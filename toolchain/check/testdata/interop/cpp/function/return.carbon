@@ -152,24 +152,24 @@ fn Var() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IngestI16.ref: %IngestI16.type = name_ref IngestI16, file.%IngestI16.decl [concrete = constants.%IngestI16]
-// CHECK:STDOUT:   %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo1.ref: %foo1.cpp_overload_set.type = name_ref foo1, imports.%foo1.cpp_overload_set.value [concrete = constants.%foo1.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc36.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc36.1
+// CHECK:STDOUT:   %.loc33_22.1: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc33_22.1
 // CHECK:STDOUT:   %foo1__carbon_thunk.call: init %empty_tuple.type = call imports.%foo1__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc36.2: init %i16 to %.loc36.1 = mark_in_place_init %foo1__carbon_thunk.call
-// CHECK:STDOUT:   %.loc36.3: ref %i16 = temporary %.loc36.1, %.loc36.2
-// CHECK:STDOUT:   %.loc36.4: %i16 = acquire_value %.loc36.3
-// CHECK:STDOUT:   %IngestI16.call: init %empty_tuple.type = call %IngestI16.ref(%.loc36.4)
+// CHECK:STDOUT:   %.loc33_22.2: init %i16 to %.loc33_22.1 = mark_in_place_init %foo1__carbon_thunk.call
+// CHECK:STDOUT:   %.loc33_22.3: ref %i16 = temporary %.loc33_22.1, %.loc33_22.2
+// CHECK:STDOUT:   %.loc33_22.4: %i16 = acquire_value %.loc33_22.3
+// CHECK:STDOUT:   %IngestI16.call: init %empty_tuple.type = call %IngestI16.ref(%.loc33_22.4)
 // CHECK:STDOUT:   %IngestI32.ref: %IngestI32.type = name_ref IngestI32, file.%IngestI32.decl [concrete = constants.%IngestI32]
-// CHECK:STDOUT:   %Cpp.ref.loc41: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo2.ref: %foo2.cpp_overload_set.type = name_ref foo2, imports.%foo2.cpp_overload_set.value [concrete = constants.%foo2.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo2.call: init %i32 = call imports.%foo2.decl()
-// CHECK:STDOUT:   %.loc45.1: %i32 = value_of_initializer %foo2.call
-// CHECK:STDOUT:   %.loc45.2: %i32 = converted %foo2.call, %.loc45.1
-// CHECK:STDOUT:   %IngestI32.call: init %empty_tuple.type = call %IngestI32.ref(%.loc45.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc36.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc36.3)
+// CHECK:STDOUT:   %.loc34_22.1: %i32 = value_of_initializer %foo2.call
+// CHECK:STDOUT:   %.loc34_22.2: %i32 = converted %foo2.call, %.loc34_22.1
+// CHECK:STDOUT:   %IngestI32.call: init %empty_tuple.type = call %IngestI32.ref(%.loc34_22.2)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc33_22.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc33_22.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,7 +186,7 @@ fn Var() {
 // CHECK:STDOUT:   %ptr.142: type = ptr_type %Cpp.nullptr_t [concrete]
 // CHECK:STDOUT:   %ReturnNullPtr__carbon_thunk.type: type = fn_type @ReturnNullPtr__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ReturnNullPtr__carbon_thunk: %ReturnNullPtr__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc14 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc73 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -211,15 +211,15 @@ fn Var() {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.f05 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Cpp.nullptr_t = var %c.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc73_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnNullPtr.ref: %ReturnNullPtr.cpp_overload_set.type = name_ref ReturnNullPtr, imports.%ReturnNullPtr.cpp_overload_set.value [concrete = constants.%ReturnNullPtr.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc14: ref %Cpp.nullptr_t = splice_block %c.var {}
-// CHECK:STDOUT:   %addr: %ptr.142 = addr_of %.loc14
+// CHECK:STDOUT:   %.loc73_3: ref %Cpp.nullptr_t = splice_block %c.var {}
+// CHECK:STDOUT:   %addr: %ptr.142 = addr_of %.loc73_3
 // CHECK:STDOUT:   %ReturnNullPtr__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnNullPtr__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc26: init %Cpp.nullptr_t to %.loc14 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
-// CHECK:STDOUT:   assign %c.var, %.loc26
-// CHECK:STDOUT:   %.loc19: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
-// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc73_51: init %Cpp.nullptr_t to %.loc73_3 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
+// CHECK:STDOUT:   assign %c.var, %.loc73_51
+// CHECK:STDOUT:   %.loc73_20: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
+// CHECK:STDOUT:     %Cpp.ref.loc73_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %nullptr_t.ref: type = name_ref nullptr_t, constants.%Cpp.nullptr_t [concrete = constants.%Cpp.nullptr_t]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = ref_binding c, %c.var
@@ -228,7 +228,7 @@ fn Var() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %Cpp.nullptr_t) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc73(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_from_thunk_param.carbon
 // CHECK:STDOUT:
@@ -291,7 +291,7 @@ fn Var() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.8f3 = return_slot_pattern %return.param_patt, %u8 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:     %.loc14: Core.Form = init_form %u8 [concrete = constants.%.471]
+// CHECK:STDOUT:     %.loc89_15: Core.Form = init_form %u8 [concrete = constants.%.471]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -301,11 +301,11 @@ fn Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnU8.ref: %ReturnU8.cpp_overload_set.type = name_ref ReturnU8, imports.%ReturnU8.cpp_overload_set.value [concrete = constants.%ReturnU8.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc21.1: ref %u8 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc21.1
+// CHECK:STDOUT:   %.loc89_40.1: ref %u8 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc89_40.1
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnU8__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc21.2: init %u8 to %.loc21.1 = mark_in_place_init %ReturnU8__carbon_thunk.call
-// CHECK:STDOUT:   return %.loc21.2
+// CHECK:STDOUT:   %.loc89_40.2: init %u8 to %.loc89_40.1 = mark_in_place_init %ReturnU8__carbon_thunk.call
+// CHECK:STDOUT:   return %.loc89_40.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU8() -> out %return.param: %u8;

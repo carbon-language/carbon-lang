@@ -215,15 +215,15 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc13.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13.2: type = converted %.loc13.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc11: %C.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.loc24_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc24_11.2: type = converted %.loc24_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc24_8: %C.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc11
+// CHECK:STDOUT:   .x = %.loc24_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
@@ -295,9 +295,9 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc11, unloaded
+// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -327,9 +327,9 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc11, unloaded
+// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -401,9 +401,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc11, unloaded
+// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -417,7 +417,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc85: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -434,14 +434,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.1: %struct_type.x = struct_literal (%.loc21.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc22.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc21.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.3: init %empty_tuple.type = converted %.loc21.1, %.loc21.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.4: init %C to file.%c.var = class_init (%.loc22.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9: init %C = converted %.loc22.1, %.loc22.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc9
+// CHECK:STDOUT:   %.loc85_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_26.1: %struct_type.x = struct_literal (%.loc85_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc85_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc85_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_26.3: init %empty_tuple.type = converted %.loc85_25.1, %.loc85_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_26.4: init %C to file.%c.var = class_init (%.loc85_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc85_1: init %C = converted %.loc85_26.1, %.loc85_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc85_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,9 +467,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc11, unloaded
+// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -483,7 +483,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc94: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -500,14 +500,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.1: %struct_type.x = struct_literal (%.loc26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc27.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.3: init %empty_tuple.type = converted %.loc26.1, %.loc26.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.4: init %C to file.%c.var = class_init (%.loc27.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc14: init %C = converted %.loc27.1, %.loc27.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc14
+// CHECK:STDOUT:   %.loc94_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc94_26.1: %struct_type.x = struct_literal (%.loc94_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc94_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc94_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc94_26.3: init %empty_tuple.type = converted %.loc94_25.1, %.loc94_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc94_26.4: init %C to file.%c.var = class_init (%.loc94_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc94_1: init %C = converted %.loc94_26.1, %.loc94_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc94_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -533,9 +533,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc11, unloaded
+// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -549,7 +549,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc102: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -566,14 +566,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.1: %struct_type.x = struct_literal (%.loc21.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc22.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc21.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.3: init %empty_tuple.type = converted %.loc21.1, %.loc21.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.4: init %C to file.%c.var = class_init (%.loc22.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9: init %C = converted %.loc22.1, %.loc22.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc9
+// CHECK:STDOUT:   %.loc102_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc102_26.1: %struct_type.x = struct_literal (%.loc102_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc102_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc102_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc102_26.3: init %empty_tuple.type = converted %.loc102_25.1, %.loc102_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc102_26.4: init %C to file.%c.var = class_init (%.loc102_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc102_1: init %C = converted %.loc102_26.1, %.loc102_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc102_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -613,7 +613,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc110: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -630,14 +630,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.1: %struct_type.x = struct_literal (%.loc21.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc22.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc21.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.3: init %empty_tuple.type = converted %.loc21.1, %.loc21.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.4: init %C to file.%c.var = class_init (%.loc22.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9: init %C = converted %.loc22.1, %.loc22.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc9
+// CHECK:STDOUT:   %.loc110_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc110_26.1: %struct_type.x = struct_literal (%.loc110_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc110_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc110_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc110_26.3: init %empty_tuple.type = converted %.loc110_25.1, %.loc110_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc110_26.4: init %C to file.%c.var = class_init (%.loc110_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc110_1: init %C = converted %.loc110_26.1, %.loc110_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc110_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -678,7 +678,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc119: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -695,14 +695,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.1: %struct_type.x = struct_literal (%.loc26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc27.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.3: init %empty_tuple.type = converted %.loc26.1, %.loc26.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.4: init %C to file.%c.var = class_init (%.loc27.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc14: init %C = converted %.loc27.1, %.loc27.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc14
+// CHECK:STDOUT:   %.loc119_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc119_26.1: %struct_type.x = struct_literal (%.loc119_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc119_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc119_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc119_26.3: init %empty_tuple.type = converted %.loc119_25.1, %.loc119_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc119_26.4: init %C to file.%c.var = class_init (%.loc119_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc119_1: init %C = converted %.loc119_26.1, %.loc119_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc119_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -742,7 +742,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc127: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -759,14 +759,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.1: %struct_type.x = struct_literal (%.loc21.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc22.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc21.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.3: init %empty_tuple.type = converted %.loc21.1, %.loc21.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22.4: init %C to file.%c.var = class_init (%.loc22.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9: init %C = converted %.loc22.1, %.loc22.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc9
+// CHECK:STDOUT:   %.loc127_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc127_26.1: %struct_type.x = struct_literal (%.loc127_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc127_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc127_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc127_26.3: init %empty_tuple.type = converted %.loc127_25.1, %.loc127_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc127_26.4: init %C to file.%c.var = class_init (%.loc127_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc127_1: init %C = converted %.loc127_26.1, %.loc127_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc127_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -812,7 +812,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc38: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc140: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -829,14 +829,14 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc46.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc47.1: %struct_type.x = struct_literal (%.loc46.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc47.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc46.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc47.3: init %empty_tuple.type = converted %.loc46.1, %.loc46.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc47.4: init %C to file.%c.var = class_init (%.loc47.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc34: init %C = converted %.loc47.1, %.loc47.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc34
+// CHECK:STDOUT:   %.loc140_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc140_26.1: %struct_type.x = struct_literal (%.loc140_25.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc140_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc140_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc140_26.3: init %empty_tuple.type = converted %.loc140_25.1, %.loc140_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc140_26.4: init %C to file.%c.var = class_init (%.loc140_26.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc140_1: init %C = converted %.loc140_26.1, %.loc140_26.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc140_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

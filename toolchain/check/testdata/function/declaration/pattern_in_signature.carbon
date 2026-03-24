@@ -42,26 +42,26 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a96 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.a96 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %.loc16: %pattern_type.de4 = tuple_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:     %.loc14_33: %pattern_type.de4 = tuple_pattern (%a.patt, %b.patt) [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param call_param0
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc9.3: type = converted %.loc9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc14_18.1: type = splice_block %.loc14_18.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc14_18.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc14_18.3: type = converted %.loc14_18.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %empty_struct_type = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %empty_struct_type = value_param call_param1
-// CHECK:STDOUT:     %.loc15.1: type = splice_block %.loc15.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc15.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc15.3: type = converted %.loc15.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc14_32.1: type = splice_block %.loc14_32.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc14_32.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc14_32.3: type = converted %.loc14_32.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %empty_struct_type = value_binding b, %b.param
 // CHECK:STDOUT:     %c.param: %empty_struct_type = value_param call_param2
-// CHECK:STDOUT:     %.loc22.1: type = splice_block %.loc22.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc22.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc22.3: type = converted %.loc22.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc14_47.1: type = splice_block %.loc14_47.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc14_47.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc14_47.3: type = converted %.loc14_47.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %empty_struct_type = value_binding c, %c.param
 // CHECK:STDOUT:   }
@@ -72,19 +72,19 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ab.param: %tuple.type.b6b = value_param call_param0
-// CHECK:STDOUT:     %.loc37.1: type = splice_block %.loc37.5 [concrete = constants.%tuple.type.b6b] {
-// CHECK:STDOUT:       %.loc33: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc36: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc37.2: %tuple.type.b6b = tuple_literal (%.loc33, %.loc36) [concrete = constants.%tuple]
-// CHECK:STDOUT:       %.loc37.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc37.4: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc37.5: type = converted %.loc37.2, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
+// CHECK:STDOUT:     %.loc18_21.1: type = splice_block %.loc18_21.5 [concrete = constants.%tuple.type.b6b] {
+// CHECK:STDOUT:       %.loc18_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc18_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc18_21.2: %tuple.type.b6b = tuple_literal (%.loc18_16, %.loc18_20) [concrete = constants.%tuple]
+// CHECK:STDOUT:       %.loc18_21.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc18_21.4: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc18_21.5: type = converted %.loc18_21.2, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ab: %tuple.type.b6b = value_binding ab, %ab.param
 // CHECK:STDOUT:     %c.param: %empty_struct_type = value_param call_param1
-// CHECK:STDOUT:     %.loc42.1: type = splice_block %.loc42.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc42.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc42.3: type = converted %.loc42.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc18_28.1: type = splice_block %.loc18_28.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc18_28.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc18_28.3: type = converted %.loc18_28.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %empty_struct_type = value_binding c, %c.param
 // CHECK:STDOUT:   }

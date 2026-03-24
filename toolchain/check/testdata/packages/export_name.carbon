@@ -233,27 +233,27 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11.2: type = converted %.loc11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc9: %C.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.loc24_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc24_11.2: type = converted %.loc24_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc24_8: %C.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc9
+// CHECK:STDOUT:   .x = %.loc24_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
-// CHECK:STDOUT:   %.loc27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc27.2: type = converted %.loc27.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc25: %NSC.elem = field_decl y, element0 [concrete]
+// CHECK:STDOUT:   %.loc29_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc29_11.2: type = converted %.loc29_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc29_8: %NSC.elem = field_decl y, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.y [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NSC
-// CHECK:STDOUT:   .y = %.loc25
+// CHECK:STDOUT:   .y = %.loc29_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
@@ -275,12 +275,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//base, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc13, loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc25_1, loaded [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc29, loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc24_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc30_1, loaded [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   %Main.import_ref.7da = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.045 = import_ref Main//base, loc25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.045 = import_ref Main//base, loc29_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -443,7 +443,7 @@ private export C;
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.ccb = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
-// CHECK:STDOUT:   %.loc25: type = splice_block %NSC.ref [concrete = constants.%NSC] {
+// CHECK:STDOUT:   %.loc70: type = splice_block %NSC.ref [concrete = constants.%NSC] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
@@ -468,22 +468,22 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.1: %struct_type.x = struct_literal (%.loc18.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc19.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc18.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.3: init %empty_tuple.type = converted %.loc18.1, %.loc18.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.4: init %C to file.%c.var = class_init (%.loc19.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8: init %C = converted %.loc19.1, %.loc19.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc8
-// CHECK:STDOUT:   %.loc33.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.1: %struct_type.y = struct_literal (%.loc33.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc34.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.160]
-// CHECK:STDOUT:   %.loc33.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.3: init %empty_tuple.type = converted %.loc33.1, %.loc33.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.4: init %NSC to file.%nsc.var = class_init (%.loc34.3) [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   %.loc21: init %NSC = converted %.loc34.1, %.loc34.4 [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   assign file.%nsc.var, %.loc21
+// CHECK:STDOUT:   %.loc69_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc69_20.1: %struct_type.x = struct_literal (%.loc69_19.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc69_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc69_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc69_20.3: init %empty_tuple.type = converted %.loc69_19.1, %.loc69_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc69_20.4: init %C to file.%c.var = class_init (%.loc69_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc69_1: init %C = converted %.loc69_20.1, %.loc69_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc69_1
+// CHECK:STDOUT:   %.loc70_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc70_27.1: %struct_type.y = struct_literal (%.loc70_26.1) [concrete = constants.%struct.8ce]
+// CHECK:STDOUT:   %.loc70_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.160]
+// CHECK:STDOUT:   %.loc70_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc70_27.3: init %empty_tuple.type = converted %.loc70_26.1, %.loc70_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc70_27.4: init %NSC to file.%nsc.var = class_init (%.loc70_27.3) [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   %.loc70_1: init %NSC = converted %.loc70_27.1, %.loc70_27.4 [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   assign file.%nsc.var, %.loc70_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -530,8 +530,8 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc74_29.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc74_29.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7c7 = var_pattern %c.patt [concrete]
@@ -544,7 +544,7 @@ private export C;
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.fd4 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
-// CHECK:STDOUT:   %.loc22: type = splice_block %NSC.ref [concrete = constants.%NSC] {
+// CHECK:STDOUT:   %.loc77: type = splice_block %NSC.ref [concrete = constants.%NSC] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
@@ -569,22 +569,22 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16.1: %struct_type.x = struct_literal (%.loc15.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc16.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc15.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16.3: init %empty_tuple.type = converted %.loc15.1, %.loc15.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16.4: init %C to file.%c.var = class_init (%.loc16.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc5: init %C = converted %.loc16.1, %.loc16.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc5
-// CHECK:STDOUT:   %.loc30.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc31.1: %struct_type.y = struct_literal (%.loc30.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc31.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2e1]
-// CHECK:STDOUT:   %.loc30.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc31.3: init %empty_tuple.type = converted %.loc30.1, %.loc30.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc31.4: init %NSC to file.%nsc.var = class_init (%.loc31.3) [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   %.loc18: init %NSC = converted %.loc31.1, %.loc31.4 [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   assign file.%nsc.var, %.loc18
+// CHECK:STDOUT:   %.loc76_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc76_20.1: %struct_type.x = struct_literal (%.loc76_19.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc76_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc76_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc76_20.3: init %empty_tuple.type = converted %.loc76_19.1, %.loc76_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc76_20.4: init %C to file.%c.var = class_init (%.loc76_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc76_1: init %C = converted %.loc76_20.1, %.loc76_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc76_1
+// CHECK:STDOUT:   %.loc77_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc77_27.1: %struct_type.y = struct_literal (%.loc77_26.1) [concrete = constants.%struct.8ce]
+// CHECK:STDOUT:   %.loc77_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2e1]
+// CHECK:STDOUT:   %.loc77_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc77_27.3: init %empty_tuple.type = converted %.loc77_26.1, %.loc77_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc77_27.4: init %NSC to file.%nsc.var = class_init (%.loc77_27.3) [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   %.loc77_1: init %NSC = converted %.loc77_27.1, %.loc77_27.4 [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   assign file.%nsc.var, %.loc77_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -644,7 +644,7 @@ private export C;
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.fd4 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
-// CHECK:STDOUT:   %.loc25: type = splice_block %NSC.ref [concrete = constants.%NSC] {
+// CHECK:STDOUT:   %.loc86: type = splice_block %NSC.ref [concrete = constants.%NSC] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
@@ -669,22 +669,22 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.1: %struct_type.x = struct_literal (%.loc18.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc19.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc18.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.3: init %empty_tuple.type = converted %.loc18.1, %.loc18.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.4: init %C to file.%c.var = class_init (%.loc19.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8: init %C = converted %.loc19.1, %.loc19.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc8
-// CHECK:STDOUT:   %.loc33.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.1: %struct_type.y = struct_literal (%.loc33.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc34.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2e1]
-// CHECK:STDOUT:   %.loc33.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.3: init %empty_tuple.type = converted %.loc33.1, %.loc33.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc34.4: init %NSC to file.%nsc.var = class_init (%.loc34.3) [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   %.loc21: init %NSC = converted %.loc34.1, %.loc34.4 [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   assign file.%nsc.var, %.loc21
+// CHECK:STDOUT:   %.loc85_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_20.1: %struct_type.x = struct_literal (%.loc85_19.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc85_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc85_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_20.3: init %empty_tuple.type = converted %.loc85_19.1, %.loc85_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc85_20.4: init %C to file.%c.var = class_init (%.loc85_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc85_1: init %C = converted %.loc85_20.1, %.loc85_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc85_1
+// CHECK:STDOUT:   %.loc86_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc86_27.1: %struct_type.y = struct_literal (%.loc86_26.1) [concrete = constants.%struct.8ce]
+// CHECK:STDOUT:   %.loc86_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2e1]
+// CHECK:STDOUT:   %.loc86_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc86_27.3: init %empty_tuple.type = converted %.loc86_26.1, %.loc86_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc86_27.4: init %NSC to file.%nsc.var = class_init (%.loc86_27.3) [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   %.loc86_1: init %NSC = converted %.loc86_27.1, %.loc86_27.4 [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   assign file.%nsc.var, %.loc86_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -746,9 +746,9 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
-// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc13, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -795,12 +795,12 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC: type = import_ref Main//base, NSC, loaded [concrete = constants.%NSC]
-// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc13, loaded [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc25_1, loaded [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc29, loaded [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc24_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc30_1, loaded [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   %Main.import_ref.7da = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.045 = import_ref Main//base, loc25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.045 = import_ref Main//base, loc29_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -823,7 +823,7 @@ private export C;
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.b52 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
-// CHECK:STDOUT:   %.loc29: type = splice_block %NSC.ref [concrete = constants.%NSC] {
+// CHECK:STDOUT:   %.loc143: type = splice_block %NSC.ref [concrete = constants.%NSC] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
@@ -848,22 +848,22 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.1: %struct_type.x = struct_literal (%.loc22.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc23.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc22.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.3: init %empty_tuple.type = converted %.loc22.1, %.loc22.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.4: init %C to file.%c.var = class_init (%.loc23.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc12: init %C = converted %.loc23.1, %.loc23.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc12
-// CHECK:STDOUT:   %.loc37.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.1: %struct_type.y = struct_literal (%.loc37.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc38.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.b2f]
-// CHECK:STDOUT:   %.loc37.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.3: init %empty_tuple.type = converted %.loc37.1, %.loc37.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.4: init %NSC to file.%nsc.var = class_init (%.loc38.3) [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   %.loc25: init %NSC = converted %.loc38.1, %.loc38.4 [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   assign file.%nsc.var, %.loc25
+// CHECK:STDOUT:   %.loc142_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc142_20.1: %struct_type.x = struct_literal (%.loc142_19.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc142_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc142_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc142_20.3: init %empty_tuple.type = converted %.loc142_19.1, %.loc142_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc142_20.4: init %C to file.%c.var = class_init (%.loc142_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc142_1: init %C = converted %.loc142_20.1, %.loc142_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc142_1
+// CHECK:STDOUT:   %.loc143_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc143_27.1: %struct_type.y = struct_literal (%.loc143_26.1) [concrete = constants.%struct.8ce]
+// CHECK:STDOUT:   %.loc143_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.b2f]
+// CHECK:STDOUT:   %.loc143_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc143_27.3: init %empty_tuple.type = converted %.loc143_26.1, %.loc143_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc143_27.4: init %NSC to file.%nsc.var = class_init (%.loc143_27.3) [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   %.loc143_1: init %NSC = converted %.loc143_27.1, %.loc143_27.4 [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   assign file.%nsc.var, %.loc143_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -923,7 +923,7 @@ private export C;
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.ccb = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
-// CHECK:STDOUT:   %.loc29: type = splice_block %NSC.ref [concrete = constants.%NSC] {
+// CHECK:STDOUT:   %.loc153: type = splice_block %NSC.ref [concrete = constants.%NSC] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
@@ -948,22 +948,22 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.1: %struct_type.x = struct_literal (%.loc22.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc23.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc22.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.3: init %empty_tuple.type = converted %.loc22.1, %.loc22.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23.4: init %C to file.%c.var = class_init (%.loc23.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc12: init %C = converted %.loc23.1, %.loc23.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc12
-// CHECK:STDOUT:   %.loc37.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.1: %struct_type.y = struct_literal (%.loc37.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc38.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.160]
-// CHECK:STDOUT:   %.loc37.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.3: init %empty_tuple.type = converted %.loc37.1, %.loc37.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc38.4: init %NSC to file.%nsc.var = class_init (%.loc38.3) [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   %.loc25: init %NSC = converted %.loc38.1, %.loc38.4 [concrete = constants.%NSC.val]
-// CHECK:STDOUT:   assign file.%nsc.var, %.loc25
+// CHECK:STDOUT:   %.loc152_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc152_20.1: %struct_type.x = struct_literal (%.loc152_19.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc152_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc152_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc152_20.3: init %empty_tuple.type = converted %.loc152_19.1, %.loc152_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc152_20.4: init %C to file.%c.var = class_init (%.loc152_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc152_1: init %C = converted %.loc152_20.1, %.loc152_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc152_1
+// CHECK:STDOUT:   %.loc153_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc153_27.1: %struct_type.y = struct_literal (%.loc153_26.1) [concrete = constants.%struct.8ce]
+// CHECK:STDOUT:   %.loc153_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.160]
+// CHECK:STDOUT:   %.loc153_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc153_27.3: init %empty_tuple.type = converted %.loc153_26.1, %.loc153_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc153_27.4: init %NSC to file.%nsc.var = class_init (%.loc153_27.3) [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   %.loc153_1: init %NSC = converted %.loc153_27.1, %.loc153_27.4 [concrete = constants.%NSC.val]
+// CHECK:STDOUT:   assign file.%nsc.var, %.loc153_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1000,9 +1000,9 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
-// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc13, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1068,14 +1068,14 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.1: %struct_type.x = struct_literal (%.loc18.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc19.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
-// CHECK:STDOUT:   %.loc18.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.3: init %empty_tuple.type = converted %.loc18.1, %.loc18.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.4: init %C to file.%c.var = class_init (%.loc19.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8: init %C = converted %.loc19.1, %.loc19.4 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc8
+// CHECK:STDOUT:   %.loc194_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc194_20.1: %struct_type.x = struct_literal (%.loc194_19.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc194_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.1d2]
+// CHECK:STDOUT:   %.loc194_19.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc194_20.3: init %empty_tuple.type = converted %.loc194_19.1, %.loc194_19.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc194_20.4: init %C to file.%c.var = class_init (%.loc194_20.3) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc194_1: init %C = converted %.loc194_20.1, %.loc194_20.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc194_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1095,9 +1095,9 @@ private export C;
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
-// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc13, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc25_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fec = import_ref Main//base, loc24_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

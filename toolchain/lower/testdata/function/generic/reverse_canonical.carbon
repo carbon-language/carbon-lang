@@ -59,12 +59,12 @@ fn Main() {
 // CHECK:STDOUT:   store i8 poison, ptr %x.var, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !8
 // CHECK:STDOUT:   store ptr poison, ptr %y.var, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc328 = load i8, ptr %x.var, align 1, !dbg !9
-// CHECK:STDOUT:   %.loc3281 = trunc i8 %.loc328 to i1, !dbg !9
-// CHECK:STDOUT:   %.loc330 = load i8, ptr %x.var, align 1, !dbg !10
-// CHECK:STDOUT:   %.loc3302 = trunc i8 %.loc330 to i1, !dbg !10
-// CHECK:STDOUT:   %.loc332 = load ptr, ptr %y.var, align 8, !dbg !11
-// CHECK:STDOUT:   call void @_Cfirst.Main.36f5e0b0ce09cb9a(i1 %.loc3281, i1 %.loc3302, ptr %.loc332), !dbg !12
+// CHECK:STDOUT:   %.loc47_9 = load i8, ptr %x.var, align 1, !dbg !9
+// CHECK:STDOUT:   %.loc47_91 = trunc i8 %.loc47_9 to i1, !dbg !9
+// CHECK:STDOUT:   %.loc47_12 = load i8, ptr %x.var, align 1, !dbg !10
+// CHECK:STDOUT:   %.loc47_122 = trunc i8 %.loc47_12 to i1, !dbg !10
+// CHECK:STDOUT:   %.loc47_15 = load ptr, ptr %y.var, align 8, !dbg !11
+// CHECK:STDOUT:   call void @_Cfirst.Main.36f5e0b0ce09cb9a(i1 %.loc47_91, i1 %.loc47_122, ptr %.loc47_15), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,8 +77,8 @@ fn Main() {
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !22
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !22
-// CHECK:STDOUT:   %.loc164 = load ptr, ptr %local_name.var, align 8, !dbg !23
-// CHECK:STDOUT:   call void @_Csecond.Main.d7e5e45a4314338a(i1 %arg2, i1 %arg2, ptr %.loc164), !dbg !24
+// CHECK:STDOUT:   %.loc23 = load ptr, ptr %local_name.var, align 8, !dbg !23
+// CHECK:STDOUT:   call void @_Csecond.Main.d7e5e45a4314338a(i1 %arg2, i1 %arg2, ptr %.loc23), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,8 +89,8 @@ fn Main() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !31
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !31
 // CHECK:STDOUT:   call void @_Cfirst.Main.3beb1adb29385874(ptr %arg3, ptr %arg3, i1 %arg1), !dbg !32
-// CHECK:STDOUT:   %.loc218 = load ptr, ptr %local_name.var, align 8, !dbg !33
-// CHECK:STDOUT:   call void @_Cthird.Main.d7e5e45a4314338a(i1 %arg2, i1 %arg2, ptr %.loc218), !dbg !34
+// CHECK:STDOUT:   %.loc30 = load ptr, ptr %local_name.var, align 8, !dbg !33
+// CHECK:STDOUT:   call void @_Cthird.Main.d7e5e45a4314338a(i1 %arg2, i1 %arg2, ptr %.loc30), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,8 +100,8 @@ fn Main() {
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !41
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !41
-// CHECK:STDOUT:   %.loc164 = load ptr, ptr %local_name.var, align 8, !dbg !42
-// CHECK:STDOUT:   call void @_Csecond.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc164), !dbg !43
+// CHECK:STDOUT:   %.loc23 = load ptr, ptr %local_name.var, align 8, !dbg !42
+// CHECK:STDOUT:   call void @_Csecond.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc23), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,9 +111,9 @@ fn Main() {
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !50
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !50
-// CHECK:STDOUT:   %.loc260 = load ptr, ptr %local_name.var, align 8, !dbg !51
-// CHECK:STDOUT:   %.loc262 = load ptr, ptr %local_name.var, align 8, !dbg !52
-// CHECK:STDOUT:   call void @_Cfourth.Main.0d9750e0ffa31ae6(ptr %.loc260, ptr %.loc262, i1 %arg1), !dbg !53
+// CHECK:STDOUT:   %.loc36_10 = load ptr, ptr %local_name.var, align 8, !dbg !51
+// CHECK:STDOUT:   %.loc36_22 = load ptr, ptr %local_name.var, align 8, !dbg !52
+// CHECK:STDOUT:   call void @_Cfourth.Main.0d9750e0ffa31ae6(ptr %.loc36_10, ptr %.loc36_22, i1 %arg1), !dbg !53
 // CHECK:STDOUT:   call void @_Cfourth.Main.0d9750e0ffa31ae6(ptr %arg3, ptr %arg3, i1 %arg2), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
@@ -125,8 +125,8 @@ fn Main() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !61
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !61
 // CHECK:STDOUT:   call void @_Cfirst.Main.8f47aef0a9da052b(ptr %arg3, ptr %arg3, ptr %arg1), !dbg !62
-// CHECK:STDOUT:   %.loc218 = load ptr, ptr %local_name.var, align 8, !dbg !63
-// CHECK:STDOUT:   call void @_Cthird.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc218), !dbg !64
+// CHECK:STDOUT:   %.loc30 = load ptr, ptr %local_name.var, align 8, !dbg !63
+// CHECK:STDOUT:   call void @_Cthird.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc30), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,8 +142,8 @@ fn Main() {
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !77
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !77
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !77
-// CHECK:STDOUT:   %.loc164 = load ptr, ptr %local_name.var, align 8, !dbg !78
-// CHECK:STDOUT:   call void @_Csecond.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc164), !dbg !79
+// CHECK:STDOUT:   %.loc23 = load ptr, ptr %local_name.var, align 8, !dbg !78
+// CHECK:STDOUT:   call void @_Csecond.Main.8f47aef0a9da052b(ptr %arg2, ptr %arg2, ptr %.loc23), !dbg !79
 // CHECK:STDOUT:   ret void, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,9 +153,9 @@ fn Main() {
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !86
 // CHECK:STDOUT:   store ptr poison, ptr %local_name.var, align 8, !dbg !86
-// CHECK:STDOUT:   %.loc260 = load ptr, ptr %local_name.var, align 8, !dbg !87
-// CHECK:STDOUT:   %.loc262 = load ptr, ptr %local_name.var, align 8, !dbg !88
-// CHECK:STDOUT:   call void @_Cfourth.Main.c950b7c9c726f508(ptr %.loc260, ptr %.loc262, ptr %arg1), !dbg !89
+// CHECK:STDOUT:   %.loc36_10 = load ptr, ptr %local_name.var, align 8, !dbg !87
+// CHECK:STDOUT:   %.loc36_22 = load ptr, ptr %local_name.var, align 8, !dbg !88
+// CHECK:STDOUT:   call void @_Cfourth.Main.c950b7c9c726f508(ptr %.loc36_10, ptr %.loc36_22, ptr %arg1), !dbg !89
 // CHECK:STDOUT:   call void @_Cfourth.Main.c950b7c9c726f508(ptr %arg3, ptr %arg3, ptr %arg2), !dbg !90
 // CHECK:STDOUT:   ret void, !dbg !91
 // CHECK:STDOUT: }

@@ -63,7 +63,7 @@ interface I {
 // CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
-// CHECK:STDOUT:   %I.impl_witness.loc11.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc11.2 (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %I.impl_witness.loc24_21.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc24_21.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
@@ -93,6 +93,6 @@ interface I {
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C
-// CHECK:STDOUT:   %I.impl_witness.loc11.2 => constants.%I.impl_witness
+// CHECK:STDOUT:   %I.impl_witness.loc24_21.2 => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

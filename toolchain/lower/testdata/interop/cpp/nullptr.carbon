@@ -82,17 +82,17 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassNullptr.Main() #2 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16.2.temp = alloca ptr, align 8, !dbg !19
-// CHECK:STDOUT:   %.loc25.1.temp = alloca ptr, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc25_18.2.temp = alloca ptr, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc27_22.1.temp = alloca ptr, align 8, !dbg !20
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr poison), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16.2.temp), !dbg !19
-// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, ptr %.loc16.2.temp, align 8, !dbg !19
-// CHECK:STDOUT:   %.loc16.4 = load ptr, ptr %.loc16.2.temp, align 8, !dbg !19
-// CHECK:STDOUT:   call void @_Z7TakePtrPi(ptr %.loc16.4), !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_18.2.temp), !dbg !19
+// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, ptr %.loc25_18.2.temp, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc25_18.4 = load ptr, ptr %.loc25_18.2.temp, align 8, !dbg !19
+// CHECK:STDOUT:   call void @_Z7TakePtrPi(ptr %.loc25_18.4), !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_22.1.temp), !dbg !20
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !20
-// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc25.1.temp, align 8, !dbg !20
-// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr %.loc25.1.temp), !dbg !22
+// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc27_22.1.temp, align 8, !dbg !20
+// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr %.loc27_22.1.temp), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,11 +114,11 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !31
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !31
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc62 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !32
-// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc62, ptr %a.var, align 8, !dbg !31
-// CHECK:STDOUT:   %.loc66 = load ptr, ptr %a.var, align 8, !dbg !33
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc66 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %.loc66), !dbg !33
-// CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc66, !dbg !34
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc35 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !32
+// CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc35, ptr %a.var, align 8, !dbg !31
+// CHECK:STDOUT:   %.loc36 = load ptr, ptr %a.var, align 8, !dbg !33
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc36 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %.loc36), !dbg !33
+// CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc36, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -127,19 +127,19 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !36
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %a.var), !dbg !37
-// CHECK:STDOUT:   %.loc96 = load ptr, ptr %a.var, align 8, !dbg !38
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc96), !dbg !39
+// CHECK:STDOUT:   %.loc41_10 = load ptr, ptr %a.var, align 8, !dbg !38
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc41_10), !dbg !39
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CReturnConvertedNullptrDirectly.Main() #2 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc117.1.temp = alloca ptr, align 8, !dbg !41
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc117.1.temp), !dbg !41
-// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %.loc117.1.temp), !dbg !41
-// CHECK:STDOUT:   %.loc117.4 = load ptr, ptr %.loc117.1.temp, align 8, !dbg !41
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc117.4), !dbg !42
+// CHECK:STDOUT:   %.loc45_28.1.temp = alloca ptr, align 8, !dbg !41
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc45_28.1.temp), !dbg !41
+// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %.loc45_28.1.temp), !dbg !41
+// CHECK:STDOUT:   %.loc45_28.4 = load ptr, ptr %.loc45_28.1.temp, align 8, !dbg !41
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc45_28.4), !dbg !42
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,8 +95,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_21.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_21.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,8 +132,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_26.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_26.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -166,8 +166,8 @@ extern fn A();
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc59_27.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc59_27.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

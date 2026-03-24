@@ -90,10 +90,10 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc31.1.temp = alloca {}, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr %.loc31.1.temp, ptr %d), !dbg !10
-// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.65ad70c00874dfd2(ptr %.loc31.1.temp), !dbg !10
+// CHECK:STDOUT:   %.loc52_21.1.temp = alloca {}, align 8, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc52_21.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr %.loc52_21.1.temp, ptr %d), !dbg !10
+// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.65ad70c00874dfd2(ptr %.loc52_21.1.temp), !dbg !10
 // CHECK:STDOUT:   ret ptr %C.GetC.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

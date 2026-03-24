@@ -105,7 +105,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc7
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc20_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -117,10 +117,10 @@ fn F() {
 // CHECK:STDOUT:   br !if.expr.result(%f64)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc15: type = block_arg !if.expr.result
+// CHECK:STDOUT:   %.loc21: type = block_arg !if.expr.result
 // CHECK:STDOUT:   %impl.elem0: %.070 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %impl.elem0
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc15)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc21, %impl.elem0
+// CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc21)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,7 +144,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc7
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc50_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -156,10 +156,10 @@ fn F() {
 // CHECK:STDOUT:   br !if.expr.result(%f64)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc15: type = block_arg !if.expr.result
+// CHECK:STDOUT:   %.loc51: type = block_arg !if.expr.result
 // CHECK:STDOUT:   %impl.elem0: %.070 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %impl.elem0
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc15)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc51, %impl.elem0
+// CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc51)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,7 +179,7 @@ fn F() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc8: bool) {
+// CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc78_14: bool) {
 // CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.a76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -194,11 +194,11 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc12 [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %true.loc27: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc28: bool = not %true.loc27 [concrete = constants.%false]
-// CHECK:STDOUT:   %true.loc28: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   if %.loc28 br !or.rhs else br !or.result(%true.loc28)
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc78_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %true.loc86_20: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc86: bool = not %true.loc86_20 [concrete = constants.%false]
+// CHECK:STDOUT:   %true.loc86_25: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   if %.loc86 br !or.rhs else br !or.result(%true.loc86_25)
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

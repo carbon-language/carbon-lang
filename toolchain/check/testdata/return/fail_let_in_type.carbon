@@ -85,30 +85,30 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc6
+// CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22.1: type = splice_block %.loc22.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc27_9.1: type = splice_block %.loc27_9.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc22.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc27_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc24
+// CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {} {
 // CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc41.1: type = splice_block %.loc41.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc39_18.1: type = splice_block %.loc39_18.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc41.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc39_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc43
+// CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {} {
 // CHECK:STDOUT:     %z.ref: type = name_ref z, file.%z
 // CHECK:STDOUT:   }
@@ -134,9 +134,9 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i32.loc43: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

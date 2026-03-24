@@ -69,8 +69,8 @@ class ForwardDecl {
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_17.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_17.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ForwardDecl.decl: type = class_decl @ForwardDecl [concrete = constants.%ForwardDecl] {} {}
 // CHECK:STDOUT: }

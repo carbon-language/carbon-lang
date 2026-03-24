@@ -62,14 +62,14 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern %return.param_patt, %.loc12.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern %return.param_patt, %.loc15_25.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12.1: %tuple.type.ff9 = tuple_literal (%i32.loc7, %i32.loc9, %i32.loc11) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc12.2: type = converted %.loc12.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
-// CHECK:STDOUT:     %.loc12.3: Core.Form = init_form %.loc12.2 [concrete = constants.%.074]
+// CHECK:STDOUT:     %i32.loc15_12: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_25.1: %tuple.type.ff9 = tuple_literal (%i32.loc15_12, %i32.loc15_17, %i32.loc15_22) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_25.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %.loc15_25.3: Core.Form = init_form %.loc15_25.2 [concrete = constants.%.074]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.189 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.189 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -85,27 +85,27 @@ fn G() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.3c2 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2f9 = var %v.var_patt
-// CHECK:STDOUT:   %F.ref.loc51: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc61.1: ref %tuple.type.189 = struct_access %v.var, element0
-// CHECK:STDOUT:   %F.call.loc53: init %tuple.type.189 to %.loc61.1 = call %F.ref.loc51()
-// CHECK:STDOUT:   %F.ref.loc58: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc61.2: ref %tuple.type.189 = struct_access %v.var, element1
-// CHECK:STDOUT:   %F.call.loc60: init %tuple.type.189 to %.loc61.2 = call %F.ref.loc58()
-// CHECK:STDOUT:   %.loc61.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc53, %F.call.loc60)
-// CHECK:STDOUT:   %.loc61.4: init %struct_type.a.b.2f9 to %v.var = struct_init (%F.call.loc53, %F.call.loc60)
-// CHECK:STDOUT:   %.loc19: init %struct_type.a.b.2f9 = converted %.loc61.3, %.loc61.4
-// CHECK:STDOUT:   assign %v.var, %.loc19
-// CHECK:STDOUT:   %.loc45: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {
-// CHECK:STDOUT:     %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc33.1: %tuple.type.ff9 = tuple_literal (%i32.loc28, %i32.loc30, %i32.loc32) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc33.2: type = converted %.loc33.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
-// CHECK:STDOUT:     %i32.loc39: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc41: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc43: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc44.1: %tuple.type.ff9 = tuple_literal (%i32.loc39, %i32.loc41, %i32.loc43) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc44.2: type = converted %.loc44.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:   %F.ref.loc18_68: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc18_81.1: ref %tuple.type.189 = struct_access %v.var, element0
+// CHECK:STDOUT:   %F.call.loc18_70: init %tuple.type.189 to %.loc18_81.1 = call %F.ref.loc18_68()
+// CHECK:STDOUT:   %F.ref.loc18_78: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc18_81.2: ref %tuple.type.189 = struct_access %v.var, element1
+// CHECK:STDOUT:   %F.call.loc18_80: init %tuple.type.189 to %.loc18_81.2 = call %F.ref.loc18_78()
+// CHECK:STDOUT:   %.loc18_81.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc18_70, %F.call.loc18_80)
+// CHECK:STDOUT:   %.loc18_81.4: init %struct_type.a.b.2f9 to %v.var = struct_init (%F.call.loc18_70, %F.call.loc18_80)
+// CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.2f9 = converted %.loc18_81.3, %.loc18_81.4
+// CHECK:STDOUT:   assign %v.var, %.loc18_3
+// CHECK:STDOUT:   %.loc18_58: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {
+// CHECK:STDOUT:     %i32.loc18_23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_28: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_33: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_36.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_23, %i32.loc18_28, %i32.loc18_33) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_36.2: type = converted %.loc18_36.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %i32.loc18_44: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_49: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_54: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_57.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_44, %i32.loc18_49, %i32.loc18_54) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_57.2: type = converted %.loc18_57.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %tuple.type.189, .b: %tuple.type.189} [concrete = constants.%struct_type.a.b.2f9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %struct_type.a.b.2f9 = ref_binding v, %v.var

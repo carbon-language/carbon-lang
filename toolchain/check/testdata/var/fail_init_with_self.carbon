@@ -69,9 +69,9 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc11.1: type = splice_block %.loc11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc11.3: type = converted %.loc11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc29_18.1: type = splice_block %.loc29_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc29_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc29_18.3: type = converted %.loc29_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op

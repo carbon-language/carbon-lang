@@ -19,14 +19,14 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'return_value_access.carbon'
 // CHECK:STDOUT: source_filename = "return_value_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.014.loc18 = internal constant { i32, i32 } { i32 12, i32 24 }
+// CHECK:STDOUT: @tuple.014.loc13_39 = internal constant { i32, i32 } { i32 12, i32 24 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.014.loc18, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.014.loc13_39, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -34,13 +34,13 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc32.1.temp = alloca { i32, i32 }, align 8, !dbg !14
+// CHECK:STDOUT:   %.loc16_18.1.temp = alloca { i32, i32 }, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc32.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc32.1.temp), !dbg !14
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc32.1.temp, i32 0, i32 1, !dbg !14
-// CHECK:STDOUT:   %.loc33 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc33, ptr %_.var, align 4, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_18.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_18.1.temp), !dbg !14
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !14
+// CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc16_19, ptr %_.var, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

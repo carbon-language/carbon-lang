@@ -54,12 +54,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc8: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   %int_42.loc20: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc10: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc13: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:   assign %.loc10, <error>
+// CHECK:STDOUT:   %.loc25: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_42.loc25: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   assign %.loc25, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

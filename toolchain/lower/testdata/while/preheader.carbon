@@ -42,36 +42,36 @@ fn While() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CWhile.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %while.cond.loc24
+// CHECK:STDOUT:   br label %while.cond.loc22
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond.loc24:                                 ; preds = %entry, %while.body.loc28
-// CHECK:STDOUT:   %Cond.call.loc27 = call i1 @_CCond.Main(), !dbg !7
-// CHECK:STDOUT:   br i1 %Cond.call.loc27, label %while.body.loc28, label %while.done.loc28, !dbg !8
+// CHECK:STDOUT: while.cond.loc22:                                 ; preds = %entry, %while.body.loc22
+// CHECK:STDOUT:   %Cond.call.loc22 = call i1 @_CCond.Main(), !dbg !7
+// CHECK:STDOUT:   br i1 %Cond.call.loc22, label %while.body.loc22, label %while.done.loc22, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.body.loc28:                                 ; preds = %while.cond.loc24
+// CHECK:STDOUT: while.body.loc22:                                 ; preds = %while.cond.loc22
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
-// CHECK:STDOUT:   br label %while.cond.loc24, !dbg !10
+// CHECK:STDOUT:   br label %while.cond.loc22, !dbg !10
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.done.loc28:                                 ; preds = %while.cond.loc24
-// CHECK:STDOUT:   %Cond.call.loc39 = call i1 @_CCond.Main(), !dbg !11
-// CHECK:STDOUT:   br i1 %Cond.call.loc39, label %while.cond.loc43, label %if.else, !dbg !12
+// CHECK:STDOUT: while.done.loc22:                                 ; preds = %while.cond.loc22
+// CHECK:STDOUT:   %Cond.call.loc26 = call i1 @_CCond.Main(), !dbg !11
+// CHECK:STDOUT:   br i1 %Cond.call.loc26, label %while.cond.loc27, label %if.else, !dbg !12
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond.loc43:                                 ; preds = %while.body.loc47, %while.done.loc28
-// CHECK:STDOUT:   %Cond.call.loc46 = call i1 @_CCond.Main(), !dbg !13
-// CHECK:STDOUT:   br i1 %Cond.call.loc46, label %while.body.loc47, label %while.done.loc47, !dbg !14
+// CHECK:STDOUT: while.cond.loc27:                                 ; preds = %while.body.loc27, %while.done.loc22
+// CHECK:STDOUT:   %Cond.call.loc27 = call i1 @_CCond.Main(), !dbg !13
+// CHECK:STDOUT:   br i1 %Cond.call.loc27, label %while.body.loc27, label %while.done.loc27, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.body.loc47:                                 ; preds = %while.cond.loc43
+// CHECK:STDOUT: while.body.loc27:                                 ; preds = %while.cond.loc27
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !15
-// CHECK:STDOUT:   br label %while.cond.loc43, !dbg !16
+// CHECK:STDOUT:   br label %while.cond.loc27, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.done.loc47:                                 ; preds = %while.cond.loc43
+// CHECK:STDOUT: while.done.loc27:                                 ; preds = %while.cond.loc27
 // CHECK:STDOUT:   br label %if.else, !dbg !17
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else:                                          ; preds = %while.done.loc47, %while.done.loc28
+// CHECK:STDOUT: if.else:                                          ; preds = %while.done.loc27, %while.done.loc22
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %while.cond.loc24, { 1, 0 }
+// CHECK:STDOUT:   uselistorder label %while.cond.loc22, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

@@ -25,8 +25,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CG.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13.2 = load i32, ptr %p, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc13.2, !dbg !12
+// CHECK:STDOUT:   %.loc14_10.2 = load i32, ptr %p, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc14_10.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

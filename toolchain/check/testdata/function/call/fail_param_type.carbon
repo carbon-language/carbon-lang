@@ -84,7 +84,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc18: %i32 = converted %float, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc28: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

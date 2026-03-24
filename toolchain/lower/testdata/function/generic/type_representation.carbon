@@ -93,14 +93,14 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.X.Main:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc137.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !22
-// CHECK:STDOUT:   %.loc137.2 = load i32, ptr %.loc137.1.a, align 4, !dbg !22
-// CHECK:STDOUT:   %.loc144.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !23
-// CHECK:STDOUT:   %.loc144.2 = load i32, ptr %.loc144.1.b, align 4, !dbg !23
-// CHECK:STDOUT:   %.loc146.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !24
-// CHECK:STDOUT:   store i32 %.loc137.2, ptr %.loc146.2.a, align 4, !dbg !24
-// CHECK:STDOUT:   %.loc146.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !24
-// CHECK:STDOUT:   store i32 %.loc144.2, ptr %.loc146.4.b, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc38_24.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !22
+// CHECK:STDOUT:   %.loc38_24.2 = load i32, ptr %.loc38_24.1.a, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc38_37.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !23
+// CHECK:STDOUT:   %.loc38_37.2 = load i32, ptr %.loc38_37.1.b, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc38_39.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !24
+// CHECK:STDOUT:   store i32 %.loc38_24.2, ptr %.loc38_39.2.a, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc38_39.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !24
+// CHECK:STDOUT:   store i32 %.loc38_37.2, ptr %.loc38_39.4.b, align 4, !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,14 +127,14 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.d07e2731f1087d49:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc244.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !41
-// CHECK:STDOUT:   %tuple.elem0.loc244.1.tuple.elem.load = load i32, ptr %tuple.elem0.loc244.1.tuple.elem, align 4, !dbg !41
-// CHECK:STDOUT:   %tuple.elem0.loc244.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !41
-// CHECK:STDOUT:   store i32 %tuple.elem0.loc244.1.tuple.elem.load, ptr %tuple.elem0.loc244.2.tuple.elem, align 4, !dbg !41
-// CHECK:STDOUT:   %tuple.elem1.loc244.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !41
-// CHECK:STDOUT:   %tuple.elem1.loc244.1.tuple.elem.load = load i32, ptr %tuple.elem1.loc244.1.tuple.elem, align 4, !dbg !41
-// CHECK:STDOUT:   %tuple.elem1.loc244.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !41
-// CHECK:STDOUT:   store i32 %tuple.elem1.loc244.1.tuple.elem.load, ptr %tuple.elem1.loc244.2.tuple.elem, align 4, !dbg !41
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem0.loc59_12.1.tuple.elem, align 4, !dbg !41
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   store i32 %tuple.elem0.loc59_12.1.tuple.elem.load, ptr %tuple.elem0.loc59_12.2.tuple.elem, align 4, !dbg !41
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem1.loc59_12.1.tuple.elem, align 4, !dbg !41
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   store i32 %tuple.elem1.loc59_12.1.tuple.elem.load, ptr %tuple.elem1.loc59_12.2.tuple.elem, align 4, !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -148,14 +148,14 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.a6c7c55658a5a74c:Copy.Main"(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %self) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc317.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 0, !dbg !51
-// CHECK:STDOUT:   %tuple.elem0.loc317.tuple.elem.load = load ptr, ptr %tuple.elem0.loc317.tuple.elem, align 8, !dbg !51
-// CHECK:STDOUT:   %tuple.elem0.loc339.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !52
-// CHECK:STDOUT:   call void @"_COp.d07e2731f1087d49:Copy.Main"(ptr %tuple.elem0.loc339.tuple.elem, ptr %tuple.elem0.loc317.tuple.elem.load), !dbg !51
-// CHECK:STDOUT:   %tuple.elem1.loc329.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 1, !dbg !53
-// CHECK:STDOUT:   %tuple.elem1.loc329.tuple.elem.load = load ptr, ptr %tuple.elem1.loc329.tuple.elem, align 8, !dbg !53
-// CHECK:STDOUT:   %tuple.elem1.loc339.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !52
-// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %tuple.elem1.loc339.tuple.elem, ptr %tuple.elem1.loc329.tuple.elem.load), !dbg !53
+// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 0, !dbg !51
+// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem.load = load ptr, ptr %tuple.elem0.loc69_17.tuple.elem, align 8, !dbg !51
+// CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !52
+// CHECK:STDOUT:   call void @"_COp.d07e2731f1087d49:Copy.Main"(ptr %tuple.elem0.loc69_51.tuple.elem, ptr %tuple.elem0.loc69_17.tuple.elem.load), !dbg !51
+// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 1, !dbg !53
+// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem.load = load ptr, ptr %tuple.elem1.loc69_37.tuple.elem, align 8, !dbg !53
+// CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !52
+// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %tuple.elem1.loc69_51.tuple.elem, ptr %tuple.elem1.loc69_37.tuple.elem.load), !dbg !53
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,10 +171,10 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !63
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !63
-// CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc49 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !64
-// CHECK:STDOUT:   store i32 %Copy.WithSelf.Op.call.loc49, ptr %_.var, align 4, !dbg !63
-// CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc60 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !65
-// CHECK:STDOUT:   ret i32 %Copy.WithSelf.Op.call.loc60, !dbg !66
+// CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc18 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !64
+// CHECK:STDOUT:   store i32 %Copy.WithSelf.Op.call.loc18, ptr %_.var, align 4, !dbg !63
+// CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc19 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !65
+// CHECK:STDOUT:   ret i32 %Copy.WithSelf.Op.call.loc19, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

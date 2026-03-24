@@ -165,84 +165,84 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.092 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19.1: type = splice_block %.loc19.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc22_21.1: type = splice_block %.loc22_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.1dc]
-// CHECK:STDOUT:       %.loc24: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc19.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc22_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc22_21.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
-// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc24
+// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc22_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc16.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc16.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc22_15.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc22_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.092 = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc33.1: type = splice_block %.loc33.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc24_23.1: type = splice_block %.loc24_23.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.1dc]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc34: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc24_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.loc38: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc33.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc24_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc24_23.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
-// CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc38
+// CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc24_41
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc30.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc30.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc24_17.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc24_17.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [concrete = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.17f = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc47.1: type = splice_block %.loc47.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc26_27.1: type = splice_block %.loc26_27.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.loc46: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc26_22: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.16f]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.loc47.2: type = where_expr %.Self.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %.loc26_27.2: type = where_expr %.Self.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc44.2: %type_where = symbolic_binding V, 0 [symbolic = %V.loc44.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc26_18.2: %type_where = symbolic_binding V, 0 [symbolic = %V.loc26_18.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc16.2: %I_where.type) {
-// CHECK:STDOUT:   %T.loc16.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc16.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc22_15.2: %I_where.type) {
+// CHECK:STDOUT:   %T.loc22_15.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc22_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc30.2: %I_where.type) {
-// CHECK:STDOUT:   %U.loc30.1: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc30.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc24_17.2: %I_where.type) {
+// CHECK:STDOUT:   %U.loc24_17.1: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc24_17.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc44.2: %type_where) {
-// CHECK:STDOUT:   %V.loc44.1: %type_where = symbolic_binding V, 0 [symbolic = %V.loc44.1 (constants.%V)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc26_18.2: %type_where) {
+// CHECK:STDOUT:   %V.loc26_18.1: %type_where = symbolic_binding V, 0 [symbolic = %V.loc26_18.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
-// CHECK:STDOUT:   %T.loc16.1 => constants.%T
+// CHECK:STDOUT:   %T.loc22_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %U.loc30.1 => constants.%U
+// CHECK:STDOUT:   %U.loc24_17.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %V.loc44.1 => constants.%V
+// CHECK:STDOUT:   %V.loc26_18.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,9 +69,9 @@ fn Main() {
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: %MakeImplicitEmptyTuple.type = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [concrete = constants.%MakeImplicitEmptyTuple]
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init %empty_tuple.type = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
-// CHECK:STDOUT:   %.loc17.1: type = splice_block %.loc17.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc17.3: type = converted %.loc17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc19_18.1: type = splice_block %.loc19_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc19_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc19_18.3: type = converted %.loc19_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op

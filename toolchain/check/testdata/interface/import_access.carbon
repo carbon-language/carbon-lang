@@ -188,10 +188,10 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc9
+// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc29
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc9: type = interface_decl @ForwardWithDef [concrete = constants.%ForwardWithDef.type] {} {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc12: type = interface_decl @ForwardWithDef [concrete = constants.%ForwardWithDef.type] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc29: type = interface_decl @ForwardWithDef [concrete = constants.%ForwardWithDef.type] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc31: type = interface_decl @ForwardWithDef [concrete = constants.%ForwardWithDef.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef {
@@ -225,7 +225,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def.type]
-// CHECK:STDOUT:   %Test.import_ref.faa = import_ref Test//def, loc9, unloaded
+// CHECK:STDOUT:   %Test.import_ref.faa = import_ref Test//def, loc23_23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -340,7 +340,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %Test.import_ref.947 = import_ref Test//forward_with_def, loc12, unloaded
+// CHECK:STDOUT:   %Test.import_ref.947 = import_ref Test//forward_with_def, loc31_26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -464,7 +464,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc115: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -509,7 +509,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc133: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -547,7 +547,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc18: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc145: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -569,10 +569,10 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc7
+// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc151
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Redecl.decl.loc7: type = interface_decl @Redecl [concrete = constants.%Redecl.type] {} {}
-// CHECK:STDOUT:   %Redecl.decl.loc11: type = interface_decl @Redecl [concrete = constants.%Redecl.type] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc151: type = interface_decl @Redecl [concrete = constants.%Redecl.type] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc153: type = interface_decl @Redecl [concrete = constants.%Redecl.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Redecl {

@@ -165,40 +165,40 @@ fn Use() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.396 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %reference.ref: ref %X = name_ref reference, file.%reference [concrete = file.%reference.var]
-// CHECK:STDOUT:   %Core.ref.loc43: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc44: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc47: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc48: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:   %.loc42.1: ref %MaybeUnformed.b49 = as_compatible %reference.ref [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %.loc42.2: ref %MaybeUnformed.b49 = converted %reference.ref, %.loc42.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.045 = addr_of %.loc42.2 [concrete = constants.%addr.25c]
-// CHECK:STDOUT:   %.loc37: type = splice_block %ptr.loc37 [concrete = constants.%ptr.045] {
-// CHECK:STDOUT:     %Core.ref.loc31: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc32: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc35: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc36: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:     %ptr.loc37: type = ptr_type %MaybeUnformed.loc36 [concrete = constants.%ptr.045]
+// CHECK:STDOUT:   %Core.ref.loc25_57: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc25_61: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc25_76: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc25_77: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %.loc25_54.1: ref %MaybeUnformed.b49 = as_compatible %reference.ref [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %.loc25_54.2: ref %MaybeUnformed.b49 = converted %reference.ref, %.loc25_54.1 [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %addr: %ptr.045 = addr_of %.loc25_54.2 [concrete = constants.%addr.25c]
+// CHECK:STDOUT:   %.loc25_38: type = splice_block %ptr.loc25 [concrete = constants.%ptr.045] {
+// CHECK:STDOUT:     %Core.ref.loc25_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc25_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc25_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc25_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:     %ptr.loc25: type = ptr_type %MaybeUnformed.loc25_37 [concrete = constants.%ptr.045]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %ptr.045 = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.396 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.2a9 = name_ref ptr, file.%ptr.loc14
-// CHECK:STDOUT:   %Core.ref.loc65: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc66: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc69: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc70: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:   %ptr.loc71: type = ptr_type %MaybeUnformed.loc70 [concrete = constants.%ptr.045]
-// CHECK:STDOUT:   %.loc64.1: %ptr.045 = as_compatible %ptr.ref
-// CHECK:STDOUT:   %.loc64.2: %ptr.045 = converted %ptr.ref, %.loc64.1
-// CHECK:STDOUT:   %.loc61: type = splice_block %ptr.loc61 [concrete = constants.%ptr.045] {
-// CHECK:STDOUT:     %Core.ref.loc55: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc56: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc59: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc60: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:     %ptr.loc61: type = ptr_type %MaybeUnformed.loc60 [concrete = constants.%ptr.045]
+// CHECK:STDOUT:   %ptr.ref: %ptr.2a9 = name_ref ptr, file.%ptr.loc20_5
+// CHECK:STDOUT:   %Core.ref.loc26_49: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc26_53: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc26_68: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc26_69: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %ptr.loc26_70: type = ptr_type %MaybeUnformed.loc26_69 [concrete = constants.%ptr.045]
+// CHECK:STDOUT:   %.loc26_46.1: %ptr.045 = as_compatible %ptr.ref
+// CHECK:STDOUT:   %.loc26_46.2: %ptr.045 = converted %ptr.ref, %.loc26_46.1
+// CHECK:STDOUT:   %.loc26_38: type = splice_block %ptr.loc26_38 [concrete = constants.%ptr.045] {
+// CHECK:STDOUT:     %Core.ref.loc26_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc26_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc26_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc26_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:     %ptr.loc26_38: type = ptr_type %MaybeUnformed.loc26_37 [concrete = constants.%ptr.045]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.045 = value_binding b, %.loc64.2
+// CHECK:STDOUT:   %b: %ptr.045 = value_binding b, %.loc26_46.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -246,35 +246,35 @@ fn Use() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %MaybeUnformed.b49 = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc42: ref %X = temporary_storage
-// CHECK:STDOUT:   %Init.call: init %X to %.loc42 = call %Init.ref()
-// CHECK:STDOUT:   %Core.ref.loc44: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc45: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc48: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc49: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:   %.loc43: %MaybeUnformed.b49 = converted %Init.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc49_46: ref %X = temporary_storage
+// CHECK:STDOUT:   %Init.call: init %X to %.loc49_46 = call %Init.ref()
+// CHECK:STDOUT:   %Core.ref.loc49_51: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc49_55: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc49_70: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc49_71: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %.loc49_48: %MaybeUnformed.b49 = converted %Init.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %i.var, <error>
-// CHECK:STDOUT:   %.loc38: type = splice_block %MaybeUnformed.loc38 [concrete = constants.%MaybeUnformed.b49] {
-// CHECK:STDOUT:     %Core.ref.loc33: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc34: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc37: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc38: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %.loc49_37: type = splice_block %MaybeUnformed.loc49_37 [concrete = constants.%MaybeUnformed.b49] {
+// CHECK:STDOUT:     %Core.ref.loc49_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc49_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc49_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc49_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %MaybeUnformed.b49 = ref_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.de9 = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
-// CHECK:STDOUT:   %Core.ref.loc64: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc65: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc68: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc69: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
-// CHECK:STDOUT:   %.loc63: %MaybeUnformed.b49 = converted %value.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc60: type = splice_block %MaybeUnformed.loc60 [concrete = constants.%MaybeUnformed.b49] {
-// CHECK:STDOUT:     %Core.ref.loc55: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc56: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc59: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc60: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %Core.ref.loc57_50: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc57_54: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc57_69: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc57_70: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
+// CHECK:STDOUT:   %.loc57_47: %MaybeUnformed.b49 = converted %value.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc57_37: type = splice_block %MaybeUnformed.loc57_37 [concrete = constants.%MaybeUnformed.b49] {
+// CHECK:STDOUT:     %Core.ref.loc57_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc57_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc57_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc57_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.b49]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.b49 = value_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op
@@ -308,37 +308,37 @@ fn Use() {
 // CHECK:STDOUT:     %v.patt: %pattern_type.05f = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %MaybeUnformed.b49 = name_ref value, file.%value
-// CHECK:STDOUT:   %X.ref.loc72: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc71.1: %X = as_compatible %value.ref
-// CHECK:STDOUT:   %.loc71.2: %X = converted %value.ref, %.loc71.1
-// CHECK:STDOUT:   %X.ref.loc67: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %v: %X = value_binding v, %.loc71.2
+// CHECK:STDOUT:   %X.ref.loc130_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc130_34.1: %X = as_compatible %value.ref
+// CHECK:STDOUT:   %.loc130_34.2: %X = converted %value.ref, %.loc130_34.1
+// CHECK:STDOUT:   %X.ref.loc130_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %v: %X = value_binding v, %.loc130_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.37f = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %reference.ref: ref %MaybeUnformed.b49 = name_ref reference, file.%reference [concrete = file.%reference.var]
-// CHECK:STDOUT:   %X.ref.loc86: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc85.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %.loc85.2: ref %X = converted %reference.ref, %.loc85.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.2a9 = addr_of %.loc85.2 [concrete = constants.%addr.6f7]
-// CHECK:STDOUT:   %.loc79: type = splice_block %ptr.loc79 [concrete = constants.%ptr.2a9] {
-// CHECK:STDOUT:     %X.ref.loc78: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc79: type = ptr_type %X.ref.loc78 [concrete = constants.%ptr.2a9]
+// CHECK:STDOUT:   %X.ref.loc131_44: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc131_41.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %.loc131_41.2: ref %X = converted %reference.ref, %.loc131_41.1 [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %addr: %ptr.2a9 = addr_of %.loc131_41.2 [concrete = constants.%addr.6f7]
+// CHECK:STDOUT:   %.loc131_18: type = splice_block %ptr.loc131 [concrete = constants.%ptr.2a9] {
+// CHECK:STDOUT:     %X.ref.loc131_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %ptr.loc131: type = ptr_type %X.ref.loc131_17 [concrete = constants.%ptr.2a9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %ptr.2a9 = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.37f = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.045 = name_ref ptr, file.%ptr.loc45
-// CHECK:STDOUT:   %X.ref.loc99: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %ptr.loc100: type = ptr_type %X.ref.loc99 [concrete = constants.%ptr.2a9]
-// CHECK:STDOUT:   %.loc98.1: %ptr.2a9 = as_compatible %ptr.ref
-// CHECK:STDOUT:   %.loc98.2: %ptr.2a9 = converted %ptr.ref, %.loc98.1
-// CHECK:STDOUT:   %.loc94: type = splice_block %ptr.loc94 [concrete = constants.%ptr.2a9] {
-// CHECK:STDOUT:     %X.ref.loc93: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc94: type = ptr_type %X.ref.loc93 [concrete = constants.%ptr.2a9]
+// CHECK:STDOUT:   %ptr.ref: %ptr.045 = name_ref ptr, file.%ptr.loc126_5
+// CHECK:STDOUT:   %X.ref.loc132_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %ptr.loc132_37: type = ptr_type %X.ref.loc132_36 [concrete = constants.%ptr.2a9]
+// CHECK:STDOUT:   %.loc132_33.1: %ptr.2a9 = as_compatible %ptr.ref
+// CHECK:STDOUT:   %.loc132_33.2: %ptr.2a9 = converted %ptr.ref, %.loc132_33.1
+// CHECK:STDOUT:   %.loc132_18: type = splice_block %ptr.loc132_18 [concrete = constants.%ptr.2a9] {
+// CHECK:STDOUT:     %X.ref.loc132_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %ptr.loc132_18: type = ptr_type %X.ref.loc132_17 [concrete = constants.%ptr.2a9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.2a9 = value_binding b, %.loc98.2
+// CHECK:STDOUT:   %b: %ptr.2a9 = value_binding b, %.loc132_33.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

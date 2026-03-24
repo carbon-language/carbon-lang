@@ -110,10 +110,10 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
-// CHECK:STDOUT:   %.loc26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc45_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26.2: %empty_tuple.type = converted %.loc26.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref(%.loc26.2) [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc45_9.2: %empty_tuple.type = converted %.loc45_9.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref(%.loc45_9.2) [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,9 +133,9 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15.1: type = splice_block %.loc15.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15.3: type = converted %.loc15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc56_9.1: type = splice_block %.loc56_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc56_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc56_9.3: type = converted %.loc56_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }

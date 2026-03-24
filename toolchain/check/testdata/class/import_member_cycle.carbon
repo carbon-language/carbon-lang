@@ -59,14 +59,14 @@ fn Run() {
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [concrete = constants.%Cycle]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
-// CHECK:STDOUT:   %.loc9: %Cycle.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc20: %Cycle.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .Cycle = <poisoned>
-// CHECK:STDOUT:   .a = %.loc9
+// CHECK:STDOUT:   .a = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -102,11 +102,11 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.4e3: <witness> = import_ref Main//a, loc13, loaded [concrete = constants.%complete_type.e68]
+// CHECK:STDOUT:   %Main.import_ref.4e3: <witness> = import_ref Main//a, loc21_1, loaded [concrete = constants.%complete_type.e68]
 // CHECK:STDOUT:   %Main.import_ref.fd1 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.465 = import_ref Main//a, loc9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.465 = import_ref Main//a, loc20_8, unloaded
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -138,13 +138,13 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr, (constants.%DefaultOrUnformed.impl_witness.446) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc19.1: %DefaultOrUnformed.type = converted constants.%ptr, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc19.1 [concrete = constants.%ptr]
-// CHECK:STDOUT:   %.loc19.2: type = converted %.loc19.1, %as_type [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc30_23.1: %DefaultOrUnformed.type = converted constants.%ptr, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc30_23.1 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc30_23.2: type = converted %.loc30_23.1, %as_type [concrete = constants.%ptr]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.1cb, @T.as.DefaultOrUnformed.impl.Op(constants.%ptr) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %ptr = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %a.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc18: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %.loc30_22: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }

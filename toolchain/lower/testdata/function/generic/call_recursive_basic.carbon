@@ -43,12 +43,12 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc26 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc15_51 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.C.Main:Copy.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc26, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +60,7 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !16
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc151.4.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc40_9.4.temp = alloca {}, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !15
@@ -69,18 +69,18 @@ fn M() {
 // CHECK:STDOUT:   store ptr %n.var, ptr %ptr_i32.var, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !17
 // CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !17
-// CHECK:STDOUT:   %.loc112 = load i32, ptr %n.var, align 4, !dbg !20
-// CHECK:STDOUT:   %F.call.loc115 = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %.loc112, i32 0), !dbg !21
-// CHECK:STDOUT:   %.loc119 = load double, ptr %m.var, align 8, !dbg !22
-// CHECK:STDOUT:   %F.call.loc122 = call double @_CF.Main.de5b400758c39a65(double %.loc119, i32 0), !dbg !23
-// CHECK:STDOUT:   %.loc126 = load ptr, ptr %ptr_i32.var, align 8, !dbg !24
-// CHECK:STDOUT:   %F.call.loc129 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc126, i32 0), !dbg !25
-// CHECK:STDOUT:   %.loc133 = load ptr, ptr %ptr_f64.var, align 8, !dbg !26
-// CHECK:STDOUT:   %F.call.loc136 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc133, i32 0), !dbg !27
+// CHECK:STDOUT:   %.loc34_5 = load i32, ptr %n.var, align 4, !dbg !20
+// CHECK:STDOUT:   %F.call.loc34 = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %.loc34_5, i32 0), !dbg !21
+// CHECK:STDOUT:   %.loc35_5 = load double, ptr %m.var, align 8, !dbg !22
+// CHECK:STDOUT:   %F.call.loc35 = call double @_CF.Main.de5b400758c39a65(double %.loc35_5, i32 0), !dbg !23
+// CHECK:STDOUT:   %.loc36_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !24
+// CHECK:STDOUT:   %F.call.loc36 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc36_5, i32 0), !dbg !25
+// CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !26
+// CHECK:STDOUT:   %F.call.loc37 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc37_5, i32 0), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc26, i64 0, i1 false), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc151.4.temp), !dbg !19
-// CHECK:STDOUT:   call void @_CF.Main.706e9f413f1bae3d(ptr %.loc151.4.temp, ptr %c.var, i32 0), !dbg !19
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.4.temp), !dbg !19
+// CHECK:STDOUT:   call void @_CF.Main.706e9f413f1bae3d(ptr %.loc40_9.4.temp, ptr %c.var, i32 0), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

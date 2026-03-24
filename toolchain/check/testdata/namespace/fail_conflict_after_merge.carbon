@@ -73,9 +73,9 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NS.type.a515f3.1: type = fn_type @NS.loc15 [concrete]
+// CHECK:STDOUT:   %NS.type.a515f3.1: type = fn_type @NS.loc39 [concrete]
 // CHECK:STDOUT:   %NS.ff8104.1: %NS.type.a515f3.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %NS.type.a515f3.2: type = fn_type @NS.loc23 [concrete]
+// CHECK:STDOUT:   %NS.type.a515f3.2: type = fn_type @NS.loc53 [concrete]
 // CHECK:STDOUT:   %NS.ff8104.2: %NS.type.a515f3.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,13 +95,13 @@ fn NS();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %NS.loc10: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc15: %NS.type.a515f3.1 = fn_decl @NS.loc15 [concrete = constants.%NS.ff8104.1] {} {}
-// CHECK:STDOUT:   %NS.loc18: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc23: %NS.type.a515f3.2 = fn_decl @NS.loc23 [concrete = constants.%NS.ff8104.2] {} {}
+// CHECK:STDOUT:   %NS.loc29: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %NS.decl.loc39: %NS.type.a515f3.1 = fn_decl @NS.loc39 [concrete = constants.%NS.ff8104.1] {} {}
+// CHECK:STDOUT:   %NS.loc43: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %NS.decl.loc53: %NS.type.a515f3.2 = fn_decl @NS.loc53 [concrete = constants.%NS.ff8104.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.loc15();
+// CHECK:STDOUT: fn @NS.loc39();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.loc23();
+// CHECK:STDOUT: fn @NS.loc53();
 // CHECK:STDOUT:

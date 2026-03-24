@@ -59,14 +59,14 @@ fn M() {
 // CHECK:STDOUT:   store ptr %n.var, ptr %ptr_i32.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !10
 // CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc147 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %F.call.loc150 = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %.loc147, i32 0), !dbg !12
-// CHECK:STDOUT:   %.loc154 = load double, ptr %m.var, align 8, !dbg !13
-// CHECK:STDOUT:   %F.call.loc157 = call double @_CF.Main.de5b400758c39a65(double %.loc154, i32 0), !dbg !14
-// CHECK:STDOUT:   %.loc161 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
-// CHECK:STDOUT:   %F.call.loc164 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc161, i32 0), !dbg !16
-// CHECK:STDOUT:   %.loc168 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
-// CHECK:STDOUT:   %F.call.loc171 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc168, i32 0), !dbg !18
+// CHECK:STDOUT:   %.loc38_5 = load i32, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   %F.call.loc38 = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %.loc38_5, i32 0), !dbg !12
+// CHECK:STDOUT:   %.loc39_5 = load double, ptr %m.var, align 8, !dbg !13
+// CHECK:STDOUT:   %F.call.loc39 = call double @_CF.Main.de5b400758c39a65(double %.loc39_5, i32 0), !dbg !14
+// CHECK:STDOUT:   %.loc40_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
+// CHECK:STDOUT:   %F.call.loc40 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc40_5, i32 0), !dbg !16
+// CHECK:STDOUT:   %.loc41_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
+// CHECK:STDOUT:   %F.call.loc41 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc41_5, i32 0), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

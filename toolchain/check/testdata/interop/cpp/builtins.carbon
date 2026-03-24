@@ -246,11 +246,11 @@ fn F() {
 // CHECK:STDOUT:     .double = @F.%f64.2
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.ae3.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc197, loaded [symbolic = @Core.IntLiteral.as.As.impl.ae3.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.ae3.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.ae3.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl.ae3 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.600: @Core.IntLiteral.as.As.impl.5fe.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.2b1) = import_ref Core//prelude/parts/uint, loc197, loaded [symbolic = @Core.IntLiteral.as.As.impl.5fe.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.979)]
+// CHECK:STDOUT:   %Core.import_ref.600: @Core.IntLiteral.as.As.impl.5fe.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.2b1) = import_ref Core//prelude/parts/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.5fe.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.979)]
 // CHECK:STDOUT:   %As.impl_witness_table.7eb = impl_witness_table (%Core.import_ref.600), @Core.IntLiteral.as.As.impl.5fe [concrete]
-// CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/parts/float, loc163, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
+// CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
 // CHECK:STDOUT:   %As.impl_witness_table.7c1 = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,194 +259,194 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_signed_char.patt: %pattern_type.e3f = value_binding_pattern cpp_signed_char [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %i8.loc21: type = type_literal constants.%i8 [concrete = constants.%i8]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.57e = impl_witness_access constants.%As.impl_witness.0bb, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bf2]
-// CHECK:STDOUT:   %bound_method.loc20.1: <bound method> = bound_method %int_1.loc19, %impl.elem0.loc20 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.c11]
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_8) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.d98]
-// CHECK:STDOUT:   %bound_method.loc20.2: <bound method> = bound_method %int_1.loc19, %specific_fn.loc20 [concrete = constants.%bound_method.1fe]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc20: init %i8 = call %bound_method.loc20.2(%int_1.loc19) [concrete = constants.%int_1.30e]
-// CHECK:STDOUT:   %.loc20.1: %i8 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc20 [concrete = constants.%int_1.30e]
-// CHECK:STDOUT:   %.loc20.2: %i8 = converted %int_1.loc19, %.loc20.1 [concrete = constants.%int_1.30e]
-// CHECK:STDOUT:   %.loc16: type = splice_block %signed_char.ref [concrete = constants.%i8] {
-// CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.57e = impl_witness_access constants.%As.impl_witness.0bb, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bf2]
+// CHECK:STDOUT:   %bound_method.loc21_45.1: <bound method> = bound_method %int_1.loc21, %impl.elem0.loc21 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.c11]
+// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_8) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.d98]
+// CHECK:STDOUT:   %bound_method.loc21_45.2: <bound method> = bound_method %int_1.loc21, %specific_fn.loc21 [concrete = constants.%bound_method.1fe]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc21: init %i8 = call %bound_method.loc21_45.2(%int_1.loc21) [concrete = constants.%int_1.30e]
+// CHECK:STDOUT:   %.loc21_45.1: %i8 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc21 [concrete = constants.%int_1.30e]
+// CHECK:STDOUT:   %.loc21_45.2: %i8 = converted %int_1.loc21, %.loc21_45.1 [concrete = constants.%int_1.30e]
+// CHECK:STDOUT:   %.loc21_28: type = splice_block %signed_char.ref [concrete = constants.%i8] {
+// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %signed_char.ref: type = name_ref signed_char, %i8.2 [concrete = constants.%i8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_signed_char: %i8 = value_binding cpp_signed_char, %.loc20.2
+// CHECK:STDOUT:   %cpp_signed_char: %i8 = value_binding cpp_signed_char, %.loc21_45.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_signed_char.patt: %pattern_type.e3f = value_binding_pattern carbon_signed_char [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_signed_char.ref: %i8 = name_ref cpp_signed_char, %cpp_signed_char
-// CHECK:STDOUT:   %i8.loc27: type = type_literal constants.%i8 [concrete = constants.%i8]
+// CHECK:STDOUT:   %i8.loc22: type = type_literal constants.%i8 [concrete = constants.%i8]
 // CHECK:STDOUT:   %carbon_signed_char: %i8 = value_binding carbon_signed_char, %cpp_signed_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_short.patt: %pattern_type.2f8 = value_binding_pattern cpp_short [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc38: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %i16.loc40: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %impl.elem0.loc39: %.70c = impl_witness_access constants.%As.impl_witness.b61, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.a42]
-// CHECK:STDOUT:   %bound_method.loc39.1: <bound method> = bound_method %int_1.loc38, %impl.elem0.loc39 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.896]
-// CHECK:STDOUT:   %specific_fn.loc39: <specific function> = specific_function %impl.elem0.loc39, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.00b]
-// CHECK:STDOUT:   %bound_method.loc39.2: <bound method> = bound_method %int_1.loc38, %specific_fn.loc39 [concrete = constants.%bound_method.4da]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc39: init %i16 = call %bound_method.loc39.2(%int_1.loc38) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc39.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc39 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc39.2: %i16 = converted %int_1.loc38, %.loc39.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc35: type = splice_block %short.ref [concrete = constants.%i16] {
-// CHECK:STDOUT:     %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %i16.loc24: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.70c = impl_witness_access constants.%As.impl_witness.b61, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.a42]
+// CHECK:STDOUT:   %bound_method.loc24_33.1: <bound method> = bound_method %int_1.loc24, %impl.elem0.loc24 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.896]
+// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.00b]
+// CHECK:STDOUT:   %bound_method.loc24_33.2: <bound method> = bound_method %int_1.loc24, %specific_fn.loc24 [concrete = constants.%bound_method.4da]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc24: init %i16 = call %bound_method.loc24_33.2(%int_1.loc24) [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc24_33.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc24 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc24_33.2: %i16 = converted %int_1.loc24, %.loc24_33.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc24_22: type = splice_block %short.ref [concrete = constants.%i16] {
+// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %short.ref: type = name_ref short, %i16.2 [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_short: %i16 = value_binding cpp_short, %.loc39.2
+// CHECK:STDOUT:   %cpp_short: %i16 = value_binding cpp_short, %.loc24_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_short.patt: %pattern_type.2f8 = value_binding_pattern carbon_short [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_short.ref: %i16 = name_ref cpp_short, %cpp_short
-// CHECK:STDOUT:   %i16.loc46: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %i16.loc25: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %carbon_short: %i16 = value_binding carbon_short, %cpp_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_int.patt: %pattern_type.7ce = value_binding_pattern cpp_int [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc57: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %i32.loc59: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc58: %.9ed = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
-// CHECK:STDOUT:   %bound_method.loc58.1: <bound method> = bound_method %int_1.loc57, %impl.elem0.loc58 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.bd3]
-// CHECK:STDOUT:   %specific_fn.loc58: <specific function> = specific_function %impl.elem0.loc58, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.fab]
-// CHECK:STDOUT:   %bound_method.loc58.2: <bound method> = bound_method %int_1.loc57, %specific_fn.loc58 [concrete = constants.%bound_method.290]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc58: init %i32 = call %bound_method.loc58.2(%int_1.loc57) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc58.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc58 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc58.2: %i32 = converted %int_1.loc57, %.loc58.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc54: type = splice_block %int.ref [concrete = constants.%i32] {
-// CHECK:STDOUT:     %Cpp.ref.loc53: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_1.loc27: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc27: %.9ed = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc27_29.1: <bound method> = bound_method %int_1.loc27, %impl.elem0.loc27 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.bd3]
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Core.IntLiteral.as.As.impl.Convert.1(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.fab]
+// CHECK:STDOUT:   %bound_method.loc27_29.2: <bound method> = bound_method %int_1.loc27, %specific_fn.loc27 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc27: init %i32 = call %bound_method.loc27_29.2(%int_1.loc27) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc27_29.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc27 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc27_29.2: %i32 = converted %int_1.loc27, %.loc27_29.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc27_20: type = splice_block %int.ref [concrete = constants.%i32] {
+// CHECK:STDOUT:     %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %int.ref: type = name_ref int, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_int: %i32 = value_binding cpp_int, %.loc58.2
+// CHECK:STDOUT:   %cpp_int: %i32 = value_binding cpp_int, %.loc27_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_int.patt: %pattern_type.7ce = value_binding_pattern carbon_int [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_int.ref: %i32 = name_ref cpp_int, %cpp_int
-// CHECK:STDOUT:   %i32.loc65: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %carbon_int: %i32 = value_binding carbon_int, %cpp_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_char.patt: %pattern_type.8f3 = value_binding_pattern cpp_unsigned_char [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc76: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %u8.loc78: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %impl.elem0.loc77: %.3d2 = impl_witness_access constants.%As.impl_witness.ce7, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.edb]
-// CHECK:STDOUT:   %bound_method.loc77.1: <bound method> = bound_method %int_1.loc76, %impl.elem0.loc77 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.f5f]
-// CHECK:STDOUT:   %specific_fn.loc77: <specific function> = specific_function %impl.elem0.loc77, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_8) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.130]
-// CHECK:STDOUT:   %bound_method.loc77.2: <bound method> = bound_method %int_1.loc76, %specific_fn.loc77 [concrete = constants.%bound_method.6b2]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc77: init %u8 = call %bound_method.loc77.2(%int_1.loc76) [concrete = constants.%int_1.e80]
-// CHECK:STDOUT:   %.loc77.1: %u8 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc77 [concrete = constants.%int_1.e80]
-// CHECK:STDOUT:   %.loc77.2: %u8 = converted %int_1.loc76, %.loc77.1 [concrete = constants.%int_1.e80]
-// CHECK:STDOUT:   %.loc73: type = splice_block %unsigned_char.ref [concrete = constants.%u8] {
-// CHECK:STDOUT:     %Cpp.ref.loc72: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_1.loc30: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %u8.loc30: type = type_literal constants.%u8 [concrete = constants.%u8]
+// CHECK:STDOUT:   %impl.elem0.loc30: %.3d2 = impl_witness_access constants.%As.impl_witness.ce7, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.edb]
+// CHECK:STDOUT:   %bound_method.loc30_49.1: <bound method> = bound_method %int_1.loc30, %impl.elem0.loc30 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.f5f]
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_8) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.130]
+// CHECK:STDOUT:   %bound_method.loc30_49.2: <bound method> = bound_method %int_1.loc30, %specific_fn.loc30 [concrete = constants.%bound_method.6b2]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc30: init %u8 = call %bound_method.loc30_49.2(%int_1.loc30) [concrete = constants.%int_1.e80]
+// CHECK:STDOUT:   %.loc30_49.1: %u8 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc30 [concrete = constants.%int_1.e80]
+// CHECK:STDOUT:   %.loc30_49.2: %u8 = converted %int_1.loc30, %.loc30_49.1 [concrete = constants.%int_1.e80]
+// CHECK:STDOUT:   %.loc30_30: type = splice_block %unsigned_char.ref [concrete = constants.%u8] {
+// CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_char.ref: type = name_ref unsigned_char, %u8.2 [concrete = constants.%u8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = value_binding cpp_unsigned_char, %.loc77.2
+// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = value_binding cpp_unsigned_char, %.loc30_49.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_char.patt: %pattern_type.8f3 = value_binding_pattern carbon_unsigned_char [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_char.ref: %u8 = name_ref cpp_unsigned_char, %cpp_unsigned_char
-// CHECK:STDOUT:   %u8.loc84: type = type_literal constants.%u8 [concrete = constants.%u8]
+// CHECK:STDOUT:   %u8.loc31: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:   %carbon_unsigned_char: %u8 = value_binding carbon_unsigned_char, %cpp_unsigned_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_short.patt: %pattern_type.9db = value_binding_pattern cpp_unsigned_short [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc95: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %u16.loc97: type = type_literal constants.%u16 [concrete = constants.%u16]
-// CHECK:STDOUT:   %impl.elem0.loc96: %.f78 = impl_witness_access constants.%As.impl_witness.e55, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.dab]
-// CHECK:STDOUT:   %bound_method.loc96.1: <bound method> = bound_method %int_1.loc95, %impl.elem0.loc96 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.e01]
-// CHECK:STDOUT:   %specific_fn.loc96: <specific function> = specific_function %impl.elem0.loc96, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.b56]
-// CHECK:STDOUT:   %bound_method.loc96.2: <bound method> = bound_method %int_1.loc95, %specific_fn.loc96 [concrete = constants.%bound_method.6f0]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc96: init %u16 = call %bound_method.loc96.2(%int_1.loc95) [concrete = constants.%int_1.3e8]
-// CHECK:STDOUT:   %.loc96.1: %u16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc96 [concrete = constants.%int_1.3e8]
-// CHECK:STDOUT:   %.loc96.2: %u16 = converted %int_1.loc95, %.loc96.1 [concrete = constants.%int_1.3e8]
-// CHECK:STDOUT:   %.loc92: type = splice_block %unsigned_short.ref [concrete = constants.%u16] {
-// CHECK:STDOUT:     %Cpp.ref.loc91: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %u16.loc33: type = type_literal constants.%u16 [concrete = constants.%u16]
+// CHECK:STDOUT:   %impl.elem0.loc33: %.f78 = impl_witness_access constants.%As.impl_witness.e55, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.dab]
+// CHECK:STDOUT:   %bound_method.loc33_51.1: <bound method> = bound_method %int_1.loc33, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.e01]
+// CHECK:STDOUT:   %specific_fn.loc33: <specific function> = specific_function %impl.elem0.loc33, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.b56]
+// CHECK:STDOUT:   %bound_method.loc33_51.2: <bound method> = bound_method %int_1.loc33, %specific_fn.loc33 [concrete = constants.%bound_method.6f0]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc33: init %u16 = call %bound_method.loc33_51.2(%int_1.loc33) [concrete = constants.%int_1.3e8]
+// CHECK:STDOUT:   %.loc33_51.1: %u16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc33 [concrete = constants.%int_1.3e8]
+// CHECK:STDOUT:   %.loc33_51.2: %u16 = converted %int_1.loc33, %.loc33_51.1 [concrete = constants.%int_1.3e8]
+// CHECK:STDOUT:   %.loc33_31: type = splice_block %unsigned_short.ref [concrete = constants.%u16] {
+// CHECK:STDOUT:     %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_short.ref: type = name_ref unsigned_short, %u16.2 [concrete = constants.%u16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = value_binding cpp_unsigned_short, %.loc96.2
+// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = value_binding cpp_unsigned_short, %.loc33_51.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_short.patt: %pattern_type.9db = value_binding_pattern carbon_unsigned_short [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_short.ref: %u16 = name_ref cpp_unsigned_short, %cpp_unsigned_short
-// CHECK:STDOUT:   %u16.loc103: type = type_literal constants.%u16 [concrete = constants.%u16]
+// CHECK:STDOUT:   %u16.loc34: type = type_literal constants.%u16 [concrete = constants.%u16]
 // CHECK:STDOUT:   %carbon_unsigned_short: %u16 = value_binding carbon_unsigned_short, %cpp_unsigned_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_int.patt: %pattern_type.4a9 = value_binding_pattern cpp_unsigned_int [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc114: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %u32.loc116: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %impl.elem0.loc115: %.1a4 = impl_witness_access constants.%As.impl_witness.e1d, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bbd]
-// CHECK:STDOUT:   %bound_method.loc115.1: <bound method> = bound_method %int_1.loc114, %impl.elem0.loc115 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.a65]
-// CHECK:STDOUT:   %specific_fn.loc115: <specific function> = specific_function %impl.elem0.loc115, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.f97]
-// CHECK:STDOUT:   %bound_method.loc115.2: <bound method> = bound_method %int_1.loc114, %specific_fn.loc115 [concrete = constants.%bound_method.f17]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc115: init %u32 = call %bound_method.loc115.2(%int_1.loc114) [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc115.1: %u32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc115 [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc115.2: %u32 = converted %int_1.loc114, %.loc115.1 [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc111: type = splice_block %unsigned_int.ref [concrete = constants.%u32] {
-// CHECK:STDOUT:     %Cpp.ref.loc110: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %u32.loc36: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:   %impl.elem0.loc36: %.1a4 = impl_witness_access constants.%As.impl_witness.e1d, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bbd]
+// CHECK:STDOUT:   %bound_method.loc36_47.1: <bound method> = bound_method %int_1.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound.a65]
+// CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Core.IntLiteral.as.As.impl.Convert.2(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn.f97]
+// CHECK:STDOUT:   %bound_method.loc36_47.2: <bound method> = bound_method %int_1.loc36, %specific_fn.loc36 [concrete = constants.%bound_method.f17]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc36: init %u32 = call %bound_method.loc36_47.2(%int_1.loc36) [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %.loc36_47.1: %u32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc36 [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %.loc36_47.2: %u32 = converted %int_1.loc36, %.loc36_47.1 [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %.loc36_29: type = splice_block %unsigned_int.ref [concrete = constants.%u32] {
+// CHECK:STDOUT:     %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_int.ref: type = name_ref unsigned_int, %u32.2 [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = value_binding cpp_unsigned_int, %.loc115.2
+// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = value_binding cpp_unsigned_int, %.loc36_47.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_int.patt: %pattern_type.4a9 = value_binding_pattern carbon_unsigned_int [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_int.ref: %u32 = name_ref cpp_unsigned_int, %cpp_unsigned_int
-// CHECK:STDOUT:   %u32.loc122: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:   %u32.loc37: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %carbon_unsigned_int: %u32 = value_binding carbon_unsigned_int, %cpp_unsigned_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_float.patt: %pattern_type.201 = value_binding_pattern cpp_float [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %float.loc133: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.1]
-// CHECK:STDOUT:   %f32.loc135: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
-// CHECK:STDOUT:   %impl.elem0.loc134: %.49e = impl_witness_access constants.%As.impl_witness.748, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.683]
-// CHECK:STDOUT:   %bound_method.loc134.1: <bound method> = bound_method %float.loc133, %impl.elem0.loc134 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.04c]
-// CHECK:STDOUT:   %specific_fn.loc134: <specific function> = specific_function %impl.elem0.loc134, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a]
-// CHECK:STDOUT:   %bound_method.loc134.2: <bound method> = bound_method %float.loc133, %specific_fn.loc134 [concrete = constants.%bound_method.4ec]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc134: init %f32.97e = call %bound_method.loc134.2(%float.loc133) [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc134.1: %f32.97e = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc134 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc134.2: %f32.97e = converted %float.loc133, %.loc134.1 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc130: type = splice_block %float.ref [concrete = constants.%f32.97e] {
-// CHECK:STDOUT:     %Cpp.ref.loc129: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %float.loc39: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.1]
+// CHECK:STDOUT:   %f32.loc39: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   %impl.elem0.loc39: %.49e = impl_witness_access constants.%As.impl_witness.748, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.683]
+// CHECK:STDOUT:   %bound_method.loc39_35.1: <bound method> = bound_method %float.loc39, %impl.elem0.loc39 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.04c]
+// CHECK:STDOUT:   %specific_fn.loc39: <specific function> = specific_function %impl.elem0.loc39, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a]
+// CHECK:STDOUT:   %bound_method.loc39_35.2: <bound method> = bound_method %float.loc39, %specific_fn.loc39 [concrete = constants.%bound_method.4ec]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc39: init %f32.97e = call %bound_method.loc39_35.2(%float.loc39) [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc39_35.1: %f32.97e = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc39 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc39_35.2: %f32.97e = converted %float.loc39, %.loc39_35.1 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc39_22: type = splice_block %float.ref [concrete = constants.%f32.97e] {
+// CHECK:STDOUT:     %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %float.ref: type = name_ref float, %f32.2 [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_float: %f32.97e = value_binding cpp_float, %.loc134.2
+// CHECK:STDOUT:   %cpp_float: %f32.97e = value_binding cpp_float, %.loc39_35.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_float.patt: %pattern_type.201 = value_binding_pattern carbon_float [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_float.ref: %f32.97e = name_ref cpp_float, %cpp_float
-// CHECK:STDOUT:   %f32.loc141: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   %f32.loc40: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   %carbon_float: %f32.97e = value_binding carbon_float, %cpp_float.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_double.patt: %pattern_type.0ae = value_binding_pattern cpp_double [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %float.loc152: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.2]
-// CHECK:STDOUT:   %f64.loc154: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
-// CHECK:STDOUT:   %impl.elem0.loc153: %.293 = impl_witness_access constants.%As.impl_witness.187, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.4b9]
-// CHECK:STDOUT:   %bound_method.loc153.1: <bound method> = bound_method %float.loc152, %impl.elem0.loc153 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.9c5]
-// CHECK:STDOUT:   %specific_fn.loc153: <specific function> = specific_function %impl.elem0.loc153, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e]
-// CHECK:STDOUT:   %bound_method.loc153.2: <bound method> = bound_method %float.loc152, %specific_fn.loc153 [concrete = constants.%bound_method.18b]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc153: init %f64.d77 = call %bound_method.loc153.2(%float.loc152) [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc153.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc153 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc153.2: %f64.d77 = converted %float.loc152, %.loc153.1 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc149: type = splice_block %double.ref [concrete = constants.%f64.d77] {
-// CHECK:STDOUT:     %Cpp.ref.loc148: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %float.loc42: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.2]
+// CHECK:STDOUT:   %f64.loc42: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %impl.elem0.loc42: %.293 = impl_witness_access constants.%As.impl_witness.187, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.4b9]
+// CHECK:STDOUT:   %bound_method.loc42_37.1: <bound method> = bound_method %float.loc42, %impl.elem0.loc42 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.9c5]
+// CHECK:STDOUT:   %specific_fn.loc42: <specific function> = specific_function %impl.elem0.loc42, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e]
+// CHECK:STDOUT:   %bound_method.loc42_37.2: <bound method> = bound_method %float.loc42, %specific_fn.loc42 [concrete = constants.%bound_method.18b]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc42: init %f64.d77 = call %bound_method.loc42_37.2(%float.loc42) [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc42_37.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc42 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc42_37.2: %f64.d77 = converted %float.loc42, %.loc42_37.1 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc42_23: type = splice_block %double.ref [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:     %Cpp.ref.loc42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %double.ref: type = name_ref double, %f64.2 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_double: %f64.d77 = value_binding cpp_double, %.loc153.2
+// CHECK:STDOUT:   %cpp_double: %f64.d77 = value_binding cpp_double, %.loc42_37.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_double.patt: %pattern_type.0ae = value_binding_pattern carbon_double [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_double.ref: %f64.d77 = name_ref cpp_double, %cpp_double
-// CHECK:STDOUT:   %f64.loc160: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %f64.loc43: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %carbon_double: %f64.d77 = value_binding carbon_double, %cpp_double.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -475,7 +475,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/parts/float, loc163, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
+// CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -485,21 +485,21 @@ fn F() {
 // CHECK:STDOUT:     %cpp_long_double.patt: <error> = value_binding_pattern cpp_long_double [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
-// CHECK:STDOUT:   %f64.loc21: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %f64.loc62: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %impl.elem0: %.293 = impl_witness_access constants.%As.impl_witness.187, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.4b9]
-// CHECK:STDOUT:   %bound_method.loc20.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc62_47.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc20.2(%float) [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc20.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc20.2: %f64.d77 = converted %float, %.loc20.1 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %bound_method.loc62_47.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc62_47.2(%float) [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc62_47.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc62_47.2: %f64.d77 = converted %float, %.loc62_47.1 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %cpp_long_double: <error> = value_binding cpp_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_double.patt: %pattern_type.0ae = value_binding_pattern carbon_long_double [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long_double.ref: <error> = name_ref cpp_long_double, %cpp_long_double [concrete = <error>]
-// CHECK:STDOUT:   %f64.loc27: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %f64.loc63: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %carbon_long_double: %f64.d77 = value_binding carbon_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -533,7 +533,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int.decl: type = class_decl @unsigned_int [concrete = constants.%unsigned_int] {} {}
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.cpp_overload_set.value: %unsigned_int.foo.cpp_overload_set.type = cpp_overload_set_value @unsigned_int.foo.cpp_overload_set [concrete = constants.%unsigned_int.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %unsigned_int.foo.decl: %unsigned_int.foo.type = fn_decl @unsigned_int.foo [concrete = constants.%unsigned_int.foo] {
@@ -556,29 +556,29 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int.var: ref %unsigned_int = var %unsigned_int.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%unsigned_int, (constants.%DefaultOrUnformed.impl_witness.4c4) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc20.1: %DefaultOrUnformed.type = converted constants.%unsigned_int, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc20.1 [concrete = constants.%unsigned_int]
-// CHECK:STDOUT:   %.loc20.2: type = converted %.loc20.1, %as_type [concrete = constants.%unsigned_int]
+// CHECK:STDOUT:   %.loc109_38.1: %DefaultOrUnformed.type = converted constants.%unsigned_int, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc109_38.1 [concrete = constants.%unsigned_int]
+// CHECK:STDOUT:   %.loc109_38.2: type = converted %.loc109_38.1, %as_type [concrete = constants.%unsigned_int]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc14: ref %unsigned_int = splice_block %unsigned_int.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %unsigned_int to %.loc14 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc109_3: ref %unsigned_int = splice_block %unsigned_int.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %unsigned_int to %.loc109_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %unsigned_int.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc18: type = splice_block %unsigned_int.ref.loc18 [concrete = constants.%unsigned_int] {
+// CHECK:STDOUT:   %.loc109_25: type = splice_block %unsigned_int.ref.loc109 [concrete = constants.%unsigned_int] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %unsigned_int.ref.loc18: type = name_ref unsigned_int, imports.%unsigned_int.decl [concrete = constants.%unsigned_int]
+// CHECK:STDOUT:     %unsigned_int.ref.loc109: type = name_ref unsigned_int, imports.%unsigned_int.decl [concrete = constants.%unsigned_int]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int: ref %unsigned_int = ref_binding unsigned_int, %unsigned_int.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.4a9 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %unsigned_int.ref.loc27: ref %unsigned_int = name_ref unsigned_int, %unsigned_int
+// CHECK:STDOUT:   %unsigned_int.ref.loc110: ref %unsigned_int = name_ref unsigned_int, %unsigned_int
 // CHECK:STDOUT:   %foo.ref: %unsigned_int.foo.cpp_overload_set.type = name_ref foo, imports.%unsigned_int.foo.cpp_overload_set.value [concrete = constants.%unsigned_int.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %unsigned_int.ref.loc27, %foo.ref
-// CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%unsigned_int.ref.loc27)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %unsigned_int.ref.loc110, %foo.ref
+// CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%unsigned_int.ref.loc110)
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %.loc31.1: %u32 = value_of_initializer %unsigned_int.foo.call
-// CHECK:STDOUT:   %.loc31.2: %u32 = converted %unsigned_int.foo.call, %.loc31.1
-// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc31.2
+// CHECK:STDOUT:   %.loc110_40.1: %u32 = value_of_initializer %unsigned_int.foo.call
+// CHECK:STDOUT:   %.loc110_40.2: %u32 = converted %unsigned_int.foo.call, %.loc110_40.1
+// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc110_40.2
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>

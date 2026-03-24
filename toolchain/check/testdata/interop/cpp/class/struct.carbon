@@ -52,7 +52,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %.loc28: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]

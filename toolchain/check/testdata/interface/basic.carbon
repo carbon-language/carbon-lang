@@ -37,11 +37,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
-// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc7
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc7: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc18: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc20: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

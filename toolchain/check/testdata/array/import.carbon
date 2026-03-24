@@ -84,26 +84,26 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%n.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc18.1: ref %array_type = temporary_storage
-// CHECK:STDOUT:   %F.call: init %array_type to %.loc18.1 = call %F.ref()
+// CHECK:STDOUT:   %.loc25_12.1: ref %array_type = temporary_storage
+// CHECK:STDOUT:   %F.call: init %array_type to %.loc25_12.1 = call %F.ref()
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc18.2: ref %array_type = temporary %.loc18.1, %F.call
-// CHECK:STDOUT:   %.loc21.1: ref %i32 = array_index %.loc18.2, %n.ref
-// CHECK:STDOUT:   %.loc21.2: %i32 = acquire_value %.loc21.1
+// CHECK:STDOUT:   %.loc25_12.2: ref %array_type = temporary %.loc25_12.1, %F.call
+// CHECK:STDOUT:   %.loc25_15.1: ref %i32 = array_index %.loc25_12.2, %n.ref
+// CHECK:STDOUT:   %.loc25_15.2: %i32 = acquire_value %.loc25_15.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc21.1: <bound method> = bound_method %.loc21.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc25_15.1: <bound method> = bound_method %.loc25_15.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc21.2: <bound method> = bound_method %.loc21.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21.2(%.loc21.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc18.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc18.2)
+// CHECK:STDOUT:   %bound_method.loc25_15.2: <bound method> = bound_method %.loc25_15.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_15.2(%.loc25_15.2)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc25_12.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc25_12.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

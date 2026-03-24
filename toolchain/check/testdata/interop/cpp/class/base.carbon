@@ -505,7 +505,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc217, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -514,17 +514,17 @@ class V {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.5c86 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %d.patt: %pattern_type.5c86 = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.72a = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.72a = return_slot_pattern %return.param_patt, %ptr.loc23 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.72a = return_slot_pattern %return.param_patt, %ptr.loc25_43 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc25_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %ptr.loc23: type = ptr_type %Base.ref [concrete = constants.%ptr.fb2]
-// CHECK:STDOUT:     %.loc23: Core.Form = init_form %ptr.loc23 [concrete = constants.%.c2a]
+// CHECK:STDOUT:     %ptr.loc25_43: type = ptr_type %Base.ref [concrete = constants.%ptr.fb2]
+// CHECK:STDOUT:     %.loc25_43: Core.Form = init_form %ptr.loc25_43 [concrete = constants.%.c2a]
 // CHECK:STDOUT:     %d.param: %ptr.ddb = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %ptr.loc17 [concrete = constants.%ptr.ddb] {
-// CHECK:STDOUT:       %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %.loc25_29: type = splice_block %ptr.loc25_29 [concrete = constants.%ptr.ddb] {
+// CHECK:STDOUT:       %Cpp.ref.loc25_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:       %ptr.loc17: type = ptr_type %Derived.ref [concrete = constants.%ptr.ddb]
+// CHECK:STDOUT:       %ptr.loc25_29: type = ptr_type %Derived.ref [concrete = constants.%ptr.ddb]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %d: %ptr.ddb = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %ptr.fb2 = out_param call_param1
@@ -535,7 +535,7 @@ class V {
 // CHECK:STDOUT:     %d.patt: %pattern_type.5de = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
-// CHECK:STDOUT:     %.loc45: type = splice_block %Derived.ref [concrete = constants.%Derived] {
+// CHECK:STDOUT:     %.loc33: type = splice_block %Derived.ref [concrete = constants.%Derived] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     }
@@ -546,15 +546,15 @@ class V {
 // CHECK:STDOUT: fn @ConvertPtr(%d.param: %ptr.ddb) -> out %return.param: %ptr.fb2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %ptr.ddb = name_ref d, %d
-// CHECK:STDOUT:   %.loc27.1: ref %Derived = deref %d.ref
-// CHECK:STDOUT:   %.loc27.2: ref %Base = class_element_access %.loc27.1, element0
-// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc27.2
-// CHECK:STDOUT:   %.loc27.3: %ptr.fb2 = converted %d.ref, %addr
+// CHECK:STDOUT:   %.loc26_11.1: ref %Derived = deref %d.ref
+// CHECK:STDOUT:   %.loc26_11.2: ref %Base = class_element_access %.loc26_11.1, element0
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc26_11.2
+// CHECK:STDOUT:   %.loc26_11.3: %ptr.fb2 = converted %d.ref, %addr
 // CHECK:STDOUT:   %impl.elem0: %.107 = impl_witness_access constants.%Copy.impl_witness.33f, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dae]
-// CHECK:STDOUT:   %bound_method.loc27.1: <bound method> = bound_method %.loc27.3, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc26_11.1: <bound method> = bound_method %.loc26_11.3, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Base) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc27.2: <bound method> = bound_method %.loc27.3, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc27.2(%.loc27.3)
+// CHECK:STDOUT:   %bound_method.loc26_11.2: <bound method> = bound_method %.loc26_11.3, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc26_11.2(%.loc26_11.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -562,10 +562,10 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %AcceptVal.ref: %AcceptVal.type = name_ref AcceptVal, file.%AcceptVal.decl [concrete = constants.%AcceptVal]
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %.loc51.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc51.2: ref %Base = converted %d.ref, %.loc51.1
-// CHECK:STDOUT:   %.loc51.3: %Base = acquire_value %.loc51.2
-// CHECK:STDOUT:   %AcceptVal.call: init %empty_tuple.type = call %AcceptVal.ref(%.loc51.3)
+// CHECK:STDOUT:   %.loc34_13.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc34_13.2: ref %Base = converted %d.ref, %.loc34_13.1
+// CHECK:STDOUT:   %.loc34_13.3: %Base = acquire_value %.loc34_13.2
+// CHECK:STDOUT:   %AcceptVal.call: init %empty_tuple.type = call %AcceptVal.ref(%.loc34_13.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -604,16 +604,16 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc58: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %base_fn.ref.loc17: %Base.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Base.base_fn.cpp_overload_set.value [concrete = constants.%Base.base_fn.cpp_overload_set.value]
-// CHECK:STDOUT:   %Base.base_fn.call.loc20: init %empty_tuple.type = call imports.%Base.base_fn.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Derived.ref.loc23: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %base_fn.ref.loc25: %Derived.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Derived.base_fn.cpp_overload_set.value [concrete = constants.%Derived.base_fn.cpp_overload_set.value]
-// CHECK:STDOUT:   %Base.base_fn.call.loc28: init %empty_tuple.type = call imports.%Base.base_fn.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Derived.ref.loc31: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %base_fn.ref.loc58: %Base.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Base.base_fn.cpp_overload_set.value [concrete = constants.%Base.base_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.base_fn.call.loc58: init %empty_tuple.type = call imports.%Base.base_fn.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc59: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc59: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %base_fn.ref.loc59: %Derived.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Derived.base_fn.cpp_overload_set.value [concrete = constants.%Derived.base_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.base_fn.call.loc59: init %empty_tuple.type = call imports.%Base.base_fn.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc60: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc60: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %derived_fn.ref: %Derived.derived_fn.cpp_overload_set.type = name_ref derived_fn, imports.%Derived.derived_fn.cpp_overload_set.value [concrete = constants.%Derived.derived_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Derived.derived_fn.call: init %empty_tuple.type = call imports.%Derived.derived_fn.decl()
 // CHECK:STDOUT:   <elided>
@@ -648,7 +648,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -656,33 +656,33 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.1 [concrete = @Base.%.1]
-// CHECK:STDOUT:   %.loc23.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc23.2: ref %Base = converted %d.ref, %.loc23.1
-// CHECK:STDOUT:   %.loc23.3: ref %i32 = class_element_access %.loc23.2, element0
-// CHECK:STDOUT:   %.loc23.4: %i32 = acquire_value %.loc23.3
+// CHECK:STDOUT:   %.loc83_11.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc83_11.2: ref %Base = converted %d.ref, %.loc83_11.1
+// CHECK:STDOUT:   %.loc83_11.3: ref %i32 = class_element_access %.loc83_11.2, element0
+// CHECK:STDOUT:   %.loc83_11.4: %i32 = acquire_value %.loc83_11.3
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc23.1: <bound method> = bound_method %.loc23.4, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc83_11.1: <bound method> = bound_method %.loc83_11.4, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23.2: <bound method> = bound_method %.loc23.4, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23.2(%.loc23.4)
+// CHECK:STDOUT:   %bound_method.loc83_11.2: <bound method> = bound_method %.loc83_11.4, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc83_11.2(%.loc83_11.4)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessQualified(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %Cpp.ref.loc43: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc89: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.2 [concrete = @Base.%.2]
-// CHECK:STDOUT:   %.loc41.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc41.2: ref %Base = converted %d.ref, %.loc41.1
-// CHECK:STDOUT:   %.loc41.3: ref %i32 = class_element_access %.loc41.2, element1
-// CHECK:STDOUT:   %.loc41.4: %i32 = acquire_value %.loc41.3
+// CHECK:STDOUT:   %.loc89_11.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc89_11.2: ref %Base = converted %d.ref, %.loc89_11.1
+// CHECK:STDOUT:   %.loc89_11.3: ref %i32 = class_element_access %.loc89_11.2, element1
+// CHECK:STDOUT:   %.loc89_11.4: %i32 = acquire_value %.loc89_11.3
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc41.1: <bound method> = bound_method %.loc41.4, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc89_11.1: <bound method> = bound_method %.loc89_11.4, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc41.2: <bound method> = bound_method %.loc41.4, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc41.2(%.loc41.4)
+// CHECK:STDOUT:   %bound_method.loc89_11.2: <bound method> = bound_method %.loc89_11.4, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc89_11.2(%.loc89_11.4)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -729,44 +729,44 @@ class V {
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %f.ref: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %f.ref
-// CHECK:STDOUT:   %.loc19.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc19.2: ref %Base = converted %d.ref, %.loc19.1
-// CHECK:STDOUT:   %.loc19.3: %Base = acquire_value %.loc19.2
-// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc19.3)
+// CHECK:STDOUT:   %.loc112_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc112_3.2: ref %Base = converted %d.ref, %.loc112_3.1
+// CHECK:STDOUT:   %.loc112_3.3: %Base = acquire_value %.loc112_3.2
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc112_3.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallQualified(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc118: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %g.ref: %Base.g.cpp_overload_set.type = name_ref g, imports.%Base.g.cpp_overload_set.value [concrete = constants.%Base.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %g.ref
-// CHECK:STDOUT:   %.loc36.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc36.2: ref %Base = converted %d.ref, %.loc36.1
-// CHECK:STDOUT:   %.loc36.3: %Base = acquire_value %.loc36.2
-// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc36.3)
+// CHECK:STDOUT:   %.loc118_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc118_3.2: ref %Base = converted %d.ref, %.loc118_3.1
+// CHECK:STDOUT:   %.loc118_3.3: %Base = acquire_value %.loc118_3.2
+// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc118_3.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallBaseQualifiedByDerived(%d.param: %Derived, %b.param: %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %Cpp.ref.loc68: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Derived.ref.loc69: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %f.ref.loc71: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc66: <bound method> = bound_method %d.ref, %f.ref.loc71
-// CHECK:STDOUT:   %.loc65.1: ref %Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc65.2: ref %Base = converted %d.ref, %.loc65.1
-// CHECK:STDOUT:   %.loc65.3: %Base = acquire_value %.loc65.2
-// CHECK:STDOUT:   %f__carbon_thunk.call.loc75: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc65.3)
+// CHECK:STDOUT:   %Cpp.ref.loc127: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc127: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %f.ref.loc127: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc127: <bound method> = bound_method %d.ref, %f.ref.loc127
+// CHECK:STDOUT:   %.loc127_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc127_3.2: ref %Base = converted %d.ref, %.loc127_3.1
+// CHECK:STDOUT:   %.loc127_3.3: %Base = acquire_value %.loc127_3.2
+// CHECK:STDOUT:   %f__carbon_thunk.call.loc127: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc127_3.3)
 // CHECK:STDOUT:   %b.ref: %Base = name_ref b, %b
-// CHECK:STDOUT:   %Cpp.ref.loc80: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Derived.ref.loc81: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %f.ref.loc83: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc78: <bound method> = bound_method %b.ref, %f.ref.loc83
-// CHECK:STDOUT:   %f__carbon_thunk.call.loc87: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%b.ref)
+// CHECK:STDOUT:   %Cpp.ref.loc128: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc128: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %f.ref.loc128: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc128: <bound method> = bound_method %b.ref, %f.ref.loc128
+// CHECK:STDOUT:   %f__carbon_thunk.call.loc128: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

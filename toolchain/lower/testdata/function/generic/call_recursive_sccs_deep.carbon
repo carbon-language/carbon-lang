@@ -102,14 +102,14 @@ fn M() {
 // CHECK:STDOUT:   store ptr %n.var, ptr %ptr_i32.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !10
 // CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc450 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %A.call.loc453 = call i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %.loc450, i32 0), !dbg !12
-// CHECK:STDOUT:   %.loc457 = load double, ptr %m.var, align 8, !dbg !13
-// CHECK:STDOUT:   %A.call.loc460 = call double @_CA.Main.de5b400758c39a65(double %.loc457, i32 0), !dbg !14
-// CHECK:STDOUT:   %.loc464 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
-// CHECK:STDOUT:   %A.call.loc467 = call ptr @_CA.Main.779b9c0f3b54a7f8(ptr %.loc464, i32 0), !dbg !16
-// CHECK:STDOUT:   %.loc471 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
-// CHECK:STDOUT:   %A.call.loc474 = call ptr @_CA.Main.779b9c0f3b54a7f8(ptr %.loc471, i32 0), !dbg !18
+// CHECK:STDOUT:   %.loc79_5 = load i32, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   %A.call.loc79 = call i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %.loc79_5, i32 0), !dbg !12
+// CHECK:STDOUT:   %.loc80_5 = load double, ptr %m.var, align 8, !dbg !13
+// CHECK:STDOUT:   %A.call.loc80 = call double @_CA.Main.de5b400758c39a65(double %.loc80_5, i32 0), !dbg !14
+// CHECK:STDOUT:   %.loc81_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
+// CHECK:STDOUT:   %A.call.loc81 = call ptr @_CA.Main.779b9c0f3b54a7f8(ptr %.loc81_5, i32 0), !dbg !16
+// CHECK:STDOUT:   %.loc82_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
+// CHECK:STDOUT:   %A.call.loc82 = call ptr @_CA.Main.779b9c0f3b54a7f8(ptr %.loc82_5, i32 0), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,21 +151,21 @@ fn M() {
 // CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !55 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !59
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc262, label %if.else.loc262, !dbg !60
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc48, label %if.else.loc48, !dbg !60
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.then.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   ret i32 %x, !dbg !61
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.else.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   %Int.as.ModWith.impl.Op.call = srem i32 %count, 2, !dbg !62
 // CHECK:STDOUT:   %Int.as.EqWith.impl.Equal.call = icmp eq i32 %Int.as.ModWith.impl.Op.call, 0, !dbg !62
-// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc275, label %if.else.loc275, !dbg !63
+// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc51, label %if.else.loc51, !dbg !63
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.then.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %E.call = call i32 @_CE.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count), !dbg !64
 // CHECK:STDOUT:   ret i32 %E.call, !dbg !65
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.else.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count), !dbg !66
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !67
 // CHECK:STDOUT: }
@@ -181,21 +181,21 @@ fn M() {
 // CHECK:STDOUT: define linkonce_odr double @_CD.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !80
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc262, label %if.else.loc262, !dbg !81
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc48, label %if.else.loc48, !dbg !81
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.then.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   ret double %x, !dbg !82
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.else.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   %Int.as.ModWith.impl.Op.call = srem i32 %count, 2, !dbg !83
 // CHECK:STDOUT:   %Int.as.EqWith.impl.Equal.call = icmp eq i32 %Int.as.ModWith.impl.Op.call, 0, !dbg !83
-// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc275, label %if.else.loc275, !dbg !84
+// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc51, label %if.else.loc51, !dbg !84
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.then.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %E.call = call double @_CE.Main.de5b400758c39a65(double %x, i32 %count), !dbg !85
 // CHECK:STDOUT:   ret double %E.call, !dbg !86
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.else.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %F.call = call double @_CF.Main.de5b400758c39a65(double %x, i32 %count), !dbg !87
 // CHECK:STDOUT:   ret double %F.call, !dbg !88
 // CHECK:STDOUT: }
@@ -211,21 +211,21 @@ fn M() {
 // CHECK:STDOUT: define linkonce_odr ptr @_CD.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !95 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !99
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc262, label %if.else.loc262, !dbg !100
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc48, label %if.else.loc48, !dbg !100
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.then.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   ret ptr %x, !dbg !101
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc262:                                   ; preds = %entry
+// CHECK:STDOUT: if.else.loc48:                                    ; preds = %entry
 // CHECK:STDOUT:   %Int.as.ModWith.impl.Op.call = srem i32 %count, 2, !dbg !102
 // CHECK:STDOUT:   %Int.as.EqWith.impl.Equal.call = icmp eq i32 %Int.as.ModWith.impl.Op.call, 0, !dbg !102
-// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc275, label %if.else.loc275, !dbg !103
+// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.Equal.call, label %if.then.loc51, label %if.else.loc51, !dbg !103
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.then.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %E.call = call ptr @_CE.Main.779b9c0f3b54a7f8(ptr %x, i32 %count), !dbg !104
 // CHECK:STDOUT:   ret ptr %E.call, !dbg !105
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc275:                                   ; preds = %if.else.loc262
+// CHECK:STDOUT: if.else.loc51:                                    ; preds = %if.else.loc48
 // CHECK:STDOUT:   %F.call = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %x, i32 %count), !dbg !106
 // CHECK:STDOUT:   ret ptr %F.call, !dbg !107
 // CHECK:STDOUT: }

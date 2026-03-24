@@ -319,7 +319,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,34 +356,34 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%i8, (constants.%DefaultOrUnformed.impl_witness.8de) [concrete = constants.%DefaultOrUnformed.facet.e22]
-// CHECK:STDOUT:   %.loc8.1: %DefaultOrUnformed.type = converted constants.%i8, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.e22]
-// CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8.1 [concrete = constants.%i8]
-// CHECK:STDOUT:   %.loc8.2: type = converted %.loc8.1, %as_type.loc8 [concrete = constants.%i8]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc17: %DefaultOrUnformed.type = facet_value constants.%i8, (constants.%DefaultOrUnformed.impl_witness.8de) [concrete = constants.%DefaultOrUnformed.facet.e22]
+// CHECK:STDOUT:   %.loc17_16.1: %DefaultOrUnformed.type = converted constants.%i8, %DefaultOrUnformed.facet.loc17 [concrete = constants.%DefaultOrUnformed.facet.e22]
+// CHECK:STDOUT:   %as_type.loc17: type = facet_access_type %.loc17_16.1 [concrete = constants.%i8]
+// CHECK:STDOUT:   %.loc17_16.2: type = converted %.loc17_16.1, %as_type.loc17 [concrete = constants.%i8]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc8: init %i8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
-// CHECK:STDOUT:   assign file.%test_i8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc8
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc13: %DefaultOrUnformed.type = facet_value constants.%i16, (constants.%DefaultOrUnformed.impl_witness.e93) [concrete = constants.%DefaultOrUnformed.facet.cc9]
-// CHECK:STDOUT:   %.loc13.1: %DefaultOrUnformed.type = converted constants.%i16, %DefaultOrUnformed.facet.loc13 [concrete = constants.%DefaultOrUnformed.facet.cc9]
-// CHECK:STDOUT:   %as_type.loc13: type = facet_access_type %.loc13.1 [concrete = constants.%i16]
-// CHECK:STDOUT:   %.loc13.2: type = converted %.loc13.1, %as_type.loc13 [concrete = constants.%i16]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc17: init %i8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign file.%test_i8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc17
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%i16, (constants.%DefaultOrUnformed.impl_witness.e93) [concrete = constants.%DefaultOrUnformed.facet.cc9]
+// CHECK:STDOUT:   %.loc18_18.1: %DefaultOrUnformed.type = converted constants.%i16, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.cc9]
+// CHECK:STDOUT:   %as_type.loc18: type = facet_access_type %.loc18_18.1 [concrete = constants.%i16]
+// CHECK:STDOUT:   %.loc18_18.2: type = converted %.loc18_18.1, %as_type.loc18 [concrete = constants.%i16]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc13: init %i16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign file.%test_i16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc13
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.8d3) [concrete = constants.%DefaultOrUnformed.facet.266]
-// CHECK:STDOUT:   %.loc18.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.266]
-// CHECK:STDOUT:   %as_type.loc18: type = facet_access_type %.loc18.1 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc18.2: type = converted %.loc18.1, %as_type.loc18 [concrete = constants.%i32]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc18: init %i16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign file.%test_i16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc18
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.8d3) [concrete = constants.%DefaultOrUnformed.facet.266]
+// CHECK:STDOUT:   %.loc19_18.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.266]
+// CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_18.1 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc19_18.2: type = converted %.loc19_18.1, %as_type.loc19 [concrete = constants.%i32]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc18: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
-// CHECK:STDOUT:   assign file.%test_i32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc18
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc23: %DefaultOrUnformed.type = facet_value constants.%i64, (constants.%DefaultOrUnformed.impl_witness.3a1) [concrete = constants.%DefaultOrUnformed.facet.161]
-// CHECK:STDOUT:   %.loc23.1: %DefaultOrUnformed.type = converted constants.%i64, %DefaultOrUnformed.facet.loc23 [concrete = constants.%DefaultOrUnformed.facet.161]
-// CHECK:STDOUT:   %as_type.loc23: type = facet_access_type %.loc23.1 [concrete = constants.%i64]
-// CHECK:STDOUT:   %.loc23.2: type = converted %.loc23.1, %as_type.loc23 [concrete = constants.%i64]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc19: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign file.%test_i32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc19
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc20: %DefaultOrUnformed.type = facet_value constants.%i64, (constants.%DefaultOrUnformed.impl_witness.3a1) [concrete = constants.%DefaultOrUnformed.facet.161]
+// CHECK:STDOUT:   %.loc20_18.1: %DefaultOrUnformed.type = converted constants.%i64, %DefaultOrUnformed.facet.loc20 [concrete = constants.%DefaultOrUnformed.facet.161]
+// CHECK:STDOUT:   %as_type.loc20: type = facet_access_type %.loc20_18.1 [concrete = constants.%i64]
+// CHECK:STDOUT:   %.loc20_18.2: type = converted %.loc20_18.1, %as_type.loc20 [concrete = constants.%i64]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc23: init %i64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
-// CHECK:STDOUT:   assign file.%test_i64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc23
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc20: init %i64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
+// CHECK:STDOUT:   assign file.%test_i64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc20
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -417,7 +417,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,34 +454,34 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%u8, (constants.%DefaultOrUnformed.impl_witness.341) [concrete = constants.%DefaultOrUnformed.facet.56df]
-// CHECK:STDOUT:   %.loc8.1: %DefaultOrUnformed.type = converted constants.%u8, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.56df]
-// CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8.1 [concrete = constants.%u8]
-// CHECK:STDOUT:   %.loc8.2: type = converted %.loc8.1, %as_type.loc8 [concrete = constants.%u8]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc27: %DefaultOrUnformed.type = facet_value constants.%u8, (constants.%DefaultOrUnformed.impl_witness.341) [concrete = constants.%DefaultOrUnformed.facet.56df]
+// CHECK:STDOUT:   %.loc27_16.1: %DefaultOrUnformed.type = converted constants.%u8, %DefaultOrUnformed.facet.loc27 [concrete = constants.%DefaultOrUnformed.facet.56df]
+// CHECK:STDOUT:   %as_type.loc27: type = facet_access_type %.loc27_16.1 [concrete = constants.%u8]
+// CHECK:STDOUT:   %.loc27_16.2: type = converted %.loc27_16.1, %as_type.loc27 [concrete = constants.%u8]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc8: init %u8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
-// CHECK:STDOUT:   assign file.%test_u8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc8
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc13: %DefaultOrUnformed.type = facet_value constants.%u16, (constants.%DefaultOrUnformed.impl_witness.f79) [concrete = constants.%DefaultOrUnformed.facet.ad7]
-// CHECK:STDOUT:   %.loc13.1: %DefaultOrUnformed.type = converted constants.%u16, %DefaultOrUnformed.facet.loc13 [concrete = constants.%DefaultOrUnformed.facet.ad7]
-// CHECK:STDOUT:   %as_type.loc13: type = facet_access_type %.loc13.1 [concrete = constants.%u16]
-// CHECK:STDOUT:   %.loc13.2: type = converted %.loc13.1, %as_type.loc13 [concrete = constants.%u16]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc27: init %u8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign file.%test_u8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc27
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc28: %DefaultOrUnformed.type = facet_value constants.%u16, (constants.%DefaultOrUnformed.impl_witness.f79) [concrete = constants.%DefaultOrUnformed.facet.ad7]
+// CHECK:STDOUT:   %.loc28_18.1: %DefaultOrUnformed.type = converted constants.%u16, %DefaultOrUnformed.facet.loc28 [concrete = constants.%DefaultOrUnformed.facet.ad7]
+// CHECK:STDOUT:   %as_type.loc28: type = facet_access_type %.loc28_18.1 [concrete = constants.%u16]
+// CHECK:STDOUT:   %.loc28_18.2: type = converted %.loc28_18.1, %as_type.loc28 [concrete = constants.%u16]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc13: init %u16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign file.%test_u16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc13
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%u32, (constants.%DefaultOrUnformed.impl_witness.486) [concrete = constants.%DefaultOrUnformed.facet.5f8]
-// CHECK:STDOUT:   %.loc18.1: %DefaultOrUnformed.type = converted constants.%u32, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.5f8]
-// CHECK:STDOUT:   %as_type.loc18: type = facet_access_type %.loc18.1 [concrete = constants.%u32]
-// CHECK:STDOUT:   %.loc18.2: type = converted %.loc18.1, %as_type.loc18 [concrete = constants.%u32]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc28: init %u16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign file.%test_u16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc28
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc29: %DefaultOrUnformed.type = facet_value constants.%u32, (constants.%DefaultOrUnformed.impl_witness.486) [concrete = constants.%DefaultOrUnformed.facet.5f8]
+// CHECK:STDOUT:   %.loc29_18.1: %DefaultOrUnformed.type = converted constants.%u32, %DefaultOrUnformed.facet.loc29 [concrete = constants.%DefaultOrUnformed.facet.5f8]
+// CHECK:STDOUT:   %as_type.loc29: type = facet_access_type %.loc29_18.1 [concrete = constants.%u32]
+// CHECK:STDOUT:   %.loc29_18.2: type = converted %.loc29_18.1, %as_type.loc29 [concrete = constants.%u32]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc18: init %u32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
-// CHECK:STDOUT:   assign file.%test_u32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc18
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc23: %DefaultOrUnformed.type = facet_value constants.%u64, (constants.%DefaultOrUnformed.impl_witness.8ea) [concrete = constants.%DefaultOrUnformed.facet.56d3]
-// CHECK:STDOUT:   %.loc23.1: %DefaultOrUnformed.type = converted constants.%u64, %DefaultOrUnformed.facet.loc23 [concrete = constants.%DefaultOrUnformed.facet.56d3]
-// CHECK:STDOUT:   %as_type.loc23: type = facet_access_type %.loc23.1 [concrete = constants.%u64]
-// CHECK:STDOUT:   %.loc23.2: type = converted %.loc23.1, %as_type.loc23 [concrete = constants.%u64]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc29: init %u32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign file.%test_u32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc29
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%u64, (constants.%DefaultOrUnformed.impl_witness.8ea) [concrete = constants.%DefaultOrUnformed.facet.56d3]
+// CHECK:STDOUT:   %.loc30_18.1: %DefaultOrUnformed.type = converted constants.%u64, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.56d3]
+// CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_18.1 [concrete = constants.%u64]
+// CHECK:STDOUT:   %.loc30_18.2: type = converted %.loc30_18.1, %as_type.loc30 [concrete = constants.%u64]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc23: init %u64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
-// CHECK:STDOUT:   assign file.%test_u64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc23
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc30: init %u64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
+// CHECK:STDOUT:   assign file.%test_u64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -515,7 +515,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -552,34 +552,34 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%f16.a6a, (constants.%DefaultOrUnformed.impl_witness.a55) [concrete = constants.%DefaultOrUnformed.facet.671]
-// CHECK:STDOUT:   %.loc8.1: %DefaultOrUnformed.type = converted constants.%f16.a6a, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.671]
-// CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8.1 [concrete = constants.%f16.a6a]
-// CHECK:STDOUT:   %.loc8.2: type = converted %.loc8.1, %as_type.loc8 [concrete = constants.%f16.a6a]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc37: %DefaultOrUnformed.type = facet_value constants.%f16.a6a, (constants.%DefaultOrUnformed.impl_witness.a55) [concrete = constants.%DefaultOrUnformed.facet.671]
+// CHECK:STDOUT:   %.loc37_18.1: %DefaultOrUnformed.type = converted constants.%f16.a6a, %DefaultOrUnformed.facet.loc37 [concrete = constants.%DefaultOrUnformed.facet.671]
+// CHECK:STDOUT:   %as_type.loc37: type = facet_access_type %.loc37_18.1 [concrete = constants.%f16.a6a]
+// CHECK:STDOUT:   %.loc37_18.2: type = converted %.loc37_18.1, %as_type.loc37 [concrete = constants.%f16.a6a]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc8: init %f16.a6a = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
-// CHECK:STDOUT:   assign file.%test_f16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc8
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc13: %DefaultOrUnformed.type = facet_value constants.%f32.97e, (constants.%DefaultOrUnformed.impl_witness.567) [concrete = constants.%DefaultOrUnformed.facet.60c]
-// CHECK:STDOUT:   %.loc13.1: %DefaultOrUnformed.type = converted constants.%f32.97e, %DefaultOrUnformed.facet.loc13 [concrete = constants.%DefaultOrUnformed.facet.60c]
-// CHECK:STDOUT:   %as_type.loc13: type = facet_access_type %.loc13.1 [concrete = constants.%f32.97e]
-// CHECK:STDOUT:   %.loc13.2: type = converted %.loc13.1, %as_type.loc13 [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc37: init %f16.a6a = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign file.%test_f16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc37
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc38: %DefaultOrUnformed.type = facet_value constants.%f32.97e, (constants.%DefaultOrUnformed.impl_witness.567) [concrete = constants.%DefaultOrUnformed.facet.60c]
+// CHECK:STDOUT:   %.loc38_18.1: %DefaultOrUnformed.type = converted constants.%f32.97e, %DefaultOrUnformed.facet.loc38 [concrete = constants.%DefaultOrUnformed.facet.60c]
+// CHECK:STDOUT:   %as_type.loc38: type = facet_access_type %.loc38_18.1 [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   %.loc38_18.2: type = converted %.loc38_18.1, %as_type.loc38 [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc13: init %f32.97e = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign file.%test_f32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc13
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%f64.d77, (constants.%DefaultOrUnformed.impl_witness.461) [concrete = constants.%DefaultOrUnformed.facet.625]
-// CHECK:STDOUT:   %.loc18.1: %DefaultOrUnformed.type = converted constants.%f64.d77, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.625]
-// CHECK:STDOUT:   %as_type.loc18: type = facet_access_type %.loc18.1 [concrete = constants.%f64.d77]
-// CHECK:STDOUT:   %.loc18.2: type = converted %.loc18.1, %as_type.loc18 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc38: init %f32.97e = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign file.%test_f32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc38
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc39: %DefaultOrUnformed.type = facet_value constants.%f64.d77, (constants.%DefaultOrUnformed.impl_witness.461) [concrete = constants.%DefaultOrUnformed.facet.625]
+// CHECK:STDOUT:   %.loc39_18.1: %DefaultOrUnformed.type = converted constants.%f64.d77, %DefaultOrUnformed.facet.loc39 [concrete = constants.%DefaultOrUnformed.facet.625]
+// CHECK:STDOUT:   %as_type.loc39: type = facet_access_type %.loc39_18.1 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %.loc39_18.2: type = converted %.loc39_18.1, %as_type.loc39 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc18: init %f64.d77 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
-// CHECK:STDOUT:   assign file.%test_f64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc18
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc23: %DefaultOrUnformed.type = facet_value constants.%f128.b8c, (constants.%DefaultOrUnformed.impl_witness.39e) [concrete = constants.%DefaultOrUnformed.facet.560]
-// CHECK:STDOUT:   %.loc23.1: %DefaultOrUnformed.type = converted constants.%f128.b8c, %DefaultOrUnformed.facet.loc23 [concrete = constants.%DefaultOrUnformed.facet.560]
-// CHECK:STDOUT:   %as_type.loc23: type = facet_access_type %.loc23.1 [concrete = constants.%f128.b8c]
-// CHECK:STDOUT:   %.loc23.2: type = converted %.loc23.1, %as_type.loc23 [concrete = constants.%f128.b8c]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc39: init %f64.d77 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign file.%test_f64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc39
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc40: %DefaultOrUnformed.type = facet_value constants.%f128.b8c, (constants.%DefaultOrUnformed.impl_witness.39e) [concrete = constants.%DefaultOrUnformed.facet.560]
+// CHECK:STDOUT:   %.loc40_20.1: %DefaultOrUnformed.type = converted constants.%f128.b8c, %DefaultOrUnformed.facet.loc40 [concrete = constants.%DefaultOrUnformed.facet.560]
+// CHECK:STDOUT:   %as_type.loc40: type = facet_access_type %.loc40_20.1 [concrete = constants.%f128.b8c]
+// CHECK:STDOUT:   %.loc40_20.2: type = converted %.loc40_20.1, %as_type.loc40 [concrete = constants.%f128.b8c]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc23: init %f128.b8c = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
-// CHECK:STDOUT:   assign file.%test_f128.var, %T.as.DefaultOrUnformed.impl.Op.call.loc23
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc40: init %f128.b8c = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
+// CHECK:STDOUT:   assign file.%test_f128.var, %T.as.DefaultOrUnformed.impl.Op.call.loc40
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,7 +601,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.b73: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/parts/char, loc47, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %Core.import_ref.b73: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/parts/char, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.b73), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -611,16 +611,16 @@ var test_str: str = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %impl.elem0: %.734 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc9, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc9) [concrete = constants.%int_99]
-// CHECK:STDOUT:   %.loc9.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
-// CHECK:STDOUT:   %.loc9.2: %char = converted @__global_init.%.loc9, %.loc9.1 [concrete = constants.%int_99]
-// CHECK:STDOUT:   %test_char: %char = value_binding test_char, %.loc9.2
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc48, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc48) [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc48_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc48_23.2: %char = converted @__global_init.%.loc48, %.loc48_23.1 [concrete = constants.%int_99]
+// CHECK:STDOUT:   %test_char: %char = value_binding test_char, %.loc48_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
+// CHECK:STDOUT:   %.loc48: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -672,7 +672,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.1a7: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc237, loaded [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.1a7: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.b1c = impl_witness_table (%Core.import_ref.1a7), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -682,7 +682,7 @@ var test_str: str = ();
 // CHECK:STDOUT:     %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var %test_type.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc64: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %test_type: ref type = ref_binding test_type, %test_type.var [concrete = %test_type.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

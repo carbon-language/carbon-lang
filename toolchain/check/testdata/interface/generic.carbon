@@ -147,90 +147,90 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Simple.decl: %Simple.type.673 = interface_decl @Simple [concrete = constants.%Simple.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc19_22.1: type = splice_block %.loc19_22.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc19_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7.2: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %T.loc19_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc19_18.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %WithAssocFn.decl: %WithAssocFn.type.daa = interface_decl @WithAssocFn [concrete = constants.%WithAssocFn.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc22.1: type = splice_block %.loc22.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc23_27.1: type = splice_block %.loc23_27.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc22.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc23_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc20.2: type = symbolic_binding T, 0 [symbolic = %T.loc20.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %T.loc23_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc23_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %WithImplicitArgs.decl: %WithImplicitArgs.type = interface_decl @WithImplicitArgs [concrete = constants.%WithImplicitArgs.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %N.patt: @WithImplicitArgs.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc70.1: type = splice_block %.loc70.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc37_32.1: type = splice_block %.loc37_32.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc70.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc37_32.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc68.2: type = symbolic_binding T, 0 [symbolic = %T.loc68.1 (constants.%T.67d)]
-// CHECK:STDOUT:     %.loc75: type = splice_block %T.ref [symbolic = %T.loc68.1 (constants.%T.67d)] {
+// CHECK:STDOUT:     %T.loc37_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc37_28.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %.loc37_42: type = splice_block %T.ref [symbolic = %T.loc37_28.1 (constants.%T.67d)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc68.2 [symbolic = %T.loc68.1 (constants.%T.67d)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc37_28.2 [symbolic = %T.loc37_28.1 (constants.%T.67d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc73.2: @WithImplicitArgs.%T.loc68.1 (%T.67d) = symbolic_binding N, 1 [symbolic = %N.loc73.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc37_38.2: @WithImplicitArgs.%T.loc37_28.1 (%T.67d) = symbolic_binding N, 1 [symbolic = %N.loc37_38.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Receive.decl: %Receive.type = fn_decl @Receive [concrete = constants.%Receive] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.08a = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc87: type = splice_block %Simple.type [concrete = constants.%Simple.type.12a] {
+// CHECK:STDOUT:     %.loc39: type = splice_block %Simple.type [concrete = constants.%Simple.type.12a] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Simple.ref: %Simple.type.673 = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.generic]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.12a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc82.3: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc82.2 (constants.%T.7608f6.2)]
+// CHECK:STDOUT:     %T.loc39_19.3: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc39_19.2 (constants.%T.7608f6.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Pass.decl: %Pass.type = fn_decl @Pass [concrete = constants.%Pass] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.08a = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc99: type = splice_block %Simple.type [concrete = constants.%Simple.type.12a] {
+// CHECK:STDOUT:     %.loc40: type = splice_block %Simple.type [concrete = constants.%Simple.type.12a] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Simple.ref: %Simple.type.673 = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.generic]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.12a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc94.2: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc94.1 (constants.%T.7608f6.1)]
+// CHECK:STDOUT:     %T.loc40_9.2: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc40_9.1 (constants.%T.7608f6.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Simple(%T.loc7.2: type) {
-// CHECK:STDOUT:   %T.loc7.1: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T.67d)]
+// CHECK:STDOUT: generic interface @Simple(%T.loc19_18.2: type) {
+// CHECK:STDOUT:   %T.loc19_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc19_18.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple, @Simple(%T.loc7.1)> [symbolic = %Simple.type (constants.%Simple.type.e29)]
-// CHECK:STDOUT:   %Self.loc11.2: @Simple.%Simple.type (%Simple.type.e29) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self.862)]
+// CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple, @Simple(%T.loc19_18.1)> [symbolic = %Simple.type (constants.%Simple.type.e29)]
+// CHECK:STDOUT:   %Self.loc19_28.2: @Simple.%Simple.type (%Simple.type.e29) = symbolic_binding Self, 1 [symbolic = %Self.loc19_28.2 (constants.%Self.862)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc11.1: @Simple.%Simple.type (%Simple.type.e29) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self.862)]
+// CHECK:STDOUT:     %Self.loc19_28.1: @Simple.%Simple.type (%Simple.type.e29) = symbolic_binding Self, 1 [symbolic = %Self.loc19_28.2 (constants.%Self.862)]
 // CHECK:STDOUT:     %Simple.WithSelf.decl = interface_with_self_decl @Simple [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc11.1
+// CHECK:STDOUT:     .Self = %Self.loc19_28.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @WithAssocFn(%T.loc20.2: type) {
-// CHECK:STDOUT:   %T.loc20.1: type = symbolic_binding T, 0 [symbolic = %T.loc20.1 (constants.%T.67d)]
+// CHECK:STDOUT: generic interface @WithAssocFn(%T.loc23_23.2: type) {
+// CHECK:STDOUT:   %T.loc23_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc23_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(%T.loc20.1)> [symbolic = %WithAssocFn.type (constants.%WithAssocFn.type.d36)]
-// CHECK:STDOUT:   %Self.loc24.2: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36) = symbolic_binding Self, 1 [symbolic = %Self.loc24.2 (constants.%Self.629)]
+// CHECK:STDOUT:   %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(%T.loc23_23.1)> [symbolic = %WithAssocFn.type (constants.%WithAssocFn.type.d36)]
+// CHECK:STDOUT:   %Self.loc23_33.2: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36) = symbolic_binding Self, 1 [symbolic = %Self.loc23_33.2 (constants.%Self.629)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc24.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36) = symbolic_binding Self, 1 [symbolic = %Self.loc24.2 (constants.%Self.629)]
+// CHECK:STDOUT:     %Self.loc23_33.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36) = symbolic_binding Self, 1 [symbolic = %Self.loc23_33.2 (constants.%Self.629)]
 // CHECK:STDOUT:     %WithAssocFn.WithSelf.decl = interface_with_self_decl @WithAssocFn [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
@@ -239,27 +239,27 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:       %return.patt: %pattern_type.05f = return_slot_pattern %return.param_patt, %X.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %.loc30: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
+// CHECK:STDOUT:       %.loc25: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
 // CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc31.1: @WithAssocFn.WithSelf.%WithAssocFn.assoc_type (%WithAssocFn.assoc_type.b93) = assoc_entity element0, %WithAssocFn.WithSelf.F.decl [symbolic = %assoc0.loc31.2 (constants.%assoc0.395)]
+// CHECK:STDOUT:     %assoc0.loc25_14.1: @WithAssocFn.WithSelf.%WithAssocFn.assoc_type (%WithAssocFn.assoc_type.b93) = assoc_entity element0, %WithAssocFn.WithSelf.F.decl [symbolic = %assoc0.loc25_14.2 (constants.%assoc0.395)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc24.1
+// CHECK:STDOUT:     .Self = %Self.loc23_33.1
 // CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .X = <poisoned>
-// CHECK:STDOUT:     .F = @WithAssocFn.WithSelf.%assoc0.loc31.1
+// CHECK:STDOUT:     .F = @WithAssocFn.WithSelf.%assoc0.loc25_14.1
 // CHECK:STDOUT:     witness = (@WithAssocFn.WithSelf.%WithAssocFn.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @WithImplicitArgs(%T.loc68.2: type, %N.loc73.2: @WithImplicitArgs.%T.loc68.1 (%T.67d)) {
-// CHECK:STDOUT:   %T.loc68.1: type = symbolic_binding T, 0 [symbolic = %T.loc68.1 (constants.%T.67d)]
-// CHECK:STDOUT:   %N.loc73.1: @WithImplicitArgs.%T.loc68.1 (%T.67d) = symbolic_binding N, 1 [symbolic = %N.loc73.1 (constants.%N)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc68.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT: generic interface @WithImplicitArgs(%T.loc37_28.2: type, %N.loc37_38.2: @WithImplicitArgs.%T.loc37_28.1 (%T.67d)) {
+// CHECK:STDOUT:   %T.loc37_28.1: type = symbolic_binding T, 0 [symbolic = %T.loc37_28.1 (constants.%T.67d)]
+// CHECK:STDOUT:   %N.loc37_38.1: @WithImplicitArgs.%T.loc37_28.1 (%T.67d) = symbolic_binding N, 1 [symbolic = %N.loc37_38.1 (constants.%N)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc37_28.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
@@ -278,7 +278,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     %return.patt: %pattern_type.05f = return_slot_pattern %return.param_patt, %X.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc56: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
+// CHECK:STDOUT:     %.loc31: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -323,21 +323,21 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WithAssocFn.WithSelf.F(@WithAssocFn.%T.loc20.2: type, @WithAssocFn.%Self.loc24.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36)) {
+// CHECK:STDOUT: generic fn @WithAssocFn.WithSelf.F(@WithAssocFn.%T.loc23_23.2: type, @WithAssocFn.%Self.loc23_33.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36)) {
 // CHECK:STDOUT:   fn() -> out %return.param: %X;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.WithAssocFn.impl.F() -> out %return.param: %X {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc60.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc60.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc61: init %X = converted %.loc60.1, %.loc60.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:   return %.loc61 to %return.param
+// CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc32_15.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc32_16: init %X = converted %.loc32_15.1, %.loc32_15.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   return %.loc32_16 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Receive(%T.loc82.3: %Simple.type.12a) {
-// CHECK:STDOUT:   %T.loc82.1: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc82.1 (constants.%T.7608f6.1)]
-// CHECK:STDOUT:   %T.loc82.2: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc82.2 (constants.%T.7608f6.2)]
+// CHECK:STDOUT: generic fn @Receive(%T.loc39_19.3: %Simple.type.12a) {
+// CHECK:STDOUT:   %T.loc39_19.1: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc39_19.1 (constants.%T.7608f6.1)]
+// CHECK:STDOUT:   %T.loc39_19.2: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc39_19.2 (constants.%T.7608f6.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -347,30 +347,30 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Pass(%T.loc94.2: %Simple.type.12a) {
-// CHECK:STDOUT:   %T.loc94.1: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc94.1 (constants.%T.7608f6.1)]
+// CHECK:STDOUT: generic fn @Pass(%T.loc40_9.2: %Simple.type.12a) {
+// CHECK:STDOUT:   %T.loc40_9.1: %Simple.type.12a = symbolic_binding T, 0 [symbolic = %T.loc40_9.1 (constants.%T.7608f6.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Receive.specific_fn.loc102.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc94.1) [symbolic = %Receive.specific_fn.loc102.2 (constants.%Receive.specific_fn)]
+// CHECK:STDOUT:   %Receive.specific_fn.loc41_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc40_9.1) [symbolic = %Receive.specific_fn.loc41_3.2 (constants.%Receive.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [concrete = constants.%Receive]
-// CHECK:STDOUT:     %T.ref: %Simple.type.12a = name_ref T, %T.loc94.2 [symbolic = %T.loc94.1 (constants.%T.7608f6.1)]
-// CHECK:STDOUT:     %Receive.specific_fn.loc102.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.7608f6.1) [symbolic = %Receive.specific_fn.loc102.2 (constants.%Receive.specific_fn)]
-// CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %Receive.specific_fn.loc102.1()
+// CHECK:STDOUT:     %T.ref: %Simple.type.12a = name_ref T, %T.loc40_9.2 [symbolic = %T.loc40_9.1 (constants.%T.7608f6.1)]
+// CHECK:STDOUT:     %Receive.specific_fn.loc41_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.7608f6.1) [symbolic = %Receive.specific_fn.loc41_3.2 (constants.%Receive.specific_fn)]
+// CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %Receive.specific_fn.loc41_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.67d) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%T.67d
+// CHECK:STDOUT:   %T.loc19_18.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%T.67d, constants.%Self.862) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d) {
-// CHECK:STDOUT:   %T.loc20.1 => constants.%T.67d
+// CHECK:STDOUT:   %T.loc23_23.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%T.67d, constants.%Self.629) {}
@@ -378,11 +378,11 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf.F(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%C
+// CHECK:STDOUT:   %T.loc19_18.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Simple.type => constants.%Simple.type.12a
-// CHECK:STDOUT:   %Self.loc11.2 => constants.%Self.0b4
+// CHECK:STDOUT:   %Self.loc19_28.2 => constants.%Self.0b4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%C, constants.%Self.862) {
@@ -394,11 +394,11 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
-// CHECK:STDOUT:   %T.loc20.1 => constants.%C
+// CHECK:STDOUT:   %T.loc23_23.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %WithAssocFn.type => constants.%WithAssocFn.type.19d
-// CHECK:STDOUT:   %Self.loc24.2 => constants.%Self.63e
+// CHECK:STDOUT:   %Self.loc23_33.2 => constants.%Self.63e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%C, constants.%Self.629) {
@@ -409,7 +409,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.836
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.a5a
 // CHECK:STDOUT:   %WithAssocFn.assoc_type => constants.%WithAssocFn.assoc_type.cc0
-// CHECK:STDOUT:   %assoc0.loc31.2 => constants.%assoc0.50d
+// CHECK:STDOUT:   %assoc0.loc25_14.2 => constants.%assoc0.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%C, constants.%WithAssocFn.facet) {
@@ -420,29 +420,29 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.a47
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.975
 // CHECK:STDOUT:   %WithAssocFn.assoc_type => constants.%WithAssocFn.assoc_type.cc0
-// CHECK:STDOUT:   %assoc0.loc31.2 => constants.%assoc0.50d
+// CHECK:STDOUT:   %assoc0.loc25_14.2 => constants.%assoc0.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf.F(constants.%C, constants.%WithAssocFn.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.67d, constants.%N) {
-// CHECK:STDOUT:   %T.loc68.1 => constants.%T.67d
-// CHECK:STDOUT:   %N.loc73.1 => constants.%N
+// CHECK:STDOUT:   %T.loc37_28.1 => constants.%T.67d
+// CHECK:STDOUT:   %N.loc37_38.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.7608f6.2) {
-// CHECK:STDOUT:   %T.loc82.1 => constants.%T.7608f6.2
-// CHECK:STDOUT:   %T.loc82.2 => constants.%T.7608f6.2
+// CHECK:STDOUT:   %T.loc39_19.1 => constants.%T.7608f6.2
+// CHECK:STDOUT:   %T.loc39_19.2 => constants.%T.7608f6.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.7608f6.1) {
-// CHECK:STDOUT:   %T.loc94.1 => constants.%T.7608f6.1
+// CHECK:STDOUT:   %T.loc40_9.1 => constants.%T.7608f6.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.7608f6.1) {
-// CHECK:STDOUT:   %T.loc82.1 => constants.%T.7608f6.1
-// CHECK:STDOUT:   %T.loc82.2 => constants.%T.7608f6.1
+// CHECK:STDOUT:   %T.loc39_19.1 => constants.%T.7608f6.1
+// CHECK:STDOUT:   %T.loc39_19.2 => constants.%T.7608f6.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -487,51 +487,51 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.835 = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc48_23.1: type = splice_block %.loc48_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc48_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7.2: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %T.loc48_19.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_19.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.708 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc29: type = splice_block %Generic.type [concrete = constants.%Generic.type.478] {
+// CHECK:STDOUT:     %.loc53: type = splice_block %Generic.type [concrete = constants.%Generic.type.478] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.835 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Generic.type: type = facet_type <@Generic, @Generic(constants.%A)> [concrete = constants.%Generic.type.478]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc24.2: %Generic.type.478 = symbolic_binding T, 0 [symbolic = %T.loc24.1 (constants.%T.c1d)]
+// CHECK:STDOUT:     %T.loc53_6.2: %Generic.type.478 = symbolic_binding T, 0 [symbolic = %T.loc53_6.1 (constants.%T.c1d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.0c9 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc40: type = splice_block %Generic.type [concrete = constants.%Generic.type.cb7] {
+// CHECK:STDOUT:     %.loc54: type = splice_block %Generic.type [concrete = constants.%Generic.type.cb7] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.835 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:       %Generic.type: type = facet_type <@Generic, @Generic(constants.%B)> [concrete = constants.%Generic.type.cb7]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc35.2: %Generic.type.cb7 = symbolic_binding T, 0 [symbolic = %T.loc35.1 (constants.%T.3ee)]
+// CHECK:STDOUT:     %T.loc54_6.2: %Generic.type.cb7 = symbolic_binding T, 0 [symbolic = %T.loc54_6.1 (constants.%T.3ee)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Generic(%T.loc7.2: type) {
-// CHECK:STDOUT:   %T.loc7.1: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T.67d)]
+// CHECK:STDOUT: generic interface @Generic(%T.loc48_19.2: type) {
+// CHECK:STDOUT:   %T.loc48_19.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_19.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc7.1)> [symbolic = %Generic.type (constants.%Generic.type.03d)]
-// CHECK:STDOUT:   %Self.loc11.2: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self.15d)]
+// CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc48_19.1)> [symbolic = %Generic.type (constants.%Generic.type.03d)]
+// CHECK:STDOUT:   %Self.loc48_29.2: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc48_29.2 (constants.%Self.15d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc11.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self.15d)]
+// CHECK:STDOUT:     %Self.loc48_29.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc48_29.2 (constants.%Self.15d)]
 // CHECK:STDOUT:     %Generic.WithSelf.decl = interface_with_self_decl @Generic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc11.1
+// CHECK:STDOUT:     .Self = %Self.loc48_29.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -554,51 +554,51 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc24.2: %Generic.type.478) {
-// CHECK:STDOUT:   %T.loc24.1: %Generic.type.478 = symbolic_binding T, 0 [symbolic = %T.loc24.1 (constants.%T.c1d)]
+// CHECK:STDOUT: generic fn @F(%T.loc53_6.2: %Generic.type.478) {
+// CHECK:STDOUT:   %T.loc53_6.1: %Generic.type.478 = symbolic_binding T, 0 [symbolic = %T.loc53_6.1 (constants.%T.c1d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc35.2: %Generic.type.cb7) {
-// CHECK:STDOUT:   %T.loc35.1: %Generic.type.cb7 = symbolic_binding T, 0 [symbolic = %T.loc35.1 (constants.%T.3ee)]
+// CHECK:STDOUT: generic fn @G(%T.loc54_6.2: %Generic.type.cb7) {
+// CHECK:STDOUT:   %T.loc54_6.1: %Generic.type.cb7 = symbolic_binding T, 0 [symbolic = %T.loc54_6.1 (constants.%T.3ee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc35.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc54_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: %Generic.type.cb7 = name_ref T, %T.loc35.2 [symbolic = %T.loc35.1 (constants.%T.3ee)]
+// CHECK:STDOUT:     %T.ref: %Generic.type.cb7 = name_ref T, %T.loc54_6.2 [symbolic = %T.loc54_6.1 (constants.%T.3ee)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.67d) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%T.67d
+// CHECK:STDOUT:   %T.loc48_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%T.67d, constants.%Self.15d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%A
+// CHECK:STDOUT:   %T.loc48_19.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.c1d) {
-// CHECK:STDOUT:   %T.loc24.1 => constants.%T.c1d
+// CHECK:STDOUT:   %T.loc53_6.1 => constants.%T.c1d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%B
+// CHECK:STDOUT:   %T.loc48_19.1 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.type => constants.%Generic.type.cb7
-// CHECK:STDOUT:   %Self.loc11.2 => constants.%Self.b24
+// CHECK:STDOUT:   %Self.loc48_29.2 => constants.%Self.b24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.3ee) {
-// CHECK:STDOUT:   %T.loc35.1 => constants.%T.3ee
+// CHECK:STDOUT:   %T.loc54_6.1 => constants.%T.3ee
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%B, constants.%Self.15d) {
@@ -630,11 +630,11 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.835 = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc68_23.1: type = splice_block %.loc68_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc68_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7.2: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc68_19.2: type = symbolic_binding T, 0 [symbolic = %T.loc68_19.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
@@ -642,26 +642,26 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.835 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %.loc22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc77_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc77_30: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Generic(%T.loc7.2: type) {
-// CHECK:STDOUT:   %T.loc7.1: type = symbolic_binding T, 0 [symbolic = %T.loc7.1 (constants.%T)]
+// CHECK:STDOUT: generic interface @Generic(%T.loc68_19.2: type) {
+// CHECK:STDOUT:   %T.loc68_19.1: type = symbolic_binding T, 0 [symbolic = %T.loc68_19.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc7.1)> [symbolic = %Generic.type (constants.%Generic.type.03d)]
-// CHECK:STDOUT:   %Self.loc11.2: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self)]
+// CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc68_19.1)> [symbolic = %Generic.type (constants.%Generic.type.03d)]
+// CHECK:STDOUT:   %Self.loc68_29.2: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc68_29.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc11.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc11.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc68_29.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc68_29.2 (constants.%Self)]
 // CHECK:STDOUT:     %Generic.WithSelf.decl = interface_with_self_decl @Generic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc11.1
+// CHECK:STDOUT:     .Self = %Self.loc68_29.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -678,7 +678,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT:   %T.loc7.1 => constants.%T
+// CHECK:STDOUT:   %T.loc68_19.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%T, constants.%Self) {}

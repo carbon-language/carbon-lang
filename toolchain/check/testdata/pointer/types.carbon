@@ -67,7 +67,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc217, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,15 +82,15 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fe8 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern %return.param_patt, %ptr.loc11 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern %return.param_patt, %ptr.loc15_23 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %i32.loc10 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %.loc11: Core.Form = init_form %ptr.loc11 [concrete = constants.%.605]
+// CHECK:STDOUT:     %i32.loc15_20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc15_23: type = ptr_type %i32.loc15_20 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %.loc15_23: Core.Form = init_form %ptr.loc15_23 [concrete = constants.%.605]
 // CHECK:STDOUT:     %p.param: %ptr.235 = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.235] {
-// CHECK:STDOUT:       %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %i32.loc6 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %.loc15_14: type = splice_block %ptr.loc15_14 [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:       %i32.loc15_11: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %ptr.loc15_14: type = ptr_type %i32.loc15_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.235 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
@@ -100,17 +100,17 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.bff = value_param_pattern [concrete]
 // CHECK:STDOUT:     %p.patt: %pattern_type.bff = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bff = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.bff = return_slot_pattern %return.param_patt, %ptr.loc31 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.bff = return_slot_pattern %return.param_patt, %ptr.loc19_42 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc28: type = const_type %i32.loc29 [concrete = constants.%const.20a]
-// CHECK:STDOUT:     %ptr.loc31: type = ptr_type %const.loc28 [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:     %.loc31: Core.Form = init_form %ptr.loc31 [concrete = constants.%.132]
+// CHECK:STDOUT:     %i32.loc19_38: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %const.loc19_32: type = const_type %i32.loc19_38 [concrete = constants.%const.20a]
+// CHECK:STDOUT:     %ptr.loc19_42: type = ptr_type %const.loc19_32 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %.loc19_42: Core.Form = init_form %ptr.loc19_42 [concrete = constants.%.132]
 // CHECK:STDOUT:     %p.param: %ptr.36b = value_param call_param0
-// CHECK:STDOUT:     %.loc24: type = splice_block %ptr.loc24 [concrete = constants.%ptr.36b] {
-// CHECK:STDOUT:       %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc22: type = const_type %i32.loc23 [concrete = constants.%const.20a]
-// CHECK:STDOUT:       %ptr.loc24: type = ptr_type %const.loc22 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %.loc19_25: type = splice_block %ptr.loc19_25 [concrete = constants.%ptr.36b] {
+// CHECK:STDOUT:       %i32.loc19_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %const.loc19_16: type = const_type %i32.loc19_22 [concrete = constants.%const.20a]
+// CHECK:STDOUT:       %ptr.loc19_25: type = ptr_type %const.loc19_16 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.36b = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.36b = out_param call_param1
@@ -122,10 +122,10 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.235 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.a62 = impl_witness_access constants.%Copy.impl_witness.843, element0 [concrete = constants.%ptr.as.Copy.impl.Op.011]
-// CHECK:STDOUT:   %bound_method.loc14.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc16_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.101]
-// CHECK:STDOUT:   %bound_method.loc14.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc14.2(%p.ref)
+// CHECK:STDOUT:   %bound_method.loc16_10.2: <bound method> = bound_method %p.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc16_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,10 +133,10 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.36b = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.767 = impl_witness_access constants.%Copy.impl_witness.ce1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.efa]
-// CHECK:STDOUT:   %bound_method.loc34.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%const.20a) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.bcd]
-// CHECK:STDOUT:   %bound_method.loc34.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.36b = call %bound_method.loc34.2(%p.ref)
+// CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %p.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.36b = call %bound_method.loc20_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

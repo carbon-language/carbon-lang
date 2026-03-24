@@ -45,20 +45,20 @@ let f: Form() = form(var ());
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.13f = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13.1: type = splice_block %.loc13.3 [concrete = Core.Form] {
+// CHECK:STDOUT:   %.loc26_13.1: type = splice_block %.loc26_13.3 [concrete = Core.Form] {
 // CHECK:STDOUT:     %Form.ref: %Form.type = name_ref Form, imports.%Main.Form [concrete = constants.%Form]
 // CHECK:STDOUT:     %Form.call: init type = call %Form.ref() [concrete = Core.Form]
-// CHECK:STDOUT:     %.loc13.2: type = value_of_initializer %Form.call [concrete = Core.Form]
-// CHECK:STDOUT:     %.loc13.3: type = converted %Form.call, %.loc13.2 [concrete = Core.Form]
+// CHECK:STDOUT:     %.loc26_13.2: type = value_of_initializer %Form.call [concrete = Core.Form]
+// CHECK:STDOUT:     %.loc26_13.3: type = converted %Form.call, %.loc26_13.2 [concrete = Core.Form]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: Core.Form = value_binding f, @__global_init.%.loc17
+// CHECK:STDOUT:   %f: Core.Form = value_binding f, @__global_init.%.loc26_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19.2: type = converted %.loc19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc17: Core.Form = init_form %.loc19.2 [concrete = constants.%.262]
+// CHECK:STDOUT:   %.loc26_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc26_27.2: type = converted %.loc26_27.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc26_22: Core.Form = init_form %.loc26_27.2 [concrete = constants.%.262]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

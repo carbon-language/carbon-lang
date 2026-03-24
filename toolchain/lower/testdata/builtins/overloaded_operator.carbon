@@ -20,9 +20,9 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAddThreeIntegers.Main(i32 %a, i32 %b, i32 %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc21 = add i32 %a, %b, !dbg !12
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc23 = add i32 %Int.as.AddWith.impl.Op.call.loc21, %c, !dbg !12
-// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.loc23, !dbg !13
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc14_12 = add i32 %a, %b, !dbg !12
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc14_16 = add i32 %Int.as.AddWith.impl.Op.call.loc14_12, %c, !dbg !12
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.loc14_16, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

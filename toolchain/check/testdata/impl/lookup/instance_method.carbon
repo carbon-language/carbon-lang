@@ -76,14 +76,14 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .C = %C.decl.loc3
+// CHECK:STDOUT:     .C = %C.decl.loc15
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl.loc3: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc15: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %C.decl.loc22: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc21: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = at_binding_pattern c, %c.param_patt [concrete]
@@ -91,9 +91,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc50: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %.loc27: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc3 [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc15 [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -112,12 +112,12 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc17: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %.loc18_25: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc12.1: type = splice_block %.loc12.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %.loc18_14.1: type = splice_block %.loc18_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc12.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc18_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -141,7 +141,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc38: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param

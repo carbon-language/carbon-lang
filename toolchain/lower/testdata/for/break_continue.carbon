@@ -36,42 +36,42 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFor.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc41.1.temp = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc20_32.1.temp = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc42.1.temp = alloca { i32, i1 }, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc41.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc41.1.temp, i32 100), !dbg !7
-// CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc41.1.temp), !dbg !8
+// CHECK:STDOUT:   %.loc20_33.1.temp = alloca { i32, i1 }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_32.1.temp), !dbg !7
+// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc20_32.1.temp, i32 100), !dbg !7
+// CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc20_32.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !8
 // CHECK:STDOUT:   store i32 %IntRange.as.Iterate.impl.NewCursor.call, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: for.next:                                         ; preds = %if.else.loc59, %if.then.loc59, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc42.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc42.1.temp, ptr %.loc41.1.temp, ptr %var), !dbg !8
-// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.a0986cb4211ec3fb(ptr %.loc42.1.temp), !dbg !8
+// CHECK:STDOUT: for.next:                                         ; preds = %if.else.loc22, %if.then.loc22, %entry
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc20_33.1.temp, ptr %.loc20_32.1.temp, ptr %var), !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.a0986cb4211ec3fb(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.a0986cb4211ec3fb(ptr %.loc42.1.temp), !dbg !8
+// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.a0986cb4211ec3fb(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !9
-// CHECK:STDOUT:   br i1 %F.call, label %if.then.loc49, label %if.else.loc49, !dbg !10
+// CHECK:STDOUT:   br i1 %F.call, label %if.then.loc21, label %if.else.loc21, !dbg !10
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc49:                                    ; preds = %for.body
+// CHECK:STDOUT: if.then.loc21:                                    ; preds = %for.body
 // CHECK:STDOUT:   br label %for.done, !dbg !11
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc49:                                    ; preds = %for.body
+// CHECK:STDOUT: if.else.loc21:                                    ; preds = %for.body
 // CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !12
-// CHECK:STDOUT:   br i1 %G.call, label %if.then.loc59, label %if.else.loc59, !dbg !13
+// CHECK:STDOUT:   br i1 %G.call, label %if.then.loc22, label %if.else.loc22, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc59:                                    ; preds = %if.else.loc49
+// CHECK:STDOUT: if.then.loc22:                                    ; preds = %if.else.loc21
 // CHECK:STDOUT:   br label %for.next, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc59:                                    ; preds = %if.else.loc49
+// CHECK:STDOUT: if.else.loc22:                                    ; preds = %if.else.loc21
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !15
 // CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc49, %for.next
+// CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc21, %for.next
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

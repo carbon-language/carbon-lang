@@ -1391,7 +1391,8 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
         // Formats a NodeId from the import.
         const auto& tree = import_ir.sem_ir->parse_tree();
         auto token = tree.node_token(loc_id.node_id());
-        out() << "loc" << token.index;
+        out() << "loc" << tree.tokens().GetLineNumber(token) << "_"
+              << tree.tokens().GetColumnNumber(token);
         break;
       }
       case LocId::Kind::InstId:

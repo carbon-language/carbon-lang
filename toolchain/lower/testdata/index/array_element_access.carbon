@@ -23,24 +23,24 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'array_element_access.carbon'
 // CHECK:STDOUT: source_filename = "array_element_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.21c.loc18 = internal constant { i32, i32 } { i32 1, i32 2 }
-// CHECK:STDOUT: @array.loc38 = internal constant [2 x i32] [i32 1, i32 2]
+// CHECK:STDOUT: @tuple.21c.loc12_37 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @array.loc14_40 = internal constant [2 x i32] [i32 1, i32 2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CA.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.21c.loc18, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.21c.loc12_37, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CB.Main(ptr sret([2 x i32]) %return) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 0, !dbg !11
-// CHECK:STDOUT:   %.loc37.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @array.loc38, i64 8, i1 false), !dbg !12
+// CHECK:STDOUT:   %.loc14_39.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 0, !dbg !11
+// CHECK:STDOUT:   %.loc14_39.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 1, !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @array.loc14_40, i64 8, i1 false), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,35 +48,35 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !16
-// CHECK:STDOUT:   %.loc57.1.temp = alloca { i32, i32 }, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc17_28.1.temp = alloca { i32, i32 }, align 8, !dbg !17
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !18
-// CHECK:STDOUT:   %_.var.loc66 = alloca i32, align 4, !dbg !19
-// CHECK:STDOUT:   %_.var.loc76 = alloca i32, align 4, !dbg !20
-// CHECK:STDOUT:   %.loc83.1.temp = alloca [2 x i32], align 4, !dbg !21
+// CHECK:STDOUT:   %_.var.loc19 = alloca i32, align 4, !dbg !19
+// CHECK:STDOUT:   %_.var.loc20 = alloca i32, align 4, !dbg !20
+// CHECK:STDOUT:   %.loc20_18.1.temp = alloca [2 x i32], align 4, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc57.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @_CA.Main(ptr %.loc57.1.temp), !dbg !17
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc57.1.temp, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc57.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !17
-// CHECK:STDOUT:   %.loc57.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 0, !dbg !17
-// CHECK:STDOUT:   store i32 %.loc57.3, ptr %.loc57.4.array.index, align 4, !dbg !17
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc57.1.temp, i32 0, i32 1, !dbg !17
-// CHECK:STDOUT:   %.loc57.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !17
-// CHECK:STDOUT:   %.loc57.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 1, !dbg !17
-// CHECK:STDOUT:   store i32 %.loc57.6, ptr %.loc57.7.array.index, align 4, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_28.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @_CA.Main(ptr %.loc17_28.1.temp), !dbg !17
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc17_28.1.temp, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc17_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc17_28.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 0, !dbg !17
+// CHECK:STDOUT:   store i32 %.loc17_28.3, ptr %.loc17_28.4.array.index, align 4, !dbg !17
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc17_28.1.temp, i32 0, i32 1, !dbg !17
+// CHECK:STDOUT:   %.loc17_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc17_28.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 1, !dbg !17
+// CHECK:STDOUT:   store i32 %.loc17_28.6, ptr %.loc17_28.7.array.index, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !18
 // CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc66), !dbg !19
-// CHECK:STDOUT:   %.loc73 = load i32, ptr %b.var, align 4, !dbg !22
-// CHECK:STDOUT:   %.loc74.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc73, !dbg !23
-// CHECK:STDOUT:   %.loc74.2 = load i32, ptr %.loc74.1.array.index, align 4, !dbg !23
-// CHECK:STDOUT:   store i32 %.loc74.2, ptr %_.var.loc66, align 4, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc76), !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc83.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_CB.Main(ptr %.loc83.1.temp), !dbg !21
-// CHECK:STDOUT:   %.loc86.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc83.1.temp, i32 0, i32 1, !dbg !21
-// CHECK:STDOUT:   %.loc86.2 = load i32, ptr %.loc86.1.array.index, align 4, !dbg !21
-// CHECK:STDOUT:   store i32 %.loc86.2, ptr %_.var.loc76, align 4, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !19
+// CHECK:STDOUT:   %.loc19_18 = load i32, ptr %b.var, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc19_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc19_18, !dbg !23
+// CHECK:STDOUT:   %.loc19_19.2 = load i32, ptr %.loc19_19.1.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   store i32 %.loc19_19.2, ptr %_.var.loc19, align 4, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @_CB.Main(ptr %.loc20_18.1.temp), !dbg !21
+// CHECK:STDOUT:   %.loc20_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc20_18.1.temp, i32 0, i32 1, !dbg !21
+// CHECK:STDOUT:   %.loc20_21.2 = load i32, ptr %.loc20_21.1.array.index, align 4, !dbg !21
+// CHECK:STDOUT:   store i32 %.loc20_21.2, ptr %_.var.loc20, align 4, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

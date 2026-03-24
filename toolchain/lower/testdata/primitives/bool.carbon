@@ -42,11 +42,11 @@ fn LoadStore(p: bool*, b: bool) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CLoadStore.Main(ptr %p, i1 %b) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc43.2 = load i8, ptr %p, align 1, !dbg !17
-// CHECK:STDOUT:   %.loc43.21 = trunc i8 %.loc43.2 to i1, !dbg !17
+// CHECK:STDOUT:   %.loc22_17.2 = load i8, ptr %p, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc22_17.21 = trunc i8 %.loc22_17.2 to i1, !dbg !17
 // CHECK:STDOUT:   %0 = zext i1 %b to i8, !dbg !18
 // CHECK:STDOUT:   store i8 %0, ptr %p, align 1, !dbg !18
-// CHECK:STDOUT:   ret i1 %.loc43.21, !dbg !19
+// CHECK:STDOUT:   ret i1 %.loc22_17.21, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

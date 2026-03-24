@@ -43,11 +43,11 @@ let f: FloatLiteral() = 1.0;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.dab = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13.1: type = splice_block %.loc13.3 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:   %.loc26_21.1: type = splice_block %.loc26_21.3 [concrete = Core.FloatLiteral] {
 // CHECK:STDOUT:     %FloatLiteral.ref: %FloatLiteral.type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = constants.%FloatLiteral]
 // CHECK:STDOUT:     %FloatLiteral.call: init type = call %FloatLiteral.ref() [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc13.2: type = value_of_initializer %FloatLiteral.call [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc13.3: type = converted %FloatLiteral.call, %.loc13.2 [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:     %.loc26_21.2: type = value_of_initializer %FloatLiteral.call [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:     %.loc26_21.3: type = converted %FloatLiteral.call, %.loc26_21.2 [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, @__global_init.%float
 // CHECK:STDOUT: }

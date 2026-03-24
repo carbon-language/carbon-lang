@@ -32,28 +32,28 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'numeric_literals.carbon'
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.712.loc6 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
-// CHECK:STDOUT: @array.6e0.loc27 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
+// CHECK:STDOUT: @array.712.loc16_3 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
+// CHECK:STDOUT: @array.6e0.loc22_3 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc6 = alloca [4 x i32], align 4, !dbg !7
-// CHECK:STDOUT:   %_.var.loc27 = alloca [6 x double], align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc6), !dbg !7
-// CHECK:STDOUT:   %.loc25.3.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc6, i32 0, i64 0, !dbg !9
-// CHECK:STDOUT:   %.loc25.6.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc6, i32 0, i64 1, !dbg !9
-// CHECK:STDOUT:   %.loc25.9.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc6, i32 0, i64 2, !dbg !9
-// CHECK:STDOUT:   %.loc25.12.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc6, i32 0, i64 3, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc6, ptr align 4 @array.712.loc6, i64 16, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc27), !dbg !8
-// CHECK:STDOUT:   %.loc50.3.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 0, !dbg !10
-// CHECK:STDOUT:   %.loc50.6.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 1, !dbg !10
-// CHECK:STDOUT:   %.loc50.9.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 2, !dbg !10
-// CHECK:STDOUT:   %.loc50.12.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 3, !dbg !10
-// CHECK:STDOUT:   %.loc50.15.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 4, !dbg !10
-// CHECK:STDOUT:   %.loc50.18.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc27, i32 0, i64 5, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc27, ptr align 8 @array.6e0.loc27, i64 48, i1 false), !dbg !8
+// CHECK:STDOUT:   %_.var.loc16 = alloca [4 x i32], align 4, !dbg !7
+// CHECK:STDOUT:   %_.var.loc22 = alloca [6 x double], align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !7
+// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 0, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 1, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 2, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 3, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc16, ptr align 4 @array.712.loc16_3, i64 16, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !8
+// CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 0, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 1, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 2, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 3, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 4, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 5, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc22, ptr align 8 @array.6e0.loc22_3, i64 48, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

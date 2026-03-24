@@ -28,10 +28,10 @@ fn Bar() {
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Baz.type.c2b: type = fn_type @Baz.loc8 [concrete]
+// CHECK:STDOUT:   %Baz.type.c2b: type = fn_type @Baz.loc18 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Baz.b31: %Baz.type.c2b = struct_value () [concrete]
-// CHECK:STDOUT:   %Baz.type.0fc: type = fn_type @Baz.loc16 [concrete]
+// CHECK:STDOUT:   %Baz.type.0fc: type = fn_type @Baz.loc21 [concrete]
 // CHECK:STDOUT:   %Baz.efc: %Baz.type.0fc = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [concrete]
@@ -48,24 +48,24 @@ fn Bar() {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc8
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc18
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc16
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc8: %Baz.type.c2b = fn_decl @Baz.loc8 [concrete = constants.%Baz.b31] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc16: %Baz.type.0fc = fn_decl @Baz.loc16 [concrete = constants.%Baz.efc] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc18: %Baz.type.c2b = fn_decl @Baz.loc18 [concrete = constants.%Baz.b31] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc21: %Baz.type.0fc = fn_decl @Baz.loc21 [concrete = constants.%Baz.efc] {} {}
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz.loc8() {
+// CHECK:STDOUT: fn @Baz.loc18() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz.loc16() {
+// CHECK:STDOUT: fn @Baz.loc21() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -73,7 +73,7 @@ fn Bar() {
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [concrete = file.%Foo]
-// CHECK:STDOUT:   %Baz.ref: %Baz.type.0fc = name_ref Baz, file.%Baz.decl.loc16 [concrete = constants.%Baz.efc]
+// CHECK:STDOUT:   %Baz.ref: %Baz.type.0fc = name_ref Baz, file.%Baz.decl.loc21 [concrete = constants.%Baz.efc]
 // CHECK:STDOUT:   %Baz.call: init %empty_tuple.type = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

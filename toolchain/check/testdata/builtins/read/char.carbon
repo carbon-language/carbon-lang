@@ -31,7 +31,7 @@ fn Main() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %ReadChar.type.c36: type = fn_type @ReadChar.loc12 [concrete]
+// CHECK:STDOUT:   %ReadChar.type.c36: type = fn_type @ReadChar.loc17 [concrete]
 // CHECK:STDOUT:   %ReadChar.6ad: %ReadChar.type.c36 = struct_value () [concrete]
 // CHECK:STDOUT:   %ReadChar.type.9f3: type = fn_type @ReadChar.1 [concrete]
 // CHECK:STDOUT:   %ReadChar.01f: %ReadChar.type.9f3 = struct_value () [concrete]
@@ -54,22 +54,22 @@ fn Main() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReadChar.ref.loc26: %ReadChar.type.c36 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.6ad]
-// CHECK:STDOUT:   %ReadChar.call.loc28: init %i32 = call %ReadChar.ref.loc26()
-// CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc28.1: %i32 = value_of_initializer %ReadChar.call.loc28
-// CHECK:STDOUT:   %.loc28.2: %i32 = converted %ReadChar.call.loc28, %.loc28.1
-// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc28.2
+// CHECK:STDOUT:   %ReadChar.ref.loc21: %ReadChar.type.c36 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.6ad]
+// CHECK:STDOUT:   %ReadChar.call.loc21: init %i32 = call %ReadChar.ref.loc21()
+// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc21_32.1: %i32 = value_of_initializer %ReadChar.call.loc21
+// CHECK:STDOUT:   %.loc21_32.2: %i32 = converted %ReadChar.call.loc21, %.loc21_32.1
+// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc21_32.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = value_binding_pattern m [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %ReadChar.ref.loc37: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
-// CHECK:STDOUT:   %ReadChar.call.loc40: init %i32 = call %ReadChar.ref.loc37()
-// CHECK:STDOUT:   %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc40.1: %i32 = value_of_initializer %ReadChar.call.loc40
-// CHECK:STDOUT:   %.loc40.2: %i32 = converted %ReadChar.call.loc40, %.loc40.1
-// CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc40.2
+// CHECK:STDOUT:   %ReadChar.ref.loc22: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %ReadChar.call.loc22: init %i32 = call %ReadChar.ref.loc22()
+// CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc22_37.1: %i32 = value_of_initializer %ReadChar.call.loc22
+// CHECK:STDOUT:   %.loc22_37.2: %i32 = converted %ReadChar.call.loc22, %.loc22_37.1
+// CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc22_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

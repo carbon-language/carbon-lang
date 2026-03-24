@@ -164,7 +164,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc57, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
+// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,19 +174,19 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.5c7 = name_ref input, %input
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.874] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc23_25: type = splice_block %ptr.loc23 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %void.ref [concrete = constants.%ptr.874]
+// CHECK:STDOUT:     %ptr.loc23: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0: %.751 = impl_witness_access constants.%ImplicitAs.impl_witness.ffd, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.d8d]
-// CHECK:STDOUT:   %bound_method.loc29.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc23_29.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%S) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.ffe]
-// CHECK:STDOUT:   %bound_method.loc29.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %ptr.874 = call %bound_method.loc29.2(%input.ref)
-// CHECK:STDOUT:   %.loc29.1: %ptr.874 = value_of_initializer %ptr.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc29.2: %ptr.874 = converted %input.ref, %.loc29.1
-// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc29.2
+// CHECK:STDOUT:   %bound_method.loc23_29.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %ptr.874 = call %bound_method.loc23_29.2(%input.ref)
+// CHECK:STDOUT:   %.loc23_29.1: %ptr.874 = value_of_initializer %ptr.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc23_29.2: %ptr.874 = converted %input.ref, %.loc23_29.1
+// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc23_29.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,7 +216,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     .void = constants.%Cpp.void
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc57, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
+// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,19 +226,19 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.31e = name_ref input, %input
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:   %.loc37_25: type = splice_block %ptr.loc37 [concrete = constants.%ptr.874] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %void.ref [concrete = constants.%ptr.874]
+// CHECK:STDOUT:     %ptr.loc37: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0: %.9d0 = impl_witness_access constants.%ImplicitAs.impl_witness.39c, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.1f8]
-// CHECK:STDOUT:   %bound_method.loc29.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc37_29.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%C) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.384]
-// CHECK:STDOUT:   %bound_method.loc29.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %ptr.874 = call %bound_method.loc29.2(%input.ref)
-// CHECK:STDOUT:   %.loc29.1: %ptr.874 = value_of_initializer %ptr.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc29.2: %ptr.874 = converted %input.ref, %.loc29.1
-// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc29.2
+// CHECK:STDOUT:   %bound_method.loc37_29.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %ptr.874 = call %bound_method.loc37_29.2(%input.ref)
+// CHECK:STDOUT:   %.loc37_29.1: %ptr.874 = value_of_initializer %ptr.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc37_29.2: %ptr.874 = converted %input.ref, %.loc37_29.1
+// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc37_29.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,9 +278,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc105, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
+// CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc57, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
+// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,22 +290,22 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.5c7 = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %void.ref.loc32: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:   %ptr.loc34: type = ptr_type %void.ref.loc32 [concrete = constants.%ptr.874]
+// CHECK:STDOUT:   %Cpp.ref.loc51_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %void.ref.loc51_41: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
+// CHECK:STDOUT:   %ptr.loc51_46: type = ptr_type %void.ref.loc51_41 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   %impl.elem0: %.bb8 = impl_witness_access constants.%As.impl_witness.9e9, element0 [concrete = constants.%T.binding.as_type.as.As.impl.Convert.e7d]
-// CHECK:STDOUT:   %bound_method.loc30.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc51_35.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.binding.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.binding.as_type.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc30.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc30.2(%input.ref)
-// CHECK:STDOUT:   %.loc30.1: %ptr.874 = value_of_initializer %T.binding.as_type.as.As.impl.Convert.call
-// CHECK:STDOUT:   %.loc30.2: %ptr.874 = converted %input.ref, %.loc30.1
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.874] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %void.ref.loc25: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %void.ref.loc25 [concrete = constants.%ptr.874]
+// CHECK:STDOUT:   %bound_method.loc51_35.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc51_35.2(%input.ref)
+// CHECK:STDOUT:   %.loc51_35.1: %ptr.874 = value_of_initializer %T.binding.as_type.as.As.impl.Convert.call
+// CHECK:STDOUT:   %.loc51_35.2: %ptr.874 = converted %input.ref, %.loc51_35.1
+// CHECK:STDOUT:   %.loc51_25: type = splice_block %ptr.loc51_25 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:     %Cpp.ref.loc51_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %void.ref.loc51_20: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
+// CHECK:STDOUT:     %ptr.loc51_25: type = ptr_type %void.ref.loc51_20 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc30.2
+// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc51_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,9 +343,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     .void = constants.%Cpp.void
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc105, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
+// CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc57, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
+// CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,22 +355,22 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.31e = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %void.ref.loc32: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:   %ptr.loc34: type = ptr_type %void.ref.loc32 [concrete = constants.%ptr.874]
+// CHECK:STDOUT:   %Cpp.ref.loc65_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %void.ref.loc65_41: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
+// CHECK:STDOUT:   %ptr.loc65_46: type = ptr_type %void.ref.loc65_41 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   %impl.elem0: %.99e = impl_witness_access constants.%As.impl_witness.fa1, element0 [concrete = constants.%T.binding.as_type.as.As.impl.Convert.483]
-// CHECK:STDOUT:   %bound_method.loc30.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc65_35.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.binding.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.binding.as_type.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc30.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc30.2(%input.ref)
-// CHECK:STDOUT:   %.loc30.1: %ptr.874 = value_of_initializer %T.binding.as_type.as.As.impl.Convert.call
-// CHECK:STDOUT:   %.loc30.2: %ptr.874 = converted %input.ref, %.loc30.1
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.874] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %void.ref.loc25: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %void.ref.loc25 [concrete = constants.%ptr.874]
+// CHECK:STDOUT:   %bound_method.loc65_35.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc65_35.2(%input.ref)
+// CHECK:STDOUT:   %.loc65_35.1: %ptr.874 = value_of_initializer %T.binding.as_type.as.As.impl.Convert.call
+// CHECK:STDOUT:   %.loc65_35.2: %ptr.874 = converted %input.ref, %.loc65_35.1
+// CHECK:STDOUT:   %.loc65_25: type = splice_block %ptr.loc65_25 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:     %Cpp.ref.loc65_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %void.ref.loc65_20: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
+// CHECK:STDOUT:     %ptr.loc65_25: type = ptr_type %void.ref.loc65_20 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc30.2
+// CHECK:STDOUT:   %p: %ptr.874 = value_binding p, %.loc65_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,14 +399,14 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.259 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc32: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc34: type = ptr_type %S.ref.loc32 [concrete = constants.%ptr.5c7]
-// CHECK:STDOUT:   %.loc30: %ptr.5c7 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.5c7] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc25: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %S.ref.loc25 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %Cpp.ref.loc86_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc86_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %ptr.loc86_40: type = ptr_type %S.ref.loc86_38 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %.loc86_32: %ptr.5c7 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc86_22: type = splice_block %ptr.loc86_22 [concrete = constants.%ptr.5c7] {
+// CHECK:STDOUT:     %Cpp.ref.loc86_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc86_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr.loc86_22: type = ptr_type %S.ref.loc86_20 [concrete = constants.%ptr.5c7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.5c7 = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
@@ -428,12 +428,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.506 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %C.ref.loc31: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr.loc32: type = ptr_type %C.ref.loc31 [concrete = constants.%ptr.31e]
-// CHECK:STDOUT:   %.loc30: %ptr.31e = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.31e] {
-// CHECK:STDOUT:     %C.ref.loc26: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %C.ref.loc26 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %C.ref.loc107_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %ptr.loc107_32: type = ptr_type %C.ref.loc107_31 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %.loc107_28: %ptr.31e = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc107_18: type = splice_block %ptr.loc107_18 [concrete = constants.%ptr.31e] {
+// CHECK:STDOUT:     %C.ref.loc107_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc107_18: type = ptr_type %C.ref.loc107_17 [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.31e = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
@@ -468,7 +468,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc321, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
+// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
 // CHECK:STDOUT:   %UnsafeAs.impl_witness_table.630 = impl_witness_table (%Core.import_ref.d3b), @ptr.as.UnsafeAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -478,22 +478,22 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.259 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc33: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc35: type = ptr_type %S.ref.loc33 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %Cpp.ref.loc121_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc121_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %ptr.loc121_47: type = ptr_type %S.ref.loc121_45 [concrete = constants.%ptr.5c7]
 // CHECK:STDOUT:   %impl.elem0: %.fba = impl_witness_access constants.%UnsafeAs.impl_witness.080, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.fe3]
-// CHECK:STDOUT:   %bound_method.loc31.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc121_39.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%S) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc31.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.5c7 = call %bound_method.loc31.2(%input.ref)
-// CHECK:STDOUT:   %.loc31.1: %ptr.5c7 = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc31.2: %ptr.5c7 = converted %input.ref, %.loc31.1
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.5c7] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc25: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %S.ref.loc25 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %bound_method.loc121_39.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.5c7 = call %bound_method.loc121_39.2(%input.ref)
+// CHECK:STDOUT:   %.loc121_39.1: %ptr.5c7 = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc121_39.2: %ptr.5c7 = converted %input.ref, %.loc121_39.1
+// CHECK:STDOUT:   %.loc121_22: type = splice_block %ptr.loc121_22 [concrete = constants.%ptr.5c7] {
+// CHECK:STDOUT:     %Cpp.ref.loc121_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc121_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr.loc121_22: type = ptr_type %S.ref.loc121_20 [concrete = constants.%ptr.5c7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.5c7 = value_binding p, %.loc31.2
+// CHECK:STDOUT:   %p: %ptr.5c7 = value_binding p, %.loc121_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -520,7 +520,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc321, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
+// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
 // CHECK:STDOUT:   %UnsafeAs.impl_witness_table.630 = impl_witness_table (%Core.import_ref.d3b), @ptr.as.UnsafeAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -530,20 +530,20 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.506 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr.loc33: type = ptr_type %C.ref.loc32 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %C.ref.loc135_38: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %ptr.loc135_39: type = ptr_type %C.ref.loc135_38 [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   %impl.elem0: %.53b = impl_witness_access constants.%UnsafeAs.impl_witness.2f5, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.409]
-// CHECK:STDOUT:   %bound_method.loc31.1: <bound method> = bound_method %input.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc135_35.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%C) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc31.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.31e = call %bound_method.loc31.2(%input.ref)
-// CHECK:STDOUT:   %.loc31.1: %ptr.31e = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc31.2: %ptr.31e = converted %input.ref, %.loc31.1
-// CHECK:STDOUT:   %.loc27: type = splice_block %ptr.loc27 [concrete = constants.%ptr.31e] {
-// CHECK:STDOUT:     %C.ref.loc26: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc27: type = ptr_type %C.ref.loc26 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %bound_method.loc135_35.2: <bound method> = bound_method %input.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.31e = call %bound_method.loc135_35.2(%input.ref)
+// CHECK:STDOUT:   %.loc135_35.1: %ptr.31e = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc135_35.2: %ptr.31e = converted %input.ref, %.loc135_35.1
+// CHECK:STDOUT:   %.loc135_18: type = splice_block %ptr.loc135_18 [concrete = constants.%ptr.31e] {
+// CHECK:STDOUT:     %C.ref.loc135_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc135_18: type = ptr_type %C.ref.loc135_17 [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.31e = value_binding p, %.loc31.2
+// CHECK:STDOUT:   %p: %ptr.31e = value_binding p, %.loc135_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

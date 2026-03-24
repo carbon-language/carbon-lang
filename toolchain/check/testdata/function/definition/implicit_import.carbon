@@ -152,8 +152,8 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_21.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_21.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,8 +189,8 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_26.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_26.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,8 +226,8 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc55_27.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc55_27.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -266,8 +266,8 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc75_32.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc75_32.2 = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.8165c1.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.8aef9d.1: %A.type.8165c1.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc9 [concrete]
+// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc105 [concrete]
 // CHECK:STDOUT:   %A.8aef9d.2: %A.type.8165c1.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,14 +309,14 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.8165c1.2 = fn_decl @A.loc9 [concrete = constants.%A.8aef9d.2] {} {}
+// CHECK:STDOUT:   %default.import.loc95_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc95_31.2 = import <none>
+// CHECK:STDOUT:   %A.decl: %A.type.8165c1.2 = fn_decl @A.loc105 [concrete = constants.%A.8aef9d.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc9() {
+// CHECK:STDOUT: fn @A.loc105() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -359,8 +359,8 @@ fn B() {}
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc116_25.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc116_25.2 = import <none>
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

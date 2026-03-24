@@ -110,38 +110,38 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc26: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %A.ref.loc28: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc9: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
-// CHECK:STDOUT:   %addr.loc31: %ptr.270 = addr_of %.loc9
+// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc28_38: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc28_40: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc28_1: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
+// CHECK:STDOUT:   %addr.loc28: %ptr.270 = addr_of %.loc28_1
+// CHECK:STDOUT:   %A__carbon_thunk.call.loc28: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc28)
+// CHECK:STDOUT:   %.loc28_43: init %A to %.loc28_1 = mark_in_place_init %A__carbon_thunk.call.loc28
+// CHECK:STDOUT:   assign file.%a1.var, %.loc28_43
+// CHECK:STDOUT:   %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc29_38: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc29_40: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc29_1: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
+// CHECK:STDOUT:   %addr.loc29: %ptr.a04 = addr_of %.loc29_1
+// CHECK:STDOUT:   %B__carbon_thunk.call.loc29: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc29)
+// CHECK:STDOUT:   %.loc29_43: init %B to %.loc29_1 = mark_in_place_init %B__carbon_thunk.call.loc29
+// CHECK:STDOUT:   assign file.%b1.var, %.loc29_43
+// CHECK:STDOUT:   %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc30_39: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc30_41: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc30_1: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
+// CHECK:STDOUT:   %addr.loc30: %ptr.a04 = addr_of %.loc30_1
+// CHECK:STDOUT:   %B__carbon_thunk.call.loc30: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc30)
+// CHECK:STDOUT:   %.loc30_44: init %B to %.loc30_1 = mark_in_place_init %B__carbon_thunk.call.loc30
+// CHECK:STDOUT:   assign file.%b2.var, %.loc30_44
+// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc31_39: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc31_41: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc31_1: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
+// CHECK:STDOUT:   %addr.loc31: %ptr.270 = addr_of %.loc31_1
 // CHECK:STDOUT:   %A__carbon_thunk.call.loc31: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc31)
-// CHECK:STDOUT:   %.loc31: init %A to %.loc9 = mark_in_place_init %A__carbon_thunk.call.loc31
-// CHECK:STDOUT:   assign file.%a1.var, %.loc31
-// CHECK:STDOUT:   %Cpp.ref.loc49: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc50: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc52: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc33: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
-// CHECK:STDOUT:   %addr.loc55: %ptr.a04 = addr_of %.loc33
-// CHECK:STDOUT:   %B__carbon_thunk.call.loc55: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc55)
-// CHECK:STDOUT:   %.loc55: init %B to %.loc33 = mark_in_place_init %B__carbon_thunk.call.loc55
-// CHECK:STDOUT:   assign file.%b1.var, %.loc55
-// CHECK:STDOUT:   %Cpp.ref.loc73: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc74: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc76: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc57: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
-// CHECK:STDOUT:   %addr.loc79: %ptr.a04 = addr_of %.loc57
-// CHECK:STDOUT:   %B__carbon_thunk.call.loc79: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc79)
-// CHECK:STDOUT:   %.loc79: init %B to %.loc57 = mark_in_place_init %B__carbon_thunk.call.loc79
-// CHECK:STDOUT:   assign file.%b2.var, %.loc79
-// CHECK:STDOUT:   %Cpp.ref.loc97: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc98: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %A.ref.loc100: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc81: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
-// CHECK:STDOUT:   %addr.loc103: %ptr.270 = addr_of %.loc81
-// CHECK:STDOUT:   %A__carbon_thunk.call.loc103: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc103)
-// CHECK:STDOUT:   %.loc103: init %A to %.loc81 = mark_in_place_init %A__carbon_thunk.call.loc103
-// CHECK:STDOUT:   assign file.%a2.var, %.loc103
+// CHECK:STDOUT:   %.loc31_44: init %A to %.loc31_1 = mark_in_place_init %A__carbon_thunk.call.loc31
+// CHECK:STDOUT:   assign file.%a2.var, %.loc31_44
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

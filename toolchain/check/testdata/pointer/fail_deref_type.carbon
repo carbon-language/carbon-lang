@@ -57,8 +57,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref <error> = var %p.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4: ref <error> = deref %i32.loc5 [concrete = <error>]
+// CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc22: ref <error> = deref %i32.loc22 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref <error> = ref_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -67,8 +67,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var %p2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc11: ref <error> = deref %i32.loc10 [concrete = <error>]
+// CHECK:STDOUT:     %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc27: ref <error> = deref %i32.loc27 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2: ref <error> = ref_binding p2, <error> [concrete = <error>]

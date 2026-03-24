@@ -266,14 +266,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %.loc14: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc29: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .a = %.loc14
+// CHECK:STDOUT:   .a = %.loc29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon
@@ -407,7 +407,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
-// CHECK:STDOUT:     %Abstract.ref.loc14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc71: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -426,7 +426,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %Abstract.ref.loc21: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref.loc72: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -589,7 +589,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %Derived.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %.loc29: Core.Form = init_form %Derived.ref [concrete = constants.%.d9b]
+// CHECK:STDOUT:     %.loc117: Core.Form = init_form %Derived.ref [concrete = constants.%.d9b]
 // CHECK:STDOUT:     %return.param: ref %Derived = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -605,36 +605,36 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %.loc16: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc21.2: type = converted %.loc21.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc19: %Derived.elem.87e = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %.loc112: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc114_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc114_11.2: type = converted %.loc114_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc114_8: %Derived.elem.87e = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d.be5 [concrete = constants.%complete_type.840]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .d = %.loc19
+// CHECK:STDOUT:   .base = %.loc112
+// CHECK:STDOUT:   .d = %.loc114_8
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> out %return.param: %Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc43.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc44.1: %struct_type.base.d.e0f = struct_literal (%.loc37.1, %.loc43.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc44.2: ref %.ec6 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc37.2: init %.ec6 to %.loc44.2 = class_init () [concrete = constants.%empty_struct.8eb]
-// CHECK:STDOUT:   %.loc44.3: init %.ec6 = converted %.loc37.1, %.loc37.2 [concrete = constants.%empty_struct.8eb]
-// CHECK:STDOUT:   %.loc44.4: init %Abstract = as_compatible %.loc44.3 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc44.5: ref %empty_struct_type = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc43.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc44.6: init %empty_struct_type = converted %.loc43.1, %.loc43.2 [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc44.7: init %Derived to %return.param = class_init (%.loc44.4, %.loc44.6) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc45: init %Derived = converted %.loc44.1, %.loc44.7 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   return %.loc45 to %return.param
+// CHECK:STDOUT:   %.loc118_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc118_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc118_30.1: %struct_type.base.d.e0f = struct_literal (%.loc118_20.1, %.loc118_29.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc118_30.2: ref %.ec6 = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc118_20.2: init %.ec6 to %.loc118_30.2 = class_init () [concrete = constants.%empty_struct.8eb]
+// CHECK:STDOUT:   %.loc118_30.3: init %.ec6 = converted %.loc118_20.1, %.loc118_20.2 [concrete = constants.%empty_struct.8eb]
+// CHECK:STDOUT:   %.loc118_30.4: init %Abstract = as_compatible %.loc118_30.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc118_30.5: ref %empty_struct_type = class_element_access %return.param, element1
+// CHECK:STDOUT:   %.loc118_29.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc118_30.6: init %empty_struct_type = converted %.loc118_29.1, %.loc118_29.2 [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc118_30.7: init %Derived to %return.param = class_init (%.loc118_30.4, %.loc118_30.6) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc118_31: init %Derived = converted %.loc118_30.1, %.loc118_30.7 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   return %.loc118_31 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_abstract.carbon
@@ -676,12 +676,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %Abstract.ref.loc32 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %Abstract.ref.loc140_27 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Abstract.ref.loc32: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %.loc32: Core.Form = init_form %Abstract.ref.loc32 [concrete = constants.%.7d7]
+// CHECK:STDOUT:     %Abstract.ref.loc140_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %.loc140: Core.Form = init_form %Abstract.ref.loc140_27 [concrete = constants.%.7d7]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
-// CHECK:STDOUT:     %Abstract.ref.loc29: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc140_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
@@ -698,18 +698,18 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %.loc16: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc21.2: type = converted %.loc21.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc19: %Derived.elem.87e = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %.loc128: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc130_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc130_11.2: type = converted %.loc130_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc130_8: %Derived.elem.87e = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d [concrete = constants.%complete_type.840]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .d = %.loc19
+// CHECK:STDOUT:   .base = %.loc128
+// CHECK:STDOUT:   .d = %.loc130_8
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -761,11 +761,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.9f6 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %d.patt: %pattern_type.9f6 = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc39.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc157_27.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc39.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc39.2: type = converted %.loc39.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc39.3: Core.Form = init_form %.loc39.2 [concrete = constants.%.469]
+// CHECK:STDOUT:     %.loc157_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc157_27.2: type = converted %.loc157_27.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc157_27.3: Core.Form = init_form %.loc157_27.2 [concrete = constants.%.469]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
@@ -775,39 +775,39 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc12.2: type = converted %.loc12.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc10: %Abstract.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc148_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc148_11.2: type = converted %.loc148_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc148_8: %Abstract.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.225 [concrete = constants.%complete_type.8c6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
-// CHECK:STDOUT:   .a = %.loc10
+// CHECK:STDOUT:   .a = %.loc148_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %.loc22: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc27.2: type = converted %.loc27.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc25: %Derived.elem.87e = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %.loc152: %Derived.elem.032 = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc154_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc154_11.2: type = converted %.loc154_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc154_8: %Derived.elem.87e = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d.be5 [concrete = constants.%complete_type.840]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .base = %.loc22
-// CHECK:STDOUT:   .d = %.loc25
+// CHECK:STDOUT:   .base = %.loc152
+// CHECK:STDOUT:   .d = %.loc154_8
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param: %Derived) -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %Derived.elem.032 = name_ref base, @Derived.%.loc22 [concrete = @Derived.%.loc22]
-// CHECK:STDOUT:   %.loc43: ref %Abstract = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %base.ref: %Derived.elem.032 = name_ref base, @Derived.%.loc152 [concrete = @Derived.%.loc152]
+// CHECK:STDOUT:   %.loc165: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -855,7 +855,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc182: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -913,14 +913,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %.loc16: %Derived.elem = base_decl %Abstract.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc192: %Derived.elem = base_decl %Abstract.ref, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.709 [concrete = constants.%complete_type.907]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .base = %.loc192
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -929,16 +929,16 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc35.1: %struct_type.base.f5e = struct_literal (%.loc34.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc207_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc207_39.1: %struct_type.base.f5e = struct_literal (%.loc207_38.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc35.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc35.3: ref %.ec6 = class_element_access %.loc35.2, element0
-// CHECK:STDOUT:   %.loc34.2: init %.ec6 to %.loc35.3 = class_init () [concrete = constants.%empty_struct.8eb]
-// CHECK:STDOUT:   %.loc35.4: init %.ec6 = converted %.loc34.1, %.loc34.2 [concrete = constants.%empty_struct.8eb]
-// CHECK:STDOUT:   %.loc35.5: init %Abstract = as_compatible %.loc35.4 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc35.6: init %Derived to %.loc35.2 = class_init (%.loc35.5) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc36: init %Derived = converted %.loc35.1, %.loc35.6 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc207_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc207_39.3: ref %.ec6 = class_element_access %.loc207_39.2, element0
+// CHECK:STDOUT:   %.loc207_38.2: init %.ec6 to %.loc207_39.3 = class_init () [concrete = constants.%empty_struct.8eb]
+// CHECK:STDOUT:   %.loc207_39.4: init %.ec6 = converted %.loc207_38.1, %.loc207_38.2 [concrete = constants.%empty_struct.8eb]
+// CHECK:STDOUT:   %.loc207_39.5: init %Abstract = as_compatible %.loc207_39.4 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc207_39.6: init %Derived to %.loc207_39.2 = class_init (%.loc207_39.5) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc207_41: init %Derived = converted %.loc207_39.1, %.loc207_39.6 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -979,7 +979,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %Abstract.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %.loc14: Core.Form = init_form %Abstract.ref [concrete = constants.%.7d7]
+// CHECK:STDOUT:     %.loc216: Core.Form = init_form %Abstract.ref [concrete = constants.%.7d7]
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }

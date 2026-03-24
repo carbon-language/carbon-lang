@@ -47,7 +47,7 @@ class Derived {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc29
+// CHECK:STDOUT:   .base = %.loc24
 // CHECK:STDOUT:   .Make = %Derived.Make.decl
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
@@ -56,12 +56,12 @@ class Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %Make.ref: %Base.Make.type = name_ref Make, @Base.%Base.Make.decl [concrete = constants.%Base.Make]
-// CHECK:STDOUT:   %.loc47.1: ref %.7a5 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %Base.Make.call: init %.7a5 to %.loc47.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc47.2: %struct_type.base.cad = struct_literal (%Base.Make.call)
-// CHECK:STDOUT:   %.loc47.3: init %Base = as_compatible %Base.Make.call
-// CHECK:STDOUT:   %.loc47.4: init %Derived to %return.param = class_init (%.loc47.3)
-// CHECK:STDOUT:   %.loc48: init %Derived = converted %.loc47.2, %.loc47.4
-// CHECK:STDOUT:   return %.loc48 to %return.param
+// CHECK:STDOUT:   %.loc27_32.1: ref %.7a5 = class_element_access %return.param, element0
+// CHECK:STDOUT:   %Base.Make.call: init %.7a5 to %.loc27_32.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc27_32.2: %struct_type.base.cad = struct_literal (%Base.Make.call)
+// CHECK:STDOUT:   %.loc27_32.3: init %Base = as_compatible %Base.Make.call
+// CHECK:STDOUT:   %.loc27_32.4: init %Derived to %return.param = class_init (%.loc27_32.3)
+// CHECK:STDOUT:   %.loc27_33: init %Derived = converted %.loc27_32.2, %.loc27_32.4
+// CHECK:STDOUT:   return %.loc27_33 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

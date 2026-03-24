@@ -76,21 +76,21 @@ var x: Class = {};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc12: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc10.1: type = splice_block %.loc10.2 [concrete = type] {
+// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc24_11.1: type = splice_block %.loc24_11.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc24_11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: type = value_binding A, %Class.ref.loc12
+// CHECK:STDOUT:   %A: type = value_binding A, %Class.ref.loc24
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc18.1: type = splice_block %.loc18.2 [concrete = type] {
+// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc30_20.1: type = splice_block %.loc30_20.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc30_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: type = value_binding B, %Class.ref.loc20
+// CHECK:STDOUT:   %B: type = value_binding B, %Class.ref.loc30
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

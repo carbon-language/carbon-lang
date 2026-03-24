@@ -42,15 +42,15 @@ fn Main() {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc11.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc15_20.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc11.2: type = converted %.loc11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc11.3: Core.Form = init_form %.loc11.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc15_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_20.3: Core.Form = init_form %.loc15_20.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %a.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc7.1: type = splice_block %.loc7.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc7.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc7.3: type = converted %.loc7.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc15_13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %empty_tuple.type = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
@@ -62,18 +62,18 @@ fn Main() {
 // CHECK:STDOUT: fn @Echo(%a.param: %empty_tuple.type) -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, %a
-// CHECK:STDOUT:   %.loc14: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15: init %empty_tuple.type = converted %a.ref, %.loc14 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc15
+// CHECK:STDOUT:   %.loc16_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_11: init %empty_tuple.type = converted %a.ref, %.loc16_10 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc16_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [concrete = constants.%Echo]
-// CHECK:STDOUT:   %.loc25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc25.2: %empty_tuple.type = converted %.loc25.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %Echo.call: init %empty_tuple.type = call %Echo.ref(%.loc25.2)
+// CHECK:STDOUT:   %.loc20_9.2: %empty_tuple.type = converted %.loc20_9.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %Echo.call: init %empty_tuple.type = call %Echo.ref(%.loc20_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -67,9 +67,9 @@ var b: T = *a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7.1: type = splice_block %.loc7.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc23_9.1: type = splice_block %.loc23_9.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc7.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc23_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
@@ -105,8 +105,8 @@ var b: T = *a;
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc9: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
+// CHECK:STDOUT:   %.loc33: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %T.ref.loc33: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
@@ -115,7 +115,7 @@ var b: T = *a;
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, imports.%Implicit.T
+// CHECK:STDOUT:   %T.ref.loc38: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,7 +123,7 @@ var b: T = *a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a [concrete = <error>]
-// CHECK:STDOUT:   %.loc16: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc38: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

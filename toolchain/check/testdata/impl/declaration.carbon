@@ -48,12 +48,12 @@ impl i32 as I {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc8: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc17: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc19: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ impl i32 as I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl: %i32.loc6 as %I.ref.loc8 {
+// CHECK:STDOUT: impl @i32.as.I.impl: %i32.loc17 as %I.ref.loc17 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:

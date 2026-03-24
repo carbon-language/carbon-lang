@@ -77,7 +77,7 @@ fn Derived.H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc18: %Derived.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc20: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %Derived.G.decl: %Derived.G.type = fn_decl @Derived.G [concrete = constants.%Derived.G] {} {}
 // CHECK:STDOUT:   %Derived.H.decl: %Derived.H.type = fn_decl @Derived.H [concrete = constants.%Derived.H] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.5a1]
@@ -86,7 +86,7 @@ fn Derived.H() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc18
+// CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .G = %Derived.G.decl
 // CHECK:STDOUT:   .H = %Derived.H.decl
 // CHECK:STDOUT:   .F = <poisoned>

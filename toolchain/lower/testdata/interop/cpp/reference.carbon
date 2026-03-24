@@ -133,7 +133,7 @@ fn GetRefs() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc35.1 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc36_20.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z9TakeCRRefO1C.carbon_thunk(ptr noundef %0) #0 {
@@ -187,26 +187,26 @@ fn GetRefs() {
 // CHECK:STDOUT: define void @_CPassRefs.Main() #2 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !19
-// CHECK:STDOUT:   %.loc34.2.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc36_18.2.temp = alloca {}, align 8, !dbg !20
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !21
-// CHECK:STDOUT:   %.loc66.3.temp = alloca i32, align 4, !dbg !22
-// CHECK:STDOUT:   %.loc74.2.temp = alloca i32, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc41_22.3.temp = alloca i32, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc42_23.2.temp = alloca i32, align 4, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !19
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C(ptr %c.var), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34.2.temp), !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc34.2.temp, ptr align 1 @C.val.loc35.1, i64 0, i1 false), !dbg !20
-// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr %.loc34.2.temp), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc36_18.2.temp), !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc36_18.2.temp, ptr align 1 @C.val.loc36_20.1, i64 0, i1 false), !dbg !20
+// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr %.loc36_18.2.temp), !dbg !25
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C.carbon_thunk(ptr %c.var), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !21
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !21
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi(ptr %n.var), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc66.3.temp), !dbg !22
-// CHECK:STDOUT:   store i32 42, ptr %.loc66.3.temp, align 4, !dbg !22
-// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi.carbon_thunk(ptr %.loc66.3.temp), !dbg !28
-// CHECK:STDOUT:   %.loc74.1 = load i32, ptr %n.var, align 4, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc74.2.temp), !dbg !23
-// CHECK:STDOUT:   store i32 %.loc74.1, ptr %.loc74.2.temp, align 4, !dbg !23
-// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi.carbon_thunk(ptr %.loc74.2.temp), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc41_22.3.temp), !dbg !22
+// CHECK:STDOUT:   store i32 42, ptr %.loc41_22.3.temp, align 4, !dbg !22
+// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi.carbon_thunk(ptr %.loc41_22.3.temp), !dbg !28
+// CHECK:STDOUT:   %.loc42_23.1 = load i32, ptr %n.var, align 4, !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc42_23.2.temp), !dbg !23
+// CHECK:STDOUT:   store i32 %.loc42_23.1, ptr %.loc42_23.2.temp, align 4, !dbg !23
+// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi.carbon_thunk(ptr %.loc42_23.2.temp), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -271,7 +271,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %class.ForceThunk = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc35.1 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc65_20.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk1(ptr noundef nonnull align 1 dereferenceable(1) %0) #0 {
@@ -355,26 +355,26 @@ fn GetRefs() {
 // CHECK:STDOUT: define void @_CPassRefs.Main() #2 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !21
-// CHECK:STDOUT:   %.loc34.2.temp = alloca {}, align 8, !dbg !22
+// CHECK:STDOUT:   %.loc65_18.2.temp = alloca {}, align 8, !dbg !22
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !23
-// CHECK:STDOUT:   %.loc66.3.temp = alloca i32, align 4, !dbg !24
-// CHECK:STDOUT:   %.loc74.2.temp = alloca i32, align 4, !dbg !25
+// CHECK:STDOUT:   %.loc70_22.3.temp = alloca i32, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc71_23.2.temp = alloca i32, align 4, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !21
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34.2.temp), !dbg !22
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc34.2.temp, ptr align 1 @C.val.loc35.1, i64 0, i1 false), !dbg !22
-// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr %.loc34.2.temp), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc65_18.2.temp), !dbg !22
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc65_18.2.temp, ptr align 1 @C.val.loc65_20.1, i64 0, i1 false), !dbg !22
+// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr %.loc65_18.2.temp), !dbg !27
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !23
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !23
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk.carbon_thunk1(ptr %n.var), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc66.3.temp), !dbg !24
-// CHECK:STDOUT:   store i32 42, ptr %.loc66.3.temp, align 4, !dbg !24
-// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk1(ptr %.loc66.3.temp), !dbg !30
-// CHECK:STDOUT:   %.loc74.1 = load i32, ptr %n.var, align 4, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc74.2.temp), !dbg !25
-// CHECK:STDOUT:   store i32 %.loc74.1, ptr %.loc74.2.temp, align 4, !dbg !25
-// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk1(ptr %.loc74.2.temp), !dbg !31
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc70_22.3.temp), !dbg !24
+// CHECK:STDOUT:   store i32 42, ptr %.loc70_22.3.temp, align 4, !dbg !24
+// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk1(ptr %.loc70_22.3.temp), !dbg !30
+// CHECK:STDOUT:   %.loc71_23.1 = load i32, ptr %n.var, align 4, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc71_23.2.temp), !dbg !25
+// CHECK:STDOUT:   store i32 %.loc71_23.1, ptr %.loc71_23.2.temp, align 4, !dbg !25
+// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk1(ptr %.loc71_23.2.temp), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

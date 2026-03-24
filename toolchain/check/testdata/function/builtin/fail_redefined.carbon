@@ -52,9 +52,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %A.type.8165c1.1: type = fn_type @A.loc14 [concrete]
+// CHECK:STDOUT:   %A.type.8165c1.1: type = fn_type @A.loc15 [concrete]
 // CHECK:STDOUT:   %A.8aef9d.1: %A.type.8165c1.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc31 [concrete]
+// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc23 [concrete]
 // CHECK:STDOUT:   %A.8aef9d.2: %A.type.8165c1.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -66,13 +66,13 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.081: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %B.type.d6bcfe.1: type = fn_type @B.loc50 [concrete]
+// CHECK:STDOUT:   %B.type.d6bcfe.1: type = fn_type @B.loc25 [concrete]
 // CHECK:STDOUT:   %B.5d732e.1: %B.type.d6bcfe.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.type.d6bcfe.2: type = fn_type @B.loc68 [concrete]
+// CHECK:STDOUT:   %B.type.d6bcfe.2: type = fn_type @B.loc33 [concrete]
 // CHECK:STDOUT:   %B.5d732e.2: %B.type.d6bcfe.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type.0036b9.1: type = fn_type @C.loc84 [concrete]
+// CHECK:STDOUT:   %C.type.0036b9.1: type = fn_type @C.loc35 [concrete]
 // CHECK:STDOUT:   %C.6a91b4.1: %C.type.0036b9.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type.0036b9.2: type = fn_type @C.loc100 [concrete]
+// CHECK:STDOUT:   %C.type.0036b9.2: type = fn_type @C.loc43 [concrete]
 // CHECK:STDOUT:   %C.6a91b4.2: %C.type.0036b9.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,161 +85,161 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl.loc14
-// CHECK:STDOUT:     .B = %B.decl.loc50
-// CHECK:STDOUT:     .C = %C.decl.loc84
+// CHECK:STDOUT:     .A = %A.decl.loc15
+// CHECK:STDOUT:     .B = %B.decl.loc25
+// CHECK:STDOUT:     .C = %C.decl.loc35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc14: %A.type.8165c1.1 = fn_decl @A.loc14 [concrete = constants.%A.8aef9d.1] {
+// CHECK:STDOUT:   %A.decl.loc15: %A.type.8165c1.1 = fn_decl @A.loc15 [concrete = constants.%A.8aef9d.1] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc13 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc15_25 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc15_25: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_25 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc31: %A.type.8165c1.2 = fn_decl @A.loc31 [concrete = constants.%A.8aef9d.2] {
+// CHECK:STDOUT:   %A.decl.loc23: %A.type.8165c1.2 = fn_decl @A.loc23 [concrete = constants.%A.8aef9d.2] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc30 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc23_32 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc30: Core.Form = init_form %i32.loc30 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc23_32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32.loc23_32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc50: %B.type.d6bcfe.1 = fn_decl @B.loc50 [concrete = constants.%B.5d732e.1] {
+// CHECK:STDOUT:   %B.decl.loc25: %B.type.d6bcfe.1 = fn_decl @B.loc25 [concrete = constants.%B.5d732e.1] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc49 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc25_32 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc49: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc49: Core.Form = init_form %i32.loc49 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc25_32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25_32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc41: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc25_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc46: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc25_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc68: %B.type.d6bcfe.2 = fn_decl @B.loc68 [concrete = constants.%B.5d732e.2] {
+// CHECK:STDOUT:   %B.decl.loc33: %B.type.d6bcfe.2 = fn_decl @B.loc33 [concrete = constants.%B.5d732e.2] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc67 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc33_25 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc67: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc67: Core.Form = init_form %i32.loc67 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc33_25: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc33: Core.Form = init_form %i32.loc33_25 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc60: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc33_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc64: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc33_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc84: %C.type.0036b9.1 = fn_decl @C.loc84 [concrete = constants.%C.6a91b4.1] {
+// CHECK:STDOUT:   %C.decl.loc35: %C.type.0036b9.1 = fn_decl @C.loc35 [concrete = constants.%C.6a91b4.1] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc83 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc35_25 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc83: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc83: Core.Form = init_form %i32.loc83 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc35_25: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc35: Core.Form = init_form %i32.loc35_25 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc76: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc35_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc80: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc35_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc100: %C.type.0036b9.2 = fn_decl @C.loc100 [concrete = constants.%C.6a91b4.2] {
+// CHECK:STDOUT:   %C.decl.loc43: %C.type.0036b9.2 = fn_decl @C.loc43 [concrete = constants.%C.6a91b4.2] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = at_binding_pattern m, %m.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc99 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc43_25 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc99: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc99: Core.Form = init_form %i32.loc99 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc43_25: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc43: Core.Form = init_form %i32.loc43_25 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc92: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc43_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc96: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc43_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc14(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT: fn @A.loc15(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc31(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @A.loc23(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc33.1: <bound method> = bound_method %n.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc23_45.1: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc33.2: <bound method> = bound_method %n.ref, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc33.2(%n.ref)
+// CHECK:STDOUT:   %bound_method.loc23_45.2: <bound method> = bound_method %n.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_45.2(%n.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.loc50(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @B.loc25(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc52.1: <bound method> = bound_method %n.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc25_45.1: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc52.2: <bound method> = bound_method %n.ref, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc52.2(%n.ref)
+// CHECK:STDOUT:   %bound_method.loc25_45.2: <bound method> = bound_method %n.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_45.2(%n.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.loc68(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT: fn @B.loc33(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.loc84(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc35(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.loc100(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc43(%n.param: %i32, %m.param: %i32) -> out %return.param: %i32 = "int.sadd";
 // CHECK:STDOUT:

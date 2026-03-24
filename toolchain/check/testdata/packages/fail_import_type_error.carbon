@@ -72,7 +72,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %a_ref.var_patt: <error> = var_pattern %a_ref.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var %a_ref.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %x.ref.loc7: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref.loc23: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %a_ref: ref <error> = ref_binding a_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ref.patt: <error> = ref_binding_pattern b_ref [concrete]
@@ -80,8 +80,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var %b_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc16: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc17: <error> = struct_literal (%x.ref.loc16) [concrete = <error>]
+// CHECK:STDOUT:     %x.ref.loc28: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc28: <error> = struct_literal (%x.ref.loc28) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: ref <error> = ref_binding b_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -90,8 +90,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var %c_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc23: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc25: <error> = tuple_literal (%x.ref.loc23) [concrete = <error>]
+// CHECK:STDOUT:     %x.ref.loc33: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc33: <error> = tuple_literal (%x.ref.loc33) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref: ref <error> = ref_binding c_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -99,8 +99,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %d_ref.var_patt: <error> = var_pattern %d_ref.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var %d_ref.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc31: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc30: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc38: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %x.ref.loc38: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref: ref <error> = ref_binding d_ref, <error> [concrete = <error>]
@@ -158,28 +158,28 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc46: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc47: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7ce = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7ce = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %i32 = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc48: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %c: ref %i32 = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.7ce = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.7ce = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var %d.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc49: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: ref %i32 = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -72,8 +72,8 @@ impl C as B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc20_17.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc20_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.impl.carbon
@@ -95,12 +95,12 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref.fa0 = import_ref Main//b, loc15, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//b, loc6, unloaded
-// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc13, loaded [symbolic = @B.WithSelf.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc14, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.e33cd1.2: %B.type = import_ref Main//b, loc10, loaded [symbolic = constants.%Self.f45]
-// CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//b, loc10, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fa0 = import_ref Main//b, loc27_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//b, loc25_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc27_18, loaded [symbolic = @B.WithSelf.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc27_24, loaded [concrete = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.e33cd1.2: %B.type = import_ref Main//b, loc26_14, loaded [symbolic = constants.%Self.f45]
+// CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//b, loc26_14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -109,16 +109,16 @@ impl C as B {}
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc32_17.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc32_17.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11: type = splice_block %B.ref [concrete = constants.%B.type] {
+// CHECK:STDOUT:     %.loc34: type = splice_block %B.ref [concrete = constants.%B.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc9.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc34_13.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc34_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,8 +146,8 @@ impl C as B {}
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc9.2: %B.type) {
-// CHECK:STDOUT:   %T.loc9.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc9.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc34_13.2: %B.type) {
+// CHECK:STDOUT:   %T.loc34_13.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc34_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -169,6 +169,6 @@ impl C as B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc9.1 => constants.%T
+// CHECK:STDOUT:   %T.loc34_13.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

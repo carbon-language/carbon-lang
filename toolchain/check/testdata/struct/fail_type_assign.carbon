@@ -56,7 +56,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.268 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc9: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc22: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
@@ -67,7 +67,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:   %.loc1: %struct_type.a = converted %struct_type.a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22: %struct_type.a = converted %struct_type.a, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

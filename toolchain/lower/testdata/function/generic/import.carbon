@@ -117,9 +117,9 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p.var), !dbg !9
 // CHECK:STDOUT:   %DirectGeneric.call = call ptr @_CDirectGeneric.Main.b88d1103f417c6d4(ptr %n.var), !dbg !10
 // CHECK:STDOUT:   store ptr %DirectGeneric.call, ptr %p.var, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc38 = load ptr, ptr %p.var, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc37.2 = load i32, ptr %.loc38, align 4, !dbg !12
-// CHECK:STDOUT:   ret i32 %.loc37.2, !dbg !13
+// CHECK:STDOUT:   %.loc56_11 = load ptr, ptr %p.var, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc56_10.2 = load i32, ptr %.loc56_11, align 4, !dbg !12
+// CHECK:STDOUT:   ret i32 %.loc56_10.2, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

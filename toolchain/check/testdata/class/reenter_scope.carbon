@@ -58,31 +58,31 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc26 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc20 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc26: Core.Form = init_form %i32.loc26 [concrete = constants.%.ff5]
-// CHECK:STDOUT:     %return.param.loc26: ref %i32 = out_param call_param0
-// CHECK:STDOUT:     %return.loc26: ref %i32 = return_slot %return.param.loc26
+// CHECK:STDOUT:     %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc20: Core.Form = init_form %i32.loc20 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc26 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc20 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %i32.loc9 [concrete = constants.%.ff5]
-// CHECK:STDOUT:     %return.param.loc9: ref %i32 = out_param call_param0
-// CHECK:STDOUT:     %return.loc9: ref %i32 = return_slot %return.param.loc9
+// CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %.loc17: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -95,14 +95,14 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   .G = %Class.G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F() -> out %return.param.loc26: %i32 {
+// CHECK:STDOUT: fn @Class.F() -> out %return.param.loc20: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %G.ref.loc29: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
-// CHECK:STDOUT:   %Class.G.call.loc32: init %i32 = call %G.ref.loc29()
-// CHECK:STDOUT:   %G.ref.loc35: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
-// CHECK:STDOUT:   %Class.G.call.loc37: init %i32 = call %G.ref.loc35()
-// CHECK:STDOUT:   return %Class.G.call.loc37
+// CHECK:STDOUT:   %G.ref.loc21: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
+// CHECK:STDOUT:   %Class.G.call.loc21: init %i32 = call %G.ref.loc21()
+// CHECK:STDOUT:   %G.ref.loc22: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
+// CHECK:STDOUT:   %Class.G.call.loc22: init %i32 = call %G.ref.loc22()
+// CHECK:STDOUT:   return %Class.G.call.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G() -> out %return.param: %i32;

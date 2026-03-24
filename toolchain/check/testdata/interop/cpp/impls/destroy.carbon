@@ -273,11 +273,11 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.27d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %PublicDestructor = var %a.var_patt
-// CHECK:STDOUT:   %.loc23.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc23.2: init %PublicDestructor to %a.var = class_init () [concrete = constants.%PublicDestructor.val]
-// CHECK:STDOUT:   %.loc14: init %PublicDestructor = converted %.loc23.1, %.loc23.2 [concrete = constants.%PublicDestructor.val]
-// CHECK:STDOUT:   assign %a.var, %.loc14
-// CHECK:STDOUT:   %.loc19: type = splice_block %PublicDestructor.ref [concrete = constants.%PublicDestructor] {
+// CHECK:STDOUT:   %.loc61_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc61_41.2: init %PublicDestructor to %a.var = class_init () [concrete = constants.%PublicDestructor.val]
+// CHECK:STDOUT:   %.loc61_3: init %PublicDestructor = converted %.loc61_41.1, %.loc61_41.2 [concrete = constants.%PublicDestructor.val]
+// CHECK:STDOUT:   assign %a.var, %.loc61_3
+// CHECK:STDOUT:   %.loc61_20: type = splice_block %PublicDestructor.ref [concrete = constants.%PublicDestructor] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %PublicDestructor.ref: type = name_ref PublicDestructor, imports.%PublicDestructor.decl [concrete = constants.%PublicDestructor]
 // CHECK:STDOUT:   }
@@ -296,11 +296,11 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.1b8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %TrivialDestructor = var %a.var_patt
-// CHECK:STDOUT:   %.loc40.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc40.2: init %TrivialDestructor to %a.var = class_init () [concrete = constants.%TrivialDestructor.val]
-// CHECK:STDOUT:   %.loc31: init %TrivialDestructor = converted %.loc40.1, %.loc40.2 [concrete = constants.%TrivialDestructor.val]
-// CHECK:STDOUT:   assign %a.var, %.loc31
-// CHECK:STDOUT:   %.loc36: type = splice_block %TrivialDestructor.ref [concrete = constants.%TrivialDestructor] {
+// CHECK:STDOUT:   %.loc65_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc65_42.2: init %TrivialDestructor to %a.var = class_init () [concrete = constants.%TrivialDestructor.val]
+// CHECK:STDOUT:   %.loc65_3: init %TrivialDestructor = converted %.loc65_42.1, %.loc65_42.2 [concrete = constants.%TrivialDestructor.val]
+// CHECK:STDOUT:   assign %a.var, %.loc65_3
+// CHECK:STDOUT:   %.loc65_20: type = splice_block %TrivialDestructor.ref [concrete = constants.%TrivialDestructor] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %TrivialDestructor.ref: type = name_ref TrivialDestructor, imports.%TrivialDestructor.decl [concrete = constants.%TrivialDestructor]
 // CHECK:STDOUT:   }
@@ -356,15 +356,15 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9f6 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
-// CHECK:STDOUT:   %.loc36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc37.1: %struct_type.base.f5e = struct_literal (%.loc36.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc37.2: ref %.ce2 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc36.2: init %.ce2 to %.loc37.2 = class_init () [concrete = constants.%empty_struct.377]
-// CHECK:STDOUT:   %.loc37.3: init %.ce2 = converted %.loc36.1, %.loc36.2 [concrete = constants.%empty_struct.377]
-// CHECK:STDOUT:   %.loc37.4: init %ProtectedDestructor = as_compatible %.loc37.3 [concrete = constants.%ProtectedDestructor.val]
-// CHECK:STDOUT:   %.loc37.5: init %Derived to %a.var = class_init (%.loc37.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc25: init %Derived = converted %.loc37.1, %.loc37.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc25
+// CHECK:STDOUT:   %.loc80_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc80_38.1: %struct_type.base.f5e = struct_literal (%.loc80_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc80_38.2: ref %.ce2 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc80_37.2: init %.ce2 to %.loc80_38.2 = class_init () [concrete = constants.%empty_struct.377]
+// CHECK:STDOUT:   %.loc80_38.3: init %.ce2 = converted %.loc80_37.1, %.loc80_37.2 [concrete = constants.%empty_struct.377]
+// CHECK:STDOUT:   %.loc80_38.4: init %ProtectedDestructor = as_compatible %.loc80_38.3 [concrete = constants.%ProtectedDestructor.val]
+// CHECK:STDOUT:   %.loc80_38.5: init %Derived to %a.var = class_init (%.loc80_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc80_3: init %Derived = converted %.loc80_38.1, %.loc80_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc80_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
@@ -400,15 +400,15 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9f6 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
-// CHECK:STDOUT:   %.loc36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc37.1: %struct_type.base.f5e = struct_literal (%.loc36.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc37.2: ref %.b20 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc36.2: init %.b20 to %.loc37.2 = class_init () [concrete = constants.%empty_struct.361]
-// CHECK:STDOUT:   %.loc37.3: init %.b20 = converted %.loc36.1, %.loc36.2 [concrete = constants.%empty_struct.361]
-// CHECK:STDOUT:   %.loc37.4: init %PrivateDestructor = as_compatible %.loc37.3 [concrete = constants.%PrivateDestructor.val]
-// CHECK:STDOUT:   %.loc37.5: init %Derived to %a.var = class_init (%.loc37.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc25: init %Derived = converted %.loc37.1, %.loc37.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc25
+// CHECK:STDOUT:   %.loc97_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc97_38.1: %struct_type.base.f5e = struct_literal (%.loc97_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc97_38.2: ref %.b20 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc97_37.2: init %.b20 to %.loc97_38.2 = class_init () [concrete = constants.%empty_struct.361]
+// CHECK:STDOUT:   %.loc97_38.3: init %.b20 = converted %.loc97_37.1, %.loc97_37.2 [concrete = constants.%empty_struct.361]
+// CHECK:STDOUT:   %.loc97_38.4: init %PrivateDestructor = as_compatible %.loc97_38.3 [concrete = constants.%PrivateDestructor.val]
+// CHECK:STDOUT:   %.loc97_38.5: init %Derived to %a.var = class_init (%.loc97_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc97_3: init %Derived = converted %.loc97_38.1, %.loc97_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc97_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op

@@ -34,8 +34,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc28 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @D.val.loc36 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc20_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @D.val.loc21_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
@@ -45,19 +45,19 @@ fn G() {
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %m.var = alloca double, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc28, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc36, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc21_3, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !10
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %m.var, align 8, !dbg !10
 // CHECK:STDOUT:   call void @_CF.Main.0c4ab795cec6cb27(ptr %c.var), !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main.0c4ab795cec6cb27(ptr %d.var), !dbg !12
-// CHECK:STDOUT:   %.loc70 = load i32, ptr %n.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc70), !dbg !14
-// CHECK:STDOUT:   %.loc75 = load double, ptr %m.var, align 8, !dbg !15
-// CHECK:STDOUT:   call void @_CF.Main.d4b5665541d5d7a8(double %.loc75), !dbg !16
+// CHECK:STDOUT:   %.loc27 = load i32, ptr %n.var, align 4, !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc27), !dbg !14
+// CHECK:STDOUT:   %.loc28 = load double, ptr %m.var, align 8, !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main.d4b5665541d5d7a8(double %.loc28), !dbg !16
 // CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }

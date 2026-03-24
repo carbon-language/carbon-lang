@@ -106,7 +106,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//a, loc14, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//a, loc20_14, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.751 = import_ref Other//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [concrete = imports.%NS1]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]
-// CHECK:STDOUT:     %.loc25: Core.Form = init_form %A.ref [concrete = constants.%.71f]
+// CHECK:STDOUT:     %.loc30_14: Core.Form = init_form %A.ref [concrete = constants.%.71f]
 // CHECK:STDOUT:     %return.param: ref %A = out_param call_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -152,10 +152,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %A {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc30.2: init %A to %return.param = class_init () [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc31: init %A = converted %.loc30.1, %.loc30.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   return %.loc31 to %return.param
+// CHECK:STDOUT:   %.loc30_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc30_27.2: init %A to %return.param = class_init () [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc30_28: init %A = converted %.loc30_27.1, %.loc30_27.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   return %.loc30_28 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
@@ -208,7 +208,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.A: type = import_ref Other//a, A, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -233,40 +233,40 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref.loc16: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc17: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc20.1: ref %A = temporary_storage
-// CHECK:STDOUT:   %F.call.loc20: init %A to %.loc20.1 = call %F.ref.loc17()
-// CHECK:STDOUT:   %.loc20.2: ref %A = temporary %.loc20.1, %F.call.loc20
+// CHECK:STDOUT:   %Other.ref.loc39: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
+// CHECK:STDOUT:   %F.ref.loc39: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc39_11.1: ref %A = temporary_storage
+// CHECK:STDOUT:   %F.call.loc39: init %A to %.loc39_11.1 = call %F.ref.loc39()
+// CHECK:STDOUT:   %.loc39_11.2: ref %A = temporary %.loc39_11.1, %F.call.loc39
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.272 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.272 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%A, (constants.%DefaultOrUnformed.impl_witness.c9e) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc30.1: %DefaultOrUnformed.type = converted constants.%A, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc30.1 [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc30.2: type = converted %.loc30.1, %as_type [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc42_21.1: %DefaultOrUnformed.type = converted constants.%A, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc42_21.1 [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc42_21.2: type = converted %.loc42_21.1, %as_type [concrete = constants.%A]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.993, @T.as.DefaultOrUnformed.impl.Op(constants.%A) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
-// CHECK:STDOUT:   %.loc22: ref %A = splice_block %a.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %A to %.loc22 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc42_3: ref %A = splice_block %a.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %A to %.loc42_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %a.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc28: type = splice_block %A.ref [concrete = constants.%A] {
-// CHECK:STDOUT:     %Other.ref.loc25: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
+// CHECK:STDOUT:   %.loc42_19: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:     %Other.ref.loc42: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.f3d [concrete = imports.%NS1.f3d]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %A = name_ref a, %a
-// CHECK:STDOUT:   %Other.ref.loc33: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc34: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc31: ref %A = splice_block %a.ref {}
-// CHECK:STDOUT:   %F.call.loc37: init %A to %.loc31 = call %F.ref.loc34()
-// CHECK:STDOUT:   assign %a.ref, %F.call.loc37
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %a.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%a.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc20: <bound method> = bound_method %.loc20.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc20: init %empty_tuple.type = call %Destroy.Op.bound.loc20(%.loc20.2)
+// CHECK:STDOUT:   %Other.ref.loc45: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
+// CHECK:STDOUT:   %F.ref.loc45: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc45: ref %A = splice_block %a.ref {}
+// CHECK:STDOUT:   %F.call.loc45: init %A to %.loc45 = call %F.ref.loc45()
+// CHECK:STDOUT:   assign %a.ref, %F.call.loc45
+// CHECK:STDOUT:   %Destroy.Op.bound.loc42: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc42: init %empty_tuple.type = call %Destroy.Op.bound.loc42(%a.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc39: <bound method> = bound_method %.loc39_11.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc39: init %empty_tuple.type = call %Destroy.Op.bound.loc39(%.loc39_11.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

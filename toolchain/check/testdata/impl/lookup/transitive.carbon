@@ -86,10 +86,10 @@ fn Call() {
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc12.1: type = splice_block %.loc12.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %.loc19_26.1: type = splice_block %.loc19_26.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc12.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc19_26.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
@@ -146,10 +146,10 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.7f4 = import_ref Main//i, loc16, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7f4 = import_ref Main//i, loc19_33, unloaded
 // CHECK:STDOUT:   %Main.F: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.a1f) = import_ref Main//i, F, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cc3)]
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//i, loc6, loaded [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//i, loc6, unloaded
+// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//i, loc19_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//i, loc19_13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -258,7 +258,7 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//c, loc11, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//c, loc27_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//c, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,7 +275,7 @@ fn Call() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc13: Core.Form = init_form %C.ref [concrete = constants.%.a69]
+// CHECK:STDOUT:     %.loc36: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -331,15 +331,15 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//get, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.a60 = import_ref Main//get, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.a54: %I.assoc_type = import_ref Main//i, loc16, loaded [concrete = constants.%assoc0.a42]
+// CHECK:STDOUT:   %Main.import_ref.a54: %I.assoc_type = import_ref Main//i, loc19_33, loaded [concrete = constants.%assoc0.a42]
 // CHECK:STDOUT:   %Main.F = import_ref Main//i, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//i, loc6, loaded [symbolic = constants.%Self.651]
-// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//i, loc6, unloaded
-// CHECK:STDOUT:   %Main.import_ref.972: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.a1f) = import_ref Main//i, loc16, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cc3)]
-// CHECK:STDOUT:   %Main.import_ref.31c: <witness> = import_ref Main//c, loc16, loaded [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//c, loc13, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.91f: type = import_ref Main//c, loc15, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.706: %C.as.I.impl.F.type = import_ref Main//c, loc27, loaded [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//i, loc19_13, loaded [symbolic = constants.%Self.651]
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//i, loc19_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.972: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.a1f) = import_ref Main//i, loc19_33, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cc3)]
+// CHECK:STDOUT:   %Main.import_ref.31c: <witness> = import_ref Main//c, loc28_13, loaded [concrete = constants.%I.impl_witness]
+// CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//c, loc28_6, loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.91f: type = import_ref Main//c, loc28_11, loaded [concrete = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.706: %C.as.I.impl.F.type = import_ref Main//c, loc28_41, loaded [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.706), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -380,17 +380,17 @@ fn Call() {
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, imports.%Main.Get [concrete = constants.%Get]
-// CHECK:STDOUT:   %.loc19.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %Get.call: init %C to %.loc19.1 = call %Get.ref()
+// CHECK:STDOUT:   %.loc47_7.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %Get.call: init %C to %.loc47_7.1 = call %Get.ref()
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.a54 [concrete = constants.%assoc0.a42]
 // CHECK:STDOUT:   %impl.elem0: %.c4c = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Get.call, %impl.elem0
-// CHECK:STDOUT:   %.loc19.2: ref %C = temporary %.loc19.1, %Get.call
-// CHECK:STDOUT:   %.loc19.3: %C = acquire_value %.loc19.2
-// CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc19.3)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc19.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc19.2)
+// CHECK:STDOUT:   %.loc47_7.2: ref %C = temporary %.loc47_7.1, %Get.call
+// CHECK:STDOUT:   %.loc47_7.3: %C = acquire_value %.loc47_7.2
+// CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc47_7.3)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc47_7.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc47_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

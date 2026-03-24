@@ -85,10 +85,10 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassBool.Main() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc79.1.temp = alloca i1, align 1, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc79.1.temp), !dbg !25
-// CHECK:STDOUT:   call void @_CMakeBool.Main(ptr %.loc79.1.temp), !dbg !25
-// CHECK:STDOUT:   call void @_CTakeBool.Main(ptr %.loc79.1.temp), !dbg !26
+// CHECK:STDOUT:   %.loc28_21.1.temp = alloca i1, align 1, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_21.1.temp), !dbg !25
+// CHECK:STDOUT:   call void @_CMakeBool.Main(ptr %.loc28_21.1.temp), !dbg !25
+// CHECK:STDOUT:   call void @_CTakeBool.Main(ptr %.loc28_21.1.temp), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,12 +110,12 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassAdapterI32.Main() #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc144.1.temp = alloca i32, align 4, !dbg !38
+// CHECK:STDOUT:   %.loc48_33.1.temp = alloca i32, align 4, !dbg !38
 // CHECK:STDOUT:   %MakeAdapterI32.call = call i32 @_CMakeAdapterI32.Main(), !dbg !38
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc144.1.temp), !dbg !38
-// CHECK:STDOUT:   store i32 %MakeAdapterI32.call, ptr %.loc144.1.temp, align 4, !dbg !38
-// CHECK:STDOUT:   %.loc144.3 = load i32, ptr %.loc144.1.temp, align 4, !dbg !38
-// CHECK:STDOUT:   call void @_CTakeAdapterI32.Main(i32 %.loc144.3), !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc48_33.1.temp), !dbg !38
+// CHECK:STDOUT:   store i32 %MakeAdapterI32.call, ptr %.loc48_33.1.temp, align 4, !dbg !38
+// CHECK:STDOUT:   %.loc48_33.3 = load i32, ptr %.loc48_33.1.temp, align 4, !dbg !38
+// CHECK:STDOUT:   call void @_CTakeAdapterI32.Main(i32 %.loc48_33.3), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,10 +130,10 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassAdapterBool.Main() #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc179.1.temp = alloca i1, align 1, !dbg !46
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc179.1.temp), !dbg !46
-// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc179.1.temp), !dbg !46
-// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc179.1.temp), !dbg !47
+// CHECK:STDOUT:   %.loc55_35.1.temp = alloca i1, align 1, !dbg !46
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc55_35.1.temp), !dbg !46
+// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !46
+// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -87,65 +87,65 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pa.patt: %pattern_type.bcf = value_binding_pattern pa [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: type = splice_block %ptr.loc15 [concrete = constants.%ptr.270] {
-// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc13: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %A.ref.loc13 [concrete = constants.%ptr.270]
+// CHECK:STDOUT:   %.loc31: type = splice_block %ptr.loc31 [concrete = constants.%ptr.270] {
+// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc31: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %ptr.loc31: type = ptr_type %A.ref.loc31 [concrete = constants.%ptr.270]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pa: %ptr.270 = value_binding pa, @__global_init.%addr.loc17
+// CHECK:STDOUT:   %pa: %ptr.270 = value_binding pa, @__global_init.%addr.loc31
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pb.patt: %pattern_type.837 = value_binding_pattern pb [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc33: type = splice_block %ptr.loc33 [concrete = constants.%ptr.a04] {
-// CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %B.ref.loc31: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc33: type = ptr_type %B.ref.loc31 [concrete = constants.%ptr.a04]
+// CHECK:STDOUT:   %.loc32: type = splice_block %ptr.loc32 [concrete = constants.%ptr.a04] {
+// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %B.ref.loc32: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:     %ptr.loc32: type = ptr_type %B.ref.loc32 [concrete = constants.%ptr.a04]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pb: %ptr.a04 = value_binding pb, @__global_init.%addr.loc35
+// CHECK:STDOUT:   %pb: %ptr.a04 = value_binding pb, @__global_init.%addr.loc32
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pwa.patt: %pattern_type.bcf = value_binding_pattern pwa [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc51: type = splice_block %ptr.loc51 [concrete = constants.%ptr.270] {
-// CHECK:STDOUT:     %Cpp.ref.loc48: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc49: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc51: type = ptr_type %A.ref.loc49 [concrete = constants.%ptr.270]
+// CHECK:STDOUT:   %.loc33: type = splice_block %ptr.loc33 [concrete = constants.%ptr.270] {
+// CHECK:STDOUT:     %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %ptr.loc33: type = ptr_type %A.ref.loc33 [concrete = constants.%ptr.270]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pwa: %ptr.270 = value_binding pwa, @__global_init.%addr.loc53
+// CHECK:STDOUT:   %pwa: %ptr.270 = value_binding pwa, @__global_init.%addr.loc33
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pwb.patt: %pattern_type.837 = value_binding_pattern pwb [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc71: type = splice_block %ptr.loc71 [concrete = constants.%ptr.a04] {
-// CHECK:STDOUT:     %Cpp.ref.loc68: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %B.ref.loc69: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc71: type = ptr_type %B.ref.loc69 [concrete = constants.%ptr.a04]
+// CHECK:STDOUT:   %.loc34: type = splice_block %ptr.loc34 [concrete = constants.%ptr.a04] {
+// CHECK:STDOUT:     %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %B.ref.loc34: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:     %ptr.loc34: type = ptr_type %B.ref.loc34 [concrete = constants.%ptr.a04]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pwb: %ptr.a04 = value_binding pwb, @__global_init.%addr.loc73
+// CHECK:STDOUT:   %pwb: %ptr.a04 = value_binding pwb, @__global_init.%addr.loc34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %var.ref.loc19: %var.type.230 = name_ref r#var, imports.%var.template.326 [concrete = constants.%var.template.326]
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc23: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %addr.loc17: %ptr.270 = addr_of imports.%var.var.2f7 [concrete = constants.%addr.0b0]
-// CHECK:STDOUT:   %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %var.ref.loc37: %var.type.230 = name_ref r#var, imports.%var.template.326 [concrete = constants.%var.template.326]
-// CHECK:STDOUT:   %Cpp.ref.loc40: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc41: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %addr.loc35: %ptr.a04 = addr_of imports.%var.var.a15 [concrete = constants.%addr.324]
-// CHECK:STDOUT:   %Cpp.ref.loc54: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Wrap.ref.loc55: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
-// CHECK:STDOUT:   %var.ref.loc57: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
-// CHECK:STDOUT:   %Cpp.ref.loc60: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc61: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %addr.loc53: %ptr.270 = addr_of imports.%var.var.2e6 [concrete = constants.%addr.113]
-// CHECK:STDOUT:   %Cpp.ref.loc74: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Wrap.ref.loc75: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
-// CHECK:STDOUT:   %var.ref.loc77: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
-// CHECK:STDOUT:   %Cpp.ref.loc80: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc81: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %addr.loc73: %ptr.a04 = addr_of imports.%var.var.bab [concrete = constants.%addr.594]
+// CHECK:STDOUT:   %Cpp.ref.loc31_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %var.ref.loc31: %var.type.230 = name_ref r#var, imports.%var.template.326 [concrete = constants.%var.template.326]
+// CHECK:STDOUT:   %Cpp.ref.loc31_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc31: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %addr.loc31: %ptr.270 = addr_of imports.%var.var.2f7 [concrete = constants.%addr.0b0]
+// CHECK:STDOUT:   %Cpp.ref.loc32_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %var.ref.loc32: %var.type.230 = name_ref r#var, imports.%var.template.326 [concrete = constants.%var.template.326]
+// CHECK:STDOUT:   %Cpp.ref.loc32_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc32: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %addr.loc32: %ptr.a04 = addr_of imports.%var.var.a15 [concrete = constants.%addr.324]
+// CHECK:STDOUT:   %Cpp.ref.loc33_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Wrap.ref.loc33: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
+// CHECK:STDOUT:   %var.ref.loc33: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
+// CHECK:STDOUT:   %Cpp.ref.loc33_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %addr.loc33: %ptr.270 = addr_of imports.%var.var.2e6 [concrete = constants.%addr.113]
+// CHECK:STDOUT:   %Cpp.ref.loc34_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Wrap.ref.loc34: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
+// CHECK:STDOUT:   %var.ref.loc34: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
+// CHECK:STDOUT:   %Cpp.ref.loc34_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc34: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %addr.loc34: %ptr.a04 = addr_of imports.%var.var.bab [concrete = constants.%addr.594]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

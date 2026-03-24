@@ -139,55 +139,55 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc22: %pattern_type.a96 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8.1: type = splice_block %.loc8.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc8.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc8.3: type = converted %.loc8.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc22_9.1: type = splice_block %.loc22_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc22_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc22_9.3: type = converted %.loc22_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc11: %empty_struct_type = converted @__global_init.%.loc11, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %_.loc5: %empty_struct_type = value_binding _, %.loc11
+// CHECK:STDOUT:   %.loc22_14: %empty_struct_type = converted @__global_init.%.loc22, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %_.loc22: %empty_struct_type = value_binding _, %.loc22_14
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc14: %pattern_type.a96 = ref_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc14 [concrete]
+// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.a96 = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc23 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
-// CHECK:STDOUT:   %.loc17.1: type = splice_block %.loc17.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc17.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc17.3: type = converted %.loc17.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc23_9.1: type = splice_block %.loc23_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc23_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc23_9.3: type = converted %.loc23_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc14: ref %empty_struct_type = ref_binding _, %_.var
+// CHECK:STDOUT:   %_.loc23: ref %empty_struct_type = ref_binding _, %_.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc28: %pattern_type.a96 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc26: %pattern_type.a96 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc31.1: type = splice_block %.loc31.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc31.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc31.3: type = converted %.loc31.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc26_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc26_11.1: type = splice_block %.loc26_11.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc26_11.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc26_11.3: type = converted %.loc26_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc34.2: %empty_struct_type = converted %.loc34.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %_.loc28: %empty_struct_type = value_binding _, %.loc34.2
+// CHECK:STDOUT:   %.loc26_16.2: %empty_struct_type = converted %.loc26_16.1, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %_.loc26: %empty_struct_type = value_binding _, %.loc26_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc37: %pattern_type.a96 = ref_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc37 [concrete]
+// CHECK:STDOUT:     %_.patt.loc27: %pattern_type.a96 = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc27 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
-// CHECK:STDOUT:   %.loc43.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc43.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc36: init %empty_struct_type = converted %.loc43.1, %.loc43.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign %_.var, %.loc36
-// CHECK:STDOUT:   %.loc40.1: type = splice_block %.loc40.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc40.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc40.3: type = converted %.loc40.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc27_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc27_16.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc27_3: init %empty_struct_type = converted %.loc27_16.1, %.loc27_16.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign %_.var, %.loc27_3
+// CHECK:STDOUT:   %.loc27_11.1: type = splice_block %.loc27_11.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc27_11.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc27_11.3: type = converted %.loc27_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc37: ref %empty_struct_type = ref_binding _, %_.var
+// CHECK:STDOUT:   %_.loc27: ref %empty_struct_type = ref_binding _, %_.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   return
@@ -197,11 +197,11 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc20.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13: init %empty_struct_type = converted %.loc20.1, %.loc20.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign file.%_.var, %.loc13
+// CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc23_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc23_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc23_1: init %empty_struct_type = converted %.loc23_14.1, %.loc23_14.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign file.%_.var, %.loc23_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,9 +240,9 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
-// CHECK:STDOUT:     %.loc10.1: type = splice_block %.loc10.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc10.3: type = converted %.loc10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc34_10.1: type = splice_block %.loc34_10.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc34_10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc34_10.3: type = converted %.loc34_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
 // CHECK:STDOUT:   }
@@ -251,9 +251,9 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
-// CHECK:STDOUT:     %.loc19.1: type = splice_block %.loc19.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc19.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc19.3: type = converted %.loc19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc36_10.1: type = splice_block %.loc36_10.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc36_10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc36_10.3: type = converted %.loc36_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
 // CHECK:STDOUT:   }
@@ -270,10 +270,10 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc39_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc31.2: %empty_struct_type = converted %.loc31.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc31.2)
+// CHECK:STDOUT:   %.loc39_6.2: %empty_struct_type = converted %.loc39_6.1, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc39_6.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,17 +311,17 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc46_10.1: type = splice_block %.loc46_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc46_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc7.2: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc46_6.2: type = symbolic_binding _, 0 [symbolic = %_.loc46_6.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc7.2: type) {
-// CHECK:STDOUT:   %_.loc7.1: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc46_6.2: type) {
+// CHECK:STDOUT:   %_.loc46_6.1: type = symbolic_binding _, 0 [symbolic = %_.loc46_6.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -334,19 +334,19 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc23: type = converted %.loc22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc49_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc49_7: type = converted %.loc49_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.loc7.1 => constants.%_
+// CHECK:STDOUT:   %_.loc46_6.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %_.loc7.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.loc46_6.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -385,17 +385,17 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc56_10.1: type = splice_block %.loc56_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc56_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc7.2: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc56_6.2: type = symbolic_binding _, 0 [symbolic = %_.loc56_6.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc7.2: type) {
-// CHECK:STDOUT:   %_.loc7.1: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc56_6.2: type) {
+// CHECK:STDOUT:   %_.loc56_6.1: type = symbolic_binding _, 0 [symbolic = %_.loc56_6.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -403,19 +403,19 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc21: type = converted %.loc20, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc66_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc66_7: type = converted %.loc66_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.loc7.1 => constants.%_
+// CHECK:STDOUT:   %_.loc56_6.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %_.loc7.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.loc56_6.1 => constants.%empty_struct_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function_implict.carbon
@@ -448,31 +448,31 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc73_10.1: type = splice_block %.loc73_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc73_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc7.2: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc73_6.2: type = symbolic_binding _, 0 [symbolic = %_.loc73_6.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19.1: type = splice_block %.loc19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc75_10.1: type = splice_block %.loc75_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc75_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc17.2: type = symbolic_binding _, 0 [symbolic = %_.loc17.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc75_6.2: type = symbolic_binding _, 0 [symbolic = %_.loc75_6.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc7.2: type) {
-// CHECK:STDOUT:   %_.loc7.1: type = symbolic_binding _, 0 [symbolic = %_.loc7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc73_6.2: type) {
+// CHECK:STDOUT:   %_.loc73_6.1: type = symbolic_binding _, 0 [symbolic = %_.loc73_6.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%_.loc17.2: type) {
-// CHECK:STDOUT:   %_.loc17.1: type = symbolic_binding _, 0 [symbolic = %_.loc17.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @G(%_.loc75_6.2: type) {
+// CHECK:STDOUT:   %_.loc75_6.1: type = symbolic_binding _, 0 [symbolic = %_.loc75_6.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -483,11 +483,11 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.loc7.1 => constants.%_
+// CHECK:STDOUT:   %_.loc73_6.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%_) {
-// CHECK:STDOUT:   %_.loc17.1 => constants.%_
+// CHECK:STDOUT:   %_.loc75_6.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class.carbon

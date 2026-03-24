@@ -57,15 +57,15 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13.2: type = converted %.loc13.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc11: %C.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc20_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc20_11.2: type = converted %.loc20_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc20_8: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc11
+// CHECK:STDOUT:   .n = %.loc20_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -79,9 +79,9 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Foo.C: type = import_ref Foo//a, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc15, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc21_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Foo.import_ref.1d1 = import_ref Foo//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Foo.import_ref.8c5 = import_ref Foo//a, loc11, unloaded
+// CHECK:STDOUT:   %Foo.import_ref.8c5 = import_ref Foo//a, loc20_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

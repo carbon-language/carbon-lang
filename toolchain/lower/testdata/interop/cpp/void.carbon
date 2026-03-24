@@ -64,12 +64,12 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassVoidPtr.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24.2.temp = alloca ptr, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc26_21.2.temp = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb"(ptr %a), !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24.2.temp), !dbg !17
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc24.2.temp, align 8, !dbg !17
-// CHECK:STDOUT:   %.loc24.4 = load ptr, ptr %.loc24.2.temp, align 8, !dbg !17
-// CHECK:STDOUT:   call void @_Z13take_void_ptrPv(ptr %.loc24.4), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_21.2.temp), !dbg !17
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc26_21.2.temp, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc26_21.4 = load ptr, ptr %.loc26_21.2.temp, align 8, !dbg !17
+// CHECK:STDOUT:   call void @_Z13take_void_ptrPv(ptr %.loc26_21.4), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,24 +78,24 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassIntPtr.Main(ptr %a) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc43.2.temp = alloca ptr, align 8, !dbg !23
+// CHECK:STDOUT:   %.loc30_21.2.temp = alloca ptr, align 8, !dbg !23
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.295aa3526801a9d4"(ptr %a), !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc43.2.temp), !dbg !23
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc43.2.temp, align 8, !dbg !23
-// CHECK:STDOUT:   %.loc43.4 = load ptr, ptr %.loc43.2.temp, align 8, !dbg !23
-// CHECK:STDOUT:   call void @_Z13take_void_ptrPv(ptr %.loc43.4), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_21.2.temp), !dbg !23
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc30_21.2.temp, align 8, !dbg !23
+// CHECK:STDOUT:   %.loc30_21.4 = load ptr, ptr %.loc30_21.2.temp, align 8, !dbg !23
+// CHECK:STDOUT:   call void @_Z13take_void_ptrPv(ptr %.loc30_21.4), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassIntPtrToConstVoidPtr.Main(ptr %a) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc62.2.temp = alloca ptr, align 8, !dbg !29
+// CHECK:STDOUT:   %.loc34_27.2.temp = alloca ptr, align 8, !dbg !29
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e995c7ea1c3d1cc3"(ptr %a), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc62.2.temp), !dbg !29
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc62.2.temp, align 8, !dbg !29
-// CHECK:STDOUT:   %.loc62.4 = load ptr, ptr %.loc62.2.temp, align 8, !dbg !29
-// CHECK:STDOUT:   call void @_Z19take_const_void_ptrPKv(ptr %.loc62.4), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_27.2.temp), !dbg !29
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc34_27.2.temp, align 8, !dbg !29
+// CHECK:STDOUT:   %.loc34_27.4 = load ptr, ptr %.loc34_27.2.temp, align 8, !dbg !29
+// CHECK:STDOUT:   call void @_Z19take_const_void_ptrPKv(ptr %.loc34_27.4), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,12 +104,12 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassConstIntPtrToConstVoidPtr.Main(ptr %a) #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc82.2.temp = alloca ptr, align 8, !dbg !35
+// CHECK:STDOUT:   %.loc38_27.2.temp = alloca ptr, align 8, !dbg !35
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e995c7ea1c3d1cc3"(ptr %a), !dbg !35
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc82.2.temp), !dbg !35
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc82.2.temp, align 8, !dbg !35
-// CHECK:STDOUT:   %.loc82.4 = load ptr, ptr %.loc82.2.temp, align 8, !dbg !35
-// CHECK:STDOUT:   call void @_Z19take_const_void_ptrPKv(ptr %.loc82.4), !dbg !36
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc38_27.2.temp), !dbg !35
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc38_27.2.temp, align 8, !dbg !35
+// CHECK:STDOUT:   %.loc38_27.4 = load ptr, ptr %.loc38_27.2.temp, align 8, !dbg !35
+// CHECK:STDOUT:   call void @_Z19take_const_void_ptrPKv(ptr %.loc38_27.4), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

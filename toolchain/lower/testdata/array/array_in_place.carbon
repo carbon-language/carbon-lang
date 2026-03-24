@@ -26,10 +26,10 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !7
-// CHECK:STDOUT:   %.loc43.6.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 0, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc43.6.array.index), !dbg !9
-// CHECK:STDOUT:   %.loc43.5.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 1, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc43.5.array.index), !dbg !10
+// CHECK:STDOUT:   %.loc16_47.6.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 0, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.6.array.index), !dbg !9
+// CHECK:STDOUT:   %.loc16_47.5.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 1, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.5.array.index), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

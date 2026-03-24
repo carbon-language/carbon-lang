@@ -28,37 +28,37 @@ class A {
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @A.val.loc32 = internal constant { [2 x i32] } { [2 x i32] [i32 1, i32 2] }
+// CHECK:STDOUT: @A.val.loc16_40 = internal constant { [2 x i32] } { [2 x i32] [i32 1, i32 2] }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInit.A.Main(ptr sret({ [2 x i32] }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc31.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %return, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc30.3.array.index = getelementptr inbounds [2 x i32], ptr %.loc31.2.v, i32 0, i64 0, !dbg !9
-// CHECK:STDOUT:   %.loc30.6.array.index = getelementptr inbounds [2 x i32], ptr %.loc31.2.v, i32 0, i64 1, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @A.val.loc32, i64 8, i1 false), !dbg !10
+// CHECK:STDOUT:   %.loc16_39.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc16_38.3.array.index = getelementptr inbounds [2 x i32], ptr %.loc16_39.2.v, i32 0, i64 0, !dbg !9
+// CHECK:STDOUT:   %.loc16_38.6.array.index = getelementptr inbounds [2 x i32], ptr %.loc16_39.2.v, i32 0, i64 1, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @A.val.loc16_40, i64 8, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccess.A.Main(ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc48.1.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc52.2.array.index = getelementptr inbounds [2 x i32], ptr %.loc48.1.v, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc52.3 = load i32, ptr %.loc52.2.array.index, align 4, !dbg !17
-// CHECK:STDOUT:   ret i32 %.loc52.3, !dbg !18
+// CHECK:STDOUT:   %.loc19_16.1.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc19_20.2.array.index = getelementptr inbounds [2 x i32], ptr %.loc19_16.1.v, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc19_20.3 = load i32, ptr %.loc19_20.2.array.index, align 4, !dbg !17
+// CHECK:STDOUT:   ret i32 %.loc19_20.3, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUse.A.Main(ptr %self) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc69.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !22
-// CHECK:STDOUT:   %.loc73.array.index = getelementptr inbounds [2 x i32], ptr %.loc69.v, i32 0, i32 0, !dbg !22
-// CHECK:STDOUT:   store i32 1, ptr %.loc73.array.index, align 4, !dbg !22
-// CHECK:STDOUT:   %.loc79.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   %.loc83.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc79.v, i32 0, i32 1, !dbg !23
-// CHECK:STDOUT:   %.loc83.2 = load i32, ptr %.loc83.1.array.index, align 4, !dbg !23
-// CHECK:STDOUT:   ret i32 %.loc83.2, !dbg !24
+// CHECK:STDOUT:   %.loc23_9.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !22
+// CHECK:STDOUT:   %.loc23_13.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.v, i32 0, i32 0, !dbg !22
+// CHECK:STDOUT:   store i32 1, ptr %.loc23_13.array.index, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc24_16.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   %.loc24_20.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.v, i32 0, i32 1, !dbg !23
+// CHECK:STDOUT:   %.loc24_20.2 = load i32, ptr %.loc24_20.1.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   ret i32 %.loc24_20.2, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

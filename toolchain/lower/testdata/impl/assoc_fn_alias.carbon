@@ -35,9 +35,9 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc52.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc52.2 = load i32, ptr %.loc52.1.n, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc52.2, !dbg !12
+// CHECK:STDOUT:   %.loc24_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc24_16.2 = load i32, ptr %.loc24_16.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc24_16.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

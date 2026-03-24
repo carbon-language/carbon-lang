@@ -88,12 +88,12 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT:     %argv.patt: %pattern_type.fe8 = at_binding_pattern argv, %argv.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc25_21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %argc: %i32 = value_binding argc, %argc.param
 // CHECK:STDOUT:     %argv.param: %ptr = value_param call_param1
-// CHECK:STDOUT:     %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:       %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc15 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %.loc25: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %i32.loc25_39: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc25_39 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %argv: %ptr = value_binding argv, %argv.param
 // CHECK:STDOUT:   }

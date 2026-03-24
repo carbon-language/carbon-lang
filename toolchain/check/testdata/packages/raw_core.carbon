@@ -101,7 +101,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.eced1c.2: <namespace> = namespace file.%Core.import.loc6, [concrete] {
+// CHECK:STDOUT:   %Core.eced1c.2: <namespace> = namespace file.%Core.import.loc25, [concrete] {
 // CHECK:STDOUT:     .F = %Core.F
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
@@ -117,7 +117,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import.1 = import Core
-// CHECK:STDOUT:   %Core.import.loc6 = import r#Core
+// CHECK:STDOUT:   %Core.import.loc25 = import r#Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.eced1c.2: <namespace> = namespace file.%Core.import.loc6, [concrete] {
+// CHECK:STDOUT:   %Core.eced1c.2: <namespace> = namespace file.%Core.import.loc35, [concrete] {
 // CHECK:STDOUT:     .Int = <poisoned>
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
@@ -171,7 +171,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import.1 = import Core
-// CHECK:STDOUT:   %Core.import.loc6 = import r#Core
+// CHECK:STDOUT:   %Core.import.loc35 = import r#Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
@@ -248,10 +248,10 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.As: %As.type.90f = import_ref Core//prelude/parts/as, As, loaded [concrete = constants.%As.generic]
-// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc197, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -277,13 +277,13 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc6: %Core.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc52: %Core.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Core
-// CHECK:STDOUT:   .n = %.loc6
+// CHECK:STDOUT:   .n = %.loc52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -293,24 +293,24 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc25.1: %.9ed = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
-// CHECK:STDOUT:   %bound_method.loc25.1: <bound method> = bound_method %int_0, %impl.elem0.loc25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc25.1: <specific function> = specific_function %impl.elem0.loc25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25.2: <bound method> = bound_method %int_0, %specific_fn.loc25.1 [concrete = constants.%bound_method.628]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc25.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc25.2: %i32 = converted %int_0, %.loc25.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc32.1: %struct_type.n = struct_literal (%.loc25.2) [concrete = constants.%struct]
-// CHECK:STDOUT:   %impl.elem0.loc25.2: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc25.3: <bound method> = bound_method %.loc25.2, %impl.elem0.loc25.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %specific_fn.loc25.2: <specific function> = specific_function %impl.elem0.loc25.2, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25.4: <bound method> = bound_method %.loc25.2, %specific_fn.loc25.2 [concrete = constants.%bound_method.5f6]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25.4(%.loc25.2) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc32.2: ref %i32 = class_element_access file.%c.var, element0 [concrete = constants.%.cb0]
-// CHECK:STDOUT:   %.loc32.3: init %i32 to %.loc32.2 = in_place_init %Int.as.Copy.impl.Op.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc32.4: init %Core to file.%c.var = class_init (%.loc32.3) [concrete = constants.%Core.val]
-// CHECK:STDOUT:   %.loc15: init %Core = converted %.loc32.1, %.loc32.4 [concrete = constants.%Core.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc15
+// CHECK:STDOUT:   %impl.elem0.loc55_25.1: %.9ed = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc55_25.1: <bound method> = bound_method %int_0, %impl.elem0.loc55_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc55_25.1: <specific function> = specific_function %impl.elem0.loc55_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc55_25.2: <bound method> = bound_method %int_0, %specific_fn.loc55_25.1 [concrete = constants.%bound_method.628]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc55_25.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc55_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc55_25.2: %i32 = converted %int_0, %.loc55_25.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc55_40.1: %struct_type.n = struct_literal (%.loc55_25.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %impl.elem0.loc55_25.2: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc55_25.3: <bound method> = bound_method %.loc55_25.2, %impl.elem0.loc55_25.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc55_25.2: <specific function> = specific_function %impl.elem0.loc55_25.2, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc55_25.4: <bound method> = bound_method %.loc55_25.2, %specific_fn.loc55_25.2 [concrete = constants.%bound_method.5f6]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc55_25.4(%.loc55_25.2) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc55_40.2: ref %i32 = class_element_access file.%c.var, element0 [concrete = constants.%.cb0]
+// CHECK:STDOUT:   %.loc55_40.3: init %i32 to %.loc55_40.2 = in_place_init %Int.as.Copy.impl.Op.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc55_40.4: init %Core to file.%c.var = class_init (%.loc55_40.3) [concrete = constants.%Core.val]
+// CHECK:STDOUT:   %.loc55_1: init %Core = converted %.loc55_40.1, %.loc55_40.4 [concrete = constants.%Core.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc55_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

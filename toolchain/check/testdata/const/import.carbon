@@ -74,10 +74,10 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.6eb = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.c45 = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.c45] {
-// CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %const.loc8: type = const_type %C.ref.loc9 [concrete = constants.%const.0e5]
-// CHECK:STDOUT:     %ptr.loc10: type = ptr_type %const.loc8 [concrete = constants.%ptr.c45]
+// CHECK:STDOUT:   %.loc29: type = splice_block %ptr.loc29 [concrete = constants.%ptr.c45] {
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:     %const.loc29: type = const_type %C.ref.loc29 [concrete = constants.%const.0e5]
+// CHECK:STDOUT:     %ptr.loc29: type = ptr_type %const.loc29 [concrete = constants.%ptr.c45]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.c45 = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -85,10 +85,10 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:     %a_ptr.var_patt: %pattern_type.6eb = var_pattern %a_ptr.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr.var: ref %ptr.c45 = var %a_ptr.var_patt [concrete]
-// CHECK:STDOUT:   %.loc20: type = splice_block %ptr.loc20 [concrete = constants.%ptr.c45] {
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %const.loc18: type = const_type %C.ref.loc19 [concrete = constants.%const.0e5]
-// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %const.loc18 [concrete = constants.%ptr.c45]
+// CHECK:STDOUT:   %.loc30: type = splice_block %ptr.loc30 [concrete = constants.%ptr.c45] {
+// CHECK:STDOUT:     %C.ref.loc30: type = name_ref C, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:     %const.loc30: type = const_type %C.ref.loc30 [concrete = constants.%const.0e5]
+// CHECK:STDOUT:     %ptr.loc30: type = ptr_type %const.loc30 [concrete = constants.%ptr.c45]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr: ref %ptr.c45 = ref_binding a_ptr, %a_ptr.var [concrete = %a_ptr.var]
 // CHECK:STDOUT: }
@@ -97,20 +97,20 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_ref.ref: ref %const.0e5 = name_ref a_ref, imports.%Main.a_ref [concrete = imports.%a_ref.var]
 // CHECK:STDOUT:   %addr: %ptr.c45 = addr_of %a_ref.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %impl.elem0.loc12: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
-// CHECK:STDOUT:   %bound_method.loc12.1: <bound method> = bound_method %addr, %impl.elem0.loc12 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12.2: <bound method> = bound_method %addr, %specific_fn.loc12 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc12: init %ptr.c45 = call %bound_method.loc12.2(%addr) [concrete = constants.%addr]
-// CHECK:STDOUT:   assign file.%a.var, %ptr.as.Copy.impl.Op.call.loc12
+// CHECK:STDOUT:   %impl.elem0.loc29: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
+// CHECK:STDOUT:   %bound_method.loc29_19.1: <bound method> = bound_method %addr, %impl.elem0.loc29 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc29_19.2: <bound method> = bound_method %addr, %specific_fn.loc29 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc29: init %ptr.c45 = call %bound_method.loc29_19.2(%addr) [concrete = constants.%addr]
+// CHECK:STDOUT:   assign file.%a.var, %ptr.as.Copy.impl.Op.call.loc29
 // CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr.c45 = name_ref a_ptr_ref, imports.%Main.a_ptr_ref [concrete = imports.%a_ptr_ref.var]
-// CHECK:STDOUT:   %.loc22: %ptr.c45 = acquire_value %a_ptr_ref.ref
-// CHECK:STDOUT:   %impl.elem0.loc22: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
-// CHECK:STDOUT:   %bound_method.loc22.1: <bound method> = bound_method %.loc22, %impl.elem0.loc22
-// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22.2: <bound method> = bound_method %.loc22, %specific_fn.loc22
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc22: init %ptr.c45 = call %bound_method.loc22.2(%.loc22)
-// CHECK:STDOUT:   assign file.%a_ptr.var, %ptr.as.Copy.impl.Op.call.loc22
+// CHECK:STDOUT:   %.loc30: %ptr.c45 = acquire_value %a_ptr_ref.ref
+// CHECK:STDOUT:   %impl.elem0.loc30: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
+// CHECK:STDOUT:   %bound_method.loc30_23.1: <bound method> = bound_method %.loc30, %impl.elem0.loc30
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc30_23.2: <bound method> = bound_method %.loc30, %specific_fn.loc30
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc30: init %ptr.c45 = call %bound_method.loc30_23.2(%.loc30)
+// CHECK:STDOUT:   assign file.%a_ptr.var, %ptr.as.Copy.impl.Op.call.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

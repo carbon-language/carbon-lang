@@ -209,7 +209,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc9, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc23_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,7 +226,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc47: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -242,10 +242,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9: init %C = converted %.loc17.1, %.loc17.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc9
+// CHECK:STDOUT:   %.loc47_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc47_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc47_1: init %C = converted %.loc47_19.1, %.loc47_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc47_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,7 +282,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc63: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -293,7 +293,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc63: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -320,7 +320,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc9, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc23_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -337,7 +337,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc84: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -353,10 +353,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc14: init %C = converted %.loc22.1, %.loc22.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc14
+// CHECK:STDOUT:   %.loc84_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc84_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc84_1: init %C = converted %.loc84_19.1, %.loc84_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc84_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,7 +382,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Other//other_conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc9, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc23_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,7 +399,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc105: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -415,10 +415,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc14: init %C = converted %.loc22.1, %.loc22.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc14
+// CHECK:STDOUT:   %.loc105_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc105_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc105_1: init %C = converted %.loc105_19.1, %.loc105_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc105_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

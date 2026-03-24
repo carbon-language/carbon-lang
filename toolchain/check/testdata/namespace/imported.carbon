@@ -116,9 +116,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc9.1: type = splice_block %.loc9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9.3: type = converted %.loc9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc29_9.1: type = splice_block %.loc29_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc29_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc29_9.3: type = converted %.loc29_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -126,9 +126,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc21.1: type = splice_block %.loc21.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc21.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc21.3: type = converted %.loc21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc30_9.1: type = splice_block %.loc30_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc30_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc30_9.3: type = converted %.loc30_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -136,9 +136,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %package_a.var_patt: %pattern_type = var_pattern %package_a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var %package_a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc35.1: type = splice_block %.loc35.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc35.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc35.3: type = converted %.loc35.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc32_17.1: type = splice_block %.loc32_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc32_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc32_17.3: type = converted %.loc32_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %package_a: ref %empty_tuple.type = ref_binding package_a, %package_a.var [concrete = %package_a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -146,9 +146,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %package_b.var_patt: %pattern_type = var_pattern %package_b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var %package_b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc49.1: type = splice_block %.loc49.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc49.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc49.3: type = converted %.loc49.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc33_17.1: type = splice_block %.loc33_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc33_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc33_17.3: type = converted %.loc33_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %package_b: ref %empty_tuple.type = ref_binding package_b, %package_b.var [concrete = %package_b.var]
 // CHECK:STDOUT: }
@@ -159,26 +159,26 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %NS.ref.loc11: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
-// CHECK:STDOUT:   %A.ref.loc12: %A.type = name_ref A, imports.%Implicit.A [concrete = constants.%A]
-// CHECK:STDOUT:   %A.call.loc15: init %empty_tuple.type = call %A.ref.loc12()
-// CHECK:STDOUT:   assign file.%a.var, %A.call.loc15
-// CHECK:STDOUT:   %NS.ref.loc23: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
-// CHECK:STDOUT:   %ChildNS.ref.loc24: <namespace> = name_ref ChildNS, imports.%ChildNS [concrete = imports.%ChildNS]
-// CHECK:STDOUT:   %B.ref.loc26: %B.type = name_ref B, imports.%Implicit.B [concrete = constants.%B]
-// CHECK:STDOUT:   %B.call.loc29: init %empty_tuple.type = call %B.ref.loc26()
-// CHECK:STDOUT:   assign file.%b.var, %B.call.loc29
-// CHECK:STDOUT:   %package.ref.loc37: <namespace> = name_ref package, package [concrete = package]
-// CHECK:STDOUT:   %NS.ref.loc38: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
-// CHECK:STDOUT:   %A.ref.loc40: %A.type = name_ref A, imports.%Implicit.A [concrete = constants.%A]
-// CHECK:STDOUT:   %A.call.loc43: init %empty_tuple.type = call %A.ref.loc40()
-// CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc43
-// CHECK:STDOUT:   %package.ref.loc51: <namespace> = name_ref package, package [concrete = package]
-// CHECK:STDOUT:   %NS.ref.loc52: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
-// CHECK:STDOUT:   %ChildNS.ref.loc54: <namespace> = name_ref ChildNS, imports.%ChildNS [concrete = imports.%ChildNS]
-// CHECK:STDOUT:   %B.ref.loc56: %B.type = name_ref B, imports.%Implicit.B [concrete = constants.%B]
-// CHECK:STDOUT:   %B.call.loc59: init %empty_tuple.type = call %B.ref.loc56()
-// CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc59
+// CHECK:STDOUT:   %NS.ref.loc29: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %A.ref.loc29: %A.type = name_ref A, imports.%Implicit.A [concrete = constants.%A]
+// CHECK:STDOUT:   %A.call.loc29: init %empty_tuple.type = call %A.ref.loc29()
+// CHECK:STDOUT:   assign file.%a.var, %A.call.loc29
+// CHECK:STDOUT:   %NS.ref.loc30: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %ChildNS.ref.loc30: <namespace> = name_ref ChildNS, imports.%ChildNS [concrete = imports.%ChildNS]
+// CHECK:STDOUT:   %B.ref.loc30: %B.type = name_ref B, imports.%Implicit.B [concrete = constants.%B]
+// CHECK:STDOUT:   %B.call.loc30: init %empty_tuple.type = call %B.ref.loc30()
+// CHECK:STDOUT:   assign file.%b.var, %B.call.loc30
+// CHECK:STDOUT:   %package.ref.loc32: <namespace> = name_ref package, package [concrete = package]
+// CHECK:STDOUT:   %NS.ref.loc32: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %A.ref.loc32: %A.type = name_ref A, imports.%Implicit.A [concrete = constants.%A]
+// CHECK:STDOUT:   %A.call.loc32: init %empty_tuple.type = call %A.ref.loc32()
+// CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc32
+// CHECK:STDOUT:   %package.ref.loc33: <namespace> = name_ref package, package [concrete = package]
+// CHECK:STDOUT:   %NS.ref.loc33: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %ChildNS.ref.loc33: <namespace> = name_ref ChildNS, imports.%ChildNS [concrete = imports.%ChildNS]
+// CHECK:STDOUT:   %B.ref.loc33: %B.type = name_ref B, imports.%Implicit.B [concrete = constants.%B]
+// CHECK:STDOUT:   %B.call.loc33: init %empty_tuple.type = call %B.ref.loc33()
+// CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc33
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

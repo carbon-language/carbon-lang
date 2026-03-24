@@ -53,15 +53,15 @@ fn Convert(unused t: ()) {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.05f = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
-// CHECK:STDOUT:   %.loc56.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc25_22.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %impl.elem0: %.1bd = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc56.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %.loc49.1: ref %X = splice_block %x.var {}
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc25_22.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %.loc25_3.1: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc56.2: %empty_tuple.type = converted %.loc56.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X to %.loc49.1 = call %bound_method(%.loc56.2)
-// CHECK:STDOUT:   %.loc49.2: init %X = converted %.loc56.1, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   assign %x.var, %.loc49.2
+// CHECK:STDOUT:   %.loc25_22.2: %empty_tuple.type = converted %.loc25_22.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X to %.loc25_3.1 = call %bound_method(%.loc25_22.2)
+// CHECK:STDOUT:   %.loc25_3.2: init %X = converted %.loc25_22.1, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   assign %x.var, %.loc25_3.2
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op

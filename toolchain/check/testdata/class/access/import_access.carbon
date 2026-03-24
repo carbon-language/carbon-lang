@@ -173,10 +173,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc9
+// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc29
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc9: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc12: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc29: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc31: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
@@ -215,7 +215,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def]
-// CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc10, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc23_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Test.import_ref.390 = import_ref Test//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,10 +244,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13.2: init %Def to file.%c.var = class_init () [concrete = constants.%Def.val]
-// CHECK:STDOUT:   %.loc7: init %Def = converted %.loc13.1, %.loc13.2 [concrete = constants.%Def.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7
+// CHECK:STDOUT:   %.loc47_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc47_15.2: init %Def to file.%c.var = class_init () [concrete = constants.%Def.val]
+// CHECK:STDOUT:   %.loc47_1: init %Def = converted %.loc47_15.1, %.loc47_15.2 [concrete = constants.%Def.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc47_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,7 +275,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc59: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -314,7 +314,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc71: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -332,7 +332,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc13, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc31_23, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Test.import_ref.623 = import_ref Test//forward_with_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -361,10 +361,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13.2: init %ForwardWithDef to file.%c.var = class_init () [concrete = constants.%ForwardWithDef.val]
-// CHECK:STDOUT:   %.loc7: init %ForwardWithDef = converted %.loc13.1, %.loc13.2 [concrete = constants.%ForwardWithDef.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7
+// CHECK:STDOUT:   %.loc77_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc77_26.2: init %ForwardWithDef to file.%c.var = class_init () [concrete = constants.%ForwardWithDef.val]
+// CHECK:STDOUT:   %.loc77_1: init %ForwardWithDef = converted %.loc77_26.1, %.loc77_26.2 [concrete = constants.%ForwardWithDef.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc77_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -392,7 +392,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc89: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -431,7 +431,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc101: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -464,7 +464,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %.loc107: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Forward.ref: type = name_ref Forward, imports.%Test.Forward [concrete = constants.%Forward]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Forward.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -504,7 +504,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc121: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -542,7 +542,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc20: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc133: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
@@ -566,10 +566,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc7
+// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc139
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Redecl.decl.loc7: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
-// CHECK:STDOUT:   %Redecl.decl.loc11: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc139: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc141: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Redecl {

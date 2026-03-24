@@ -60,14 +60,14 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; ModuleID = 'adapt_class.carbon'
 // CHECK:STDOUT: source_filename = "adapt_class.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @PairOfInts.val.loc36 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @PairOfInts.val.loc22_28 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.PairOfInts.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc35.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc35.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @PairOfInts.val.loc36, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   %.loc22_27.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc22_27.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @PairOfInts.val.loc22_28, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,9 +81,9 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CGetB.PairAdapter.Main(ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc85.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !19
-// CHECK:STDOUT:   %.loc85.2 = load i32, ptr %.loc85.1.b, align 4, !dbg !19
-// CHECK:STDOUT:   ret i32 %.loc85.2, !dbg !20
+// CHECK:STDOUT:   %.loc35_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !19
+// CHECK:STDOUT:   %.loc35_14.2 = load i32, ptr %.loc35_14.1.b, align 4, !dbg !19
+// CHECK:STDOUT:   ret i32 %.loc35_14.2, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

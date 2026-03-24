@@ -226,12 +226,12 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassNonnullPtr.Main(ptr %p) #2 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc41.2.temp = alloca ptr, align 8, !dbg !24
+// CHECK:STDOUT:   %.loc73_15.2.temp = alloca ptr, align 8, !dbg !24
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc41.2.temp), !dbg !24
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc41.2.temp, align 8, !dbg !24
-// CHECK:STDOUT:   %.loc41.4 = load ptr, ptr %.loc41.2.temp, align 8, !dbg !24
-// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %.loc41.4), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc73_15.2.temp), !dbg !24
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc73_15.2.temp, align 8, !dbg !24
+// CHECK:STDOUT:   %.loc73_15.4 = load ptr, ptr %.loc73_15.2.temp, align 8, !dbg !24
+// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %.loc73_15.4), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,12 +255,12 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassNonnullPtrWithThunk.Main(ptr %p) #2 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc100.2.temp = alloca ptr, align 8, !dbg !39
+// CHECK:STDOUT:   %.loc86_24.2.temp = alloca ptr, align 8, !dbg !39
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc100.2.temp), !dbg !39
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc100.2.temp, align 8, !dbg !39
-// CHECK:STDOUT:   %.loc100.4 = load ptr, ptr %.loc100.2.temp, align 8, !dbg !39
-// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc100.4), !dbg !40
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc86_24.2.temp), !dbg !39
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc86_24.2.temp, align 8, !dbg !39
+// CHECK:STDOUT:   %.loc86_24.4 = load ptr, ptr %.loc86_24.2.temp, align 8, !dbg !39
+// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc86_24.4), !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

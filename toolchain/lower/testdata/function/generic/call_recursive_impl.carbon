@@ -63,8 +63,8 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call.loc113 = call i32 @_CG.Main.e55c78367db83a6b(i32 0), !dbg !13
-// CHECK:STDOUT:   %G.call.loc120 = call i32 @_CG.Main.95a632fb0c368a62(i32 0), !dbg !14
+// CHECK:STDOUT:   %G.call.loc40 = call i32 @_CG.Main.e55c78367db83a6b(i32 0), !dbg !13
+// CHECK:STDOUT:   %G.call.loc41 = call i32 @_CG.Main.95a632fb0c368a62(i32 0), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

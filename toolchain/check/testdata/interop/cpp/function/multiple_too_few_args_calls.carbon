@@ -62,9 +62,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %F1.ref: %F1.cpp_overload_set.type = name_ref F1, imports.%F1.cpp_overload_set.value [concrete = constants.%F1.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc40: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %F2.ref: %F2.cpp_overload_set.type = name_ref F2, imports.%F2.cpp_overload_set.value [concrete = constants.%F2.cpp_overload_set.value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

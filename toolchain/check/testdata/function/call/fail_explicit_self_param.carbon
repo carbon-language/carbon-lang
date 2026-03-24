@@ -44,9 +44,9 @@ fn Run() {
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc7.1: type = splice_block %.loc7.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc7.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc7.3: type = converted %.loc7.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc19_13.1: type = splice_block %.loc19_13.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc19_13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc19_13.3: type = converted %.loc19_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
 // CHECK:STDOUT:   }
@@ -58,10 +58,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc22_6.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc18.2: %empty_tuple.type = converted %.loc18.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc18.2)
+// CHECK:STDOUT:   %.loc22_6.2: %empty_tuple.type = converted %.loc22_6.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc22_6.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

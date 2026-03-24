@@ -480,11 +480,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc101: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc23: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc23
+// CHECK:STDOUT:   %.loc101: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc101
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -518,11 +518,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc127: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc23: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc23
+// CHECK:STDOUT:   %.loc127: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc127
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -556,11 +556,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc155: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc23: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc23
+// CHECK:STDOUT:   %.loc155: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc155
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -603,17 +603,17 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc177: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc25: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.87e = addr_of %.loc25
+// CHECK:STDOUT:   %.loc177: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.87e = addr_of %.loc177
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.eb9 = ref_binding_pattern x [concrete]
@@ -621,17 +621,17 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %U = var %x.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%U, (constants.%DefaultOrUnformed.impl_witness.860) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc37.1: %DefaultOrUnformed.type = converted constants.%U, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc37.1 [concrete = constants.%U]
-// CHECK:STDOUT:   %.loc37.2: type = converted %.loc37.1, %as_type [concrete = constants.%U]
+// CHECK:STDOUT:   %.loc179_24.1: %DefaultOrUnformed.type = converted constants.%U, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc179_24.1 [concrete = constants.%U]
+// CHECK:STDOUT:   %.loc179_24.2: type = converted %.loc179_24.1, %as_type [concrete = constants.%U]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc28: ref %U = splice_block %x.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %U to %.loc28 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc179_3: ref %U = splice_block %x.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %U to %.loc179_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %x.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc35: type = splice_block %U.ref.loc35 [concrete = constants.%U] {
-// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %N.ref.loc33: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:     %U.ref.loc35: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %.loc179_22: type = splice_block %U.ref.loc179 [concrete = constants.%U] {
+// CHECK:STDOUT:     %Cpp.ref.loc179: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %N.ref.loc179: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:     %U.ref.loc179: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %U = ref_binding x, %x.var
 // CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%U.cpp_destructor
@@ -676,12 +676,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N1.ref.loc24: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
+// CHECK:STDOUT:   %Cpp.ref.loc202: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N1.ref.loc202: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc29: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.8c1 = addr_of %.loc29
+// CHECK:STDOUT:   %.loc202: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.8c1 = addr_of %.loc202
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -721,17 +721,17 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc227: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc25: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.a6c = addr_of %.loc25
+// CHECK:STDOUT:   %.loc227: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.a6c = addr_of %.loc227
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cff = ref_binding_pattern x [concrete]
@@ -739,16 +739,16 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %O = var %x.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%O, (constants.%DefaultOrUnformed.impl_witness.938) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc35.1: %DefaultOrUnformed.type = converted constants.%O, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc35.1 [concrete = constants.%O]
-// CHECK:STDOUT:   %.loc35.2: type = converted %.loc35.1, %as_type [concrete = constants.%O]
+// CHECK:STDOUT:   %.loc228_22.1: %DefaultOrUnformed.type = converted constants.%O, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc228_22.1 [concrete = constants.%O]
+// CHECK:STDOUT:   %.loc228_22.2: type = converted %.loc228_22.1, %as_type [concrete = constants.%O]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc28: ref %O = splice_block %x.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %O to %.loc28 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc228_3: ref %O = splice_block %x.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %O to %.loc228_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %x.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc33: type = splice_block %O.ref.loc33 [concrete = constants.%O] {
-// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %O.ref.loc33: type = name_ref O, imports.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:   %.loc228_20: type = splice_block %O.ref.loc228 [concrete = constants.%O] {
+// CHECK:STDOUT:     %Cpp.ref.loc228: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %O.ref.loc228: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
@@ -791,15 +791,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %U.ref.loc20: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %Cpp.ref.loc252: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref.loc252: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %bar.ref: %U.bar.cpp_overload_set.type = name_ref bar, imports.%U.bar.cpp_overload_set.value [concrete = constants.%U.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call imports.%U.bar.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc253: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc31: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc31
+// CHECK:STDOUT:   %.loc253: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc253
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -839,14 +839,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc265: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %U = name_ref u, %u
-// CHECK:STDOUT:   %.loc23: ref %U = value_as_ref %u.ref
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc23
+// CHECK:STDOUT:   %.loc265: ref %U = value_as_ref %u.ref
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc265
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %U.ref.loc27: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %Cpp.ref.loc266: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref.loc266: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %bar.ref: %U.bar.cpp_overload_set.type = name_ref bar, imports.%U.bar.cpp_overload_set.value [concrete = constants.%U.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call imports.%U.bar.decl()
 // CHECK:STDOUT:   <elided>
@@ -881,7 +881,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %ptr) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc314: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
@@ -917,7 +917,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %ptr) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc336: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
@@ -955,13 +955,13 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc18.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc18.1
+// CHECK:STDOUT:   %.loc406_11.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc406_11.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc18.2: init %U to %.loc18.1 = mark_in_place_init %foo__carbon_thunk.call
-// CHECK:STDOUT:   %.loc18.3: ref %U = temporary %.loc18.1, %.loc18.2
-// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc18.3, constants.%U.cpp_destructor
-// CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%.loc18.3)
+// CHECK:STDOUT:   %.loc406_11.2: init %U to %.loc406_11.1 = mark_in_place_init %foo__carbon_thunk.call
+// CHECK:STDOUT:   %.loc406_11.3: ref %U = temporary %.loc406_11.1, %.loc406_11.2
+// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc406_11.3, constants.%U.cpp_destructor
+// CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%.loc406_11.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -269,7 +269,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     if (loc_id.kind() == LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
-      out << ".loc" << token.index;
+      out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
+          << tree.tokens().GetColumnNumber(token);
     }
     return out.TakeStr();
   }
@@ -374,7 +375,12 @@ auto InstNamer::Namespace::AllocateName(
     if (loc_id->kind() == LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id->node_id());
-      llvm::raw_string_ostream(name) << ".loc" << token.index;
+      llvm::raw_string_ostream(name)
+          << ".loc" << tree.tokens().GetLineNumber(token);
+      add_name();
+
+      llvm::raw_string_ostream(name)
+          << "_" << tree.tokens().GetColumnNumber(token);
       add_name();
     }
   } else {

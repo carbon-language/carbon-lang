@@ -61,9 +61,9 @@ fn J() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CJ.Main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc84.1.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   call void @_CI.Main(), !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc84.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.1.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

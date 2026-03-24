@@ -56,7 +56,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: --- bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc26: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: type = alias_binding b, bool [concrete = bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,7 +73,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: %pattern_type.831 = value_binding_pattern a_test [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc41: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %a_test: bool = value_binding a_test, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

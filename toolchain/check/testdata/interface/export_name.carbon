@@ -78,7 +78,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//base, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//base, loc6, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//base, loc23_13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

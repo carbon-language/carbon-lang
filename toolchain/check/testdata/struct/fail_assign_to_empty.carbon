@@ -47,9 +47,9 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc5.1: type = splice_block %.loc5.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc5.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc5.3: type = converted %.loc5.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc19_9.1: type = splice_block %.loc19_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc19_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc19_9.3: type = converted %.loc19_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
@@ -57,7 +57,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc12: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

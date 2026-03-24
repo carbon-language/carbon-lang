@@ -117,11 +117,11 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc53.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc35_12.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc53.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc53.2: type = converted %.loc53.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc53.3: Core.Form = init_form %.loc53.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc35_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc35_12.2: type = converted %.loc35_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc35_12.3: Core.Form = init_form %.loc35_12.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -130,10 +130,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: fn @B() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %b.ref.loc37: ref %empty_tuple.type = name_ref b, %b
+// CHECK:STDOUT:   %b.ref.loc29: ref %empty_tuple.type = name_ref b, %b
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
-// CHECK:STDOUT:   assign %b.ref.loc37, %A.call
+// CHECK:STDOUT:   assign %b.ref.loc29, %A.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,25 +144,25 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
-// CHECK:STDOUT:   %.loc62.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc62.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc55: init %empty_tuple.type = converted %.loc62.1, %.loc62.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %c.var, %.loc55
-// CHECK:STDOUT:   %.loc59.1: type = splice_block %.loc59.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc59.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc59.3: type = converted %.loc59.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc36_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc36_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc36_3: init %empty_tuple.type = converted %.loc36_16.1, %.loc36_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %c.var, %.loc36_3
+// CHECK:STDOUT:   %.loc36_11.1: type = splice_block %.loc36_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc36_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc36_11.3: type = converted %.loc36_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = ref_binding c, %c.var
-// CHECK:STDOUT:   %c.ref.loc64: ref %empty_tuple.type = name_ref c, %c
+// CHECK:STDOUT:   %c.ref.loc37: ref %empty_tuple.type = name_ref c, %c
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.call: init %empty_tuple.type = call %B.ref()
-// CHECK:STDOUT:   assign %c.ref.loc64, %B.call
-// CHECK:STDOUT:   %c.ref.loc71: ref %empty_tuple.type = name_ref c, %c
-// CHECK:STDOUT:   %.loc71: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc72: init %empty_tuple.type = converted %c.ref.loc71, %.loc71 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %c.ref.loc37, %B.call
+// CHECK:STDOUT:   %c.ref.loc38: ref %empty_tuple.type = name_ref c, %c
+// CHECK:STDOUT:   %.loc38_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc38_11: init %empty_tuple.type = converted %c.ref.loc38, %.loc38_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
-// CHECK:STDOUT:   return %.loc72
+// CHECK:STDOUT:   return %.loc38_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class.carbon
@@ -228,21 +228,21 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.call: init %empty_tuple.type = call %C.ref()
-// CHECK:STDOUT:   %.loc47.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc47.2: ref %empty_tuple.type = temporary %.loc47.1, %A.call
-// CHECK:STDOUT:   %tuple.loc47: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc47.3: %empty_tuple.type = converted %A.call, %tuple.loc47 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc79_7.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc79_7.2: ref %empty_tuple.type = temporary %.loc79_7.1, %A.call
+// CHECK:STDOUT:   %tuple.loc79: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc79_7.3: %empty_tuple.type = converted %A.call, %tuple.loc79 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc55.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc55.2: ref %empty_tuple.type = temporary %.loc55.1, %C.call
-// CHECK:STDOUT:   %tuple.loc55: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc55.3: %empty_tuple.type = converted %C.call, %tuple.loc55 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc83_7.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc83_7.2: ref %empty_tuple.type = temporary %.loc83_7.1, %C.call
+// CHECK:STDOUT:   %tuple.loc83: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc83_7.3: %empty_tuple.type = converted %C.call, %tuple.loc83 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Destroy.Op.bound.loc55: <bound method> = bound_method %.loc55.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc55: init %empty_tuple.type = call %Destroy.Op.bound.loc55(%.loc55.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc83: <bound method> = bound_method %.loc83_7.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc83: init %empty_tuple.type = call %Destroy.Op.bound.loc83(%.loc83_7.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Destroy.Op.bound.loc47: <bound method> = bound_method %.loc47.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc47: init %empty_tuple.type = call %Destroy.Op.bound.loc47(%.loc47.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc79: <bound method> = bound_method %.loc79_7.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc79: init %empty_tuple.type = call %Destroy.Op.bound.loc79(%.loc79_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

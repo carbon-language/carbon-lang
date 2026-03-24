@@ -54,10 +54,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc10: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc9: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc12: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc13: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc22: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc22: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc27: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc27: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -101,12 +101,12 @@ class D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .A = %A.decl.loc25
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
-// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc10: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %default.import.loc23_46.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc23_46.2 = import <none>
+// CHECK:STDOUT:   %A.decl.loc25: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc27: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -133,8 +133,8 @@ class D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc35_31.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.carbon
@@ -162,8 +162,8 @@ class D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc47_32.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc47_32.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
@@ -191,8 +191,8 @@ class D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc57_40.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc57_40.2 = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,8 +214,8 @@ class D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc71_33.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc71_33.2 = import <none>
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

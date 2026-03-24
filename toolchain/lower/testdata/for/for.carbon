@@ -36,25 +36,25 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFor.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc41.1.temp = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc21_32.1.temp = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc42.1.temp = alloca { i32, i1 }, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc21_33.1.temp = alloca { i32, i1 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc41.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc41.1.temp, i32 100), !dbg !7
-// CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc41.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_32.1.temp), !dbg !7
+// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc21_32.1.temp, i32 100), !dbg !7
+// CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_32.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !8
 // CHECK:STDOUT:   store i32 %IntRange.as.Iterate.impl.NewCursor.call, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc42.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc42.1.temp, ptr %.loc41.1.temp, ptr %var), !dbg !8
-// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.a0986cb4211ec3fb(ptr %.loc42.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_33.1.temp, ptr %.loc21_32.1.temp, ptr %var), !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.a0986cb4211ec3fb(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.a0986cb4211ec3fb(ptr %.loc42.1.temp), !dbg !8
+// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.a0986cb4211ec3fb(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:

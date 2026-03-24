@@ -44,26 +44,26 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Class = %Class.decl.loc3
+// CHECK:STDOUT:     .Class = %Class.decl.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl.loc3: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.decl.loc6: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.decl.loc15: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.decl.loc17: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.904 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc29: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc30: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc28: %Class = value_binding self, %self.param.loc29
-// CHECK:STDOUT:     %b.param.loc35: %empty_tuple.type = value_param call_param1
-// CHECK:STDOUT:     %.loc37.1: type = splice_block %.loc37.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc37.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc37.3: type = converted %.loc37.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %self.param.loc21: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc21: %Class = value_binding self, %self.param.loc21
+// CHECK:STDOUT:     %b.param.loc21: %empty_tuple.type = value_param call_param1
+// CHECK:STDOUT:     %.loc21_42.1: type = splice_block %.loc21_42.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc21_42.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc21_42.3: type = converted %.loc21_42.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc34: %empty_tuple.type = value_binding b, %b.param.loc35
+// CHECK:STDOUT:     %b.loc21: %empty_tuple.type = value_binding b, %b.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,15 +74,15 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc11: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc10: %Class = value_binding self, %self.param.loc11
-// CHECK:STDOUT:     %b.param.loc16: %empty_tuple.type = value_param call_param1
-// CHECK:STDOUT:     %.loc18.1: type = splice_block %.loc18.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc18.3: type = converted %.loc18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %self.param.loc18: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
+// CHECK:STDOUT:     %b.param.loc18: %empty_tuple.type = value_param call_param1
+// CHECK:STDOUT:     %.loc18_24.1: type = splice_block %.loc18_24.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc18_24.3: type = converted %.loc18_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc15: %empty_tuple.type = value_binding b, %b.param.loc16
+// CHECK:STDOUT:     %b.loc18: %empty_tuple.type = value_binding b, %b.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -92,7 +92,7 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc29: %Class, %b.param.loc35: %empty_tuple.type) {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc21: %Class, %b.param.loc21: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

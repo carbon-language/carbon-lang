@@ -62,25 +62,25 @@ fn H() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10.1: type = splice_block %.loc10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc19_17.1: type = splice_block %.loc19_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc19_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8.2: type = symbolic_binding T, 0 [symbolic = %T.loc8.1 (constants.%T.67db0b.1)]
+// CHECK:STDOUT:     %T.loc19_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc19_13.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19.1: type = splice_block %.loc19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc22_10.1: type = splice_block %.loc22_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc22_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc17.2: type = symbolic_binding T, 0 [symbolic = %T.loc17.1 (constants.%T.67db0b.2)]
+// CHECK:STDOUT:     %T.loc22_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc22_6.1 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc8.2: type) {
-// CHECK:STDOUT:   %T.loc8.1: type = symbolic_binding T, 0 [symbolic = %T.loc8.1 (constants.%T.67db0b.1)]
+// CHECK:STDOUT: generic fn @F(%T.loc19_13.2: type) {
+// CHECK:STDOUT:   %T.loc19_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc19_13.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -90,32 +90,32 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc17.2: type) {
-// CHECK:STDOUT:   %T.loc17.1: type = symbolic_binding T, 0 [symbolic = %T.loc17.1 (constants.%T.67db0b.2)]
+// CHECK:STDOUT: generic fn @G(%T.loc22_6.2: type) {
+// CHECK:STDOUT:   %T.loc22_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc22_6.1 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.specific_fn.loc22.2: <specific function> = specific_function constants.%F, @F(%T.loc17.1) [symbolic = %F.specific_fn.loc22.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %F.specific_fn.loc23_3.2: <specific function> = specific_function constants.%F, @F(%T.loc22_6.1) [symbolic = %F.specific_fn.loc23_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc17.2 [symbolic = %T.loc17.1 (constants.%T.67db0b.2)]
-// CHECK:STDOUT:     %F.specific_fn.loc22.1: <specific function> = specific_function %F.ref, @F(constants.%T.67db0b.2) [symbolic = %F.specific_fn.loc22.2 (constants.%F.specific_fn)]
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc22.1()
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc22_6.2 [symbolic = %T.loc22_6.1 (constants.%T.67db0b.2)]
+// CHECK:STDOUT:     %F.specific_fn.loc23_3.1: <specific function> = specific_function %F.ref, @F(constants.%T.67db0b.2) [symbolic = %F.specific_fn.loc23_3.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc23_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
-// CHECK:STDOUT:   %T.loc8.1 => constants.%T.67db0b.1
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%T.67db0b.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.67db0b.2) {
-// CHECK:STDOUT:   %T.loc17.1 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc22_6.1 => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.2) {
-// CHECK:STDOUT:   %T.loc8.1 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%T.67db0b.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -143,8 +143,8 @@ fn H() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//library, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//library, G, loaded [concrete = constants.%G]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//library, loc8, loaded [symbolic = @F.%T (constants.%T.67db0b.1)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//library, loc17, loaded [symbolic = @G.%T (constants.%T.67db0b.2)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//library, loc19_13, loaded [symbolic = @F.%T (constants.%T.67db0b.1)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//library, loc22_6, loaded [symbolic = @G.%T (constants.%T.67db0b.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -170,11 +170,11 @@ fn H() {
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
-// CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc36: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%Main.G [concrete = constants.%G]
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc38: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%C) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   return

@@ -66,8 +66,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvertPtr.Main(ptr %p) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27.2.base = getelementptr inbounds nuw [8 x i8], ptr %p, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   ret ptr %.loc27.2.base, !dbg !17
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw [8 x i8], ptr %p, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   ret ptr %.loc32_11.2.base, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CAcceptVal.Main(ptr)
@@ -75,8 +75,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CConvertVal.Main(ptr %b) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc51.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   call void @_CAcceptVal.Main(ptr %.loc51.1.base), !dbg !24
+// CHECK:STDOUT:   %.loc38_13.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   call void @_CAcceptVal.Main(ptr %.loc38_13.1.base), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,10 +120,10 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessVal.Main(ptr %b) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   %.loc23.3.a = getelementptr inbounds nuw [4 x i8], ptr %.loc23.1.base, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   %.loc23.4 = load i32, ptr %.loc23.3.a, align 4, !dbg !18
-// CHECK:STDOUT:   ret i32 %.loc23.4, !dbg !19
+// CHECK:STDOUT:   %.loc48_11.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc48_11.3.a = getelementptr inbounds nuw [4 x i8], ptr %.loc48_11.1.base, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc48_11.4 = load i32, ptr %.loc48_11.3.a, align 4, !dbg !18
+// CHECK:STDOUT:   ret i32 %.loc48_11.4, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -162,8 +162,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %b) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc21.2.base), !dbg !17
+// CHECK:STDOUT:   %.loc58_4.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc58_4.2.base), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

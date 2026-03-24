@@ -77,17 +77,17 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %.2ba = value_param call_param0
-// CHECK:STDOUT:     %.loc21.1: type = splice_block %.loc21.3 [concrete = constants.%.2ba] {
-// CHECK:STDOUT:       %Make.ref.loc14: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:       %Make.ref.loc16: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:       %.loc19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc19.2: type = converted %.loc19.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %Make.call.loc20: init type = call %Make.ref.loc16(%.loc19.2) [concrete = constants.%.a8d]
-// CHECK:STDOUT:       %.loc20.1: type = value_of_initializer %Make.call.loc20 [concrete = constants.%.a8d]
-// CHECK:STDOUT:       %.loc20.2: type = converted %Make.call.loc20, %.loc20.1 [concrete = constants.%.a8d]
-// CHECK:STDOUT:       %Make.call.loc21: init type = call %Make.ref.loc14(%.loc20.2) [concrete = constants.%.2ba]
-// CHECK:STDOUT:       %.loc21.2: type = value_of_initializer %Make.call.loc21 [concrete = constants.%.2ba]
-// CHECK:STDOUT:       %.loc21.3: type = converted %Make.call.loc21, %.loc21.2 [concrete = constants.%.2ba]
+// CHECK:STDOUT:     %.loc26_29.1: type = splice_block %.loc26_29.3 [concrete = constants.%.2ba] {
+// CHECK:STDOUT:       %Make.ref.loc26_16: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
+// CHECK:STDOUT:       %Make.ref.loc26_21: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
+// CHECK:STDOUT:       %.loc26_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc26_27.2: type = converted %.loc26_27.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %Make.call.loc26_28: init type = call %Make.ref.loc26_21(%.loc26_27.2) [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %.loc26_28.1: type = value_of_initializer %Make.call.loc26_28 [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %.loc26_28.2: type = converted %Make.call.loc26_28, %.loc26_28.1 [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %Make.call.loc26_29: init type = call %Make.ref.loc26_16(%.loc26_28.2) [concrete = constants.%.2ba]
+// CHECK:STDOUT:       %.loc26_29.2: type = value_of_initializer %Make.call.loc26_29 [concrete = constants.%.2ba]
+// CHECK:STDOUT:       %.loc26_29.3: type = converted %Make.call.loc26_29, %.loc26_29.2 [concrete = constants.%.2ba]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %.2ba = value_binding b, %b.param
 // CHECK:STDOUT:   }
@@ -116,21 +116,21 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %.loc14: type = converted @__global_init.%.loc14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %t: type = value_binding t, %.loc14
+// CHECK:STDOUT:   %.loc36_8: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc36_16: type = converted @__global_init.%.loc36, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %t: type = value_binding t, %.loc36_16
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type = value_binding_pattern u [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %.loc24.1: type = value_of_initializer @__global_init.%Make.call
-// CHECK:STDOUT:   %.loc24.2: type = converted @__global_init.%Make.call, %.loc24.1
-// CHECK:STDOUT:   %u: type = value_binding u, %.loc24.2
+// CHECK:STDOUT:   %.loc37_8: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc37_21.1: type = value_of_initializer @__global_init.%Make.call
+// CHECK:STDOUT:   %.loc37_21.2: type = converted @__global_init.%Make.call, %.loc37_21.1
+// CHECK:STDOUT:   %u: type = value_binding u, %.loc37_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc36: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %t.ref: type = name_ref t, file.%t
 // CHECK:STDOUT:   %Make.call: init type = call %Make.ref(%t.ref)

@@ -124,7 +124,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11vector_likeD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.loc42.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc73_50.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #0 {
@@ -187,17 +187,17 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitDirectly.Main() #3 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !24
-// CHECK:STDOUT:   %.loc42.3.temp = alloca [3 x i32], align 4, !dbg !25
+// CHECK:STDOUT:   %.loc73_50.3.temp = alloca [3 x i32], align 4, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc42.3.temp), !dbg !25
-// CHECK:STDOUT:   %.loc42.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 0, !dbg !25
-// CHECK:STDOUT:   %.loc42.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 1, !dbg !25
-// CHECK:STDOUT:   %.loc42.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 2, !dbg !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc42.3.temp, ptr align 4 @array.loc42.13, i64 12, i1 false), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc73_50.3.temp), !dbg !25
+// CHECK:STDOUT:   %.loc73_50.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc73_50.3.temp, i32 0, i64 0, !dbg !25
+// CHECK:STDOUT:   %.loc73_50.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc73_50.3.temp, i32 0, i64 1, !dbg !25
+// CHECK:STDOUT:   %.loc73_50.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc73_50.3.temp, i32 0, i64 2, !dbg !25
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc73_50.3.temp, ptr align 4 @array.loc73_50.13, i64 12, i1 false), !dbg !25
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !24
-// CHECK:STDOUT:   store ptr %.loc42.3.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !24
+// CHECK:STDOUT:   store ptr %.loc73_50.3.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !24
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !24
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 1, !dbg !24
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x i32], ptr %.loc73_50.3.temp, i32 1, !dbg !24
 // CHECK:STDOUT:   store ptr %initializer_list.initializer_list.call.array.end, ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !24
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
@@ -207,21 +207,21 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitVectorLike.Main() #3 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !29
-// CHECK:STDOUT:   %.loc67.2.temp = alloca [16 x i8], align 1, !dbg !30
-// CHECK:STDOUT:   %.loc67.4.temp = alloca [3 x i32], align 4, !dbg !30
+// CHECK:STDOUT:   %.loc78_36.2.temp = alloca [16 x i8], align 1, !dbg !30
+// CHECK:STDOUT:   %.loc78_36.4.temp = alloca [3 x i32], align 4, !dbg !30
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.2.temp), !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.4.temp), !dbg !30
-// CHECK:STDOUT:   %.loc67.5.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 0, !dbg !30
-// CHECK:STDOUT:   %.loc67.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 1, !dbg !30
-// CHECK:STDOUT:   %.loc67.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 2, !dbg !30
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc67.4.temp, ptr align 4 @array.loc42.13, i64 12, i1 false), !dbg !30
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc67.2.temp, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   store ptr %.loc67.4.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !30
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc67.2.temp, i32 0, i32 8, !dbg !30
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 1, !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc78_36.2.temp), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc78_36.4.temp), !dbg !30
+// CHECK:STDOUT:   %.loc78_36.5.array.index = getelementptr inbounds [3 x i32], ptr %.loc78_36.4.temp, i32 0, i64 0, !dbg !30
+// CHECK:STDOUT:   %.loc78_36.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc78_36.4.temp, i32 0, i64 1, !dbg !30
+// CHECK:STDOUT:   %.loc78_36.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc78_36.4.temp, i32 0, i64 2, !dbg !30
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc78_36.4.temp, ptr align 4 @array.loc73_50.13, i64 12, i1 false), !dbg !30
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc78_36.2.temp, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   store ptr %.loc78_36.4.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !30
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc78_36.2.temp, i32 0, i32 8, !dbg !30
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x i32], ptr %.loc78_36.4.temp, i32 1, !dbg !30
 // CHECK:STDOUT:   store ptr %initializer_list.initializer_list.call.array.end, ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !30
-// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc67.2.temp, ptr %_.var), !dbg !29
+// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc78_36.2.temp, ptr %_.var), !dbg !29
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !31
 // CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !32
@@ -240,19 +240,19 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitNontrivialDtor.Main() #3 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !34
-// CHECK:STDOUT:   %.loc102.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !35
+// CHECK:STDOUT:   %.loc83_69.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !35
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc102.17.temp), !dbg !35
-// CHECK:STDOUT:   %.loc102.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 0, !dbg !35
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.18.array.index), !dbg !35
-// CHECK:STDOUT:   %.loc102.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 1, !dbg !35
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.16.array.index), !dbg !35
-// CHECK:STDOUT:   %.loc102.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 2, !dbg !35
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.15.array.index), !dbg !35
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc83_69.17.temp), !dbg !35
+// CHECK:STDOUT:   %.loc83_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc83_69.17.temp, i32 0, i64 0, !dbg !35
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc83_69.18.array.index), !dbg !35
+// CHECK:STDOUT:   %.loc83_69.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc83_69.17.temp, i32 0, i64 1, !dbg !35
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc83_69.16.array.index), !dbg !35
+// CHECK:STDOUT:   %.loc83_69.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc83_69.17.temp, i32 0, i64 2, !dbg !35
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc83_69.15.array.index), !dbg !35
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !34
-// CHECK:STDOUT:   store ptr %.loc102.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !34
+// CHECK:STDOUT:   store ptr %.loc83_69.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !34
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !34
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 1, !dbg !34
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x [1 x i8]], ptr %.loc83_69.17.temp, i32 1, !dbg !34
 // CHECK:STDOUT:   store ptr %initializer_list.initializer_list.call.array.end, ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !34
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !37
@@ -325,7 +325,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11vector_likeD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.loc42.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc100_50.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #0 {
@@ -388,15 +388,15 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitDirectly.Main() #3 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !26
-// CHECK:STDOUT:   %.loc42.3.temp = alloca [3 x i32], align 4, !dbg !27
+// CHECK:STDOUT:   %.loc100_50.3.temp = alloca [3 x i32], align 4, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc42.3.temp), !dbg !27
-// CHECK:STDOUT:   %.loc42.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 0, !dbg !27
-// CHECK:STDOUT:   %.loc42.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 1, !dbg !27
-// CHECK:STDOUT:   %.loc42.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc42.3.temp, i32 0, i64 2, !dbg !27
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc42.3.temp, ptr align 4 @array.loc42.13, i64 12, i1 false), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc100_50.3.temp), !dbg !27
+// CHECK:STDOUT:   %.loc100_50.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc100_50.3.temp, i32 0, i64 0, !dbg !27
+// CHECK:STDOUT:   %.loc100_50.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc100_50.3.temp, i32 0, i64 1, !dbg !27
+// CHECK:STDOUT:   %.loc100_50.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc100_50.3.temp, i32 0, i64 2, !dbg !27
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc100_50.3.temp, ptr align 4 @array.loc100_50.13, i64 12, i1 false), !dbg !27
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !26
-// CHECK:STDOUT:   store ptr %.loc42.3.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !26
+// CHECK:STDOUT:   store ptr %.loc100_50.3.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !26
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !26
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !26
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !28
@@ -407,20 +407,20 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitVectorLike.Main() #3 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !31
-// CHECK:STDOUT:   %.loc67.2.temp = alloca [16 x i8], align 1, !dbg !32
-// CHECK:STDOUT:   %.loc67.4.temp = alloca [3 x i32], align 4, !dbg !32
+// CHECK:STDOUT:   %.loc105_36.2.temp = alloca [16 x i8], align 1, !dbg !32
+// CHECK:STDOUT:   %.loc105_36.4.temp = alloca [3 x i32], align 4, !dbg !32
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.2.temp), !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.4.temp), !dbg !32
-// CHECK:STDOUT:   %.loc67.5.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 0, !dbg !32
-// CHECK:STDOUT:   %.loc67.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 1, !dbg !32
-// CHECK:STDOUT:   %.loc67.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc67.4.temp, i32 0, i64 2, !dbg !32
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc67.4.temp, ptr align 4 @array.loc42.13, i64 12, i1 false), !dbg !32
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc67.2.temp, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   store ptr %.loc67.4.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !32
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc67.2.temp, i32 0, i32 8, !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc105_36.2.temp), !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc105_36.4.temp), !dbg !32
+// CHECK:STDOUT:   %.loc105_36.5.array.index = getelementptr inbounds [3 x i32], ptr %.loc105_36.4.temp, i32 0, i64 0, !dbg !32
+// CHECK:STDOUT:   %.loc105_36.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc105_36.4.temp, i32 0, i64 1, !dbg !32
+// CHECK:STDOUT:   %.loc105_36.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc105_36.4.temp, i32 0, i64 2, !dbg !32
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc105_36.4.temp, ptr align 4 @array.loc100_50.13, i64 12, i1 false), !dbg !32
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc105_36.2.temp, i32 0, i32 0, !dbg !32
+// CHECK:STDOUT:   store ptr %.loc105_36.4.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !32
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc105_36.2.temp, i32 0, i32 8, !dbg !32
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !32
-// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc67.2.temp, ptr %_.var), !dbg !31
+// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc105_36.2.temp, ptr %_.var), !dbg !31
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !33
 // CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -439,17 +439,17 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitNontrivialDtor.Main() #3 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !36
-// CHECK:STDOUT:   %.loc102.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !37
+// CHECK:STDOUT:   %.loc110_69.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !37
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !36
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc102.17.temp), !dbg !37
-// CHECK:STDOUT:   %.loc102.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 0, !dbg !37
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.18.array.index), !dbg !37
-// CHECK:STDOUT:   %.loc102.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 1, !dbg !37
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.16.array.index), !dbg !37
-// CHECK:STDOUT:   %.loc102.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc102.17.temp, i32 0, i64 2, !dbg !37
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc102.15.array.index), !dbg !37
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc110_69.17.temp), !dbg !37
+// CHECK:STDOUT:   %.loc110_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc110_69.17.temp, i32 0, i64 0, !dbg !37
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc110_69.18.array.index), !dbg !37
+// CHECK:STDOUT:   %.loc110_69.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc110_69.17.temp, i32 0, i64 1, !dbg !37
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc110_69.16.array.index), !dbg !37
+// CHECK:STDOUT:   %.loc110_69.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc110_69.17.temp, i32 0, i64 2, !dbg !37
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc110_69.15.array.index), !dbg !37
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !36
-// CHECK:STDOUT:   store ptr %.loc102.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !36
+// CHECK:STDOUT:   store ptr %.loc110_69.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !36
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !36
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !36
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !38

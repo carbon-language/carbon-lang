@@ -78,7 +78,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,12 +94,12 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.679) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc24.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc24.1 [concrete = constants.%TwoTypes]
-// CHECK:STDOUT:   %.loc24.2: type = converted %.loc24.1, %as_type [concrete = constants.%TwoTypes]
+// CHECK:STDOUT:   %.loc27_34.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc27_34.1 [concrete = constants.%TwoTypes]
+// CHECK:STDOUT:   %.loc27_34.2: type = converted %.loc27_34.1, %as_type [concrete = constants.%TwoTypes]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc9: ref %TwoTypes = splice_block file.%x.var [concrete = file.%x.var] {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %TwoTypes to %.loc9 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc27_1: ref %TwoTypes = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %TwoTypes to %.loc27_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%x.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -118,7 +118,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -134,12 +134,12 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.679) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc20.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc20.1 [concrete = constants.%TwoTypes]
-// CHECK:STDOUT:   %.loc20.2: type = converted %.loc20.1, %as_type [concrete = constants.%TwoTypes]
+// CHECK:STDOUT:   %.loc37_32.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc37_32.1 [concrete = constants.%TwoTypes]
+// CHECK:STDOUT:   %.loc37_32.2: type = converted %.loc37_32.1, %as_type [concrete = constants.%TwoTypes]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc9: ref %TwoTypes = splice_block file.%x.var [concrete = file.%x.var] {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %TwoTypes to %.loc9 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc37_1: ref %TwoTypes = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %TwoTypes to %.loc37_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%x.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

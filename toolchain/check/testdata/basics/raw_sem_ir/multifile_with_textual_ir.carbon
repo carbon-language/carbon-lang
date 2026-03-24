@@ -260,9 +260,9 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc12: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
-// CHECK:STDOUT:   %A.ref.loc13: %A.type = name_ref A, imports.%A.A [concrete = constants.%A]
-// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc13()
+// CHECK:STDOUT:   %A.ref.loc27_3: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
+// CHECK:STDOUT:   %A.ref.loc27_4: %A.type = name_ref A, imports.%A.A [concrete = constants.%A]
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc27_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

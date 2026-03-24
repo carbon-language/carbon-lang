@@ -89,9 +89,9 @@ impl C(B) as I {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc48.2 = load i32, ptr %.loc48.1.n, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc48.2, !dbg !12
+// CHECK:STDOUT:   %.loc27_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc27_16.2 = load i32, ptr %.loc27_16.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc27_16.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -127,20 +127,20 @@ impl C(B) as I {
 // CHECK:STDOUT: ; ModuleID = 'generic_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_impls.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @A.val.loc61 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @B.val.loc88 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc48_42 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @B.val.loc52_42 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.C.Main:I.96947bccc1c5e61b.Main"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @A.val.loc61, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @A.val.loc48_42, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.C.Main:I.707dbe5ae2414d29.Main"(ptr sret({}) %return, ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc88, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc52_42, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

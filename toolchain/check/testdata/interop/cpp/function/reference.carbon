@@ -355,20 +355,20 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc14: init %S = converted %.loc22.1, %.loc22.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   assign %s.var, %.loc14
-// CHECK:STDOUT:   %.loc18: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc32_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc32_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc32_3: init %S = converted %.loc32_19.1, %.loc32_19.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   assign %s.var, %.loc32_3
+// CHECK:STDOUT:   %.loc32_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %.loc28: %S = ref_tag %s.ref
-// CHECK:STDOUT:   %TakesLValue.call: init %empty_tuple.type = call imports.%TakesLValue.decl(%.loc28)
+// CHECK:STDOUT:   %.loc33: %S = ref_tag %s.ref
+// CHECK:STDOUT:   %TakesLValue.call: init %empty_tuple.type = call imports.%TakesLValue.decl(%.loc33)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -407,7 +407,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %TakesLValue.cpp_overload_set.value: %TakesLValue.cpp_overload_set.type = cpp_overload_set_value @TakesLValue.cpp_overload_set [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T.e15] {} {}
@@ -420,93 +420,93 @@ fn F() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7da = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %S = var %v.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc20: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %.loc20.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc20 [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %as_type.loc20: type = facet_access_type %.loc20.1 [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc20.2: type = converted %.loc20.1, %as_type.loc20 [concrete = constants.%S]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc45: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc45_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc45 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc45: type = facet_access_type %.loc45_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc45_15.2: type = converted %.loc45_15.1, %as_type.loc45 [concrete = constants.%S]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc14: ref %S = splice_block %v.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc20: init %S to %.loc14 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
-// CHECK:STDOUT:   assign %v.var, %T.as.DefaultOrUnformed.impl.Op.call.loc20
-// CHECK:STDOUT:   %.loc18: type = splice_block %S.ref.loc18 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc18: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc45_3: ref %S = splice_block %v.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc45: init %S to %.loc45_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign %v.var, %T.as.DefaultOrUnformed.impl.Op.call.loc45
+// CHECK:STDOUT:   %.loc45_13: type = splice_block %S.ref.loc45 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc45: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %S = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.7da = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %S = name_ref v, %v
-// CHECK:STDOUT:   %.loc25: type = splice_block %S.ref.loc25 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc25: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc46_13: type = splice_block %S.ref.loc46 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc46: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc46: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: %S = acquire_value %v.ref
-// CHECK:STDOUT:   %s: %S = value_binding s, %.loc28
-// CHECK:STDOUT:   %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc31: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc34: %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc38: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc41: %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const.loc43: type = const_type %S.ref.loc45 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc42.1: %const = as_compatible %s.ref.loc41
-// CHECK:STDOUT:   %.loc42.2: %const = converted %s.ref.loc41, %.loc42.1
+// CHECK:STDOUT:   %.loc46_18: %S = acquire_value %v.ref
+// CHECK:STDOUT:   %s: %S = value_binding s, %.loc46_18
+// CHECK:STDOUT:   %Cpp.ref.loc55: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc55: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc55: %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc65_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc65: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc65: %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc65_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc65: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const.loc65: type = const_type %S.ref.loc65 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc65_21.1: %const = as_compatible %s.ref.loc65
+// CHECK:STDOUT:   %.loc65_21.2: %const = converted %s.ref.loc65, %.loc65_21.1
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = ref_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T.e15 = var %t.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc55: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
-// CHECK:STDOUT:   %.loc55.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc55 [concrete = constants.%DefaultOrUnformed.facet.5fe]
-// CHECK:STDOUT:   %as_type.loc55: type = facet_access_type %.loc55.1 [concrete = constants.%T.e15]
-// CHECK:STDOUT:   %.loc55.2: type = converted %.loc55.1, %as_type.loc55 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc67: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %.loc67_15.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc67 [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %as_type.loc67: type = facet_access_type %.loc67_15.1 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %.loc67_15.2: type = converted %.loc67_15.1, %as_type.loc67 [concrete = constants.%T.e15]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc49: ref %T.e15 = splice_block %t.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc55: init %T.e15 to %.loc49 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc55
-// CHECK:STDOUT:   %.loc53: type = splice_block %T.ref [concrete = constants.%T.e15] {
-// CHECK:STDOUT:     %Cpp.ref.loc52: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc67_3: ref %T.e15 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc67: init %T.e15 to %.loc67_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc67
+// CHECK:STDOUT:   %.loc67_13: type = splice_block %T.ref [concrete = constants.%T.e15] {
+// CHECK:STDOUT:     %Cpp.ref.loc67: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.e15]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.e15 = ref_binding t, %t.var
-// CHECK:STDOUT:   %Cpp.ref.loc56: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc57: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc76: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc76: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.e15 = name_ref t, %t
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type.7da = ref_binding_pattern u [concrete]
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.7da = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %S = var %u.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc69: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %.loc69.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc69 [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %as_type.loc69: type = facet_access_type %.loc69.1 [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc69.2: type = converted %.loc69.1, %as_type.loc69 [concrete = constants.%S]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc78: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc78_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc78 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc78: type = facet_access_type %.loc78_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc78_15.2: type = converted %.loc78_15.1, %as_type.loc78 [concrete = constants.%S]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc63: ref %S = splice_block %u.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc69: init %S to %.loc63 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
-// CHECK:STDOUT:   assign %u.var, %T.as.DefaultOrUnformed.impl.Op.call.loc69
-// CHECK:STDOUT:   %.loc67: type = splice_block %S.ref.loc67 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc66: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc67: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc78_3: ref %S = splice_block %u.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc78: init %S to %.loc78_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign %u.var, %T.as.DefaultOrUnformed.impl.Op.call.loc78
+// CHECK:STDOUT:   %.loc78_13: type = splice_block %S.ref.loc78 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc78: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc78: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u: ref %S = ref_binding u, %u.var
-// CHECK:STDOUT:   %Cpp.ref.loc70: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc71: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc87_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc87: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
-// CHECK:STDOUT:   %Cpp.ref.loc77: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc78: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const.loc76: type = const_type %S.ref.loc78 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc75.1: ref %const = as_compatible %u.ref
-// CHECK:STDOUT:   %.loc75.2: ref %const = converted %u.ref, %.loc75.1
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc63: <bound method> = bound_method %u.var, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc63: init %empty_tuple.type = call %S.cpp_destructor.bound.loc63(%u.var)
+// CHECK:STDOUT:   %Cpp.ref.loc87_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc87: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const.loc87: type = const_type %S.ref.loc87 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc87_21.1: ref %const = as_compatible %u.ref
+// CHECK:STDOUT:   %.loc87_21.2: ref %const = converted %u.ref, %.loc87_21.1
+// CHECK:STDOUT:   %S.cpp_destructor.bound.loc78: <bound method> = bound_method %u.var, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call.loc78: init %empty_tuple.type = call %S.cpp_destructor.bound.loc78(%u.var)
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc14: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc14: init %empty_tuple.type = call %S.cpp_destructor.bound.loc14(%v.var)
+// CHECK:STDOUT:   %S.cpp_destructor.bound.loc45: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call.loc45: init %empty_tuple.type = call %S.cpp_destructor.bound.loc45(%v.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -544,21 +544,21 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc110_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc110_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc110_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc19.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc19.3: init %S to %.loc19.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc20.1: init %S = converted %.loc19.1, %.loc19.3 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc20.2: ref %S = temporary %.loc19.2, %.loc20.1
-// CHECK:STDOUT:   %.loc20.3: %S = acquire_value %.loc20.2
-// CHECK:STDOUT:   %.loc20.4: ref %S = value_as_ref %.loc20.3
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc20.4
+// CHECK:STDOUT:   %.loc110_20.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc110_20.3: init %S to %.loc110_20.2 = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc110_22.1: init %S = converted %.loc110_20.1, %.loc110_20.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc110_22.2: ref %S = temporary %.loc110_20.2, %.loc110_22.1
+// CHECK:STDOUT:   %.loc110_22.3: %S = acquire_value %.loc110_22.2
+// CHECK:STDOUT:   %.loc110_22.4: ref %S = value_as_ref %.loc110_22.3
+// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc110_22.4
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc20.2, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc20.2)
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc110_22.2, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc110_22.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -599,7 +599,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T.e15] {} {}
@@ -612,56 +612,56 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc20: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %.loc20.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc20 [concrete = constants.%DefaultOrUnformed.facet.d8f]
-// CHECK:STDOUT:   %as_type.loc20: type = facet_access_type %.loc20.1 [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc20.2: type = converted %.loc20.1, %as_type.loc20 [concrete = constants.%S]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc141: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc141_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc141 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc141: type = facet_access_type %.loc141_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc141_15.2: type = converted %.loc141_15.1, %as_type.loc141 [concrete = constants.%S]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc14: ref %S = splice_block %s.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc20: init %S to %.loc14 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
-// CHECK:STDOUT:   assign %s.var, %T.as.DefaultOrUnformed.impl.Op.call.loc20
-// CHECK:STDOUT:   %.loc18: type = splice_block %S.ref.loc18 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc18: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc141_3: ref %S = splice_block %s.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc141: init %S to %.loc141_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign %s.var, %T.as.DefaultOrUnformed.impl.Op.call.loc141
+// CHECK:STDOUT:   %.loc141_13: type = splice_block %S.ref.loc141 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc141: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc141: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc22: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc150: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc150: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = ref_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T.e15 = var %t.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc34: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
-// CHECK:STDOUT:   %.loc34.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc34 [concrete = constants.%DefaultOrUnformed.facet.5fe]
-// CHECK:STDOUT:   %as_type.loc34: type = facet_access_type %.loc34.1 [concrete = constants.%T.e15]
-// CHECK:STDOUT:   %.loc34.2: type = converted %.loc34.1, %as_type.loc34 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc152: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %.loc152_15.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc152 [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %as_type.loc152: type = facet_access_type %.loc152_15.1 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %.loc152_15.2: type = converted %.loc152_15.1, %as_type.loc152 [concrete = constants.%T.e15]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc28: ref %T.e15 = splice_block %t.var {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc34: init %T.e15 to %.loc28 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc34
-// CHECK:STDOUT:   %.loc32: type = splice_block %T.ref [concrete = constants.%T.e15] {
-// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc152_3: ref %T.e15 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc152: init %T.e15 to %.loc152_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc152
+// CHECK:STDOUT:   %.loc152_13: type = splice_block %T.ref [concrete = constants.%T.e15] {
+// CHECK:STDOUT:     %Cpp.ref.loc152: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.e15]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.e15 = ref_binding t, %t.var
-// CHECK:STDOUT:   %Cpp.ref.loc35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc36: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc161: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc161: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.e15 = name_ref t, %t
-// CHECK:STDOUT:   %Cpp.ref.loc42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc43: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc48.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %Cpp.ref.loc50: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc51: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc48.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc48.3: init %S to %.loc48.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc49: init %S = converted %.loc48.1, %.loc48.3 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %Cpp.ref.loc56: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc57: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc57 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc54.1: init %const = as_compatible %.loc49 [concrete = constants.%empty_struct.6ef]
-// CHECK:STDOUT:   %.loc54.2: init %const = converted %.loc49, %.loc54.1 [concrete = constants.%empty_struct.6ef]
+// CHECK:STDOUT:   %Cpp.ref.loc171_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc171: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc171_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %Cpp.ref.loc171_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc171_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc171_21.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc171_21.3: init %S to %.loc171_21.2 = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc171_23: init %S = converted %.loc171_21.1, %.loc171_21.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %Cpp.ref.loc171_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc171_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc171_45 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc171_33.1: init %const = as_compatible %.loc171_23 [concrete = constants.%empty_struct.6ef]
+// CHECK:STDOUT:   %.loc171_33.2: init %const = converted %.loc171_23, %.loc171_33.1 [concrete = constants.%empty_struct.6ef]
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
@@ -711,40 +711,40 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc14: init %S = converted %.loc22.1, %.loc22.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   assign %s.var, %.loc14
-// CHECK:STDOUT:   %.loc18: type = splice_block %S.ref.loc18 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc18: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc194_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc194_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc194_3: init %S = converted %.loc194_19.1, %.loc194_19.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   assign %s.var, %.loc194_3
+// CHECK:STDOUT:   %.loc194_13: type = splice_block %S.ref.loc194 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc194: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc194: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstLValue.ref.loc25: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc28: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc32: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc32 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc29.1: ref %const = as_compatible %s.ref.loc28
-// CHECK:STDOUT:   %.loc29.2: ref %const = converted %s.ref.loc28, %.loc29.1
-// CHECK:STDOUT:   %.loc29.3: ref %S = as_compatible %.loc29.2
-// CHECK:STDOUT:   %.loc29.4: ref %S = converted %.loc29.2, %.loc29.3
-// CHECK:STDOUT:   %.loc29.5: %S = acquire_value %.loc29.4
-// CHECK:STDOUT:   %.loc29.6: ref %S = value_as_ref %.loc29.5
-// CHECK:STDOUT:   %addr.loc34: %ptr.5c7 = addr_of %.loc29.6
-// CHECK:STDOUT:   %.loc34.1: %ptr.ff5 = as_compatible %addr.loc34
-// CHECK:STDOUT:   %.loc34.2: %ptr.ff5 = converted %addr.loc34, %.loc34.1
-// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc34: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc34.2)
-// CHECK:STDOUT:   %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstLValue.ref.loc37: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc40: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %.loc40.1: %S = acquire_value %s.ref.loc40
-// CHECK:STDOUT:   %.loc40.2: ref %S = value_as_ref %.loc40.1
-// CHECK:STDOUT:   %addr.loc41: %ptr.5c7 = addr_of %.loc40.2
-// CHECK:STDOUT:   %.loc41.1: %ptr.ff5 = as_compatible %addr.loc41
-// CHECK:STDOUT:   %.loc41.2: %ptr.ff5 = converted %addr.loc41, %.loc41.1
-// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc41: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc41.2)
+// CHECK:STDOUT:   %Cpp.ref.loc195_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstLValue.ref.loc195: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc195: ref %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc195_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc195: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc195 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc195_26.1: ref %const = as_compatible %s.ref.loc195
+// CHECK:STDOUT:   %.loc195_26.2: ref %const = converted %s.ref.loc195, %.loc195_26.1
+// CHECK:STDOUT:   %.loc195_26.3: ref %S = as_compatible %.loc195_26.2
+// CHECK:STDOUT:   %.loc195_26.4: ref %S = converted %.loc195_26.2, %.loc195_26.3
+// CHECK:STDOUT:   %.loc195_26.5: %S = acquire_value %.loc195_26.4
+// CHECK:STDOUT:   %.loc195_26.6: ref %S = value_as_ref %.loc195_26.5
+// CHECK:STDOUT:   %addr.loc195: %ptr.5c7 = addr_of %.loc195_26.6
+// CHECK:STDOUT:   %.loc195_40.1: %ptr.ff5 = as_compatible %addr.loc195
+// CHECK:STDOUT:   %.loc195_40.2: %ptr.ff5 = converted %addr.loc195, %.loc195_40.1
+// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc195: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc195_40.2)
+// CHECK:STDOUT:   %Cpp.ref.loc197: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstLValue.ref.loc197: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc197: ref %S = name_ref s, %s
+// CHECK:STDOUT:   %.loc197_24.1: %S = acquire_value %s.ref.loc197
+// CHECK:STDOUT:   %.loc197_24.2: ref %S = value_as_ref %.loc197_24.1
+// CHECK:STDOUT:   %addr.loc197: %ptr.5c7 = addr_of %.loc197_24.2
+// CHECK:STDOUT:   %.loc197_25.1: %ptr.ff5 = as_compatible %addr.loc197
+// CHECK:STDOUT:   %.loc197_25.2: %ptr.ff5 = converted %addr.loc197, %.loc197_25.1
+// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc197: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc197_25.2)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -790,42 +790,42 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.7da = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc18: type = splice_block %S.ref.loc18 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc18: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc209_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc209_13: type = splice_block %S.ref.loc209 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc209: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc209: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc22.3: init %S to %.loc22.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc22.4: init %S = converted %.loc22.1, %.loc22.3 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc22.5: ref %S = temporary %.loc22.2, %.loc22.4
-// CHECK:STDOUT:   %.loc22.6: %S = acquire_value %.loc22.5
-// CHECK:STDOUT:   %s: %S = value_binding s, %.loc22.6
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstLValue.ref.loc25: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc28: %S = name_ref s, %s
-// CHECK:STDOUT:   %.loc28: ref %S = value_as_ref %s.ref.loc28
-// CHECK:STDOUT:   %addr.loc29: %ptr.5c7 = addr_of %.loc28
-// CHECK:STDOUT:   %.loc29.1: %ptr.ff5 = as_compatible %addr.loc29
-// CHECK:STDOUT:   %.loc29.2: %ptr.ff5 = converted %addr.loc29, %.loc29.1
-// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc29: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc29.2)
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstLValue.ref.loc32: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc35: %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc39: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc39 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc36.1: %const = as_compatible %s.ref.loc35
-// CHECK:STDOUT:   %.loc36.2: %const = converted %s.ref.loc35, %.loc36.1
-// CHECK:STDOUT:   %.loc36.3: %S = as_compatible %.loc36.2
-// CHECK:STDOUT:   %.loc36.4: %S = converted %.loc36.2, %.loc36.3
-// CHECK:STDOUT:   %.loc36.5: ref %S = value_as_ref %.loc36.4
-// CHECK:STDOUT:   %addr.loc41: %ptr.5c7 = addr_of %.loc36.5
-// CHECK:STDOUT:   %.loc41.1: %ptr.ff5 = as_compatible %addr.loc41
-// CHECK:STDOUT:   %.loc41.2: %ptr.ff5 = converted %addr.loc41, %.loc41.1
-// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc41: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc41.2)
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc22.5, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc22.5)
+// CHECK:STDOUT:   %.loc209_19.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc209_19.3: init %S to %.loc209_19.2 = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc209_19.4: init %S = converted %.loc209_19.1, %.loc209_19.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc209_19.5: ref %S = temporary %.loc209_19.2, %.loc209_19.4
+// CHECK:STDOUT:   %.loc209_19.6: %S = acquire_value %.loc209_19.5
+// CHECK:STDOUT:   %s: %S = value_binding s, %.loc209_19.6
+// CHECK:STDOUT:   %Cpp.ref.loc210: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstLValue.ref.loc210: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc210: %S = name_ref s, %s
+// CHECK:STDOUT:   %.loc210_24: ref %S = value_as_ref %s.ref.loc210
+// CHECK:STDOUT:   %addr.loc210: %ptr.5c7 = addr_of %.loc210_24
+// CHECK:STDOUT:   %.loc210_25.1: %ptr.ff5 = as_compatible %addr.loc210
+// CHECK:STDOUT:   %.loc210_25.2: %ptr.ff5 = converted %addr.loc210, %.loc210_25.1
+// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc210: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc210_25.2)
+// CHECK:STDOUT:   %Cpp.ref.loc212_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstLValue.ref.loc212: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc212: %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc212_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc212: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc212 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc212_26.1: %const = as_compatible %s.ref.loc212
+// CHECK:STDOUT:   %.loc212_26.2: %const = converted %s.ref.loc212, %.loc212_26.1
+// CHECK:STDOUT:   %.loc212_26.3: %S = as_compatible %.loc212_26.2
+// CHECK:STDOUT:   %.loc212_26.4: %S = converted %.loc212_26.2, %.loc212_26.3
+// CHECK:STDOUT:   %.loc212_26.5: ref %S = value_as_ref %.loc212_26.4
+// CHECK:STDOUT:   %addr.loc212: %ptr.5c7 = addr_of %.loc212_26.5
+// CHECK:STDOUT:   %.loc212_40.1: %ptr.ff5 = as_compatible %addr.loc212
+// CHECK:STDOUT:   %.loc212_40.2: %ptr.ff5 = converted %addr.loc212, %.loc212_40.1
+// CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc212: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc212_40.2)
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc209_19.5, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc209_19.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -856,11 +856,11 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc253_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsLValue.ref: %ReturnsLValue.cpp_overload_set.type = name_ref ReturnsLValue, imports.%ReturnsLValue.cpp_overload_set.value [concrete = constants.%ReturnsLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnsLValue.call: ref %S = call imports.%ReturnsLValue.decl()
-// CHECK:STDOUT:   %.loc20: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc253: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc253_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = ref_binding s, %ReturnsLValue.call
@@ -894,11 +894,11 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc275_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsRValue.ref: %ReturnsRValue.cpp_overload_set.type = name_ref ReturnsRValue, imports.%ReturnsRValue.cpp_overload_set.value [concrete = constants.%ReturnsRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnsRValue.call: ref %S = call imports.%ReturnsRValue.decl()
-// CHECK:STDOUT:   %.loc20: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc275: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc275_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = ref_binding s, %ReturnsRValue.call
@@ -933,11 +933,11 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc297_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnConstLValue.ref: %ReturnConstLValue.cpp_overload_set.type = name_ref ReturnConstLValue, imports.%ReturnConstLValue.cpp_overload_set.value [concrete = constants.%ReturnConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnConstLValue.call: ref %const = call imports.%ReturnConstLValue.decl()
-// CHECK:STDOUT:   %.loc19: type = splice_block %const [concrete = constants.%const] {
-// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc297: type = splice_block %const [concrete = constants.%const] {
+// CHECK:STDOUT:     %Cpp.ref.loc297_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }

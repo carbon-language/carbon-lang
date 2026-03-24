@@ -265,9 +265,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc13.1: type = splice_block %.loc13.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc13.3: type = converted %.loc13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc35_17.1: type = splice_block %.loc35_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc35_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc35_17.3: type = converted %.loc35_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -372,10 +372,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref.loc19: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
+// CHECK:STDOUT:   %Other.ref.loc69: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   %Other.ref.loc25: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
+// CHECK:STDOUT:   %Other.ref.loc70: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%Other.F2 [concrete = constants.%F2]
 // CHECK:STDOUT:   %F2.call: init %empty_tuple.type = call %F2.ref()
 // CHECK:STDOUT:   return
@@ -482,7 +482,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type.a71006.1: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.680f0e.1: %F.type.a71006.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.a71006.2: type = fn_type @F.loc19 [concrete]
+// CHECK:STDOUT:   %F.type.a71006.2: type = fn_type @F.loc149 [concrete]
 // CHECK:STDOUT:   %F.680f0e.2: %F.type.a71006.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -501,12 +501,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.a71006.2 = fn_decl @F.loc19 [concrete = constants.%F.680f0e.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.a71006.2 = fn_decl @F.loc149 [concrete = constants.%F.680f0e.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc19() {
+// CHECK:STDOUT: fn @F.loc149() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

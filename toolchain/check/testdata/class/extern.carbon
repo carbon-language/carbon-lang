@@ -405,10 +405,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc7
+// CHECK:STDOUT:     .C = %C.decl.loc71
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc7: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc71: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc79: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -421,10 +421,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc10
+// CHECK:STDOUT:     .C = %C.decl.loc93
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc7: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc10: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc85: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc93: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -467,10 +467,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc10
+// CHECK:STDOUT:     .C = %C.decl.loc119
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc7: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc10: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc111: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc119: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -489,10 +489,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:     .C = %C.decl.loc125
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc10: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc125: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc133: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -603,7 +603,7 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc7, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc41_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -631,7 +631,7 @@ extern class C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc7, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc41_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -89,8 +89,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc11.2: type = converted %.loc11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc24_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc24_14.2: type = converted %.loc24_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -106,7 +106,7 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc11.2 as %I.ref {
+// CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc24_14.2 as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @empty_tuple.type.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -157,7 +157,7 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.J.impl: %.loc16.2 as %J.ref {
+// CHECK:STDOUT: impl @empty_struct_type.as.J.impl: %.loc36_16.2 as %J.ref {
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @empty_struct_type.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:
@@ -168,8 +168,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   impl_decl @empty_struct_type.as.J.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc16.2: type = converted %.loc16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc36_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc36_16.2: type = converted %.loc36_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
@@ -315,17 +315,17 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc48.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc64_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc48.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc48.3: init %Point to %.loc48.2 = class_init () [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc49.1: init %Point = converted %.loc48.1, %.loc48.3 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc49.2: ref %Point = temporary %.loc48.2, %.loc49.1
+// CHECK:STDOUT:   %.loc64_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc64_5.3: init %Point to %.loc64_5.2 = class_init () [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc64_7.1: init %Point = converted %.loc64_5.1, %.loc64_5.3 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc64_7.2: ref %Point = temporary %.loc64_5.2, %.loc64_7.1
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.cc0]
 // CHECK:STDOUT:   %impl.elem0: %.c1b = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc49.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc49.2)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc64_7.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc64_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

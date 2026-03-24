@@ -35,38 +35,38 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @Derived.val.loc49 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
+// CHECK:STDOUT: @Derived.val.loc24_36 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ { i32 }, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc48.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc42.3.b = getelementptr inbounds nuw { i32 }, ptr %.loc48.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   %.loc48.6.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @Derived.val.loc49, i64 8, i1 false), !dbg !10
+// CHECK:STDOUT:   %.loc24_35.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc24_26.3.b = getelementptr inbounds nuw { i32 }, ptr %.loc24_35.2.base, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc24_35.6.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @Derived.val.loc24_36, i64 8, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAccess.Main(ptr sret({ i32, i32 }) %return, ptr %d) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc68.1.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 1, !dbg !16
-// CHECK:STDOUT:   %.loc68.2 = load i32, ptr %.loc68.1.d, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc72.1.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc74.1.b = getelementptr inbounds nuw { i32 }, ptr %.loc72.1.base, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc74.2 = load i32, ptr %.loc74.1.b, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc28_12.1.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 1, !dbg !16
+// CHECK:STDOUT:   %.loc28_12.2 = load i32, ptr %.loc28_12.1.d, align 4, !dbg !16
+// CHECK:STDOUT:   %.loc28_17.1.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc28_22.1.b = getelementptr inbounds nuw { i32 }, ptr %.loc28_17.1.base, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc28_22.2 = load i32, ptr %.loc28_22.1.b, align 4, !dbg !17
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   store i32 %.loc68.2, ptr %tuple.elem0.tuple.elem, align 4, !dbg !18
+// CHECK:STDOUT:   store i32 %.loc28_12.2, ptr %tuple.elem0.tuple.elem, align 4, !dbg !18
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !18
-// CHECK:STDOUT:   store i32 %.loc74.2, ptr %tuple.elem1.tuple.elem, align 4, !dbg !18
+// CHECK:STDOUT:   store i32 %.loc28_22.2, ptr %tuple.elem1.tuple.elem, align 4, !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvert.Main(ptr %p) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc93.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %p, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   ret ptr %.loc93.2.base, !dbg !23
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %p, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   ret ptr %.loc32_11.2.base, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

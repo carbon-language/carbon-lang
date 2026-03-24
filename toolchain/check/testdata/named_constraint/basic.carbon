@@ -87,10 +87,10 @@ constraint Declared {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc6
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc23
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc6: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc9: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc23: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc25: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @ForwardDeclared {

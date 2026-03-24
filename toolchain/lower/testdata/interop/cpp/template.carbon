@@ -263,7 +263,7 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %class.X = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc20.1 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc76_14.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #0 {
@@ -316,30 +316,30 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall1.Main() #2 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19.2.temp = alloca {}, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19.2.temp), !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc19.2.temp, ptr align 1 @X.val.loc20.1, i64 0, i1 false), !dbg !17
-// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr %.loc19.2.temp), !dbg !18
+// CHECK:STDOUT:   %.loc76_12.2.temp = alloca {}, align 8, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc76_12.2.temp), !dbg !17
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc76_12.2.temp, ptr align 1 @X.val.loc76_14.1, i64 0, i1 false), !dbg !17
+// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr %.loc76_12.2.temp), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall2.Main() #2 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37.2.temp = alloca {}, align 8, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37.2.temp), !dbg !21
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc37.2.temp, ptr align 1 @X.val.loc20.1, i64 0, i1 false), !dbg !21
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr %.loc37.2.temp, i32 2), !dbg !22
+// CHECK:STDOUT:   %.loc82_12.2.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc82_12.2.temp), !dbg !21
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc82_12.2.temp, ptr align 1 @X.val.loc76_14.1, i64 0, i1 false), !dbg !21
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr %.loc82_12.2.temp, i32 2), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall3.Main() #2 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc57.2.temp = alloca {}, align 8, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc57.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc57.2.temp, ptr align 1 @X.val.loc20.1, i64 0, i1 false), !dbg !25
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr %.loc57.2.temp, i32 2, i32 3), !dbg !26
+// CHECK:STDOUT:   %.loc88_12.2.temp = alloca {}, align 8, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc88_12.2.temp), !dbg !25
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc88_12.2.temp, ptr align 1 @X.val.loc76_14.1, i64 0, i1 false), !dbg !25
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr %.loc88_12.2.temp, i32 2, i32 3), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

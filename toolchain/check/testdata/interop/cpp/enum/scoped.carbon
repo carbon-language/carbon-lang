@@ -68,12 +68,12 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc23: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc25_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc25_31: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc19: type = splice_block %Enum.ref.loc19 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc19: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %.loc25: type = splice_block %Enum.ref.loc25_20 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc25_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc25_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %Enum = value_binding a, %a.ref
 // CHECK:STDOUT:   return

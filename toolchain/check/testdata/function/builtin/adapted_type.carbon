@@ -93,10 +93,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [concrete = constants.%IntLiteral] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc9.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc19_20.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc9.2: Core.Form = init_form %.loc9.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc19_20.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc19_20.2: Core.Form = init_form %.loc19_20.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -105,10 +105,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.d59 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %N.patt: %pattern_type.d59 = at_binding_pattern N, %N.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc30.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc25_28.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc30.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc30.2: Core.Form = init_form %.loc30.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc25_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc25_28.2: Core.Form = init_form %.loc25_28.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
@@ -120,15 +120,15 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.d59 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type.d59 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4d1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc66 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc33 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %MyInt32.ref.loc66: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %.loc66: Core.Form = init_form %MyInt32.ref.loc66 [concrete = constants.%.c88]
-// CHECK:STDOUT:     %a.param.loc62: %MyIntLiteral = value_param call_param0
-// CHECK:STDOUT:     %MyIntLiteral.ref.loc63: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc61: %MyIntLiteral = value_binding a, %a.param.loc62
-// CHECK:STDOUT:     %return.param.loc66: ref %MyInt32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc66: ref %MyInt32 = return_slot %return.param.loc66
+// CHECK:STDOUT:     %MyInt32.ref.loc33: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:     %.loc33: Core.Form = init_form %MyInt32.ref.loc33 [concrete = constants.%.c88]
+// CHECK:STDOUT:     %a.param.loc33: %MyIntLiteral = value_param call_param0
+// CHECK:STDOUT:     %MyIntLiteral.ref.loc33: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
+// CHECK:STDOUT:     %a.loc33: %MyIntLiteral = value_binding a, %a.param.loc33
+// CHECK:STDOUT:     %return.param.loc33: ref %MyInt32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc33: ref %MyInt32 = return_slot %return.param.loc33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyAdd.decl: %MyAdd.type = fn_decl @MyAdd [concrete = constants.%MyAdd] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.4d1 = value_param_pattern [concrete]
@@ -136,15 +136,15 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.4d1 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.4d1 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4d1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc82 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc35_37 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %MyInt32.ref.loc82: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %.loc82: Core.Form = init_form %MyInt32.ref.loc82 [concrete = constants.%.c88]
+// CHECK:STDOUT:     %MyInt32.ref.loc35_37: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:     %.loc35: Core.Form = init_form %MyInt32.ref.loc35_37 [concrete = constants.%.c88]
 // CHECK:STDOUT:     %a.param: %MyInt32 = value_param call_param0
-// CHECK:STDOUT:     %MyInt32.ref.loc75: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:     %MyInt32.ref.loc35_13: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
 // CHECK:STDOUT:     %a: %MyInt32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %MyInt32 = value_param call_param1
-// CHECK:STDOUT:     %MyInt32.ref.loc79: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:     %MyInt32.ref.loc35_25: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
 // CHECK:STDOUT:     %b: %MyInt32 = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %MyInt32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %MyInt32 = return_slot %return.param
@@ -161,9 +161,9 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT: class @MyIntLiteral {
 // CHECK:STDOUT:   %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:   %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc20.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc20.2: type = converted %IntLiteral.call, %.loc20.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:   adapt_decl %.loc20.2 [concrete]
+// CHECK:STDOUT:   %.loc22_21.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
+// CHECK:STDOUT:   %.loc22_21.2: type = converted %IntLiteral.call, %.loc22_21.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:   adapt_decl %.loc22_21.2 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness Core.IntLiteral [concrete = constants.%complete_type.972]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -176,25 +176,25 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, file.%Int.decl [concrete = constants.%Int]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32.be0]
 // CHECK:STDOUT:   %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:   %.loc41.1: %MyIntLiteral = as_compatible %int_32 [concrete = constants.%int_32.2f2]
-// CHECK:STDOUT:   %.loc41.2: %MyIntLiteral = converted %int_32, %.loc41.1 [concrete = constants.%int_32.2f2]
-// CHECK:STDOUT:   %Int.call: init type = call %Int.ref(%.loc41.2) [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:   %.loc44.1: type = value_of_initializer %Int.call [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:   %.loc44.2: type = converted %Int.call, %.loc44.1 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:   adapt_decl %.loc44.2 [concrete]
+// CHECK:STDOUT:   %.loc28_16.1: %MyIntLiteral = as_compatible %int_32 [concrete = constants.%int_32.2f2]
+// CHECK:STDOUT:   %.loc28_16.2: %MyIntLiteral = converted %int_32, %.loc28_16.1 [concrete = constants.%int_32.2f2]
+// CHECK:STDOUT:   %Int.call: init type = call %Int.ref(%.loc28_16.2) [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc28_32.1: type = value_of_initializer %Int.call [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc28_32.2: type = converted %Int.call, %.loc28_32.1 [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   adapt_decl %.loc28_32.2 [concrete]
 // CHECK:STDOUT:   %MyInt32.Make.decl: %MyInt32.Make.type = fn_decl @MyInt32.Make [concrete = constants.%MyInt32.Make] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.d59 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type.d59 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4d1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc66 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4d1 = return_slot_pattern %return.param_patt, %MyInt32.ref.loc33 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %MyInt32.ref.loc53: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %.loc53: Core.Form = init_form %MyInt32.ref.loc53 [concrete = constants.%.c88]
-// CHECK:STDOUT:     %a.param.loc49: %MyIntLiteral = value_param call_param0
-// CHECK:STDOUT:     %MyIntLiteral.ref.loc50: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc48: %MyIntLiteral = value_binding a, %a.param.loc49
-// CHECK:STDOUT:     %return.param.loc53: ref %MyInt32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc53: ref %MyInt32 = return_slot %return.param.loc53
+// CHECK:STDOUT:     %MyInt32.ref.loc30: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:     %.loc30: Core.Form = init_form %MyInt32.ref.loc30 [concrete = constants.%.c88]
+// CHECK:STDOUT:     %a.param.loc30: %MyIntLiteral = value_param call_param0
+// CHECK:STDOUT:     %MyIntLiteral.ref.loc30: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
+// CHECK:STDOUT:     %a.loc30: %MyIntLiteral = value_binding a, %a.param.loc30
+// CHECK:STDOUT:     %return.param.loc30: ref %MyInt32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc30: ref %MyInt32 = return_slot %return.param.loc30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%i32.builtin [concrete = constants.%complete_type.833]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -211,32 +211,32 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyInt32.Make(%a.param.loc62: %MyIntLiteral) -> out %return.param.loc66: %MyInt32 = "int.convert_checked";
+// CHECK:STDOUT: fn @MyInt32.Make(%a.param.loc33: %MyIntLiteral) -> out %return.param.loc33: %MyInt32 = "int.convert_checked";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyAdd(%a.param: %MyInt32, %b.param: %MyInt32) -> out %return.param: %MyInt32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MyAdd.ref: %MyAdd.type = name_ref MyAdd, file.%MyAdd.decl [concrete = constants.%MyAdd]
-// CHECK:STDOUT:   %MyInt32.ref.loc93: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:   %Make.ref.loc94: %MyInt32.Make.type = name_ref Make, @MyInt32.%MyInt32.Make.decl [concrete = constants.%MyInt32.Make]
+// CHECK:STDOUT:   %MyInt32.ref.loc37_24: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:   %Make.ref.loc37_31: %MyInt32.Make.type = name_ref Make, @MyInt32.%MyInt32.Make.decl [concrete = constants.%MyInt32.Make]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %MyIntLiteral.ref.loc99: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:   %.loc98.1: %MyIntLiteral = as_compatible %int_1 [concrete = constants.%int_1.ed9]
-// CHECK:STDOUT:   %.loc98.2: %MyIntLiteral = converted %int_1, %.loc98.1 [concrete = constants.%int_1.ed9]
-// CHECK:STDOUT:   %MyInt32.Make.call.loc100: init %MyInt32 = call %Make.ref.loc94(%.loc98.2) [concrete = constants.%int_1.6de]
-// CHECK:STDOUT:   %MyInt32.ref.loc102: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:   %Make.ref.loc103: %MyInt32.Make.type = name_ref Make, @MyInt32.%MyInt32.Make.decl [concrete = constants.%MyInt32.Make]
+// CHECK:STDOUT:   %MyIntLiteral.ref.loc37_42: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
+// CHECK:STDOUT:   %.loc37_39.1: %MyIntLiteral = as_compatible %int_1 [concrete = constants.%int_1.ed9]
+// CHECK:STDOUT:   %.loc37_39.2: %MyIntLiteral = converted %int_1, %.loc37_39.1 [concrete = constants.%int_1.ed9]
+// CHECK:STDOUT:   %MyInt32.Make.call.loc37_54: init %MyInt32 = call %Make.ref.loc37_31(%.loc37_39.2) [concrete = constants.%int_1.6de]
+// CHECK:STDOUT:   %MyInt32.ref.loc37_57: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
+// CHECK:STDOUT:   %Make.ref.loc37_64: %MyInt32.Make.type = name_ref Make, @MyInt32.%MyInt32.Make.decl [concrete = constants.%MyInt32.Make]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %MyIntLiteral.ref.loc108: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:   %.loc107.1: %MyIntLiteral = as_compatible %int_2 [concrete = constants.%int_2.7bb]
-// CHECK:STDOUT:   %.loc107.2: %MyIntLiteral = converted %int_2, %.loc107.1 [concrete = constants.%int_2.7bb]
-// CHECK:STDOUT:   %MyInt32.Make.call.loc109: init %MyInt32 = call %Make.ref.loc103(%.loc107.2) [concrete = constants.%int_2.035]
-// CHECK:STDOUT:   %.loc100.1: %MyInt32 = value_of_initializer %MyInt32.Make.call.loc100 [concrete = constants.%int_1.6de]
-// CHECK:STDOUT:   %.loc100.2: %MyInt32 = converted %MyInt32.Make.call.loc100, %.loc100.1 [concrete = constants.%int_1.6de]
-// CHECK:STDOUT:   %.loc109.1: %MyInt32 = value_of_initializer %MyInt32.Make.call.loc109 [concrete = constants.%int_2.035]
-// CHECK:STDOUT:   %.loc109.2: %MyInt32 = converted %MyInt32.Make.call.loc109, %.loc109.1 [concrete = constants.%int_2.035]
-// CHECK:STDOUT:   %MyAdd.call: init %MyInt32 = call %MyAdd.ref(%.loc100.2, %.loc109.2) [concrete = constants.%int_3]
+// CHECK:STDOUT:   %MyIntLiteral.ref.loc37_75: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
+// CHECK:STDOUT:   %.loc37_72.1: %MyIntLiteral = as_compatible %int_2 [concrete = constants.%int_2.7bb]
+// CHECK:STDOUT:   %.loc37_72.2: %MyIntLiteral = converted %int_2, %.loc37_72.1 [concrete = constants.%int_2.7bb]
+// CHECK:STDOUT:   %MyInt32.Make.call.loc37_87: init %MyInt32 = call %Make.ref.loc37_64(%.loc37_72.2) [concrete = constants.%int_2.035]
+// CHECK:STDOUT:   %.loc37_54.1: %MyInt32 = value_of_initializer %MyInt32.Make.call.loc37_54 [concrete = constants.%int_1.6de]
+// CHECK:STDOUT:   %.loc37_54.2: %MyInt32 = converted %MyInt32.Make.call.loc37_54, %.loc37_54.1 [concrete = constants.%int_1.6de]
+// CHECK:STDOUT:   %.loc37_87.1: %MyInt32 = value_of_initializer %MyInt32.Make.call.loc37_87 [concrete = constants.%int_2.035]
+// CHECK:STDOUT:   %.loc37_87.2: %MyInt32 = converted %MyInt32.Make.call.loc37_87, %.loc37_87.1 [concrete = constants.%int_2.035]
+// CHECK:STDOUT:   %MyAdd.call: init %MyInt32 = call %MyAdd.ref(%.loc37_54.2, %.loc37_87.2) [concrete = constants.%int_3]
 // CHECK:STDOUT:   assign file.%v.var, %MyAdd.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -265,10 +265,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.d59 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %N.patt: %pattern_type.d59 = at_binding_pattern N, %N.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc20.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc51_28.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc20.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc20.2: Core.Form = init_form %.loc20.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc51_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc51_28.2: Core.Form = init_form %.loc51_28.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
@@ -278,9 +278,9 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyIntLiteral {
-// CHECK:STDOUT:   %.loc9: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10: type = converted %.loc9, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   adapt_decl %.loc10 [concrete]
+// CHECK:STDOUT:   %.loc44_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc44_11: type = converted %.loc44_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc44_11 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

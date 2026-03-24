@@ -37,11 +37,11 @@ fn Procedure() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [concrete = constants.%Procedure] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc7.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc15_20.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc7.2: type = converted %.loc7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc7.3: Core.Form = init_form %.loc7.2 [concrete = constants.%.469]
+// CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc15_20.3: Core.Form = init_form %.loc15_20.2 [concrete = constants.%.469]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }

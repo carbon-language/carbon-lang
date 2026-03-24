@@ -216,11 +216,11 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21.2.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc21.2.base, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc54_4.2.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc54_4.2.base, align 8, !dbg !17
 // CHECK:STDOUT:   %Base.virt0.call = getelementptr ptr, ptr %Base.virt0.call.vtable, i32 0, !dbg !17
 // CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !17
-// CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc21.2.base), !dbg !17
+// CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc54_4.2.base), !dbg !17
 // CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !18
 // CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !18
 // CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !18
@@ -302,14 +302,14 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %n) #2 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23.3.temp = alloca i8, align 1, !dbg !24
-// CHECK:STDOUT:   %.loc30.3.temp = alloca i8, align 1, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23.3.temp), !dbg !24
-// CHECK:STDOUT:   store i8 1, ptr %.loc23.3.temp, align 1, !dbg !24
-// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr %.loc23.3.temp), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30.3.temp), !dbg !25
-// CHECK:STDOUT:   store i8 1, ptr %.loc30.3.temp, align 1, !dbg !25
-// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr %.loc30.3.temp), !dbg !27
+// CHECK:STDOUT:   %.loc72_14.3.temp = alloca i8, align 1, !dbg !24
+// CHECK:STDOUT:   %.loc73_14.3.temp = alloca i8, align 1, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc72_14.3.temp), !dbg !24
+// CHECK:STDOUT:   store i8 1, ptr %.loc72_14.3.temp, align 1, !dbg !24
+// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr %.loc72_14.3.temp), !dbg !26
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc73_14.3.temp), !dbg !25
+// CHECK:STDOUT:   store i8 1, ptr %.loc73_14.3.temp, align 1, !dbg !25
+// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr %.loc73_14.3.temp), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

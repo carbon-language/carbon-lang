@@ -46,8 +46,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !18
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !19
-// CHECK:STDOUT:   %.loc29 = load i32, ptr %n.var, align 4, !dbg !20
-// CHECK:STDOUT:   ret i32 %.loc29, !dbg !21
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !20
+// CHECK:STDOUT:   ret i32 %.loc24, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

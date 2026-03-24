@@ -61,7 +61,7 @@ interface I {
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0.2e7]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %.loc10: type = converted %int_42, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc23: type = converted %int_42, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
