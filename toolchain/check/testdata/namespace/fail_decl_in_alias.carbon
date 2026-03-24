@@ -80,8 +80,8 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [concrete = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = alias_binding ns, %NS [concrete = %NS]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc27_14: Core.Form = init_form %i32 [concrete = constants.%.ff5]

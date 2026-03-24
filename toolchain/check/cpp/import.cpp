@@ -1319,18 +1319,20 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   auto return_patterns_id = SemIR::InstBlockId::Empty;
   if (auto init_form =
           context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
-    SemIR::InstId return_slot_pattern_id = AddPatternInst(
+    auto param_pattern_id = AddPatternInst(
         context, MakeImportedLocIdAndInst(
                      context, return_type_import_ir_inst_id,
-                     SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
-                                               .type_inst_id = type_inst_id})));
-    auto param_pattern_id = AddPatternInst(
+                     SemIR::OutParamPattern(
+                         {.type_id = pattern_type_id,
+                          .pretty_name_id = SemIR::NameId::ReturnSlot})));
+    SemIR::InstId return_slot_pattern_id = AddPatternInst(
         context,
         MakeImportedLocIdAndInst(
             context, return_type_import_ir_inst_id,
-            SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                    .subpattern_id = return_slot_pattern_id})));
-    return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+            SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
+                                      .subpattern_id = param_pattern_id,
+                                      .type_inst_id = type_inst_id})));
+    return_patterns_id = context.inst_blocks().Add({return_slot_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,
           .return_form_inst_id = form_inst_id,

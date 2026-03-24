@@ -178,8 +178,8 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%Assoc [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:     %c.patt: @I.WithSelf.F.%pattern_type (%pattern_type.850) = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.850) = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.850) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: @I.WithSelf.F.%pattern_type (%pattern_type.850) = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: @I.WithSelf.F.%C.loc24_18.1 (%C.6ff) = value_param call_param0
 // CHECK:STDOUT:     %.loc24_18.2: type = splice_block %C.loc24_18.2 [symbolic = %C.loc24_18.1 (constants.%C.6ff)] {
@@ -530,8 +530,8 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.loc20_24.2 as %.loc20_31 {
 // CHECK:STDOUT:     %D.as.I.impl.F.decl: @D.as.I.impl.%D.as.I.impl.F.type (%D.as.I.impl.F.type) = fn_decl @D.as.I.impl.F [symbolic = @D.as.I.impl.%D.as.I.impl.F (constants.%D.as.I.impl.F)] {
-// CHECK:STDOUT:       %c.patt: %pattern_type.479 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:       %c.param_patt: %pattern_type.479 = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:       %c.param_patt: %pattern_type.479 = value_param_pattern [concrete]
+// CHECK:STDOUT:       %c.patt: %pattern_type.479 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %c.param: %C.a44 = value_param call_param0
 // CHECK:STDOUT:       %.loc21_22.1: type = splice_block %C [concrete = constants.%C.a44] {

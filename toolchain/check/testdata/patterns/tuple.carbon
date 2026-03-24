@@ -35,7 +35,7 @@ let (a: (), b: ()) = F();
 
 library "[[@TEST_NAME]]";
 
-var t: ((), ());
+var t: ((), ()) = ((), ());
 //@dump-sem-ir-begin
 let (a: (), b: ()) = t;
 //@dump-sem-ir-end
@@ -133,9 +133,9 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access file.%t.var, element0 [concrete]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access file.%t.var, element1 [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,6 +164,7 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %t.ref: ref %tuple.type = name_ref t, file.%t [concrete = file.%t.var]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -527,10 +527,10 @@ fn F2(U:! Z) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9d9 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @Use.%pattern_type (%pattern_type.422) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Use.%pattern_type (%pattern_type.422) = value_param_pattern %x.patt [concrete]
-// CHECK:STDOUT:     %return.patt: @Use.%pattern_type (%pattern_type.422) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Use.%pattern_type (%pattern_type.422) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @Use.%pattern_type (%pattern_type.422) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @Use.%pattern_type (%pattern_type.422) = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Use.%pattern_type (%pattern_type.422) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @Use.%pattern_type (%pattern_type.422) = return_slot_pattern %return.param_patt, %.loc9_24.3 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc9_24: %I.type = name_ref T, %T.loc9_8.2 [symbolic = %T.loc9_8.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc9_24: type = facet_access_type %T.ref.loc9_24 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
@@ -714,8 +714,8 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %AA.patt: %pattern_type.dc8 = symbolic_binding_pattern AA, 0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc6_33 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AA.ref: %A_where.type = name_ref AA, %AA.loc6_6.2 [symbolic = %AA.loc6_6.1 (constants.%AA)]
 // CHECK:STDOUT:     %AA.as_type: type = facet_access_type %AA.ref [symbolic = %AA.binding.as_type (constants.%AA.binding.as_type)]
@@ -852,8 +852,8 @@ fn F2(U:! Z) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %AB.patt: %pattern_type.77e = symbolic_binding_pattern AB, 0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc14_49 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AB.ref: %facet_type.82c = name_ref AB, %AB.loc14_6.2 [symbolic = %AB.loc14_6.1 (constants.%AB)]
 // CHECK:STDOUT:     %AB.as_type: type = facet_access_type %AB.ref [symbolic = %AB.binding.as_type (constants.%AB.binding.as_type)]
@@ -897,8 +897,8 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %AB.patt: %pattern_type.77e = symbolic_binding_pattern AB, 0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_49 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AB.ref: %facet_type.82c = name_ref AB, %AB.loc18_6.2 [symbolic = %AB.loc18_6.1 (constants.%AB)]
 // CHECK:STDOUT:     %AB.as_type: type = facet_access_type %AB.ref [symbolic = %AB.binding.as_type (constants.%AB.binding.as_type)]

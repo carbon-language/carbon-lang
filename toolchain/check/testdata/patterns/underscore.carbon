@@ -236,8 +236,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt: %pattern_type = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_struct_type] {
@@ -247,8 +247,8 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %_.patt: %pattern_type = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.3 [concrete = constants.%empty_struct_type] {

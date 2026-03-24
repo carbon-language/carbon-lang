@@ -197,6 +197,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%v.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -217,8 +223,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7de = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7de = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7de = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7de = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -296,6 +302,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%v2.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_first.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -335,6 +347,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%v3.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_second.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -372,6 +390,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%v4.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lib.carbon
@@ -435,5 +459,11 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.141
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%v5.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

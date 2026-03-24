@@ -118,7 +118,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
-var x: Cpp.TwoNonType(1, 2);
+var x: Cpp.TwoNonType(1, 2) = {};
 //@dump-sem-ir-end
 
 // --- dependent.carbon
@@ -129,7 +129,7 @@ import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
 var x: Cpp.DependentNonType(i32, 123) = Cpp.MakeDependentNonType123();
-var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt);
+var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt) = {};
 //@dump-sem-ir-end
 
 // --- fail_type_argument.carbon
@@ -139,13 +139,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_type_argument.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
+// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A) = {};
 // CHECK:STDERR:                          ^~~~~
 // CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
+// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A) = {};
 // CHECK:STDERR:                          ^~~~~
 // CHECK:STDERR:
-var x: Cpp.TwoNonType(1, Cpp.A);
+var x: Cpp.TwoNonType(1, Cpp.A) = {};
 
 // --- fail_no_conversion.carbon
 
@@ -156,13 +156,13 @@ import Cpp library "templates.h";
 var n: i32;
 
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
+// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n) = {};
 // CHECK:STDERR:                          ^~
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
+// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n) = {};
 // CHECK:STDERR:                          ^~
 // CHECK:STDERR:
-var x: Cpp.TwoNonType(1, &n);
+var x: Cpp.TwoNonType(1, &n) = {};
 
 // --- dependent_parameter_pack.carbon
 
@@ -182,7 +182,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.8a6: type = pattern_type %TwoNonType [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %TwoNonType.val: %TwoNonType = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -192,6 +195,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoNonType = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_32.2: init %TwoNonType to file.%x.var = class_init () [concrete = constants.%TwoNonType.val]
+// CHECK:STDOUT:   %.loc7_1: init %TwoNonType = converted %.loc7_32.1, %.loc7_32.2 [concrete = constants.%TwoNonType.val]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_1
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dependent.carbon
@@ -204,6 +216,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DependentNonType.794fcf.1: type = class_type @DependentNonType.1 [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.b95a71.1: type = pattern_type %DependentNonType.794fcf.1 [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.type: type = cpp_overload_set_type @MakeDependentNonType123.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.value: %MakeDependentNonType123.cpp_overload_set.type = cpp_overload_set_value @MakeDependentNonType123.cpp_overload_set [concrete]
@@ -212,6 +225,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DependentNonType.794fcf.2: type = class_type @DependentNonType.2 [concrete]
 // CHECK:STDOUT:   %pattern_type.b95a71.2: type = pattern_type %DependentNonType.794fcf.2 [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %DependentNonType.val: %DependentNonType.794fcf.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -257,6 +272,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeDependentNonType123__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc7_69: init %DependentNonType.794fcf.1 to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_69
+// CHECK:STDOUT:   %.loc8_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_54.2: init %DependentNonType.794fcf.2 to file.%y.var = class_init () [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   %.loc8_1: init %DependentNonType.794fcf.2 = converted %.loc8_54.1, %.loc8_54.2 [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   assign file.%y.var, %.loc8_1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

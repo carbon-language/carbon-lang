@@ -135,10 +135,10 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Int.decl: %Int.type.b3e = fn_decl @Int.loc2 [concrete = constants.%Int.d6d] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = value_binding_pattern N [concrete]
-// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern %N.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc2_33.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_33.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc2_33.2: Core.Form = init_form %.loc2_33.1 [concrete = constants.%.805]
@@ -165,8 +165,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %N.loc6_9.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc6_9.1 (constants.%N.5de)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.f32 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.f32 = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.f32 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.f32 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.0e2 = value_param call_param0
 // CHECK:STDOUT:     %.loc12_13: type = splice_block %ptr.loc12 [concrete = constants.%ptr.0e2] {

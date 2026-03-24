@@ -111,10 +111,10 @@ alias D = C;
 fn Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn Foo(unused b: D) {}
-// CHECK:STDERR:               ^~~~
+// CHECK:STDERR:               ^
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR:        ^
 // CHECK:STDERR:
 fn Foo(unused b: D) {}
 
@@ -222,32 +222,32 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7: %C = value_binding a, %a.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc8: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc8: %C = value_binding a, %a.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc10: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc10: %C = value_binding a, %a.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc11: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D [concrete = constants.%C]
@@ -291,16 +291,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc6: %C = value_binding a, %a.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -341,16 +341,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.47530a.1 = fn_decl @Foo.loc6 [concrete = constants.%Foo.9ec12f.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.47530a.2 = fn_decl @Foo.loc14 [concrete = constants.%Foo.9ec12f.2] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -428,16 +428,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc6: %C = value_binding a, %a.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -482,16 +482,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -541,16 +541,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
@@ -598,16 +598,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.47530a.1 = fn_decl @Foo.loc7 [concrete = constants.%Foo.9ec12f.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.47530a.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.9ec12f.2] {
-// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -653,16 +653,16 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.47530a.1 = fn_decl @Foo.loc7 [concrete = constants.%Foo.9ec12f.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.47530a.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.9ec12f.2] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -790,8 +790,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.a69]
@@ -799,8 +799,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %return.loc7: ref %C = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc8_13: Core.Form = init_form %D.ref [concrete = constants.%.a69]
@@ -843,8 +843,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -890,8 +890,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -932,8 +932,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.47530a.1 = fn_decl @Foo.loc6 [concrete = constants.%Foo.9ec12f.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
@@ -943,8 +943,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %a: %const = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.47530a.2 = fn_decl @Foo.loc18 [concrete = constants.%Foo.9ec12f.2] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
 // CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_18 [concrete = constants.%const] {

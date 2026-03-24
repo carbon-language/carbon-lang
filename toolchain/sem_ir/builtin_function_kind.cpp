@@ -400,6 +400,9 @@ constexpr BuiltinInfo None = {"", nullptr};
 
 constexpr BuiltinInfo NoOp = {"no_op", ValidateNoOpSignature};
 
+constexpr BuiltinInfo MakeUninitialized = {"make_uninitialized",
+                                           ValidateSignature<auto()->AnyType>};
+
 constexpr BuiltinInfo PrimitiveCopy = {
     "primitive_copy",
     ValidateSignature<auto(PrimitiveCopyParamT)->PrimitiveCopyParamT>};

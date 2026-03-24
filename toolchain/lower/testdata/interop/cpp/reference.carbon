@@ -198,6 +198,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !25
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C.carbon_thunk(ptr %c.var), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !21
+// CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !21
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi(ptr %n.var), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_22.3.temp), !dbg !22
 // CHECK:STDOUT:   store i32 42, ptr %.loc24_22.3.temp, align 4, !dbg !22
@@ -365,6 +366,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr %.loc20_18.2.temp), !dbg !27
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !23
+// CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !23
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk.carbon_thunk1(ptr %n.var), !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_22.3.temp), !dbg !24
 // CHECK:STDOUT:   store i32 42, ptr %.loc25_22.3.temp, align 4, !dbg !24

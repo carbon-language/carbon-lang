@@ -241,10 +241,10 @@ the names `y` and `z` to its elements.
 In SemIR we represent this situation with special `ParamPattern` instructions,
 which mark the boundary: there is exactly one `ParamPattern` instruction for
 each `Call` parameter, which matches the entire corresponding `Call` argument.
-The subpatterns of the `ParamPattern`s are matched on the callee side, and
-everything above them is matched on the caller side. There are multiple kinds of
-`ParamPattern` instruction, which correspond to different ways of passing a
-parameter (such as by reference or by value).
+If a `ParamPattern` has a subpattern, it is matched on the callee side, and
+everything above it is matched primarily on the caller side. There are multiple
+kinds of `ParamPattern` instruction, which correspond to different ways of
+passing a parameter (such as by reference or by value).
 
 When performing callee-side pattern matching, we do not have an actual scrutinee
 expression. Instead, for each `ParamPattern` instruction we generate a
@@ -256,18 +256,18 @@ the `Call` argument list, and we use that as the scrutinee of the
 
 If a function has a declared return type, the function takes an additional
 `Call` parameter, which points to the storage that should be initialized with
-the return value. This `Call` parameter is represented as an `OutParamPattern`
-instruction with a `ReturnSlotPattern` instruction as a subpattern. The
+the return value. This `Call` parameter is represented as `ReturnSlotPattern`
+instruction with an `OutParamPattern` instruction as a subpattern. The
 `ReturnSlotPattern` also represents the return type declaration itself, such as
 in `FunctionFields`. The SemIR that matches these patterns consists of a
 `ReturnSlot` instruction, which binds the special name `NameId::ReturnSlot` to
 the `OutParam` instruction representing the storage passed by the caller.
 
 This structure is analogous to the handling of an ordinary by-value parameter,
-which is represented in the `Call` parameters as a `ValueParamPattern`
-instruction with a `ValueBindingPattern`, and in the pattern-matching SemIR as a
-`ValueBinding` instruction that binds the parameter name to the `ValueParam`
-instruction representing the argument passed by the caller.
+which is represented in the `Call` parameters as an `WrapperBindingPattern`
+instruction with a `ValueParamPattern` subpattern, and in the pattern-matching
+SemIR as a `ValueBinding` instruction that binds the parameter name to the
+`ValueParam` instruction representing the argument passed by the caller.
 
 Note that if the return type does not have an in-place value representation
 (meaning that the return value should not be passed in memory), these

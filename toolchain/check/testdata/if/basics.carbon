@@ -124,8 +124,8 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = type_literal bool [concrete = bool]
@@ -169,8 +169,8 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = type_literal bool [concrete = bool]
@@ -221,10 +221,10 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc4_19.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_19.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc4_19.2: Core.Form = init_form %.loc4_19.1 [concrete = constants.%.f34]

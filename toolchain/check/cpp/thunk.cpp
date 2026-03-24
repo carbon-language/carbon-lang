@@ -14,6 +14,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/context.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -22,6 +23,39 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+// Generate and return a function:
+// `void* operator new(__SIZE_TYPE__, void*) noexcept`.
+static auto GeneratePlacementNewFunctionDecl(clang::ASTContext& context)
+    -> clang::FunctionDecl* {
+  clang::QualType size_type = context.getSizeType();
+  clang::QualType void_ptr_type = context.VoidPtrTy;
+
+  auto ext_info = clang::FunctionProtoType::ExtProtoInfo();
+  ext_info.ExceptionSpec.Type = clang::EST_BasicNoexcept;
+
+  clang::QualType function_type = context.getFunctionType(
+      void_ptr_type, {size_type, void_ptr_type}, ext_info);
+
+  clang::DeclarationName name =
+      context.DeclarationNames.getCXXOperatorName(clang::OO_New);
+
+  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
+      context, context.getTranslationUnitDecl(), clang::SourceLocation(),
+      clang::SourceLocation(), name, function_type,
+      /*TInfo=*/nullptr, clang::SC_None);
+
+  clang::ParmVarDecl* size_param = clang::ParmVarDecl::Create(
+      context, function_decl, clang::SourceLocation(), clang::SourceLocation(),
+      nullptr, size_type, nullptr, clang::SC_None, nullptr);
+  clang::ParmVarDecl* ptr_param = clang::ParmVarDecl::Create(
+      context, function_decl, clang::SourceLocation(), clang::SourceLocation(),
+      nullptr, void_ptr_type, nullptr, clang::SC_None, nullptr);
+
+  function_decl->setParams({size_param, ptr_param});
+  CARBON_CHECK(function_decl->isReservedGlobalPlacementOperator());
+  return function_decl;
+}
 
 // Returns the GlobalDecl to use to represent the given function declaration.
 // TODO: Refactor with `Lower::CreateGlobalDecl`.
@@ -487,7 +521,7 @@ static auto BuildCalleeArgs(clang::Sema& sema,
 // Builds the thunk function body which calls the callee function using the call
 // args and returns the callee function return value. Returns nullptr on
 // failure.
-static auto BuildThunkBody(clang::Sema& sema,
+static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
                            clang::FunctionDecl* thunk_function_decl,
                            CalleeFunctionInfo callee_info)
     -> clang::StmtResult {
@@ -566,10 +600,25 @@ static auto BuildThunkBody(clang::Sema& sema,
   auto return_type = callee_info.effective_return_type.getNonReferenceType();
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
-  auto placement_new = sema.BuildCXXNew(
-      clang_loc, /*UseGlobal=*/true, clang_loc, {return_object_addr}, clang_loc,
-      /*TypeIdParens=*/clang::SourceRange(), return_type, return_type_info,
-      /*ArraySize=*/std::nullopt, clang_loc, call.get());
+
+  auto* placement_new_decl = cpp_context.placement_new_decl();
+  if (!placement_new_decl) {
+    placement_new_decl = GeneratePlacementNewFunctionDecl(sema.getASTContext());
+    cpp_context.set_placement_new_decl(placement_new_decl);
+  }
+  sema.MarkFunctionReferenced(clang_loc, placement_new_decl);
+  clang::ImplicitAllocationParameters params(return_type,
+                                             clang::TypeAwareAllocationMode::No,
+                                             clang::AlignedAllocationMode::No);
+  clang::SourceRange range(clang_loc, clang_loc);
+  auto* placement_new = clang::CXXNewExpr::Create(
+      sema.getASTContext(), /*IsGlobalNew*/ true, placement_new_decl,
+      /*OperatorDelete*/ nullptr, params, /*UsualArrayDeleteWantsSize*/ false,
+      {return_object_addr},
+      /*TypeIdParens=*/clang::SourceRange(), /*ArraySize=*/std::nullopt,
+      clang::CXXNewInitializationStyle::Parens, call.get(),
+      sema.getASTContext().getPointerType(return_type), return_type_info, range,
+      range);
   return sema.ActOnExprStmt(placement_new, /*DiscardedValue=*/true);
 }
 
@@ -598,8 +647,8 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
-  clang::StmtResult body =
-      BuildThunkBody(sema, thunk_function_decl, callee_info);
+  clang::StmtResult body = BuildThunkBody(*context.cpp_context(), sema,
+                                          thunk_function_decl, callee_info);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   if (body.isInvalid()) {
     return nullptr;

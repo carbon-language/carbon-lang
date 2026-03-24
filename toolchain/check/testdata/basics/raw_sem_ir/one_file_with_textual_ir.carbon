@@ -69,9 +69,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000012:    {kind: TupleValue, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000013:    {kind: Converted, arg0: inst50000011, arg1: inst50000010, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000014:    {kind: PatternType, arg0: inst50000010, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000015:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst50000026, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000016:    {kind: ValueBindingPattern, arg0: entity_name50000000, type: type(inst50000014)}
-// CHECK:STDOUT:     inst50000017:    {kind: ValueParamPattern, arg0: inst50000016, type: type(inst50000014)}
+// CHECK:STDOUT:     inst50000015:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000014)}
+// CHECK:STDOUT:     inst50000016:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst50000026, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000017:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000015, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000018:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000019:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001A:    {kind: TupleType, arg0: inst_block50000008, type: type(TypeType)}
@@ -84,8 +84,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000021:    {kind: InitForm, arg0: inst50000020, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst50000022:    {kind: InitForm, arg0: inst5000001A, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst50000023:    {kind: PatternType, arg0: inst5000001A, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000024:    {kind: ReturnSlotPattern, arg0: inst50000020, type: type(inst50000023)}
-// CHECK:STDOUT:     inst50000025:    {kind: OutParamPattern, arg0: inst50000024, type: type(inst50000023)}
+// CHECK:STDOUT:     inst50000024:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(inst50000023)}
+// CHECK:STDOUT:     inst50000025:    {kind: ReturnSlotPattern, arg0: inst50000024, arg1: inst50000020, type: type(inst50000023)}
 // CHECK:STDOUT:     inst50000026:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000027:    {kind: SpliceBlock, arg0: inst_block50000005, arg1: inst50000013, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000028:    {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(inst5000001A)}
@@ -93,7 +93,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst5000002A:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block5000000F, type: type(inst5000002B)}
 // CHECK:STDOUT:     inst5000002B:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000002C:    {kind: StructValue, arg0: inst_block_empty, type: type(inst5000002B)}
-// CHECK:STDOUT:     inst5000002D:    {kind: NameRef, arg0: name1, arg1: inst50000015, type: type(inst50000010)}
+// CHECK:STDOUT:     inst5000002D:    {kind: NameRef, arg0: name1, arg1: inst50000016, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000002E:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000002F:    {kind: TupleLiteral, arg0: inst_block50000011, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000030:    {kind: TupleAccess, arg0: inst50000028, arg1: element0, type: type(inst50000010)}
@@ -113,7 +113,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000010)
 // CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000014)
-// CHECK:STDOUT:       inst50000016:    concrete_constant(inst50000016)
+// CHECK:STDOUT:       inst50000015:    concrete_constant(inst50000015)
 // CHECK:STDOUT:       inst50000017:    concrete_constant(inst50000017)
 // CHECK:STDOUT:       inst50000018:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000019:    concrete_constant(inst50000012)
@@ -168,13 +168,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst_block5000000B:
 // CHECK:STDOUT:       0:               inst50000025
 // CHECK:STDOUT:     inst_block5000000C:
-// CHECK:STDOUT:       0:               inst50000017
-// CHECK:STDOUT:       1:               inst50000025
+// CHECK:STDOUT:       0:               inst50000015
+// CHECK:STDOUT:       1:               inst50000024
 // CHECK:STDOUT:     inst_block5000000D:
 // CHECK:STDOUT:       0:               inst50000026
 // CHECK:STDOUT:       1:               inst50000028
 // CHECK:STDOUT:     inst_block5000000E:
-// CHECK:STDOUT:       0:               inst50000016
+// CHECK:STDOUT:       0:               inst50000015
 // CHECK:STDOUT:       1:               inst50000017
 // CHECK:STDOUT:       2:               inst50000024
 // CHECK:STDOUT:       3:               inst50000025
@@ -188,7 +188,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       6:               inst50000021
 // CHECK:STDOUT:       7:               inst50000026
 // CHECK:STDOUT:       8:               inst50000027
-// CHECK:STDOUT:       9:               inst50000015
+// CHECK:STDOUT:       9:               inst50000016
 // CHECK:STDOUT:       10:              inst50000028
 // CHECK:STDOUT:       11:              inst50000029
 // CHECK:STDOUT:     inst_block50000010:
@@ -243,10 +243,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern %return.param_patt, %.loc16_25.4 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_20: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_24: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

@@ -129,6 +129,14 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
 // CHECK:STDOUT:   %Class.ff1: type = class_type @Class, @Class(%ptr.235, %int_5.0f6) [concrete]
 // CHECK:STDOUT:   %pattern_type.d58: type = pattern_type %Class.ff1 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.77b: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%Class.ff1) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.b8a: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Class.ff1) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.090: %T.as.DefaultOrUnformed.impl.Op.type.b8a = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.31a: %DefaultOrUnformed.type = facet_value %Class.ff1, (%DefaultOrUnformed.impl_witness.77b) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.16a: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.090, @T.as.DefaultOrUnformed.impl.Op(%Class.ff1) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.897: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
@@ -136,12 +144,18 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %Class.7c6: type = class_type @Class, @Class(%empty_tuple.type, %int_0.6a9) [concrete]
 // CHECK:STDOUT:   %pattern_type.a3c: type = pattern_type %Class.7c6 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.c95: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%Class.7c6) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.7ec: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Class.7c6) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.b11: %T.as.DefaultOrUnformed.impl.Op.type.7ec = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.d1f: %DefaultOrUnformed.type = facet_value %Class.7c6, (%DefaultOrUnformed.impl_witness.c95) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.87f: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.b11, @T.as.DefaultOrUnformed.impl.Op(%Class.7c6) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .DefaultOrUnformed = %Core.DefaultOrUnformed
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -149,6 +163,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -229,6 +246,27 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.e86
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%Class.ff1, (constants.%DefaultOrUnformed.impl_witness.77b) [concrete = constants.%DefaultOrUnformed.facet.31a]
+// CHECK:STDOUT:   %.loc6_22.1: %DefaultOrUnformed.type = converted constants.%Class.ff1, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.31a]
+// CHECK:STDOUT:   %as_type.loc6: type = facet_access_type %.loc6_22.1 [concrete = constants.%Class.ff1]
+// CHECK:STDOUT:   %.loc6_22.2: type = converted %.loc6_22.1, %as_type.loc6 [concrete = constants.%Class.ff1]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.090, @T.as.DefaultOrUnformed.impl.Op(constants.%Class.ff1) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn.16a]
+// CHECK:STDOUT:   %.loc6_1: ref %Class.ff1 = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc6: init %Class.ff1 to %.loc6_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign file.%a.var, %T.as.DefaultOrUnformed.impl.Op.call.loc6
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc9: %DefaultOrUnformed.type = facet_value constants.%Class.7c6, (constants.%DefaultOrUnformed.impl_witness.c95) [concrete = constants.%DefaultOrUnformed.facet.d1f]
+// CHECK:STDOUT:   %.loc9_20.1: %DefaultOrUnformed.type = converted constants.%Class.7c6, %DefaultOrUnformed.facet.loc9 [concrete = constants.%DefaultOrUnformed.facet.d1f]
+// CHECK:STDOUT:   %as_type.loc9: type = facet_access_type %.loc9_20.1 [concrete = constants.%Class.7c6]
+// CHECK:STDOUT:   %.loc9_20.2: type = converted %.loc9_20.1, %as_type.loc9 [concrete = constants.%Class.7c6]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.b11, @T.as.DefaultOrUnformed.impl.Op(constants.%Class.7c6) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn.87f]
+// CHECK:STDOUT:   %.loc9_1: ref %Class.7c6 = splice_block file.%b.var [concrete = file.%b.var] {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc9: init %Class.7c6 to %.loc9_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign file.%b.var, %T.as.DefaultOrUnformed.impl.Op.call.loc9
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.6f3) {
@@ -330,6 +368,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.6f3) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.6f3
@@ -417,6 +461,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.6f3) {
@@ -509,6 +559,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.6f3) {
@@ -639,8 +695,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.A.decl: @Inner.%Inner.A.type (%Inner.A.type.c2f) = fn_decl @Inner.A [symbolic = @Inner.%Inner.A (constants.%Inner.A.07b)] {
-// CHECK:STDOUT:       %return.patt: @Inner.A.%pattern_type (%pattern_type.130) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.A.%pattern_type (%pattern_type.130) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.A.%pattern_type (%pattern_type.130) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Inner.A.%pattern_type (%pattern_type.130) = return_slot_pattern %return.param_patt, %Outer.loc4_22.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.2 [symbolic = %T (constants.%T)]
@@ -650,8 +706,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %return: ref @Inner.A.%Outer.loc4_22.1 (%Outer.387) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.B.decl: @Inner.%Inner.B.type (%Inner.B.type.f42) = fn_decl @Inner.B [symbolic = @Inner.%Inner.B (constants.%Inner.B.b14)] {
-// CHECK:STDOUT:       %return.patt: @Inner.B.%pattern_type (%pattern_type.760) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.B.%pattern_type (%pattern_type.760) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.B.%pattern_type (%pattern_type.760) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Inner.B.%pattern_type (%pattern_type.760) = return_slot_pattern %return.param_patt, %Outer.loc7_22.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.2 [symbolic = %U (constants.%U)]
@@ -661,8 +717,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %return: ref @Inner.B.%Outer.loc7_22.1 (%Outer.d2f) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.C.decl: @Inner.%Inner.C.type (%Inner.C.type.912) = fn_decl @Inner.C [symbolic = @Inner.%Inner.C (constants.%Inner.C.125)] {
-// CHECK:STDOUT:       %return.patt: @Inner.C.%pattern_type (%pattern_type.81e) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.C.%pattern_type (%pattern_type.81e) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.C.%pattern_type (%pattern_type.81e) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Inner.C.%pattern_type (%pattern_type.81e) = return_slot_pattern %return.param_patt, %Inner.loc10_22.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10_15: @Inner.C.%Inner.type (%Inner.type.e0d) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.C.%Inner.type (%Inner.type.e0d) = name_ref Inner, %.loc10_15 [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
@@ -673,8 +729,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %return: ref @Inner.C.%Inner.loc10_22.1 (%Inner.ddc) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.D.decl: @Inner.%Inner.D.type (%Inner.D.type.cd0) = fn_decl @Inner.D [symbolic = @Inner.%Inner.D (constants.%Inner.D.147)] {
-// CHECK:STDOUT:       %return.patt: @Inner.D.%pattern_type (%pattern_type.0d1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.D.%pattern_type (%pattern_type.0d1) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.D.%pattern_type (%pattern_type.0d1) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Inner.D.%pattern_type (%pattern_type.0d1) = return_slot_pattern %return.param_patt, %Inner.loc13_22.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_15: @Inner.D.%Inner.type (%Inner.type.e0d) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.D.%Inner.type (%Inner.type.e0d) = name_ref Inner, %.loc13_15 [symbolic = %Inner.generic (constants.%Inner.generic.ada)]

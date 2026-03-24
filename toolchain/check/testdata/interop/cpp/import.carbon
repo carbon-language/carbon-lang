@@ -165,6 +165,7 @@ fn F() {
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %MyStructAlias.ref: type = name_ref MyStructAlias, imports.%Main.MyStructAlias [concrete = <error>]
 // CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %x.ref: ref <error> = name_ref x, %x [concrete = <error>]

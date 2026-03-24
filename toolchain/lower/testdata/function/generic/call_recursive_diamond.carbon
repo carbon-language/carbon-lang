@@ -47,8 +47,8 @@ fn D[T:! Core.Copy](x: T, count: i32) -> T {
 fn M() {
   var n: i32 = 0;
   var m: f64 = 1.0;
-  var ptr_i32 : i32*;
-  var ptr_f64 : f64*;
+  var ptr_i32 : i32* = &n;
+  var ptr_f64 : f64* = &m;
 
   A(n, 0);
   A(m, 0);
@@ -73,7 +73,9 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !8
 // CHECK:STDOUT:   store double 1.000000e+00, ptr %m.var, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !9
+// CHECK:STDOUT:   store ptr %n.var, ptr %ptr_i32.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !10
+// CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !10
 // CHECK:STDOUT:   %.loc53_5 = load i32, ptr %n.var, align 4, !dbg !11
 // CHECK:STDOUT:   %A.call.loc53 = call i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %.loc53_5, i32 0), !dbg !12
 // CHECK:STDOUT:   %.loc54_5 = load double, ptr %m.var, align 8, !dbg !13

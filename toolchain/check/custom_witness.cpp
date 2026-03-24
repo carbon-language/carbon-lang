@@ -15,6 +15,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -247,10 +248,29 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
             /*defer_thunk_definition=*/false));
         break;
       }
-      case SemIR::AssociatedConstantDecl::Kind: {
-        context.TODO(loc_id,
-                     "Associated constant in interface with synthesized impl");
-        return SemIR::ErrorInst::InstId;
+      case CARBON_KIND(SemIR::AssociatedConstantDecl decl): {
+        if (decl.type_id == SemIR::ErrorInst::TypeId) {
+          return SemIR::ErrorInst::InstId;
+        }
+
+        // TODO: remove once we have a test-case for all associated constants.
+        // Special-case the ones we want to support in this if-statement, until
+        // we're able to account for everything.
+        if (decl.type_id != SemIR::TypeType::TypeId) {
+          context.TODO(loc_id,
+                       "Associated constant of type other than `TypeType` in "
+                       "synthesized impl");
+          return SemIR::ErrorInst::InstId;
+        }
+
+        auto type_id = context.insts().Get(value_id).type_id();
+        CARBON_CHECK(type_id == SemIR::TypeType::TypeId ||
+                     type_id == SemIR::ErrorInst::TypeId);
+        auto impl_witness_associated_constant =
+            AddInst<SemIR::ImplWitnessAssociatedConstant>(
+                context, loc_id, {.type_id = type_id, .inst_id = value_id});
+        entries.push_back(impl_witness_associated_constant);
+        break;
       }
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
@@ -263,7 +283,10 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // then a second after all associated functions, rather than building one in
   // each `StructValue`. Right now the code is written assuming at most one
   // function, though this CHECK can be removed as a temporary workaround.
-  CARBON_CHECK(entries.size() <= 1,
+  auto associated_functions = llvm::count_if(entries, [&](SemIR::InstId id) {
+    return context.insts().Get(id).kind() == SemIR::InstKind::FunctionDecl;
+  });
+  CARBON_CHECK(associated_functions <= 1,
                "TODO: Support multiple associated functions");
 
   return MakeCustomWitnessConstantInst(context, loc_id,

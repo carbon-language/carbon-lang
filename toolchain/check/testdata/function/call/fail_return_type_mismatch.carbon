@@ -91,8 +91,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern %return.param_patt, %f64 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %.loc15_13: Core.Form = init_form %f64 [concrete = constants.%.49c]

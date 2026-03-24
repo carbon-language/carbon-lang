@@ -572,12 +572,9 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
   // corresponds to its form.
   if (auto form_param_pattern =
           param_pattern.TryAs<SemIR::FormParamPattern>()) {
-    auto form_binding_pattern = sem_ir.insts().GetAs<SemIR::FormBindingPattern>(
-        form_param_pattern->subpattern_id);
-    auto form_id =
-        sem_ir.entity_names().Get(form_binding_pattern.entity_name_id).form_id;
-    CARBON_CHECK(!form_id.is_symbolic(), "TODO");
-    auto form_inst_id = sem_ir.constant_values().GetInstId(form_id);
+    CARBON_CHECK(!form_param_pattern->form_id.is_symbolic(), "TODO");
+    auto form_inst_id =
+        sem_ir.constant_values().GetInstId(form_param_pattern->form_id);
     auto form_kind = sem_ir.insts().Get(form_inst_id).kind();
     switch (form_kind) {
       case SemIR::InitForm::Kind:

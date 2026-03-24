@@ -117,8 +117,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc15: %F.type.117dbc.1 = fn_decl @F.loc15 [concrete = constants.%F.d98bd5.1] {} {}
 // CHECK:STDOUT:   %F.decl.loc23: %F.type.117dbc.2 = fn_decl @F.loc23 [concrete = constants.%F.d98bd5.2] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc23_17.1: type = splice_block %.loc23_17.3 [concrete = constants.%empty_tuple.type] {
@@ -128,8 +128,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc25: %G.type.90f93f.1 = fn_decl @G.loc25 [concrete = constants.%G.4dbc02.1] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc25_10.1: type = splice_block %.loc25_10.3 [concrete = constants.%empty_tuple.type] {
@@ -140,8 +140,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc33: %G.type.90f93f.2 = fn_decl @G.loc33 [concrete = constants.%G.4dbc02.2] {} {}
 // CHECK:STDOUT:   %H.decl.loc35: %H.type.7917a6.1 = fn_decl @H.loc35 [concrete = constants.%H.414c03.1] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc35_10.1: type = splice_block %.loc35_10.3 [concrete = constants.%empty_tuple.type] {
@@ -151,17 +151,17 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl.loc40: %H.type.7917a6.2 = fn_decl @H.loc40 [concrete = constants.%H.414c03.2] {
-// CHECK:STDOUT:     %x.patt: <error> = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc40: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:     %x: <error> = value_binding x, %x.param
+// CHECK:STDOUT:     %x: <error> = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc42: %I.type.f30c8e.1 = fn_decl @I.loc42 [concrete = constants.%I.73832e.1] {} {}
 // CHECK:STDOUT:   %I.decl.loc50: %I.type.f30c8e.2 = fn_decl @I.loc50 [concrete = constants.%I.73832e.2] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc50_12.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc50_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc50_12.2: type = converted %.loc50_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -170,8 +170,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl.loc52: %J.type.fe0423.1 = fn_decl @J.loc52 [concrete = constants.%J.6d8208.1] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc52_12.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc52_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc52_12.2: type = converted %.loc52_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -181,8 +181,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl.loc60: %J.type.fe0423.2 = fn_decl @J.loc60 [concrete = constants.%J.6d8208.2] {} {}
 // CHECK:STDOUT:   %K.decl.loc62: %K.type.4b1c50.1 = fn_decl @K.loc62 [concrete = constants.%K.548a8d.1] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc62_12.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc62_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc62_12.2: type = converted %.loc62_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -191,8 +191,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %K.decl.loc70: %K.type.4b1c50.2 = fn_decl @K.loc70 [concrete = constants.%K.548a8d.2] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc70_12.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc70_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc70_12.2: type = converted %.loc70_12.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

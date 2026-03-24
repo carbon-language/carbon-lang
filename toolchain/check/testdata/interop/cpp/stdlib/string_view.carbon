@@ -125,8 +125,8 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern %return.param_patt, %str [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:     %.loc13_11.2: Core.Form = init_form %str [concrete = constants.%.b6b]
@@ -194,12 +194,12 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %StarstWith.decl: %StarstWith.type = fn_decl @StarstWith [concrete = constants.%StarstWith] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.461 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.461 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.461 = value_param_pattern %b.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.461 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.461 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.461 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.461 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc7_34.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1 [concrete = constants.%.f34]
