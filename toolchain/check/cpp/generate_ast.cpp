@@ -365,6 +365,11 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   // enable roundtripping through forward and reverse interop (once we have
   // syntax/support for that).
   Map<clang::DeclContext*, SemIR::InstId> scope_map_;
+
+  // Has the "Carbon" C++ namespace been created yet
+  // (this could be replaced with `!scope_map_.empty()` if Carbon::Map supported
+  // `empty()`)
+  bool root_scope_initialized_ = false;
 };
 
 void CarbonExternalASTSource::StartTranslationUnit(
@@ -404,15 +409,12 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  auto decl_context_inst_id =
-      scope_map_.Lookup(decl_context->getPrimaryContext());
-
-  if (!decl_context_inst_id) {
+  if (decl_context->getDeclKind() == clang::Decl::Kind::TranslationUnit) {
     // If the context doesn't already have a mapping between C++ and Carbon,
     // check if this is the root mapping (for the "Carbon" namespace in the
     // translation unit scope) and if so, create that mapping.
 
-    if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
+    if (root_scope_initialized_) {
       return false;
     }
 
@@ -435,10 +437,15 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     SetExternalVisibleDeclsForName(decl_context, decl_name,
                                    {carbon_cpp_namespace});
+    root_scope_initialized_ = true;
     return true;
   }
 
-  // Lookup the name in Carbon package scope
+  auto decl_context_inst_id =
+      scope_map_.Lookup(decl_context->getPrimaryContext());
+  CARBON_CHECK(
+      decl_context_inst_id,
+      "The DeclContext should already be associated with a Carbon InstId.");
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
 
