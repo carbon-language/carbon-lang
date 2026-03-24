@@ -330,6 +330,7 @@ CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 
 // Named constraint checking.
 CARBON_DIAGNOSTIC_KIND(NamedConstraintForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(NamedConstraintIncompleteWithinDefinition)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
