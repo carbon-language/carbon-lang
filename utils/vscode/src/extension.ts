@@ -68,10 +68,11 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
         range: new Range(i, 0, i, 0),
         renderOptions: {
           before: {
-            contentText: splitLineNum.toString().padStart(maxDigits, ' '),
+            contentText: splitLineNum.toString(),
             color: new ThemeColor('editorLineNumber.foreground'),
             width: widthStr,
             margin: '0 2ch 0 0',
+            textDecoration: 'none; text-align: right;',
           }
         }
       });
