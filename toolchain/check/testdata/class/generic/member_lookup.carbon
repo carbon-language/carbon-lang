@@ -164,17 +164,17 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.loc13_18.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc13_45.1 => constants.%Derived.ad7
-// CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.d85
+// CHECK:STDOUT:   %pattern_type.loc13_34 => constants.%pattern_type.d85
 // CHECK:STDOUT:   %.loc13_51.2 => constants.%.076a48.2
-// CHECK:STDOUT:   %pattern_type.loc13_48 => constants.%pattern_type.9b9f0c.2
+// CHECK:STDOUT:   %pattern_type.loc13_51 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessBase(constants.%T.035) {
 // CHECK:STDOUT:   %T.loc19_15.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc19_42.1 => constants.%Derived.ad7
-// CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.d85
+// CHECK:STDOUT:   %pattern_type.loc19_31 => constants.%pattern_type.d85
 // CHECK:STDOUT:   %.loc19_48.2 => constants.%.076a48.2
-// CHECK:STDOUT:   %pattern_type.loc19_45 => constants.%pattern_type.9b9f0c.2
+// CHECK:STDOUT:   %pattern_type.loc19_48 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

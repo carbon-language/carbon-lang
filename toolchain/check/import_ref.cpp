@@ -1547,12 +1547,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 template <typename ParamPatternT>
-  requires SemIR::Internal::HasInstCategory<SemIR::AnyParamPattern,
-                                            ParamPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyLeafParamPattern,
+                                            ParamPatternT> &&
+           (!std::same_as<ParamPatternT, SemIR::FormParamPattern>)
 static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
+  auto name_id = GetLocalNameId(resolver, inst.pretty_name_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1561,7 +1562,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
       resolver, import_inst_id,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-       .subpattern_id = subpattern_id});
+       .pretty_name_id = name_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -1743,6 +1744,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.import_entity_names().Get(inst.entity_name_id);
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_entity_name.parent_scope_id);
+  auto subpattern_id = SemIR::InstId::None;
+  if constexpr (std::is_same_v<BindingPatternT, SemIR::WrapperBindingPattern>) {
+    subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
+  }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1753,11 +1758,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .parent_scope_id = parent_scope_id,
        .bind_index_value = import_entity_name.bind_index().index,
        .is_template = import_entity_name.is_template});
+  // We use AnyBindingPattern here so that we can initialize it uniformly,
+  // regardless of whether BindingPatternT has a subpattern_id field.
+  SemIR::AnyBindingPattern result = {
+      .kind = BindingPatternT::Kind,
+      .type_id =
+          resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
+      .entity_name_id = entity_name_id,
+      .subpattern_id = subpattern_id};
+
   return ResolveResult::Unique<BindingPatternT>(
-      resolver, import_inst_id,
-      {.type_id =
-           resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-       .entity_name_id = entity_name_id});
+      resolver, import_inst_id, SemIR::Inst(result).As<BindingPatternT>());
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3730,6 +3741,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ReturnSlotPattern inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -3738,6 +3750,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_inst_id,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
+       .subpattern_id = subpattern_id,
        .type_inst_id = SemIR::TypeInstId::None});
 }
 
@@ -3953,8 +3966,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .element_type_inst_id = elem_const_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::VarPattern inst,
+template <typename VarPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyVarPattern, VarPatternT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver, VarPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
@@ -3962,7 +3976,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveResult::Unique<SemIR::VarPattern>(
+  return ResolveResult::Unique<VarPatternT>(
       resolver, import_inst_id,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
@@ -4266,6 +4280,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::VtablePtr inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::WrapperBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     default:
       // Found a canonical instruction which needs to be resolved, but which is

@@ -116,8 +116,8 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %A.F.decl: %A.F.type = fn_decl @A.F [concrete = constants.%A.F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -134,8 +134,8 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %B.Make.decl: %B.Make.type = fn_decl @B.Make [concrete = constants.%B.Make] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.971 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.971 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.971 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.971 = return_slot_pattern %return.param_patt, %Self.ref.loc18 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc18: Core.Form = init_form %Self.ref.loc18 [concrete = constants.%.18e]

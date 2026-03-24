@@ -71,8 +71,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.0dc = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.93e) = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.93e) = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.93e) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.93e) = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -89,8 +89,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.e10 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.892) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.892) = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.892) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.892) = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

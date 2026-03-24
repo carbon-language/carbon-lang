@@ -259,6 +259,6 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.14f
 // CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
-// CHECK:STDOUT:   %pattern_type.loc25_20 => constants.%pattern_type.e04
+// CHECK:STDOUT:   %pattern_type.loc25_21 => constants.%pattern_type.e04
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

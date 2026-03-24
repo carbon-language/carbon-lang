@@ -263,8 +263,8 @@ fn Var() {
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/types/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %ReturnU8.cpp_overload_set.value: %ReturnU8.cpp_overload_set.type = cpp_overload_set_value @ReturnU8.cpp_overload_set [concrete = constants.%ReturnU8.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.decl: %ReturnU8__carbon_thunk.type = fn_decl @ReturnU8__carbon_thunk [concrete = constants.%ReturnU8__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a66 = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a66 = value_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a66 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a66 = at_binding_pattern r#return, %return.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {
@@ -287,8 +287,8 @@ fn Var() {
 // CHECK:STDOUT:     import Cpp inline
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetU8.decl: %GetU8.type = fn_decl @GetU8 [concrete = constants.%GetU8] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.8f3 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8f3 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8f3 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.8f3 = return_slot_pattern %return.param_patt, %u8 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8 [concrete = constants.%.471]
@@ -346,8 +346,8 @@ fn Var() {
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/types/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %ReturnU32.cpp_overload_set.value: %ReturnU32.cpp_overload_set.type = cpp_overload_set_value @ReturnU32.cpp_overload_set [concrete = constants.%ReturnU32.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU32.decl: %ReturnU32.type = fn_decl @ReturnU32 [concrete = constants.%ReturnU32] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.4a9 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a9 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a9 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4a9 = return_slot_pattern %return.param_patt, %u32.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.1: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]

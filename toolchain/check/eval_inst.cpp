@@ -540,7 +540,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                            true)) {
       return ConstantEvalResult::Error;
     }
-    return ConstantEvalResult::NewSamePhase(SemIR::CompleteTypeWitness{
+    return ConstantEvalResult::NewAnyPhase(SemIR::CompleteTypeWitness{
         .type_id = witness_type_id,
         .object_repr_type_inst_id = context.types().GetTypeInstId(
             context.types().GetObjectRepr(complete_type_id))});

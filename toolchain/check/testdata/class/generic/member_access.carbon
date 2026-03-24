@@ -291,20 +291,20 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Class.Get(constants.%T.035) {
 // CHECK:STDOUT:   %T => constants.%T.035
 // CHECK:STDOUT:   %Class => constants.%Class.847
-// CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.893
+// CHECK:STDOUT:   %pattern_type.loc7_14 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %.loc7_27.2 => constants.%.076a48.2
-// CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.9b9f0c.2
+// CHECK:STDOUT:   %pattern_type.loc7_27 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.GetAddr(constants.%T.035) {
 // CHECK:STDOUT:   %T => constants.%T.035
 // CHECK:STDOUT:   %Class => constants.%Class.847
-// CHECK:STDOUT:   %pattern_type.loc13_18 => constants.%pattern_type.893
+// CHECK:STDOUT:   %pattern_type.loc13_22 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %ptr.loc13_36.1 => constants.%ptr.e7d
 // CHECK:STDOUT:   %.loc13_36.1 => constants.%.66f
-// CHECK:STDOUT:   %pattern_type.loc13_32 => constants.%pattern_type.65a
+// CHECK:STDOUT:   %pattern_type.loc13_36 => constants.%pattern_type.65a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%Copy.facet.de4) {
@@ -326,10 +326,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Class.Get(constants.%Copy.facet.de4) {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.de4
 // CHECK:STDOUT:   %Class => constants.%Class.06a
-// CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.cea
+// CHECK:STDOUT:   %pattern_type.loc7_14 => constants.%pattern_type.cea
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
 // CHECK:STDOUT:   %.loc7_27.2 => constants.%.ff5
-// CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.7ce
+// CHECK:STDOUT:   %pattern_type.loc7_27 => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc7 => constants.%complete_type.1ec
@@ -345,11 +345,11 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Class.GetAddr(constants.%Copy.facet.de4) {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.de4
 // CHECK:STDOUT:   %Class => constants.%Class.06a
-// CHECK:STDOUT:   %pattern_type.loc13_18 => constants.%pattern_type.cea
+// CHECK:STDOUT:   %pattern_type.loc13_22 => constants.%pattern_type.cea
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
 // CHECK:STDOUT:   %ptr.loc13_36.1 => constants.%ptr.235
 // CHECK:STDOUT:   %.loc13_36.1 => constants.%.605
-// CHECK:STDOUT:   %pattern_type.loc13_32 => constants.%pattern_type.fe8
+// CHECK:STDOUT:   %pattern_type.loc13_36 => constants.%pattern_type.fe8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc13_22 => constants.%complete_type.1ec

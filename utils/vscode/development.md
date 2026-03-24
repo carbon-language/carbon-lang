@@ -8,14 +8,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Tool setup
 
-NodeJS is required to build the extension. You will also need to install `vsce`:
+NodeJS is required to build the extension. You will also need to install `vsce`
+and `ovsx`:
 
 ```
-npm install -g vsce
+npm install -g @vscode/vsce ovsx
 ```
 
-This installs `vsce` to `/usr/local/bin/vsce`. Ensure that `/usr/local/bin` is
-in your `$PATH` environment variable to use it.
+This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
+`/usr/local/bin` is in your `$PATH` environment variable to use it.
 
 ## Common operations
 
@@ -43,12 +44,15 @@ in your `$PATH` environment variable to use it.
            and select "Extensions: Install from VSIX...".
         3. Enter the path printed by the above command.
 
--   Build and publish the release using the website:
+-   Build and publish the release to the VSCode Marketplace using the website:
 
     1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
     2. Go to https://marketplace.visualstudio.com/manage/publishers/carbon-lang
     3. Next to the extension name, click the "..." and select "Update".
     4. Select the `carbon.vsix` file.
+
+-   Build and publish the release to the Open VSX Registry by following the
+    [Open VSX documentation for publishing extensions](https://github.com/EclipseFdn/open-vsx.org/wiki/Publishing-Extensions).
 
 ## Development
 

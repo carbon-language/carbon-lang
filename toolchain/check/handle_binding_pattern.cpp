@@ -33,8 +33,8 @@ auto HandleParseNode(Context& context, Parse::UnderscoreNameId node_id)
 }
 
 // Returns the `InstKind` corresponding to the pattern's `NodeKind`.
-static auto GetPatternInstKind(Parse::NodeKind node_kind, bool is_ref)
-    -> SemIR::InstKind {
+static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
+                                          bool is_ref) -> SemIR::InstKind {
   switch (node_kind) {
     case Parse::NodeKind::CompileTimeBindingPattern:
       return SemIR::InstKind::SymbolicBindingPattern;
@@ -170,30 +170,34 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RefBindingName>();
 
-  SemIR::InstKind pattern_inst_kind = GetPatternInstKind(node_kind, is_ref);
-
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
 
-  auto form_id = pattern_inst_kind == SemIR::FormBindingPattern::Kind
+  auto form_id = node_kind == Parse::FormBindingPattern::Kind
                      ? context.constant_values().Get(type_expr.inst_id)
                      : SemIR::ConstantId::None;
 
-  auto make_binding_pattern = [&]() -> SemIR::InstId {
+  // Adds a binding pattern for `node_id`, with the given kind and subpattern,
+  // and adds its name to the current context. The subpattern must not be
+  // provided unless the kind is `FormBindingPattern`.
+  auto make_binding_pattern = [&](SemIR::InstKind kind,
+                                  SemIR::InstId subpattern_id =
+                                      SemIR::InstId::None) -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto phase = BindingPhase::Runtime;
-    if (pattern_inst_kind == SemIR::SymbolicBindingPattern::Kind) {
+    if (kind == SemIR::SymbolicBindingPattern::Kind) {
       phase = is_template ? BindingPhase::Template : BindingPhase::Symbolic;
     }
     auto binding = AddBindingPattern(
         context, name_node, type_expr_region_id,
-        {.kind = pattern_inst_kind,
+        {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
-         .entity_name_id = AddBindingEntityName(context, name_id, form_id,
-                                                is_unused, phase)});
+         .entity_name_id =
+             AddBindingEntityName(context, name_id, form_id, is_unused, phase),
+         .subpattern_id = subpattern_id});
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
     // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
@@ -281,30 +285,45 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         }
       }
 
-      auto result_inst_id = make_binding_pattern();
-
-      // A binding pattern in a function signature is a `Call` parameter
-      // unless it's nested inside a `var` pattern (because then the
-      // enclosing `var` pattern is), or it's a compile-time binding pattern
-      // (because then it's not passed to the `Call` inst).
-      if (node_kind == Parse::NodeKind::LetBindingPattern ||
-          node_kind == Parse::NodeKind::FormBindingPattern) {
-        auto type_id = context.insts().GetAttachedType(result_inst_id);
-        if (is_ref) {
-          result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
-              context, node_id,
-              {.type_id = type_id, .subpattern_id = result_inst_id});
-        } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
-          result_inst_id = AddPatternInst<SemIR::FormParamPattern>(
-              context, node_id,
-              {.type_id = type_id,
-               .subpattern_id = result_inst_id,
-               .form_id = form_id});
-        } else {
-          result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
-              context, node_id,
-              {.type_id = type_id, .subpattern_id = result_inst_id});
+      auto result_inst_id = SemIR::InstId::None;
+      switch (node_kind) {
+        // A binding pattern in a function signature is a `Call` parameter
+        // unless it's nested inside a `var` pattern (because then the
+        // enclosing `var` pattern is), or it's a compile-time binding pattern
+        // (because then it's not passed to the `Call` inst).
+        case Parse::NodeKind::LetBindingPattern:
+        case Parse::NodeKind::FormBindingPattern: {
+          auto param_pattern_id = SemIR::InstId::None;
+          auto pattern_type_id =
+              GetPatternType(context, type_expr.type_component_id);
+          if (is_ref) {
+            param_pattern_id = AddPatternInst<SemIR::RefParamPattern>(
+                context, node_id,
+                {.type_id = pattern_type_id, .pretty_name_id = name_id});
+          } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
+            param_pattern_id = AddPatternInst<SemIR::FormParamPattern>(
+                context, node_id,
+                {.type_id = pattern_type_id,
+                 .pretty_name_id = name_id,
+                 .form_id = form_id});
+          } else {
+            param_pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+                context, node_id,
+                {.type_id = pattern_type_id, .pretty_name_id = name_id});
+          }
+          result_inst_id = make_binding_pattern(
+              SemIR::WrapperBindingPattern::Kind, param_pattern_id);
+          break;
         }
+        case Parse::NodeKind::VarBindingPattern:
+          result_inst_id = make_binding_pattern(SemIR::RefBindingPattern::Kind);
+          break;
+        case Parse::NodeKind::CompileTimeBindingPattern:
+          result_inst_id =
+              make_binding_pattern(SemIR::SymbolicBindingPattern::Kind);
+          break;
+        default:
+          CARBON_FATAL("Unexpected node kind {0}", node_kind);
       }
       context.node_stack().Push(node_id, result_inst_id);
       break;
@@ -333,7 +352,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         }
       }
 
-      auto binding_pattern_id = make_binding_pattern();
+      auto binding_pattern_id = make_binding_pattern(
+          GetLeafBindingPatternInstKind(node_kind, is_ref));
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
         CARBON_CHECK(!is_generic);
 
@@ -532,10 +552,6 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
     auto current_inst_id = worklist.pop_back_val();
     auto inst = context.insts().Get(current_inst_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND_ANY(SemIR::AnyParamPattern, param): {
-        worklist.push_back(param.subpattern_id);
-        break;
-      }
       case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& name = context.entity_names().Get(bind.entity_name_id);
         name.is_unused = true;
@@ -548,14 +564,14 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
         }
         break;
       }
+      case CARBON_KIND_ANY(SemIR::AnyVarPattern, var): {
+        worklist.push_back(var.subpattern_id);
+        break;
+      }
       case CARBON_KIND(SemIR::TuplePattern tuple): {
         for (auto elem_id : context.inst_blocks().Get(tuple.elements_id)) {
           worklist.push_back(elem_id);
         }
-        break;
-      }
-      case CARBON_KIND(SemIR::VarPattern var): {
-        worklist.push_back(var.subpattern_id);
         break;
       }
       default:

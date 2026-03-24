@@ -206,10 +206,10 @@ library "[[@TEST_NAME]]";
 fn F(x: i32);
 // CHECK:STDERR: fail_unused_does_not_affect_redeclaration.carbon:[[@LINE+7]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn F(unused y: i32) {}
-// CHECK:STDERR:             ^~~~~~
+// CHECK:STDERR:             ^
 // CHECK:STDERR: fail_unused_does_not_affect_redeclaration.carbon:[[@LINE-4]]:6: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: fn F(x: i32);
-// CHECK:STDERR:      ^~~~~~
+// CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn F(unused y: i32) {}
 

@@ -153,8 +153,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.0dc = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.93e) = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.93e) = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.93e) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.93e) = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -171,8 +171,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.37f = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.256) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.256) = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.256) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.256) = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_28.1: type = splice_block %.loc8_28.3 [concrete = constants.%facet_type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -356,8 +356,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Tame.decl: type = interface_decl @Tame [concrete = constants.%Tame.type] {} {}
 // CHECK:STDOUT:   %FeedTame.decl: %FeedTame.type = fn_decl @FeedTame [concrete = constants.%FeedTame] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.fa7 = symbolic_binding_pattern V, 0 [concrete]
-// CHECK:STDOUT:     %v.patt: @FeedTame.%pattern_type (%pattern_type.795) = value_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.param_patt: @FeedTame.%pattern_type (%pattern_type.795) = value_param_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.param_patt: @FeedTame.%pattern_type (%pattern_type.795) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %v.patt: @FeedTame.%pattern_type (%pattern_type.795) = at_binding_pattern v, %v.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [concrete = constants.%facet_type.2db] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -380,8 +380,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleTameAnimal.decl: %HandleTameAnimal.type = fn_decl @HandleTameAnimal [concrete = constants.%HandleTameAnimal] {
 // CHECK:STDOUT:     %W.patt: %pattern_type.fb4 = symbolic_binding_pattern W, 0 [concrete]
-// CHECK:STDOUT:     %w.patt: @HandleTameAnimal.%pattern_type (%pattern_type.e8e) = value_binding_pattern w [concrete]
-// CHECK:STDOUT:     %w.param_patt: @HandleTameAnimal.%pattern_type (%pattern_type.e8e) = value_param_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.param_patt: @HandleTameAnimal.%pattern_type (%pattern_type.e8e) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %w.patt: @HandleTameAnimal.%pattern_type (%pattern_type.e8e) = at_binding_pattern w, %w.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_39.1: type = splice_block %.loc9_39.3 [concrete = constants.%facet_type.206] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -607,8 +607,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FeedTame2.decl: %FeedTame2.type = fn_decl @FeedTame2 [concrete = constants.%FeedTame2] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.fa7 = symbolic_binding_pattern V, 0 [concrete]
-// CHECK:STDOUT:     %v.patt: @FeedTame2.%pattern_type (%pattern_type.795) = value_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.param_patt: @FeedTame2.%pattern_type (%pattern_type.795) = value_param_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.param_patt: @FeedTame2.%pattern_type (%pattern_type.795) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %v.patt: @FeedTame2.%pattern_type (%pattern_type.795) = at_binding_pattern v, %v.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.3 [concrete = constants.%facet_type.2db] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -631,8 +631,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleTameAnimal2.decl: %HandleTameAnimal2.type = fn_decl @HandleTameAnimal2 [concrete = constants.%HandleTameAnimal2] {
 // CHECK:STDOUT:     %W.patt: %pattern_type.310 = symbolic_binding_pattern W, 0 [concrete]
-// CHECK:STDOUT:     %w.patt: @HandleTameAnimal2.%pattern_type (%pattern_type.da7) = value_binding_pattern w [concrete]
-// CHECK:STDOUT:     %w.param_patt: @HandleTameAnimal2.%pattern_type (%pattern_type.da7) = value_param_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.param_patt: @HandleTameAnimal2.%pattern_type (%pattern_type.da7) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %w.patt: @HandleTameAnimal2.%pattern_type (%pattern_type.da7) = at_binding_pattern w, %w.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_33.1: type = splice_block %.loc11_33.3 [concrete = constants.%facet_type.afc] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -840,8 +840,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %TakesA.decl: %TakesA.type = fn_decl @TakesA [concrete = constants.%TakesA] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.faf = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @TakesA.%pattern_type (%pattern_type.057cf4.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @TakesA.%pattern_type (%pattern_type.057cf4.1) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @TakesA.%pattern_type (%pattern_type.057cf4.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @TakesA.%pattern_type (%pattern_type.057cf4.1) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_15: type = splice_block %A.ref [concrete = constants.%A.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -858,8 +858,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithExtraWhere.decl: %WithExtraWhere.type = fn_decl @WithExtraWhere [concrete = constants.%WithExtraWhere] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.faf = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %y.patt: @WithExtraWhere.%pattern_type (%pattern_type.057cf4.2) = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: @WithExtraWhere.%pattern_type (%pattern_type.057cf4.2) = value_param_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.param_patt: @WithExtraWhere.%pattern_type (%pattern_type.057cf4.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %y.patt: @WithExtraWhere.%pattern_type (%pattern_type.057cf4.2) = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_25.1: type = splice_block %.loc9_25.2 [concrete = constants.%A.type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -1002,8 +1002,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TakesTypeDeduced.decl: %TakesTypeDeduced.type = fn_decl @TakesTypeDeduced [concrete = constants.%TakesTypeDeduced] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @TakesTypeDeduced.%pattern_type (%pattern_type.51d) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @TakesTypeDeduced.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @TakesTypeDeduced.%pattern_type (%pattern_type.51d) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @TakesTypeDeduced.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_25.1: type = splice_block %.loc3_25.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -1016,8 +1016,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallsWithExtraWhere.decl: %CallsWithExtraWhere.type = fn_decl @CallsWithExtraWhere [concrete = constants.%CallsWithExtraWhere] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %y.patt: @CallsWithExtraWhere.%pattern_type (%pattern_type.349) = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: @CallsWithExtraWhere.%pattern_type (%pattern_type.349) = value_param_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.param_patt: @CallsWithExtraWhere.%pattern_type (%pattern_type.349) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %y.patt: @CallsWithExtraWhere.%pattern_type (%pattern_type.349) = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_33.1: type = splice_block %.loc4_33.2 [concrete = constants.%type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -1212,8 +1212,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TakesExtraWhereDeduced.decl: %TakesExtraWhereDeduced.type = fn_decl @TakesExtraWhereDeduced [concrete = constants.%TakesExtraWhereDeduced] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.349) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.349) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.349) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.349) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_36.1: type = splice_block %.loc3_36.2 [concrete = constants.%type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -1237,8 +1237,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallsWithType.decl: %CallsWithType.type = fn_decl @CallsWithType [concrete = constants.%CallsWithType] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %y.patt: @CallsWithType.%pattern_type (%pattern_type.51d) = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: @CallsWithType.%pattern_type (%pattern_type.51d) = value_param_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.param_patt: @CallsWithType.%pattern_type (%pattern_type.51d) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %y.patt: @CallsWithType.%pattern_type (%pattern_type.51d) = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_22.1: type = splice_block %.loc4_22.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]

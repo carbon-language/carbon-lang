@@ -308,24 +308,24 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
-// CHECK:STDOUT:     %e.patt: %pattern_type.7d1 = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: %pattern_type.7d1 = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.7d1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.7d1 = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %e: %Empty.type = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [concrete = constants.%UseBasic] {
-// CHECK:STDOUT:     %e.patt: %pattern_type.185 = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: %pattern_type.185 = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.185 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.185 = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Basic.type = value_param call_param0
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
 // CHECK:STDOUT:     %e: %Basic.type = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [concrete = constants.%UseForwardDeclared] {
-// CHECK:STDOUT:     %f.patt: %pattern_type.0a0 = value_binding_pattern f [concrete]
-// CHECK:STDOUT:     %f.param_patt: %pattern_type.0a0 = value_param_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.param_patt: %pattern_type.0a0 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type.0a0 = at_binding_pattern f, %f.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]

@@ -104,8 +104,8 @@ fn H() {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.1d6) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cd4)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
-// CHECK:STDOUT:       %return.patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = return_slot_pattern %return.param_patt, %U.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc16_21.2: Core.Form = init_form %U.ref [symbolic = %.loc16_21.1 (constants.%.a6b)]

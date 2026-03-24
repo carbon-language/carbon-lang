@@ -180,6 +180,10 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
       case CARBON_KIND(SemIR::InitForm _): {
         auto call_params = context.inst_blocks().Get(
             GetCurrentFunctionForReturn(context).call_params_id);
+        if (function.call_param_ranges.return_size() == 0) {
+          out_param_id = SemIR::InstId::None;
+          break;
+        }
         CARBON_CHECK(function.call_param_ranges.return_size() == 1);
         out_param_id =
             call_params[function.call_param_ranges.return_begin().index];

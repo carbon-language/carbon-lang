@@ -77,8 +77,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc5_12.1: type = splice_block %.loc5_12.3 [concrete = constants.%empty_struct_type] {
@@ -224,8 +224,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.loc7_25.2 as %I.ref {
 // CHECK:STDOUT:     %C.as.I.impl.F.decl.loc8_24.1: @C.as.I.impl.%C.as.I.impl.F.type.loc8_24.1 (%C.as.I.impl.F.type.cf838e.1) = fn_decl @C.as.I.impl.F.loc8_24.1 [symbolic = @C.as.I.impl.%C.as.I.impl.F.loc8_24.1 (constants.%C.as.I.impl.F.421e41.1)] {
-// CHECK:STDOUT:       %x.patt: @C.as.I.impl.F.loc8_24.1.%pattern_type (%pattern_type.fb2) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:       %x.param_patt: @C.as.I.impl.F.loc8_24.1.%pattern_type (%pattern_type.fb2) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:       %x.param_patt: @C.as.I.impl.F.loc8_24.1.%pattern_type (%pattern_type.fb2) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %x.patt: @C.as.I.impl.F.loc8_24.1.%pattern_type (%pattern_type.fb2) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.I.impl.F.loc8_24.1.%C.loc8_21.1 (%C.c8540f.2) = value_param call_param0
 // CHECK:STDOUT:       %.loc8: type = splice_block %C.loc8_21.2 [symbolic = %C.loc8_21.1 (constants.%C.c8540f.2)] {
@@ -236,8 +236,8 @@ fn G() {
 // CHECK:STDOUT:       %x: @C.as.I.impl.F.loc8_24.1.%C.loc8_21.1 (%C.c8540f.2) = value_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.as.I.impl.F.decl.loc8_24.2: @C.as.I.impl.%C.as.I.impl.F.type.loc8_24.2 (%C.as.I.impl.F.type.cf838e.2) = fn_decl @C.as.I.impl.F.loc8_24.2 [symbolic = @C.as.I.impl.%C.as.I.impl.F.loc8_24.2 (constants.%C.as.I.impl.F.421e41.2)] {
-// CHECK:STDOUT:       %x.patt: %pattern_type.a96 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:       %x.param_patt: %pattern_type.a96 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:       %x.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
+// CHECK:STDOUT:       %x.patt: %pattern_type.a96 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:       %x: %empty_struct_type = value_binding x, %x.param

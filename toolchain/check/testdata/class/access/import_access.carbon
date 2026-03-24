@@ -460,8 +460,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -500,15 +500,15 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: <error> = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: <error> = value_binding c, %c.param
+// CHECK:STDOUT:     %c: <error> = value_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,8 +538,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: <error> = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -547,7 +547,7 @@ private class Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: <error> = value_binding c, %c.param
+// CHECK:STDOUT:     %c: <error> = value_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
