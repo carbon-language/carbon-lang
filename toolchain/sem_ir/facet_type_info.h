@@ -148,7 +148,7 @@ struct IdentifiedFacetType {
         -> bool = default;
   };
 
-  IdentifiedFacetType(IdentifiedFacetTypeKey key,
+  IdentifiedFacetType(IdentifiedFacetTypeKey key, bool partially_identified,
                       llvm::ArrayRef<RequiredImpl> extends,
                       llvm::ArrayRef<RequiredImpl> self_impls);
 

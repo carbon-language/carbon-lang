@@ -182,3 +182,22 @@ fn G() -> P({}) {
   }
   return F(C);
 }
+
+// --- fail_impl_lookup_target_partially_identified.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+interface X { let XZ:! Z; }
+constraint W {
+  require impls Z;
+  // Target of impl lookup can not be partially identified.
+  // CHECK:STDERR: fail_impl_lookup_target_partially_identified.carbon:[[@LINE+7]]:32: error: facet type `Z & W` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:   require impls X where .XZ = (Self as (W & Z));
+  // CHECK:STDERR:                                ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_lookup_target_partially_identified.carbon:[[@LINE-6]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
+  // CHECK:STDERR: constraint W {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require impls X where .XZ = (Self as (W & Z));
+}

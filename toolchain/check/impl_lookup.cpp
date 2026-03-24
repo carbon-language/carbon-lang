@@ -341,9 +341,8 @@ static auto TryGetSpecificWitnessIdForImpl(
 
 // Returns nullopt if an error was found and diagnosed.
 static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
-                                       SemIR::ConstantId query_self_const_id,
-                                       bool diagnose)
-    -> std::optional<SemIR::IdentifiedFacetTypeId> {
+                                       SemIR::ConstantId query_self_const_id)
+    -> SemIR::IdentifiedFacetTypeId {
   auto query_self_inst_id =
       context.constant_values().GetInstId(query_self_const_id);
 
@@ -357,21 +356,8 @@ static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
   // position of the witness for that interface in `FacetValue`. The
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
-  auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id, *facet_type,
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetTypeOfQuerySelf, Context,
-                          "facet type of value {0} can not be identified",
-                          InstIdAsType);
-        builder.Context(loc_id, ImplLookupInUnidentifiedFacetTypeOfQuerySelf,
-                        query_self_inst_id);
-      },
-      diagnose);
-  if (!identified_id.has_value()) {
-    // An error was found.
-    return std::nullopt;
-  }
-  return identified_id;
+  return TryToIdentifyFacetType(context, loc_id, query_self_const_id,
+                                *facet_type, true);
 }
 
 // Substitutes witnesess in place of `LookupImplWitness` queries into `.Self`,
@@ -934,22 +920,15 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (const auto& req_impl : req_impls) {
     // Identify the type of the requirement's self up front, if it's a facet, so
     // we only have to do this once.
-    auto req_self_type_identified_id = IdentifyQuerySelfFacetType(
-        context, loc_id, req_impl.self_facet_value, diagnose);
-    if (!req_self_type_identified_id) {
-      auto pop = stack.pop_back_val();
-      if (pop.diagnosed_cycle && !stack.empty()) {
-        stack.back().diagnosed_cycle = true;
-      }
-      return SemIR::InstBlockIdOrError::MakeError();
-    }
+    auto req_self_type_identified_id =
+        IdentifyQuerySelfFacetType(context, loc_id, req_impl.self_facet_value);
 
     // If the self facet contains a final witness for the required interface, we
     // use that and avoid any further work. This is strictly an optimization,
     // since that same final witness should be found by evaluating a
     // LookupImplWitness instruction for the required self+interface pair.
     auto result_witness_id = FindFinalWitnessFromSelfFacetValue(
-        context, req_impl.self_facet_value, *req_self_type_identified_id,
+        context, req_impl.self_facet_value, req_self_type_identified_id,
         req_impl.specific_interface);
     if (result_witness_id.has_value()) {
       // Found a final witness, use it.
@@ -982,7 +961,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // the `LookupImplWitness` as our witness so that monomorphization can
     // produce a final witness later.
     if (!FindNonFinalWitness(context, loc_id, req_impl.self_facet_value,
-                             *req_self_type_identified_id,
+                             req_self_type_identified_id,
                              req_impl.specific_interface)) {
       // At least one queried interface in the facet type has no witness for the
       // given type, we can stop looking for more.

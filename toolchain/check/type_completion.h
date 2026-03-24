@@ -65,6 +65,18 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          DiagnosticContextFn concrete_type_diagnostic_context)
     -> bool;
 
+// Performs `RequireIdentifiedFacetType`, but it is not an error if the facet
+// type is not identified.
+//
+// If `allow_partially_identified` is true, the facet type may be partially
+// identified, which can contain interfaces from a named constraint that is in
+// the middle of being defined.
+auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
+                            SemIR::ConstantId self_const_id,
+                            const SemIR::FacetType& facet_type,
+                            bool allow_partially_identified)
+    -> SemIR::IdentifiedFacetTypeId;
+
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is a
 // type or facet type expression that is the self that the FacetType is
