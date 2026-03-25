@@ -726,6 +726,32 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
+struct IndexInFacetValue {
+  enum None { None };
+  enum Unstable { Unstable };
+  struct Stable {
+    int32_t index;
+  };
+  using Value = std::variant<enum None, enum Unstable, Stable>;
+
+  // Returns whether the value represents a successful attempt to find the index
+  // of an interface in a FacetValue. Returns true regardless of whether the
+  // index is stable and able to be used or not.
+  static auto WasFound(const Value& value) -> bool {
+    CARBON_KIND_SWITCH(value) {
+      case CARBON_KIND(enum None _): {
+        return false;
+      }
+      case CARBON_KIND(enum Unstable _): {
+        return true;
+      }
+      case CARBON_KIND(Stable _): {
+        return true;
+      }
+    }
+  }
+};
+
 // Looks in the facet type of the query self facet value and returns the index
 // of `query_specific_interface` in the defined interface order for that facet
 // type. The order comes from the `query_self_type_identified_id` which must be
@@ -734,14 +760,19 @@ static auto CollectCandidateImplsForQuery(
 // If the query self is not a facet value, the IdentifiedFacetType would be
 // None.
 //
+// The IdentifiedFacetType must not be partially identified in order to find an
+// index, as that implies the interface order is not yet stable. In that case,
+// no index will be found.
+//
 // If the `query_specific_interface` is not part of the facet type of the query
 // self, returns -1 to indicate it was not found.
 static auto IndexOfImplWitnessInSelfFacetValue(
     Context& context, SemIR::ConstantId query_self_const_id,
     SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
-    SemIR::SpecificInterface query_specific_interface) -> int32_t {
+    SemIR::SpecificInterface query_specific_interface)
+    -> IndexInFacetValue::Value {
   if (!query_self_type_identified_id.has_value()) {
-    return -1;
+    return IndexInFacetValue::None;
   }
 
   // The self in the identified facet type is a canonicalized facet value, so we
@@ -749,19 +780,22 @@ static auto IndexOfImplWitnessInSelfFacetValue(
   auto canonical_query_self_const_id =
       GetCanonicalFacetOrTypeValue(context, query_self_const_id);
 
-  auto facet_type_req_impls =
-      llvm::enumerate(context.identified_facet_types()
-                          .Get(query_self_type_identified_id)
-                          .required_impls());
+  const auto& identified =
+      context.identified_facet_types().Get(query_self_type_identified_id);
+  auto facet_type_req_impls = llvm::enumerate(identified.required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {
     auto [req_self, req_specific_interface] = e.value();
     return req_self == canonical_query_self_const_id &&
            req_specific_interface == query_specific_interface;
   });
   if (it == facet_type_req_impls.end()) {
-    return -1;
+    return IndexInFacetValue::None;
   }
-  return static_cast<int32_t>((*it).index());
+
+  if (identified.partially_identified()) {
+    return IndexInFacetValue::Unstable;
+  }
+  return IndexInFacetValue::Stable(static_cast<int32_t>((*it).index()));
 }
 
 static auto FindFinalWitnessFromSelfFacetValue(
@@ -777,15 +811,16 @@ static auto FindFinalWitnessFromSelfFacetValue(
     return SemIR::InstId::None;
   }
 
-  auto index = IndexOfImplWitnessInSelfFacetValue(context, query_self_const_id,
-                                                  query_self_type_identified_id,
-                                                  query_specific_interface);
-  if (index < 0) {
+  auto index_in_facet_value = IndexOfImplWitnessInSelfFacetValue(
+      context, query_self_const_id, query_self_type_identified_id,
+      query_specific_interface);
+  auto* stable = std::get_if<IndexInFacetValue::Stable>(&index_in_facet_value);
+  if (stable == nullptr) {
     return SemIR::InstId::None;
   }
 
   auto witness_id =
-      context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
+      context.inst_blocks().Get(facet_value->witnesses_block_id)[stable->index];
   if (context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
     // Did not find a final witness.
     return SemIR::InstId::None;
@@ -799,9 +834,10 @@ static auto FindNonFinalWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
     SemIR::SpecificInterface query_specific_interface) -> bool {
-  if (IndexOfImplWitnessInSelfFacetValue(context, query_self_const_id,
-                                         query_self_type_identified_id,
-                                         query_specific_interface) >= 0) {
+  auto index = IndexOfImplWitnessInSelfFacetValue(context, query_self_const_id,
+                                                  query_self_type_identified_id,
+                                                  query_specific_interface);
+  if (IndexInFacetValue::WasFound(index)) {
     return true;
   }
 

@@ -180,6 +180,10 @@ struct IdentifiedFacetType {
     }
   }
 
+  auto partially_identified() const -> bool {
+    return key_.num_require_impls >= 0;
+  }
+
   auto GetAsKey() const -> IdentifiedFacetTypeKey { return key_; }
 
  private:
