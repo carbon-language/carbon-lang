@@ -17,6 +17,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -208,25 +209,88 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // The values that will go in the witness table.
   llvm::SmallVector<SemIR::InstId> entries;
 
+  auto self_facet = SemIR::ConstantId::None;
+  auto interface_with_self_specific_id = SemIR::SpecificId::None;
+
+  enum class AssociatedEntityState {
+    None,
+    AssociatedConstant,
+    AssociatedFunction
+  };
+  auto associated_entity_state = AssociatedEntityState::None;
+
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
 
-    // Build a witness with the current contents of the witness table. This will
-    // grow as we progress through the impl. In theory this will build O(n^2)
-    // table entries, but in practice n <= 2, so that's OK.
-    //
-    // This is necessary because later associated entities may refer to earlier
-    // associated entities in their signatures. In particular, an associated
-    // result type may be used as the return type of an associated function.
-    auto self_facet = MakeSelfFacetWithCustomWitness(
-        context, loc_id, query_types_for_self_facet,
-        query_specific_interface_id, context.inst_blocks().Add(entries));
-    auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-        context, loc_id, interface.generic_id, interface.generic_with_self_id,
-        query_specific_interface.specific_id, self_facet);
-
+    {
+      // Build a witness with the current contents of the witness table. Each
+      // specific interface has at most two witness tables: an optional table
+      // for associated constants and a table for associated functions.
+      //
+      // We need to separate associated constants and associated functions since
+      // associated entities can't depend on other entities in their own witness
+      // table. To ensure that we don't end up with n^2 witness tables, and so
+      // that we don't need to loop over the associated entities more than once,
+      // we require that interfaces with a custom witness specify all of their
+      // associated constants before their associated functions. Interfaces with
+      // custom witness tables are hardcoded in the compiler, so this
+      // restriction doesn't impact whether or not a type is definable.
+      auto decl_id = context.constant_values().GetInstId(
+          context.constant_values().Get(assoc_entity_id));
+      CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+      auto decl = context.insts().Get(decl_id);
+      CARBON_KIND_SWITCH(decl) {
+        case SemIR::StructValue::Kind: {
+          switch (associated_entity_state) {
+            case AssociatedEntityState::None:
+            case AssociatedEntityState::AssociatedConstant:
+              self_facet = MakeSelfFacetWithCustomWitness(
+                  context, loc_id, query_types_for_self_facet,
+                  query_specific_interface_id,
+                  context.inst_blocks().Add(entries));
+              interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+                  context, loc_id, interface.generic_id,
+                  interface.generic_with_self_id,
+                  query_specific_interface.specific_id, self_facet);
+              associated_entity_state =
+                  AssociatedEntityState::AssociatedFunction;
+              break;
+            case AssociatedEntityState::AssociatedFunction:
+              break;
+          }
+          break;
+        }
+        case SemIR::AssociatedConstantDecl::Kind: {
+          switch (associated_entity_state) {
+            case AssociatedEntityState::None:
+              self_facet = MakeSelfFacetWithCustomWitness(
+                  context, loc_id, query_types_for_self_facet,
+                  query_specific_interface_id,
+                  context.inst_blocks().Add(entries));
+              interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+                  context, loc_id, interface.generic_id,
+                  interface.generic_with_self_id,
+                  query_specific_interface.specific_id, self_facet);
+              associated_entity_state =
+                  AssociatedEntityState::AssociatedConstant;
+              break;
+            case AssociatedEntityState::AssociatedFunction:
+              CARBON_FATAL(
+                  "Implementation restriction: associated constants must be "
+                  "defined before associated functions");
+            case AssociatedEntityState::AssociatedConstant:
+              break;
+          }
+          break;
+        }
+        default:
+          CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
+                       "Unexpected kind of associated entity {0}", decl);
+          return SemIR::ErrorInst::InstId;
+      }
+    }
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_with_self_specific_id,
@@ -278,16 +342,6 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         return SemIR::ErrorInst::InstId;
     }
   }
-
-  // TODO: Consider building one witness after all associated constants, and
-  // then a second after all associated functions, rather than building one in
-  // each `StructValue`. Right now the code is written assuming at most one
-  // function, though this CHECK can be removed as a temporary workaround.
-  auto associated_functions = llvm::count_if(entries, [&](SemIR::InstId id) {
-    return context.insts().Get(id).kind() == SemIR::InstKind::FunctionDecl;
-  });
-  CARBON_CHECK(associated_functions <= 1,
-               "TODO: Support multiple associated functions");
 
   return MakeCustomWitnessConstantInst(context, loc_id,
                                        query_specific_interface_id,
