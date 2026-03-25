@@ -23,7 +23,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-var b: Make(Make({}));
+fn F(unused b: Make(Make({}))) {}
 //@dump-sem-ir-end
 
 // --- runtime_call.carbon
@@ -63,6 +63,8 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %.a8d: type = maybe_unformed_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.2ba: type = maybe_unformed_type %.a8d [concrete]
 // CHECK:STDOUT:   %pattern_type.ce6: type = pattern_type %.2ba [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,24 +72,30 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.ce6 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.ce6 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %b.param: %.2ba = value_param call_param0
+// CHECK:STDOUT:     %.loc7_29.1: type = splice_block %.loc7_29.3 [concrete = constants.%.2ba] {
+// CHECK:STDOUT:       %Make.ref.loc7_16: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
+// CHECK:STDOUT:       %Make.ref.loc7_21: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
+// CHECK:STDOUT:       %.loc7_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc7_27.2: type = converted %.loc7_27.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %Make.call.loc7_28: init type = call %Make.ref.loc7_21(%.loc7_27.2) [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %.loc7_28.1: type = value_of_initializer %Make.call.loc7_28 [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %.loc7_28.2: type = converted %Make.call.loc7_28, %.loc7_28.1 [concrete = constants.%.a8d]
+// CHECK:STDOUT:       %Make.call.loc7_29: init type = call %Make.ref.loc7_16(%.loc7_28.2) [concrete = constants.%.2ba]
+// CHECK:STDOUT:       %.loc7_29.2: type = value_of_initializer %Make.call.loc7_29 [concrete = constants.%.2ba]
+// CHECK:STDOUT:       %.loc7_29.3: type = converted %Make.call.loc7_29, %.loc7_29.2 [concrete = constants.%.2ba]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: %.2ba = value_binding b, %b.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %.2ba = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7_21.1: type = splice_block %.loc7_21.3 [concrete = constants.%.2ba] {
-// CHECK:STDOUT:     %Make.ref.loc7_8: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:     %Make.ref.loc7_13: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:     %.loc7_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc7_19.2: type = converted %.loc7_19.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %Make.call.loc7_20: init type = call %Make.ref.loc7_13(%.loc7_19.2) [concrete = constants.%.a8d]
-// CHECK:STDOUT:     %.loc7_20.1: type = value_of_initializer %Make.call.loc7_20 [concrete = constants.%.a8d]
-// CHECK:STDOUT:     %.loc7_20.2: type = converted %Make.call.loc7_20, %.loc7_20.1 [concrete = constants.%.a8d]
-// CHECK:STDOUT:     %Make.call.loc7_21: init type = call %Make.ref.loc7_8(%.loc7_20.2) [concrete = constants.%.2ba]
-// CHECK:STDOUT:     %.loc7_21.2: type = value_of_initializer %Make.call.loc7_21 [concrete = constants.%.2ba]
-// CHECK:STDOUT:     %.loc7_21.3: type = converted %Make.call.loc7_21, %.loc7_21.2 [concrete = constants.%.2ba]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %.2ba = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b.param: %.2ba) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- runtime_call.carbon

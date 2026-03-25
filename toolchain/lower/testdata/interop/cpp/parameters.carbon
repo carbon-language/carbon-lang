@@ -114,6 +114,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cc.Main = global i16 0
+// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z11pass_signedasil.carbon_thunk(ptr noundef %0, ptr noundef %1, i32 noundef %2, i64 noundef %3) #0 {
@@ -224,6 +225,13 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #2 !dbg !48 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   store i16 poison, ptr @_Cc.Main, align 2, !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
@@ -284,6 +292,9 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !45 = !DILocation(line: 19, column: 3, scope: !31)
 // CHECK:STDOUT: !46 = !DILocation(line: 20, column: 3, scope: !31)
 // CHECK:STDOUT: !47 = !DILocation(line: 16, column: 1, scope: !31)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !22, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !49 = !DILocation(line: 14, column: 1, scope: !48)
+// CHECK:STDOUT: !50 = !DILocation(line: 0, scope: !48)
 // CHECK:STDOUT: ; ModuleID = 'import_struct.carbon'
 // CHECK:STDOUT: source_filename = "import_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

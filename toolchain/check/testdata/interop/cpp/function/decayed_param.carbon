@@ -82,8 +82,21 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_42, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.b6e: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %array_type.643: type = array_type %int_42, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.b6e: type = pattern_type %array_type.643 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
+// CHECK:STDOUT:   %T.c4d: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op.2, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%T.c4d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.340: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.c5f, @Int.as.UnformedInit.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.b6d: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.340) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.90e: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.60d, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.40a: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.90e) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.eb0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.626, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%UnformedInit.facet.40a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.eb0) [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.type: type = cpp_overload_set_type @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -91,7 +104,6 @@ fn F() {
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
-// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.6bc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
@@ -106,7 +118,6 @@ fn F() {
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
 // CHECK:STDOUT:   %T.542: %OptionalStorage.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.e1f: <witness> = lookup_impl_witness %ptr.e8f, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.617: %Destroy.type = facet_value %ptr.e8f, (%Destroy.lookup_impl_witness.e1f) [symbolic]
 // CHECK:STDOUT:   %MaybeUnformed.2e9: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.617) [symbolic]
@@ -161,6 +172,10 @@ fn F() {
 // CHECK:STDOUT:     .nullptr = @F.%uninit
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.e09: @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.626 = impl_witness_table (%Core.import_ref.e09), @T.binding.as_type.as.DefaultOrUnformed.impl.90a [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.60d = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.c5f = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete = constants.%TakesArray.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -196,16 +211,24 @@ fn F() {
 // CHECK:STDOUT:     %n.patt: %pattern_type.b6e = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.b6e = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %array_type = var %n.var_patt
-// CHECK:STDOUT:   %.loc10: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %n.var: ref %array_type.643 = var %n.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.eb0) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc10_24.1: %DefaultOrUnformed.type = converted constants.%array_type.643, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_24.1 [concrete = constants.%array_type.643]
+// CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, %as_type [concrete = constants.%array_type.643]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc10_3: ref %array_type.643 = splice_block %n.var {}
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc10_3 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %n.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %.loc10_23: type = splice_block %array_type [concrete = constants.%array_type.643] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %array_type.643 = ref_binding n, %n.var
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesArray.ref.loc11: %TakesArray.cpp_overload_set.type = name_ref TakesArray, imports.%TakesArray.cpp_overload_set.value [concrete = constants.%TakesArray.cpp_overload_set.value]
-// CHECK:STDOUT:   %n.ref: ref %array_type = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: ref %array_type.643 = name_ref n, %n
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc11_21: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc11_21.1: <bound method> = bound_method %int_0, %impl.elem0.loc11_21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -252,7 +275,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13(%self.param: ref %Optional.75d) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %array_type.643) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_call_params_2.carbon
 // CHECK:STDOUT:
@@ -267,8 +290,19 @@ fn F() {
 // CHECK:STDOUT:   %Function.cpp_overload_set.type: type = cpp_overload_set_type @Function.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Function.cpp_overload_set.value: %Function.cpp_overload_set.type = cpp_overload_set_value @Function.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_42, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.b6e: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %array_type.643: type = array_type %int_42, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.b6e: type = pattern_type %array_type.643 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
+// CHECK:STDOUT:   %T.c4d: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op.2, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%T.c4d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.340: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.c5f, @Int.as.UnformedInit.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.b6d: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.340) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.90e: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.60d, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.40a: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.90e) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.eb0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.626, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%UnformedInit.facet.40a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.eb0) [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -300,6 +334,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete = constants.%TakesFunction.cpp_overload_set.value]
 // CHECK:STDOUT:   %Function.cpp_overload_set.value: %Function.cpp_overload_set.type = cpp_overload_set_value @Function.cpp_overload_set [concrete = constants.%Function.cpp_overload_set.value]
+// CHECK:STDOUT:   %Core.import_ref.e09: @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.626 = impl_witness_table (%Core.import_ref.e09), @T.binding.as_type.as.DefaultOrUnformed.impl.90a [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.60d = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.c5f = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
@@ -317,16 +355,24 @@ fn F() {
 // CHECK:STDOUT:     %n.patt: %pattern_type.b6e = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.b6e = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %array_type = var %n.var_patt
-// CHECK:STDOUT:   %.loc22: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %n.var: ref %array_type.643 = var %n.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.eb0) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc22_24.1: %DefaultOrUnformed.type = converted constants.%array_type.643, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc22_24.1 [concrete = constants.%array_type.643]
+// CHECK:STDOUT:   %.loc22_24.2: type = converted %.loc22_24.1, %as_type [concrete = constants.%array_type.643]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc22_3: ref %array_type.643 = splice_block %n.var {}
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc22_3 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %n.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %.loc22_23: type = splice_block %array_type [concrete = constants.%array_type.643] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %array_type.643 = ref_binding n, %n.var
 // CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesFunction.ref.loc31: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %n.ref: ref %array_type = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: ref %array_type.643 = name_ref n, %n
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc31_24.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -347,5 +393,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc22(%self.param: ref %array_type.643) = "no_op";
 // CHECK:STDOUT:

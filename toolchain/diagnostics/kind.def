@@ -54,7 +54,7 @@ CARBON_DIAGNOSTIC_KIND(ErrorReadingFile)
 // Lexer diagnostics
 // ============================================================================
 
-CARBON_DIAGNOSTIC_KIND(BinaryRealLiteral)
+CARBON_DIAGNOSTIC_KIND(InvalidRealLiteralRadix)
 CARBON_DIAGNOSTIC_KIND(ContentBeforeStringTerminator)
 CARBON_DIAGNOSTIC_KIND(DecimalEscapeSequence)
 CARBON_DIAGNOSTIC_KIND(DumpSemIRRangeMissingEnd)

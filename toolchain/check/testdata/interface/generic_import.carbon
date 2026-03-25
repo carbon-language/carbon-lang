@@ -36,8 +36,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.d53: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.d53 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.265: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]

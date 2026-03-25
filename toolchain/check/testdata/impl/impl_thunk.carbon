@@ -817,8 +817,8 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %U.035: %Copy.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
+// CHECK:STDOUT:   %U.035: %Copy.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.binding.as_type.14b: type = symbolic_binding_type U, 0, %U.035 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.2: type = pattern_type %U.binding.as_type.14b [symbolic]
 // CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %U.binding.as_type.14b [symbolic]
@@ -982,8 +982,8 @@ impl () as I({}) {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %U.035: %Copy.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
+// CHECK:STDOUT:   %U.035: %Copy.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.binding.as_type.14b: type = symbolic_binding_type U, 0, %U.035 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.2: type = pattern_type %U.binding.as_type.14b [symbolic]
 // CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %U.binding.as_type.14b [symbolic]

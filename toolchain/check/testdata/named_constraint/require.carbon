@@ -183,6 +183,20 @@ constraint Z {
   require impls Z;
 }
 
+// --- fail_require_impls_incomplete_self_through_alias.carbon
+library "[[@TEST_NAME]]";
+
+constraint Z;
+
+alias Y = Z;
+constraint Z {
+  // CHECK:STDERR: fail_require_impls_incomplete_self_through_alias.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
+  // CHECK:STDERR:   require impls Y;
+  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:
+  require impls Y;
+}
+
 // --- fail_require_impls_incomplete_self_forward_declared.carbon
 library "[[@TEST_NAME]]";
 
@@ -1115,8 +1129,8 @@ fn F() {
 // CHECK:STDOUT: --- fail_require_impls_without_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.7a8: type = generic_named_constaint_type @Z [concrete]
 // CHECK:STDOUT:   %empty_struct: %Z.type.7a8 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type.d68: type = facet_type <@Z, @Z(%T)> [symbolic]

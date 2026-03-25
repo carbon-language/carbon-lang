@@ -52,6 +52,8 @@ fn F(a: AdaptNotExtend) {
 
 // --- fail_misplaced.carbon
 
+library "[[@TEST_NAME]]";
+
 fn F() {
   // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
   // CHECK:STDERR:   adapt i32;

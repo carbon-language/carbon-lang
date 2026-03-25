@@ -5,20 +5,105 @@
 #include "toolchain/check/cpp/constant.h"
 
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
+static auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
+                                const clang::APValue& ap_value,
+                                clang::QualType type) -> SemIR::ConstantId {
+  CARBON_CHECK(ap_value.isLValue(), "not an LValue");
+
+  const auto* value_decl =
+      ap_value.getLValueBase().get<const clang::ValueDecl*>();
+
+  if (!ap_value.hasLValuePath()) {
+    context.TODO(loc_id, "lvalue has no path");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  if (ap_value.isLValueOnePastTheEnd()) {
+    context.TODO(loc_id, "one-past-the-end lvalue");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      // TODO: can this const_cast be avoided?
+      const_cast<clang::ValueDecl*>(value_decl));
+
+  auto inst_id = ImportCppDecl(context, loc_id, key);
+  if (ap_value.getLValuePath().empty()) {
+    return context.constant_values().Get(inst_id);
+  }
+
+  // Import the base type so that its fields can be accessed.
+  auto var_storage = context.insts().GetAs<SemIR::VarStorage>(inst_id);
+  // TODO: currently an error isn't reachable here because incomplete
+  // array types can't be imported. Once that changes, switch to
+  // `RequireCompleteType` and handle the error.
+  CompleteTypeOrCheckFail(context, var_storage.type_id);
+
+  clang::QualType qual_type = ap_value.getLValueBase().getType();
+  for (const auto& entry : ap_value.getLValuePath()) {
+    if (qual_type->isArrayType()) {
+      context.TODO(loc_id, "lvalue path contains an array type");
+    } else {
+      const auto* decl =
+          cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+
+      const auto* field_decl = dyn_cast<clang::FieldDecl>(decl);
+      if (!field_decl) {
+        context.TODO(loc_id, "lvalue path contains a base class subobject");
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      auto field_inst_id =
+          ImportCppDecl(context, loc_id,
+                        SemIR::ClangDeclKey::ForNonFunctionDecl(
+                            const_cast<clang::FieldDecl*>(field_decl)));
+
+      if (field_inst_id == SemIR::ErrorInst::InstId) {
+        context.TODO(loc_id,
+                     "unsupported field in lvalue path: " +
+                         ap_value.getAsString(context.ast_context(), type));
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      const SemIR::FieldDecl& field_decl_inst =
+          context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+
+      qual_type = field_decl->getType();
+      inst_id = PerformMemberAccess(context, loc_id, inst_id,
+                                    field_decl_inst.name_id);
+    }
+  }
+
+  return context.constant_values().Get(inst_id);
+}
+
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
-                          const clang::APValue& ap_value, clang::QualType type)
-    -> SemIR::ConstantId {
+                          const clang::APValue& ap_value, clang::QualType type,
+                          bool is_lvalue) -> SemIR::ConstantId {
   SemIR::TypeId type_id = ImportCppType(context, loc_id, type).type_id;
   if (!type_id.has_value()) {
     return SemIR::ConstantId::NotConstant;
   }
 
-  if (ap_value.isInt()) {
+  if (is_lvalue) {
+    return MapLValueToConstant(context, loc_id, ap_value, type);
+  } else if (type->isPointerType()) {
+    auto const_id = MapLValueToConstant(context, loc_id, ap_value, type);
+    auto inst_id = AddInst<SemIR::AddrOf>(
+        context, loc_id,
+        {.type_id = type_id,
+         .lvalue_id = context.constant_values().GetInstId(const_id)});
+    return context.constant_values().Get(inst_id);
+  } else if (ap_value.isInt()) {
     if (type->isBooleanType()) {
       auto value = SemIR::BoolValue::From(!ap_value.getInt().isZero());
       return TryEvalInst(
@@ -36,25 +121,71 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
         context, SemIR::FloatValue{.type_id = type_id, .float_id = float_id});
   } else {
     // TODO: support other types.
-    return SemIR::ConstantId::NotConstant;
+    context.TODO(loc_id, "unsupported conversion to constant from APValue " +
+                             ap_value.getAsString(context.ast_context(), type));
+    return SemIR::ErrorInst::ConstantId;
   }
 }
 
-static auto ConvertConstantToAPValue(Context& context,
-                                     SemIR::InstId const_inst_id,
-                                     clang::QualType param_type)
+static auto MapAPValueToConstantForConstexpr(Context& context,
+                                             SemIR::LocId loc_id,
+                                             const clang::APValue& ap_value,
+                                             clang::QualType type)
+    -> SemIR::ConstantId {
+  bool is_lvalue = false;
+  if (type->isReferenceType()) {
+    is_lvalue = true;
+    type = type.getNonReferenceType();
+  }
+  return MapAPValueToConstant(context, loc_id, ap_value, type, is_lvalue);
+}
+
+auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
+                    const clang::VarDecl* var_decl, SemIR::TypeId type_id)
+    -> SemIR::ConstantId {
+  // If the C++ global is constant, map it to a Carbon constant.
+  if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
+    if (const auto* ap_value = var_decl->getEvaluatedValue()) {
+      auto clang_type = MapToCppType(context, type_id);
+      if (clang_type.isNull()) {
+        context.TODO(loc_id, "failed to map C++ type to Carbon");
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      return MapAPValueToConstantForConstexpr(context, loc_id, *ap_value,
+                                              clang_type);
+    }
+  }
+
+  return SemIR::ConstantId::NotConstant;
+}
+
+auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
+                          clang::QualType param_type)
     -> std::optional<clang::APValue> {
   if (param_type->isIntegerType()) {
+    const bool is_signed = param_type->isSignedIntegerOrEnumerationType();
     if (auto int_value =
             context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
-      const auto& ap_int = context.ints().GetAtWidth(
-          int_value->int_id, context.ast_context().getIntWidth(param_type));
-
+      const auto& ap_int = context.ints().Get(int_value->int_id);
       auto aps_int =
-          llvm::APSInt(ap_int, !param_type->isSignedIntegerOrEnumerationType())
+          llvm::APSInt(ap_int, !is_signed)
               .extOrTrunc(context.ast_context().getIntWidth(param_type));
-
       return clang::APValue(aps_int);
+    } else if (auto bool_value = context.insts().TryGetAs<SemIR::BoolLiteral>(
+                   const_inst_id)) {
+      llvm::APInt ap_int(context.ast_context().getIntWidth(param_type),
+                         bool_value->value.ToBool(), is_signed);
+      auto aps_int =
+          llvm::APSInt(ap_int, !is_signed)
+              .extOrTrunc(context.ast_context().getIntWidth(param_type));
+      return clang::APValue(aps_int);
+    }
+  } else if (param_type->isFloatingType()) {
+    if (auto float_value =
+            context.insts().TryGetAs<SemIR::FloatValue>(const_inst_id)) {
+      const auto& ap_float = context.floats().Get(float_value->float_id);
+      return clang::APValue(ap_float);
     }
   }
 
@@ -69,7 +200,7 @@ static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
     return nullptr;
   }
 
-  auto ap_value = ConvertConstantToAPValue(context, const_inst_id, param_type);
+  auto ap_value = MapConstantToAPValue(context, const_inst_id, param_type);
   if (!ap_value.has_value()) {
     return nullptr;
   }
@@ -136,8 +267,9 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
                            function_decl->isConsteval());
     return SemIR::ErrorInst::ConstantId;
   }
-  return MapAPValueToConstant(context, loc_id, eval_result.Val,
-                              function_decl->getCallResultType());
+
+  return MapAPValueToConstantForConstexpr(context, loc_id, eval_result.Val,
+                                          function_decl->getCallResultType());
 }
 
 }  // namespace Carbon::Check

@@ -99,7 +99,7 @@ fn UseFGenerically(X:! i32) {
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst5C00018B: {kind: Call, arg0: inst5C00003E, arg1: inst_block5C000091, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst7C00018B: {kind: Call, arg0: inst7C00003E, arg1: inst_block7C000091, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

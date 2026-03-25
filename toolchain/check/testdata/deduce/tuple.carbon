@@ -66,8 +66,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.4b9: %tuple.type.24b = tuple_value (%T, %U) [symbolic]
@@ -77,9 +77,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.220: <witness> = require_complete_type %tuple.type.a5e [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type.a5e [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.a54: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
-// CHECK:STDOUT:   %require_complete.441: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %tuple.a0a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.281: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.881: type = pattern_type %tuple.type.281 [concrete]
@@ -187,9 +186,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40: type = pattern_type %U.loc7_16.1 [symbolic = %pattern_type.loc7_40 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_30 (constants.%require_complete.220)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1, %U.loc7_16.1) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.a54)]
-// CHECK:STDOUT:   %require_complete.loc7_61: <witness> = require_complete_type %U.loc7_16.1 [symbolic = %require_complete.loc7_61 (constants.%require_complete.441)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.a5e)) -> out %return.param: @F.%U.loc7_16.1 (%U) {
 // CHECK:STDOUT:   !entry:
@@ -222,9 +220,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.946
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%require_complete.220
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.a54
-// CHECK:STDOUT:   %require_complete.loc7_61 => constants.%require_complete.441
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
@@ -237,9 +234,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.9c8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%complete_type.734
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.734
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.107
-// CHECK:STDOUT:   %require_complete.loc7_61 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_value.carbon
@@ -255,15 +251,15 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %Pair: %tuple.type.d07 = symbolic_binding Pair, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
+// CHECK:STDOUT:   %Pair: %tuple.type.d07 = symbolic_binding Pair, 0 [symbolic]
 // CHECK:STDOUT:   %HasPair.type: type = generic_class_type @HasPair [concrete]
 // CHECK:STDOUT:   %HasPair.generic: %HasPair.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasPair.7cc: type = class_type @HasPair, @HasPair(%Pair) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %A: %i32 = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %A: %i32 = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %B: %i32 = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.9c9: %tuple.type.d07 = tuple_value (%A, %B) [symbolic]
 // CHECK:STDOUT:   %HasPair.2e7: type = class_type @HasPair, @HasPair(%tuple.9c9) [symbolic]
@@ -519,8 +515,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.11e: %tuple.type.24b = tuple_value (%T, %T) [symbolic]
 // CHECK:STDOUT:   %tuple.type.07a: type = tuple_type (%T, %T) [symbolic]

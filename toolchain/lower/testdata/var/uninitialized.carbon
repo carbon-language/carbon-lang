@@ -1,0 +1,72 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/var/uninitialized.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/var/uninitialized.carbon
+
+fn Run() {
+  var unused a: i32;
+  var unused b: f64;
+  var unused c: ();
+  var unused d: {};
+  var unused e: bool;
+  var unused f: i32*;
+}
+
+// CHECK:STDOUT: ; ModuleID = 'uninitialized.carbon'
+// CHECK:STDOUT: source_filename = "uninitialized.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @main() #0 !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %b.var = alloca double, align 8, !dbg !8
+// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !10
+// CHECK:STDOUT:   %e.var = alloca i1, align 1, !dbg !11
+// CHECK:STDOUT:   %f.var = alloca ptr, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !7
+// CHECK:STDOUT:   store i32 poison, ptr %a.var, align 4, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !8
+// CHECK:STDOUT:   store double poison, ptr %b.var, align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %e.var), !dbg !11
+// CHECK:STDOUT:   store i8 poison, ptr %e.var, align 1, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %f.var), !dbg !12
+// CHECK:STDOUT:   store ptr poison, ptr %f.var, align 8, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "uninitialized.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{null}
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 1, scope: !4)

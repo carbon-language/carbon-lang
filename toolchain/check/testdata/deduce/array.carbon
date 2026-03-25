@@ -153,8 +153,8 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type.3ec: type = array_type %int_3, %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3f: type = pattern_type %array_type.3ec [symbolic]
@@ -163,9 +163,8 @@ fn G() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.ff3: <witness> = require_complete_type %array_type.3ec [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.3ec [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.643: <specific function> = specific_function %F, @F(%T) [symbolic]
-// CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -256,9 +255,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32: type = pattern_type %T.loc6_6.1 [symbolic = %pattern_type.loc6_32 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.ff3)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_29.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2: <specific function> = specific_function constants.%F, @F(%T.loc6_6.1) [symbolic = %F.specific_fn.loc6_46.2 (constants.%F.specific_fn.643)]
-// CHECK:STDOUT:   %require_complete.loc6_50: <witness> = require_complete_type %T.loc6_6.1 [symbolic = %require_complete.loc6_50 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_29.1 (%array_type.3ec)) -> out %return.param: @F.%T.loc6_6.1 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -324,9 +322,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.ff3
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2 => constants.%F.specific_fn.643
-// CHECK:STDOUT:   %require_complete.loc6_50 => constants.%require_complete.944
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
@@ -337,9 +334,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.7c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.c7a
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.c7a
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2 => constants.%F.specific_fn.540
-// CHECK:STDOUT:   %require_complete.loc6_50 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- bound_only.carbon
@@ -353,8 +349,8 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %array_type.c79: type = array_type %N, %C [symbolic]
 // CHECK:STDOUT:   %pattern_type.cc9: type = pattern_type %array_type.c79 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -572,13 +568,13 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %array_type.6d2: type = array_type %N, %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.4d8: type = pattern_type %array_type.6d2 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -747,8 +743,8 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type.a0b: type = array_type %int_2, %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %array_type.a0b [symbolic]
@@ -757,9 +753,8 @@ fn G() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.fc9: <witness> = require_complete_type %array_type.a0b [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.a0b [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.643: <specific function> = specific_function %F, @F(%T) [symbolic]
-// CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -856,9 +851,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32: type = pattern_type %T.loc6_6.1 [symbolic = %pattern_type.loc6_32 (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.fc9)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_29.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2: <specific function> = specific_function constants.%F, @F(%T.loc6_6.1) [symbolic = %F.specific_fn.loc6_46.2 (constants.%F.specific_fn.643)]
-// CHECK:STDOUT:   %require_complete.loc6_50: <witness> = require_complete_type %T.loc6_6.1 [symbolic = %require_complete.loc6_50 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_29.1 (%array_type.a0b)) -> out %return.param: @F.%T.loc6_6.1 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -924,9 +918,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.fc9
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2 => constants.%F.specific_fn.643
-// CHECK:STDOUT:   %require_complete.loc6_50 => constants.%require_complete.944
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
@@ -937,9 +930,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.7c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.b8b
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.b8b
 // CHECK:STDOUT:   %F.specific_fn.loc6_46.2 => constants.%F.specific_fn.540
-// CHECK:STDOUT:   %require_complete.loc6_50 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -954,8 +946,8 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %array_type.c79: type = array_type %N, %C [symbolic]
 // CHECK:STDOUT:   %pattern_type.cc9: type = pattern_type %array_type.c79 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1191,8 +1183,8 @@ fn G() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %N.5de: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.5de: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.139: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
@@ -1410,8 +1402,8 @@ fn G() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %N.5de: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.5de: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.139: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]

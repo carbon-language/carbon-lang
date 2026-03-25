@@ -405,7 +405,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.8b1: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.fec [concrete]
-// CHECK:STDOUT:   %float.3fedf4.2: Core.FloatLiteral = float_literal_value 1e-1 [concrete]
+// CHECK:STDOUT:   %float.d5ab3d.2: Core.FloatLiteral = float_literal_value 1e-1 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.ba9: <witness> = impl_witness imports.%Copy.impl_witness_table.65a [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value Core.FloatLiteral, (%Copy.impl_witness.ba9) [concrete]
@@ -413,15 +413,15 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %.91c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.582, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.type: type = fn_type @Core.FloatLiteral.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op: %Core.FloatLiteral.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %float.3fedf4.2, %Core.FloatLiteral.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %float.d5ab3d.2, %Core.FloatLiteral.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//float_literal, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//float_literal, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.c2c: %I.assoc_type = import_ref Main//float_literal, loc5_12, loaded [concrete = constants.%assoc0.8b1]
-// CHECK:STDOUT:   %Main.import_ref.dec: Core.FloatLiteral = import_ref Main//float_literal, loc10_32, loaded [concrete = constants.%float.3fedf4.2]
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.dec), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.78a: Core.FloatLiteral = import_ref Main//float_literal, loc10_32, loaded [concrete = constants.%float.d5ab3d.2]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.78a), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.fec: Core.FloatLiteral = import_ref Main//float_literal, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: Core.FloatLiteral = assoc_const_decl @value [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.3f0: %Core.FloatLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.FloatLiteral.as.Copy.impl.Op]
@@ -437,10 +437,10 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_13 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc7_18: type = converted %.loc7_13, %as_type [concrete = constants.%C]
 // CHECK:STDOUT:   %value.ref: %I.assoc_type = name_ref value, imports.%Main.import_ref.c2c [concrete = constants.%assoc0.8b1]
-// CHECK:STDOUT:   %impl.elem0.loc7_18.1: Core.FloatLiteral = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%float.3fedf4.2]
+// CHECK:STDOUT:   %impl.elem0.loc7_18.1: Core.FloatLiteral = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%float.d5ab3d.2]
 // CHECK:STDOUT:   %impl.elem0.loc7_18.2: %.91c = impl_witness_access constants.%Copy.impl_witness.ba9, element0 [concrete = constants.%Core.FloatLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %impl.elem0.loc7_18.1, %impl.elem0.loc7_18.2 [concrete = constants.%Core.FloatLiteral.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.call: init Core.FloatLiteral = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%float.3fedf4.2]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.call: init Core.FloatLiteral = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%float.d5ab3d.2]
 // CHECK:STDOUT:   return %Core.FloatLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -128,20 +128,10 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::AcquireValue inst) -> ConstantEvalResult {
   if (const auto* var_decl = GetAsClangVarDecl(context, inst.value_id)) {
-    // If the C++ global is constant, map it to a Carbon constant.
-    if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
-      if (const auto* ap_value = var_decl->getEvaluatedValue()) {
-        auto clang_type = MapToCppType(context, inst.type_id);
-        if (clang_type.isNull()) {
-          return ConstantEvalResult::TODO;
-        }
-
-        auto const_id = MapAPValueToConstant(context, SemIR::LocId(inst_id),
-                                             *ap_value, clang_type);
-        if (const_id.has_value() && const_id.is_constant()) {
-          return ConstantEvalResult::Existing(const_id);
-        }
-      }
+    auto const_id =
+        EvalCppVarDecl(context, SemIR::LocId(inst_id), var_decl, inst.type_id);
+    if (const_id.has_value() && const_id.is_constant()) {
+      return ConstantEvalResult::Existing(const_id);
     }
 
     return ConstantEvalResult::NotConstant;

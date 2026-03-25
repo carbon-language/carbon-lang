@@ -177,13 +177,23 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
 
+  auto form_id = pattern_inst_kind == SemIR::FormBindingPattern::Kind
+                     ? context.constant_values().Get(type_expr.inst_id)
+                     : SemIR::ConstantId::None;
+
   auto make_binding_pattern = [&]() -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
+    auto phase = BindingPhase::Runtime;
+    if (pattern_inst_kind == SemIR::SymbolicBindingPattern::Kind) {
+      phase = is_template ? BindingPhase::Template : BindingPhase::Symbolic;
+    }
     auto binding = AddBindingPattern(
-        context, name_node, name_id, type_expr.type_component_id,
-        context.constant_values().Get(type_expr.inst_id), type_expr_region_id,
-        pattern_inst_kind, is_template, is_unused);
+        context, name_node, type_expr_region_id,
+        {.kind = pattern_inst_kind,
+         .type_id = GetPatternType(context, type_expr.type_component_id),
+         .entity_name_id = AddBindingEntityName(context, name_id, form_id,
+                                                is_unused, phase)});
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
     // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
@@ -287,7 +297,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
           result_inst_id = AddPatternInst<SemIR::FormParamPattern>(
               context, node_id,
-              {.type_id = type_id, .subpattern_id = result_inst_id});
+              {.type_id = type_id,
+               .subpattern_id = result_inst_id,
+               .form_id = form_id});
         } else {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
