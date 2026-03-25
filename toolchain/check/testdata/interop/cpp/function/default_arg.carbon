@@ -847,9 +847,8 @@ fn Call() {
 // CHECK:STDOUT: fn @X.Op(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %self.ref: ref %X = name_ref self, %self.param
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.ref, %Op.ref
-// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%self.ref)
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref
+// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

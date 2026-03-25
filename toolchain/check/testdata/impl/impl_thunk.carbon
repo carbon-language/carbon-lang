@@ -389,7 +389,6 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.F.loc10_48.2(%x.param: %struct_type.a.b.391) -> out %return.param: %struct_type.c.d.15a [thunk @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_48.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %empty_tuple.type.as.I.impl.F.type.19e4b8.1 = name_ref F, @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_48.1 [concrete = constants.%empty_tuple.type.as.I.impl.F.8be29b.1]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_48.1: ref %struct_type.d.c.b36 = temporary_storage
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.call: init %struct_type.d.c.b36 to %.loc10_48.1 = call %F.ref(%.loc5_9.3)
@@ -490,8 +489,7 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.31e = call %B.as.X.impl.F.bound(%.loc9_16.2, %.loc9_29.3)
 // CHECK:STDOUT:   %.loc14_37.1: %ptr.31e = value_of_initializer %B.as.X.impl.F.call
@@ -553,8 +551,7 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc13_26.2(%self.param: %B, %other.param: %B) [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc13_26.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc13_26.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.loc8_12.3, %.loc8_25.3)
 // CHECK:STDOUT:   return
@@ -639,8 +636,7 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.31e = call %B.as.X.impl.F.bound(%.loc9_16.2, %.loc9_29.3)
 // CHECK:STDOUT:   %.loc14_37.1: %ptr.31e = value_of_initializer %B.as.X.impl.F.call
@@ -736,8 +732,7 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.31e = call %B.as.X.impl.F.bound(%.loc9_16.2, %.loc9_29.3)
 // CHECK:STDOUT:   %.loc14_37.1: %ptr.31e = value_of_initializer %B.as.X.impl.F.call
@@ -799,7 +794,6 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @A.as.X.impl.F.loc23_14.2() -> out %return.param: %A [thunk @A.as.X.impl.%A.as.X.impl.F.decl.loc23_14.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %A.as.X.impl.F.type.170a02.1 = name_ref F, @A.as.X.impl.%A.as.X.impl.F.decl.loc23_14.1 [concrete = constants.%A.as.X.impl.F.e6cf46.1]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc23_14.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %A.as.X.impl.F.call: init %B to %.loc23_14.1 = call %F.ref()
 // CHECK:STDOUT:   %.loc23_14.2: ref %B = temporary %.loc23_14.1, %A.as.X.impl.F.call
@@ -937,11 +931,10 @@ impl () as I({}) {
 // CHECK:STDOUT:   fn(%x.param: @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f)) -> out %return.param: @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f) [thunk @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_34.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %empty_tuple.type.as.I.impl.F.type.19e4b8.1 = name_ref F, @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_34.1 [concrete = constants.%empty_tuple.type.as.I.impl.F.8be29b.1]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Copy.facet.loc10_34.1: %Copy.type = facet_value constants.%ptr.e8f, (constants.%Copy.lookup_impl_witness.2e6) [symbolic = %Copy.facet.loc10_34.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:     %.loc10_34.1: %Copy.type = converted constants.%ptr.e8f, %Copy.facet.loc10_34.1 [symbolic = %Copy.facet.loc10_34.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1: <specific function> = specific_function %F.ref, @empty_tuple.type.as.I.impl.F.loc10_34.1(constants.%Copy.facet) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
-// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f) = call %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1(%x.ref)
+// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f) = call %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1(%x.param)
 // CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1110,13 +1103,12 @@ impl () as I({}) {
 // CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @empty_tuple.type.as.I.impl.F.loc10_51.2.%ptr (%ptr.e8f)) -> out %return.param: @empty_tuple.type.as.I.impl.F.loc10_51.2.%ptr (%ptr.e8f) [thunk @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_51.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %empty_tuple.type.as.I.impl.F.type.19e4b8.1 = name_ref F, @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_51.1 [concrete = constants.%empty_tuple.type.as.I.impl.F.8be29b.1]
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
 // CHECK:STDOUT:     %Copy.facet.loc10_51.1: %Copy.type = facet_value constants.%ptr.e8f, (constants.%Copy.lookup_impl_witness.2e6) [symbolic = %Copy.facet.loc10_51.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:     %.loc10_51.1: %Copy.type = converted constants.%ptr.e8f, %Copy.facet.loc10_51.1 [symbolic = %Copy.facet.loc10_51.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.1: <specific function> = specific_function %F.ref, @empty_tuple.type.as.I.impl.F.loc10_51.1(constants.%Copy.facet) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %self.ref, %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.1
-// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_51.2.%ptr (%ptr.e8f) = call %bound_method(%self.ref, %x.ref)
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %self.param, %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.1
+// CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_51.2.%ptr (%ptr.e8f) = call %bound_method(%self.param, %x.param)
 // CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1201,7 +1193,6 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.F.loc10_29.2() -> out %return.param: %struct_type.a.b.f95 [thunk @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_29.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %empty_tuple.type.as.I.impl.F.type.e82c13.1 = name_ref F, @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_29.1 [concrete = constants.%empty_tuple.type.as.I.impl.F.5f0cef.1]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_29.1: ref %struct_type.b.a.1b0 = temporary_storage
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.call: init %struct_type.b.a.1b0 to %.loc10_29.1 = call %F.ref()
 // CHECK:STDOUT:   %.loc10_29.2: ref %struct_type.b.a.1b0 = temporary %.loc10_29.1, %empty_tuple.type.as.I.impl.F.call

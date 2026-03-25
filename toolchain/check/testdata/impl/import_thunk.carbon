@@ -305,11 +305,10 @@ fn G() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8: @C.as.I.impl.F.loc8_24.2.%C.as.I.impl.F.type (%C.as.I.impl.F.type.cf838e.1) = specific_constant @C.as.I.impl.%C.as.I.impl.F.decl.loc8_24.1, @C.as.I.impl(constants.%Y) [symbolic = %C.as.I.impl.F (constants.%C.as.I.impl.F.421e41.1)]
 // CHECK:STDOUT:     %F.ref: @C.as.I.impl.F.loc8_24.2.%C.as.I.impl.F.type (%C.as.I.impl.F.type.cf838e.1) = name_ref F, %.loc8 [symbolic = %C.as.I.impl.F (constants.%C.as.I.impl.F.421e41.1)]
-// CHECK:STDOUT:     %x.ref: %empty_struct_type = name_ref x, %x.param
 // CHECK:STDOUT:     %C.as.I.impl.F.specific_fn.loc8_24.1: <specific function> = specific_function %F.ref, @C.as.I.impl.F.loc8_24.1(constants.%Y) [symbolic = %C.as.I.impl.F.specific_fn.loc8_24.2 (constants.%C.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %.1: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary_storage
 // CHECK:STDOUT:     %.2: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) to %.1 = class_init () [symbolic = %C.val (constants.%C.val)]
-// CHECK:STDOUT:     %.3: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = converted %x.ref, %.2 [symbolic = %C.val (constants.%C.val)]
+// CHECK:STDOUT:     %.3: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = converted %x.param, %.2 [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.4: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary %.1, %.3
 // CHECK:STDOUT:     %.5: @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = acquire_value %.4
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn.loc8_24.1(%.5)

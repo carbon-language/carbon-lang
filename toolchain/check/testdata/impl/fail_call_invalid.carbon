@@ -155,8 +155,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.2(%self.param: %i32) [thunk @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
-// CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self.param
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %self.ref, %G.ref
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %self.param, %G.ref
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

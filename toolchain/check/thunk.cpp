@@ -350,21 +350,8 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
   callee_id = BuildNameRef(context, loc_id, function.name_id, callee_id,
                            callee_type.specific_id);
 
-  // Build a reference to each parameter for use as call arguments.
-  llvm::SmallVector<SemIR::InstId> call_args;
   auto call_params = context.inst_blocks().Get(function.call_params_id);
-  call_args.reserve(call_params.size());
-  for (auto call_param_id : call_params) {
-    // Use a pretty name for the `name_ref`. While it's suspicious to use a
-    // pretty name in the IR like this, the only reason we include a name at all
-    // here is to make the formatted SemIR more readable.
-    auto call_param = context.insts().GetAs<SemIR::AnyParam>(call_param_id);
-    call_args.push_back(BuildNameRef(context, SemIR::LocId(call_param_id),
-                                     call_param.pretty_name_id, call_param_id,
-                                     SemIR::SpecificId::None));
-  }
-
-  return PerformThunkCall(context, loc_id, function_id, call_args, callee_id);
+  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id);
 }
 
 // Given a declaration of a thunk and the function that it should call, build

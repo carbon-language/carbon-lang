@@ -258,8 +258,7 @@ impl i32 as I {
 // CHECK:STDOUT: fn @i32.as.I.impl.F.loc43_18.2(%c.param: %C.719) [thunk @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %i32.as.I.impl.F.type.6c53e7.1 = name_ref F, @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1 [concrete = constants.%i32.as.I.impl.F.7f652f.1]
-// CHECK:STDOUT:   %c.ref: %C.719 = name_ref c, %c.param
-// CHECK:STDOUT:   %.loc25: %C.899 = converted %c.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %C.899 = converted %c.param, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
