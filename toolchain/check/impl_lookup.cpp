@@ -339,7 +339,8 @@ static auto TryGetSpecificWitnessIdForImpl(
                                            impl.witness_id);
 }
 
-// Returns nullopt if an error was found and diagnosed.
+// Identify the facet type of the query self. It is allowed to be partially
+// identified.
 static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
                                        SemIR::ConstantId query_self_const_id)
     -> SemIR::IdentifiedFacetTypeId {
@@ -352,10 +353,6 @@ static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
     return SemIR::IdentifiedFacetTypeId::None;
   }
 
-  // The position of the interface in `required_impls()` is also the
-  // position of the witness for that interface in `FacetValue`. The
-  // `FacetValue` witnesses are the output of an impl lookup, which finds and
-  // returns witnesses in the same order.
   return TryToIdentifyFacetType(context, loc_id, query_self_const_id,
                                 *facet_type,
                                 /*allow_partially_identified=*/true);
