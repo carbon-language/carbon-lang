@@ -209,7 +209,6 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // The values that will go in the witness table.
   llvm::SmallVector<SemIR::InstId> entries;
 
-  auto self_facet = SemIR::ConstantId::None;
   auto interface_with_self_specific_id = SemIR::SpecificId::None;
 
   enum class AssociatedEntityState {
@@ -246,7 +245,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
           switch (associated_entity_state) {
             case AssociatedEntityState::None:
             case AssociatedEntityState::AssociatedConstant:
-              self_facet = MakeSelfFacetWithCustomWitness(
+              auto self_facet = MakeSelfFacetWithCustomWitness(
                   context, loc_id, query_types_for_self_facet,
                   query_specific_interface_id,
                   context.inst_blocks().Add(entries));
@@ -265,7 +264,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         case SemIR::AssociatedConstantDecl::Kind: {
           switch (associated_entity_state) {
             case AssociatedEntityState::None:
-              self_facet = MakeSelfFacetWithCustomWitness(
+              auto self_facet = MakeSelfFacetWithCustomWitness(
                   context, loc_id, query_types_for_self_facet,
                   query_specific_interface_id,
                   context.inst_blocks().Add(entries));
