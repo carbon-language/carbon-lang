@@ -982,11 +982,11 @@ constraint Constraint {
   // statement.
   require impls Z;
 
-  // Ok, the partially identified facet type of `Self` can convert to facet
+  // OK, the partially identified facet type of `Self` can convert to facet
   // type `Z` to match the parameter of `UsesZ`.
   require impls Y(UsesZ(Self));
 
-  // Also ok, as `Self` converts to `Z` again.
+  // Also OK, as `Self` converts to `Z` again.
   require UsesZ(Self) impls X;
 }
 
