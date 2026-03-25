@@ -592,7 +592,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 // specified range of indexes, replacing those elements with `None`.
 static auto GetConstantBlockValueIgnoringIndexRange(
     EvalContext& eval_context, SemIR::InstBlockId inst_block_id, Phase* phase,
-    std::pair<size_t, size_t> ignored_range) -> SemIR::InstBlockId {
+    std::pair<int, int> ignored_range) -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
@@ -600,8 +600,8 @@ static auto GetConstantBlockValueIgnoringIndexRange(
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
     auto const_inst_id = SemIR::InstId::None;
-    if (const_insts.size() < ignored_range.first ||
-        const_insts.size() >= ignored_range.second) {
+    if (static_cast<int>(const_insts.size()) < ignored_range.first ||
+        static_cast<int>(const_insts.size()) >= ignored_range.second) {
       const_inst_id = GetConstantValue(eval_context, inst_id, phase);
       if (!const_inst_id.has_value()) {
         return SemIR::InstBlockId::None;
@@ -2106,14 +2106,13 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 // this function call.
 static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
                                             const SemIR::Callee& callee)
-    -> std::pair<size_t, size_t> {
+    -> std::pair<int, int> {
   if (const auto* callee_function =
           std::get_if<SemIR::CalleeFunction>(&callee)) {
     const auto& function =
         eval_context.functions().Get(callee_function->function_id);
-    return {
-        static_cast<size_t>(function.call_param_ranges.return_begin().index),
-        static_cast<size_t>(function.call_param_ranges.return_end().index)};
+    return {function.call_param_ranges.return_begin().index,
+            function.call_param_ranges.return_end().index};
   }
 
   return {0, 0};
