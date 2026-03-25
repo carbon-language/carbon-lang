@@ -57,6 +57,18 @@ fn CallG() {
   G(Cpp.C);
 }
 
+// --- todo_fail_no_default_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "default.h";
+
+fn F() {
+  // TODO: This should fail, but currently does not because the min_prelude
+  // version of UnformedInit is currently implemented by every type.
+  var unused x: Cpp.NoDefault;
+}
+
 // --- fail_no_default.carbon
 
 library "[[@TEST_NAME]]";

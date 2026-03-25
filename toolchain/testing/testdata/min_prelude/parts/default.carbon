@@ -11,7 +11,7 @@ interface DefaultOrUnformed { fn Op() -> Self; }
 interface Default { fn Op() -> Self; }
 
 final impl forall [T:! Default] T as DefaultOrUnformed {
-  fn Op() -> Self { return T.Op(); }
+  fn Op() -> Self { return T.(Default.Op)(); }
 }
 
 // In tests, just allow any type to be default-initialized as a no-op.
