@@ -39,12 +39,12 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy.WithSelf.Op(%Copy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_6.2: type) {
+// CHECK:STDOUT: generic fn @F(%T.loc4_7.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc4_6.1) [symbolic = %.loc6_10.3 (constants.%.2f2)]
+// CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc4_7.1) [symbolic = %.loc6_10.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc4_20.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc4_20.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
@@ -67,7 +67,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
-// CHECK:STDOUT:   %T.loc4_6.1 => constants.%T.67d
+// CHECK:STDOUT:   %T.loc4_7.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %ptr.loc4_21.1 => constants.%ptr.125
 // CHECK:STDOUT:   %pattern_type.loc4_17 => constants.%pattern_type.8bb

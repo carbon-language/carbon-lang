@@ -122,7 +122,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:       %.loc17_28.2: %tuple.type = tuple_literal (%.loc17_22) [concrete = constants.%tuple.0d2]
 // CHECK:STDOUT:       %.loc17_28.3: type = converted %.loc17_28.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc17_17.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc17_18.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeConvertFrom.decl: type = class_decl @RuntimeConvertFrom [concrete = constants.%RuntimeConvertFrom] {} {}
 // CHECK:STDOUT:   %RuntimeConvertTo.decl: type = class_decl @RuntimeConvertTo [concrete = constants.%RuntimeConvertTo] {} {}
@@ -135,7 +135,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %A.patt: @F.%pattern_type.loc27_27 (%pattern_type.e66) = symbolic_binding_pattern A, 1 [concrete]
+// CHECK:STDOUT:     %A.patt: @F.%pattern_type.loc27_28 (%pattern_type.e66) = symbolic_binding_pattern A, 1 [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc27_44 (%pattern_type.17d) = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc27_44 (%pattern_type.17d) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -145,18 +145,18 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:       %.loc27_17.2: %tuple.type = tuple_literal (%.loc27_11) [concrete = constants.%tuple.0d2]
 // CHECK:STDOUT:       %.loc27_17.3: type = converted %.loc27_17.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc27_6.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc27_7.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc27_32: type = splice_block %tuple.elem0.loc27_32.2 [symbolic = %tuple.elem0.loc27_32.1 (constants.%tuple.elem0)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %T.ref.loc27_31: %tuple.type = name_ref T, %T.loc27_6.2 [symbolic = %T.loc27_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc27_31: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %tuple.elem0.loc27_32.2: type = tuple_access %T.ref.loc27_31, element0 [symbolic = %tuple.elem0.loc27_32.1 (constants.%tuple.elem0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %A.loc27_27.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0) = symbolic_binding A, 1 [symbolic = %A.loc27_27.1 (constants.%A)]
+// CHECK:STDOUT:     %A.loc27_28.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0) = symbolic_binding A, 1 [symbolic = %A.loc27_28.1 (constants.%A)]
 // CHECK:STDOUT:     %x.param: @F.%HoldsType.loc27_57.1 (%HoldsType.f6a) = value_param call_param0
 // CHECK:STDOUT:     %.loc27_57: type = splice_block %HoldsType.loc27_57.2 [symbolic = %HoldsType.loc27_57.1 (constants.%HoldsType.f6a)] {
 // CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
-// CHECK:STDOUT:       %T.ref.loc27_56: %tuple.type = name_ref T, %T.loc27_6.2 [symbolic = %T.loc27_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc27_56: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc27_57.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc27_57.1 (constants.%HoldsType.f6a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%HoldsType.loc27_57.1 (%HoldsType.f6a) = value_binding x, %x.param
@@ -180,7 +180,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %RuntimeConvertFrom.ref: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %from.loc29_49.2: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic = %from.loc29_49.1 (constants.%from)]
+// CHECK:STDOUT:     %from.loc29_53.2: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic = %from.loc29_53.1 (constants.%from)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,8 +208,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @HoldsType(%T.loc17_17.2: %tuple.type) {
-// CHECK:STDOUT:   %T.loc17_17.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @HoldsType(%T.loc17_18.2: %tuple.type) {
+// CHECK:STDOUT:   %T.loc17_18.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -246,12 +246,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   return %.loc24_66 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc27_6.2: %tuple.type, %A.loc27_27.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0)) {
-// CHECK:STDOUT:   %T.loc27_6.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_6.1 (constants.%T)]
-// CHECK:STDOUT:   %tuple.elem0.loc27_32.1: type = tuple_access %T.loc27_6.1, element0 [symbolic = %tuple.elem0.loc27_32.1 (constants.%tuple.elem0)]
-// CHECK:STDOUT:   %A.loc27_27.1: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0) = symbolic_binding A, 1 [symbolic = %A.loc27_27.1 (constants.%A)]
-// CHECK:STDOUT:   %pattern_type.loc27_27: type = pattern_type %tuple.elem0.loc27_32.1 [symbolic = %pattern_type.loc27_27 (constants.%pattern_type.e66)]
-// CHECK:STDOUT:   %HoldsType.loc27_57.1: type = class_type @HoldsType, @HoldsType(%T.loc27_6.1) [symbolic = %HoldsType.loc27_57.1 (constants.%HoldsType.f6a)]
+// CHECK:STDOUT: generic fn @F(%T.loc27_7.2: %tuple.type, %A.loc27_28.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0)) {
+// CHECK:STDOUT:   %T.loc27_7.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T)]
+// CHECK:STDOUT:   %tuple.elem0.loc27_32.1: type = tuple_access %T.loc27_7.1, element0 [symbolic = %tuple.elem0.loc27_32.1 (constants.%tuple.elem0)]
+// CHECK:STDOUT:   %A.loc27_28.1: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0) = symbolic_binding A, 1 [symbolic = %A.loc27_28.1 (constants.%A)]
+// CHECK:STDOUT:   %pattern_type.loc27_28: type = pattern_type %tuple.elem0.loc27_32.1 [symbolic = %pattern_type.loc27_28 (constants.%pattern_type.e66)]
+// CHECK:STDOUT:   %HoldsType.loc27_57.1: type = class_type @HoldsType, @HoldsType(%T.loc27_7.1) [symbolic = %HoldsType.loc27_57.1 (constants.%HoldsType.f6a)]
 // CHECK:STDOUT:   %pattern_type.loc27_44: type = pattern_type %HoldsType.loc27_57.1 [symbolic = %pattern_type.loc27_44 (constants.%pattern_type.17d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -263,16 +263,16 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%from.loc29_49.2: %RuntimeConvertFrom) {
-// CHECK:STDOUT:   %from.loc29_49.1: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic = %from.loc29_49.1 (constants.%from)]
+// CHECK:STDOUT: generic fn @G(%from.loc29_53.2: %RuntimeConvertFrom) {
+// CHECK:STDOUT:   %from.loc29_53.1: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic = %from.loc29_53.1 (constants.%from)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %from.loc29_49.1, constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert [symbolic = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound (constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound)]
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %from.loc29_53.1, constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert [symbolic = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound (constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%holds_to.param: %HoldsType.0ca) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %from.ref: %RuntimeConvertFrom = name_ref from, %from.loc29_49.2 [symbolic = %from.loc29_49.1 (constants.%from)]
+// CHECK:STDOUT:     %from.ref: %RuntimeConvertFrom = name_ref from, %from.loc29_53.2 [symbolic = %from.loc29_53.1 (constants.%from)]
 // CHECK:STDOUT:     %holds_to.ref: %HoldsType.0ca = name_ref holds_to, %holds_to
 // CHECK:STDOUT:     %impl.elem0: %.8ab = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound (constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound)]
@@ -294,35 +294,35 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %RuntimeConvertTo) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T) {
-// CHECK:STDOUT:   %T.loc17_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc17_18.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%A) {
-// CHECK:STDOUT:   %T.loc27_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc27_7.1 => constants.%T
 // CHECK:STDOUT:   %tuple.elem0.loc27_32.1 => constants.%tuple.elem0
-// CHECK:STDOUT:   %A.loc27_27.1 => constants.%A
-// CHECK:STDOUT:   %pattern_type.loc27_27 => constants.%pattern_type.e66
+// CHECK:STDOUT:   %A.loc27_28.1 => constants.%A
+// CHECK:STDOUT:   %pattern_type.loc27_28 => constants.%pattern_type.e66
 // CHECK:STDOUT:   %HoldsType.loc27_57.1 => constants.%HoldsType.f6a
 // CHECK:STDOUT:   %pattern_type.loc27_44 => constants.%pattern_type.17d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple.b95) {
-// CHECK:STDOUT:   %T.loc17_17.1 => constants.%tuple.b95
+// CHECK:STDOUT:   %T.loc17_18.1 => constants.%tuple.b95
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%from) {
-// CHECK:STDOUT:   %from.loc29_49.1 => constants.%from
+// CHECK:STDOUT:   %from.loc29_53.1 => constants.%from
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%tuple.b95, <error>) {
-// CHECK:STDOUT:   %T.loc27_6.1 => constants.%tuple.b95
+// CHECK:STDOUT:   %T.loc27_7.1 => constants.%tuple.b95
 // CHECK:STDOUT:   %tuple.elem0.loc27_32.1 => constants.%RuntimeConvertTo
-// CHECK:STDOUT:   %A.loc27_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc27_27 => constants.%pattern_type.c89
+// CHECK:STDOUT:   %A.loc27_28.1 => <error>
+// CHECK:STDOUT:   %pattern_type.loc27_28 => constants.%pattern_type.c89
 // CHECK:STDOUT:   %HoldsType.loc27_57.1 => constants.%HoldsType.0ca
 // CHECK:STDOUT:   %pattern_type.loc27_44 => constants.%pattern_type.c6f
 // CHECK:STDOUT: }

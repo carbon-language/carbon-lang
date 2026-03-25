@@ -300,12 +300,12 @@ base class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:22: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
   // CHECK:STDERR:   override fn F1[ref self: Self]();
-  // CHECK:STDERR:                      ^~~~
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-8]]:17: note: previous declaration's corresponding implicit parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F1[self: Self]();
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:                 ^~~~~~~~~~
   // CHECK:STDERR:
   override fn F1[ref self: Self]();
 }
@@ -418,10 +418,10 @@ class D1 {
   extend base: Base(T1);
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:43: error: type `<pattern for T2*>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T1*>` [RedeclParamDiffersType]
   // CHECK:STDERR:   override fn F[unused self: Self](unused t: T2*) { }
-  // CHECK:STDERR:                                           ^
+  // CHECK:STDERR:                                           ^~~~~~
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:42: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR:                                          ^~~~~~
   // CHECK:STDERR:
   override fn F[unused self: Self](unused t: T2*) { }
 }
@@ -437,10 +437,10 @@ class Derived(T:! type) {
   extend base: Base(T);
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:43: error: type `<pattern for T>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T*>` [RedeclParamDiffersType]
   // CHECK:STDERR:   override fn F[unused self: Self](unused t: T) { }
-  // CHECK:STDERR:                                           ^
+  // CHECK:STDERR:                                           ^~~~
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:42: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR:                                          ^~~~~
   // CHECK:STDERR:
   override fn F[unused self: Self](unused t: T) { }
 }
@@ -2217,17 +2217,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc7_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc7_17.2: type) {
-// CHECK:STDOUT:   %T.loc7_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc7_18.2: type) {
+// CHECK:STDOUT:   %T.loc7_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_18.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc13_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc13_1.2 (constants.%Base.F.specific_fn)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc13_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_18.1) [symbolic = %Base.F.specific_fn.loc13_1.2 (constants.%Base.F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -2257,7 +2257,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Base.%Base.F.specific_fn.loc13_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_17.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_18.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.2f0)]
@@ -2266,7 +2266,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_18.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -2338,7 +2338,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc7_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }
@@ -2351,13 +2351,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%T1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc7_17.2: type) {
-// CHECK:STDOUT:   %T.loc7_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc7_18.2: type) {
+// CHECK:STDOUT:   %T.loc7_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_18.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.0f1) = struct_value () [symbolic = %Base.F (constants.%Base.F.cd3)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.f8c)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_18.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.f8c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.0f1) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.cd3)] {
@@ -2373,7 +2373,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Base.F.%Base (%Base.d0c) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Base.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc7_17.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc7_18.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @Base.F.%T (%T) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Base.F.specific_fn.loc9_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.f8c)]
@@ -2430,7 +2430,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_17.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_18.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.d0c)]
 // CHECK:STDOUT:   %pattern_type.loc8_27: type = pattern_type %Base [symbolic = %pattern_type.loc8_27 (constants.%pattern_type.2f0)]
@@ -2452,7 +2452,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_18.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.0f1
@@ -2472,7 +2472,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
-// CHECK:STDOUT:   %T.loc7_17.1 => constants.%T1
+// CHECK:STDOUT:   %T.loc7_18.1 => constants.%T1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.cb1
@@ -2698,7 +2698,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc9_32.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_29.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_29.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -2708,14 +2708,14 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .F = %T1.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(%T.loc9_28.2: type) {
-// CHECK:STDOUT:   %T.loc9_28.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
+// CHECK:STDOUT: generic virtual fn @T1.F(%T.loc9_29.2: type) {
+// CHECK:STDOUT:   %T.loc9_29.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_29.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: %T1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%T) {
-// CHECK:STDOUT:   %T.loc9_28.1 => constants.%T
+// CHECK:STDOUT:   %T.loc9_29.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_virtual_in_generic_class.carbon
@@ -2756,15 +2756,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T1(%T.loc4_15.2: type) {
-// CHECK:STDOUT:   %T.loc4_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T.67d)]
+// CHECK:STDOUT: generic class @T1(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_16.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type) = struct_value () [symbolic = %T1.F (constants.%T1.F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -2783,7 +2783,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:         %.loc9_32.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %T.loc9_28.2: type = symbolic_binding T, 1 [symbolic = %T.loc9_28.1 (constants.%T.091)]
+// CHECK:STDOUT:       %T.loc9_29.2: type = symbolic_binding T, 1 [symbolic = %T.loc9_29.1 (constants.%T.091)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -2794,24 +2794,24 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_15.2: type, %T.loc9_28.2: type) {
+// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_16.2: type, %T.loc9_29.2: type) {
 // CHECK:STDOUT:   %T.loc9_22: type = symbolic_binding T, 0 [symbolic = %T.loc9_22 (constants.%T.67d)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T.loc9_22) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.253)]
-// CHECK:STDOUT:   %T.loc9_28.1: type = symbolic_binding T, 1 [symbolic = %T.loc9_28.1 (constants.%T.091)]
+// CHECK:STDOUT:   %T.loc9_29.1: type = symbolic_binding T, 1 [symbolic = %T.loc9_29.1 (constants.%T.091)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T.67d) {
-// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T.67d
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%T.67d, constants.%T.091) {
 // CHECK:STDOUT:   %T.loc9_22 => constants.%T.67d
 // CHECK:STDOUT:   %T1 => constants.%T1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.253
-// CHECK:STDOUT:   %T.loc9_28.1 => constants.%T.091
+// CHECK:STDOUT:   %T.loc9_29.1 => constants.%T.091
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_with_virtual.carbon
@@ -2855,17 +2855,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T1(%T.loc4_15.2: type) {
-// CHECK:STDOUT:   %T.loc4_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT: generic class @T1(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_16.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type) = struct_value () [symbolic = %T1.F (constants.%T1.F)]
-// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
+// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_16.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
@@ -2895,7 +2895,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @T1.%T1.F.specific_fn.loc6_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_15.2: type) {
+// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.253)]
@@ -2910,7 +2910,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type
@@ -2970,17 +2970,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T1(%T.loc4_15.2: type) {
-// CHECK:STDOUT:   %T.loc4_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT: generic class @T1(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_16.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type) = struct_value () [symbolic = %T1.F (constants.%T1.F)]
-// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
+// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_16.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
@@ -2996,7 +2996,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @T1.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_16.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @T1.F.%T (%T) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T1.F.specific_fn.loc6_1.1: <specific function> = specific_function %T1.F.decl, @T1.F(constants.%T) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
@@ -3016,7 +3016,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @T1.%T1.F.specific_fn.loc6_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_15.2: type) {
+// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:   %pattern_type.loc5_27: type = pattern_type %T1 [symbolic = %pattern_type.loc5_27 (constants.%pattern_type.253)]
@@ -3033,7 +3033,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type
@@ -3168,7 +3168,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc9_31.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_27.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_27.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3200,18 +3200,18 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .F2 = %NonGenericBase.F2.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericDerived(%T.loc9_27.2: type) {
-// CHECK:STDOUT:   %T.loc9_27.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_27.1 (constants.%T)]
+// CHECK:STDOUT: generic class @GenericDerived(%T.loc9_28.2: type) {
+// CHECK:STDOUT:   %T.loc9_28.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T.loc9_27.1) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T.loc9_28.1) [symbolic = %GenericDerived (constants.%GenericDerived)]
 // CHECK:STDOUT:   %GenericDerived.elem: type = unbound_element_type %GenericDerived, constants.%NonGenericBase [symbolic = %GenericDerived.elem (constants.%GenericDerived.elem)]
-// CHECK:STDOUT:   %GenericDerived.F2.type: type = fn_type @GenericDerived.F2, @GenericDerived(%T.loc9_27.1) [symbolic = %GenericDerived.F2.type (constants.%GenericDerived.F2.type)]
+// CHECK:STDOUT:   %GenericDerived.F2.type: type = fn_type @GenericDerived.F2, @GenericDerived(%T.loc9_28.1) [symbolic = %GenericDerived.F2.type (constants.%GenericDerived.F2.type)]
 // CHECK:STDOUT:   %GenericDerived.F2: @GenericDerived.%GenericDerived.F2.type (%GenericDerived.F2.type) = struct_value () [symbolic = %GenericDerived.F2 (constants.%GenericDerived.F2)]
-// CHECK:STDOUT:   %GenericDerived.F3.type: type = fn_type @GenericDerived.F3, @GenericDerived(%T.loc9_27.1) [symbolic = %GenericDerived.F3.type (constants.%GenericDerived.F3.type)]
+// CHECK:STDOUT:   %GenericDerived.F3.type: type = fn_type @GenericDerived.F3, @GenericDerived(%T.loc9_28.1) [symbolic = %GenericDerived.F3.type (constants.%GenericDerived.F3.type)]
 // CHECK:STDOUT:   %GenericDerived.F3: @GenericDerived.%GenericDerived.F3.type (%GenericDerived.F3.type) = struct_value () [symbolic = %GenericDerived.F3 (constants.%GenericDerived.F3)]
-// CHECK:STDOUT:   %GenericDerived.F2.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F2, @GenericDerived.F2(%T.loc9_27.1) [symbolic = %GenericDerived.F2.specific_fn.loc13_1.2 (constants.%GenericDerived.F2.specific_fn)]
-// CHECK:STDOUT:   %GenericDerived.F3.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F3, @GenericDerived.F3(%T.loc9_27.1) [symbolic = %GenericDerived.F3.specific_fn.loc13_1.2 (constants.%GenericDerived.F3.specific_fn)]
+// CHECK:STDOUT:   %GenericDerived.F2.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F2, @GenericDerived.F2(%T.loc9_28.1) [symbolic = %GenericDerived.F2.specific_fn.loc13_1.2 (constants.%GenericDerived.F2.specific_fn)]
+// CHECK:STDOUT:   %GenericDerived.F3.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F3, @GenericDerived.F3(%T.loc9_28.1) [symbolic = %GenericDerived.F3.specific_fn.loc13_1.2 (constants.%GenericDerived.F3.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %NonGenericBase.ref: type = name_ref NonGenericBase, file.%NonGenericBase.decl [concrete = constants.%NonGenericBase]
@@ -3276,7 +3276,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic override fn @GenericDerived.F2(@GenericDerived.%T.loc9_27.2: type) {
+// CHECK:STDOUT: generic override fn @GenericDerived.F2(@GenericDerived.%T.loc9_28.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericDerived [symbolic = %pattern_type (constants.%pattern_type.945)]
@@ -3290,7 +3290,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @GenericDerived.F3(@GenericDerived.%T.loc9_27.2: type) {
+// CHECK:STDOUT: generic virtual fn @GenericDerived.F3(@GenericDerived.%T.loc9_28.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericDerived [symbolic = %pattern_type (constants.%pattern_type.945)]
@@ -3305,7 +3305,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericDerived(constants.%T) {
-// CHECK:STDOUT:   %T.loc9_27.1 => constants.%T
+// CHECK:STDOUT:   %T.loc9_28.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericDerived => constants.%GenericDerived
@@ -3401,22 +3401,22 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_28.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_24.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_25.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %NonGenericDerived.decl: type = class_decl @NonGenericDerived [concrete = constants.%NonGenericDerived] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericBase(%T.loc4_24.2: type) {
-// CHECK:STDOUT:   %T.loc4_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
+// CHECK:STDOUT: generic class @GenericBase(%T.loc4_25.2: type) {
+// CHECK:STDOUT:   %T.loc4_25.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericBase.F1.type: type = fn_type @GenericBase.F1, @GenericBase(%T.loc4_24.1) [symbolic = %GenericBase.F1.type (constants.%GenericBase.F1.type.c30)]
+// CHECK:STDOUT:   %GenericBase.F1.type: type = fn_type @GenericBase.F1, @GenericBase(%T.loc4_25.1) [symbolic = %GenericBase.F1.type (constants.%GenericBase.F1.type.c30)]
 // CHECK:STDOUT:   %GenericBase.F1: @GenericBase.%GenericBase.F1.type (%GenericBase.F1.type.c30) = struct_value () [symbolic = %GenericBase.F1 (constants.%GenericBase.F1.5f6)]
-// CHECK:STDOUT:   %GenericBase.F2.type: type = fn_type @GenericBase.F2, @GenericBase(%T.loc4_24.1) [symbolic = %GenericBase.F2.type (constants.%GenericBase.F2.type.3d4)]
+// CHECK:STDOUT:   %GenericBase.F2.type: type = fn_type @GenericBase.F2, @GenericBase(%T.loc4_25.1) [symbolic = %GenericBase.F2.type (constants.%GenericBase.F2.type.3d4)]
 // CHECK:STDOUT:   %GenericBase.F2: @GenericBase.%GenericBase.F2.type (%GenericBase.F2.type.3d4) = struct_value () [symbolic = %GenericBase.F2 (constants.%GenericBase.F2.9ed)]
-// CHECK:STDOUT:   %GenericBase.F1.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F1, @GenericBase.F1(%T.loc4_24.1) [symbolic = %GenericBase.F1.specific_fn.loc7_1.2 (constants.%GenericBase.F1.specific_fn.463)]
-// CHECK:STDOUT:   %GenericBase.F2.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F2, @GenericBase.F2(%T.loc4_24.1) [symbolic = %GenericBase.F2.specific_fn.loc7_1.2 (constants.%GenericBase.F2.specific_fn.92d)]
+// CHECK:STDOUT:   %GenericBase.F1.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F1, @GenericBase.F1(%T.loc4_25.1) [symbolic = %GenericBase.F1.specific_fn.loc7_1.2 (constants.%GenericBase.F1.specific_fn.463)]
+// CHECK:STDOUT:   %GenericBase.F2.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F2, @GenericBase.F2(%T.loc4_25.1) [symbolic = %GenericBase.F2.specific_fn.loc7_1.2 (constants.%GenericBase.F2.specific_fn.92d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericBase.F1.decl: @GenericBase.%GenericBase.F1.type (%GenericBase.F1.type.c30) = fn_decl @GenericBase.F1 [symbolic = @GenericBase.%GenericBase.F1 (constants.%GenericBase.F1.5f6)] {
@@ -3504,7 +3504,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @NonGenericDerived.%NonGenericDerived.F3.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @GenericBase.F1(@GenericBase.%T.loc4_24.2: type) {
+// CHECK:STDOUT: generic virtual fn @GenericBase.F1(@GenericBase.%T.loc4_25.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericBase: type = class_type @GenericBase, @GenericBase(%T) [symbolic = %GenericBase (constants.%GenericBase.5e3)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericBase [symbolic = %pattern_type (constants.%pattern_type.3f7)]
@@ -3518,7 +3518,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @GenericBase.F2(@GenericBase.%T.loc4_24.2: type) {
+// CHECK:STDOUT: generic virtual fn @GenericBase.F2(@GenericBase.%T.loc4_25.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericBase: type = class_type @GenericBase, @GenericBase(%T) [symbolic = %GenericBase (constants.%GenericBase.5e3)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericBase [symbolic = %pattern_type (constants.%pattern_type.3f7)]
@@ -3543,7 +3543,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericBase(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_24.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_25.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericBase.F1.type => constants.%GenericBase.F1.type.c30
@@ -3573,7 +3573,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericBase(constants.%T1) {
-// CHECK:STDOUT:   %T.loc4_24.1 => constants.%T1
+// CHECK:STDOUT:   %T.loc4_25.1 => constants.%T1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericBase.F1.type => constants.%GenericBase.F1.type.93d
@@ -3665,19 +3665,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %D1.decl: type = class_decl @D1 [concrete = constants.%D1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc4_17.2: type) {
-// CHECK:STDOUT:   %T.loc4_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc4_18.2: type) {
+// CHECK:STDOUT:   %T.loc4_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_18.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.0f1) = struct_value () [symbolic = %Base.F (constants.%Base.F.cd3)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_17.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_18.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.0f1) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.cd3)] {
@@ -3695,7 +3695,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %t.param: @Base.F.%ptr.loc5_52.1 (%ptr.4b1) = value_param call_param1
 // CHECK:STDOUT:       %.loc5_52: type = splice_block %ptr.loc5_52.2 [symbolic = %ptr.loc5_52.1 (constants.%ptr.4b1)] {
 // CHECK:STDOUT:         %Base.ref: %Base.type = name_ref Base, file.%Base.decl [concrete = constants.%Base.generic]
-// CHECK:STDOUT:         %T.ref: type = name_ref T, @Base.%T.loc4_17.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, @Base.%T.loc4_18.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %Base.loc5_51: type = class_type @Base, @Base(constants.%T) [symbolic = %Base.loc5_29 (constants.%Base.d0c)]
 // CHECK:STDOUT:         %ptr.loc5_52.2: type = ptr_type %Base.loc5_51 [symbolic = %ptr.loc5_52.1 (constants.%ptr.4b1)]
 // CHECK:STDOUT:       }
@@ -3763,7 +3763,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @D1.%D1.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_18.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base.loc5_29: type = class_type @Base, @Base(%T) [symbolic = %Base.loc5_29 (constants.%Base.d0c)]
 // CHECK:STDOUT:   %pattern_type.loc5_27: type = pattern_type %Base.loc5_29 [symbolic = %pattern_type.loc5_27 (constants.%pattern_type.2f0)]
@@ -3786,7 +3786,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_18.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.0f1
@@ -3807,7 +3807,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
-// CHECK:STDOUT:   %T.loc4_17.1 => constants.%T1
+// CHECK:STDOUT:   %T.loc4_18.1 => constants.%T1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.cb1
@@ -3892,7 +3892,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc7_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D1.decl: type = class_decl @D1 [concrete = constants.%D1] {} {}
 // CHECK:STDOUT: }
@@ -3901,13 +3901,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc7_17.2: type) {
-// CHECK:STDOUT:   %T.loc7_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc7_18.2: type) {
+// CHECK:STDOUT:   %T.loc7_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_18.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.0f1) = struct_value () [symbolic = %Base.F (constants.%Base.F.cd3)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.f8c)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_18.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.f8c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.0f1) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.cd3)] {
@@ -3987,7 +3987,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @D1.%D1.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_17.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc7_18.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.d0c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.2f0)]
@@ -4007,7 +4007,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_18.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.0f1
@@ -4025,7 +4025,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
-// CHECK:STDOUT:   %T.loc7_17.1 => constants.%T1
+// CHECK:STDOUT:   %T.loc7_18.1 => constants.%T1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.cb1
@@ -4101,7 +4101,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_21.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: %Derived.type = class_decl @Derived [concrete = constants.%Derived.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
@@ -4110,17 +4110,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc7_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc4_21.2: type) {
-// CHECK:STDOUT:   %T.loc4_21.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc4_22.2: type) {
+// CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_22.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_22.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -4137,7 +4137,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %self: @Base.F.%Base (%Base) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Base.F.%ptr.loc5_46.1 (%ptr.e8f) = value_param call_param1
 // CHECK:STDOUT:       %.loc5_46: type = splice_block %ptr.loc5_46.2 [symbolic = %ptr.loc5_46.1 (constants.%ptr.e8f)] {
-// CHECK:STDOUT:         %T.ref: type = name_ref T, @Base.%T.loc4_21.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, @Base.%T.loc4_22.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %ptr.loc5_46.2: type = ptr_type %T.ref [symbolic = %ptr.loc5_46.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @Base.F.%ptr.loc5_46.1 (%ptr.e8f) = value_binding t, %t.param
@@ -4155,23 +4155,23 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Derived(%T.loc7_15.2: type) {
-// CHECK:STDOUT:   %T.loc7_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Derived(%T.loc7_16.2: type) {
+// CHECK:STDOUT:   %T.loc7_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.loc8_22.2: type = class_type @Base, @Base(%T.loc7_15.1) [symbolic = %Base.loc8_22.2 (constants.%Base)]
+// CHECK:STDOUT:   %Base.loc8_22.2: type = class_type @Base, @Base(%T.loc7_16.1) [symbolic = %Base.loc8_22.2 (constants.%Base)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.loc8_22.2 [symbolic = %require_complete (constants.%require_complete.1e0)]
-// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc7_15.1) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc7_16.1) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.loc8_22.2 [symbolic = %Derived.elem (constants.%Derived.elem)]
-// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_15.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
+// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
 // CHECK:STDOUT:   %Derived.F: @Derived.%Derived.F.type (%Derived.F.type) = struct_value () [symbolic = %Derived.F (constants.%Derived.F)]
-// CHECK:STDOUT:   %Derived.F.specific_fn.loc17_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_15.1) [symbolic = %Derived.F.specific_fn.loc17_1.2 (constants.%Derived.F.specific_fn)]
+// CHECK:STDOUT:   %Derived.F.specific_fn.loc17_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_16.1) [symbolic = %Derived.F.specific_fn.loc17_1.2 (constants.%Derived.F.specific_fn)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @Derived.%Base.loc8_22.2 (%Base)} [symbolic = %struct_type.base (constants.%struct_type.base.b5f)]
 // CHECK:STDOUT:   %complete_type.loc17_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.33f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.ref: %Base.type = name_ref Base, file.%Base.decl [concrete = constants.%Base.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_15.2 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_16.2 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:     %Base.loc8_22.1: type = class_type @Base, @Base(constants.%T) [symbolic = %Base.loc8_22.2 (constants.%Base)]
 // CHECK:STDOUT:     %.loc8: @Derived.%Derived.elem (%Derived.elem) = base_decl %Base.loc8_22.1, element0 [concrete]
 // CHECK:STDOUT:     %Derived.F.decl: @Derived.%Derived.F.type (%Derived.F.type) = fn_decl @Derived.F [symbolic = @Derived.%Derived.F (constants.%Derived.F)] {
@@ -4187,7 +4187,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Derived.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Derived.%T.loc7_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @Derived.F.%T (%T) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Derived.F.specific_fn.loc17_1.1: <specific function> = specific_function %Derived.F.decl, @Derived.F(constants.%T) [symbolic = %Derived.F.specific_fn.loc17_1.2 (constants.%Derived.F.specific_fn)]
@@ -4214,7 +4214,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.specific_fn.loc17_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_21.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_22.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base)]
 // CHECK:STDOUT:   %pattern_type.loc5_27: type = pattern_type %Base [symbolic = %pattern_type.loc5_27 (constants.%pattern_type.2f0)]
@@ -4231,7 +4231,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_15.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:   %pattern_type.loc16_28: type = pattern_type %Derived [symbolic = %pattern_type.loc16_28 (constants.%pattern_type.b9d)]
@@ -4250,7 +4250,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_21.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type
@@ -4271,7 +4271,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_15.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc8_22.2 => constants.%Base
@@ -4363,7 +4363,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_21.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: %Derived.type = class_decl @Derived [concrete = constants.%Derived.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
@@ -4372,17 +4372,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc7_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc4_21.2: type) {
-// CHECK:STDOUT:   %T.loc4_21.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc4_22.2: type) {
+// CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_22.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.0f1) = struct_value () [symbolic = %Base.F (constants.%Base.F.cd3)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_22.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.0f1) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.cd3)] {
@@ -4398,7 +4398,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Base.F.%Base (%Base.d0c) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Base.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc4_21.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc4_22.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @Base.F.%T (%T) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
@@ -4414,24 +4414,24 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Derived(%T.loc7_15.2: type) {
-// CHECK:STDOUT:   %T.loc7_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Derived(%T.loc7_16.2: type) {
+// CHECK:STDOUT:   %T.loc7_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr.loc8_22.2: type = ptr_type %T.loc7_15.1 [symbolic = %ptr.loc8_22.2 (constants.%ptr.e8f)]
+// CHECK:STDOUT:   %ptr.loc8_22.2: type = ptr_type %T.loc7_16.1 [symbolic = %ptr.loc8_22.2 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %Base.loc8_23.2: type = class_type @Base, @Base(%ptr.loc8_22.2) [symbolic = %Base.loc8_23.2 (constants.%Base.f29)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.loc8_23.2 [symbolic = %require_complete (constants.%require_complete.b3c)]
-// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc7_15.1) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc7_16.1) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.loc8_23.2 [symbolic = %Derived.elem (constants.%Derived.elem)]
-// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_15.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
+// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
 // CHECK:STDOUT:   %Derived.F: @Derived.%Derived.F.type (%Derived.F.type) = struct_value () [symbolic = %Derived.F (constants.%Derived.F)]
-// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_15.1) [symbolic = %Derived.F.specific_fn.loc10_1.2 (constants.%Derived.F.specific_fn)]
+// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_16.1) [symbolic = %Derived.F.specific_fn.loc10_1.2 (constants.%Derived.F.specific_fn)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @Derived.%Base.loc8_23.2 (%Base.f29)} [symbolic = %struct_type.base (constants.%struct_type.base.aa5)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.8c0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.ref: %Base.type = name_ref Base, file.%Base.decl [concrete = constants.%Base.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_15.2 [symbolic = %T.loc7_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_16.2 [symbolic = %T.loc7_16.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc8_22.1: type = ptr_type %T.ref [symbolic = %ptr.loc8_22.2 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     %Base.loc8_23.1: type = class_type @Base, @Base(constants.%ptr.e8f) [symbolic = %Base.loc8_23.2 (constants.%Base.f29)]
 // CHECK:STDOUT:     %.loc8: @Derived.%Derived.elem (%Derived.elem) = base_decl %Base.loc8_23.1, element0 [concrete]
@@ -4449,7 +4449,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc9_46 (%ptr.e8f) = value_param call_param1
 // CHECK:STDOUT:       %.loc9_47: type = splice_block %ptr.loc9_47 [symbolic = %ptr.loc9_46 (constants.%ptr.e8f)] {
-// CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %ptr.loc9_47: type = ptr_type %T.ref [symbolic = %ptr.loc9_46 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @Derived.F.%ptr.loc9_46 (%ptr.e8f) = value_binding t, %t.param
@@ -4478,7 +4478,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.specific_fn.loc10_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_21.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_22.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.d0c)]
 // CHECK:STDOUT:   %pattern_type.loc5_27: type = pattern_type %Base [symbolic = %pattern_type.loc5_27 (constants.%pattern_type.2f0)]
@@ -4494,7 +4494,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_15.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:   %pattern_type.loc9_28: type = pattern_type %Derived [symbolic = %pattern_type.loc9_28 (constants.%pattern_type.b9d)]
@@ -4514,7 +4514,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_21.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.0f1
@@ -4534,7 +4534,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_15.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc8_22.2 => constants.%ptr.e8f
@@ -4550,7 +4550,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%ptr.e8f) {
-// CHECK:STDOUT:   %T.loc4_21.1 => constants.%ptr.e8f
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%ptr.e8f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.c53
@@ -4639,19 +4639,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_21.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc4_21.2: type) {
-// CHECK:STDOUT:   %T.loc4_21.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_21.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc4_22.2: type) {
+// CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_22.1) [symbolic = %Base.F.type (constants.%Base.F.type.0f1)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.0f1) = struct_value () [symbolic = %Base.F (constants.%Base.F.cd3)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_22.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.f8c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.0f1) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.cd3)] {
@@ -4714,7 +4714,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic abstract fn @Base.F(@Base.%T.loc4_21.2: type) {
+// CHECK:STDOUT: generic abstract fn @Base.F(@Base.%T.loc4_22.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.d0c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.2f0)]
@@ -4728,7 +4728,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_21.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -4738,7 +4738,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
-// CHECK:STDOUT:   %T.loc4_21.1 => constants.%T1
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.cb1
@@ -4793,17 +4793,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(%T.loc4_17.2: type) {
-// CHECK:STDOUT:   %T.loc4_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Base(%T.loc4_18.2: type) {
+// CHECK:STDOUT:   %T.loc4_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_18.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_17.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_18.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
-// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_17.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
+// CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_18.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -4833,7 +4833,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Base.%Base.F.specific_fn.loc6_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT: generic virtual fn @Base.F(@Base.%T.loc4_18.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.2f0)]
@@ -4848,7 +4848,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_17.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_18.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type
@@ -4900,12 +4900,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//generic_lib, loc4_18, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.462: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2af = import_ref Main//generic_lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cf = import_ref Main//generic_lib, loc5_37, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//generic_lib, loc4_18, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.4f0: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.f8c]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5071,7 +5071,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G1.loc4_15.2: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_15.1 (constants.%G1)]
+// CHECK:STDOUT:     %G1.loc4_17.2: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_17.1 (constants.%G1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T2.decl: %T2.type = class_decl @T2 [concrete = constants.%T2.generic] {
 // CHECK:STDOUT:     %G2.patt: %pattern_type.98f = symbolic_binding_pattern G2, 0 [concrete]
@@ -5080,17 +5080,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G2.loc8_10.2: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_10.1 (constants.%G2)]
+// CHECK:STDOUT:     %G2.loc8_12.2: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_12.1 (constants.%G2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T1(%G1.loc4_15.2: type) {
-// CHECK:STDOUT:   %G1.loc4_15.1: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_15.1 (constants.%G1)]
+// CHECK:STDOUT: generic class @T1(%G1.loc4_17.2: type) {
+// CHECK:STDOUT:   %G1.loc4_17.1: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_17.1 (constants.%G1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.1)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_17.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.1)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type.e39697.1) = struct_value () [symbolic = %T1.F (constants.%T1.F.9b864d.1)]
-// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.46dc79.1)]
+// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_17.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.46dc79.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type.e39697.1) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F.9b864d.1)] {
@@ -5116,23 +5116,23 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T2(%G2.loc8_10.2: type) {
-// CHECK:STDOUT:   %G2.loc8_10.1: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_10.1 (constants.%G2)]
+// CHECK:STDOUT: generic class @T2(%G2.loc8_12.2: type) {
+// CHECK:STDOUT:   %G2.loc8_12.1: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_12.1 (constants.%G2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.loc9_21.2: type = class_type @T1, @T1(%G2.loc8_10.1) [symbolic = %T1.loc9_21.2 (constants.%T1.6d4458.2)]
+// CHECK:STDOUT:   %T1.loc9_21.2: type = class_type @T1, @T1(%G2.loc8_12.1) [symbolic = %T1.loc9_21.2 (constants.%T1.6d4458.2)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T1.loc9_21.2 [symbolic = %require_complete (constants.%require_complete.6d26d2.2)]
-// CHECK:STDOUT:   %T2: type = class_type @T2, @T2(%G2.loc8_10.1) [symbolic = %T2 (constants.%T2)]
+// CHECK:STDOUT:   %T2: type = class_type @T2, @T2(%G2.loc8_12.1) [symbolic = %T2 (constants.%T2)]
 // CHECK:STDOUT:   %T2.elem: type = unbound_element_type %T2, %T1.loc9_21.2 [symbolic = %T2.elem (constants.%T2.elem)]
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G2.loc8_10.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.2)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G2.loc8_12.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.2)]
 // CHECK:STDOUT:   %T1.F: @T2.%T1.F.type (%T1.F.type.e39697.2) = struct_value () [symbolic = %T1.F (constants.%T1.F.9b864d.2)]
-// CHECK:STDOUT:   %T1.F.specific_fn.loc10_1.2: <specific function> = specific_function %T1.F, @T1.F(%G2.loc8_10.1) [symbolic = %T1.F.specific_fn.loc10_1.2 (constants.%T1.F.specific_fn.46dc79.2)]
+// CHECK:STDOUT:   %T1.F.specific_fn.loc10_1.2: <specific function> = specific_function %T1.F, @T1.F(%G2.loc8_12.1) [symbolic = %T1.F.specific_fn.loc10_1.2 (constants.%T1.F.specific_fn.46dc79.2)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @T2.%T1.loc9_21.2 (%T1.6d4458.2)} [symbolic = %struct_type.base (constants.%struct_type.base)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.fc6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.ref: %T1.type = name_ref T1, file.%T1.decl [concrete = constants.%T1.generic]
-// CHECK:STDOUT:     %G2.ref: type = name_ref G2, %G2.loc8_10.2 [symbolic = %G2.loc8_10.1 (constants.%G2)]
+// CHECK:STDOUT:     %G2.ref: type = name_ref G2, %G2.loc8_12.2 [symbolic = %G2.loc8_12.1 (constants.%G2)]
 // CHECK:STDOUT:     %T1.loc9_21.1: type = class_type @T1, @T1(constants.%G2) [symbolic = %T1.loc9_21.2 (constants.%T1.6d4458.2)]
 // CHECK:STDOUT:     %.loc9: @T2.%T2.elem (%T2.elem) = base_decl %T1.loc9_21.1, element0 [concrete]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc10_1.1: <specific function> = specific_function constants.%T1.F.9b864d.2, @T1.F(constants.%G2) [symbolic = %T1.F.specific_fn.loc10_1.2 (constants.%T1.F.specific_fn.46dc79.2)]
@@ -5158,7 +5158,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @T2.%T1.F.specific_fn.loc10_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%G1.loc4_15.2: type) {
+// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%G1.loc4_17.2: type) {
 // CHECK:STDOUT:   %G1: type = symbolic_binding G1, 0 [symbolic = %G1 (constants.%G1)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%G1) [symbolic = %T1 (constants.%T1.6d4458.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.253617.1)]
@@ -5173,7 +5173,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%G1) {
-// CHECK:STDOUT:   %G1.loc4_15.1 => constants.%G1
+// CHECK:STDOUT:   %G1.loc4_17.1 => constants.%G1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.e39697.1
@@ -5191,11 +5191,11 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%G2) {
-// CHECK:STDOUT:   %G2.loc8_10.1 => constants.%G2
+// CHECK:STDOUT:   %G2.loc8_12.1 => constants.%G2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%G2) {
-// CHECK:STDOUT:   %G1.loc4_15.1 => constants.%G2
+// CHECK:STDOUT:   %G1.loc4_17.1 => constants.%G2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.e39697.2
@@ -5271,7 +5271,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G1.loc4_15.2: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_15.1 (constants.%G1)]
+// CHECK:STDOUT:     %G1.loc4_17.2: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_17.1 (constants.%G1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T2.decl: %T2.type = class_decl @T2 [concrete = constants.%T2.generic] {
 // CHECK:STDOUT:     %G2.patt: %pattern_type.98f = symbolic_binding_pattern G2, 0 [concrete]
@@ -5280,17 +5280,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G2.loc8_10.2: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_10.1 (constants.%G2)]
+// CHECK:STDOUT:     %G2.loc8_12.2: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_12.1 (constants.%G2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T1(%G1.loc4_15.2: type) {
-// CHECK:STDOUT:   %G1.loc4_15.1: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_15.1 (constants.%G1)]
+// CHECK:STDOUT: generic class @T1(%G1.loc4_17.2: type) {
+// CHECK:STDOUT:   %G1.loc4_17.1: type = symbolic_binding G1, 0 [symbolic = %G1.loc4_17.1 (constants.%G1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.1)]
+// CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_17.1) [symbolic = %T1.F.type (constants.%T1.F.type.e39697.1)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type.e39697.1) = struct_value () [symbolic = %T1.F (constants.%T1.F.9b864d.1)]
-// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.46dc79.1)]
+// CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_17.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.46dc79.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type.e39697.1) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F.9b864d.1)] {
@@ -5316,11 +5316,11 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T2(%G2.loc8_10.2: type) {
-// CHECK:STDOUT:   %G2.loc8_10.1: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_10.1 (constants.%G2)]
+// CHECK:STDOUT: generic class @T2(%G2.loc8_12.2: type) {
+// CHECK:STDOUT:   %G2.loc8_12.1: type = symbolic_binding G2, 0 [symbolic = %G2.loc8_12.1 (constants.%G2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T3: type = class_type @T3, @T3(%G2.loc8_10.1) [symbolic = %T3 (constants.%T3)]
+// CHECK:STDOUT:   %T3: type = class_type @T3, @T3(%G2.loc8_12.1) [symbolic = %T3 (constants.%T3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T3.decl: type = class_decl @T3 [symbolic = @T2.%T3 (constants.%T3)] {} {}
@@ -5335,7 +5335,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @T3(@T2.%G2.loc8_10.2: type) {
+// CHECK:STDOUT: generic class @T3(@T2.%G2.loc8_12.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %G2: type = symbolic_binding G2, 0 [symbolic = %G2 (constants.%G2)]
 // CHECK:STDOUT:   %T1.loc10_24.2: type = class_type @T1, @T1(%G2) [symbolic = %T1.loc10_24.2 (constants.%T1.6d4458.2)]
@@ -5350,7 +5350,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.ref: %T1.type = name_ref T1, file.%T1.decl [concrete = constants.%T1.generic]
-// CHECK:STDOUT:     %G2.ref: type = name_ref G2, @T2.%G2.loc8_10.2 [symbolic = %G2 (constants.%G2)]
+// CHECK:STDOUT:     %G2.ref: type = name_ref G2, @T2.%G2.loc8_12.2 [symbolic = %G2 (constants.%G2)]
 // CHECK:STDOUT:     %T1.loc10_24.1: type = class_type @T1, @T1(constants.%G2) [symbolic = %T1.loc10_24.2 (constants.%T1.6d4458.2)]
 // CHECK:STDOUT:     %.loc10: @T3.%T3.elem (%T3.elem) = base_decl %T1.loc10_24.1, element0 [concrete]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc11_3.1: <specific function> = specific_function constants.%T1.F.9b864d.2, @T1.F(constants.%G2) [symbolic = %T1.F.specific_fn.loc11_3.2 (constants.%T1.F.specific_fn.46dc79.2)]
@@ -5376,7 +5376,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @T3.%T1.F.specific_fn.loc11_3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%G1.loc4_15.2: type) {
+// CHECK:STDOUT: generic virtual fn @T1.F(@T1.%G1.loc4_17.2: type) {
 // CHECK:STDOUT:   %G1: type = symbolic_binding G1, 0 [symbolic = %G1 (constants.%G1)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%G1) [symbolic = %T1 (constants.%T1.6d4458.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.253617.1)]
@@ -5391,7 +5391,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%G1) {
-// CHECK:STDOUT:   %G1.loc4_15.1 => constants.%G1
+// CHECK:STDOUT:   %G1.loc4_17.1 => constants.%G1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.e39697.1
@@ -5409,13 +5409,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%G2) {
-// CHECK:STDOUT:   %G2.loc8_10.1 => constants.%G2
+// CHECK:STDOUT:   %G2.loc8_12.1 => constants.%G2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T3(constants.%G2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%G2) {
-// CHECK:STDOUT:   %G1.loc4_15.1 => constants.%G2
+// CHECK:STDOUT:   %G1.loc4_17.1 => constants.%G2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.e39697.2

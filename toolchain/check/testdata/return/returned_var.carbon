@@ -188,10 +188,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   assign %result.var, %.loc26_12
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %result: ref %i32 = ref_binding result, %result.var
-// CHECK:STDOUT:   %.loc26_16: %i32 = acquire_value %result
+// CHECK:STDOUT:   %.loc26_22: %i32 = acquire_value %result
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %result.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%result.var)
-// CHECK:STDOUT:   return %.loc26_16
+// CHECK:STDOUT:   return %.loc26_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";

@@ -56,7 +56,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_39 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc18_6.2 [symbolic = %T.loc18_6.1 (constants.%T.706)]
+// CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc18_7.2 [symbolic = %T.loc18_7.1 (constants.%T.706)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc18_39.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc18_39.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
@@ -84,16 +84,16 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_25, %.loc18_32.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc18_6.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_6.1 (constants.%T.706)]
+// CHECK:STDOUT:     %T.loc18_7.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_7.1 (constants.%T.706)]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc18_6.2: %I_where.type) {
-// CHECK:STDOUT:   %T.loc18_6.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_6.1 (constants.%T.706)]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc18_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc18_6.1, @I, @I(constants.%.Self.binding.as_type.8db) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.94d)]
+// CHECK:STDOUT: generic fn @F(%T.loc18_7.2: %I_where.type) {
+// CHECK:STDOUT:   %T.loc18_7.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_7.1 (constants.%T.706)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc18_7.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc18_7.1, @I, @I(constants.%.Self.binding.as_type.8db) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.94d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -107,7 +107,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.706) {
-// CHECK:STDOUT:   %T.loc18_6.1 => constants.%T.706
+// CHECK:STDOUT:   %T.loc18_7.1 => constants.%T.706
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness.94d
 // CHECK:STDOUT: }

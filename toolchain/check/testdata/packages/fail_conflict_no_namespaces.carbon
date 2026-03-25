@@ -31,7 +31,7 @@ package Example library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
 // CHECK:STDERR: var.carbon:4:5: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: var Foo: i32;
-// CHECK:STDERR:     ^~~
+// CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn Foo();

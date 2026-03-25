@@ -26,14 +26,14 @@ interface Y(T:! Y2) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface Y(T:! Y2) {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:37: error: cannot convert type `Self` that implements `W` into type implementing `Y2` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: constraint W { extend require impls Y(Self); }
 // CHECK:STDERR:                                     ^~~~~~~
 // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-17]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface Y(T:! Y2) {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~
 // CHECK:STDERR:
 constraint W { extend require impls Y(Self); }
 
@@ -53,14 +53,14 @@ constraint W {
   // CHECK:STDERR: ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface Y(T:! Y2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE+7]]:24: error: cannot convert type `Self` that implements `W` into type implementing `Y2` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   extend require impls Y(Self);
   // CHECK:STDERR:                        ^~~~~~~
   // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-17]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface Y(T:! Y2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~
   // CHECK:STDERR:
   extend require impls Y(Self);
 }

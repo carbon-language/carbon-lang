@@ -14,7 +14,7 @@ interface I {
   let T:! type;
   // CHECK:STDERR: fail_todo_form_thunk.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support for cloning form bindings` [SemanticsTodo]
   // CHECK:STDERR:   fn F(x:? form(ref ()), y: T);
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn F(x:? form(ref ()), y: T);
 }

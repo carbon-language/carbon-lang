@@ -231,12 +231,12 @@ let n: type = i32;
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_12.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc6_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_8.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_29: type = splice_block %T.ref [symbolic = %T.loc6_8.1 (constants.%T)] {
+// CHECK:STDOUT:     %T.loc6_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc6_29: type = splice_block %T.ref [symbolic = %T.loc6_9.1 (constants.%T)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_8.2 [symbolic = %T.loc6_8.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_9.2 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_25.2: @Int.%T.loc6_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_25.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc6_26.2: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_26.1 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -247,15 +247,15 @@ let n: type = i32;
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_22.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(%T.loc8_22.2: type) {
-// CHECK:STDOUT:   %T.loc8_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_22.1 (constants.%T)]
+// CHECK:STDOUT: generic interface @ImplicitAs(%T.loc8_23.2: type) {
+// CHECK:STDOUT:   %T.loc8_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_23.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc8_22.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.9fe)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc8_23.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.9fe)]
 // CHECK:STDOUT:   %Self.loc8_32.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self.loc8_32.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -269,7 +269,7 @@ let n: type = i32;
 // CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt, %T.ref [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_22.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_23.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %.loc9_31.2: Core.Form = init_form %T.ref [symbolic = %.loc9_31.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc9_20.1: type = splice_block %.loc9_20.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -303,10 +303,10 @@ let n: type = i32;
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc6_8.2: type, %N.loc6_25.2: @Int.%T.loc6_8.1 (%T)) {
-// CHECK:STDOUT:   %T.loc6_8.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_8.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc6_25.1: @Int.%T.loc6_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_25.1 (constants.%N)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_8.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT: generic fn @Int(%T.loc6_9.2: type, %N.loc6_26.2: @Int.%T.loc6_9.1 (%T)) {
+// CHECK:STDOUT:   %T.loc6_9.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
+// CHECK:STDOUT:   %N.loc6_26.1: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_26.1 (constants.%N)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_9.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -319,7 +319,7 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(@ImplicitAs.%T.loc8_22.2: type, @ImplicitAs.%Self.loc8_32.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.9fe)) {
+// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(@ImplicitAs.%T.loc8_23.2: type, @ImplicitAs.%Self.loc8_32.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.9fe)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.9fe)]
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
@@ -332,13 +332,13 @@ let n: type = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
-// CHECK:STDOUT:   %T.loc6_8.1 => constants.%T
-// CHECK:STDOUT:   %N.loc6_25.1 => constants.%N
+// CHECK:STDOUT:   %T.loc6_9.1 => constants.%T
+// CHECK:STDOUT:   %N.loc6_26.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_22.1 => constants.%T
+// CHECK:STDOUT:   %T.loc8_23.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%T, constants.%Self) {}
@@ -593,12 +593,12 @@ let n: type = i32;
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc6_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_11.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_32: type = splice_block %T.ref [symbolic = %T.loc6_11.1 (constants.%T)] {
+// CHECK:STDOUT:     %T.loc6_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc6_32: type = splice_block %T.ref [symbolic = %T.loc6_12.1 (constants.%T)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_11.2 [symbolic = %T.loc6_11.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_12.2 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_28.2: @Int.%T.loc6_11.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc6_29.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.efe = value_binding_pattern n [concrete]
@@ -612,10 +612,10 @@ let n: type = i32;
 // CHECK:STDOUT:   %n: %Int.553 = value_binding n, %.loc8_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Int(%T.loc6_11.2: type, %N.loc6_28.2: @Int.%T.loc6_11.1 (%T)) {
-// CHECK:STDOUT:   %T.loc6_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_11.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc6_28.1: @Int.%T.loc6_11.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_11.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_29.2: @Int.%T.loc6_12.1 (%T)) {
+// CHECK:STDOUT:   %T.loc6_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
+// CHECK:STDOUT:   %N.loc6_29.1: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_12.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -635,14 +635,14 @@ let n: type = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
-// CHECK:STDOUT:   %T.loc6_11.1 => constants.%T
-// CHECK:STDOUT:   %N.loc6_28.1 => constants.%N
+// CHECK:STDOUT:   %T.loc6_12.1 => constants.%T
+// CHECK:STDOUT:   %N.loc6_29.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
-// CHECK:STDOUT:   %T.loc6_11.1 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc6_28.1 => constants.%int_32
+// CHECK:STDOUT:   %T.loc6_12.1 => Core.IntLiteral
+// CHECK:STDOUT:   %N.loc6_29.1 => constants.%int_32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dc0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

@@ -27,7 +27,7 @@ fn F() {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-10]]:15: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn AsZ(unused T:! Z) {}
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:               ^~~~~
   // CHECK:STDERR:
   AsZ(());
 }

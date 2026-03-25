@@ -95,7 +95,7 @@ fn CallF() {
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F({});
 }
@@ -642,7 +642,7 @@ fn CallF() {
 // CHECK:STDOUT:       %.loc4_33.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_33.3: type = converted %IntLiteral.call, %.loc4_33.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_13.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_13.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_14.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_14.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @empty_struct_type.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc15_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -668,11 +668,11 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(%N.loc4_13.2: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc4_13.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_13.1 (constants.%N)]
+// CHECK:STDOUT: generic interface @I(%N.loc4_14.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc4_14.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_14.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N.loc4_13.1)> [symbolic = %I.type (constants.%I.type.68b)]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N.loc4_14.1)> [symbolic = %I.type (constants.%I.type.68b)]
 // CHECK:STDOUT:   %Self.loc4_36.2: @I.%I.type (%I.type.68b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_36.2 (constants.%Self.cad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -701,13 +701,13 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%N) {
-// CHECK:STDOUT:   %N.loc4_13.1 => constants.%N
+// CHECK:STDOUT:   %N.loc4_14.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%N, constants.%Self.cad) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1) {
-// CHECK:STDOUT:   %N.loc4_13.1 => constants.%int_-1
+// CHECK:STDOUT:   %N.loc4_14.1 => constants.%int_-1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.54b
@@ -800,7 +800,7 @@ fn CallF() {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc8_60.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_6.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_7.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallF.decl: %CallF.type = fn_decl @CallF [concrete = constants.%CallF] {} {}
 // CHECK:STDOUT: }
@@ -822,8 +822,8 @@ fn CallF() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc8_6.2: %I_where.type) {
-// CHECK:STDOUT:   %T.loc8_6.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %I_where.type) {
+// CHECK:STDOUT:   %T.loc8_7.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -848,6 +848,6 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc8_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

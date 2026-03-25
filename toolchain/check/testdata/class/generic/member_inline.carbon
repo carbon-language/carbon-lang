@@ -92,21 +92,21 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc5_13.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.loc5_14.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_14.1 (constants.%T.035)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%T.loc5_13.2: %Copy.type) {
-// CHECK:STDOUT:   %T.loc5_13.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.035)]
+// CHECK:STDOUT: generic class @Class(%T.loc5_14.2: %Copy.type) {
+// CHECK:STDOUT:   %T.loc5_14.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_14.1 (constants.%T.035)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc5_13.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
+// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc5_14.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
-// CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.loc5_13.1) [symbolic = %Class.G.type (constants.%Class.G.type)]
+// CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.loc5_14.1) [symbolic = %Class.G.type (constants.%Class.G.type)]
 // CHECK:STDOUT:   %Class.G: @Class.%Class.G.type (%Class.G.type) = struct_value () [symbolic = %Class.G (constants.%Class.G)]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc5_13.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc5_14.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.67c)]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_13.1) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_14.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n)]
 // CHECK:STDOUT:   %complete_type.loc15_1.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc15_1.2 (constants.%complete_type)]
@@ -118,13 +118,13 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return.param_patt: @Class.F.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.F.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc6_17.3 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc6_17: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T (constants.%T.035)]
+// CHECK:STDOUT:       %T.ref.loc6_17: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type.loc6_17: type = facet_access_type %T.ref.loc6_17 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc6_17.3: type = converted %T.ref.loc6_17, %T.as_type.loc6_17 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc6_17.4: Core.Form = init_form %.loc6_17.3 [symbolic = %.loc6_17.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:       %n.param: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_11.1: type = splice_block %.loc6_11.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
-// CHECK:STDOUT:         %T.ref.loc6_11: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T (constants.%T.035)]
+// CHECK:STDOUT:         %T.ref.loc6_11: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:         %T.as_type.loc6_11: type = facet_access_type %T.ref.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:         %.loc6_11.2: type = converted %T.ref.loc6_11, %T.as_type.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       }
@@ -138,7 +138,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return.param_patt: @Class.G.%pattern_type.loc10_25 (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.G.%pattern_type.loc10_25 (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc10_25.3 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T (constants.%T.035)]
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc10_25.3: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc10_25.4: Core.Form = init_form %.loc10_25.3 [symbolic = %.loc10_25.2 (constants.%.076a48.2)]
@@ -151,7 +151,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return.param: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.ref: %Copy.type = name_ref T, %T.loc5_13.2 [symbolic = %T.loc5_13.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.ref: %Copy.type = name_ref T, %T.loc5_14.2 [symbolic = %T.loc5_14.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc14_10: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc14_8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
@@ -167,7 +167,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc5_13.2: %Copy.type) {
+// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc5_14.2: %Copy.type) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.2)]
@@ -194,7 +194,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.G(@Class.%T.loc5_13.2: %Copy.type) {
+// CHECK:STDOUT: generic fn @Class.G(@Class.%T.loc5_14.2: %Copy.type) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %pattern_type.loc10_12: type = pattern_type %Class [symbolic = %pattern_type.loc10_12 (constants.%pattern_type.893)]
@@ -229,7 +229,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T.035) {
-// CHECK:STDOUT:   %T.loc5_13.1 => constants.%T.035
+// CHECK:STDOUT:   %T.loc5_14.1 => constants.%T.035
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class.F.type => constants.%Class.F.type
@@ -296,17 +296,17 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc5_9.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_9.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_10.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc5_9.2: %Copy.type) {
-// CHECK:STDOUT:   %T.loc5_9.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_9.1 (constants.%T)]
+// CHECK:STDOUT: generic class @C(%T.loc5_10.2: %Copy.type) {
+// CHECK:STDOUT:   %T.loc5_10.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%T.loc5_9.1) [symbolic = %C.F.type (constants.%C.F.type)]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%T.loc5_10.1) [symbolic = %C.F.type (constants.%C.F.type)]
 // CHECK:STDOUT:   %C.F: @C.%C.F.type (%C.F.type) = struct_value () [symbolic = %C.F (constants.%C.F)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_9.1) [symbolic = %C (constants.%C)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_10.1) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, constants.%empty_struct_type [symbolic = %C.elem (constants.%C.elem)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -324,7 +324,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.F(@C.%T.loc5_9.2: %Copy.type) {
+// CHECK:STDOUT: generic fn @C.F(@C.%T.loc5_10.2: %Copy.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C)]
@@ -338,7 +338,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   %T.loc5_9.1 => constants.%T
+// CHECK:STDOUT:   %T.loc5_10.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.F.type => constants.%C.F.type

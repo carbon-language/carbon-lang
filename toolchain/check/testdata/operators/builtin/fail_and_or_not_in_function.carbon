@@ -105,7 +105,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_7
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -144,7 +144,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_7
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -179,7 +179,7 @@ fn F() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc4_14: bool) {
+// CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc4_15: bool) {
 // CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.a76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

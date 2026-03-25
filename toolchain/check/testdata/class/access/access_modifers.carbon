@@ -52,7 +52,7 @@ fn Run() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
@@ -129,7 +129,7 @@ class A {
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   protected let x: i32 = 5;
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~~~~~
 // CHECK:STDERR:
 let x: i32 = A.x;
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
@@ -137,7 +137,7 @@ let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   private let y: i32 = 5;
-// CHECK:STDERR:               ^
+// CHECK:STDERR:               ^~~~~~
 // CHECK:STDERR:
 let y: i32 = A.y;
 

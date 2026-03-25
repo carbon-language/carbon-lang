@@ -207,10 +207,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   assign %v.var, %.loc27_14
 // CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
-// CHECK:STDOUT:   %.loc27_18: %i32 = acquire_value %v
+// CHECK:STDOUT:   %.loc27_19: %i32 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.1: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.1: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.1(%v.var)
-// CHECK:STDOUT:   return %.loc27_18
+// CHECK:STDOUT:   return %.loc27_19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
@@ -228,11 +228,11 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   assign %w.var, %.loc30_12
 // CHECK:STDOUT:   %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
-// CHECK:STDOUT:   %.loc30_16: %i32 = acquire_value %w
+// CHECK:STDOUT:   %.loc30_17: %i32 = acquire_value %w
 // CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %w.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%w.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.2: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.2: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.2(%v.var)
-// CHECK:STDOUT:   return %.loc30_16
+// CHECK:STDOUT:   return %.loc30_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

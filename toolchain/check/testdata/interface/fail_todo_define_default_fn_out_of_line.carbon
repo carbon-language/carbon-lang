@@ -225,7 +225,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.param_patt: @C.F.%pattern_type.loc14_33 (%pattern_type.423) = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: @C.F.%pattern_type.loc14_33 (%pattern_type.423) = return_slot_pattern %return.param_patt, %ptr.loc20_58 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref.loc20_57: type = name_ref U, %U.loc20 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:     %U.ref.loc20_57: type = name_ref U, %U.loc20 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:     %ptr.loc20_58: type = ptr_type %U.ref.loc20_57 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:     %.loc20_58: Core.Form = init_form %ptr.loc20_58 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:     %self.param.loc20: @C.F.%C (%C) = value_param call_param0
@@ -238,10 +238,10 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc20_41.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc20: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:     %U.loc20: type = symbolic_binding U, 1 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:     %u.param.loc20: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_param call_param1
 // CHECK:STDOUT:     %.loc20_51: type = splice_block %ptr.loc20_51 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)] {
-// CHECK:STDOUT:       %U.ref.loc20_50: type = name_ref U, %U.loc20 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:       %U.ref.loc20_50: type = name_ref U, %U.loc20 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:       %ptr.loc20_51: type = ptr_type %U.ref.loc20_50 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.loc20: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_binding u, %u.param.loc20
@@ -281,7 +281,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:       %return.param_patt: @C.F.%pattern_type.loc14_33 (%pattern_type.423) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @C.F.%pattern_type.loc14_33 (%pattern_type.423) = return_slot_pattern %return.param_patt, %ptr.loc20_58 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %U.ref.loc14_42: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:       %U.ref.loc14_42: type = name_ref U, %U.loc14_23.2 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:       %ptr.loc14_43: type = ptr_type %U.ref.loc14_42 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:       %.loc14_43.2: Core.Form = init_form %ptr.loc14_43 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:       %self.param.loc14: @C.F.%C (%C) = value_param call_param0
@@ -294,10 +294,10 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:         %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:         %.loc14_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %U.loc14_22.2: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:       %U.loc14_23.2: type = symbolic_binding U, 1 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:       %u.param.loc14: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_param call_param1
 // CHECK:STDOUT:       %.loc14_36: type = splice_block %ptr.loc14_36.2 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)] {
-// CHECK:STDOUT:         %U.ref.loc14_35: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U.091)]
+// CHECK:STDOUT:         %U.ref.loc14_35: type = name_ref U, %U.loc14_23.2 [symbolic = %U.loc14_23.1 (constants.%U.091)]
 // CHECK:STDOUT:         %ptr.loc14_36.2: type = ptr_type %U.ref.loc14_35 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %u.loc14: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_binding u, %u.param.loc14
@@ -313,19 +313,19 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.F(@Interface.%Self: %Interface.type, %U.loc14_22.2: type) {
+// CHECK:STDOUT: generic fn @C.F(@Interface.%Self: %Interface.type, %U.loc14_23.2: type) {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.887)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %pattern_type.loc14_14: type = pattern_type %C [symbolic = %pattern_type.loc14_14 (constants.%pattern_type.968)]
-// CHECK:STDOUT:   %U.loc14_22.1: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
-// CHECK:STDOUT:   %ptr.loc14_36.1: type = ptr_type %U.loc14_22.1 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
+// CHECK:STDOUT:   %U.loc14_23.1: type = symbolic_binding U, 1 [symbolic = %U.loc14_23.1 (constants.%U.091)]
+// CHECK:STDOUT:   %ptr.loc14_36.1: type = ptr_type %U.loc14_23.1 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:   %pattern_type.loc14_33: type = pattern_type %ptr.loc14_36.1 [symbolic = %pattern_type.loc14_33 (constants.%pattern_type.423)]
 // CHECK:STDOUT:   %.loc14_43.1: Core.Form = init_form %ptr.loc14_36.1 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20_29: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_29 (constants.%require_complete.a31)]
 // CHECK:STDOUT:   %require_complete.loc20_48: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_48 (constants.%require_complete.56d)]
-// CHECK:STDOUT:   %.loc20_69.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_22.1) [symbolic = %.loc20_69.1 (constants.%.f1d)]
+// CHECK:STDOUT:   %.loc20_69.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_23.1) [symbolic = %.loc20_69.1 (constants.%.f1d)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc14_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.484)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc14_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.be8)]
@@ -358,7 +358,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %Self => constants.%Self.887
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.968
-// CHECK:STDOUT:   %U.loc14_22.1 => constants.%U.091
+// CHECK:STDOUT:   %U.loc14_23.1 => constants.%U.091
 // CHECK:STDOUT:   %ptr.loc14_36.1 => constants.%ptr.18e
 // CHECK:STDOUT:   %pattern_type.loc14_33 => constants.%pattern_type.423
 // CHECK:STDOUT:   %.loc14_43.1 => constants.%.6d8

@@ -178,23 +178,23 @@ impl C as I {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc13_6.2: type) {
-// CHECK:STDOUT:   %T.loc13_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
+// CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_6.1) [symbolic = %.loc19_6.2 (constants.%.242)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_6.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.242)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_7.2 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -204,7 +204,7 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.loc13_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error.carbon
@@ -233,23 +233,23 @@ impl C as I {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc13_6.2: type) {
-// CHECK:STDOUT:   %T.loc13_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
+// CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_6.1) [symbolic = %.loc19_6.2 (constants.%.242)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_6.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.242)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_7.2 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -259,11 +259,11 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.loc13_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_tuple.type) {
-// CHECK:STDOUT:   %T.loc13_6.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.loc13_7.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc19_6.2 => constants.%.194

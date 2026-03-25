@@ -114,9 +114,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc12: type = block_arg !if.expr.result
-// CHECK:STDOUT:   br !.loc12_14
+// CHECK:STDOUT:   br !.loc12_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_14:
+// CHECK:STDOUT: !.loc12_15:
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -189,9 +189,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9: type = block_arg !if.expr.result.loc9
-// CHECK:STDOUT:   br !.loc9_14
+// CHECK:STDOUT:   br !.loc9_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc9_14:
+// CHECK:STDOUT: !.loc9_15:
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete]
@@ -216,9 +216,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
 // CHECK:STDOUT:   %.loc14: type = block_arg !if.expr.result.loc14
-// CHECK:STDOUT:   br !.loc14_14
+// CHECK:STDOUT:   br !.loc14_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14_14:
+// CHECK:STDOUT: !.loc14_15:
 // CHECK:STDOUT:   %w: ref <error> = ref_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

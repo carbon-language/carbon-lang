@@ -213,21 +213,21 @@ fn F() {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_37.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %SubscriptType.loc4_21.2: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_21.1 (constants.%SubscriptType)]
+// CHECK:STDOUT:     %SubscriptType.loc4_34.2: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_34.1 (constants.%SubscriptType)]
 // CHECK:STDOUT:     %.loc4_57.1: type = splice_block %.loc4_57.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_57.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ElementType.loc4_43.2: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_43.1 (constants.%ElementType)]
+// CHECK:STDOUT:     %ElementType.loc4_54.2: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_54.1 (constants.%ElementType)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @IndexWith(%SubscriptType.loc4_21.2: type, %ElementType.loc4_43.2: type) {
-// CHECK:STDOUT:   %SubscriptType.loc4_21.1: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_21.1 (constants.%SubscriptType)]
-// CHECK:STDOUT:   %ElementType.loc4_43.1: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_43.1 (constants.%ElementType)]
+// CHECK:STDOUT: generic interface @IndexWith(%SubscriptType.loc4_34.2: type, %ElementType.loc4_54.2: type) {
+// CHECK:STDOUT:   %SubscriptType.loc4_34.1: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_34.1 (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType.loc4_54.1: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_54.1 (constants.%ElementType)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.loc4_21.1, %ElementType.loc4_43.1)> [symbolic = %IndexWith.type (constants.%IndexWith.type.2c3)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.loc4_34.1, %ElementType.loc4_54.1)> [symbolic = %IndexWith.type (constants.%IndexWith.type.2c3)]
 // CHECK:STDOUT:   %Self.loc4_63.2: @IndexWith.%IndexWith.type (%IndexWith.type.2c3) = symbolic_binding Self, 2 [symbolic = %Self.loc4_63.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -243,7 +243,7 @@ fn F() {
 // CHECK:STDOUT:       %return.param_patt: @IndexWith.WithSelf.At.%pattern_type.loc5_50 (%pattern_type.946) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @IndexWith.WithSelf.At.%pattern_type.loc5_50 (%pattern_type.946) = return_slot_pattern %return.param_patt, %ElementType.ref [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %ElementType.ref: type = name_ref ElementType, @IndexWith.%ElementType.loc4_43.2 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:       %ElementType.ref: type = name_ref ElementType, @IndexWith.%ElementType.loc4_54.2 [symbolic = %ElementType (constants.%ElementType)]
 // CHECK:STDOUT:       %.loc5_50.2: Core.Form = init_form %ElementType.ref [symbolic = %.loc5_50.1 (constants.%.822)]
 // CHECK:STDOUT:       %self.param: @IndexWith.WithSelf.At.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_15.1: type = splice_block %.loc5_15.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -254,7 +254,7 @@ fn F() {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @IndexWith.WithSelf.At.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %subscript.param: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = value_param call_param1
-// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_21.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_34.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:       %subscript: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = value_binding subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = return_slot %return.param
@@ -274,7 +274,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(@IndexWith.%SubscriptType.loc4_21.2: type, @IndexWith.%ElementType.loc4_43.2: type, @IndexWith.%Self.loc4_63.1: @IndexWith.%IndexWith.type (%IndexWith.type.2c3)) {
+// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(@IndexWith.%SubscriptType.loc4_34.2: type, @IndexWith.%ElementType.loc4_54.2: type, @IndexWith.%Self.loc4_63.1: @IndexWith.%IndexWith.type (%IndexWith.type.2c3)) {
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
 // CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.2c3)]
@@ -289,8 +289,8 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
-// CHECK:STDOUT:   %SubscriptType.loc4_21.1 => constants.%SubscriptType
-// CHECK:STDOUT:   %ElementType.loc4_43.1 => constants.%ElementType
+// CHECK:STDOUT:   %SubscriptType.loc4_34.1 => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType.loc4_54.1 => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%SubscriptType, constants.%ElementType, constants.%Self) {}

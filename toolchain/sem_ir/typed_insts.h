@@ -749,10 +749,8 @@ struct FloatValue {
 // A form binding, such as the `x` declared by `x:? F`. See `AnyBinding` for
 // member documentation.
 struct FormBinding {
-  // TODO: Should this have been associated with the `FormBindingPatternId`
-  // instead?
   static constexpr auto Kind =
-      InstKind::FormBinding.Define<Parse::IdentifierNameNotBeforeSignatureId>(
+      InstKind::FormBinding.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_binding",
            .expr_category = ComputedExprCategory::DependsOnOperands,
            .constant_kind = InstConstantKind::Never});
@@ -765,15 +763,12 @@ struct FormBinding {
 // A form binding pattern, such as `x:? F`, that is not a parameter. See
 // `AnyBindingPattern` for member documentation.
 struct FormBindingPattern {
-  // TODO: Should this have been associated with the `FormBindingPatternId`
-  // instead?
   static constexpr auto Kind =
-      InstKind::FormBindingPattern
-          .Define<Parse::IdentifierNameNotBeforeSignatureId>(
-              {.ir_name = "form_binding_pattern",
-               .expr_category = ExprCategory::Pattern,
-               .constant_kind = InstConstantKind::AlwaysUnique,
-               .is_lowered = false});
+      InstKind::FormBindingPattern.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
 
   TypeId type_id;
   // Note that the EntityName's `form_id` represents the scrutinee form, so it

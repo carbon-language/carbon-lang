@@ -173,7 +173,7 @@ fn F() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.loc49_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %OuterParam.loc49_13.2: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:     %OuterParam.loc49_23.2: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_23.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @C.as.Y.impl [concrete] {} {
@@ -201,7 +201,7 @@ fn F() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc49_13.2: type) {
+// CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc49_23.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6b3)]
@@ -234,12 +234,12 @@ fn F() {
 // CHECK:STDOUT:   witness = %Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Outer(%OuterParam.loc49_13.2: type) {
-// CHECK:STDOUT:   %OuterParam.loc49_13.1: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT: generic class @Outer(%OuterParam.loc49_23.2: type) {
+// CHECK:STDOUT:   %OuterParam.loc49_23.1: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_23.1 (constants.%OuterParam)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc49_13.1)> [symbolic = %Y.type (constants.%Y.type.6b3)]
-// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc49_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.20d)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc49_23.1)> [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc49_23.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.20d)]
 // CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.20d) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.b44)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -265,7 +265,7 @@ fn F() {
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc54_27.2, %.loc54_33.2
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %H.loc54_15.2: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_15.1 (constants.%H)]
+// CHECK:STDOUT:       %H.loc54_16.2: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_16.1 (constants.%H)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -279,7 +279,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc49_13.2: type, %H.loc54_15.2: @Outer.G.%Y_where.type (%Y_where.type.7c7)) {
+// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc49_23.2: type, %H.loc54_16.2: @Outer.G.%Y_where.type (%Y_where.type.7c7)) {
 // CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6b3)]
 // CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.6b3) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.cf7)]
@@ -290,7 +290,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.3b9)]
 // CHECK:STDOUT:   %impl.elem0.loc54_27.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc54_27.1 (constants.%impl.elem0.284)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc54_27.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.7c7)]
-// CHECK:STDOUT:   %H.loc54_15.1: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_15.1 (constants.%H)]
+// CHECK:STDOUT:   %H.loc54_16.1: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_16.1 (constants.%H)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.b97)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -318,7 +318,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam.loc49_13.1 => constants.%OuterParam
+// CHECK:STDOUT:   %OuterParam.loc49_23.1 => constants.%OuterParam
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.6b3
@@ -358,12 +358,12 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.3b9
 // CHECK:STDOUT:   %impl.elem0.loc54_27.1 => constants.%impl.elem0.284
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.7c7
-// CHECK:STDOUT:   %H.loc54_15.1 => constants.%H
+// CHECK:STDOUT:   %H.loc54_16.1 => constants.%H
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%empty_tuple.type) {
-// CHECK:STDOUT:   %OuterParam.loc49_13.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %OuterParam.loc49_23.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.5e1
@@ -410,7 +410,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.b08
 // CHECK:STDOUT:   %impl.elem0.loc54_27.1 => constants.%impl.elem0.48b
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.ad5
-// CHECK:STDOUT:   %H.loc54_15.1 => constants.%facet_value
+// CHECK:STDOUT:   %H.loc54_16.1 => constants.%facet_value
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c51
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -520,7 +520,7 @@ fn F() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %OuterParam.loc6_13.2: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:     %OuterParam.loc6_23.2: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_23.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z1.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc17_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -557,7 +557,7 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
+// CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc6_23.2: %Z1.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
@@ -581,7 +581,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @C.as.Y.impl(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
+// CHECK:STDOUT: generic impl @C.as.Y.impl(@Outer.%OuterParam.loc6_23.2: %Z1.type) {
 // CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam) [symbolic = %C (constants.%C.521)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
@@ -624,14 +624,14 @@ fn F() {
 // CHECK:STDOUT:   witness = %Z2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Outer(%OuterParam.loc6_13.2: %Z1.type) {
-// CHECK:STDOUT:   %OuterParam.loc6_13.1: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT: generic class @Outer(%OuterParam.loc6_23.2: %Z1.type) {
+// CHECK:STDOUT:   %OuterParam.loc6_23.1: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_23.1 (constants.%OuterParam)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc6_13.1)> [symbolic = %Y.type (constants.%Y.type.6ae)]
-// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc6_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.e0a)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc6_23.1)> [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc6_23.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.e0a)]
 // CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.e0a) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.dc4)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam.loc6_13.1) [symbolic = %C (constants.%C.521)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam.loc6_23.1) [symbolic = %C (constants.%C.521)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Y.decl: type = interface_decl @Y [symbolic = @Outer.%Y.type (constants.%Y.type.6ae)] {} {}
@@ -656,7 +656,7 @@ fn F() {
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_27.2, %.loc11_33.2
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %H.loc11_15.2: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_15.1 (constants.%H)]
+// CHECK:STDOUT:       %H.loc11_16.2: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_16.1 (constants.%H)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.decl: type = class_decl @C [symbolic = @Outer.%C (constants.%C.521)] {} {}
 // CHECK:STDOUT:     impl_decl @C.as.Y.impl [concrete] {} {
@@ -689,11 +689,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
+// CHECK:STDOUT: generic class @C(@Outer.%OuterParam.loc6_23.2: %Z1.type) {
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc6_13.2: %Z1.type, %H.loc11_15.2: @Outer.G.%Y_where.type (%Y_where.type.b0f)) {
+// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc6_23.2: %Z1.type, %H.loc11_16.2: @Outer.G.%Y_where.type (%Y_where.type.b0f)) {
 // CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
 // CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.6ae) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.997)]
@@ -704,7 +704,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.5bf)]
 // CHECK:STDOUT:   %impl.elem0.loc11_27.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_27.1 (constants.%impl.elem0.63e)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc11_27.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.b0f)]
-// CHECK:STDOUT:   %H.loc11_15.1: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_15.1 (constants.%H)]
+// CHECK:STDOUT:   %H.loc11_16.1: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_16.1 (constants.%H)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.6bf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -767,7 +767,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam.loc6_13.1 => constants.%OuterParam
+// CHECK:STDOUT:   %OuterParam.loc6_23.1 => constants.%OuterParam
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.6ae
@@ -808,7 +808,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.5bf
 // CHECK:STDOUT:   %impl.elem0.loc11_27.1 => constants.%impl.elem0.63e
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.b0f
-// CHECK:STDOUT:   %H.loc11_15.1 => constants.%H
+// CHECK:STDOUT:   %H.loc11_16.1 => constants.%H
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6bf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -845,7 +845,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%Z1.facet) {
-// CHECK:STDOUT:   %OuterParam.loc6_13.1 => constants.%Z1.facet
+// CHECK:STDOUT:   %OuterParam.loc6_23.1 => constants.%Z1.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.874
@@ -899,7 +899,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.249
 // CHECK:STDOUT:   %impl.elem0.loc11_27.1 => constants.%impl.elem0.9e9
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.c95
-// CHECK:STDOUT:   %H.loc11_15.1 => constants.%facet_value.256
+// CHECK:STDOUT:   %H.loc11_16.1 => constants.%facet_value.256
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.81f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

@@ -60,7 +60,7 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [symbolic = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: @Class.F.%pattern_type.loc17_12 (%pattern_type.466) = value_param_pattern [concrete]
@@ -72,7 +72,7 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc20_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc20: type = symbolic_binding T, 0 [symbolic = @Class.%T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc20: type = symbolic_binding T, 0 [symbolic = @Class.%T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:     %self.param.loc20: @Class.F.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:     %.loc20_35.1: type = splice_block %Self.ref.loc20 [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:       %.loc20_35.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
@@ -85,20 +85,20 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%T.loc15_13.2: type) {
-// CHECK:STDOUT:   %T.loc15_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Class(%T.loc15_14.2: type) {
+// CHECK:STDOUT:   %T.loc15_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_13.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc15_13.1) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_13.1 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_13.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_14.1 [symbolic = %require_complete (constants.%require_complete.944)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc15_14.1) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_14.1 [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_14.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @Class.%T.loc15_14.1 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:   %complete_type.loc18_1.2: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_13.2 [symbolic = %T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc16: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
 // CHECK:STDOUT:       %self.param_patt: @Class.F.%pattern_type.loc17_12 (%pattern_type.466) = value_param_pattern [concrete]
@@ -113,7 +113,7 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc17: @Class.F.%Class (%Class) = value_binding self, %self.param.loc17
 // CHECK:STDOUT:       %n.param.loc17: @Class.F.%T.loc17 (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref.loc17: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T.loc17 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc17: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T.loc17 (constants.%T)]
 // CHECK:STDOUT:       %n.loc17: @Class.F.%T.loc17 (%T) = value_binding n, %n.param.loc17
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc18_1.1: <witness> = complete_type_witness constants.%struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
@@ -127,7 +127,7 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc15_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc15_14.2: type) {
 // CHECK:STDOUT:   %T.loc17: type = symbolic_binding T, 0 [symbolic = %T.loc17 (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc17) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %pattern_type.loc17_12: type = pattern_type %Class [symbolic = %pattern_type.loc17_12 (constants.%pattern_type.466)]
@@ -144,7 +144,7 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_13.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_14.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.944

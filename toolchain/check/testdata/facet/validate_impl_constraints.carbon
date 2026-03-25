@@ -34,7 +34,7 @@ fn G(T:! I where .Self impls (I where .X = {})) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = ()) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -60,7 +60,7 @@ fn G(T:! L) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_where_impls_tests_associated_constant_of_generic_type.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -86,7 +86,7 @@ fn G(T:! L) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -116,7 +116,7 @@ interface I(T:! Z) {}
 // CHECK:STDERR:                 ^~~~~~~~
 // CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface I(T:! Z) {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
 fn F(unused T:! I(.Self) where .Self impls Z) {}
 
@@ -125,7 +125,7 @@ fn F(unused T:! I(.Self) where .Self impls Z) {}
 // CHECK:STDERR:              ^~~~~~~~
 // CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE-16]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface I(T:! Z) {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
 fn G(T:! Z & I(.Self)) {
   F(T);

@@ -192,7 +192,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       phase = is_template ? BindingPhase::Template : BindingPhase::Symbolic;
     }
     auto binding = AddBindingPattern(
-        context, name_node, type_expr_region_id,
+        context, node_id, type_expr_region_id,
         {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
          .entity_name_id =

@@ -83,22 +83,22 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_20: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
 // CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_34: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21_20: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc21_16: ref %Class = ref_binding self, %self.param.loc21_20
+// CHECK:STDOUT:     %self.loc21_20: ref %Class = ref_binding self, %self.param.loc21_20
 // CHECK:STDOUT:     %self.param.loc21_34: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc21_28: %i32 = value_binding r#self, %self.param.loc21_34
+// CHECK:STDOUT:     %self.loc21_34: %i32 = value_binding r#self, %self.param.loc21_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
 // CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_30: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern %return.param_patt, %.loc25_49.2 [concrete]
 // CHECK:STDOUT:   } {
@@ -109,10 +109,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_49.3: Core.Form = init_form %.loc25_49.2 [concrete = constants.%.f32]
 // CHECK:STDOUT:     %self.param.loc25_16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc25_12: %Class = value_binding self, %self.param.loc25_16
+// CHECK:STDOUT:     %self.loc25_16: %Class = value_binding self, %self.param.loc25_16
 // CHECK:STDOUT:     %self.param.loc25_30: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc25_32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc25_24: %i32 = value_binding r#self, %self.param.loc25_30
+// CHECK:STDOUT:     %self.loc25_30: %i32 = value_binding r#self, %self.param.loc25_30
 // CHECK:STDOUT:     %return.param.loc25: ref %tuple.type.d07 = out_param call_param2
 // CHECK:STDOUT:     %return.loc25: ref %tuple.type.d07 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -121,22 +121,22 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_20: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
 // CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_34: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc16_16: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc16_12: ref %Class = ref_binding self, %self.param.loc16_16
+// CHECK:STDOUT:     %self.loc16_16: ref %Class = ref_binding self, %self.param.loc16_16
 // CHECK:STDOUT:     %self.param.loc16_30: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc16_24: %i32 = value_binding r#self, %self.param.loc16_30
+// CHECK:STDOUT:     %self.loc16_30: %i32 = value_binding r#self, %self.param.loc16_30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
 // CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_30: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern %return.param_patt, %.loc25_49.2 [concrete]
 // CHECK:STDOUT:   } {
@@ -147,10 +147,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc17_45.3: Core.Form = init_form %.loc17_45.2 [concrete = constants.%.f32]
 // CHECK:STDOUT:     %self.param.loc17_12: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc17_8: %Class = value_binding self, %self.param.loc17_12
+// CHECK:STDOUT:     %self.loc17_12: %Class = value_binding self, %self.param.loc17_12
 // CHECK:STDOUT:     %self.param.loc17_26: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc17_28: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc17_20: %i32 = value_binding r#self, %self.param.loc17_26
+// CHECK:STDOUT:     %self.loc17_26: %i32 = value_binding r#self, %self.param.loc17_26
 // CHECK:STDOUT:     %return.param.loc17: ref %tuple.type.d07 = out_param call_param2
 // CHECK:STDOUT:     %return.loc17: ref %tuple.type.d07 = return_slot %return.param.loc17
 // CHECK:STDOUT:   }
@@ -168,10 +168,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param.loc21_20: ref %Class, %self.param.loc21_34: %i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref.loc22_3: ref %Class = name_ref self, %self.loc21_16
+// CHECK:STDOUT:   %self.ref.loc22_3: ref %Class = name_ref self, %self.loc21_20
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc18 [concrete = @Class.%.loc18]
 // CHECK:STDOUT:   %.loc22: ref %i32 = class_element_access %self.ref.loc22_3, element0
-// CHECK:STDOUT:   %self.ref.loc22_12: %i32 = name_ref r#self, %self.loc21_28
+// CHECK:STDOUT:   %self.ref.loc22_12: %i32 = name_ref r#self, %self.loc21_34
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc22_12.1: <bound method> = bound_method %self.ref.loc22_12, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
@@ -183,11 +183,11 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%self.param.loc25_16: %Class, %self.param.loc25_30: %i32) -> out %return.param.loc25: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref.loc26_11: %Class = name_ref self, %self.loc25_12
+// CHECK:STDOUT:   %self.ref.loc26_11: %Class = name_ref self, %self.loc25_16
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc18 [concrete = @Class.%.loc18]
 // CHECK:STDOUT:   %.loc26_15.1: ref %i32 = class_element_access %self.ref.loc26_11, element0
 // CHECK:STDOUT:   %.loc26_15.2: %i32 = acquire_value %.loc26_15.1
-// CHECK:STDOUT:   %self.ref.loc26_19: %i32 = name_ref r#self, %self.loc25_24
+// CHECK:STDOUT:   %self.ref.loc26_19: %i32 = name_ref r#self, %self.loc25_30
 // CHECK:STDOUT:   %.loc26_25.1: %tuple.type.d07 = tuple_literal (%.loc26_15.2, %self.ref.loc26_19)
 // CHECK:STDOUT:   %impl.elem0.loc26_15: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc26_15.1: <bound method> = bound_method %.loc26_15.2, %impl.elem0.loc26_15

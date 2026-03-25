@@ -114,10 +114,10 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   assign %v.var, %.loc23_12
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %v: ref %f64.d77 = ref_binding v, %v.var
-// CHECK:STDOUT:   %.loc23_16: %f64.d77 = acquire_value %v
+// CHECK:STDOUT:   %.loc23_17: %f64.d77 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
-// CHECK:STDOUT:   return %.loc23_16
+// CHECK:STDOUT:   return %.loc23_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %f64.d77) = "no_op";

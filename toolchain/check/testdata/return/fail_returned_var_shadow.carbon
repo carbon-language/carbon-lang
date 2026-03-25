@@ -17,10 +17,10 @@ fn SameScope() -> i32 {
     returned var v: i32 = 0;
     // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:25: error: cannot declare a `returned var` in the scope of another `returned var` [ReturnedVarShadowed]
     // CHECK:STDERR:     returned var unused w: i32 = 1;
-    // CHECK:STDERR:                         ^
+    // CHECK:STDERR:                         ^~~~~~
     // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: note: `returned var` was declared here [ReturnedVarHere]
     // CHECK:STDERR:     returned var v: i32 = 0;
-    // CHECK:STDERR:                  ^
+    // CHECK:STDERR:                  ^~~~~~
     // CHECK:STDERR:
     returned var unused w: i32 = 1;
   }
@@ -33,10 +33,10 @@ fn DifferentScopes() -> i32 {
     if (true) {
       // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:27: error: cannot declare a `returned var` in the scope of another `returned var` [ReturnedVarShadowed]
       // CHECK:STDERR:       returned var unused w: i32 = 1;
-      // CHECK:STDERR:                           ^
+      // CHECK:STDERR:                           ^~~~~~
       // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: note: `returned var` was declared here [ReturnedVarHere]
       // CHECK:STDERR:     returned var v: i32 = 0;
-      // CHECK:STDERR:                  ^
+      // CHECK:STDERR:                  ^~~~~~
       // CHECK:STDERR:
       returned var unused w: i32 = 1;
     }

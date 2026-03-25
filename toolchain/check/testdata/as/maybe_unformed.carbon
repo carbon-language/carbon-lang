@@ -183,7 +183,7 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.396 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.2a9 = name_ref ptr, file.%ptr.loc7_5
+// CHECK:STDOUT:   %ptr.ref: %ptr.2a9 = name_ref ptr, file.%ptr.loc7_8
 // CHECK:STDOUT:   %Core.ref.loc13_49: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %MaybeUnformed.ref.loc13_53: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT:   %X.ref.loc13_68: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -329,7 +329,7 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.37f = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.045 = name_ref ptr, file.%ptr.loc9_5
+// CHECK:STDOUT:   %ptr.ref: %ptr.045 = name_ref ptr, file.%ptr.loc9_8
 // CHECK:STDOUT:   %X.ref.loc15_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %ptr.loc15_37: type = ptr_type %X.ref.loc15_36 [concrete = constants.%ptr.2a9]
 // CHECK:STDOUT:   %.loc15_33.1: %ptr.2a9 = as_compatible %ptr.ref

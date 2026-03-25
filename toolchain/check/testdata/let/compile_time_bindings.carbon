@@ -361,7 +361,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc10_16.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc10_16.4: type = converted %.loc10_16.2, constants.%tuple.type.9fb [concrete = constants.%tuple.type.9fb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc10_8.2: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10_9.2: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_9.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.8c1 = value_binding_pattern d [concrete]
@@ -400,14 +400,14 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.F(%b.loc10_8.2: %tuple.type.9fb) {
-// CHECK:STDOUT:   %b.loc10_8.1: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT: generic fn @C.F(%b.loc10_9.2: %tuple.type.9fb) {
+// CHECK:STDOUT:   %b.loc10_9.1: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_9.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.F(constants.%b) {
-// CHECK:STDOUT:   %b.loc10_8.1 => constants.%b
+// CHECK:STDOUT:   %b.loc10_9.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon
@@ -460,12 +460,12 @@ impl i32 as Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %C.F.decl
-// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc14_7
+// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc14_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst{{[0-9A-F]+}}.loc14_7
+// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst{{[0-9A-F]+}}.loc14_8
 // CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_26: init %empty_tuple.type = converted %x.ref, %.loc5_25 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc5_26

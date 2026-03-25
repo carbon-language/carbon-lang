@@ -85,7 +85,7 @@ fn H() {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_convert.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = {.a: (), .b: {}}) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C);
 }
@@ -96,7 +96,7 @@ fn G(T:! I where .X = {.b: {}, .a: ()}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_convert.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = {.a: (), .b: {}}) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -170,7 +170,7 @@ fn G(T:! I(()) where .X = ()) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I({}) where .X = {}) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -272,7 +272,7 @@ fn G() {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_error_in_witness_table.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X1 = .X2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C);
 }
@@ -327,7 +327,7 @@ fn G(T:! type) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_non_final_impl_deduce.carbon:[[@LINE-11]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = ()) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C(T));
 }
@@ -463,7 +463,7 @@ fn G(T:! I where .X = C(()) and .Y = {}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = C(.Y)) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -515,7 +515,7 @@ fn G(T:! I where .Y = .B) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .Y = .A) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -545,7 +545,7 @@ fn G(T:! I & J where .Y = .B) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value_in_other_interface.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I & J where .Y = .A) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -773,7 +773,7 @@ fn G(T:! I(C) where .X = (I({}) where .Y = ()) and .Y = {}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_facet_type.carbon:[[@LINE-9]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I(C) where .X = (I(.Y) where .Y = ())) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -799,7 +799,7 @@ fn G(T:! I({}) where .X = (I(()) where .X = ()) and .Y = {}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_facet_type_types_differ.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I({}) where .X = (I(.Y) where .X = ())) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -835,7 +835,7 @@ fn G(T:! I where .X = (I where .X = () and .Y = () and .Z = {})) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = (I where .X = .Y)) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -873,7 +873,7 @@ fn G(T:! I where .X = (I where .Y = ())) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_nested_facet_type_assigns_same_assoc_constant.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .Y = ()) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -897,7 +897,7 @@ fn G(T:! I where .X = (I where .Y = (I where .X = () and .Y = ()))) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y))) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -910,7 +910,7 @@ fn G2(T:! I where .X = (I where .Y = (I where .X = .Y and .Z = {}))) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE-21]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y))) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1056,7 +1056,7 @@ fn G(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = () and .I2 = {}) 
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1068,7 +1068,7 @@ fn G2(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = {}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1080,7 +1080,7 @@ fn G3(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-31]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1112,7 +1112,7 @@ fn G(U:! I where .I1 = (), T:! J & K where .K1 = .Self and .J1 = U and .J2 = ())
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_access_of_other.carbon:[[@LINE-6]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1142,7 +1142,7 @@ fn G(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ())
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-7]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1154,7 +1154,7 @@ fn G2(U:! I, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-19]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1166,7 +1166,7 @@ fn G3(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-31]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1220,7 +1220,7 @@ fn G(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = {} and
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-7]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1232,7 +1232,7 @@ fn G2(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K3 = {}) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-19]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1244,7 +1244,7 @@ fn G3(U:! I & J where .J1 = {}, T:! K where .K1 = U and .K2 = () and .K3 = {}) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-31]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1256,7 +1256,7 @@ fn G4(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = ()) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-43]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1268,7 +1268,7 @@ fn G5(U:! I & J where .I1 = (), T:! K where .K1 = U and .K2 = () and .K3 = {}) {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-55]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1291,7 +1291,7 @@ fn G(T:! I where .I1 = .I2) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_target_rewrites_dont_apply_to_source.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .I1 = () and .I2 = ()) {}
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }

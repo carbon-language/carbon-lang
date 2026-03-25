@@ -111,10 +111,10 @@ alias D = C;
 fn Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn Foo(unused b: D) {}
-// CHECK:STDERR:               ^
+// CHECK:STDERR:               ^~~~
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
 fn Foo(unused b: D) {}
 
@@ -718,7 +718,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc7_8.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a.9daf47.1)]
+// CHECK:STDOUT:     %a.loc7_9.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_9.1 (constants.%a.9daf47.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.47530a.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.9ec12f.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
@@ -727,7 +727,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15_15.3: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.2 (constants.%a.9daf47.2)]
+// CHECK:STDOUT:     %a.loc15_16.3: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.2 (constants.%a.9daf47.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -739,15 +739,15 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc7(%a.loc7_8.2: %C) {
-// CHECK:STDOUT:   %a.loc7_8.1: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a.9daf47.1)]
+// CHECK:STDOUT: generic fn @Foo.loc7(%a.loc7_9.2: %C) {
+// CHECK:STDOUT:   %a.loc7_9.1: %C = symbolic_binding a, 0 [symbolic = %a.loc7_9.1 (constants.%a.9daf47.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_15.3: %C) {
-// CHECK:STDOUT:   %a.loc15_15.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.1 (constants.%a.9daf47.1)]
-// CHECK:STDOUT:   %a.loc15_15.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.2 (constants.%a.9daf47.2)]
+// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_16.3: %C) {
+// CHECK:STDOUT:   %a.loc15_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a.9daf47.1)]
+// CHECK:STDOUT:   %a.loc15_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.2 (constants.%a.9daf47.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -758,12 +758,12 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.loc7(constants.%a.9daf47.1) {
-// CHECK:STDOUT:   %a.loc7_8.1 => constants.%a.9daf47.1
+// CHECK:STDOUT:   %a.loc7_9.1 => constants.%a.9daf47.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.loc15(constants.%a.9daf47.2) {
-// CHECK:STDOUT:   %a.loc15_15.1 => constants.%a.9daf47.2
-// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a.9daf47.2
+// CHECK:STDOUT:   %a.loc15_16.1 => constants.%a.9daf47.2
+// CHECK:STDOUT:   %a.loc15_16.2 => constants.%a.9daf47.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

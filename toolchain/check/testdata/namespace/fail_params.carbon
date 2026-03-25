@@ -100,7 +100,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc48_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc48_13.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
+// CHECK:STDOUT:     %T.loc48_14.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,9 +109,9 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_13.3: type) {
-// CHECK:STDOUT:   %T.loc48_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.1 (constants.%T.67db0b.1)]
-// CHECK:STDOUT:   %T.loc48_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
+// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_14.3: type) {
+// CHECK:STDOUT:   %T.loc48_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.1 (constants.%T.67db0b.1)]
+// CHECK:STDOUT:   %T.loc48_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -122,7 +122,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc48(constants.%T.67db0b.2) {
-// CHECK:STDOUT:   %T.loc48_13.1 => constants.%T.67db0b.2
-// CHECK:STDOUT:   %T.loc48_13.2 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc48_14.1 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc48_14.2 => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

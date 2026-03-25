@@ -190,7 +190,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_9.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_9.1 (constants.%N.5de)]
+// CHECK:STDOUT:     %N.loc4_10.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_10.1 (constants.%N.5de)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
@@ -532,8 +532,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%N.loc4_9.2: %i32) {
-// CHECK:STDOUT:   %N.loc4_9.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_9.1 (constants.%N.5de)]
+// CHECK:STDOUT: generic class @C(%N.loc4_10.2: %i32) {
+// CHECK:STDOUT:   %N.loc4_10.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_10.1 (constants.%N.5de)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -651,53 +651,53 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.5de) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%N.5de
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%N.5de
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_0.6a9) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_0.6a9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1.5d2) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_1.5d2
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_1.5d2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_2.ef8) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_2.ef8
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_2.ef8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_3.822) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_3.822
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_3.822
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_4.940) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_4.940
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_4.940
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_5.0f6) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_5.0f6
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_5.0f6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_6.e56) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_6.e56
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_6.e56
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_7.0b1) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_7.0b1
+// CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_7.0b1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -887,7 +887,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_19, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %P.import_ref.01d = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %P.import_ref.67b: %i32 = import_ref P//library, loc4_9, loaded [symbolic = @C.%N (constants.%N.5de)]
+// CHECK:STDOUT:   %P.import_ref.67b: %i32 = import_ref P//library, loc4_10, loaded [symbolic = @C.%N (constants.%N.5de)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]

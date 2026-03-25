@@ -125,7 +125,7 @@ library "[[@TEST_NAME]]";
 fn F() {
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+12]]:7: error: semantics TODO: `Support local initializing forms` [SemanticsTodo]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+8]]:27: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
@@ -133,7 +133,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let x:? form(var i32) = 0;
 }

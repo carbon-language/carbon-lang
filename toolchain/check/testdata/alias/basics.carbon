@@ -71,7 +71,7 @@ var b: C = {};
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
-// CHECK:STDERR:     ^
+// CHECK:STDERR:     ^~~~
 // CHECK:STDERR:
 alias b = C;
 

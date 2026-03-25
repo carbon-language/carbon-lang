@@ -235,18 +235,18 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%A.loc25_6.2: %J.type, %B.loc25_13.2: @F.%A.binding.as_type (%A.binding.as_type)) {
+// CHECK:STDOUT: generic fn @F(%A.loc25_7.2: %J.type, %B.loc25_14.2: @F.%A.binding.as_type (%A.binding.as_type)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %G.specific_fn.loc27_3.2: <specific function> = specific_function constants.%G, @G(%A.loc25_6.1, %B.loc25_13.1) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
+// CHECK:STDOUT:   %G.specific_fn.loc27_3.2: <specific function> = specific_function constants.%G, @G(%A.loc25_7.1, %B.loc25_14.1) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%C.loc25_29.1 (%C)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:     %x.ref: @F.%C.loc25_29.1 (%C) = name_ref x, %x
-// CHECK:STDOUT:     %.loc27: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
+// CHECK:STDOUT:     %.loc27: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_7.1 (constants.%A)]
 // CHECK:STDOUT:     %G.specific_fn.loc27_3.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc27_3.1(%x.ref)
 // CHECK:STDOUT:     <elided>
@@ -254,10 +254,10 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
-// CHECK:STDOUT:   %A.loc25_6.1 => constants.%A
+// CHECK:STDOUT:   %A.loc25_7.1 => constants.%A
 // CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
-// CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
-// CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.14f
+// CHECK:STDOUT:   %B.loc25_14.1 => constants.%B
+// CHECK:STDOUT:   %pattern_type.loc25_14 => constants.%pattern_type.14f
 // CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc25_21 => constants.%pattern_type.e04
 // CHECK:STDOUT: }

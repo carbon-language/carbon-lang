@@ -318,9 +318,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc27:
 // CHECK:STDOUT:   %.loc27_10: type = block_arg !if.expr.result.loc27 [concrete = constants.%i32]
-// CHECK:STDOUT:   br !.loc27_7
+// CHECK:STDOUT:   br !.loc27_8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc27_7:
+// CHECK:STDOUT: !.loc27_8:
 // CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
@@ -352,9 +352,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc28:
 // CHECK:STDOUT:   %.loc28: type = block_arg !if.expr.result.loc28 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:   br !.loc28_7
+// CHECK:STDOUT:   br !.loc28_8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc28_7:
+// CHECK:STDOUT: !.loc28_8:
 // CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc29_11: %ptr.235 = acquire_value %w.ref
@@ -407,9 +407,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc33:
 // CHECK:STDOUT:   %.loc33_10: type = block_arg !if.expr.result.loc33 [concrete = constants.%i32]
-// CHECK:STDOUT:   br !.loc33_7
+// CHECK:STDOUT:   br !.loc33_8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc33_7:
+// CHECK:STDOUT: !.loc33_8:
 // CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
@@ -441,9 +441,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc34:
 // CHECK:STDOUT:   %.loc34: type = block_arg !if.expr.result.loc34 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:   br !.loc34_7
+// CHECK:STDOUT:   br !.loc34_8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc34_7:
+// CHECK:STDOUT: !.loc34_8:
 // CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc35_11: %ptr.235 = acquire_value %w.ref

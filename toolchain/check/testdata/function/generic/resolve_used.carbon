@@ -130,16 +130,16 @@ fn CallNegative() {
 // CHECK:STDOUT:       %.loc4_39.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_39.3: type = converted %IntLiteral.call, %.loc4_39.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_19.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_19.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_20.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_20.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [concrete = constants.%CallNegative] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_19.2: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc4_19.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_19.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_20.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc4_20.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_20.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Int.loc9_27.2: type = class_type @Int, @Int(%N.loc4_19.1) [symbolic = %Int.loc9_27.2 (constants.%Int)]
+// CHECK:STDOUT:   %Int.loc9_27.2: type = class_type @Int, @Int(%N.loc4_20.1) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc9_27.2 [symbolic = %require_complete (constants.%require_complete.901)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc9_27.2 [symbolic = %pattern_type (constants.%pattern_type.764)]
 // CHECK:STDOUT:   %.loc9_28.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%Int.loc9_27.2) [symbolic = %.loc9_28.3 (constants.%.4a9)]
@@ -174,7 +174,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     %.loc9_27: type = splice_block %Int.loc9_27.1 [symbolic = %Int.loc9_27.2 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc9: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_19.2 [symbolic = %N.loc4_19.1 (constants.%N)]
+// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_20.2 [symbolic = %N.loc4_20.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc9_27.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = ref_binding v, %v.var
@@ -199,11 +199,11 @@ fn CallNegative() {
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i0) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
-// CHECK:STDOUT:   %N.loc4_19.1 => constants.%N
+// CHECK:STDOUT:   %N.loc4_20.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
-// CHECK:STDOUT:   %N.loc4_19.1 => constants.%int_0
+// CHECK:STDOUT:   %N.loc4_20.1 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc9_27.2 => constants.%i0

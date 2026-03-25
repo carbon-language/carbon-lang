@@ -112,17 +112,17 @@ fn G() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc15_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_12.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Wrap(%T.loc15_12.2: type) {
-// CHECK:STDOUT:   %T.loc15_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_12.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Wrap(%T.loc15_13.2: type) {
+// CHECK:STDOUT:   %T.loc15_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Wrap.Make.type: type = fn_type @Wrap.Make, @Wrap(%T.loc15_12.1) [symbolic = %Wrap.Make.type (constants.%Wrap.Make.type.6e9)]
+// CHECK:STDOUT:   %Wrap.Make.type: type = fn_type @Wrap.Make, @Wrap(%T.loc15_13.1) [symbolic = %Wrap.Make.type (constants.%Wrap.Make.type.6e9)]
 // CHECK:STDOUT:   %Wrap.Make: @Wrap.%Wrap.Make.type (%Wrap.Make.type.6e9) = struct_value () [symbolic = %Wrap.Make (constants.%Wrap.Make.e25)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -130,7 +130,7 @@ fn G() {
 // CHECK:STDOUT:       %return.param_patt: @Wrap.Make.%pattern_type (%pattern_type.51d) = out_param_pattern [concrete]
 // CHECK:STDOUT:       %return.patt: @Wrap.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt, %T.ref [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc15_12.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc15_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %.loc16_16.3: Core.Form = init_form %T.ref [symbolic = %.loc16_16.2 (constants.%.184)]
 // CHECK:STDOUT:       %return.param: ref @Wrap.Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Wrap.Make.%T (%T) = return_slot %return.param
@@ -158,7 +158,7 @@ fn G() {
 // CHECK:STDOUT:   .arr = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Wrap.Make(@Wrap.%T.loc15_12.2: type) {
+// CHECK:STDOUT: generic fn @Wrap.Make(@Wrap.%T.loc15_13.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc16_16.2: Core.Form = init_form %T [symbolic = %.loc16_16.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
@@ -248,7 +248,7 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc22(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_12.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_13.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Wrap.Make.type => constants.%Wrap.Make.type.6e9
@@ -268,7 +268,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
-// CHECK:STDOUT:   %T.loc15_12.1 => constants.%i32
+// CHECK:STDOUT:   %T.loc15_13.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Wrap.Make.type => constants.%Wrap.Make.type.939
@@ -288,7 +288,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%empty_tuple.type) {
-// CHECK:STDOUT:   %T.loc15_12.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.loc15_13.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Wrap.Make.type => constants.%Wrap.Make.type.fb0
@@ -308,7 +308,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
-// CHECK:STDOUT:   %T.loc15_12.1 => constants.%C
+// CHECK:STDOUT:   %T.loc15_13.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Wrap.Make.type => constants.%Wrap.Make.type.a8f

@@ -3900,14 +3900,14 @@ fn F() {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ValueT.loc10_14.2: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:     %ValueT.loc10_20.2: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
 // CHECK:STDOUT:     %.loc10_41.1: type = splice_block %.loc10_41.2 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_14.2 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_20.2 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
 // CHECK:STDOUT:       %ValueT.as_type: type = facet_access_type %ValueT.ref [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
 // CHECK:STDOUT:       %.loc10_41.2: type = converted %ValueT.ref, %ValueT.as_type [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value.loc10_33.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_33.1 (constants.%value)]
+// CHECK:STDOUT:     %value.loc10_38.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -3923,10 +3923,10 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_33.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {
-// CHECK:STDOUT:   %ValueT.loc10_14.1: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
-// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT.loc10_14.1 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
-// CHECK:STDOUT:   %value.loc10_33.1: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_33.1 (constants.%value)]
+// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_20.2: %I.type, %value.loc10_38.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {
+// CHECK:STDOUT:   %ValueT.loc10_20.1: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
+// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT.loc10_20.1 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
+// CHECK:STDOUT:   %value.loc10_38.1: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.422)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -3950,9 +3950,9 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EchoValue(constants.%ValueT, constants.%value) {
-// CHECK:STDOUT:   %ValueT.loc10_14.1 => constants.%ValueT
+// CHECK:STDOUT:   %ValueT.loc10_20.1 => constants.%ValueT
 // CHECK:STDOUT:   %ValueT.binding.as_type => constants.%ValueT.binding.as_type
-// CHECK:STDOUT:   %value.loc10_33.1 => constants.%value
+// CHECK:STDOUT:   %value.loc10_38.1 => constants.%value
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
