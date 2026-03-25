@@ -70,7 +70,7 @@ fn F() {
   let _: Cpp.ImplicitlyDefaultedDefault =
       Cpp.ImplicitlyDefaultedDefault.ImplicitlyDefaultedDefault();
   var _: Cpp.ImplicitlyDefaultedDefault;
-  
+
   let _: Cpp.ExplicitlyDefaultedDefault =
       Cpp.ExplicitlyDefaultedDefault.ExplicitlyDefaultedDefault();
   var _: Cpp.ExplicitlyDefaultedDefault;
