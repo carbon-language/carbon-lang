@@ -1056,7 +1056,7 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId {
   return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
-                           allow_partially_identified, false);
+                           allow_partially_identified, /*diagnose=*/false);
 }
 
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
@@ -1067,8 +1067,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
 
-  return IdentifyFacetType(context, loc_id, self_const_id, facet_type, false,
-                           diagnose);
+  return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
+                           /*allow_partially_identified=*/false, diagnose);
 }
 
 }  // namespace Carbon::Check
