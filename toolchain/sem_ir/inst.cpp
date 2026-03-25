@@ -61,4 +61,66 @@ auto InstStore::GetUnattachedType(TypeId type_id) const -> TypeId {
   return file_->types().GetUnattachedType(type_id);
 }
 
+// Returns whether a parse node associated with an imported instruction of kind
+// `imported_kind` is usable as the location of a corresponding local
+// instruction of kind `local_kind`.
+static auto HasCompatibleImportedNodeKind(InstKind imported_kind,
+                                          InstKind local_kind) -> bool {
+  if (imported_kind == local_kind) {
+    return true;
+  }
+  if (imported_kind == ImportDecl::Kind && local_kind == Namespace::Kind) {
+    static_assert(
+        std::is_convertible_v<decltype(ImportDecl::Kind)::TypedNodeId,
+                              decltype(Namespace::Kind)::TypedNodeId>);
+    return true;
+  }
+  return false;
+}
+
+auto LocIdAndInst::RuntimeVerified(const File& file, LocId loc_id, Inst inst)
+    -> LocIdAndInst {
+  switch (loc_id.kind()) {
+    case LocId::Kind::ImportIRInstId: {
+      CARBON_CHECK(!inst.kind().disallow_all_node_kinds(),
+                   "Should never import builtins/singletons: {0}", inst);
+
+      if (inst.kind().allow_all_node_kinds()) {
+        break;
+      }
+
+      const auto& import_ir_inst =
+          file.import_ir_insts().Get(loc_id.import_ir_inst_id());
+      // We don't require a matching node kind if the location is in C++,
+      // because there isn't a node.
+      if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
+        break;
+      }
+      const auto* import_ir =
+          file.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      auto imported_kind =
+          import_ir->insts().Get(import_ir_inst.inst_id()).kind();
+      CARBON_CHECK(HasCompatibleImportedNodeKind(imported_kind, inst.kind()),
+                   "Unexpected imported `InstKind` {0} for {1}", imported_kind,
+                   inst);
+      break;
+    }
+
+    case LocId::Kind::InstId:
+      // TODO: Figure out right verification.
+      break;
+
+    case LocId::Kind::NodeId: {
+      auto node_kind = file.parse_tree().node_kind(loc_id.node_id());
+      CARBON_CHECK(inst.kind().IsAllowedNodeKind(node_kind),
+                   "Unexpected `NodeKind` {0} for {1}", node_kind, inst);
+      break;
+    }
+
+    case LocId::Kind::None:
+      break;
+  }
+  return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
+}
+
 }  // namespace Carbon::SemIR

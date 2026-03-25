@@ -355,11 +355,12 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
         auto import_ir_inst_id =
             context_.import_ir_insts().Add(SemIR::ImportIRInst(
                 SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
-        import_decl_id =
-            AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
-                                  context_, import_ir_inst_id,
-                                  {.package_id = SemIR::NameId::ForPackageName(
-                                       api_imports_entry.first)}));
+        import_decl_id = AddInst(
+            context_,
+            SemIR::LocIdAndInst::RuntimeVerified(
+                context_.sem_ir(), import_ir_inst_id,
+                SemIR::ImportDecl{.package_id = SemIR::NameId::ForPackageName(
+                                      api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;

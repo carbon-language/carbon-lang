@@ -2276,8 +2276,8 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
     }
     form_inst_id = AddInst(
         context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
             SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
                            .type_component_inst_id =
                                context.types().GetAsTypeInstId(type_inst_id)}));
@@ -2292,12 +2292,12 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
       return Context::FormExpr::Error;
     }
     form_inst_id = AddInst(
-        context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id, SemIR::InitForm{
-                        .type_id = SemIR::FormType::TypeId,
-                        .type_component_inst_id =
-                            context.types().GetAsTypeInstId(type_inst_id)}));
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::InitForm{
+                         .type_id = SemIR::FormType::TypeId,
+                         .type_component_inst_id =
+                             context.types().GetAsTypeInstId(type_inst_id)}));
   }
 
   auto type_const_id = context.constant_values().Get(type_inst_id);

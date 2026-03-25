@@ -10,23 +10,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/reverse/simple.carbon
 
-// --- fail_simple.carbon
-
-library "[[@TEST_NAME]]";
-
-// Demonstrate that the 'Carbon' namespace has been injected into the C++ compilation.
-
-import Cpp inline '''
-// CHECK:STDERR: fail_simple.carbon:[[@LINE+4]]:9: error: no type named 'NonExistent' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    11 | Carbon::NonExistent v;
-// CHECK:STDERR:       | ~~~~~~~~^
-// CHECK:STDERR:
-Carbon::NonExistent v;
-''';
-
-
 // --- other.carbon
 package Other;
+namespace Nested;
+namespace Nested.Again;
+
+class Class1;
 // --- namespace.carbon
 
 library "[[@TEST_NAME]]";
@@ -34,4 +23,16 @@ library "[[@TEST_NAME]]";
 import Other;
 import Cpp inline '''
 namespace X = Carbon::Other;
+namespace Y = Carbon::Other::Nested;
+namespace Z = Carbon::Other::Nested::Again;
+Carbon::Other::Class1 *glbl;
+
+template<typename T> void f1() {
+  T* v;
+}
+
+void f2() {
+  f1<Carbon::Other::Class1>();
+}
+
 ''';

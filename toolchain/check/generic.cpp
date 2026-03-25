@@ -134,10 +134,9 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
-      // TODO: Is the location we pick here always appropriate for the new
-      // instruction?
       auto inst_id = context().sem_ir().insts().AddInNoBlock(
-          SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
+          SemIR::LocIdAndInst::RuntimeVerified(context().sem_ir(), loc_id_,
+                                               new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
           context(), const_inst_id, inst_id, dependence);
       context().constant_values().Set(inst_id, const_id);

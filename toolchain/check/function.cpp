@@ -45,14 +45,15 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::InitForm _): {
       auto pattern_type_id =
           GetPatternType(context, form_expr.type_component_id);
-      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, loc_id,
-          {.type_id = pattern_type_id,
-           .type_inst_id = form_expr.type_component_inst_id});
-      return_patterns.push_back(AddPatternInst<SemIR::OutParamPattern>(
+      auto out_param_id = AddPatternInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
-           .subpattern_id = return_slot_pattern_id}));
+           .pretty_name_id = SemIR::NameId::ReturnSlot});
+      return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
+          context, SemIR::LocId(form_expr.form_inst_id),
+          {.type_id = pattern_type_id,
+           .subpattern_id = out_param_id,
+           .type_inst_id = form_expr.type_component_inst_id}));
       break;
     }
     case SemIR::ErrorInst::Kind: {
@@ -453,7 +454,8 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None, decl_block_id};
   auto decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
+      context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(), loc_id,
+                                                    function_decl));
   function.first_owning_decl_id = decl_id;
   if (is_definition) {
     function.definition_id = decl_id;

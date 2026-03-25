@@ -247,11 +247,12 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                    context, SemIR::IntLiteralType::TypeInstId),
                                .int_id = context.ints().Add(size)}));
   auto array_type_inst_id = AddTypeInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(
-                   loc_id, SemIR::ArrayType{
-                               .type_id = SemIR::TypeType::TypeId,
-                               .bound_id = bound_id,
-                               .element_type_inst_id = element_type_inst_id}));
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::ArrayType{.type_id = SemIR::TypeType::TypeId,
+                           .bound_id = bound_id,
+                           .element_type_inst_id = element_type_inst_id}));
   auto array_type_id =
       context.types().GetTypeIdForTypeInstId(array_type_inst_id);
 

@@ -41,8 +41,9 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
   CARBON_CHECK(context.insts().Get(orig_inst_id).kind() == new_inst.kind(),
                "Rebuilt pattern with the wrong kind: {0} -> {1}",
                context.insts().Get(orig_inst_id), new_inst);
-  return AddPatternInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-                                     SemIR::LocId(orig_inst_id), new_inst));
+  return AddPatternInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
 }
 
 // Wrapper to allow the type to be specified as a template argument for API
@@ -62,12 +63,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-  CARBON_CHECK((pattern.kind == SemIR::FormBindingPattern::Kind) ==
-               entity_name.form_id.has_value());
-  if (pattern.kind == SemIR::FormBindingPattern::Kind) {
-    context.TODO(pattern_id, "Support for cloning form bindings");
-    return SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(pattern.kind != SemIR::FormBindingPattern::Kind);
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -81,6 +77,19 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   pattern.entity_name_id = AddBindingEntityName(
       context, entity_name.name_id, /*form_id=*/SemIR::ConstantId::None,
       entity_name.is_unused, phase);
+  if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
+    auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
+        pattern.subpattern_id);
+    if (subpattern.kind == SemIR::FormParamPattern::Kind) {
+      context.TODO(pattern_id, "Support for cloning form bindings");
+      return SemIR::ErrorInst::InstId;
+    }
+    pattern.subpattern_id = RebuildPatternInst<SemIR::AnyLeafParamPattern>(
+        context, pattern.subpattern_id,
+        {.kind = subpattern.kind,
+         .type_id = new_pattern_type_id,
+         .pretty_name_id = entity_name.name_id});
+  }
   // Rebuild the binding pattern.
   return AddBindingPattern(context, SemIR::LocId(pattern_id),
                            SemIR::ExprRegionId::None, pattern)
@@ -106,9 +115,9 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   // Decompose the pattern. The forms we allow for patterns in a function
   // parameter list are currently fairly restrictive.
 
-  // Optional parameter pattern.
-  auto [param, param_id] = context.insts().TryUnwrap(
-      pattern, pattern_id, &SemIR::AnyParamPattern::subpattern_id);
+  // Optional var parameter pattern.
+  auto [var_param, var_param_id] = context.insts().TryUnwrap(
+      pattern, pattern_id, &SemIR::VarParamPattern::subpattern_id);
 
   // Finally, either a binding pattern or a return slot pattern.
   auto new_pattern_id = SemIR::InstId::None;
@@ -116,9 +125,14 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
     new_pattern_id = CloneBindingPattern(context, pattern_id, *binding,
                                          get_type(pattern_id));
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
+    auto new_subpattern_id = RebuildPatternInst<SemIR::OutParamPattern>(
+        context, return_slot->subpattern_id,
+        {.type_id = get_type(return_slot->subpattern_id),
+         .pretty_name_id = SemIR::NameId::ReturnSlot});
     new_pattern_id = RebuildPatternInst<SemIR::ReturnSlotPattern>(
         context, pattern_id,
         {.type_id = get_type(pattern_id),
+         .subpattern_id = new_subpattern_id,
          .type_inst_id = SemIR::TypeInstId::None});
   } else {
     CARBON_CHECK(pattern.Is<SemIR::ErrorInst>(),
@@ -127,13 +141,10 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   }
 
   // Rebuild parameter.
-  if (param && new_pattern_id != SemIR::ErrorInst::InstId) {
-    new_pattern_id = RebuildPatternInst<SemIR::AnyParamPattern>(
-        context, param_id,
-        {.kind = param->kind,
-         .type_id = get_type(param_id),
-         .subpattern_id = new_pattern_id,
-         .form_id = SemIR::ConstantId::None});
+  if (var_param && new_pattern_id != SemIR::ErrorInst::InstId) {
+    new_pattern_id = RebuildPatternInst<SemIR::VarParamPattern>(
+        context, var_param_id,
+        {.type_id = get_type(var_param_id), .subpattern_id = new_pattern_id});
   }
 
   return new_pattern_id;
@@ -280,6 +291,11 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // `function_id`, this returns the _syntactic_ argument that was passed for
   // param_pattern_id in that call.
   auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
+    if (auto at_binding_pattern =
+            context.insts().TryGetAs<SemIR::WrapperBindingPattern>(
+                param_pattern_id)) {
+      param_pattern_id = at_binding_pattern->subpattern_id;
+    }
     // NOLINTNEXTLINE(readability-qualified-auto)
     auto result =
         llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});

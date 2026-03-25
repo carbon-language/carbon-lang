@@ -70,8 +70,8 @@ fn B() {
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.473 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.3fc) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.3fc) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.3fc) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.3fc) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -172,8 +172,8 @@ fn B() {
 // CHECK:STDOUT:   %Lib.import = import Lib
 // CHECK:STDOUT:   %A.decl: %A.type.816 = fn_decl @A.loc4 [concrete = constants.%A.8ae] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.e5e = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.857) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.857) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.857) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.857) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

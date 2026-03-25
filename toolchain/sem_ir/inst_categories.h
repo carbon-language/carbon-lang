@@ -112,7 +112,8 @@ struct AnyAggregateValue {
   X(::Carbon::SemIR::FormBindingPattern) Sep()         \
   X(::Carbon::SemIR::RefBindingPattern) Sep()          \
   X(::Carbon::SemIR::SymbolicBindingPattern) Sep()     \
-  X(::Carbon::SemIR::ValueBindingPattern)
+  X(::Carbon::SemIR::ValueBindingPattern) Sep()        \
+  X(::Carbon::SemIR::WrapperBindingPattern)
 // clang-format on
 
 #define AnyBindingPattern_CARBON_KIND_ANY_EXPAND \
@@ -133,6 +134,9 @@ struct AnyBindingPattern {
   // pattern has `_` in the name position, and so does not truly declare
   // a name.
   EntityNameId entity_name_id;
+
+  // None unless this is an WrapperBindingPattern.
+  InstId subpattern_id;
 };
 
 // clang-format off
@@ -269,31 +273,53 @@ struct AnyParam {
 };
 
 // clang-format off
-#define AnyParamPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::FormParamPattern) Sep()         \
-  X(::Carbon::SemIR::OutParamPattern) Sep()          \
-  X(::Carbon::SemIR::RefParamPattern) Sep()          \
-  X(::Carbon::SemIR::ValueParamPattern) Sep()        \
+#define AnyLeafParamPattern_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::FormParamPattern) Sep()             \
+  X(::Carbon::SemIR::OutParamPattern) Sep()              \
+  X(::Carbon::SemIR::RefParamPattern) Sep()              \
+  X(::Carbon::SemIR::ValueParamPattern)
+// clang-format on
+
+#define AnyLeafParamPattern_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyLeafParamPattern)
+
+// A pattern that represents a `Call` parameter.
+struct AnyLeafParamPattern {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyLeafParamPattern);
+
+  InstKind kind;
+
+  // Always a PatternType.
+  TypeId type_id;
+
+  // A name to associate with this parameter in pretty-printed IR. This is not
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
+  NameId pretty_name_id;
+
+  AnyRawId arg1 = AnyRawId(AnyIdBase::NoneIndex);
+};
+
+// clang-format off
+#define AnyParamPattern_CARBON_INST_CATEGORY(X, Sep)     \
+  AnyLeafParamPattern_CARBON_INST_CATEGORY(X, Sep) Sep() \
   X(::Carbon::SemIR::VarParamPattern)
 // clang-format on
 
 #define AnyParamPattern_CARBON_KIND_ANY_EXPAND \
   CARBON_INST_CATEGORY_ANY_EXPAND(AnyParamPattern)
 
-// A pattern that represents a `Call` parameter. It delegates to subpattern_id
-// in pattern matching.
+// A pattern that represents a `Call` parameter.
 struct AnyParamPattern {
   using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyParamPattern);
 
   InstKind kind;
 
-  // Always a PatternType that represents the same type as the type of
-  // `subpattern_id`.
+  // Always a PatternType.
   TypeId type_id;
-  InstId subpattern_id;
 
-  // None unless this is a FormParamPattern.
-  ConstantId form_id;
+  AnyRawId arg0;
+  AnyRawId arg1;
 };
 
 // clang-format off
@@ -359,6 +385,28 @@ struct AnyStructType {
   TypeId type_id;
   StructTypeFieldsId fields_id;
   AnyRawId arg1;
+};
+
+// clang-format off
+#define AnyVarPattern_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::VarParamPattern) Sep()        \
+  X(::Carbon::SemIR::VarPattern)
+// clang-format on
+
+#define AnyVarPattern_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyVarPattern)
+
+// A `var` pattern.
+struct AnyVarPattern {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyVarPattern);
+
+  InstKind kind;
+
+  // Always a PatternType.
+  TypeId type_id;
+
+  // The pattern nested inside the `var`.
+  InstId subpattern_id;
 };
 
 }  // namespace Carbon::SemIR

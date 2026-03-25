@@ -132,8 +132,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %T.loc6_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.fa6 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.fa6 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.fa6 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.fa6 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %A.764 = value_param call_param0
 // CHECK:STDOUT:     %.loc27: type = splice_block %A [concrete = constants.%A.764] {
@@ -239,8 +239,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %B.decl.loc4: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %v.patt: @F.%pattern_type (%pattern_type.4f4) = value_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.param_patt: @F.%pattern_type (%pattern_type.4f4) = value_param_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.param_patt: @F.%pattern_type (%pattern_type.4f4) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %v.patt: @F.%pattern_type (%pattern_type.4f4) = at_binding_pattern v, %v.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -255,8 +255,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %v: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding v, %v.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.191 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.191 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.27c = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = constants.%ptr.27c] {
@@ -360,8 +360,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %p.patt: @F.%pattern_type.loc6 (%pattern_type.4f4) = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: @F.%pattern_type.loc6 (%pattern_type.4f4) = value_param_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: @F.%pattern_type.loc6 (%pattern_type.4f4) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: @F.%pattern_type.loc6 (%pattern_type.4f4) = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -376,8 +376,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.191 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.191 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.27c = value_param call_param0
 // CHECK:STDOUT:     %.loc20: type = splice_block %ptr [concrete = constants.%ptr.27c] {

@@ -161,12 +161,26 @@ class MatchContext {
 
   // Do the post-work for `entry`. `entry.work` must be a `PostWork`, and
   // the pattern argument must be the value of `entry.pattern_id` in `context`.
+  auto DoPostWork(Context& context, SemIR::AnyBindingPattern binding_pattern,
+                  WorkItem entry) -> void;
   auto DoPostWork(Context& context, SemIR::VarPattern var_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(Context& context, SemIR::AnyParamPattern param_pattern,
                   WorkItem entry) -> void;
+  auto DoPostWork(Context& context,
+                  SemIR::ReturnSlotPattern return_slot_pattern, WorkItem entry)
+      -> void;
   auto DoPostWork(Context& context, SemIR::TuplePattern tuple_pattern,
                   WorkItem entry) -> void;
+
+  // Asserts that there is a single inst in the top array in `results_stack_`,
+  // pops that array, and returns the inst.
+  auto PopResult() -> SemIR::InstId {
+    CARBON_CHECK(results_stack_.PeekArray().size() == 1);
+    auto value_id = results_stack_.PeekArray()[0];
+    results_stack_.PopArray();
+    return value_id;
+  }
 
   // Performs the core logic of matching a variable pattern whose type is
   // `pattern_type_id`, but returns the scrutinee that its subpattern should be
@@ -286,13 +300,21 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
 }
 
 // Returns the kind of conversion to perform on the scrutinee when matching the
-// given pattern.
+// given pattern. Note that this returns `NoOp` for `var` patterns, because
+// their conversion needs special handling, prior to any general-purpose
+// conversion that would use this function.
 static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
                               MatchContext::WorkItem entry)
     -> ConversionTarget::Kind {
   CARBON_KIND_SWITCH(pattern) {
-    case SemIR::OutParamPattern::Kind:
     case SemIR::VarParamPattern::Kind:
+    case SemIR::VarPattern::Kind:
+      // See function comment.
+    case SemIR::OutParamPattern::Kind:
+      // OutParamPattern conversion is handled by the enclosing
+      // ReturnSlotPattern.
+    case SemIR::WrapperBindingPattern::Kind:
+      // WrapperBindingPattern conversion is handled by its subpattern.
       return ConversionTarget::NoOp;
     case SemIR::RefBindingPattern::Kind:
       return ConversionTarget::DurableRef;
@@ -353,16 +375,33 @@ static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
   }
 }
 
-auto MatchContext::DoPreWork(Context& context,
+auto MatchContext::DoPreWork(Context& /*context*/,
                              SemIR::AnyBindingPattern binding_pattern,
                              SemIR::InstId scrutinee_id,
                              MatchContext::WorkItem entry) -> void {
-  if (kind_ == MatchKind::Caller) {
-    CARBON_CHECK(
-        binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind,
-        "Found named runtime binding pattern during caller pattern match");
-    return;
+  bool scheduled_post_work = false;
+  if (kind_ != MatchKind::Caller) {
+    results_stack_.PushArray();
+    AddAsPostWork(entry);
+    scheduled_post_work = true;
+  } else {
+    CARBON_CHECK(!need_subpattern_results());
   }
+  if (binding_pattern.kind == SemIR::WrapperBindingPattern::Kind) {
+    AddWork({.pattern_id = binding_pattern.subpattern_id,
+             .work = PreWork{.scrutinee_id = scrutinee_id},
+             .allow_unmarked_ref = entry.allow_unmarked_ref});
+  } else if (scheduled_post_work) {
+    // PostWork expects a result to bind the name to. If we scheduled PostWork,
+    // but didn't schedule PreWork for a subpattern, the name should be bound to
+    // the scrutinee.
+    results_stack_.AppendToTop(scrutinee_id);
+  }
+}
+
+auto MatchContext::DoPostWork(Context& context,
+                              SemIR::AnyBindingPattern binding_pattern,
+                              MatchContext::WorkItem entry) -> void {
   // We're logically consuming this map entry, so we invalidate it in order
   // to avoid accidentally consuming it twice.
   auto [bind_name_id, type_expr_region_id] =
@@ -372,25 +411,24 @@ auto MatchContext::DoPreWork(Context& context,
   if (type_expr_region_id.has_value()) {
     InsertHere(context, type_expr_region_id);
   }
-  auto value_id = SemIR::InstId::None;
-  if (kind_ == MatchKind::Local) {
-    auto conversion_kind = ConversionKindFor(context, binding_pattern, entry);
+  auto value_id = PopResult();
 
+  if (value_id.has_value()) {
+    auto conversion_kind = ConversionKindFor(context, binding_pattern, entry);
     if (!bind_name_id.has_value()) {
       // TODO: Is this appropriate, or should we perform a conversion based on
-      // whether the `_` binding is a value or ref binding first, and then
-      // separately discard the initializer for a `_` binding?
+      // the category of the `_` binding first, and then separately discard the
+      // initializer for a `_` binding?
       conversion_kind = ConversionTarget::Discarded;
     }
     value_id =
-        Convert(context, SemIR::LocId(scrutinee_id), scrutinee_id,
+        Convert(context, SemIR::LocId(value_id), value_id,
                 {.kind = conversion_kind,
                  .type_id = context.insts().Get(bind_name_id).type_id()});
   } else {
-    // In a function call, conversion is handled while matching the enclosing
-    // `*ParamPattern`.
-    value_id = scrutinee_id;
+    CARBON_CHECK(binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind);
   }
+
   if (bind_name_id.has_value()) {
     auto bind_name = context.insts().GetAs<SemIR::AnyBinding>(bind_name_id);
     CARBON_CHECK(!bind_name.value_id.has_value());
@@ -442,16 +480,29 @@ auto MatchContext::DoPreWork(Context& context,
                              SemIR::AnyParamPattern param_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
-  // If the form is initializing, match this as a `VarPattern` before matching
-  // it as a parameter pattern.
-  if (param_pattern.kind == SemIR::FormParamPattern::Kind) {
-    auto form_inst_id =
-        context.constant_values().GetInstId(param_pattern.form_id);
-    if (context.insts().Get(form_inst_id).kind() == SemIR::InitForm::Kind) {
-      auto new_scrutinee_id =
-          DoVarPreWorkImpl(context, param_pattern.type_id, scrutinee_id, entry);
-      scrutinee_id = new_scrutinee_id;
+  AddAsPostWork(entry);
+
+  // If `param_pattern` has initializing form, match it as a `VarPattern`
+  // before matching it as a parameter pattern.
+  switch (param_pattern.kind) {
+    case SemIR::FormParamPattern::Kind: {
+      auto form_param_pattern =
+          context.insts().GetAs<SemIR::FormParamPattern>(entry.pattern_id);
+      auto form_inst_id =
+          context.constant_values().GetInstId(form_param_pattern.form_id);
+      if (!context.insts().Is<SemIR::InitForm>(form_inst_id)) {
+        break;
+      }
+      [[fallthrough]];
     }
+    case SemIR::VarParamPattern::Kind: {
+      scrutinee_id =
+          DoVarPreWorkImpl(context, param_pattern.type_id, scrutinee_id, entry);
+      entry.allow_unmarked_ref = true;
+      break;
+    }
+    default:
+      break;
   }
 
   switch (kind_) {
@@ -469,26 +520,43 @@ auto MatchContext::DoPreWork(Context& context,
                     {.kind = ConversionKindFor(context, param_pattern, entry),
                      .type_id = scrutinee_type_id}));
       }
-      // Do not traverse farther, because the caller side of the pattern
-      // ends here.
+      // Do not traverse farther or schedule PostWork, because the caller side
+      // of the pattern ends here.
       break;
     }
     case MatchKind::Callee: {
-      if (need_subpattern_results()) {
-        AddAsPostWork(entry);
+      SemIR::Inst param =
+          SemIR::AnyParam{.kind = ParamKindFor(context, param_pattern, entry),
+                          .type_id = ExtractScrutineeType(
+                              context.sem_ir(), param_pattern.type_id),
+                          .index = SemIR::CallParamIndex(call_params_.size()),
+                          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
+                              context.sem_ir(), entry.pattern_id)};
+      auto loc_id = SemIR::LocId(entry.pattern_id);
+      auto param_id = SemIR::InstId::None;
+      // TODO: find a way to avoid this boilerplate.
+      switch (param.kind()) {
+        case SemIR::OutParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::OutParam>());
+          break;
+        case SemIR::RefParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::RefParam>());
+          break;
+        case SemIR::ValueParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::ValueParam>());
+          break;
+        default:
+          CARBON_FATAL("Unexpected parameter kind");
       }
-      SemIR::AnyParam param = {
-          .kind = ParamKindFor(context, param_pattern, entry),
-          .type_id =
-              ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
-          .index = SemIR::CallParamIndex(call_params_.size()),
-          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-              context.sem_ir(), entry.pattern_id)};
-      auto param_id =
-          AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-                               SemIR::LocId(entry.pattern_id), param));
-      AddWork({.pattern_id = param_pattern.subpattern_id,
-               .work = PreWork{.scrutinee_id = param_id}});
+      if (auto var_param_pattern =
+              context.insts().TryGetAs<SemIR::VarParamPattern>(
+                  entry.pattern_id)) {
+        AddWork({.pattern_id = var_param_pattern->subpattern_id,
+                 .work = PreWork{.scrutinee_id = param_id},
+                 .allow_unmarked_ref = entry.allow_unmarked_ref});
+      } else {
+        results_stack_.AppendToTop(param_id);
+      }
       call_params_.push_back(param_id);
       call_param_patterns_.push_back(entry.pattern_id);
       break;
@@ -502,13 +570,27 @@ auto MatchContext::DoPreWork(Context& context,
 auto MatchContext::DoPostWork(Context& /*context*/,
                               SemIR::AnyParamPattern /*param_pattern*/,
                               WorkItem /*entry*/) -> void {
-  // No-op: the subpattern's result is this pattern's result.
+  // No-op: the subpattern's result is this pattern's result. Note that if
+  // there were any post-work corresponding to DoVarPreWorkImpl, that work
+  // would have to be done here.
 }
 
-auto MatchContext::DoPreWork(Context& context,
+auto MatchContext::DoPreWork(Context& /*context*/,
                              SemIR::ReturnSlotPattern return_slot_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
+  if (kind_ == MatchKind::Callee) {
+    CARBON_CHECK(!scrutinee_id.has_value());
+    results_stack_.PushArray();
+    AddAsPostWork(entry);
+  }
+  AddWork({.pattern_id = return_slot_pattern.subpattern_id,
+           .work = PreWork{.scrutinee_id = scrutinee_id}});
+}
+
+auto MatchContext::DoPostWork(Context& context,
+                              SemIR::ReturnSlotPattern return_slot_pattern,
+                              WorkItem entry) -> void {
   CARBON_CHECK(kind_ == MatchKind::Callee);
   auto type_id =
       ExtractScrutineeType(context.sem_ir(), return_slot_pattern.type_id);
@@ -516,7 +598,7 @@ auto MatchContext::DoPreWork(Context& context,
       context, SemIR::LocId(entry.pattern_id),
       {.type_id = type_id,
        .type_inst_id = context.types().GetTypeInstId(type_id),
-       .storage_id = scrutinee_id});
+       .storage_id = PopResult()});
   bool already_in_lookup =
       context.scope_stack()
           .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
@@ -536,7 +618,8 @@ auto MatchContext::DoPreWork(Context& context, SemIR::VarPattern var_pattern,
     AddAsPostWork(entry);
   }
   AddWork({.pattern_id = var_pattern.subpattern_id,
-           .work = PreWork{.scrutinee_id = new_scrutinee_id}});
+           .work = PreWork{.scrutinee_id = new_scrutinee_id},
+           .allow_unmarked_ref = true});
 }
 
 auto MatchContext::DoVarPreWorkImpl(Context& context,
@@ -549,7 +632,7 @@ auto MatchContext::DoVarPreWorkImpl(Context& context,
       // We're emitting pattern-match IR for the callee, but we're still on
       // the caller side of the pattern, so we traverse without emitting any
       // insts.
-      return SemIR::InstId::None;
+      return scrutinee_id;
     }
     case MatchKind::Local: {
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
@@ -741,8 +824,16 @@ auto MatchContext::Dispatch(Context& context, WorkItem entry) -> void {
     }
     case CARBON_KIND(PostWork _): {
       CARBON_KIND_SWITCH(pattern) {
+        case CARBON_KIND_ANY(SemIR::AnyBindingPattern, any_binding_pattern): {
+          DoPostWork(context, any_binding_pattern, entry);
+          break;
+        }
         case CARBON_KIND_ANY(SemIR::AnyParamPattern, any_param_pattern): {
           DoPostWork(context, any_param_pattern, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
+          DoPostWork(context, return_slot_pattern, entry);
           break;
         }
         case CARBON_KIND(SemIR::VarPattern var_pattern): {

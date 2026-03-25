@@ -62,8 +62,8 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %e.patt: %pattern_type = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Eats.type = value_param call_param0
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]

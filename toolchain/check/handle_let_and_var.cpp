@@ -105,23 +105,25 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     return true;
   }
 
+  auto pattern_id = SemIR::InstId::None;
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ExplicitParamList:
     case FullPatternStack::Kind::ImplicitParamList:
-      subpattern_id = AddPatternInst<SemIR::VarParamPattern>(
+      pattern_id = AddPatternInst<SemIR::VarParamPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
+      pattern_id = AddPatternInst<SemIR::VarPattern>(
+          context, node_id,
+          {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
 
-  auto pattern_id = AddPatternInst<SemIR::VarPattern>(
-      context, node_id, {.type_id = type_id, .subpattern_id = subpattern_id});
   context.node_stack().Push(node_id, pattern_id);
   return true;
 }

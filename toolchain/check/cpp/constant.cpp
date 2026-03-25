@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/constant.h"
 
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/member_access.h"
@@ -226,7 +227,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
       context.ast_context(), /*QualifierLoc=*/clang::NestedNameSpecifierLoc(),
       /*TemplateKWLoc=*/clang::SourceLocation(), function_decl,
       /*RefersToEnclosingVariableOrCapture=*/false,
-      /*NameLoc=*/clang::SourceLocation(), function_decl->getType(),
+      /*NameLoc=*/GetCppLocation(context, loc_id), function_decl->getType(),
       clang::VK_LValue);
 
   // Cast to a function pointer type.
@@ -253,18 +254,20 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   auto* call_expr = clang::CallExpr::Create(
       context.ast_context(), implicit_cast_expr, arg_exprs,
       function_decl->getCallResultType(), clang::VK_PRValue,
-      /*RParenLoc=*/clang::SourceLocation(), clang::FPOptionsOverride());
+      /*RParenLoc=*/GetCppLocation(context, loc_id),
+      clang::FPOptionsOverride());
 
   // Evaluate the expr as a constant and map that to Carbon constant.
+  clang::SmallVector<clang::PartialDiagnosticAt> notes;
   clang::Expr::EvalResult eval_result;
+  eval_result.Diag = &notes;
   if (!call_expr->EvaluateAsConstantExpr(eval_result, context.ast_context())) {
-    // TODO: improve this diagnostic with information from `eval_result`.
-    CARBON_DIAGNOSTIC(CppConstexprEval, Error,
-                      "failed to evaluate {0:consteval|constexpr} function "
-                      "call as a constant",
-                      Diagnostics::BoolAsSelect);
-    context.emitter().Emit(loc_id, CppConstexprEval,
-                           function_decl->isConsteval());
+    context.clang_sema().Diag(call_expr->getBeginLoc(),
+                              clang::diag::err_invalid_consteval_call)
+        << function_decl << function_decl->isConsteval();
+    for (const auto& note : notes) {
+      context.clang_sema().Diag(note.first, note.second);
+    }
     return SemIR::ErrorInst::ConstantId;
   }
 

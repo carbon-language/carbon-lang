@@ -82,10 +82,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
-// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern %self.patt.loc21_16 [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = value_binding_pattern r#self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern %self.patt.loc21_28 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21_20: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
@@ -95,12 +95,12 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc21_28: %i32 = value_binding r#self, %self.param.loc21_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
-// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern %self.patt.loc25_12 [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = value_binding_pattern r#self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern %self.patt.loc25_24 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern %return.param_patt, %.loc25_49.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc25_41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc25_46: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -120,10 +120,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
-// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern %self.patt.loc21_16 [concrete]
-// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = value_binding_pattern r#self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern %self.patt.loc21_28 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc21_20: %pattern_type.904 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_16: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc21_20 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc21_34: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc21_28: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc21_34 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc16_16: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
@@ -133,12 +133,12 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc16_24: %i32 = value_binding r#self, %self.param.loc16_30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
-// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern %self.patt.loc25_12 [concrete]
-// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = value_binding_pattern r#self [concrete]
-// CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern %self.patt.loc25_24 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc25_16: %pattern_type.904 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_12: %pattern_type.904 = at_binding_pattern self, %self.param_patt.loc25_16 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc25_30: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt.loc25_24: %pattern_type.7ce = at_binding_pattern r#self, %self.param_patt.loc25_30 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern %return.param_patt, %.loc25_49.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc17_37: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc17_42: type = type_literal constants.%i32 [concrete = constants.%i32]

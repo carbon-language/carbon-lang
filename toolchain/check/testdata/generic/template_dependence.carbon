@@ -57,10 +57,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = value_param_pattern %x.patt [concrete]
-// CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc5_33 (%pattern_type.4f4b84.1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc5_33 (%pattern_type.4f4b84.1) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc5_26 (%pattern_type.8bb) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc5_26 (%pattern_type.8bb) = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc5_37 (%pattern_type.4f4b84.1) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc5_37 (%pattern_type.4f4b84.1) = return_slot_pattern %return.param_patt, %ptr.loc5_37 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5_36: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %ptr.loc5_37: type = ptr_type %T.ref.loc5_36 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
@@ -86,9 +86,9 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %T.loc5_15.1: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %ptr.loc5_29.1: type = ptr_type %T.loc5_15.1 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:   %ptr.loc5_30.1: type = ptr_type %ptr.loc5_29.1 [template = %ptr.loc5_30.1 (constants.%ptr.125)]
-// CHECK:STDOUT:   %pattern_type.loc5_25: type = pattern_type %ptr.loc5_30.1 [template = %pattern_type.loc5_25 (constants.%pattern_type.8bb)]
+// CHECK:STDOUT:   %pattern_type.loc5_26: type = pattern_type %ptr.loc5_30.1 [template = %pattern_type.loc5_26 (constants.%pattern_type.8bb)]
 // CHECK:STDOUT:   %.loc5_37.1: Core.Form = init_form %ptr.loc5_29.1 [template = %.loc5_37.1 (constants.%.cb6cb9.1)]
-// CHECK:STDOUT:   %pattern_type.loc5_33: type = pattern_type %ptr.loc5_29.1 [template = %pattern_type.loc5_33 (constants.%pattern_type.4f4b84.1)]
+// CHECK:STDOUT:   %pattern_type.loc5_37: type = pattern_type %ptr.loc5_29.1 [template = %pattern_type.loc5_37 (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.fbe)]
@@ -119,9 +119,9 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %T.loc5_15.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %ptr.loc5_29.1 => constants.%ptr.e8f8f9.1
 // CHECK:STDOUT:   %ptr.loc5_30.1 => constants.%ptr.125
-// CHECK:STDOUT:   %pattern_type.loc5_25 => constants.%pattern_type.8bb
+// CHECK:STDOUT:   %pattern_type.loc5_26 => constants.%pattern_type.8bb
 // CHECK:STDOUT:   %.loc5_37.1 => constants.%.cb6cb9.1
-// CHECK:STDOUT:   %pattern_type.loc5_33 => constants.%pattern_type.4f4b84.1
+// CHECK:STDOUT:   %pattern_type.loc5_37 => constants.%pattern_type.4f4b84.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mixed.carbon
@@ -145,8 +145,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
-// CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.eee) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type (%pattern_type.eee) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type (%pattern_type.eee) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.eee) = return_slot_pattern %return.param_patt, %.loc5_43.4 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc5: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]

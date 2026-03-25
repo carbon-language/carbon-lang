@@ -70,8 +70,8 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %ptr.loc4_21.1 => constants.%ptr.125
-// CHECK:STDOUT:   %pattern_type.loc4_16 => constants.%pattern_type.8bb
+// CHECK:STDOUT:   %pattern_type.loc4_17 => constants.%pattern_type.8bb
 // CHECK:STDOUT:   %.loc4_28.1 => constants.%.cb6
-// CHECK:STDOUT:   %pattern_type.loc4_24 => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
