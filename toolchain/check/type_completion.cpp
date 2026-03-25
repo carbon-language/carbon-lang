@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -879,6 +880,13 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               const SemIR::FacetType& facet_type,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
+  // While partially identified facet types end up in the store of
+  // IdentifiedFacetTypes, we don't try to construct a key to look for them
+  // here, so we will only early-out here for fully identified facet types. To
+  // construct the key for a partially identified facet type we need to know the
+  // set of required impls that it contains, which requires us to do most of the
+  // work of identifying the facet type (though we could skip the mapping of
+  // constant values into specifics).
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
                                     .self_const_id = self_const_id};
@@ -898,9 +906,9 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       {true, self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
+  bool partially_identified = false;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
-  bool partially_identified = false;
 
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
@@ -945,9 +953,13 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       if (constraint.is_complete()) {
         require_impls_ids = context.require_impls_blocks().Get(
             constraint.require_impls_block_id);
-      } else if (constraint.is_being_defined() && allow_partially_identified) {
-        require_impls_ids = context.require_impls_stack().PeekArray();
+      } else if (allow_partially_identified) {
         partially_identified = true;
+        if (constraint.is_being_defined()) {
+          require_impls_ids = context.require_impls_stack().PeekArray();
+        } else {
+          continue;
+        }
       } else {
         if (diagnose) {
           DiagnoseIncompleteNamedConstraint(context,
@@ -1000,8 +1012,13 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       if (constraint.is_complete()) {
         require_impls_ids = context.require_impls_blocks().Get(
             constraint.require_impls_block_id);
-      } else if (constraint.is_being_defined()) {
-        require_impls_ids = context.require_impls_stack().PeekArray();
+      } else if (allow_partially_identified) {
+        partially_identified = true;
+        if (constraint.is_being_defined()) {
+          require_impls_ids = context.require_impls_stack().PeekArray();
+        } else {
+          continue;
+        }
       } else {
         if (diagnose) {
           DiagnoseIncompleteNamedConstraint(context, impls.named_constraint_id);

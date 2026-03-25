@@ -201,3 +201,16 @@ constraint W {
   // CHECK:STDERR:
   require impls X where .XZ = (Self as (W & Z));
 }
+
+// --- convert_from_forward_declaration.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+// The facet type `W` is partially identified as soon as it is declared.
+// Converting from a facet requires its facet type to be at least partially
+// identified, not fully identified.
+constraint W;
+
+fn F(T:! W & Z) {
+  T as Z;
+}

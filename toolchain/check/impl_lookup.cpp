@@ -357,7 +357,8 @@ static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
   return TryToIdentifyFacetType(context, loc_id, query_self_const_id,
-                                *facet_type, true);
+                                *facet_type,
+                                /*allow_partially_identified=*/true);
 }
 
 // Substitutes witnesess in place of `LookupImplWitness` queries into `.Self`,
