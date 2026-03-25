@@ -26,23 +26,44 @@ fn F(T:! N) {
   T as Z;
 }
 
-// --- fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon
+// --- fail_does_not_diagnose_identify_failure_in_deduce.carbon
 library "[[@TEST_NAME]]";
 
 constraint N;
 
 interface Z {}
 // Since N is an incomplete constraint, it can not be identified as a target for
-// impl lookup to determine if C implements N.
+// impl lookup to determine if C implements N. No diagnostic is attached to the
+// impl when the lookup fails, we simply fail to convert.
 impl forall [T:! N] T as Z {}
 
 class C;
 
 fn F() {
-  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
+  C as Z;
+}
+
+// --- constraint_completed_after_deducing_impl_refers_to_it.carbon
+library "[[@TEST_NAME]]";
+
+constraint N;
+
+interface Z {}
+// N is incomplete here, but that's okay. We don't need it to be identified
+// until a lookup tries to use this impl.
+impl forall [T:! N] T as Z {}
+
+class C;
+
+// N is now identified, so it can be the target of a convertion, such as for
+// deducing `T` in the impl above.
+constraint N {}
+
+fn F() {
   C as Z;
 }
 
