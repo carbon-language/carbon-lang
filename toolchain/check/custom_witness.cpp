@@ -217,79 +217,48 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     AssociatedFunction
   };
   auto associated_entity_state = AssociatedEntityState::None;
+  // Build a witness with the current contents of the witness table. Each
+  // specific interface has at most two witness tables: an optional table
+  // for associated constants and a table for associated functions.
+  //
+  // We need to separate associated constants and associated functions since
+  // associated entities can't depend on other entities in their own witness
+  // table. To ensure that we don't end up with n^2 witness tables, and so
+  // that we don't need to loop over the associated entities more than once,
+  // we require that interfaces with a custom witness specify all of their
+  // associated constants before their associated functions. Interfaces with
+  // custom witness tables are hardcoded in the compiler, so this
+  // restriction doesn't impact whether or not a type is definable.
+  auto update_interface_with_self_specific_id =
+      [&](SemIR::InstId assoc_entity_id) {
+        auto decl_id =
+            context.constant_values().GetConstantInstId(assoc_entity_id);
+        CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+        auto decl = context.insts().Get(decl_id);
+        auto new_associated_entity_state =
+            decl.kind() == SemIR::AssociatedConstantDecl::Kind
+                ? AssociatedEntityState::AssociatedConstant
+                : AssociatedEntityState::AssociatedFunction;
+        CARBON_CHECK(new_associated_entity_state >= associated_entity_state,
+                     "Implementation restriction: associated constants must be "
+                     "defined before associated functions");
+        if (associated_entity_state < new_associated_entity_state) {
+          auto self_facet = MakeSelfFacetWithCustomWitness(
+              context, loc_id, query_types_for_self_facet,
+              query_specific_interface_id, context.inst_blocks().Add(entries));
+          interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+              context, loc_id, interface.generic_id,
+              interface.generic_with_self_id,
+              query_specific_interface.specific_id, self_facet);
+          associated_entity_state = new_associated_entity_state;
+        }
+      };
 
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
-
-    {
-      // Build a witness with the current contents of the witness table. Each
-      // specific interface has at most two witness tables: an optional table
-      // for associated constants and a table for associated functions.
-      //
-      // We need to separate associated constants and associated functions since
-      // associated entities can't depend on other entities in their own witness
-      // table. To ensure that we don't end up with n^2 witness tables, and so
-      // that we don't need to loop over the associated entities more than once,
-      // we require that interfaces with a custom witness specify all of their
-      // associated constants before their associated functions. Interfaces with
-      // custom witness tables are hardcoded in the compiler, so this
-      // restriction doesn't impact whether or not a type is definable.
-      auto decl_id = context.constant_values().GetInstId(
-          context.constant_values().Get(assoc_entity_id));
-      CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-      auto decl = context.insts().Get(decl_id);
-      CARBON_KIND_SWITCH(decl) {
-        case SemIR::StructValue::Kind: {
-          switch (associated_entity_state) {
-            case AssociatedEntityState::None:
-            case AssociatedEntityState::AssociatedConstant:
-              auto self_facet = MakeSelfFacetWithCustomWitness(
-                  context, loc_id, query_types_for_self_facet,
-                  query_specific_interface_id,
-                  context.inst_blocks().Add(entries));
-              interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-                  context, loc_id, interface.generic_id,
-                  interface.generic_with_self_id,
-                  query_specific_interface.specific_id, self_facet);
-              associated_entity_state =
-                  AssociatedEntityState::AssociatedFunction;
-              break;
-            case AssociatedEntityState::AssociatedFunction:
-              break;
-          }
-          break;
-        }
-        case SemIR::AssociatedConstantDecl::Kind: {
-          switch (associated_entity_state) {
-            case AssociatedEntityState::None:
-              auto self_facet = MakeSelfFacetWithCustomWitness(
-                  context, loc_id, query_types_for_self_facet,
-                  query_specific_interface_id,
-                  context.inst_blocks().Add(entries));
-              interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-                  context, loc_id, interface.generic_id,
-                  interface.generic_with_self_id,
-                  query_specific_interface.specific_id, self_facet);
-              associated_entity_state =
-                  AssociatedEntityState::AssociatedConstant;
-              break;
-            case AssociatedEntityState::AssociatedFunction:
-              CARBON_FATAL(
-                  "Implementation restriction: associated constants must be "
-                  "defined before associated functions");
-            case AssociatedEntityState::AssociatedConstant:
-              break;
-          }
-          break;
-        }
-        default:
-          CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
-                       "Unexpected kind of associated entity {0}", decl);
-          return SemIR::ErrorInst::InstId;
-      }
-    }
+    update_interface_with_self_specific_id(assoc_entity_id);
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_with_self_specific_id,
