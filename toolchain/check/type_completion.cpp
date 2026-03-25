@@ -956,7 +956,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       } else if (allow_partially_identified) {
         partially_identified = true;
         if (constraint.is_being_defined()) {
-          require_impls_ids = context.require_impls_stack().PeekArray();
+          require_impls_ids = context.require_impls_stack().PeekForScope(
+              extends.named_constraint_id);
         } else {
           continue;
         }
@@ -1015,7 +1016,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       } else if (allow_partially_identified) {
         partially_identified = true;
         if (constraint.is_being_defined()) {
-          require_impls_ids = context.require_impls_stack().PeekArray();
+          require_impls_ids = context.require_impls_stack().PeekForScope(
+              impls.named_constraint_id);
         } else {
           continue;
         }

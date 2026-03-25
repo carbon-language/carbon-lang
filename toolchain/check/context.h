@@ -25,6 +25,7 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
+#include "toolchain/check/require_impls_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
@@ -125,7 +126,7 @@ class Context {
     return field_decls_stack_;
   }
 
-  auto require_impls_stack() -> ArrayStack<SemIR::RequireImplsId>& {
+  auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
 
@@ -428,7 +429,7 @@ class Context {
 
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
-  ArrayStack<SemIR::RequireImplsId> require_impls_stack_;
+  RequireImplsStack require_impls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
