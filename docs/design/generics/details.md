@@ -910,9 +910,9 @@ type are satisfied, but only if the facet type is identified. Attempting to
 convert to a facet type that is not identified is an error, since the
 requirements of the target facet type are not yet fully determined.
 
-A facet with a partially identified facet type may be converted _to_ other facet
-types. While its set of requirements are not fully determined, the requirements
-that are known at that time may be used.
+A facet with an unidentified or partially identified facet type may be converted
+_to_ other facet types. While its set of requirements are not fully determined,
+the requirements that are known at that time may be used.
 
 ## Named constraints
 
