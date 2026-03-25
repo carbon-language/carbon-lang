@@ -726,30 +726,29 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
-struct IndexInFacetValue {
-  enum None { None };
-  enum Unstable { Unstable };
-  struct Stable {
-    int32_t index;
-  };
-  using Value = std::variant<enum None, enum Unstable, Stable>;
+class IndexInFacetValue {
+ public:
+  static const IndexInFacetValue None;
+  static const IndexInFacetValue Unstable;
+
+  explicit IndexInFacetValue(int32_t index) : index_(index) {}
 
   // Returns whether the value represents a successful attempt to find the index
   // of an interface in a FacetValue. Returns true regardless of whether the
   // index is stable and able to be used or not.
-  static auto WasFound(const Value& value) -> bool {
-    CARBON_KIND_SWITCH(value) {
-      case CARBON_KIND(enum None _): {
-        return false;
-      }
-      case CARBON_KIND(enum Unstable _): {
-        return true;
-      }
-      case CARBON_KIND(Stable _): {
-        return true;
-      }
+  auto WasFound() const -> bool { return index_ != None.index_; }
+
+  // Gets the stable index which can be used to index into the witness table in
+  // a FacetValue. Only valid if the index is not None and not Unstable.
+  auto TryGetStableIndex() const -> std::optional<int32_t> {
+    if (index_ == None.index_ || index_ == Unstable.index_) {
+      return {};
     }
+    return index_;
   }
+
+ private:
+  int32_t index_;
 };
 
 // Looks in the facet type of the query self facet value and returns the index
@@ -769,8 +768,7 @@ struct IndexInFacetValue {
 static auto IndexOfImplWitnessInSelfFacetValue(
     Context& context, SemIR::ConstantId query_self_const_id,
     SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
-    SemIR::SpecificInterface query_specific_interface)
-    -> IndexInFacetValue::Value {
+    SemIR::SpecificInterface query_specific_interface) -> IndexInFacetValue {
   if (!query_self_type_identified_id.has_value()) {
     return IndexInFacetValue::None;
   }
@@ -795,7 +793,7 @@ static auto IndexOfImplWitnessInSelfFacetValue(
   if (identified.partially_identified()) {
     return IndexInFacetValue::Unstable;
   }
-  return IndexInFacetValue::Stable(static_cast<int32_t>((*it).index()));
+  return IndexInFacetValue(static_cast<int32_t>((*it).index()));
 }
 
 static auto FindFinalWitnessFromSelfFacetValue(
@@ -814,13 +812,13 @@ static auto FindFinalWitnessFromSelfFacetValue(
   auto index_in_facet_value = IndexOfImplWitnessInSelfFacetValue(
       context, query_self_const_id, query_self_type_identified_id,
       query_specific_interface);
-  auto* stable = std::get_if<IndexInFacetValue::Stable>(&index_in_facet_value);
-  if (stable == nullptr) {
+  auto stable_index = index_in_facet_value.TryGetStableIndex();
+  if (!stable_index.has_value()) {
     return SemIR::InstId::None;
   }
 
   auto witness_id =
-      context.inst_blocks().Get(facet_value->witnesses_block_id)[stable->index];
+      context.inst_blocks().Get(facet_value->witnesses_block_id)[*stable_index];
   if (context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
     // Did not find a final witness.
     return SemIR::InstId::None;
@@ -837,7 +835,7 @@ static auto FindNonFinalWitness(
   auto index = IndexOfImplWitnessInSelfFacetValue(context, query_self_const_id,
                                                   query_self_type_identified_id,
                                                   query_specific_interface);
-  if (IndexInFacetValue::WasFound(index)) {
+  if (index.WasFound()) {
     return true;
   }
 
