@@ -1312,7 +1312,7 @@ interface I {
 interface J;
 
 interface K {
-  // Ok, the facet type `J` is identified because the interface `J` is
+  // OK, the facet type `J` is identified because the interface `J` is
   // declared.
   require impls J;
 }
