@@ -40,6 +40,24 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId return_patterns_id)
     -> CalleePatternMatchResults;
 
+// Given the `Call` arguments for the outer part of a thunked function call,
+// computes the corresponding syntactic argument list, suitable for passing to
+// the inner part of the thunked function call.
+struct ThunkPatternMatchResults {
+  // The syntactic argument list. If `self_pattern_id` is not `None`, the first
+  // element will be the corresponding argument.
+  llvm::SmallVector<SemIR::InstId> syntactic_args;
+
+  // The trailing elements of `outer_call_args` that were not used in
+  // `syntactic_args`. These presumably represent the output arguments for the
+  // return.
+  llvm::ArrayRef<SemIR::InstId> ignored_call_args;
+};
+auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
+                       SemIR::InstBlockId param_patterns_id,
+                       llvm::ArrayRef<SemIR::InstId> outer_call_args)
+    -> ThunkPatternMatchResults;
+
 // Emits the pattern-match IR for matching the given arguments with the given
 // parameter patterns, and returns an inst block of the arguments that should
 // be passed to the `Call` inst. `is_operator_syntax` indicates that this call
