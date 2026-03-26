@@ -105,22 +105,11 @@ class MatchContext {
                                             SemIR::SpecificId::None)
       : kind_(kind), callee_specific_id_(callee_specific_id) {}
 
-  // Whether the result of the work item at the top of the stack is needed.
-  auto need_subpattern_results() const -> bool {
-    return !results_stack_.empty();
-  }
+  // Performs pattern matching for the given work item.
+  auto Match(Context& context, WorkItem entry) -> void;
 
-  // Adds `entry` to the front of the worklist.
-  auto AddWork(WorkItem entry) -> void { stack_.push_back(entry); }
-
-  // Sets `entry.work` to `PostWork` and adds it to the front of the worklist.
-  auto AddAsPostWork(WorkItem entry) -> void {
-    entry.work = PostWork{};
-    AddWork(entry);
-  }
-
-  // Processes all work items on the stack.
-  auto DoWork(Context& context) -> void;
+  // Performs pattern matching for the given work item, and returns the result.
+  auto MatchWithResult(Context& context, WorkItem entry) -> SemIR::InstId;
 
   // Returns an inst block of references to all the emitted `Call` arguments.
   // Can only be called once, at the end of Caller pattern matching.
@@ -141,6 +130,20 @@ class MatchContext {
   ~MatchContext();
 
  private:
+  // Whether the result of the work item at the top of the stack is needed.
+  auto need_subpattern_results() const -> bool {
+    return !results_stack_.empty();
+  }
+
+  // Adds `entry` to the front of the worklist.
+  auto AddWork(WorkItem entry) -> void { stack_.push_back(entry); }
+
+  // Sets `entry.work` to `PostWork` and adds it to the front of the worklist.
+  auto AddAsPostWork(WorkItem entry) -> void {
+    entry.work = PostWork{};
+    AddWork(entry);
+  }
+
   // Dispatches `entry` to the appropriate DoWork method based on the kinds of
   // `entry.pattern_id` and `entry.work`.
   auto Dispatch(Context& context, WorkItem entry) -> void;
@@ -219,10 +222,19 @@ class MatchContext {
 
 }  // namespace
 
-auto MatchContext::DoWork(Context& context) -> void {
+auto MatchContext::Match(Context& context, WorkItem entry) -> void {
+  CARBON_CHECK(stack_.empty());
+  stack_.push_back(entry);
   while (!stack_.empty()) {
     Dispatch(context, stack_.pop_back_val());
   }
+}
+
+auto MatchContext::MatchWithResult(Context& context, WorkItem entry)
+    -> SemIR::InstId {
+  results_stack_.PushArray();
+  Match(context, entry);
+  return PopResult();
 }
 
 auto MatchContext::GetCallArgs(Context& context) && -> SemIR::InstBlockId {
@@ -870,36 +882,34 @@ auto CalleePatternMatch(Context& context,
   // in the original order.
   if (implicit_param_patterns_id.has_value()) {
     for (SemIR::InstId inst_id :
-         llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
-      match.AddWork(
+         context.inst_blocks().Get(implicit_param_patterns_id)) {
+      match.Match(
+          context,
           {.pattern_id = inst_id,
            .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None}});
     }
   }
-  match.DoWork(context);
   auto implicit_end = SemIR::CallParamIndex(match.param_count());
 
   if (param_patterns_id.has_value()) {
-    for (SemIR::InstId inst_id :
-         llvm::reverse(context.inst_blocks().Get(param_patterns_id))) {
-      match.AddWork(
+    for (SemIR::InstId inst_id : context.inst_blocks().Get(param_patterns_id)) {
+      match.Match(
+          context,
           {.pattern_id = inst_id,
            .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None}});
     }
   }
-  match.DoWork(context);
   auto explicit_end = SemIR::CallParamIndex(match.param_count());
 
   for (auto return_pattern_id :
        context.inst_blocks().GetOrEmpty(return_patterns_id)) {
-    match.AddWork(
+    match.Match(
+        context,
         {.pattern_id = return_pattern_id,
          .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None}});
   }
-  match.DoWork(context);
   auto return_end = SemIR::CallParamIndex(match.param_count());
 
-  match.DoWork(context);
   auto blocks = std::move(match).GetCallParams(context);
   return {.call_param_patterns_id = blocks.call_param_patterns_id,
           .call_params_id = blocks.call_params_id,
@@ -916,14 +926,28 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         bool is_operator_syntax) -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
+  if (self_pattern_id.has_value()) {
+    match.Match(context,
+                {.pattern_id = self_pattern_id,
+                 .work = MatchContext::PreWork{.scrutinee_id = self_arg_id},
+                 .allow_unmarked_ref = true});
+  }
+
+  for (auto [arg_id, param_pattern_id] : llvm::zip_equal(
+           arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id))) {
+    match.Match(context, {.pattern_id = param_pattern_id,
+                          .work = MatchContext::PreWork{.scrutinee_id = arg_id},
+                          .allow_unmarked_ref = is_operator_syntax});
+  }
+
   auto return_patterns = context.inst_blocks().GetOrEmpty(return_patterns_id);
   // Track the return storage, if present.
   for (auto [return_pattern_id, return_arg_id] :
        llvm::zip_equal(return_patterns, return_arg_ids)) {
     if (return_arg_id.has_value()) {
-      match.AddWork(
-          {.pattern_id = return_pattern_id,
-           .work = MatchContext::PreWork{.scrutinee_id = return_arg_id}});
+      match.Match(context, {.pattern_id = return_pattern_id,
+                            .work = MatchContext::PreWork{.scrutinee_id =
+                                                              return_arg_id}});
     } else {
       CARBON_CHECK(return_arg_ids.size() == 1,
                    "TODO: do the match even if return_arg_id is None, so that "
@@ -931,30 +955,15 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
     }
   }
 
-  // Check type conversions per-element.
-  for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
-           arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    match.AddWork({.pattern_id = param_pattern_id,
-                   .work = MatchContext::PreWork{.scrutinee_id = arg_id},
-                   .allow_unmarked_ref = is_operator_syntax});
-  }
-
-  if (self_pattern_id.has_value()) {
-    match.AddWork({.pattern_id = self_pattern_id,
-                   .work = MatchContext::PreWork{.scrutinee_id = self_arg_id},
-                   .allow_unmarked_ref = true});
-  }
-
-  match.DoWork(context);
   return std::move(match).GetCallArgs(context);
 }
 
 auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
                        SemIR::InstId scrutinee_id) -> void {
   MatchContext match(MatchKind::Local);
-  match.AddWork({.pattern_id = pattern_id,
-                 .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});
-  match.DoWork(context);
+  match.Match(context,
+              {.pattern_id = pattern_id,
+               .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});
 }
 
 }  // namespace Carbon::Check
