@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -855,17 +856,6 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return false;
 }
 
-// Require all named constraints in the facet type are identified. For a named
-// constraint, this means the constraint definition is complete.
-static auto RequireCompleteNamedConstraint(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::NamedConstraintId constraint_id, SemIR::SpecificId specific_id,
-    bool diagnose) -> bool {
-  auto facet_type =
-      FacetTypeFromNamedConstraint(context, constraint_id, specific_id);
-  return RequireCompleteFacetType(context, loc_id, facet_type, diagnose);
-}
-
 // Given a canonical facet value, or a type value, return a facet value.
 static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
     -> SemIR::ConstantId {
@@ -885,14 +875,18 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
       context, context.types().GetAsTypeInstId(self_inst_id));
 }
 
-auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
-                                SemIR::ConstantId self_const_id,
-                                const SemIR::FacetType& facet_type,
-                                DiagnosticContextFn diagnostic_context)
+static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId self_const_id,
+                              const SemIR::FacetType& facet_type,
+                              bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
-  CARBON_CHECK(diagnostic_context);
-  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
-
+  // While partially identified facet types end up in the store of
+  // IdentifiedFacetTypes, we don't try to construct a key to look for them
+  // here, so we will only early-out here for fully identified facet types. To
+  // construct the key for a partially identified facet type we need to know the
+  // set of required impls that it contains, which requires us to do most of the
+  // work of identifying the facet type (though we could skip the mapping of
+  // constant values into specifics).
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
                                     .self_const_id = self_const_id};
@@ -912,6 +906,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
       {true, self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
+  bool partially_identified = false;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
 
@@ -945,19 +940,6 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    // References to a named constraint require the constraint to be complete so
-    // that we can enumerate all the required interfaces within.
-    for (auto specific_constraint :
-         llvm::concat<const SemIR::SpecificNamedConstraint>(
-             facet_type_info.extend_named_constraints,
-             facet_type_info.self_impls_named_constraints)) {
-      if (!RequireCompleteNamedConstraint(
-              context, loc_id, specific_constraint.named_constraint_id,
-              specific_constraint.specific_id, true)) {
-        return SemIR::IdentifiedFacetTypeId::None;
-      }
-    }
-
     // The self may have type TypeType. But the `Self` in a generic require decl
     // has type FacetType, so we need something similar to replace it in the
     // specific.
@@ -966,12 +948,35 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     for (auto extends : facet_type_info.extend_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(extends.named_constraint_id);
+
+      llvm::ArrayRef<SemIR::RequireImplsId> require_impls_ids;
+      if (constraint.is_complete()) {
+        require_impls_ids = context.require_impls_blocks().Get(
+            constraint.require_impls_block_id);
+      } else if (allow_partially_identified) {
+        partially_identified = true;
+        if (constraint.is_being_defined()) {
+          require_impls_ids = context.require_impls_stack().PeekForScope(
+              extends.named_constraint_id);
+        } else {
+          continue;
+        }
+      } else {
+        if (diagnose) {
+          DiagnoseIncompleteNamedConstraint(context,
+                                            extends.named_constraint_id);
+        }
+        return SemIR::IdentifiedFacetTypeId::None;
+      }
+
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, extends.specific_id, self_facet);
+      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
+        return SemIR::IdentifiedFacetTypeId::None;
+      }
 
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               constraint.require_impls_block_id)) {
+      for (auto require_impls_id : llvm::reverse(require_impls_ids)) {
         const auto& require = context.require_impls().Get(require_impls_id);
 
         // Each require is in its own generic, with no additional bindings and
@@ -1003,12 +1008,34 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     for (auto impls : facet_type_info.self_impls_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(impls.named_constraint_id);
+
+      llvm::ArrayRef<SemIR::RequireImplsId> require_impls_ids;
+      if (constraint.is_complete()) {
+        require_impls_ids = context.require_impls_blocks().Get(
+            constraint.require_impls_block_id);
+      } else if (allow_partially_identified) {
+        partially_identified = true;
+        if (constraint.is_being_defined()) {
+          require_impls_ids = context.require_impls_stack().PeekForScope(
+              impls.named_constraint_id);
+        } else {
+          continue;
+        }
+      } else {
+        if (diagnose) {
+          DiagnoseIncompleteNamedConstraint(context, impls.named_constraint_id);
+        }
+        return SemIR::IdentifiedFacetTypeId::None;
+      }
+
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id, self_facet);
+      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
+        return SemIR::IdentifiedFacetTypeId::None;
+      }
 
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               constraint.require_impls_block_id)) {
+      for (auto require_impls_id : llvm::reverse(require_impls_ids)) {
         const auto& require = context.require_impls().Get(require_impls_id);
 
         // Each require is in its own generic, with no additional bindings and
@@ -1038,7 +1065,29 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
   }
 
   // TODO: Process other kinds of requirements.
-  return context.identified_facet_types().Add({key, extends, impls});
+  return context.identified_facet_types().Add(
+      {key, partially_identified, extends, impls});
+}
+
+auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
+                            SemIR::ConstantId self_const_id,
+                            const SemIR::FacetType& facet_type,
+                            bool allow_partially_identified)
+    -> SemIR::IdentifiedFacetTypeId {
+  return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
+                           allow_partially_identified, /*diagnose=*/false);
+}
+
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::ConstantId self_const_id,
+                                const SemIR::FacetType& facet_type,
+                                DiagnosticContextFn diagnostic_context,
+                                bool diagnose) -> SemIR::IdentifiedFacetTypeId {
+  CARBON_CHECK(diagnostic_context);
+  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
+
+  return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
+                           /*allow_partially_identified=*/false, diagnose);
 }
 
 }  // namespace Carbon::Check

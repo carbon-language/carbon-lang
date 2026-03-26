@@ -1512,7 +1512,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // by finding impl witnesses for the target FacetType.
     auto lookup_result = LookupImplWitness(
         context, loc_id, sem_ir.constant_values().Get(type_inst_id),
-        sem_ir.types().GetConstantId(target.type_id));
+        sem_ir.types().GetConstantId(target.type_id), target.diagnose);
     if (lookup_result.has_value()) {
       if (lookup_result.has_error_value()) {
         return SemIR::ErrorInst::InstId;

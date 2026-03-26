@@ -25,8 +25,10 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -356,26 +358,40 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
     clang::DeclContext& decl_context, LookupResult lookup)
     -> clang::NamedDecl* {
   auto target_inst_id = lookup.scope_result.target_inst_id();
-  if (auto target_inst =
-          context_->insts().TryGetAs<SemIR::Namespace>(target_inst_id)) {
-    auto& name_scope = context_->name_scopes().Get(target_inst->name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(*context_, name_scope.name_id());
-    // TODO: Don't immediately use the decl_context - build any intermediate
-    // namespaces iteratively.
-    // Eventually add a mapping and use that/populate it/keep it up to date.
-    // decl_context could be prepopulated in that mapping and not passed
-    // explicitly to MapInstIdToClangDecl.
-    auto* namespace_decl = clang::NamespaceDecl::Create(
-        *ast_context_, &decl_context, false, clang::SourceLocation(),
-        clang::SourceLocation(), identifier_info, nullptr, false);
-    auto result =
-        scope_map_.Insert(namespace_decl->getPrimaryContext(), target_inst_id);
-    CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
-    namespace_decl->setHasExternalVisibleStorage();
-    return namespace_decl;
+  auto target_constant =
+      context_->constant_values().GetConstantInstId(target_inst_id);
+  auto target_inst = context_->insts().Get(target_constant);
+  CARBON_KIND_SWITCH(target_inst) {
+    case CARBON_KIND(SemIR::Namespace namespace_info): {
+      auto& name_scope =
+          context_->name_scopes().Get(namespace_info.name_scope_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, name_scope.name_id());
+      // TODO: Don't immediately use the decl_context - build any intermediate
+      // namespaces iteratively.
+      // Eventually add a mapping and use that/populate it/keep it up to date.
+      // decl_context could be prepopulated in that mapping and not passed
+      // explicitly to MapInstIdToClangDecl.
+      auto* namespace_decl = clang::NamespaceDecl::Create(
+          *ast_context_, &decl_context, false, clang::SourceLocation(),
+          clang::SourceLocation(), identifier_info, nullptr, false);
+      auto result = scope_map_.Insert(namespace_decl->getPrimaryContext(),
+                                      target_inst_id);
+      CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
+      namespace_decl->setHasExternalVisibleStorage();
+      return namespace_decl;
+    }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      const auto& class_info = context_->classes().Get(class_type.class_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, class_info.name_id);
+      return clang::CXXRecordDecl::Create(
+          *ast_context_, clang::TagTypeKind::Class, &decl_context,
+          clang::SourceLocation(), clang::SourceLocation(), identifier_info);
+    }
+    default:
+      return nullptr;
   }
-  return nullptr;
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(

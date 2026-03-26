@@ -25,6 +25,7 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
+#include "toolchain/check/require_impls_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
@@ -125,7 +126,7 @@ class Context {
     return field_decls_stack_;
   }
 
-  auto require_impls_stack() -> ArrayStack<SemIR::RequireImplsId>& {
+  auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
 
@@ -221,6 +222,9 @@ class Context {
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
     SemIR::InstId impl_loc = SemIR::InstId::None;
+    // TODO: If we make a proper stack class, we only need one `diagnosed_cycle`
+    // field, which resets to false when the stack becomes empty.
+    bool diagnosed_cycle = false;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
@@ -229,7 +233,7 @@ class Context {
   // A map from a (self, interface) pair to a final witness.
   using ImplLookupCacheKey =
       std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
-  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
@@ -240,8 +244,8 @@ class Context {
     SemIR::LocId loc_id;
     // The query for a witness of an impl for an interface.
     SemIR::LookupImplWitness query;
-    // The resulting ImplWitness.
-    SemIR::InstId impl_witness;
+    // The resulting final witness.
+    SemIR::ConstantId witness_id;
   };
   auto poisoned_concrete_impl_lookup_queries()
       -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {
@@ -425,7 +429,7 @@ class Context {
 
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
-  ArrayStack<SemIR::RequireImplsId> require_impls_stack_;
+  RequireImplsStack require_impls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

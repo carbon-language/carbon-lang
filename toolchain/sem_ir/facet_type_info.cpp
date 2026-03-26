@@ -212,7 +212,8 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 }
 
 IdentifiedFacetType::IdentifiedFacetType(
-    IdentifiedFacetTypeKey key, llvm::ArrayRef<RequiredImpl> extends,
+    IdentifiedFacetTypeKey key, bool partially_identified,
+    llvm::ArrayRef<RequiredImpl> extends,
     llvm::ArrayRef<RequiredImpl> self_impls)
     : key_(key) {
   required_impls_.reserve(extends.size() + self_impls.size());
@@ -231,6 +232,14 @@ IdentifiedFacetType::IdentifiedFacetType(
 
   llvm::append_range(required_impls_, self_impls);
   SortAndDeduplicate(required_impls_, RequiredLess);
+
+  if (partially_identified) {
+    // This marks the IdentifiedFacetType as being partially identified, and
+    // prevents the key from colliding with a fully identified facet type, or
+    // with other partially (but differently) identified facet types, with the
+    // same constituents but a more complete set of required interfaces.
+    key_.num_require_impls = required_impls_.size();
+  }
 }
 
 auto AddCanonicalWitnessesBlock(File& sem_ir,

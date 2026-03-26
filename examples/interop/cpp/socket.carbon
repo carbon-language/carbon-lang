@@ -40,9 +40,8 @@ fn Run() -> i32 {
     return 1;
   }
 
-  // TODO: This initialization should zero-initialize the struct.
-  // TODO: We should be able to use simply `= ()` or `= {}` to get the same effect.
-  var address: Cpp.sockaddr_in6 = Cpp.sockaddr_in6.sockaddr_in6();
+  // TODO: We should be able to use `= ()` or `= {}` to perform zero-initialization.
+  var address: Cpp.sockaddr_in6;
   Cpp.memset(&address, 0, Cpp.SOCKADDR_IN_SIZE);
   // TODO: Should this be valid without a cast? `AF_INET6` is defined to an
   // integer literal in glibc at least, but we import it as an `i32`.

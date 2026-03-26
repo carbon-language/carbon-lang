@@ -1184,21 +1184,16 @@ struct IntValue {
   IntId int_id;
 };
 
-// A symbolic instruction that takes the place of an `ImplWitness` when the
-// result is not fully known. When evaluated it does an impl lookup query, based
-// on the stored query arguments, that a type implements an interface. The query
-// can be symbolic, and thus modified to be more concrete by applying a
-// specific. Once the query is concrete enough, or a final impl is found, the
-// instruction evaluates to an `ImplWitness`.
+// A non-final witness representing an impl lookup that did not yet find a final
+// witness.
 //
-// This instruction also represents a promise that an impl lookup query was
-// satisfied, like `ImplWitness`, but without providing which impl declaration
-// satisfies it.
+// When a final impl becomes available, or once the query and specific interface
+// are monomorphized to be concrete, this evaluates to that final witness.
 struct LookupImplWitness {
   static constexpr auto Kind =
       InstKind::LookupImplWitness.Define<Parse::NodeId>(
           {.ir_name = "lookup_impl_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
+           .constant_kind = InstConstantKind::Conditional,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});

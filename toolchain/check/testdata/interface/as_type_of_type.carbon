@@ -39,13 +39,13 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.0c3 [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.e23: type = symbolic_binding_type T, 0, %T.0c3 [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T.binding.as_type.e23 [symbolic]
 // CHECK:STDOUT:   %require_complete.315: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %pattern_type.fd9: type = pattern_type %ptr [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
-// CHECK:STDOUT:   %.a5e: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%ptr) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @DefaultOrUnformed [symbolic]
+// CHECK:STDOUT:   %.a5e: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%ptr) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %ptr, (%DefaultOrUnformed.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.478: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet) [symbolic]
 // CHECK:STDOUT:   %.fb3: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.478, %DefaultOrUnformed.facet [symbolic]
@@ -127,12 +127,12 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %T.loc21_7.1: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc21_7.1 (constants.%T.0c3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc21_7.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc21_7.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e23)]
 // CHECK:STDOUT:   %ptr.loc22_18.2: type = ptr_type %T.binding.as_type [symbolic = %ptr.loc22_18.2 (constants.%ptr)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc22_18.2 [symbolic = %require_complete (constants.%require_complete.315)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc22_18.2 [symbolic = %pattern_type (constants.%pattern_type.fd9)]
-// CHECK:STDOUT:   %.loc22_19.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%ptr.loc22_18.2) [symbolic = %.loc22_19.3 (constants.%.a5e)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc22_18.2, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness (constants.%DefaultOrUnformed.lookup_impl_witness)]
+// CHECK:STDOUT:   %.loc22_19.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%ptr.loc22_18.2) [symbolic = %.loc22_19.3 (constants.%.a5e)]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc22_19.2: %DefaultOrUnformed.type = facet_value %ptr.loc22_18.2, (%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc22_19.2 (constants.%DefaultOrUnformed.facet)]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.loc22_19.2) [symbolic = %DefaultOrUnformed.WithSelf.Op.type (constants.%DefaultOrUnformed.WithSelf.Op.type.478)]
 // CHECK:STDOUT:   %.loc22_19.4: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type, %DefaultOrUnformed.facet.loc22_19.2 [symbolic = %.loc22_19.4 (constants.%.fb3)]
@@ -162,8 +162,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     assign %x.var, %DefaultOrUnformed.WithSelf.Op.call
 // CHECK:STDOUT:     %.loc22_18.1: type = splice_block %ptr.loc22_18.1 [symbolic = %ptr.loc22_18.2 (constants.%ptr)] {
 // CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T.0c3)]
-// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc22_18.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e23)]
+// CHECK:STDOUT:       %.loc22_18.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e23)]
 // CHECK:STDOUT:       %ptr.loc22_18.1: type = ptr_type %.loc22_18.2 [symbolic = %ptr.loc22_18.2 (constants.%ptr)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: ref @F.%ptr.loc22_18.2 (%ptr) = ref_binding x, %x.var
