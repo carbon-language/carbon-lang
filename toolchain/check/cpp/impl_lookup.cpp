@@ -69,9 +69,7 @@ struct DeclInfo {
 // Returns SemIR::InstId::None if a C++ function is not found, and
 // SemIR::ErrorInst::InstId if an error occurs.
 static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
-                          DeclInfo decl_info,
-                          const TypeStructure* best_impl_type_structure,
-                          SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+                          DeclInfo decl_info) -> SemIR::InstId {
   if (!decl_info.decl) {
     // The C++ type is not able to implement the interface.
     return SemIR::InstId::None;
@@ -93,20 +91,13 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
       context, loc_id, clang::DeclAccessPair::make(cpp_fn, cpp_fn->getAccess()),
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
-  // TODO: Infer a C++ type structure and check whether it's less strict than
-  // the best Carbon type structure.
-  static_cast<void>(best_impl_type_structure);
-  static_cast<void>(best_impl_loc_id);
-
   return fn_id;
 }
 
 static auto BuildCopyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   // TODO: This should provide `Copy` for enums and other trivially copyable
@@ -118,8 +109,7 @@ static auto BuildCopyWitness(
   auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                 class_decl, clang::Qualifiers::Const),
                             .signature = {.num_params = 1}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -130,9 +120,7 @@ static auto BuildCopyWitness(
 static auto BuildCppUnsafeDerefWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
@@ -151,8 +139,7 @@ static auto BuildCppUnsafeDerefWitness(
   }
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -204,27 +191,27 @@ static auto LookupCppMethod(Context& context, SemIR::LocId loc_id,
                             clang::CXXRecordDecl* class_decl,
                             std::string_view method_name) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
-  auto lookup_begin = clang::LookupResult(
+  auto lookup_info = clang::LookupResult(
       clang_sema, &clang_sema.getASTContext().Idents.get(method_name),
       clang::SourceLocation(), clang::Sema::LookupMemberName);
-  clang_sema.LookupQualifiedName(lookup_begin, class_decl);
-  if (lookup_begin.isAmbiguous()) {
+  clang_sema.LookupQualifiedName(lookup_info, class_decl);
+  if (lookup_info.isAmbiguous()) {
     return SemIR::ErrorInst::InstId;
   }
 
-  if (!lookup_begin.isSingleResult()) {
-    context.TODO(loc_id, "overload sets not implemented yet");
+  if (!lookup_info.isSingleResult()) {
+    context.TODO(loc_id, "C++ method overload sets not implemented yet");
     return SemIR::ErrorInst::InstId;
   }
 
-  if (!lookup_begin.empty()) {
+  if (lookup_info.empty()) {
     return SemIR::InstId::None;
   }
 
   auto decl_info =
-      DeclInfo{.decl = *lookup_begin.begin(), .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+      DeclInfo{.decl = *lookup_info.begin(), .signature = {.num_params = 0}};
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
+  return fn_id;
 }
 
 static auto IsValidIteratorSentinelPair(SemIR::InstId begin_fn,
@@ -232,10 +219,9 @@ static auto IsValidIteratorSentinelPair(SemIR::InstId begin_fn,
   return false;
 }
 
-static auto LookupCppBeginEnd(
-    Context& context, SemIR::LocId loc_id, clang::CXXRecordDecl* class_decl,
-    [[maybe_unused]] const TypeStructure* best_impl_type_structure,
-    [[maybe_unused]] SemIR::LocId best_impl_loc_id) -> BeginEndPair {
+static auto LookupCppBeginEnd(Context& context, SemIR::LocId loc_id,
+                              clang::CXXRecordDecl* class_decl)
+    -> BeginEndPair {
   auto begin_fn = LookupCppMethod(context, loc_id, class_decl, "begin");
   if (begin_fn == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
@@ -255,9 +241,7 @@ static auto LookupCppBeginEnd(
 static auto BuildDefaultWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
@@ -273,8 +257,7 @@ static auto BuildDefaultWitness(
   auto decl_info =
       DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
                .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -285,9 +268,7 @@ static auto BuildDefaultWitness(
 static auto BuildDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   // TODO: This should provide `Destroy` for enums and other trivially
@@ -298,8 +279,7 @@ static auto BuildDestroyWitness(
   }
   auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
                             .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -310,9 +290,7 @@ static auto BuildDestroyWitness(
 static auto BuildCppRangeForIterateWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   const auto& functions = context.functions();
   const auto& insts = context.insts();
 
@@ -320,8 +298,7 @@ static auto BuildCppRangeForIterateWitness(
   auto end_fn = SemIR::InstId::None;
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  auto lookup_result = LookupCppBeginEnd(
-      context, loc_id, best_impl_type_structure, best_impl_loc_id, class_decl);
+  auto lookup_result = LookupCppBeginEnd(context, loc_id, class_decl);
   CARBON_KIND_SWITCH(lookup_result) {
     case CARBON_KIND(SemIR::InstId error_state): {
       return error_state;
@@ -353,27 +330,27 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  // TODO: Infer a C++ type structure and check whether it's less strict than
+  // the best Carbon type structure.
+  static_cast<void>(best_impl_type_structure);
+  static_cast<void>(best_impl_loc_id);
+
   switch (core_interface) {
     case CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id,
-                              best_impl_type_structure, best_impl_loc_id);
+                              query_specific_interface_id);
     case CoreInterface::CppUnsafeDeref:
-      return BuildCppUnsafeDerefWitness(
-          context, loc_id, query_self_const_id, query_specific_interface_id,
-          best_impl_type_structure, best_impl_loc_id);
+      return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
+                                        query_specific_interface_id);
     case CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id,
-                                 best_impl_type_structure, best_impl_loc_id);
+                                 query_specific_interface_id);
     case CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id,
-                                 best_impl_type_structure, best_impl_loc_id);
+                                 query_specific_interface_id);
     case CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(
-          context, loc_id, query_self_const_id, query_specific_interface_id,
-          best_impl_type_structure, best_impl_loc_id);
+          context, loc_id, query_self_const_id, query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
     case CoreInterface::IntFitsIn:
