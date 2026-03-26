@@ -17,8 +17,9 @@ auto HandleLet(Context& context) -> void {
   context.PushState(state, StateKind::LetFinishAsRegular);
   context.PushState(state, StateKind::LetAfterPatternAsRegular);
 
-  // This will start at the pattern.
-  context.PushState(StateKind::Pattern);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
+                              /*in_unused_pattern=*/false,
+                              PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleAssociatedConstant(Context& context) -> void {

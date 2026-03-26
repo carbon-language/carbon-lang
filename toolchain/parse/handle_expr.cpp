@@ -246,7 +246,14 @@ auto HandleExprInPostfix(Context& context) -> void {
       // If not already diagnosed in the lexer, diagnose it here.
       if (token_kind != Lex::TokenKind::Error) {
         CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
-        context.emitter().Emit(*context.position(), ExpectedExpr);
+        CARBON_DIAGNOSTIC(ExpectedPattern, Error, "expected pattern");
+        llvm::SmallVector<StateKind, 2> state_kinds(
+            llvm::map_range(llvm::ArrayRef(context.state_stack()).take_back(2),
+                            [&](const Context::State& s) { return s.kind; }));
+        bool in_pattern = state_kinds == llvm::ArrayRef{StateKind::ExprPattern,
+                                                        StateKind::ExprLoop};
+        context.emitter().Emit(*context.position(),
+                               in_pattern ? ExpectedPattern : ExpectedExpr);
       }
 
       // Add a node to keep the parse tree balanced.
