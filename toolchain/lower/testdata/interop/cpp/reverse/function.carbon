@@ -20,6 +20,8 @@ library "[[@TEST_NAME]]";
 import Other;
 import Cpp inline '''
 void G() {
+  // TODO: this is not actually calling the Carbon function yet, because
+  // it's not using the right mangled name.
   Carbon::Other::F();
 }
 ''';
