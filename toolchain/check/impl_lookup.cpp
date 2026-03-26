@@ -731,7 +731,7 @@ class IndexInFacetValue {
   static const IndexInFacetValue None;
   static const IndexInFacetValue Unstable;
 
-  explicit IndexInFacetValue(int32_t index) : index_(index) {}
+  explicit constexpr IndexInFacetValue(int32_t index) : index_(index) {}
 
   // Returns whether the value represents a successful attempt to find the index
   // of an interface in a FacetValue. Returns true regardless of whether the
@@ -739,10 +739,10 @@ class IndexInFacetValue {
   auto WasFound() const -> bool { return index_ != None.index_; }
 
   // Gets the stable index which can be used to index into the witness table in
-  // a FacetValue. Only valid if the index is not None and not Unstable.
-  auto TryGetStableIndex() const -> std::optional<int32_t> {
-    if (index_ == None.index_ || index_ == Unstable.index_) {
-      return {};
+  // a FacetValue, if there is one. Otherwise, returns -1.
+  auto GetStableIndex() const -> int32_t {
+    if (index_ == Unstable.index_) {
+      return None.index_;
     }
     return index_;
   }
@@ -750,6 +750,9 @@ class IndexInFacetValue {
  private:
   int32_t index_;
 };
+
+inline constexpr auto IndexInFacetValue::None = IndexInFacetValue(-1);
+inline constexpr auto IndexInFacetValue::Unstable = IndexInFacetValue(-2);
 
 // Looks in the facet type of the query self facet value and returns the index
 // of `query_specific_interface` in the defined interface order for that facet
@@ -812,13 +815,13 @@ static auto FindFinalWitnessFromSelfFacetValue(
   auto index_in_facet_value = IndexOfImplWitnessInSelfFacetValue(
       context, query_self_const_id, query_self_type_identified_id,
       query_specific_interface);
-  auto stable_index = index_in_facet_value.TryGetStableIndex();
-  if (!stable_index.has_value()) {
+  auto stable_index = index_in_facet_value.GetStableIndex();
+  if (stable_index < 0) {
     return SemIR::InstId::None;
   }
 
   auto witness_id =
-      context.inst_blocks().Get(facet_value->witnesses_block_id)[*stable_index];
+      context.inst_blocks().Get(facet_value->witnesses_block_id)[stable_index];
   if (context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
     // Did not find a final witness.
     return SemIR::InstId::None;
