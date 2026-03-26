@@ -48,6 +48,9 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
 
     1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
     2. Go to https://marketplace.visualstudio.com/manage/publishers/carbon-lang
+        - We use `infra-role@carbon-lang.dev` for publishing; the GitHub account
+          `CarbonInfraBot` can also be used for login. Contact leads if you
+          require access.
     3. Next to the extension name, click the "..." and select "Update".
     4. Select the `carbon.vsix` file.
 
