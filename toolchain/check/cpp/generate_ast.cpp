@@ -389,9 +389,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           *ast_context_, clang::TagTypeKind::Class, &decl_context,
           clang::SourceLocation(), clang::SourceLocation(), identifier_info);
     }
-    case CARBON_KIND(SemIR::StructValue struct_value): {
-      (void)struct_value;
-
+    case SemIR::StructValue::Kind: {
       auto callee = GetCallee(context_->sem_ir(), target_constant);
       auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
       if (!callee_function) {
