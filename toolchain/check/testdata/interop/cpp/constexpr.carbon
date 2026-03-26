@@ -79,10 +79,6 @@ constexpr int f(bool b) {
 }
 ''';
 
-// CHECK:STDERR: function_bool_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(true)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(true)) = (1, 2, 3);
 
 // --- function_float_param.carbon
@@ -95,10 +91,6 @@ constexpr int f(float b) {
 }
 ''';
 
-// CHECK:STDERR: function_float_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
 
 // --- function_return_bool.carbon
