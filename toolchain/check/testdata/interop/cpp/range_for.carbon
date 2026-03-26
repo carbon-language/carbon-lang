@@ -11,10 +11,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/range_for.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/range_for.carbon
-// CHECK:STDERR: {{.*}}/prelude/iterate.carbon:61:83: error: member name `CppUnsafeDeref` not found in `CppRangeForIterate` [MemberNameNotFoundInSpecificScope]
-// CHECK:STDERR:       returned var result: Optional(R.ElementType) = Optional(R.ElementType).Some(R.CppUnsafeDeref(&cursor->0));
-// CHECK:STDERR:                                                                                   ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 // --- range-for.carbon
 
@@ -54,17 +50,19 @@ struct RangeAdaptor {
 
 fn Sum(v: Cpp.Vector(i32)) -> i32 {
   returned var result: i32 = 0;
-  // CHECK:STDERR: range-for.carbon:[[@LINE+8]]:7: error: cannot access member of interface `Core.Iterate` in type `Cpp.Vector` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (var i: i32 in v) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: range-for.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `Cpp.Vector` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (var i: i32 in v) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
+  //@dump-sem-ir-begin
   for (var i: i32 in v) {
     result += i;
   }
+  //@dump-sem-ir-end
 
   return var;
+}
+
+fn Print(v: Cpp.RangeAdaptor(Cpp.Vector(i32))) {
+  //@dump-sem-ir-begin
+  for (var i: i32 in v) {
+    Print(i);
+  }
+  //@dump-sem-ir-end
 }

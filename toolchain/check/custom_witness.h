@@ -26,11 +26,11 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 // can have custom witnesses.
 enum class CoreInterface {
   Copy,
+  CppRangeForIterate,
   CppUnsafeDeref,
   Default,
   Destroy,
   IntFitsIn,
-  CppRangeForIterate,
 
   Unknown,
 };

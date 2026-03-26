@@ -35,30 +35,23 @@ interface CppRangeForIterate {
   let Iterator:! Copy & Destroy & CppUnsafeDeref;
   let Sentinel:! Copy & Destroy;
   let ElementType:! Copy & Destroy;
-
-  // Range operations
   fn Begin[self: Self]() -> Iterator;
   fn End[self: Self]() -> Sentinel;
-
-  // Iterator operations
-  fn Next(iterator: Iterator*);
-
-  // Sentinel operations
-  fn NotEqual(i: Iterator*, s: Sentinel*) -> bool;
+  fn Next(iterator: Iterator*) -> Optional(ElementType);
+  fn NotEqual(iterator: Iterator, sentinel: Sentinel) -> bool;
 }
 
 impl forall [R:! CppRangeForIterate]
   R as Iterate
-  where .ElementType = R.ElementType and
-        .CursorType = (R.Iterator, R.Sentinel)
+  where .ElementType = R.ElementType and .CursorType = (R.Iterator, R.Sentinel)
 {
   fn NewCursor[self: Self]() -> (R.Iterator, R.Sentinel) {
     return (self.Begin(), self.End());
   }
 
   fn Next[unused self: Self](cursor: (R.Iterator, R.Sentinel)*) -> Optional(R.ElementType) {
-    if (R.NotEqual(&cursor->0, &cursor->1)) {
-      returned var result: Optional(R.ElementType) = Optional(R.ElementType).Some(R.CppUnsafeDeref(&cursor->0));
+    if (R.NotEqual(cursor->0, cursor->1)) {
+      returned var result: Optional(R.ElementType) = Optional(R.ElementType).Some(&cursor->0.(Core.CppUnsafeDeref.Op)());
       R.Next(&cursor->0);
       return var;
     } else {
