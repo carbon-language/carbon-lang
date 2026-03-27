@@ -313,8 +313,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::Temporary inst)
   //("temp.anon" + context.inst_namer_->GetUnscopedNameFor(inst.init_id)).str();
 
   auto* global_variable = new llvm::GlobalVariable(
-      context.llvm_module(),
-      context.GetType(context.sem_ir().GetPointeeType(inst.type_id)),
+      context.llvm_module(), context.GetType(inst.type_id),
       /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
       mangled_name);
   return global_variable;
