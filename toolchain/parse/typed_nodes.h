@@ -414,8 +414,7 @@ using TuplePatternStart =
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
 
-// A parenthesized pattern. This is not used in the context of an explicit
-// parameter list.
+// A parenthesized pattern that isn't an explicit parameter list.
 struct ParenPattern {
   static constexpr auto Kind =
       NodeKind::ParenPattern.Define({.category = NodeCategory::Pattern,
