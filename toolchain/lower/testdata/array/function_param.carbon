@@ -21,7 +21,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'function_param.carbon'
 // CHECK:STDOUT: source_filename = "function_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @temporary = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) #0 !dbg !4 {
@@ -39,7 +39,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 0, !dbg !17
 // CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !17
 // CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !17
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr @temporary, i32 1), !dbg !18
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr @array, i32 1), !dbg !18
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

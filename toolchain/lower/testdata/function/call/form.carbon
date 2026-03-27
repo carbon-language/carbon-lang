@@ -102,7 +102,7 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'var_form_param.carbon'
 // CHECK:STDOUT: source_filename = "var_form_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @temporary = internal constant i32 0
+// CHECK:STDOUT: @int_0.6a9 = internal constant i32 0
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(ptr)
 // CHECK:STDOUT:
@@ -111,7 +111,7 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc3_7.1.temp = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc3_7.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CF.Main(ptr @temporary), !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr @int_0.6a9), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

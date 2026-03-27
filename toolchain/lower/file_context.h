@@ -154,12 +154,7 @@ class FileContext {
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_file() -> const SemIR::CppFile* { return sem_ir().cpp_file(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
-  // TODO
-  auto global_variables() -> Map<SemIR::InstId, llvm::GlobalVariable*>& {
-    return global_variables_;
-  }
-  auto global_variables() const
-      -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
+  auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
   auto printf_int_format_string() -> llvm::Value* {

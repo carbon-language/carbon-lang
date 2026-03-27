@@ -75,7 +75,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'let_param.carbon'
 // CHECK:STDOUT: source_filename = "let_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @temporary = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
@@ -90,7 +90,7 @@ fn InitLet() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr @temporary), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main(ptr @C.val), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -125,7 +125,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @temporary = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
@@ -140,7 +140,7 @@ fn InitLet() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr @temporary), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main(ptr @C.val), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
