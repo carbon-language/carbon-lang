@@ -669,12 +669,6 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
-    -> ConstantEvalResult {
-  // TODO: Handle this. Can we just return the value of `init_id`?
-  return ConstantEvalResult::TODO;
-}
-
 auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
     -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);

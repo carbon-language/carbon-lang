@@ -209,8 +209,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%X, %X) [concrete]
 // CHECK:STDOUT:   %tuple.type.2de: type = tuple_type (%X, %X) [concrete]
 // CHECK:STDOUT:   %pattern_type.e9d: type = pattern_type %tuple.type.2de [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc13 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %.b2288d.1: ref %X = temporary invalid, @Let.%Make.call.loc13_32 [concrete]
+// CHECK:STDOUT:   %.b2288d.2: ref %X = temporary invalid, @Let.%Make.call.loc13_40 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -237,17 +237,13 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc13_22.2: %tuple.type.24b = tuple_literal (%X.ref.loc13_18, %X.ref.loc13_21) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc13_22.3: type = converted %.loc13_22.2, constants.%tuple.type.2de [concrete = constants.%tuple.type.2de]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_32.2: ref %X = temporary %.loc13_32.1, %Make.call.loc13_32
+// CHECK:STDOUT:   %.loc13_32.2: ref %X = temporary %.loc13_32.1, %Make.call.loc13_32 [concrete = constants.%.b2288d.1]
 // CHECK:STDOUT:   %.loc13_32.3: %X = acquire_value %.loc13_32.2
-// CHECK:STDOUT:   %.loc13_40.2: ref %X = temporary %.loc13_40.1, %Make.call.loc13_40
+// CHECK:STDOUT:   %.loc13_40.2: ref %X = temporary %.loc13_40.1, %Make.call.loc13_40 [concrete = constants.%.b2288d.2]
 // CHECK:STDOUT:   %.loc13_40.3: %X = acquire_value %.loc13_40.2
 // CHECK:STDOUT:   %tuple: %tuple.type.2de = tuple_value (%.loc13_32.3, %.loc13_40.3)
 // CHECK:STDOUT:   %.loc13_41.2: %tuple.type.2de = converted %.loc13_41.1, %tuple
 // CHECK:STDOUT:   %a: %tuple.type.2de = value_binding a, %.loc13_41.2
-// CHECK:STDOUT:   %Destroy.Op.bound.loc13_40: <bound method> = bound_method %.loc13_40.2, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc13_40: init %empty_tuple.type = call %Destroy.Op.bound.loc13_40(%.loc13_40.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc13_32: <bound method> = bound_method %.loc13_32.2, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc13_32: init %empty_tuple.type = call %Destroy.Op.bound.loc13_32(%.loc13_32.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -371,6 +367,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.c03) [concrete]
 // CHECK:STDOUT:   %.84a: type = fn_type_with_self_type %As.WithSelf.Convert.type.edc, %As.facet.c03 [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.bound: <bound method> = bound_method %X.val, %X.as.As.impl.Convert [concrete]
+// CHECK:STDOUT:   %.2fd: ref %X = temporary invalid, @__global_init.%.loc30_23.1 [concrete]
+// CHECK:STDOUT:   %.b7c: ref %Y = temporary invalid, @__global_init.%.loc30_29.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -378,30 +376,30 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %n.patt: %pattern_type.77c = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
-// CHECK:STDOUT:   %.loc19_29.2: %Y = acquire_value %.loc19_29.1
-// CHECK:STDOUT:   %n: %Y = value_binding n, %.loc19_29.2
+// CHECK:STDOUT:   %.loc30_29.1: ref %Y = temporary @__global_init.%.loc30_29.1, @__global_init.%.loc30_29.2 [concrete = constants.%.b7c]
+// CHECK:STDOUT:   %.loc30_29.2: %Y = acquire_value %.loc30_29.1
+// CHECK:STDOUT:   %n: %Y = value_binding n, %.loc30_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_21.1: %struct_type.x = struct_literal (%.loc19_20.1) [concrete = constants.%struct.948]
+// CHECK:STDOUT:   %.loc30_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc30_21.1: %struct_type.x = struct_literal (%.loc30_20.1) [concrete = constants.%struct.948]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc19_21.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc19_21.3: ref %empty_tuple.type = class_element_access %.loc19_21.2, element0
-// CHECK:STDOUT:   %.loc19_20.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_21.4: init %empty_tuple.type = converted %.loc19_20.1, %.loc19_20.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_21.5: init %X to %.loc19_21.2 = class_init (%.loc19_21.4) [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.5 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc30_21.2: ref %X = temporary_storage
+// CHECK:STDOUT:   %.loc30_21.3: ref %empty_tuple.type = class_element_access %.loc30_21.2, element0
+// CHECK:STDOUT:   %.loc30_20.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc30_21.4: init %empty_tuple.type = converted %.loc30_20.1, %.loc30_20.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc30_21.5: init %X to %.loc30_21.2 = class_init (%.loc30_21.4) [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc30_23.1: init %X = converted %.loc30_21.1, %.loc30_21.5 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %impl.elem0: %.84a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
-// CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
-// CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1
-// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2
-// CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
-// CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc30_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %.loc30_29.1: ref %Y = temporary_storage
+// CHECK:STDOUT:   %.loc30_23.2: ref %X = temporary %.loc30_21.2, %.loc30_23.1 [concrete = constants.%.2fd]
+// CHECK:STDOUT:   %.loc30_23.3: %X = acquire_value %.loc30_23.2
+// CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc30_29.1 = call %bound_method(%.loc30_23.3)
+// CHECK:STDOUT:   %.loc30_29.2: init %Y = converted %.loc30_23.1, %X.as.As.impl.Convert.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

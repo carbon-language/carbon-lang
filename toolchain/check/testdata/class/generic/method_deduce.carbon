@@ -40,7 +40,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.0db: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
@@ -77,9 +76,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn.83b: <specific function> = specific_function %Class.GetNoDeduce.472, @Class.GetNoDeduce(%A, %B) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
+// CHECK:STDOUT:   %.f93: ref %A = temporary invalid, @CallGenericMethodWithNonDeducedParam.%.loc35_25.4 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.f71: <witness> = complete_type_witness %tuple.type.e87 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,20 +302,18 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT: fn @CallGenericMethodWithNonDeducedParam(%c.param: %Class.802) -> out %return.param: %tuple.type.e87 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.802 = name_ref c, %c
-// CHECK:STDOUT:   %.loc28_11: %Class.GetNoDeduce.type.902 = specific_constant @Class.%Class.GetNoDeduce.decl, @Class(constants.%A) [concrete = constants.%Class.GetNoDeduce.472]
-// CHECK:STDOUT:   %GetNoDeduce.ref: %Class.GetNoDeduce.type.902 = name_ref GetNoDeduce, %.loc28_11 [concrete = constants.%Class.GetNoDeduce.472]
-// CHECK:STDOUT:   %.loc28_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %B.ref.loc28: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc35_11: %Class.GetNoDeduce.type.902 = specific_constant @Class.%Class.GetNoDeduce.decl, @Class(constants.%A) [concrete = constants.%Class.GetNoDeduce.472]
+// CHECK:STDOUT:   %GetNoDeduce.ref: %Class.GetNoDeduce.type.902 = name_ref GetNoDeduce, %.loc35_11 [concrete = constants.%Class.GetNoDeduce.472]
+// CHECK:STDOUT:   %.loc35_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %B.ref.loc35: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn: <specific function> = specific_function %GetNoDeduce.ref, @Class.GetNoDeduce(constants.%A, constants.%B) [concrete = constants.%Class.GetNoDeduce.specific_fn.83b]
 // CHECK:STDOUT:   %.loc27_62.1: ref %tuple.type.e87 = splice_block %return.param {}
-// CHECK:STDOUT:   %.loc28_25.2: ref %A = temporary_storage
-// CHECK:STDOUT:   %.loc28_25.3: init %A to %.loc28_25.2 = class_init () [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc28_25.4: init %A = converted %.loc28_25.1, %.loc28_25.3 [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc28_25.5: ref %A = temporary %.loc28_25.2, %.loc28_25.4
-// CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
-// CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc28_25.5, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc28_25.5)
+// CHECK:STDOUT:   %.loc35_25.2: ref %A = temporary_storage
+// CHECK:STDOUT:   %.loc35_25.3: init %A to %.loc35_25.2 = class_init () [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc35_25.4: init %A = converted %.loc35_25.1, %.loc35_25.3 [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc35_25.5: ref %A = temporary %.loc35_25.2, %.loc35_25.4 [concrete = constants.%.f93]
+// CHECK:STDOUT:   %.loc35_25.6: %A = acquire_value %.loc35_25.5
+// CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc35_25.6)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

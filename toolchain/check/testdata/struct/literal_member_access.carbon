@@ -23,7 +23,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -39,6 +38,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.4ca: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %.2bc: ref %struct_type.x.y.z = temporary invalid, @F.%G.call [concrete]
+// CHECK:STDOUT:   %.dd7: ref %i32 = struct_access %.2bc, element0 [concrete]
+// CHECK:STDOUT:   %.9bd: ref %i32 = struct_access %.2bc, element1 [concrete]
+// CHECK:STDOUT:   %.e2c: ref %i32 = struct_access %.2bc, element2 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.9b9: %Int.as.Copy.impl.Op.type.824 = struct_value () [symbolic]
@@ -50,8 +53,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -109,12 +110,12 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %G.call: init %struct_type.x.y.z to %.loc18_26.1 = call %G.ref()
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc18_35.1: %struct_type.a.b.c.4ca = struct_literal (%int_1, %G.call, %int_3)
-// CHECK:STDOUT:   %.loc18_26.2: ref %struct_type.x.y.z = temporary %.loc18_26.1, %G.call
-// CHECK:STDOUT:   %.loc18_26.3: ref %i32 = struct_access %.loc18_26.2, element0
+// CHECK:STDOUT:   %.loc18_26.2: ref %struct_type.x.y.z = temporary %.loc18_26.1, %G.call [concrete = constants.%.2bc]
+// CHECK:STDOUT:   %.loc18_26.3: ref %i32 = struct_access %.loc18_26.2, element0 [concrete = constants.%.dd7]
 // CHECK:STDOUT:   %.loc18_26.4: %i32 = acquire_value %.loc18_26.3
-// CHECK:STDOUT:   %.loc18_26.5: ref %i32 = struct_access %.loc18_26.2, element1
+// CHECK:STDOUT:   %.loc18_26.5: ref %i32 = struct_access %.loc18_26.2, element1 [concrete = constants.%.9bd]
 // CHECK:STDOUT:   %.loc18_26.6: %i32 = acquire_value %.loc18_26.5
-// CHECK:STDOUT:   %.loc18_26.7: ref %i32 = struct_access %.loc18_26.2, element2
+// CHECK:STDOUT:   %.loc18_26.7: ref %i32 = struct_access %.loc18_26.2, element2 [concrete = constants.%.e2c]
 // CHECK:STDOUT:   %.loc18_26.8: %i32 = acquire_value %.loc18_26.7
 // CHECK:STDOUT:   %struct.loc18_26: %struct_type.x.y.z = struct_value (%.loc18_26.4, %.loc18_26.6, %.loc18_26.8)
 // CHECK:STDOUT:   %.loc18_35.2: %struct_type.x.y.z = converted %G.call, %struct.loc18_26
@@ -127,8 +128,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_38.2: <bound method> = bound_method %.loc18_38, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_38.2(%.loc18_38)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc18_26.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc18_26.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

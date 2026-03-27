@@ -751,7 +751,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -803,9 +802,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %WithNontype.val: %WithNontype.6bb = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.7a0: type = pattern_type %WithNontype.6bb [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_0.6a9) [concrete]
+// CHECK:STDOUT:   %.0ab: ref %WithNontype.6bb = temporary invalid, @G.%.loc16_15.1 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.06d: <bound method> = bound_method %int_0.6a9, %Int.as.Copy.impl.Op.664 [concrete]
 // CHECK:STDOUT:   %bound_method.5f6: <bound method> = bound_method %int_0.6a9, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT: }
@@ -920,26 +918,24 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc9_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [concrete = constants.%WithNontype.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:   %bound_method.loc9_31.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc16_31.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_31.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_31.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc9_31.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc9_31.2: %i32 = converted %int_0, %.loc9_31.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %bound_method.loc16_31.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_31.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc16_31.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc16_31.2: %i32 = converted %int_0, %.loc16_31.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%int_0.6a9) [concrete = constants.%WithNontype.6bb]
-// CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.6bb = temporary_storage
-// CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.6bb to %.loc9_13.2 = class_init () [concrete = constants.%WithNontype.val]
-// CHECK:STDOUT:   %.loc9_15.1: init %WithNontype.6bb = converted %.loc9_13.1, %.loc9_13.3 [concrete = constants.%WithNontype.val]
+// CHECK:STDOUT:   %.loc16_13.2: ref %WithNontype.6bb = temporary_storage
+// CHECK:STDOUT:   %.loc16_13.3: init %WithNontype.6bb to %.loc16_13.2 = class_init () [concrete = constants.%WithNontype.val]
+// CHECK:STDOUT:   %.loc16_15.1: init %WithNontype.6bb = converted %.loc16_13.1, %.loc16_13.3 [concrete = constants.%WithNontype.val]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_0.6a9) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc9_15.2: ref %WithNontype.6bb = temporary %.loc9_13.2, %.loc9_15.1
-// CHECK:STDOUT:   %.loc9_15.3: %WithNontype.6bb = acquire_value %.loc9_15.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.3)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_15.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_15.2)
+// CHECK:STDOUT:   %.loc16_15.2: ref %WithNontype.6bb = temporary %.loc16_13.2, %.loc16_15.1 [concrete = constants.%.0ab]
+// CHECK:STDOUT:   %.loc16_15.3: %WithNontype.6bb = acquire_value %.loc16_15.2
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc16_15.3)
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

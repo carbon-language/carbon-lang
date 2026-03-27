@@ -101,7 +101,7 @@ class ConstantContext {
   }
   auto sem_ir() const -> const SemIR::File& { return file_context_->sem_ir(); }
 
- private:
+  // TODOprivate:
   FileContext* file_context_;
   const FileContext::LoweredConstantStore* constants_;
   SemIR::InstId current_constant_inst_id_ = SemIR::InstId::None;
@@ -295,6 +295,29 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
       .CreateGlobalString(
           context.sem_ir().string_literal_values().Get(inst.string_literal_id),
           /*Name=*/"", /*AddressSpace=*/0, &context.llvm_module());
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::Temporary inst)
+    -> llvm::Constant* {
+  // auto const_inst_id = inst.init_id;
+  //  context.sem_ir().constant_values().Get(inst.init_id);
+  //  TODO
+  if (context.sem_ir().constant_values().Get(inst.init_id) ==
+      SemIR::ConstantId::NotConstant) {
+    return nullptr;
+  }
+
+  auto* const_value = context.GetConstant(inst.init_id);
+
+  std::string mangled_name = "temporary";
+  //("temp.anon" + context.inst_namer_->GetUnscopedNameFor(inst.init_id)).str();
+
+  auto* global_variable = new llvm::GlobalVariable(
+      context.llvm_module(),
+      context.GetType(context.sem_ir().GetPointeeType(inst.type_id)),
+      /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
+      mangled_name);
+  return global_variable;
 }
 
 static auto EmitAsConstant(ConstantContext& context,

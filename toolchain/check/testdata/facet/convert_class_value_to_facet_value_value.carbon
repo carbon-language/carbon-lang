@@ -49,9 +49,8 @@ fn F() {
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.234: type = pattern_type %Goat [concrete]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal, @WalkAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %.ca5: ref %Goat = temporary invalid, @F.%.loc30_17.1 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -143,19 +142,17 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [concrete = constants.%WalkAnimal]
-// CHECK:STDOUT:   %.loc23_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc30_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc23_15.2: ref %Goat = temporary_storage
-// CHECK:STDOUT:   %.loc23_15.3: init %Goat to %.loc23_15.2 = class_init () [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc23_17.1: init %Goat = converted %.loc23_15.1, %.loc23_15.3 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc30_15.2: ref %Goat = temporary_storage
+// CHECK:STDOUT:   %.loc30_15.3: init %Goat to %.loc30_15.2 = class_init () [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc30_17.1: init %Goat = converted %.loc30_15.1, %.loc30_15.3 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc23_24: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc30_24: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
-// CHECK:STDOUT:   %.loc23_17.2: ref %Goat = temporary %.loc23_15.2, %.loc23_17.1
-// CHECK:STDOUT:   %.loc23_17.3: %Goat = acquire_value %.loc23_17.2
-// CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.3)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_17.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_17.2)
+// CHECK:STDOUT:   %.loc30_17.2: ref %Goat = temporary %.loc30_15.2, %.loc30_17.1 [concrete = constants.%.ca5]
+// CHECK:STDOUT:   %.loc30_17.3: %Goat = acquire_value %.loc30_17.2
+// CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc30_17.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

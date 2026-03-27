@@ -123,6 +123,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.70d: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Param, %C.type.facet) [concrete]
 // CHECK:STDOUT:   %HasF.WithSelf.F.489: %HasF.WithSelf.F.type.70d = struct_value () [concrete]
 // CHECK:STDOUT:   %.095: type = fn_type_with_self_type %HasF.WithSelf.F.type.a36, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.afdc79.1: ref %Param = temporary invalid, @G.%C.as.HasF.impl.F.call.loc21 [concrete]
+// CHECK:STDOUT:   %.6b0ccd.1: ref %i32 = class_element_access %.afdc79.1, element0 [concrete]
+// CHECK:STDOUT:   %.afdc79.2: ref %Param = temporary invalid, @G.%C.as.HasF.impl.F.call.loc22 [concrete]
+// CHECK:STDOUT:   %.6b0ccd.2: ref %i32 = class_element_access %.afdc79.2, element0 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.9b9: %Int.as.Copy.impl.Op.type.824 = struct_value () [symbolic]
@@ -134,8 +138,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc22_27 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc22_3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -308,9 +310,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl.elem0.loc21: %.095 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %.loc21_27.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc21: init %Param to %.loc21_27.1 = call %impl.elem0.loc21()
-// CHECK:STDOUT:   %.loc21_27.2: ref %Param = temporary %.loc21_27.1, %C.as.HasF.impl.F.call.loc21
+// CHECK:STDOUT:   %.loc21_27.2: ref %Param = temporary %.loc21_27.1, %C.as.HasF.impl.F.call.loc21 [concrete = constants.%.afdc79.1]
 // CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
-// CHECK:STDOUT:   %.loc21_28.1: ref %i32 = class_element_access %.loc21_27.2, element0
+// CHECK:STDOUT:   %.loc21_28.1: ref %i32 = class_element_access %.loc21_27.2, element0 [concrete = constants.%.6b0ccd.1]
 // CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc21_28.2: %i32 = acquire_value %.loc21_28.1
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc21_28.2
@@ -325,9 +327,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %impl.elem0.loc22_24: %.095 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %.loc22_27.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc22: init %Param to %.loc22_27.1 = call %impl.elem0.loc22_24()
-// CHECK:STDOUT:   %.loc22_27.2: ref %Param = temporary %.loc22_27.1, %C.as.HasF.impl.F.call.loc22
+// CHECK:STDOUT:   %.loc22_27.2: ref %Param = temporary %.loc22_27.1, %C.as.HasF.impl.F.call.loc22 [concrete = constants.%.afdc79.2]
 // CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
-// CHECK:STDOUT:   %.loc22_28.1: ref %i32 = class_element_access %.loc22_27.2, element0
+// CHECK:STDOUT:   %.loc22_28.1: ref %i32 = class_element_access %.loc22_27.2, element0 [concrete = constants.%.6b0ccd.2]
 // CHECK:STDOUT:   %.loc22_28.2: %i32 = acquire_value %.loc22_28.1
 // CHECK:STDOUT:   %impl.elem0.loc22_28: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc22_28.1: <bound method> = bound_method %.loc22_28.2, %impl.elem0.loc22_28
@@ -337,12 +339,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   assign %b.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22_27: <bound method> = bound_method %.loc22_27.2, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc22_27: init %empty_tuple.type = call %Destroy.Op.bound.loc22_27(%.loc22_27.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22_3: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc22_3: init %empty_tuple.type = call %Destroy.Op.bound.loc22_3(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc21: <bound method> = bound_method %.loc21_27.2, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc21: init %empty_tuple.type = call %Destroy.Op.bound.loc21(%.loc21_27.2)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
