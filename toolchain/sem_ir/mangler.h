@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LOWER_MANGLER_H_
-#define CARBON_TOOLCHAIN_LOWER_MANGLER_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
+#define CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
 
 #include <string>
 
@@ -87,4 +87,4 @@ class Mangler {
 
 }  // namespace Carbon::Lower
 
-#endif  // CARBON_TOOLCHAIN_LOWER_MANGLER_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
