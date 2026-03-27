@@ -193,7 +193,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (!self_impls_constraints.empty()) {
+  if (!self_impls_named_constraints.empty()) {
     out << outer_sep << "self impls named constraint: ";
     llvm::ListSeparator sep;
     for (auto self_impls : self_impls_named_constraints) {

@@ -2599,7 +2599,7 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
-    -> SemIR::InstBlockId {
+    -> std::pair<SemIR::InstBlockId, bool> {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
@@ -2621,15 +2621,19 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  bool has_error = false;
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
+    if (const_id == SemIR::ErrorInst::ConstantId) {
+      has_error = true;
+    }
     result[i] = context.constant_values().GetInstId(const_id);
     CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
   }
 
-  return context.inst_blocks().Add(result);
+  return {context.inst_blocks().Add(result), has_error};
 }
 
 // Information about the function call we are currently executing. Unlike
