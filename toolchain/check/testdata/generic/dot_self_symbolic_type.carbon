@@ -107,20 +107,12 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %C.F.type.1f899e.2: type = fn_type @C.F, @C(%DD) [symbolic]
 // CHECK:STDOUT:   %C.F.faeec9.2: %C.F.type.1f899e.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.32c: <witness> = require_complete_type %C.5a3350.2 [symbolic]
-// CHECK:STDOUT:   %A.type.ade3d9.3: type = facet_type <@A, @A(%DD)> [symbolic]
-// CHECK:STDOUT:   %.Self.660472.2: %A.type.ade3d9.3 = symbolic_binding .Self [symbolic]
-// CHECK:STDOUT:   %A.lookup_impl_witness.04abbb.2: <witness> = lookup_impl_witness %.Self.660472.2, @A, @A(%DD) [symbolic]
-// CHECK:STDOUT:   %impl.elem0.f51d29.2: type = impl_witness_access %A.lookup_impl_witness.04abbb.2, element0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %D.G.type.235: type = fn_type @D.G, @D(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %D.G.be1: %D.G.type.235 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.850: type = class_type @C, @C(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.F.type.3ff: type = fn_type @C.F, @C(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.F.240: %C.F.type.3ff = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.69e: type = facet_type <@A, @A(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %.Self.f50: %A.type.69e = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %A.lookup_impl_witness.219: <witness> = lookup_impl_witness %.Self.f50, @A, @A(%empty_struct_type) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.d97: type = impl_witness_access %A.lookup_impl_witness.219, element0 [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%CC.loc6_11.2: type) {
@@ -214,10 +206,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc25_9.2 [symbolic = %require_complete (constants.%require_complete.32c)]
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%DD) [symbolic = %C.F.type (constants.%C.F.type.1f899e.2)]
 // CHECK:STDOUT:   %C.F: @D.G.%C.F.type (%C.F.type.1f899e.2) = struct_value () [symbolic = %C.F (constants.%C.F.faeec9.2)]
-// CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%DD)> [symbolic = %A.type (constants.%A.type.ade3d9.3)]
-// CHECK:STDOUT:   %.Self.loc11: @D.G.%A.type (%A.type.ade3d9.3) = symbolic_binding .Self [symbolic = %.Self.loc11 (constants.%.Self.660472.2)]
-// CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.loc11, @A, @A(%DD) [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness.04abbb.2)]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0.f51d29.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -291,10 +279,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %C.F.type => constants.%C.F.type.3ff
 // CHECK:STDOUT:   %C.F => constants.%C.F.240
-// CHECK:STDOUT:   %A.type => constants.%A.type.69e
-// CHECK:STDOUT:   %.Self.loc11 => constants.%.Self.f50
-// CHECK:STDOUT:   %A.lookup_impl_witness => constants.%A.lookup_impl_witness.219
-// CHECK:STDOUT:   %impl.elem0 => constants.%impl.elem0.d97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_struct_type) {

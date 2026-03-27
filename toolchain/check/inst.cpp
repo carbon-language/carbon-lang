@@ -18,7 +18,7 @@ namespace Carbon::Check {
 // Finish producing an instruction. Set its constant value, and register it in
 // any applicable instruction lists.
 static auto FinishInst(Context& context, SemIR::InstId inst_id,
-                       SemIR::Inst inst, SemIR::ConstantId const_id) -> void {
+                       SemIR::Inst inst) -> void {
   DependentInstKind dep_kind = DependentInstKind::None;
 
   // If the instruction has a symbolic constant type, track that we need to
@@ -28,6 +28,8 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     dep_kind.Add(DependentInstKind::SymbolicType);
   }
 
+  // If the instruction has a constant value, compute it.
+  auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
   context.constant_values().Set(inst_id, const_id);
   if (const_id.is_constant()) {
     CARBON_VLOG_TO(context.vlog_stream(), "Constant: {0} -> {1}\n", inst,
@@ -64,8 +66,7 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
-  auto const_id = TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
-  FinishInst(context, inst_id, loc_id_and_inst.inst, const_id);
+  FinishInst(context, inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
 
@@ -178,11 +179,17 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     }
 
     case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
-      // Evaluation temporarily needs an InstId. Add one for now.
-      auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+      // Evaluation temporarily needs an InstId. Add one for now. We add the
+      // instruction outside of a block, and never call `FinishInst` for this
+      // non-canonical instruction. This means it never gets attached to the
+      // constant value, and is not added to any enclosing generic context's
+      // eval block.
+      auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+      CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n",
+                     loc_id_and_inst.inst);
       // TODO: Consider removing `inst_id` from `insts` if it's still the most
       // recently added instruction.
-      return context.constant_values().Get(inst_id);
+      return TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
     }
 
     case SemIR::InstConstantNeedsInstIdKind::Permanent: {
@@ -191,25 +198,6 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
       return context.constant_values().Get(inst_id);
     }
   }
-}
-
-auto AddPartialInstForEval(Context& context,
-                           SemIR::LocIdAndInst loc_id_and_inst)
-    -> PartialConstant {
-  CARBON_CHECK(!loc_id_and_inst.inst.kind().has_cleanup());
-
-  auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
-  auto const_id = TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
-  // Does not call FinishInst() here.
-  return {const_id, loc_id_and_inst.inst, inst_id};
-}
-
-auto KeepPartialConstant(Context& context, PartialConstant partial_const)
-    -> SemIR::ConstantId {
-  FinishInst(context, partial_const.inst_id_, partial_const.inst_,
-             partial_const.const_id_);
-  return partial_const.const_id_;
 }
 
 auto AddPlaceholderInstInNoBlock(Context& context,
@@ -244,8 +232,7 @@ auto ReplaceLocIdAndInstBeforeConstantUse(Context& context,
   context.sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
   CARBON_VLOG_TO(context.vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
                  loc_id_and_inst.inst);
-  auto const_id = TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
-  FinishInst(context, inst_id, loc_id_and_inst.inst, const_id);
+  FinishInst(context, inst_id, loc_id_and_inst.inst);
 }
 
 auto ReplaceInstBeforeConstantUse(Context& context, SemIR::InstId inst_id,
@@ -253,8 +240,7 @@ auto ReplaceInstBeforeConstantUse(Context& context, SemIR::InstId inst_id,
   context.sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG_TO(context.vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
                  inst);
-  auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
-  FinishInst(context, inst_id, inst, const_id);
+  FinishInst(context, inst_id, inst);
 }
 
 auto ReplaceInstPreservingConstantValue(Context& context, SemIR::InstId inst_id,

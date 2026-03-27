@@ -388,8 +388,8 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc32_45: <witness> = require_complete_type %A.binding.as_type [symbolic = %require_complete.loc32_45 (constants.%require_complete.72f)]
 // CHECK:STDOUT:   %require_complete.loc32_54: <witness> = require_complete_type %Food.binding.as_type [symbolic = %require_complete.loc32_54 (constants.%require_complete.0a9)]
 // CHECK:STDOUT:   %.loc32_76.3: require_specific_def_type = require_specific_def @T.binding.as_type.as.Eats.impl(%A.loc32_18.1, %Food.loc32_33.1) [symbolic = %.loc32_76.3 (constants.%.f9e)]
-// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc32_18.1, @Eats, @Eats(%Food.binding.as_type) [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats, @Eats(%Food.binding.as_type)> [symbolic = %Eats.type (constants.%Eats.type.bb4cf6.2)]
+// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc32_18.1, @Eats, @Eats(%Food.binding.as_type) [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Eats.facet.loc32_76.2: @HandleAnimal.%Eats.type (%Eats.type.bb4cf6.2) = facet_value %A.binding.as_type, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.702)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc32_64.2: <specific function> = specific_function constants.%Feed, @Feed(%Food.loc32_33.1, %Eats.facet.loc32_76.2) [symbolic = %Feed.specific_fn.loc32_64.2 (constants.%Feed.specific_fn.1f9)]
 // CHECK:STDOUT:
@@ -563,8 +563,8 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc32_45 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc32_54 => constants.%complete_type.357
 // CHECK:STDOUT:   %.loc32_76.3 => constants.%.767
-// CHECK:STDOUT:   %Eats.lookup_impl_witness => constants.%Eats.impl_witness.f54
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.8c2
+// CHECK:STDOUT:   %Eats.lookup_impl_witness => constants.%Eats.impl_witness.f54
 // CHECK:STDOUT:   %Eats.facet.loc32_76.2 => constants.%Eats.facet.a4e
 // CHECK:STDOUT:   %Feed.specific_fn.loc32_64.2 => constants.%Feed.specific_fn.7dd
 // CHECK:STDOUT: }

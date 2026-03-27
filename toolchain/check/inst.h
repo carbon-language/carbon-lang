@@ -87,6 +87,12 @@ auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
 // Adds the instruction to the current block if it might be referenced by its
 // constant value; otherwise, does not add the instruction to an instruction
 // block.
+//
+// The resulting ConstantId should be used immediately, or its canonical
+// instruction can be inserted into some other instruction (though it won't have
+// location information, so GetOrAddInst is typically better unless a canonical
+// instruction is required). The constant value can't be modified by specifics
+// unless it is done so as part of some other instruction.
 auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId;
 
@@ -100,57 +106,6 @@ auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
     -> SemIR::ConstantId {
   return EvalOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
-
-class PartialConstant {
- public:
-  template <typename InstT>
-  auto Is(Context& context) -> bool {
-    return context.insts().Is<InstT>(
-        context.constant_values().GetInstId(const_id_));
-  }
-
- private:
-  friend auto AddPartialInstForEval(Context& context,
-                                    SemIR::LocIdAndInst loc_id_and_inst)
-      -> PartialConstant;
-  friend auto KeepPartialConstant(Context& context,
-                                  PartialConstant partial_const)
-      -> SemIR::ConstantId;
-
-  PartialConstant(SemIR::ConstantId const_id, SemIR::Inst inst,
-                  SemIR::InstId inst_id)
-      : const_id_(const_id), inst_(inst), inst_id_(inst_id) {}
-
-  SemIR::ConstantId const_id_;
-  SemIR::Inst inst_;
-  SemIR::InstId inst_id_;
-};
-
-// Evalaute the given instruction, and returns the constant value. The caller
-// can view the constant value but must not preserve it unless
-// `KeepPartialConstant` is called.
-//
-// This function does not finish constructing the inst after evaluation, so that
-// the constant value can be discard without side effects. In particular, this
-// prevents the instruction from being added to generic eval blocks until the
-// caller decides if they want to use the the value. The caller must call
-// `KeepPartialConstant` if they want to use the result.
-auto AddPartialInstForEval(Context& context,
-                           SemIR::LocIdAndInst loc_id_and_inst)
-    -> PartialConstant;
-
-template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup() &&
-           InstT::Kind.constant_needs_inst_id() ==
-               SemIR::InstConstantNeedsInstIdKind::DuringEvaluation &&
-           std::convertible_to<LocT, SemIR::LocId>)
-auto AddPartialInstForEval(Context& context, LocT loc, InstT inst)
-    -> PartialConstant {
-  return AddPartialInstForEval(context, SemIR::LocIdAndInst(loc, inst));
-}
-
-auto KeepPartialConstant(Context& context, PartialConstant partial_const)
-    -> SemIR::ConstantId;
 
 // Adds an instruction and enqueues it to be added to the eval block of the
 // enclosing generic, returning the produced ID. The instruction is expected to

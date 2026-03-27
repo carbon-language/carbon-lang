@@ -93,7 +93,6 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT: generic fn @F(%T.loc18_7.2: %I_where.type) {
 // CHECK:STDOUT:   %T.loc18_7.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_7.1 (constants.%T.706)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc18_7.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc18_7.1, @I, @I(constants.%.Self.binding.as_type.8db) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.94d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -109,6 +108,5 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT: specific @F(constants.%T.706) {
 // CHECK:STDOUT:   %T.loc18_7.1 => constants.%T.706
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness.94d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
