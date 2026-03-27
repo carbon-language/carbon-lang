@@ -66,6 +66,16 @@ auto HandleParseNode(Context& context, Parse::ExplicitParamListId node_id)
                             Parse::NodeKind::ExplicitParamListStart);
 }
 
+auto HandleParseNode(Context& context, Parse::ParenPatternId node_id) -> bool {
+  EndSubpatternAsNonExpr(context);
+  auto pattern_id = context.node_stack().PopPattern();
+  context.param_and_arg_refs_stack().PopAndDiscard();
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+  context.node_stack().Push(node_id, pattern_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter

@@ -983,6 +983,7 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
 // ... , )  (variant is Tuple)
 //     ^
 //   (state done)
+//   SPECIAL: parent becomes PatternListFinishAsTuple
 //
 // ... , ]  (variant is Implicit)
 //     ^
@@ -991,6 +992,7 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
 // ... , ...
 //     ^
 //   1. PatternListElementAs(Tuple|Explicit|Implicit)
+//   SPECIAL (variant is Tuple): parent becomes PatternListFinishAsTuple
 //
 // ...
 //    ^
@@ -1007,22 +1009,28 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElementFinish, Tuple, Explicit,
 // ^
 //   1. PatternListFinishAs(Tuple|Explicit|Implicit)
 //
-// ( ... )    (variant is Tuple or Explicit)
+// ( ... )    (variant is Explicit)
 // ^
 // [ ... ]    (variant is Implicit)
 // ^
-//   1. PatternListElementAs(Tuple|Explicit|Implicit)
-//   2. PatternListFinishAs(Tuple|Explicit|Implicit)
+//   1. PatternListElementAs(Explicit|Implicit)
+//   2. PatternListFinishAs(Explicit|Implicit)
+//
+// ( ... )    (variant is Explicit)
+// ^
+//   1. PatternListElementAsTuple
+//   2. PatternListFinishAsParen             (SPECIAL: may be replaced)
 CARBON_PARSE_STATE_VARIANTS3(PatternList, Tuple, Explicit, Implicit)
 
 // Handles processing of a parameter list `]` or `)`.
 //
-// ( ... )    (variant is Tuple or Explicit)
+// ( ... )    (variant is Paren, Tuple or Explicit)
 //       ^
 // [ ... ]    (variant is Implicit)
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(PatternListFinish, Tuple, Explicit, Implicit)
+CARBON_PARSE_STATE_VARIANTS4(PatternListFinish, Paren, Tuple, Explicit,
+                             Implicit)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
