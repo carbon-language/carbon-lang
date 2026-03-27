@@ -20,7 +20,7 @@ namespace Carbon::SemIR {
 class Mangler {
  public:
   // Initialize a new Mangler instance for mangling entities within the
-  // specified `FileContext`.
+  // specified `File`.
   Mangler(const SemIR::File& sem_ir, int total_ir_count)
       : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {}
 
