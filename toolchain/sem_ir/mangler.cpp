@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lower/mangler.h"
+#include "toolchain/sem_ir/mangler.h"
 
 #include <string>
 

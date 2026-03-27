@@ -22,7 +22,6 @@
 #include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
-#include "toolchain/lower/mangler.h"
 #include "toolchain/lower/options.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
@@ -36,6 +35,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/mangler.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/stringify.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -714,7 +714,7 @@ auto FileContext::GetOrCreateLLVMFunction(
         sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
   }
 
-  Mangler m(*this);
+  SemIR::Mangler m(sem_ir(), context().total_ir_count());
   std::string mangled_name = m.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
@@ -1244,7 +1244,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  Mangler m(*this);
+  SemIR::Mangler m(sem_ir(), context().total_ir_count());
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
@@ -1289,7 +1289,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::GlobalVariable* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
-  Mangler m(*this);
+  SemIR::Mangler m(sem_ir(), context().total_ir_count());
   std::string mangled_name = m.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
