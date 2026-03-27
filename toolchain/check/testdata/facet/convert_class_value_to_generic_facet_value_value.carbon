@@ -158,8 +158,8 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.4da: type = pattern_type %ImplsGeneric [concrete]
 // CHECK:STDOUT:   %pattern_type.27a: type = pattern_type %GenericParam [concrete]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
-// CHECK:STDOUT:   %.0e9: ref %ImplsGeneric = temporary invalid, @G.%.loc34_24.1 [concrete]
-// CHECK:STDOUT:   %.cf8: ref %GenericParam = temporary invalid, @G.%.loc34_44.1 [concrete]
+// CHECK:STDOUT:   %.80a: ref %ImplsGeneric = temporary invalid, %ImplsGeneric.val [concrete]
+// CHECK:STDOUT:   %.601: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %complete_type.57a: <witness> = complete_type_witness %Generic.type.498 [concrete]
 // CHECK:STDOUT:   %.fcf: type = fn_type_with_self_type %Generic.WithSelf.F.type.c86, %Generic.facet [concrete]
@@ -332,30 +332,30 @@ fn B() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [concrete = constants.%CallGenericMethod]
-// CHECK:STDOUT:   %.loc34_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc20_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
-// CHECK:STDOUT:   %.loc34_22.2: ref %ImplsGeneric = temporary_storage
-// CHECK:STDOUT:   %.loc34_22.3: init %ImplsGeneric to %.loc34_22.2 = class_init () [concrete = constants.%ImplsGeneric.val]
-// CHECK:STDOUT:   %.loc34_24.1: init %ImplsGeneric = converted %.loc34_22.1, %.loc34_22.3 [concrete = constants.%ImplsGeneric.val]
-// CHECK:STDOUT:   %.loc34_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc20_22.2: ref %ImplsGeneric = temporary_storage
+// CHECK:STDOUT:   %.loc20_22.3: init %ImplsGeneric to %.loc20_22.2 = class_init () [concrete = constants.%ImplsGeneric.val]
+// CHECK:STDOUT:   %.loc20_24.1: init %ImplsGeneric = converted %.loc20_22.1, %.loc20_22.3 [concrete = constants.%ImplsGeneric.val]
+// CHECK:STDOUT:   %.loc20_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
-// CHECK:STDOUT:   %.loc34_42.2: ref %GenericParam = temporary_storage
-// CHECK:STDOUT:   %.loc34_42.3: init %GenericParam to %.loc34_42.2 = class_init () [concrete = constants.%GenericParam.val]
-// CHECK:STDOUT:   %.loc34_44.1: init %GenericParam = converted %.loc34_42.1, %.loc34_42.3 [concrete = constants.%GenericParam.val]
+// CHECK:STDOUT:   %.loc20_42.2: ref %GenericParam = temporary_storage
+// CHECK:STDOUT:   %.loc20_42.3: init %GenericParam to %.loc20_42.2 = class_init () [concrete = constants.%GenericParam.val]
+// CHECK:STDOUT:   %.loc20_44.1: init %GenericParam = converted %.loc20_42.1, %.loc20_42.3 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.498 = facet_value constants.%ImplsGeneric, (constants.%Generic.impl_witness) [concrete = constants.%Generic.facet]
-// CHECK:STDOUT:   %.loc34_59: %Generic.type.498 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
+// CHECK:STDOUT:   %.loc20_59: %Generic.type.498 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
-// CHECK:STDOUT:   %.loc34_24.2: ref %ImplsGeneric = temporary %.loc34_22.2, %.loc34_24.1 [concrete = constants.%.0e9]
-// CHECK:STDOUT:   %.loc34_24.3: %ImplsGeneric = acquire_value %.loc34_24.2
-// CHECK:STDOUT:   %.loc34_44.2: ref %GenericParam = temporary %.loc34_42.2, %.loc34_44.1 [concrete = constants.%.cf8]
-// CHECK:STDOUT:   %.loc34_44.3: %GenericParam = acquire_value %.loc34_44.2
-// CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc34_24.3, %.loc34_44.3)
+// CHECK:STDOUT:   %.loc20_24.2: ref %ImplsGeneric = temporary %.loc20_22.2, %.loc20_24.1 [concrete = constants.%.80a]
+// CHECK:STDOUT:   %.loc20_24.3: %ImplsGeneric = acquire_value %.loc20_24.2
+// CHECK:STDOUT:   %.loc20_44.2: ref %GenericParam = temporary %.loc20_42.2, %.loc20_44.1 [concrete = constants.%.601]
+// CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2
+// CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.3, %.loc20_44.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc34_44(%self.param: ref %GenericParam) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_44(%self.param: ref %GenericParam) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc34_24(%self.param: ref %ImplsGeneric) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_24(%self.param: ref %ImplsGeneric) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_25.1 => constants.%Scalar
@@ -502,7 +502,7 @@ fn B() {
 // CHECK:STDOUT:   %I.facet.0e1: %I.type.5f7 = facet_value %C, (%I.impl_witness.1c4) [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A, @A(%I.facet.0e1) [concrete]
-// CHECK:STDOUT:   %.2f0: ref %C = temporary invalid, @B.%.loc19_8.1 [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -643,17 +643,17 @@ fn B() {
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc19_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc19_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc19_6.3: init %C to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_8.1: init %C = converted %.loc19_6.1, %.loc19_6.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc12_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc12_6.3: init %C to %.loc12_6.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc12_8.1: init %C = converted %.loc12_6.1, %.loc12_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %I.facet: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet.0e1]
-// CHECK:STDOUT:   %.loc19_12: %I.type.5f7 = converted constants.%C, %I.facet [concrete = constants.%I.facet.0e1]
+// CHECK:STDOUT:   %.loc12_12: %I.type.5f7 = converted constants.%C, %I.facet [concrete = constants.%I.facet.0e1]
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A.ref, @A(constants.%I.facet.0e1) [concrete = constants.%A.specific_fn]
-// CHECK:STDOUT:   %.loc19_8.2: ref %C = temporary %.loc19_6.2, %.loc19_8.1 [concrete = constants.%.2f0]
-// CHECK:STDOUT:   %.loc19_8.3: %C = acquire_value %.loc19_8.2
-// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc19_8.3)
+// CHECK:STDOUT:   %.loc12_8.2: ref %C = temporary %.loc12_6.2, %.loc12_8.1 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc12_8.3: %C = acquire_value %.loc12_8.2
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

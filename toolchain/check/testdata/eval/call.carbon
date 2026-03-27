@@ -192,7 +192,7 @@ fn H() {
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %tuple.ee6: %tuple.type.189 = tuple_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
-// CHECK:STDOUT:   %.769: ref %tuple.type.189 = temporary invalid, @G.%F.call [concrete]
+// CHECK:STDOUT:   %.43f: ref %tuple.type.189 = temporary invalid, %tuple.ee6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -200,7 +200,7 @@ fn H() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc8_5.1: ref %tuple.type.189 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %tuple.type.189 to %.loc8_5.1 = call %F.ref() [concrete = constants.%tuple.ee6]
-// CHECK:STDOUT:   %.loc8_5.2: ref %tuple.type.189 = temporary %.loc8_5.1, %F.call [concrete = constants.%.769]
+// CHECK:STDOUT:   %.loc8_5.2: ref %tuple.type.189 = temporary %.loc8_5.1, %F.call [concrete = constants.%.43f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,7 +381,7 @@ fn H() {
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.c18: ref %C = temporary invalid, @H.%F.call [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -410,7 +410,7 @@ fn H() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc21_7.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %F.call: init %C to %.loc21_7.1 = call %F.ref() [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc21_7.2: ref %C = temporary %.loc21_7.1, %F.call [concrete = constants.%.c18]
+// CHECK:STDOUT:   %.loc21_7.2: ref %C = temporary %.loc21_7.1, %F.call [concrete = constants.%.5ea]
 // CHECK:STDOUT:   %.loc21_7.3: %C = acquire_value %.loc21_7.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

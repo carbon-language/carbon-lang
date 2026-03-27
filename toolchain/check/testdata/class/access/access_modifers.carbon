@@ -156,6 +156,7 @@ class A {
 // CHECK:STDOUT:   %Circle: type = class_type @Circle [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
@@ -195,8 +196,9 @@ class A {
 // CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.0f6) [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.488: ref %Circle = temporary invalid, @Run.%Circle.Make.call [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -309,7 +311,7 @@ class A {
 // CHECK:STDOUT:   %.loc18_36.1: ref %Circle = temporary_storage
 // CHECK:STDOUT:   %Circle.Make.call: init %Circle to %.loc18_36.1 = call %Make.ref()
 // CHECK:STDOUT:   %Circle.ref.loc18_15: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
-// CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Circle.Make.call [concrete = constants.%.488]
+// CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Circle.Make.call
 // CHECK:STDOUT:   %.loc18_36.3: %Circle = acquire_value %.loc18_36.2
 // CHECK:STDOUT:   %circle: %Circle = value_binding circle, %.loc18_36.3
 // CHECK:STDOUT:   name_binding_decl {
@@ -327,6 +329,8 @@ class A {
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc51: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc18_36.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc18_36.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

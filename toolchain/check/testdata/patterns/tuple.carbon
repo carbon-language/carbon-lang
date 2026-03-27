@@ -91,9 +91,6 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %.ce9: ref %tuple.type = temporary invalid, @__global_init.%F.call [concrete]
-// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %.ce9, element0 [concrete]
-// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %.ce9, element1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -102,9 +99,9 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %.loc7_18: %pattern_type.5b8 = tuple_pattern (%a.patt, %b.patt) [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_24.1: ref %tuple.type = temporary @__global_init.%.loc7, @__global_init.%F.call [concrete = constants.%.ce9]
-// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %.loc7_24.1, element0 [concrete = constants.%tuple.elem0]
-// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %.loc7_24.1, element1 [concrete = constants.%tuple.elem1]
+// CHECK:STDOUT:   %.loc7_24.1: ref %tuple.type = temporary @__global_init.%.loc7, @__global_init.%F.call
+// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %.loc7_24.1, element0
+// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %.loc7_24.1, element1
 // CHECK:STDOUT:   %.loc7_10.1: type = splice_block %.loc7_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_10.3: type = converted %.loc7_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

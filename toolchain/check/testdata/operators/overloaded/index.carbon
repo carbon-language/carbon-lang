@@ -347,7 +347,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.2f0: ref %C = temporary invalid, @F.%.loc19_15.4 [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -478,16 +478,16 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc19_15.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc19_15.3: init %C to %.loc19_15.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_15.4: init %C = converted %.loc19_15.1, %.loc19_15.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_15.5: ref %C = temporary %.loc19_15.2, %.loc19_15.4 [concrete = constants.%.2f0]
-// CHECK:STDOUT:   %.loc19_15.6: %C = acquire_value %.loc19_15.5
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc19_15.6
+// CHECK:STDOUT:   %.loc15_15.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc15_15.3: init %C to %.loc15_15.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc15_15.4: init %C = converted %.loc15_15.1, %.loc15_15.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc15_15.5: ref %C = temporary %.loc15_15.2, %.loc15_15.4 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc15_15.6: %C = acquire_value %.loc15_15.5
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_15.6
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

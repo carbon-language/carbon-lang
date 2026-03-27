@@ -127,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:   %facet_value: %facet_type.dc7 = facet_value %C, (%Empty.impl_witness, %A.impl_witness, %B.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%facet_value) [concrete]
-// CHECK:STDOUT:   %.2f0: ref %C = temporary invalid, @F.%.loc52_8.1 [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %.171: type = fn_type_with_self_type %A.WithSelf.AA.type.6ff, %A.facet.34f [concrete]
 // CHECK:STDOUT:   %.e04: type = fn_type_with_self_type %B.WithSelf.BB.type.f5e, %B.facet.e93 [concrete]
@@ -378,17 +378,17 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc52_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc45_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc52_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc52_6.3: init %C to %.loc52_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc52_8.1: init %C = converted %.loc52_6.1, %.loc52_6.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc45_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc45_6.3: init %C to %.loc45_6.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc45_8.1: init %C = converted %.loc45_6.1, %.loc45_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %facet_value: %facet_type.dc7 = facet_value constants.%C, (constants.%Empty.impl_witness, constants.%A.impl_witness, constants.%B.impl_witness) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc52_12: %facet_type.dc7 = converted constants.%C, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc45_12: %facet_type.dc7 = converted constants.%C, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%facet_value) [concrete = constants.%G.specific_fn]
-// CHECK:STDOUT:   %.loc52_8.2: ref %C = temporary %.loc52_6.2, %.loc52_8.1 [concrete = constants.%.2f0]
-// CHECK:STDOUT:   %.loc52_8.3: %C = acquire_value %.loc52_8.2
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc52_8.3)
+// CHECK:STDOUT:   %.loc45_8.2: ref %C = temporary %.loc45_6.2, %.loc45_8.1 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc45_8.3: %C = acquire_value %.loc45_8.2
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc45_8.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

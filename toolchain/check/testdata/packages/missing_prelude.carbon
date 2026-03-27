@@ -578,7 +578,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %pattern_type.efe: type = pattern_type %Int.553 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.val: %Int.553 = struct_value () [concrete]
-// CHECK:STDOUT:   %.bfe: ref %Int.553 = temporary invalid, file.%.loc12_15.3 [concrete]
+// CHECK:STDOUT:   %.fdf: ref %Int.553 = temporary invalid, %Int.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -604,13 +604,13 @@ let n: type = i32;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.efe = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_8: type = type_literal constants.%Int.553 [concrete = constants.%Int.553]
-// CHECK:STDOUT:   %.loc12_15.1: ref %Int.553 = temporary_storage
-// CHECK:STDOUT:   %.loc12_15.2: init %Int.553 to %.loc12_15.1 = class_init () [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc12_15.3: init %Int.553 = converted @__global_init.%.loc12, %.loc12_15.2 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc12_15.4: ref %Int.553 = temporary %.loc12_15.1, %.loc12_15.3 [concrete = constants.%.bfe]
-// CHECK:STDOUT:   %.loc12_15.5: %Int.553 = acquire_value %.loc12_15.4
-// CHECK:STDOUT:   %n: %Int.553 = value_binding n, %.loc12_15.5
+// CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.553 [concrete = constants.%Int.553]
+// CHECK:STDOUT:   %.loc8_15.1: ref %Int.553 = temporary_storage
+// CHECK:STDOUT:   %.loc8_15.2: init %Int.553 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.3: init %Int.553 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.4: ref %Int.553 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.fdf]
+// CHECK:STDOUT:   %.loc8_15.5: %Int.553 = acquire_value %.loc8_15.4
+// CHECK:STDOUT:   %n: %Int.553 = value_binding n, %.loc8_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_29.2: @Int.%T.loc6_12.1 (%T)) {
@@ -631,7 +631,7 @@ let n: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

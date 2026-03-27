@@ -31,44 +31,45 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %struct: %struct_type.discriminant = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic]
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [symbolic]
-// CHECK:STDOUT:   %.400: ref %Always = temporary invalid, @Always.%.loc20_1.9 [concrete]
+// CHECK:STDOUT:   %.19a: ref %Always = temporary invalid, %Always.val [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Always.decl: %Always.type = class_decl @Always [concrete = constants.%Always.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18_19.1: type = splice_block %.loc18_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %.loc14_19.2 [concrete = type] {
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.loc18_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc14_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc18_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc18_16.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc14_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc14_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Always(%T.loc18_16.2: type) {
-// CHECK:STDOUT:   %T.loc18_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc18_16.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Always(%T.loc14_16.2: type) {
+// CHECK:STDOUT:   %T.loc14_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc14_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc18_16.1) [symbolic = %Always (constants.%Always)]
+// CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc14_16.1) [symbolic = %Always (constants.%Always)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Always.val: @Always.%Always (%Always) = struct_value (constants.%empty_tuple) [symbolic = %Always.val (constants.%Always.val)]
+// CHECK:STDOUT:   %.loc16_1.12: ref @Always.%Always (%Always) = temporary invalid, %Always.val [symbolic = %.loc16_1.12 (constants.%.19a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
-// CHECK:STDOUT:     %.loc20_1.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_1.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc20_1.2: %empty_tuple.type = converted %.loc20_1.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc20_1.3: %struct_type.discriminant = struct_literal (%.loc20_1.2) [concrete = constants.%struct]
-// CHECK:STDOUT:     %.loc20_1.4: ref @Always.%Always (%Always) = temporary_storage
-// CHECK:STDOUT:     %.loc20_1.5: ref %empty_tuple.type = class_element_access %.loc20_1.4, element0
-// CHECK:STDOUT:     %.loc20_1.6: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc20_1.7: init %empty_tuple.type = converted %.loc20_1.2, %.loc20_1.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc20_1.8: init @Always.%Always (%Always) to %.loc20_1.4 = class_init (%.loc20_1.7) [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %.loc20_1.9: init @Always.%Always (%Always) = converted %.loc20_1.3, %.loc20_1.8 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %.loc20_1.10: ref @Always.%Always (%Always) = temporary %.loc20_1.4, %.loc20_1.9 [concrete = constants.%.400]
-// CHECK:STDOUT:     %.loc20_1.11: @Always.%Always (%Always) = acquire_value %.loc20_1.10
-// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc20_1.11
+// CHECK:STDOUT:     %.loc16_1.2: %empty_tuple.type = converted %.loc16_1.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_1.3: %struct_type.discriminant = struct_literal (%.loc16_1.2) [concrete = constants.%struct]
+// CHECK:STDOUT:     %.loc16_1.4: ref @Always.%Always (%Always) = temporary_storage
+// CHECK:STDOUT:     %.loc16_1.5: ref %empty_tuple.type = class_element_access %.loc16_1.4, element0
+// CHECK:STDOUT:     %.loc16_1.6: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_1.7: init %empty_tuple.type = converted %.loc16_1.2, %.loc16_1.6 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_1.8: init @Always.%Always (%Always) to %.loc16_1.4 = class_init (%.loc16_1.7) [symbolic = %Always.val (constants.%Always.val)]
+// CHECK:STDOUT:     %.loc16_1.9: init @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.8 [symbolic = %Always.val (constants.%Always.val)]
+// CHECK:STDOUT:     %.loc16_1.10: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.9 [symbolic = %.loc16_1.12 (constants.%.19a)]
+// CHECK:STDOUT:     %.loc16_1.11: @Always.%Always (%Always) = acquire_value %.loc16_1.10
+// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.11
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -78,6 +79,6 @@ choice Always(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Always(constants.%T) {
-// CHECK:STDOUT:   %T.loc18_16.1 => constants.%T
+// CHECK:STDOUT:   %T.loc14_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
