@@ -1016,7 +1016,7 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElementFinish, Tuple, Explicit,
 //   1. PatternListElementAs(Explicit|Implicit)
 //   2. PatternListFinishAs(Explicit|Implicit)
 //
-// ( ... )    (variant is Explicit)
+// ( ... )    (variant is Tuple)
 // ^
 //   1. PatternListElementAsTuple
 //   2. PatternListFinishAsParen             (SPECIAL: may be replaced)
