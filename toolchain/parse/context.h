@@ -332,8 +332,8 @@ class Context {
   // `in_unused_pattern` indicate whether that pattern is nested inside a `var`
   // or `unused` pattern.
   auto PushStateForPattern(StateKind kind, bool in_var_pattern,
-                           bool in_unused_pattern,
-                           PrecedenceGroup precedence) -> void {
+                           bool in_unused_pattern, PrecedenceGroup precedence)
+      -> void {
     PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .in_unused_pattern = in_unused_pattern,

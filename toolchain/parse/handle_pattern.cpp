@@ -18,27 +18,23 @@ auto HandlePattern(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::OpenParen:
       context.PushStateForPattern(StateKind::PatternListAsTuple,
-                                  state.in_var_pattern,
-                                  state.in_unused_pattern,
+                                  state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(StateKind::VariablePattern,
-                                  state.in_var_pattern,
-                                  state.in_unused_pattern,
+                                  state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Unused:
       context.PushStateForPattern(StateKind::UnusedPattern,
-                                  state.in_var_pattern,
-                                  state.in_unused_pattern,
+                                  state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Template:
     case Lex::TokenKind::Ref:
       context.PushStateForPattern(StateKind::BindingPattern,
-                                  state.in_var_pattern,
-                                  state.in_unused_pattern,
+                                  state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Identifier:
@@ -46,10 +42,9 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::Underscore: {
       if (IsBindingPatternOperator(
               context.PositionKind(Lookahead::NextToken))) {
-        context.PushStateForPattern(StateKind::BindingPattern,
-                                    state.in_var_pattern,
-                                    state.in_unused_pattern,
-                                    state.ambient_precedence);
+        context.PushStateForPattern(
+            StateKind::BindingPattern, state.in_var_pattern,
+            state.in_unused_pattern, state.ambient_precedence);
         break;
       }
       [[fallthrough]];
