@@ -13,7 +13,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
-namespace Carbon::Lower {
+namespace Carbon::SemIR {
 
 // A class for producing mangled (deterministically unique, at least partially
 // human readable) names for externally referenceable entities such as
@@ -85,6 +85,6 @@ class Mangler {
   SemIR::InstFingerprinter fingerprinter_;
 };
 
-}  // namespace Carbon::Lower
+}  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
