@@ -52,9 +52,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ### Updating test data
 
 Carbon tests often use `file_test` (for example,
-`//toolchain/testing/file_test`). If you change compiler behavior, you likely
-need to update expected test outputs. **Do not manually edit thousands of lines
-of expected output.** Use the script:
+`//toolchain/testing/file_test`). For detailed guidelines on authoring tests,
+including file splits, naming conventions (`fail_`, `todo_`), and generating
+minimal output with SemIR dumps, please refer to the **Toolchain tests** skill.
+
+If you change compiler behavior, you likely need to update expected test
+outputs. **Do not manually edit thousands of lines of expected output.** Use the
+script:
 
 ```bash
 ./toolchain/autoupdate_testdata.py
