@@ -296,7 +296,7 @@ static auto TryGetSpecificWitnessIdForImpl(
 
   auto deduced_constraint_facet_type_id =
       context.constant_values()
-          .GetAs<SemIR::FacetType>(deduced_constraint_id)
+          .GetInstAs<SemIR::FacetType>(deduced_constraint_id)
           .facet_type_id;
   const auto& deduced_constraint_facet_type_info =
       context.facet_types().Get(deduced_constraint_facet_type_id);
@@ -497,12 +497,9 @@ static auto VerifyQueryFacetTypeConstraints(
     SemIR::ConstantId query_facet_type_const_id,
     llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
     llvm::ArrayRef<SemIR::InstId> witness_inst_ids) -> bool {
-  CARBON_CHECK(context.constant_values().Is<SemIR::FacetType>(
-      query_facet_type_const_id));
-
   const auto& facet_type_info = context.facet_types().Get(
       context.constant_values()
-          .GetAs<SemIR::FacetType>(query_facet_type_const_id)
+          .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
           .facet_type_id);
 
   if (!facet_type_info.rewrite_constraints.empty()) {
@@ -800,7 +797,7 @@ static auto FindFinalWitnessFromSelfFacetValue(
     Context& context, SemIR::ConstantId query_self_const_id,
     SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
     SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
-  auto facet_value = context.constant_values().TryGetAs<SemIR::FacetValue>(
+  auto facet_value = context.constant_values().TryGetInstAs<SemIR::FacetValue>(
       query_self_const_id);
   if (!facet_value) {
     return SemIR::InstId::None;
@@ -906,7 +903,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK((context.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
         query_self_type_id)));
     // The query facet type value is indeed a facet type.
-    CARBON_CHECK(context.constant_values().Is<SemIR::FacetType>(
+    CARBON_CHECK(context.constant_values().InstIs<SemIR::FacetType>(
         query_facet_type_const_id));
   }
 

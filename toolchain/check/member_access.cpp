@@ -120,8 +120,9 @@ auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
   auto self_class_info = context.classes().Get(self_class_type->class_id);
 
   // TODO: Support other types.
-  if (auto class_type = context.constant_values().TryGetAs<SemIR::ClassType>(
-          name_scope_const_id)) {
+  if (auto class_type =
+          context.constant_values().TryGetInstAs<SemIR::ClassType>(
+              name_scope_const_id)) {
     auto class_info = context.classes().Get(class_type->class_id);
 
     if (self_class_info.self_type_id == class_info.self_type_id) {
@@ -725,8 +726,9 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
-  auto assoc_entity = context.constant_values().GetAs<SemIR::AssociatedEntity>(
-      assoc_entity_const_id);
+  auto assoc_entity =
+      context.constant_values().GetInstAs<SemIR::AssociatedEntity>(
+          assoc_entity_const_id);
   auto decl_id = assoc_entity.decl_id;
   LoadImportRef(context, decl_id);
 
@@ -792,7 +794,8 @@ auto PerformCompoundMemberAccess(
       member.type_id() != SemIR::ErrorInst::TypeId) {
     // As a special case, an integer-valued expression can be used as a member
     // name when indexing a tuple.
-    if (context.constant_values().Is<SemIR::TupleType>(base_type_const_id)) {
+    if (context.constant_values().InstIs<SemIR::TupleType>(
+            base_type_const_id)) {
       return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
     }
 
@@ -848,7 +851,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   }
 
   auto index_literal =
-      context.constant_values().GetAs<SemIR::IntValue>(index_const_id);
+      context.constant_values().GetInstAs<SemIR::IntValue>(index_const_id);
   auto type_block = context.inst_blocks().Get(tuple_type->type_elements_id);
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());

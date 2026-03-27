@@ -104,7 +104,7 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
   if (!cond_const_id.is_concrete()) {
     // Symbolic or non-constant condition means a non-constant result.
   } else if (auto literal =
-                 context.constant_values().TryGetAs<SemIR::BoolLiteral>(
+                 context.constant_values().TryGetInstAs<SemIR::BoolLiteral>(
                      cond_const_id)) {
     const_id = context.constant_values().Get(
         literal.value().value.ToBool() ? if_true : if_false);

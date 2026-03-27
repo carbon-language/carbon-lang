@@ -184,21 +184,21 @@ class ConstantValueStore {
   // Returns whether the underlying constant inst for the given constant is the
   // specified type.
   template <typename InstT>
-  auto Is(ConstantId const_id) const -> bool {
+  auto InstIs(ConstantId const_id) const -> bool {
     return insts_->Is<InstT>(GetInstId(const_id));
   }
 
   // Returns the requested instruction from the underlying constant inst, which
   // is known to have the specified type.
   template <typename InstT>
-  auto GetAs(ConstantId const_id) const -> InstT {
+  auto GetInstAs(ConstantId const_id) const -> InstT {
     return insts_->GetAs<InstT>(GetInstId(const_id));
   }
 
   // Returns the requested instruction from the underlying constant inst as the
   // specified type, if it is of the that type.
   template <typename InstT>
-  auto TryGetAs(ConstantId const_id) const -> std::optional<InstT> {
+  auto TryGetInstAs(ConstantId const_id) const -> std::optional<InstT> {
     return insts_->TryGetAs<InstT>(GetInstId(const_id));
   }
 

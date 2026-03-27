@@ -214,7 +214,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(
     Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
-  auto class_type = context.constant_values().TryGetAs<SemIR::ClassType>(
+  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
       access_info.constant_id);
   if (!class_type) {
     return;
@@ -307,7 +307,7 @@ static auto GetSelfFacetForInterfaceFromLookupSelfType(
     return context.constant_values().Get(self_specific_args.back());
   }
 
-  if (context.constant_values().Is<SemIR::FacetType>(self_type_const_id)) {
+  if (context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
     // We are looking directly in a facet type, like `I.F` for an interface `I`,
     // which means there is no self-type from the lookup for the
     // interface-with-self specific. So the self-type we use is the abstract

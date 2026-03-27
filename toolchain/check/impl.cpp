@@ -740,7 +740,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
             loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
             context.constant_values()
-                .GetAs<SemIR::FacetType>(facet_type_const_id)
+                .GetInstAs<SemIR::FacetType>(facet_type_const_id)
                 .facet_type_id);
       }
     }

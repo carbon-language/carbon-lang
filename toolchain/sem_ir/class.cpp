@@ -46,7 +46,7 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
   }
   return file.types().GetTypeIdForTypeInstId(
       file.constant_values()
-          .GetAs<CompleteTypeWitness>(witness_id)
+          .GetInstAs<CompleteTypeWitness>(witness_id)
           .object_repr_type_inst_id);
 }
 

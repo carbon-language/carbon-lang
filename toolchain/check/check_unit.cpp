@@ -542,7 +542,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     if (found_witness_id != poison.witness_id) {
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
         auto table_id = context_.constant_values()
-                            .GetAs<SemIR::ImplWitness>(witness_id)
+                            .GetInstAs<SemIR::ImplWitness>(witness_id)
                             .witness_table_id;
         return context_.insts()
             .GetAs<SemIR::ImplWitnessTable>(table_id)
