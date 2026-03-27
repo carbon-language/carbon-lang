@@ -104,29 +104,11 @@ static auto DiagnoseIncompleteNamedConstraint(
   }
 }
 
-// TODO: Have the resolved specific know whether any instructions in the
-// declaration or definition contain an ErrorInst, instead of having to do a
-// linear scan here.
-static auto SpecificContainsError(Context& context,
-                                  SemIR::SpecificId specific_id) -> bool {
-  if (!specific_id.has_value()) {
-    return false;
-  }
-
-  const auto& specific = context.specifics().Get(specific_id);
-  auto block_ids = {specific.decl_block_id, specific.definition_block_id};
-
-  for (auto block_id : block_ids) {
-    if (block_id.has_value()) {
-      for (auto inst_id : context.inst_blocks().Get(block_id)) {
-        if (context.constant_values().Get(inst_id) ==
-            SemIR::ErrorInst::ConstantId) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
+// Returns true if either eval block contains an error.
+static auto SpecificHasError(Context& context, SemIR::SpecificId specific_id)
+    -> bool {
+  return specific_id.has_value() &&
+         context.specifics().Get(specific_id).HasError();
 }
 
 static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
@@ -146,7 +128,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     }
     if (interface.generic_id.has_value()) {
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
-      if (SpecificContainsError(context, extends.specific_id)) {
+      if (SpecificHasError(context, extends.specific_id)) {
         return false;
       }
     }
@@ -158,7 +140,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, interface.generic_id, interface.generic_with_self_id,
         extends.specific_id, context.constant_values().Get(self_facet));
-    if (SpecificContainsError(context, interface_with_self_specific_id)) {
+    if (SpecificHasError(context, interface_with_self_specific_id)) {
       return false;
     }
   }
@@ -175,7 +157,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     }
     if (constraint.generic_id.has_value()) {
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
-      if (SpecificContainsError(context, extends.specific_id)) {
+      if (SpecificHasError(context, extends.specific_id)) {
         return false;
       }
     }
@@ -187,7 +169,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, constraint.generic_id, constraint.generic_with_self_id,
         extends.specific_id, context.constant_values().Get(self_facet));
-    if (SpecificContainsError(context, constraint_with_self_specific_id)) {
+    if (SpecificHasError(context, constraint_with_self_specific_id)) {
       return false;
     }
   }
@@ -972,7 +954,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, extends.specific_id, self_facet);
-      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
+      if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
 
@@ -1031,7 +1013,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id, self_facet);
-      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
+      if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
 

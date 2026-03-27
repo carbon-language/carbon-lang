@@ -371,45 +371,45 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     generic78000009: {decl: inst7800011F, bindings: inst_block7800007F, self_specific_id: specific78000017, decl_block_id: inst_block78000083, definition_block_id: inst_block78000085}
 // CHECK:STDOUT:     generic7800000A: {decl: inst78000126, bindings: inst_block78000070, self_specific_id: specific7800001A, decl_block_id: inst_block78000072, definition_block_id: inst_block7800007C}
 // CHECK:STDOUT:   specifics:
-// CHECK:STDOUT:     specific78000000: {generic: generic78000000, args: inst_block78000016, decl_block_id: inst_block78000018, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000001: {generic: generic78000001, args: inst_block7800001D, decl_block_id: inst_block_empty, definition_block_id: inst_block7800001E}
-// CHECK:STDOUT:     specific78000002: {generic: generic78000002, args: inst_block7800001D, decl_block_id: inst_block78000024, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000003: {generic: generic78000001, args: inst_block78000025, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000004: {generic: generic78000003, args: inst_block78000028, decl_block_id: inst_block78000029, definition_block_id: inst_block7800002A}
-// CHECK:STDOUT:     specific78000005: {generic: generic78000001, args: inst_block78000028, decl_block_id: inst_block_empty, definition_block_id: inst_block78000030}
-// CHECK:STDOUT:     specific78000006: {generic: generic78000002, args: inst_block78000028, decl_block_id: inst_block78000031, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000007: {generic: generic78000004, args: inst_block78000028, decl_block_id: inst_block78000035, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000008: {generic: generic78000001, args: inst_block78000032, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000009: {generic: generic78000002, args: inst_block78000032, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800000A: {generic: generic78000003, args: inst_block78000038, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800000B: {generic: generic78000005, args: inst_block78000016, decl_block_id: inst_block7800003D, definition_block_id: inst_block78000086}
-// CHECK:STDOUT:     specific7800000C: {generic: generic78000005, args: inst_block78000040, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800000D: {generic: generic78000006, args: inst_block78000016, decl_block_id: inst_block78000047, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800000E: {generic: generic78000007, args: inst_block7800004C, decl_block_id: inst_block7800004E, definition_block_id: inst_block7800004F}
-// CHECK:STDOUT:     specific7800000F: {generic: generic78000001, args: inst_block78000056, decl_block_id: inst_block_empty, definition_block_id: inst_block78000057}
-// CHECK:STDOUT:     specific78000010: {generic: generic78000002, args: inst_block78000056, decl_block_id: inst_block78000058, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000011: {generic: generic78000008, args: inst_block7800004C, decl_block_id: inst_block7800005E, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000012: {generic: generic78000001, args: inst_block78000059, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000013: {generic: generic78000002, args: inst_block78000059, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000014: {generic: generic78000001, args: inst_block7800005B, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000015: {generic: generic78000002, args: inst_block7800005B, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000016: {generic: generic78000007, args: inst_block78000061, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000017: {generic: generic78000009, args: inst_block78000069, decl_block_id: inst_block7800006B, definition_block_id: inst_block7800006C}
-// CHECK:STDOUT:     specific78000018: {generic: generic78000001, args: inst_block78000073, decl_block_id: inst_block_empty, definition_block_id: inst_block78000074}
-// CHECK:STDOUT:     specific78000019: {generic: generic78000002, args: inst_block78000073, decl_block_id: inst_block78000075, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001A: {generic: generic7800000A, args: inst_block78000069, decl_block_id: inst_block7800007D, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001B: {generic: generic78000001, args: inst_block78000076, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001C: {generic: generic78000002, args: inst_block78000076, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001D: {generic: generic78000001, args: inst_block78000078, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001E: {generic: generic78000002, args: inst_block78000078, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific7800001F: {generic: generic78000001, args: inst_block7800007A, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000020: {generic: generic78000002, args: inst_block7800007A, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000021: {generic: generic78000009, args: inst_block78000080, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000022: {generic: generic78000005, args: inst_block78000087, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000023: {generic: generic78000001, args: inst_block78000089, decl_block_id: inst_block_empty, definition_block_id: inst_block7800008A}
-// CHECK:STDOUT:     specific78000024: {generic: generic78000001, args: inst_block7800008C, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000025: {generic: generic78000002, args: inst_block78000089, decl_block_id: inst_block7800008D, definition_block_id: inst_block<none>}
-// CHECK:STDOUT:     specific78000026: {generic: generic78000002, args: inst_block7800008C, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific78000000: {generic: generic78000000, args: inst_block78000016, decl_block_id: inst_block78000018, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000001: {generic: generic78000001, args: inst_block7800001D, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block7800001E, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000002: {generic: generic78000002, args: inst_block7800001D, decl_block_id: inst_block78000024, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000003: {generic: generic78000001, args: inst_block78000025, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000004: {generic: generic78000003, args: inst_block78000028, decl_block_id: inst_block78000029, decl_has_error: 0, definition_block_id: inst_block7800002A, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000005: {generic: generic78000001, args: inst_block78000028, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block78000030, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000006: {generic: generic78000002, args: inst_block78000028, decl_block_id: inst_block78000031, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000007: {generic: generic78000004, args: inst_block78000028, decl_block_id: inst_block78000035, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000008: {generic: generic78000001, args: inst_block78000032, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000009: {generic: generic78000002, args: inst_block78000032, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000A: {generic: generic78000003, args: inst_block78000038, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000B: {generic: generic78000005, args: inst_block78000016, decl_block_id: inst_block7800003D, decl_has_error: 0, definition_block_id: inst_block78000086, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000C: {generic: generic78000005, args: inst_block78000040, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000D: {generic: generic78000006, args: inst_block78000016, decl_block_id: inst_block78000047, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000E: {generic: generic78000007, args: inst_block7800004C, decl_block_id: inst_block7800004E, decl_has_error: 0, definition_block_id: inst_block7800004F, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800000F: {generic: generic78000001, args: inst_block78000056, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block78000057, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000010: {generic: generic78000002, args: inst_block78000056, decl_block_id: inst_block78000058, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000011: {generic: generic78000008, args: inst_block7800004C, decl_block_id: inst_block7800005E, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000012: {generic: generic78000001, args: inst_block78000059, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000013: {generic: generic78000002, args: inst_block78000059, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000014: {generic: generic78000001, args: inst_block7800005B, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000015: {generic: generic78000002, args: inst_block7800005B, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000016: {generic: generic78000007, args: inst_block78000061, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000017: {generic: generic78000009, args: inst_block78000069, decl_block_id: inst_block7800006B, decl_has_error: 0, definition_block_id: inst_block7800006C, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000018: {generic: generic78000001, args: inst_block78000073, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block78000074, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000019: {generic: generic78000002, args: inst_block78000073, decl_block_id: inst_block78000075, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001A: {generic: generic7800000A, args: inst_block78000069, decl_block_id: inst_block7800007D, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001B: {generic: generic78000001, args: inst_block78000076, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001C: {generic: generic78000002, args: inst_block78000076, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001D: {generic: generic78000001, args: inst_block78000078, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001E: {generic: generic78000002, args: inst_block78000078, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific7800001F: {generic: generic78000001, args: inst_block7800007A, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000020: {generic: generic78000002, args: inst_block7800007A, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000021: {generic: generic78000009, args: inst_block78000080, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000022: {generic: generic78000005, args: inst_block78000087, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000023: {generic: generic78000001, args: inst_block78000089, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block7800008A, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000024: {generic: generic78000001, args: inst_block7800008C, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000025: {generic: generic78000002, args: inst_block78000089, decl_block_id: inst_block7800008D, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific78000026: {generic: generic78000002, args: inst_block7800008C, decl_block_id: inst_block<none>, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
 // CHECK:STDOUT:   specific_interfaces:
 // CHECK:STDOUT:     specific_interface78000000: {interface_id: interface78000000, specific_id: specific<none>}
 // CHECK:STDOUT:   struct_type_fields:

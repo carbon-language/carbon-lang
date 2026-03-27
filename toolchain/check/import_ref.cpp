@@ -1068,9 +1068,12 @@ static auto TryFinishSpecific(ImportRefResolver& resolver,
   if (!local_specific.decl_block_id.has_value()) {
     local_specific.decl_block_id = GetLocalCanonicalInstBlockId(
         resolver, import_specific.decl_block_id, decl_block);
+    local_specific.decl_block_has_error = import_specific.decl_block_has_error;
   }
   local_specific.definition_block_id = GetLocalCanonicalInstBlockId(
       resolver, import_specific.definition_block_id, definition_block);
+  local_specific.definition_block_has_error =
+      import_specific.definition_block_has_error;
   return true;
 }
 
