@@ -46,7 +46,7 @@
       },
       {
         "language": "semir",
-        "scopeName": "source.semir",
+        "scopeName": "source.carbon-semir",
         "path": "./semir.tmLanguage.json"
       },
       {

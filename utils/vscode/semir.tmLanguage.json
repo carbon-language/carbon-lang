@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "semir",
-  "scopeName": "source.semir",
+  "scopeName": "source.carbon-semir",
   "fileTypes": ["semir"],
   "patterns": [
     {
@@ -44,7 +44,7 @@
       "patterns": [
         {
           "name": "entity.name.variable.semir",
-          "match": "%[a-zA-Z0-9_.]+"
+          "match": "(?:[a-zA-Z0-9_]+\\.)?%[a-zA-Z0-9_.]+"
         },
         {
           "name": "entity.name.function.semir",

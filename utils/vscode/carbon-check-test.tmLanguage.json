@@ -13,7 +13,7 @@
       "end": "$",
       "patterns": [
         {
-          "include": "source.semir"
+          "include": "source.carbon-semir"
         }
       ]
     }
