@@ -125,8 +125,8 @@ be one that emits non-pattern instructions. To handle these situations, we
 speculatively push an instruction block onto the (non-pattern) stack whenever we
 are about to begin handling a subpattern, and then pop it at the end of the
 subpattern, with different treatment depending on whether the subpattern turned
-out to be a subexpression. This is handled by `BeginSubpattern`,
-`EndSubpatternAsExpr`, and `EndSubpatternAsNonExpr`.
+out to involve a subexpression. This is handled by `BeginSubpattern`,
+`ConsumeSubpatternExpr`, `EndSubpattern`, and `EndEmptySubpattern`.
 
 One further complication here is that the type expression can contain control
 flow (such as an `if` expression). Consequently, we can't represent the type

@@ -152,6 +152,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(Context& context, SemIR::AnyParamPattern param_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(Context& context, SemIR::ExprPattern expr_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(Context& context, SemIR::ReturnSlotPattern return_slot_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(Context& context, SemIR::VarPattern var_pattern,
@@ -166,6 +168,8 @@ class MatchContext {
   auto DoPostWork(Context& context, SemIR::VarPattern var_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(Context& context, SemIR::AnyParamPattern param_pattern,
+                  WorkItem entry) -> void;
+  auto DoPostWork(Context& context, SemIR::ExprPattern expr_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(Context& context,
                   SemIR::ReturnSlotPattern return_slot_pattern, WorkItem entry)
@@ -575,6 +579,17 @@ auto MatchContext::DoPostWork(Context& /*context*/,
   // would have to be done here.
 }
 
+auto MatchContext::DoPreWork(Context& context,
+                             SemIR::ExprPattern /*expr_pattern*/,
+                             SemIR::InstId /*scrutinee_id*/, WorkItem entry)
+    -> void {
+  context.TODO(entry.pattern_id, "expression pattern");
+}
+
+auto MatchContext::DoPostWork(Context& /*context*/,
+                              SemIR::ExprPattern /*expr_pattern*/,
+                              WorkItem /*entry*/) -> void {}
+
 auto MatchContext::DoPreWork(Context& /*context*/,
                              SemIR::ReturnSlotPattern return_slot_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
@@ -804,6 +819,10 @@ auto MatchContext::Dispatch(Context& context, WorkItem entry) -> void {
           DoPreWork(context, any_param_pattern, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
+          DoPreWork(context, expr_pattern, work.scrutinee_id, entry);
+          break;
+        }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
           DoPreWork(context, return_slot_pattern, work.scrutinee_id, entry);
           break;
@@ -830,6 +849,10 @@ auto MatchContext::Dispatch(Context& context, WorkItem entry) -> void {
         }
         case CARBON_KIND_ANY(SemIR::AnyParamPattern, any_param_pattern): {
           DoPostWork(context, any_param_pattern, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
+          DoPostWork(context, expr_pattern, entry);
           break;
         }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
