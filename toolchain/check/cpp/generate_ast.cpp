@@ -425,7 +425,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           cpp_return_type, cpp_param_types,
           clang::FunctionProtoType::ExtProtoInfo());
 
-      auto function_decl = clang::FunctionDecl::Create(
+      auto* function_decl = clang::FunctionDecl::Create(
           *ast_context_, &decl_context,
           /*StartLoc=*/clang::SourceLocation(),
           /*NLoc=*/clang::SourceLocation(),
