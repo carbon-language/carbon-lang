@@ -65,8 +65,7 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::LocId loc_id,
     // TODO: Add tests for these cases.
     return IntId::None;
   }
-  auto arg = context.insts().TryGetAs<SemIR::IntValue>(
-      context.constant_values().GetInstId(arg_const_id));
+  auto arg = context.constant_values().TryGetAs<SemIR::IntValue>(arg_const_id);
   if (!arg) {
     return IntId::None;
   }

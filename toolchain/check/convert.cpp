@@ -434,10 +434,8 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
 
-  auto value_const_inst_id =
-      context.constant_values().GetInstId(value_const_id);
-  if (auto tuple_value =
-          context.insts().TryGetAs<SemIR::TupleValue>(value_const_inst_id)) {
+  if (auto tuple_value = context.constant_values().TryGetAs<SemIR::TupleValue>(
+          value_const_id)) {
     for (auto tuple_inst_id :
          context.inst_blocks().Get(tuple_value->elements_id)) {
       // TODO: This call recurses back into conversion. Switch to an
@@ -449,7 +447,7 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
     // A value of type TupleType that isn't a TupleValue must be a symbolic
     // binding.
     CARBON_CHECK(
-        context.insts().Is<SemIR::SymbolicBinding>(value_const_inst_id));
+        context.constant_values().Is<SemIR::SymbolicBinding>(value_const_id));
     // Form a TupleAccess for each element in the symbolic value, which is then
     // converted to a `type` or diagnosed as an error.
     auto tuple_type = context.types().GetAs<SemIR::TupleType>(value_type_id);

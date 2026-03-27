@@ -488,9 +488,8 @@ auto MatchContext::DoPreWork(Context& context,
     case SemIR::FormParamPattern::Kind: {
       auto form_param_pattern =
           context.insts().GetAs<SemIR::FormParamPattern>(entry.pattern_id);
-      auto form_inst_id =
-          context.constant_values().GetInstId(form_param_pattern.form_id);
-      if (!context.insts().Is<SemIR::InitForm>(form_inst_id)) {
+      if (!context.constant_values().Is<SemIR::InitForm>(
+              form_param_pattern.form_id)) {
         break;
       }
       [[fallthrough]];

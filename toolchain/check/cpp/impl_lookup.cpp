@@ -26,8 +26,8 @@ namespace Carbon::Check {
 static auto TypeAsClassDecl(Context& context,
                             SemIR::ConstantId query_self_const_id)
     -> clang::CXXRecordDecl* {
-  auto self_inst_id = context.constant_values().GetInstId(query_self_const_id);
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(self_inst_id);
+  auto class_type =
+      context.constant_values().TryGetAs<SemIR::ClassType>(query_self_const_id);
   if (!class_type) {
     // Not a class.
     return nullptr;

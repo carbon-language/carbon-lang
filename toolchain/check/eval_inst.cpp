@@ -727,8 +727,7 @@ auto EvalConstantInst(Context& context, SemIR::UnaryOperatorNot inst)
   // All other uses of unary `not` are non-constant.
   auto const_id = context.constant_values().Get(inst.operand_id);
   if (const_id.is_concrete()) {
-    auto value = context.insts().GetAs<SemIR::BoolLiteral>(
-        context.constant_values().GetInstId(const_id));
+    auto value = context.constant_values().GetAs<SemIR::BoolLiteral>(const_id);
     value.value = SemIR::BoolValue::From(!value.value.ToBool());
     return ConstantEvalResult::NewSamePhase(value);
   }

@@ -994,11 +994,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           return SemIR::IdentifiedFacetTypeId::None;
         }
 
-        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
-        auto facet_type_inst_id =
-            context.constant_values().GetInstId(require_facet_type);
-        auto facet_type_id = context.insts()
-                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+        auto facet_type_id = context.constant_values()
+                                 .GetAs<SemIR::FacetType>(require_facet_type)
                                  .facet_type_id;
         bool extend = facet_type_extends && require.extend_self;
         work.push_back({extend, require_self, facet_type_id});
@@ -1053,11 +1050,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           return SemIR::IdentifiedFacetTypeId::None;
         }
 
-        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
-        auto facet_type_inst_id =
-            context.constant_values().GetInstId(require_facet_type);
-        auto facet_type_id = context.insts()
-                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+        auto facet_type_id = context.constant_values()
+                                 .GetAs<SemIR::FacetType>(require_facet_type)
                                  .facet_type_id;
         work.push_back({false, require_self, facet_type_id});
       }
