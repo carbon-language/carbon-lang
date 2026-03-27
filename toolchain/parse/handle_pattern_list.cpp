@@ -85,13 +85,13 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
                               StateKind finish_state_empty,
                               StateKind finish_state_nonempty) -> void {
   auto state = context.PopState();
-  auto close_token = context.ConsumeChecked(open_token_kind);
+  auto open_token = context.ConsumeChecked(open_token_kind);
   bool empty = context.PositionIs(close_token_kind);
 
   context.PushStateForPattern(
       empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
       state.in_unused_pattern);
-  context.AddLeafNode(node_kind, close_token);
+  context.AddLeafNode(node_kind, open_token);
 
   if (!empty) {
     context.PushStateForPattern(param_state, state.in_var_pattern,
