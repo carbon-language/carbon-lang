@@ -172,7 +172,7 @@ fn For() {
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "NewCursor", linkageName: "_CNewCursor.EmptyRange.1ccc388edee5a786.Main:Iterate.Core.8d745d19e7d6c4bd", scope: null, file: !3, line: 15, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{null, !16}
-// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 7, scope: !13)

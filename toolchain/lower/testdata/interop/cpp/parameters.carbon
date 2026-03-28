@@ -279,7 +279,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
 // CHECK:STDOUT: !33 = !{null, !34, !35}
 // CHECK:STDOUT: !34 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !35 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !35 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !36 = !{!37, !38}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !31, type: !34)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !31, type: !35)
@@ -409,7 +409,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !25 = !DIFile(filename: "./struct.h", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{!28}
-// CHECK:STDOUT: !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !29 = !DILocation(line: 2, column: 8, scope: !24)
 // CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4", scope: null, file: !31, line: 9, type: !26, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
@@ -517,7 +517,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !27 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !6, line: 20, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{null, !30}
-// CHECK:STDOUT: !30 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !30 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 21, column: 3, scope: !27)

@@ -288,7 +288,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.C.Cpp", scope: null, file: !6, line: 5, type: !32, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
 // CHECK:STDOUT: !33 = !{!34}
-// CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !35 = !DILocation(line: 5, column: 7, scope: !31)
 // CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !37, line: 9, type: !32, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !37 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
@@ -484,7 +484,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.C.Cpp", scope: null, file: !6, line: 5, type: !34, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !34 = !DISubroutineType(types: !35)
 // CHECK:STDOUT: !35 = !{!36}
-// CHECK:STDOUT: !36 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !36 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !37 = !DILocation(line: 5, column: 7, scope: !33)
 // CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !39, line: 9, type: !34, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !39 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")

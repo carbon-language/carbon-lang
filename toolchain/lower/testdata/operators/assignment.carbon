@@ -88,7 +88,7 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 19, type: !13, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !16 = !DILocation(line: 20, column: 3, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 21, column: 7, scope: !12)
 // CHECK:STDOUT: !18 = !DILocation(line: 21, column: 3, scope: !12)

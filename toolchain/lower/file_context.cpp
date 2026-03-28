@@ -337,8 +337,7 @@ class FileContext::FunctionTypeInfoBuilder {
     return_type_ =
         llvm::PointerType::get(context_.llvm_context(), /*AddressSpace=*/0);
     // TODO: replace this with a reference type.
-    param_di_types_.push_back(
-        context_.context().di_builder().createPointerType(nullptr, 8));
+    param_di_types_.push_back(GetPointerDIType(nullptr));
     return true;
   }
 
@@ -391,6 +390,15 @@ class FileContext::FunctionTypeInfoBuilder {
   // TypeId::None as equivalent to the unit type, and uses an untyped pointer as
   // a placeholder DI type if context_ doesn't provide one.
   auto GetLoweredTypes(SemIR::TypeId type_id) -> LoweredTypes;
+
+  // Returns a DI type for a pointer to the given pointee. The pointee type may
+  // be null.
+  auto GetPointerDIType(llvm::DIType* pointee_type, unsigned address_space = 0)
+      -> llvm::DIDerivedType* {
+    const auto& data_layout = context_.llvm_module().getDataLayout();
+    return context_.context().di_builder().createPointerType(
+        pointee_type, data_layout.getPointerSizeInBits(address_space));
+  }
 
   FileContext& context_;
   const SemIR::SpecificId specific_id_;
@@ -662,8 +670,7 @@ auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
   if (result.llvm_di_type == nullptr) {
     // TODO: figure out what type should go here, or ensure this doesn't
     // happen.
-    result.llvm_di_type =
-        context_.context().di_builder().createPointerType(nullptr, 8);
+    result.llvm_di_type = GetPointerDIType(nullptr);
   }
   return result;
 }

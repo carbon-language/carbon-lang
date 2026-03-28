@@ -521,7 +521,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "GetX", linkageName: "_CGetX.Main", scope: null, file: !6, line: 6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{!17}
-// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !18 = !DILocation(line: 6, column: 29, scope: !14)
 // CHECK:STDOUT: !19 = !DILocation(line: 6, column: 22, scope: !14)
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Let", linkageName: "_CLet.Main", scope: null, file: !6, line: 8, type: !21, spFlags: DISPFlagDefinition, unit: !5)
@@ -592,7 +592,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 10, type: !17, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !20)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{!19, !19}
-// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 10, scope: !16)

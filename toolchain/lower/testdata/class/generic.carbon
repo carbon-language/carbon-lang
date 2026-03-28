@@ -150,7 +150,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "CreateDerived", linkageName: "_CCreateDerived.Create", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 7, column: 10, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 7, column: 19, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
@@ -239,7 +239,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Ints", linkageName: "_CInts.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 10, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Empty", linkageName: "_CEmpty.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
@@ -411,7 +411,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "AccessBool", linkageName: "_CAccessBool.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 19, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 10, scope: !4)

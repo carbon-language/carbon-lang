@@ -79,7 +79,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.64ccbb8e5d9a0b8e", scope: null, file: !3, line: 14, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{!7, !16, !7}
-// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !17 = !{!18, !19}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !16)
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 2, scope: !13, type: !7)

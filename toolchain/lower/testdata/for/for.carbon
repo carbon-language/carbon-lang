@@ -210,7 +210,7 @@ fn For() {
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{!18, !19}
 // CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !14, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 25, column: 51, scope: !14)

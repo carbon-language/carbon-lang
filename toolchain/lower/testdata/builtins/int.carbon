@@ -454,7 +454,7 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !88 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 44, type: !89, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !92)
 // CHECK:STDOUT: !89 = !DISubroutineType(types: !90)
 // CHECK:STDOUT: !90 = !{!91, !7, !7}
-// CHECK:STDOUT: !91 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !91 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !92 = !{!93, !94}
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !88, type: !7)
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 2, scope: !88, type: !7)
@@ -1015,7 +1015,7 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !10)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !8, !9}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_unsigned)
 // CHECK:STDOUT: !9 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_unsigned)
 // CHECK:STDOUT: !10 = !{!11, !12}
