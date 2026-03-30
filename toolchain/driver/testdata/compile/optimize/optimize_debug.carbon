@@ -83,15 +83,41 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   uselistorder ptr %.loc19_11.array.index, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr readnone captures(none) %self) local_unnamed_addr #2 !dbg !41 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) local_unnamed_addr #0 !dbg !33 {
+// CHECK:STDOUT:   %1 = load i32, ptr %self, align 4, !dbg !45
+// CHECK:STDOUT:   %2 = add i32 %1, 1, !dbg !45
+// CHECK:STDOUT:   store i32 %2, ptr %self, align 4, !dbg !45
+// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8"(ptr %self, i32 %other) local_unnamed_addr #2 !dbg !25 {
+// CHECK:STDOUT:   %1 = load i32, ptr %self, align 4, !dbg !48
+// CHECK:STDOUT:   %2 = add i32 %1, %other, !dbg !48
+// CHECK:STDOUT:   store i32 %2, ptr %self, align 4, !dbg !48
+// CHECK:STDOUT:   ret void, !dbg !48
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr i32 @"_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d"(i32 %self) local_unnamed_addr #0 !dbg !49 {
+// CHECK:STDOUT:   ret i32 %self, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr i32 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8"(i32 %self) local_unnamed_addr #0 !dbg !55 {
+// CHECK:STDOUT:   ret i32 %self, !dbg !58
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }
+// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -141,3 +167,17 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !7)
 // CHECK:STDOUT: !44 = !DILocation(line: 17, column: 3, scope: !41)
+// CHECK:STDOUT: !45 = !DILocation(line: 299, column: 3, scope: !25, inlinedAt: !46)
+// CHECK:STDOUT: !46 = distinct !DILocation(line: 365, column: 5, scope: !33)
+// CHECK:STDOUT: !47 = !DILocation(line: 363, column: 3, scope: !33)
+// CHECK:STDOUT: !48 = !DILocation(line: 299, column: 3, scope: !25)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d", scope: null, file: !26, line: 62, type: !50, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !52)
+// CHECK:STDOUT: !50 = !DISubroutineType(types: !51)
+// CHECK:STDOUT: !51 = !{!7, !7}
+// CHECK:STDOUT: !52 = !{!53}
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !49, type: !7)
+// CHECK:STDOUT: !54 = !DILocation(line: 64, column: 5, scope: !49)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "AsInt", linkageName: "_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8", scope: null, file: !26, line: 57, type: !50, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !7)
+// CHECK:STDOUT: !58 = !DILocation(line: 57, column: 36, scope: !55)

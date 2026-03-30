@@ -98,26 +98,24 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_COp.1608e268d71809e4:core.Destroy.Core"(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z7TakePtrPi(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %self) #2 !dbg !24 {
+// CHECK:STDOUT: define weak_odr void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %self) #2 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.ca2ce9262234b385:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ca2ce9262234b385:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.dc33c1983710215f:core.Destroy.Core"(ptr %self) #2 !dbg !35 {
+// CHECK:STDOUT: define weak_odr void @"_COp.dc33c1983710215f:core.Destroy.Core"(ptr %self) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
@@ -174,7 +172,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %self) #2 !dbg !59 {
+// CHECK:STDOUT: define weak_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %self) #2 !dbg !59 {
 // CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.95809cda2a4fffc7(), !dbg !65
 // CHECK:STDOUT:   ret ptr %1, !dbg !66
 // CHECK:STDOUT: }
@@ -185,7 +183,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare ptr @_CMake.NullptrT.CppCompat.Core()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.95809cda2a4fffc7() #2 !dbg !67 {
+// CHECK:STDOUT: define weak_odr ptr @_CNone.Optional.Core.95809cda2a4fffc7() #2 !dbg !67 {
 // CHECK:STDOUT:   ret ptr null, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -279,25 +279,25 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %self) #2 !dbg !80 {
+// CHECK:STDOUT: define weak_odr void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %self) #2 !dbg !80 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #2 !dbg !86 {
+// CHECK:STDOUT: define weak_odr void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #2 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.ecaf8c3e76291eee:core.Destroy.Core"(ptr %self) #2 !dbg !92 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ecaf8c3e76291eee:core.Destroy.Core"(ptr %self) #2 !dbg !92 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.3de38e83520d6bec:core.Destroy.Core"(ptr %self) #2 !dbg !98 {
+// CHECK:STDOUT: define weak_odr void @"_COp.3de38e83520d6bec:core.Destroy.Core"(ptr %self) #2 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !103
 // CHECK:STDOUT: }
@@ -354,25 +354,25 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.0d6779e60704359e:core.Destroy.Core"(ptr %self) #2 !dbg !131 {
+// CHECK:STDOUT: define weak_odr void @"_COp.0d6779e60704359e:core.Destroy.Core"(ptr %self) #2 !dbg !131 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #2 !dbg !137 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #2 !dbg !137 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !142
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.798ffd80cf2992c3:core.Destroy.Core"(ptr %self) #2 !dbg !143 {
+// CHECK:STDOUT: define weak_odr void @"_COp.798ffd80cf2992c3:core.Destroy.Core"(ptr %self) #2 !dbg !143 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !148
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.dab1523ded6661cc:core.Destroy.Core"(ptr %self) #2 !dbg !149 {
+// CHECK:STDOUT: define weak_odr void @"_COp.dab1523ded6661cc:core.Destroy.Core"(ptr %self) #2 !dbg !149 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !154
 // CHECK:STDOUT: }

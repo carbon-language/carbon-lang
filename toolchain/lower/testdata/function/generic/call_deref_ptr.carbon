@@ -62,13 +62,13 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !14 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %self) #0 !dbg !21 {
+// CHECK:STDOUT: define weak_odr void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %self) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
@@ -77,7 +77,7 @@ fn M() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !28 {
+// CHECK:STDOUT: define weak_odr void @_CF.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.582d60b54baf6b63(%type zeroinitializer), !dbg !31
 // CHECK:STDOUT:   call void @_CB.Main.bfb441135f07cbe1(ptr %x), !dbg !32
@@ -85,7 +85,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !34 {
+// CHECK:STDOUT: define weak_odr void @_CF.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.582d60b54baf6b63(%type zeroinitializer), !dbg !37
 // CHECK:STDOUT:   call void @_CB.Main.29cf1dfeccef7249(ptr %x), !dbg !38
@@ -93,13 +93,13 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CA.Main.582d60b54baf6b63(%type %x) #0 !dbg !40 {
+// CHECK:STDOUT: define weak_odr %type @_CA.Main.582d60b54baf6b63(%type %x) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type %x, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !46 {
+// CHECK:STDOUT: define weak_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !46 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc27_7.2.temp = alloca i32, align 4, !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !49
@@ -111,7 +111,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !52 {
+// CHECK:STDOUT: define weak_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc27_7.2.temp = alloca double, align 8, !dbg !55
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !55
@@ -123,13 +123,13 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x) #0 !dbg !58 {
+// CHECK:STDOUT: define weak_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x) #0 !dbg !58 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr double @_CD.Main.de5b400758c39a65(double %x) #0 !dbg !64 {
+// CHECK:STDOUT: define weak_odr double @_CD.Main.de5b400758c39a65(double %x) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !67
 // CHECK:STDOUT: }

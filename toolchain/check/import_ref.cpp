@@ -2349,7 +2349,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      new_function.SetCoreWitness();
+      new_function.SetCoreWitness(import_function.builtin_function_kind());
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {

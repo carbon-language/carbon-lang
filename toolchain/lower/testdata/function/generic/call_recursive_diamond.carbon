@@ -90,13 +90,13 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %self) #0 !dbg !20 {
+// CHECK:STDOUT: define weak_odr void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %self) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -105,7 +105,7 @@ fn M() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !34 {
+// CHECK:STDOUT: define weak_odr i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !40
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !41
@@ -128,7 +128,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr double @_CA.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !49 {
+// CHECK:STDOUT: define weak_odr double @_CA.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !55
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !56
@@ -151,7 +151,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CA.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !64 {
+// CHECK:STDOUT: define weak_odr ptr @_CA.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !68
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !69
@@ -174,7 +174,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CB.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !77 {
+// CHECK:STDOUT: define weak_odr i32 @_CB.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !77 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !81
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count), !dbg !82
@@ -182,7 +182,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CC.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !84 {
+// CHECK:STDOUT: define weak_odr i32 @_CC.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !84 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !88
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count), !dbg !89
@@ -190,7 +190,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr double @_CB.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !91 {
+// CHECK:STDOUT: define weak_odr double @_CB.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !95
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.de5b400758c39a65(double %x, i32 %count), !dbg !96
@@ -198,7 +198,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr double @_CC.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !98 {
+// CHECK:STDOUT: define weak_odr double @_CC.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !102
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.de5b400758c39a65(double %x, i32 %count), !dbg !103
@@ -206,7 +206,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CB.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !105 {
+// CHECK:STDOUT: define weak_odr ptr @_CB.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !105 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !109
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.779b9c0f3b54a7f8(ptr %x, i32 %count), !dbg !110
@@ -214,7 +214,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CC.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !112 {
+// CHECK:STDOUT: define weak_odr ptr @_CC.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !112 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !116
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.779b9c0f3b54a7f8(ptr %x, i32 %count), !dbg !117
@@ -224,7 +224,7 @@ fn M() {
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !119 {
+// CHECK:STDOUT: define weak_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %count) #0 !dbg !119 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !123
 // CHECK:STDOUT:   %A.call = call i32 @_CA.Main.64ccbb8e5d9a0b8e(i32 %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !124
@@ -232,7 +232,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr double @_CD.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !126 {
+// CHECK:STDOUT: define weak_odr double @_CD.Main.de5b400758c39a65(double %x, i32 %count) #0 !dbg !126 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !130
 // CHECK:STDOUT:   %A.call = call double @_CA.Main.de5b400758c39a65(double %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !131
@@ -240,7 +240,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CD.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !133 {
+// CHECK:STDOUT: define weak_odr ptr @_CD.Main.779b9c0f3b54a7f8(ptr %x, i32 %count) #0 !dbg !133 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !137
 // CHECK:STDOUT:   %A.call = call ptr @_CA.Main.779b9c0f3b54a7f8(ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !138

@@ -71,7 +71,7 @@ fn Run() {
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.e55c78367db83a6b(i32 %count) #0 !dbg !16 {
+// CHECK:STDOUT: define weak_odr i32 @_CG.Main.e55c78367db83a6b(i32 %count) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !22
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !23
@@ -87,7 +87,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.95a632fb0c368a62(i32 %count) #0 !dbg !29 {
+// CHECK:STDOUT: define weak_odr i32 @_CG.Main.95a632fb0c368a62(i32 %count) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !32
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !33

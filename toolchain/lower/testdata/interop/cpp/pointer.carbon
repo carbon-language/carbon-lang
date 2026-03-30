@@ -239,13 +239,13 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.52ae03024b07a1ce:core.Destroy.Core"(ptr %self) #2 !dbg !27 {
+// CHECK:STDOUT: define weak_odr void @"_COp.52ae03024b07a1ce:core.Destroy.Core"(ptr %self) #2 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.b17d31fafee11ec0:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @"_COp.b17d31fafee11ec0:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
@@ -286,7 +286,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %self) #2 !dbg !53 {
+// CHECK:STDOUT: define weak_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %self) #2 !dbg !53 {
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self), !dbg !59
 // CHECK:STDOUT:   ret ptr %1, !dbg !60
 // CHECK:STDOUT: }
@@ -295,19 +295,19 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #2 !dbg !61 {
+// CHECK:STDOUT: define weak_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #2 !dbg !61 {
 // CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %self), !dbg !64
 // CHECK:STDOUT:   ret ptr %1, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %value) #2 !dbg !66 {
+// CHECK:STDOUT: define weak_odr ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %value) #2 !dbg !66 {
 // CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %value), !dbg !69
 // CHECK:STDOUT:   ret ptr %1, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %self) #2 !dbg !71 {
+// CHECK:STDOUT: define weak_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %self) #2 !dbg !71 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !74
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !74
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !74

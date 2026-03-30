@@ -200,25 +200,25 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.ecaf8c3e76291eee:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ecaf8c3e76291eee:core.Destroy.Core"(ptr %self) #2 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.3de38e83520d6bec:core.Destroy.Core"(ptr %self) #2 !dbg !38 {
+// CHECK:STDOUT: define weak_odr void @"_COp.3de38e83520d6bec:core.Destroy.Core"(ptr %self) #2 !dbg !38 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %self) #2 !dbg !45 {
+// CHECK:STDOUT: define weak_odr void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %self) #2 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #2 !dbg !52 {
+// CHECK:STDOUT: define weak_odr void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #2 !dbg !52 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !58
 // CHECK:STDOUT: }
@@ -420,7 +420,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #6
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #4 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #4 !dbg !30 {
 // CHECK:STDOUT:   call void @"_COp:thunk.X.Cpp"(ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }

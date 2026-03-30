@@ -63,14 +63,14 @@ fn Run() {
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.e55c78367db83a6b() #0 !dbg !16 {
+// CHECK:STDOUT: define weak_odr void @_CG.Main.e55c78367db83a6b() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.95a632fb0c368a62() #0 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @_CG.Main.95a632fb0c368a62() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21

@@ -340,7 +340,7 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
     function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
   } else {
     CARBON_CHECK(format == DestroyFormat::NonTrivial);
-    function.SetCoreWitness();
+    function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
     auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
                                      function.self_param_id);
     function.body_block_ids.push_back(body_id);

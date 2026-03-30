@@ -55,7 +55,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -78,7 +78,7 @@ fn Run() {
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.27a852a6bab6ed2e() #0 !dbg !28 {
+// CHECK:STDOUT: define weak_odr void @_CG.Main.27a852a6bab6ed2e() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i1, align 1, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !29
@@ -91,7 +91,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.2de7c972fe093485() #0 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @_CG.Main.2de7c972fe093485() #0 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !32
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !32

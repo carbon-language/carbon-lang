@@ -124,7 +124,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !14 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
@@ -133,7 +133,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CDirectGeneric.Main.b88d1103f417c6d4(ptr %y) #0 !dbg !20 {
+// CHECK:STDOUT: define weak_odr ptr @_CDirectGeneric.Main.b88d1103f417c6d4(ptr %y) #0 !dbg !20 {
 // CHECK:STDOUT:   call void @_CDirectDeclared.Main(), !dbg !27
 // CHECK:STDOUT:   call void @_CDirectDefined.Main(), !dbg !28
 // CHECK:STDOUT:   %1 = call ptr @_CIndirectGeneric.Main.b88d1103f417c6d4(ptr %y), !dbg !29
@@ -145,7 +145,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: declare void @_CDirectDefined.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CIndirectGeneric.Main.b88d1103f417c6d4(ptr %x) #0 !dbg !31 {
+// CHECK:STDOUT: define weak_odr ptr @_CIndirectGeneric.Main.b88d1103f417c6d4(ptr %x) #0 !dbg !31 {
 // CHECK:STDOUT:   call void @_CIndirectDeclared.Main(), !dbg !35
 // CHECK:STDOUT:   call void @_CIndirectDefined.Main(), !dbg !36
 // CHECK:STDOUT:   ret ptr %x, !dbg !37

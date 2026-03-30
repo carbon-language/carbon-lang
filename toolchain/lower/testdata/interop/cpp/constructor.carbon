@@ -320,7 +320,7 @@ fn Four() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret([8 x i8]) %return) #2 !dbg !28 {
+// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret([8 x i8]) %return) #2 !dbg !28 {
 // CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
@@ -457,13 +457,13 @@ fn Four() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.22b4681b019423d7"(ptr sret([4 x i8]) %return) #3 !dbg !36 {
+// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.22b4681b019423d7"(ptr sret([4 x i8]) %return) #3 !dbg !36 {
 // CHECK:STDOUT:   call void @"_COp:thunk.ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.1a27c303748a2360"(ptr sret([4 x i8]) %return) #3 !dbg !40 {
+// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.1a27c303748a2360"(ptr sret([4 x i8]) %return) #3 !dbg !40 {
 // CHECK:STDOUT:   call void @"_COp:thunk.ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
