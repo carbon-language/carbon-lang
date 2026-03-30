@@ -4,6 +4,9 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
+#include <clang/AST/DeclBase.h>
+#include <clang/AST/DeclCXX.h>
+
 #include <type_traits>
 #include <utility>
 
@@ -12,15 +15,19 @@
 #include "clang/Sema/Sema.h"
 #include "common/map.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -157,85 +164,283 @@ static auto BuildCppUnsafeDerefWitness(
                             {result_type_id, fn_id});
 }
 
-// static auto LookupCppFunction(Context& context, SemIR::LocId loc_id,
-//                               clang::CXXRecordDecl* class_decl,
-//                               clang::LookupResult lookup_info)
-//     -> std::optional<DeclInfo> {
-//   auto& clang_sema = context.clang_sema();
-//   const auto name = lookup_info.getLookupName().getAsString();
-
-//   if (lookup_info.isClassLookup()) {
-//     return DeclInfo{};
-//   }
-
-//   clang_sema.LookupName(lookup_info, clang_sema.getCurScope());
-//   if (lookup_info.isAmbiguous()) {
-//     return std::nullopt;
-//   }
-//   if (!lookup_info.isSingleResult()) {
-//     context.TODO(loc_id, name + "() overload sets not implemented yet");
-//     return std::nullopt;
-//   }
-//   if (!lookup_info.empty()) {
-//     return DeclInfo{.decl = *lookup_info.begin(),
-//                     .signature = {.num_params = 1}};
-//   }
-
-//   return DeclInfo{};
-// }
-
-using InstPair = std::pair<SemIR::InstId, SemIR::InstId>;
-using BeginEndPair = std::variant<SemIR::InstId, InstPair>;
-
-static auto LookupCppMethod(Context& context, SemIR::LocId loc_id,
-                            clang::CXXRecordDecl* class_decl,
-                            std::string_view method_name) -> SemIR::InstId {
-  auto& clang_sema = context.clang_sema();
-  auto lookup_info = clang::LookupResult(
-      clang_sema, &clang_sema.getASTContext().Idents.get(method_name),
-      clang::SourceLocation(), clang::Sema::LookupMemberName);
-  clang_sema.LookupQualifiedName(lookup_info, class_decl);
-  if (lookup_info.isAmbiguous()) {
-    return SemIR::ErrorInst::InstId;
+namespace {
+struct CppRangeForIterateWitnessEntries {
+  auto HasAllEntries() const -> bool {
+    return iterator_type != SemIR::InstId::None &&
+           sentinel_type != SemIR::InstId::None &&
+           //  element_type == SemIR::InstId::None &&
+           begin_fn != SemIR::InstId::None && end_fn != SemIR::InstId::None &&
+           next_fn != SemIR::InstId::None &&
+           not_equal_fn != SemIR::InstId::None;
   }
 
-  if (!lookup_info.isSingleResult()) {
-    context.TODO(loc_id, "C++ method overload sets not implemented yet");
-    return SemIR::ErrorInst::InstId;
+  auto HasError() const -> bool {
+    return iterator_type == SemIR::ErrorInst::InstId ||
+           sentinel_type == SemIR::ErrorInst::InstId ||
+           //  element_type == SemIR::ErrorInst::InstId ||
+           begin_fn == SemIR::ErrorInst::InstId ||
+           end_fn == SemIR::ErrorInst::InstId ||
+           next_fn == SemIR::ErrorInst::InstId ||
+           not_equal_fn == SemIR::ErrorInst::InstId;
   }
 
-  if (lookup_info.empty()) {
+  SemIR::InstId iterator_type = SemIR::InstId::None;
+  SemIR::InstId sentinel_type = SemIR::InstId::None;
+  // SemIR::InstId element_type = SemIR::InstId::None;
+  SemIR::InstId begin_fn = SemIR::InstId::None;
+  SemIR::InstId end_fn = SemIR::InstId::None;
+  SemIR::InstId next_fn = SemIR::InstId::None;
+  SemIR::InstId not_equal_fn = SemIR::InstId::None;
+};
+}  // namespace
+
+static auto GetIncrementId(Context& context, SemIR::LocId loc_id,
+                           const clang::CXXRecordDecl* iterator_type)
+    -> SemIR::InstId {
+  auto viable_candidates = llvm::SmallVector<clang::FunctionDecl*>{};
+  auto candidates = iterator_type->lookup(
+      context.clang_sema().getASTContext().DeclarationNames.getCXXOperatorName(
+          clang::OO_PlusPlus));
+  for (auto* candidate : candidates) {
+    auto* function_decl = candidate->getUnderlyingDecl()->getAsFunction();
+    if (function_decl->getNumParams() == 0) {
+      viable_candidates.push_back(function_decl);
+    }
+  }
+
+  if (viable_candidates.empty()) {
     return SemIR::InstId::None;
   }
 
-  auto decl_info =
-      DeclInfo{.decl = *lookup_info.begin(), .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info);
-  return fn_id;
-}
-
-static auto IsValidIteratorSentinelPair(SemIR::InstId begin_fn,
-                                        SemIR::InstId end_fn) -> bool {
-  return false;
-}
-
-static auto LookupCppBeginEnd(Context& context, SemIR::LocId loc_id,
-                              clang::CXXRecordDecl* class_decl)
-    -> BeginEndPair {
-  auto begin_fn = LookupCppMethod(context, loc_id, class_decl, "begin");
-  if (begin_fn == SemIR::ErrorInst::InstId) {
+  if (viable_candidates.size() > 1) {
+    context.TODO(loc_id, "operator++ overload sets not handled yet");
     return SemIR::ErrorInst::InstId;
   }
 
-  auto end_fn = LookupCppMethod(context, loc_id, class_decl, "end");
-  if (end_fn == SemIR::ErrorInst::InstId) {
+  return GetFunctionId(
+      context, loc_id,
+      {.decl = viable_candidates.front(), .signature = {.num_params = 0}});
+}
+
+static auto MakeRangeWitnessEntries(Context& context, SemIR::LocId loc_id,
+                                    DeclInfo begin_fn, DeclInfo end_fn)
+    -> std::optional<CppRangeForIterateWitnessEntries> {
+  const auto* begin_return_type =
+      begin_fn.decl->getAsFunction()->getReturnType().getTypePtr();
+  const auto* end_return_type =
+      end_fn.decl->getAsFunction()->getReturnType().getTypePtr();
+
+  if (begin_return_type->isPointerType()) {
+    context.TODO(loc_id, "handle pointer types");
+    return std::nullopt;
+  }
+
+  auto begin_fn_id = GetFunctionId(context, loc_id, begin_fn);
+  auto end_fn_id = GetFunctionId(context, loc_id, end_fn);
+
+  // CppRangeForIterate.Iterator and CppRangeForIterate.Sentinel can't be worked
+  // out if `begin` or `end` don't have a Carbon ID, and we can't provide more
+  // information without those types, so we should return now.
+  if (begin_fn_id == SemIR::InstId::None || end_fn_id == SemIR::InstId::None ||
+      begin_fn_id == SemIR::ErrorInst::InstId ||
+      end_fn_id == SemIR::ErrorInst::InstId) {
+    return CppRangeForIterateWitnessEntries{
+        .iterator_type = SemIR::InstId::None,
+        .sentinel_type = SemIR::InstId::None,
+        .begin_fn = begin_fn_id,
+        .end_fn = end_fn_id,
+        .next_fn = SemIR::InstId::None,
+        .not_equal_fn = SemIR::InstId::None,
+    };
+  }
+
+  auto iterator_type = context.functions()
+                           .Get(context.insts()
+                                    .GetAs<SemIR::FunctionDecl>(begin_fn_id)
+                                    .function_id)
+                           .return_type_inst_id;
+  auto sentinel_type =
+      context.functions()
+          .Get(
+              context.insts().GetAs<SemIR::FunctionDecl>(end_fn_id).function_id)
+          .return_type_inst_id;
+
+  if (begin_return_type != end_return_type) {
+    context.TODO(loc_id, "add a test case for iterator-sentinel pairs");
+    return CppRangeForIterateWitnessEntries{};
+  }
+
+  return CppRangeForIterateWitnessEntries{
+      .iterator_type = iterator_type,
+      .sentinel_type = sentinel_type,
+      .begin_fn = begin_fn_id,
+      .end_fn = end_fn_id,
+      .next_fn = GetIncrementId(context, loc_id,
+                                begin_return_type->getAsCXXRecordDecl()),
+      .not_equal_fn =
+          LookupCppOperator(context, loc_id,
+                            {.interface_name = CoreIdentifier::NotEqual,
+                             .op_name = CoreIdentifier::NotEqual},
+                            {iterator_type, sentinel_type}),
+  };
+}
+
+static auto LookupCppBeginEndMethods(Context& context, SemIR::LocId loc_id,
+                                     clang::CXXRecordDecl* class_decl)
+    -> std::optional<CppRangeForIterateWitnessEntries> {
+  auto lookup_method =
+      [&](std::string_view method_name) -> std::optional<DeclInfo> {
+    auto& clang_sema = context.clang_sema();
+    auto lookup_info = clang::LookupResult(
+        clang_sema, &clang_sema.getASTContext().Idents.get(method_name),
+        clang::SourceLocation(), clang::Sema::LookupMemberName);
+    clang_sema.LookupQualifiedName(lookup_info, class_decl);
+    if (lookup_info.isAmbiguous()) {
+      return std::nullopt;
+    }
+
+    if (!lookup_info.isSingleResult()) {
+      context.TODO(loc_id, "C++ method overload sets not implemented yet");
+      return std::nullopt;
+    }
+
+    if (lookup_info.empty()) {
+      return DeclInfo{.decl = nullptr, .signature = {.num_params = 0}};
+    }
+
+    return DeclInfo{.decl = *lookup_info.begin(),
+                    .signature = {.num_params = 0}};
+  };
+
+  auto begin_fn = lookup_method("begin");
+  if (!begin_fn.has_value()) {
+    return CppRangeForIterateWitnessEntries{};
+  }
+
+  auto end_fn = lookup_method("end");
+  if (!end_fn.has_value()) {
+    return CppRangeForIterateWitnessEntries{};
+  }
+
+  return MakeRangeWitnessEntries(context, loc_id, *begin_fn, *end_fn);
+}
+
+#if 0
+static auto LookupCppUnqualifiedBeginEnd(Context& context, SemIR::LocId loc_id,
+                                         clang::CXXRecordDecl* class_decl)
+    -> std::optional<CppRangeForIterateWitnessEntries> {
+  auto lookup_unqualified_function =
+      [&](std::string_view name) -> std::optional<DeclInfo> {
+    auto& clang_sema = context.clang_sema();
+    auto lookup_info = clang::LookupResult(
+        clang_sema, &clang_sema.getASTContext().Idents.get(name),
+        clang::SourceLocation(), clang::Sema::LookupOrdinaryName);
+    clang_sema.LookupQualifiedName(lookup_info, class_decl);
+    if (lookup_info.isAmbiguous()) {
+      return std::nullopt;
+    }
+
+    if (!lookup_info.isSingleResult()) {
+      context.TODO(loc_id, "C++ method overload sets not implemented yet");
+      return std::nullopt;
+    }
+
+    if (lookup_info.empty()) {
+      return DeclInfo{.decl = nullptr, .signature = {.num_params = 0}};
+    }
+
+    return DeclInfo{.decl = *lookup_info.begin(),
+                    .signature = {.num_params = 0}};
+  };
+
+  auto begin_fn = lookup_unqualified_function("begin");
+  if (!begin_fn.has_value()) {
+    return std::nullopt;
+  }
+
+  auto end_fn = lookup_unqualified_function("end");
+  if (!end_fn.has_value()) {
+    return std::nullopt;
+  }
+
+  return MakeRangeWitnessEntries(context, loc_id, *begin_fn, *end_fn);
+}
+#endif
+
+static auto BuildCppRangeForIterateWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+
+  auto lookup_methods = LookupCppBeginEndMethods(context, loc_id, class_decl);
+  if (!lookup_methods.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
 
-  if (begin_fn.has_value() && end_fn.has_value() &&
-      IsValidIteratorSentinelPair(begin_fn, end_fn)) {
-    return InstPair(begin_fn, end_fn);
+  if (lookup_methods->HasAllEntries() && !lookup_methods->HasError()) {
+    auto methods = std::array{
+        lookup_methods->iterator_type, lookup_methods->sentinel_type,
+        lookup_methods->begin_fn,      lookup_methods->end_fn,
+        lookup_methods->next_fn,       lookup_methods->not_equal_fn,
+    };
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id, methods);
   }
+
+  // auto lookup_unqualified =
+  //     LookupCppUnqualifiedBeginEnd(context, loc_id, class_decl);
+  // if (!lookup_unqualified.has_value()) {
+  //   return SemIR::ErrorInst::InstId;
+  // }
+
+  // if (!lookup_unqualified->HasNone() && !lookup_methods->HasError()) {
+  //   return BuildCustomWitness(context, loc_id, query_self_const_id,
+  //                             query_specific_interface_id,
+  //                             {&lookup_unqualified->iterator_type, 6});
+  // }
+  llvm::errs() << '\n';
+  if (lookup_methods->iterator_type == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.Iterator == None\n";
+  }
+  if (lookup_methods->iterator_type == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.Iterator == Error\n";
+  }
+  if (lookup_methods->sentinel_type == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.Sentinel == None\n";
+  }
+  if (lookup_methods->sentinel_type == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.Sentinel == Error\n";
+  }
+  if (lookup_methods->begin_fn == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.Begin == None\n";
+  }
+  if (lookup_methods->begin_fn == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.Begin == Error\n";
+  }
+  if (lookup_methods->end_fn == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.End == None\n";
+  }
+  if (lookup_methods->end_fn == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.End == Error\n";
+  }
+  if (lookup_methods->next_fn == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.Next == None\n";
+  }
+  if (lookup_methods->next_fn == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.Next == Error\n";
+  }
+  if (lookup_methods->not_equal_fn == SemIR::InstId::None) {
+    llvm::errs() << "CppRangeForIterate.NotEqual == None\n";
+  }
+  if (lookup_methods->not_equal_fn == SemIR::ErrorInst::InstId) {
+    llvm::errs() << "CppRangeForIterate.NotEqual == Error\n";
+  }
+
+  context.TODO(loc_id,
+               "provide helpful diagnoses for why range-for doesn't work");
+  return SemIR::InstId::None;
 }
 
 static auto BuildDefaultWitness(
@@ -285,43 +490,6 @@ static auto BuildDestroyWitness(
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {fn_id});
-}
-
-static auto BuildCppRangeForIterateWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  const auto& functions = context.functions();
-  const auto& insts = context.insts();
-
-  auto begin_fn = SemIR::InstId::None;
-  auto end_fn = SemIR::InstId::None;
-
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  auto lookup_result = LookupCppBeginEnd(context, loc_id, class_decl);
-  CARBON_KIND_SWITCH(lookup_result) {
-    case CARBON_KIND(SemIR::InstId error_state): {
-      return error_state;
-    }
-    case CARBON_KIND(InstPair begin_end): {
-      begin_fn = begin_end.first;
-      end_fn = begin_end.second;
-    }
-  }
-
-  const auto iterator_type_id =
-      functions.Get(insts.GetAs<SemIR::FunctionDecl>(begin_fn).function_id)
-          .return_type_inst_id;
-  const auto sentinel_type_id =
-      functions.Get(insts.GetAs<SemIR::FunctionDecl>(end_fn).function_id)
-          .return_type_inst_id;
-  const auto next_fn = SemIR::InstId::None;
-  const auto not_equal_fn = SemIR::InstId::None;
-
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id,
-                            {begin_fn, end_fn, iterator_type_id,
-                             sentinel_type_id, next_fn, not_equal_fn});
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,

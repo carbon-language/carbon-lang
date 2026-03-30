@@ -34,7 +34,8 @@ impl forall [T:! Copy & Destroy, N:! IntLiteral()]
 interface CppRangeForIterate {
   let Iterator:! Copy & Destroy & CppUnsafeDeref;
   let Sentinel:! Copy & Destroy;
-  let ElementType:! Copy & Destroy;
+  // TODO: Support iteating ranges of non-copyable values.
+  let ElementType:! Iterator.(CppUnsafeDeref.Result);
   fn Begin[self: Self]() -> Iterator;
   fn End[self: Self]() -> Sentinel;
   fn Next(iterator: Iterator*) -> Optional(ElementType);
@@ -51,7 +52,7 @@ impl forall [R:! CppRangeForIterate]
 
   fn Next[unused self: Self](cursor: (R.Iterator, R.Sentinel)*) -> Optional(R.ElementType) {
     if (R.NotEqual(cursor->0, cursor->1)) {
-      returned var result: Optional(R.ElementType) = Optional(R.ElementType).Some(&cursor->0.(Core.CppUnsafeDeref.Op)());
+      returned var result: Optional(R.ElementType) = Optional(R.ElementType).Some((cursor->0).(CppUnsafeDeref.Op)());
       R.Next(&cursor->0);
       return var;
     } else {
