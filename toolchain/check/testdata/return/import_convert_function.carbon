@@ -1038,7 +1038,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc7_35: <bound method> = bound_method %.loc7_26.1, %impl.elem0.loc7_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.cfc]
 // CHECK:STDOUT:   %.loc6_26.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc7_26.2: ref %C.b00 = temporary %.loc7_24.2, %.loc7_26.1 [concrete = constants.%.b4e]
-// CHECK:STDOUT:   %.loc7_26.3: %C.b00 = acquire_value %.loc7_26.2
+// CHECK:STDOUT:   %.loc7_26.3: %C.b00 = acquire_value %.loc7_26.2 [concrete = constants.%C.val.452]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc7: init %D to %.loc6_26.1 = call %bound_method.loc7_35(%.loc7_26.3)
 // CHECK:STDOUT:   %.loc7_35: init %D = converted %.loc7_26.1, %C.as.ImplicitAs.impl.Convert.call.loc7
 // CHECK:STDOUT:   return %.loc7_35 to %return.param
@@ -1067,7 +1067,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc8_35: <bound method> = bound_method %.loc8_26.1, %impl.elem0.loc8_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.530]
 // CHECK:STDOUT:   %.loc6_26.2: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc8_26.2: ref %C.674 = temporary %.loc8_24.2, %.loc8_26.1 [concrete = constants.%.6f4]
-// CHECK:STDOUT:   %.loc8_26.3: %C.674 = acquire_value %.loc8_26.2
+// CHECK:STDOUT:   %.loc8_26.3: %C.674 = acquire_value %.loc8_26.2 [concrete = constants.%C.val.678]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc8: init %D to %.loc6_26.2 = call %bound_method.loc8_35(%.loc8_26.3)
 // CHECK:STDOUT:   %.loc8_35: init %D = converted %.loc8_26.1, %C.as.ImplicitAs.impl.Convert.call.loc8
 // CHECK:STDOUT:   return %.loc8_35 to %return.param
@@ -1096,7 +1096,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc9_35: <bound method> = bound_method %.loc9_26.1, %impl.elem0.loc9_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.fc6]
 // CHECK:STDOUT:   %.loc6_26.3: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc9_26.2: ref %C.681 = temporary %.loc9_24.2, %.loc9_26.1 [concrete = constants.%.18a]
-// CHECK:STDOUT:   %.loc9_26.3: %C.681 = acquire_value %.loc9_26.2
+// CHECK:STDOUT:   %.loc9_26.3: %C.681 = acquire_value %.loc9_26.2 [concrete = constants.%C.val.fb5]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc9: init %D to %.loc6_26.3 = call %bound_method.loc9_35(%.loc9_26.3)
 // CHECK:STDOUT:   %.loc9_35: init %D = converted %.loc9_26.1, %C.as.ImplicitAs.impl.Convert.call.loc9
 // CHECK:STDOUT:   return %.loc9_35 to %return.param
@@ -1125,7 +1125,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc10_35: <bound method> = bound_method %.loc10_26.1, %impl.elem0.loc10_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.ffe]
 // CHECK:STDOUT:   %.loc6_26.4: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc10_26.2: ref %C.7ac = temporary %.loc10_24.2, %.loc10_26.1 [concrete = constants.%.440]
-// CHECK:STDOUT:   %.loc10_26.3: %C.7ac = acquire_value %.loc10_26.2
+// CHECK:STDOUT:   %.loc10_26.3: %C.7ac = acquire_value %.loc10_26.2 [concrete = constants.%C.val.fe7]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc10: init %D to %.loc6_26.4 = call %bound_method.loc10_35(%.loc10_26.3)
 // CHECK:STDOUT:   %.loc10_35: init %D = converted %.loc10_26.1, %C.as.ImplicitAs.impl.Convert.call.loc10
 // CHECK:STDOUT:   return %.loc10_35 to %return.param
@@ -1154,7 +1154,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc11_35: <bound method> = bound_method %.loc11_26.1, %impl.elem0.loc11_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.7cc]
 // CHECK:STDOUT:   %.loc6_26.5: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc11_26.2: ref %C.89d = temporary %.loc11_24.2, %.loc11_26.1 [concrete = constants.%.c3b]
-// CHECK:STDOUT:   %.loc11_26.3: %C.89d = acquire_value %.loc11_26.2
+// CHECK:STDOUT:   %.loc11_26.3: %C.89d = acquire_value %.loc11_26.2 [concrete = constants.%C.val.1dd]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc11: init %D to %.loc6_26.5 = call %bound_method.loc11_35(%.loc11_26.3)
 // CHECK:STDOUT:   %.loc11_35: init %D = converted %.loc11_26.1, %C.as.ImplicitAs.impl.Convert.call.loc11
 // CHECK:STDOUT:   return %.loc11_35 to %return.param
@@ -1183,7 +1183,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_26.1, %impl.elem0.loc12_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.4ca]
 // CHECK:STDOUT:   %.loc6_26.6: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc12_26.2: ref %C.f0a = temporary %.loc12_24.2, %.loc12_26.1 [concrete = constants.%.d3c]
-// CHECK:STDOUT:   %.loc12_26.3: %C.f0a = acquire_value %.loc12_26.2
+// CHECK:STDOUT:   %.loc12_26.3: %C.f0a = acquire_value %.loc12_26.2 [concrete = constants.%C.val.a4a]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc12: init %D to %.loc6_26.6 = call %bound_method.loc12_35(%.loc12_26.3)
 // CHECK:STDOUT:   %.loc12_35: init %D = converted %.loc12_26.1, %C.as.ImplicitAs.impl.Convert.call.loc12
 // CHECK:STDOUT:   return %.loc12_35 to %return.param
@@ -1212,7 +1212,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc13_35: <bound method> = bound_method %.loc13_26.1, %impl.elem0.loc13_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.f82]
 // CHECK:STDOUT:   %.loc6_26.7: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc13_26.2: ref %C.c60 = temporary %.loc13_24.2, %.loc13_26.1 [concrete = constants.%.d2b]
-// CHECK:STDOUT:   %.loc13_26.3: %C.c60 = acquire_value %.loc13_26.2
+// CHECK:STDOUT:   %.loc13_26.3: %C.c60 = acquire_value %.loc13_26.2 [concrete = constants.%C.val.a4b]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc13: init %D to %.loc6_26.7 = call %bound_method.loc13_35(%.loc13_26.3)
 // CHECK:STDOUT:   %.loc13_35: init %D = converted %.loc13_26.1, %C.as.ImplicitAs.impl.Convert.call.loc13
 // CHECK:STDOUT:   return %.loc13_35 to %return.param
@@ -1241,7 +1241,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.loc14_35: <bound method> = bound_method %.loc14_26.1, %impl.elem0.loc14_35 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound.622]
 // CHECK:STDOUT:   %.loc6_26.8: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc14_26.2: ref %C.304 = temporary %.loc14_24.2, %.loc14_26.1 [concrete = constants.%.5dc]
-// CHECK:STDOUT:   %.loc14_26.3: %C.304 = acquire_value %.loc14_26.2
+// CHECK:STDOUT:   %.loc14_26.3: %C.304 = acquire_value %.loc14_26.2 [concrete = constants.%C.val.f9f]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc14: init %D to %.loc6_26.8 = call %bound_method.loc14_35(%.loc14_26.3)
 // CHECK:STDOUT:   %.loc14_35: init %D = converted %.loc14_26.1, %C.as.ImplicitAs.impl.Convert.call.loc14
 // CHECK:STDOUT:   return %.loc14_35 to %return.param

@@ -230,7 +230,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.13: init %array_type to %.loc8_50.4 = array_init (%.loc8_50.6, %.loc8_50.9, %.loc8_50.12) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc8_50.14: init %array_type = converted %.loc8_50.1, %.loc8_50.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc8_50.15: ref %array_type = temporary %.loc8_50.4, %.loc8_50.14 [concrete = constants.%.fd3]
-// CHECK:STDOUT:   %.loc8_50.16: %array_type = acquire_value %.loc8_50.15
+// CHECK:STDOUT:   %.loc8_50.16: %array_type = acquire_value %.loc8_50.15 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc8: init %initializer_list to %.loc8_50.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.1(%.loc8_50.16)
 // CHECK:STDOUT:   %.loc8_50.17: init %initializer_list = converted %.loc8_50.1, %initializer_list.initializer_list.call.loc8
 // CHECK:STDOUT:   %.loc8_50.18: ref %initializer_list = temporary %.loc8_50.2, %.loc8_50.17
@@ -277,7 +277,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.13: init %array_type to %.loc10_23.4 = array_init (%.loc10_23.6, %.loc10_23.9, %.loc10_23.12) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_23.14: init %array_type = converted %.loc10_23.1, %.loc10_23.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_23.15: ref %array_type = temporary %.loc10_23.4, %.loc10_23.14 [concrete = constants.%.fd3]
-// CHECK:STDOUT:   %.loc10_23.16: %array_type = acquire_value %.loc10_23.15
+// CHECK:STDOUT:   %.loc10_23.16: %array_type = acquire_value %.loc10_23.15 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc10: init %initializer_list to %.loc10_23.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.2(%.loc10_23.16)
 // CHECK:STDOUT:   %.loc10_23.17: init %initializer_list = converted %.loc10_23.1, %initializer_list.initializer_list.call.loc10
 // CHECK:STDOUT:   %.loc10_23.18: ref %initializer_list = temporary %.loc10_23.2, %.loc10_23.17
@@ -332,7 +332,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.14: init %array_type to %.loc12_44.5 = array_init (%.loc12_44.7, %.loc12_44.10, %.loc12_44.13) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc12_44.15: init %array_type = converted %.loc12_44.1, %.loc12_44.14 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc12_44.16: ref %array_type = temporary %.loc12_44.5, %.loc12_44.15 [concrete = constants.%.fd3]
-// CHECK:STDOUT:   %.loc12_44.17: %array_type = acquire_value %.loc12_44.16
+// CHECK:STDOUT:   %.loc12_44.17: %array_type = acquire_value %.loc12_44.16 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc12: init %initializer_list to %.loc12_44.3 = call generated.%initializer_list.initializer_list.decl.2bdc3e.3(%.loc12_44.17)
 // CHECK:STDOUT:   %.loc12_44.18: init %initializer_list = converted %.loc12_44.1, %initializer_list.initializer_list.call.loc12
 // CHECK:STDOUT:   %.loc12_44.19: ref %initializer_list = temporary %.loc12_44.3, %.loc12_44.18

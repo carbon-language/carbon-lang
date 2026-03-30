@@ -346,9 +346,9 @@ fn B() {
 // CHECK:STDOUT:   %.loc20_59: %Generic.type.498 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
 // CHECK:STDOUT:   %.loc20_24.2: ref %ImplsGeneric = temporary %.loc20_22.2, %.loc20_24.1 [concrete = constants.%.80a]
-// CHECK:STDOUT:   %.loc20_24.3: %ImplsGeneric = acquire_value %.loc20_24.2
+// CHECK:STDOUT:   %.loc20_24.3: %ImplsGeneric = acquire_value %.loc20_24.2 [concrete = constants.%ImplsGeneric.val]
 // CHECK:STDOUT:   %.loc20_44.2: ref %GenericParam = temporary %.loc20_42.2, %.loc20_44.1 [concrete = constants.%.601]
-// CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2
+// CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.3, %.loc20_44.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -652,7 +652,7 @@ fn B() {
 // CHECK:STDOUT:   %.loc12_12: %I.type.5f7 = converted constants.%C, %I.facet [concrete = constants.%I.facet.0e1]
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A.ref, @A(constants.%I.facet.0e1) [concrete = constants.%A.specific_fn]
 // CHECK:STDOUT:   %.loc12_8.2: ref %C = temporary %.loc12_6.2, %.loc12_8.1 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc12_8.3: %C = acquire_value %.loc12_8.2
+// CHECK:STDOUT:   %.loc12_8.3: %C = acquire_value %.loc12_8.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

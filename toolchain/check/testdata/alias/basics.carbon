@@ -189,7 +189,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.2: init %C to %.loc10_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.3: init %C = converted @__global_init.%.loc10, %.loc10_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4
+// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

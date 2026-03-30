@@ -155,7 +155,7 @@ fn H() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_return_in_place_class.carbon
+// --- return_in_place_class.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -167,15 +167,7 @@ eval fn F() -> C { return {}; }
 fn G(_:! C) {}
 
 fn H() {
-  // TODO: The call to the function is a constant, but the `temporary` instruction wrapping it is not.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_return_in_place_class.carbon:[[@LINE+7]]:3: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR:   G(F());
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_return_in_place_class.carbon:[[@LINE-8]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn G(_:! C) {}
-  // CHECK:STDERR:      ^~~~~
-  // CHECK:STDERR:
   G(F());
   //@dump-sem-ir-end
 }
@@ -368,7 +360,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type.189) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_return_in_place_class.carbon
+// CHECK:STDOUT: --- return_in_place_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -376,12 +368,14 @@ fn H() {
 // CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
+// CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%C.val) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -408,10 +402,12 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc21_7.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C to %.loc21_7.1 = call %F.ref() [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc21_7.2: ref %C = temporary %.loc21_7.1, %F.call [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc21_7.3: %C = acquire_value %.loc21_7.2
+// CHECK:STDOUT:   %.loc13_7.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C to %.loc13_7.1 = call %F.ref() [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_7.2: ref %C = temporary %.loc13_7.1, %F.call [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc13_7.3: %C = acquire_value %.loc13_7.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%C.val) [concrete = constants.%G.specific_fn]
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

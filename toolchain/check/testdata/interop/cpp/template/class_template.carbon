@@ -99,7 +99,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %.loc7_41.1: init %B = converted %.loc7_39.1, %.loc7_39.3 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
 // CHECK:STDOUT:   %.loc7_41.2: ref %B = temporary %.loc7_39.2, %.loc7_41.1 [concrete = constants.%.5ef]
-// CHECK:STDOUT:   %.loc7_41.3: %B = acquire_value %.loc7_41.2
+// CHECK:STDOUT:   %.loc7_41.3: %B = acquire_value %.loc7_41.2 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_41.4: ref %B = value_as_ref %.loc7_41.3
 // CHECK:STDOUT:   %addr.loc7_49.1: %ptr.a04 = addr_of %.loc7_41.4
 // CHECK:STDOUT:   %addr.loc7_49.2: %ptr.270 = addr_of %.loc7_1

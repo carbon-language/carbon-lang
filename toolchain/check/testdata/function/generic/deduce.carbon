@@ -656,7 +656,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_37.3: init %A to %.loc11_37.2 = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc11_37.4: init %A = converted %.loc11_37.1, %.loc11_37.3 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc11_37.5: ref %A = temporary %.loc11_37.2, %.loc11_37.4 [concrete = constants.%.33f]
-// CHECK:STDOUT:   %.loc11_37.6: %A = acquire_value %.loc11_37.5
+// CHECK:STDOUT:   %.loc11_37.6: %A = acquire_value %.loc11_37.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.643 = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT: }

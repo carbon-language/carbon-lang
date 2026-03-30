@@ -183,7 +183,7 @@ let n: array(i32, G()) = (1, 2, 3);
 // CHECK:STDOUT:   %.loc11_35.11: init %array_type to %.loc11_35.2 = array_init (%.loc11_35.4, %.loc11_35.7, %.loc11_35.10) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_35.12: init %array_type = converted @__global_init.%.loc11, %.loc11_35.11 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_35.13: ref %array_type = temporary %.loc11_35.2, %.loc11_35.12 [concrete = constants.%.fd3]
-// CHECK:STDOUT:   %.loc11_35.14: %array_type = acquire_value %.loc11_35.13
+// CHECK:STDOUT:   %.loc11_35.14: %array_type = acquire_value %.loc11_35.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %n: %array_type = value_binding n, %.loc11_35.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

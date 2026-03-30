@@ -125,6 +125,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: $_ZN11vector_likeD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: @array = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc13_50.15 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #0 {
@@ -194,9 +195,9 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 1, !dbg !25
 // CHECK:STDOUT:   %.loc13_50.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 2, !dbg !25
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !24
-// CHECK:STDOUT:   store ptr @array, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !24
+// CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !24
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !24
-// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !24
+// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !24
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
@@ -214,9 +215,9 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc18_36.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.4.temp, i32 0, i64 1, !dbg !30
 // CHECK:STDOUT:   %.loc18_36.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.4.temp, i32 0, i64 2, !dbg !30
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   store ptr @array, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !30
+// CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !30
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 8, !dbg !30
-// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !30
+// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !30
 // CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !29
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !31
 // CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !29
@@ -322,6 +323,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: $_ZN11vector_likeD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: @array = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc13_50.15 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #0 {
@@ -391,7 +393,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 1, !dbg !27
 // CHECK:STDOUT:   %.loc13_50.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 2, !dbg !27
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !26
-// CHECK:STDOUT:   store ptr @array, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !26
+// CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !26
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !26
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !26
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !28
@@ -411,7 +413,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc18_36.8.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.4.temp, i32 0, i64 1, !dbg !32
 // CHECK:STDOUT:   %.loc18_36.11.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.4.temp, i32 0, i64 2, !dbg !32
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   store ptr @array, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !32
+// CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !32
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 8, !dbg !32
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !32
 // CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !31

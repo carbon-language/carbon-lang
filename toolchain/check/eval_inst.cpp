@@ -127,17 +127,20 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::AcquireValue inst) -> ConstantEvalResult {
+  SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
   if (const auto* var_decl = GetAsClangVarDecl(context, inst.value_id)) {
-    auto const_id =
+    const_id =
         EvalCppVarDecl(context, SemIR::LocId(inst_id), var_decl, inst.type_id);
-    if (const_id.has_value() && const_id.is_constant()) {
-      return ConstantEvalResult::Existing(const_id);
-    }
-
-    return ConstantEvalResult::NotConstant;
+  } else if (auto temporary =
+                 context.insts().TryGetAs<SemIR::Temporary>(inst.value_id)) {
+    const_id = context.constant_values().Get(temporary->init_id);
   }
 
-  return ConstantEvalResult::TODO;
+  if (const_id.has_value() && const_id.is_constant()) {
+    return ConstantEvalResult::Existing(const_id);
+  }
+
+  return ConstantEvalResult::NotConstant;
 }
 
 auto EvalConstantInst(Context& context, SemIR::ClassElementAccess inst)

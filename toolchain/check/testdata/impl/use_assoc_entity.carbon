@@ -4722,7 +4722,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.63b, element0 [concrete = constants.%C.302]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_30.2: ref %C.302 = temporary %.loc12_28.2, %.loc12_30.1 [concrete = constants.%.cdd]
-// CHECK:STDOUT:   %.loc12_30.3: %C.302 = acquire_value %.loc12_30.2
+// CHECK:STDOUT:   %.loc12_30.3: %C.302 = acquire_value %.loc12_30.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %a: %C.302 = value_binding a, %.loc12_30.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

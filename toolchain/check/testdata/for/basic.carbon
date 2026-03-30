@@ -94,7 +94,8 @@ fn Run() {
 // CHECK:STDOUT:   %TrivialRange.val: %TrivialRange = struct_value () [concrete]
 // CHECK:STDOUT:   %.401: ref %TrivialRange = temporary invalid, %TrivialRange.val [concrete]
 // CHECK:STDOUT:   %.ccd: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.a3c, %Iterate.facet [concrete]
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound: <bound method> = bound_method %.401, %TrivialRange.as.Iterate.impl.NewCursor.c71f42.2 [concrete]
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound.fe4: <bound method> = bound_method %.401, %TrivialRange.as.Iterate.impl.NewCursor.c71f42.2 [concrete]
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound.28d: <bound method> = bound_method %TrivialRange.val, %TrivialRange.as.Iterate.impl.NewCursor.c71f42.1 [concrete]
 // CHECK:STDOUT:   %.827: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.9dc, %Iterate.facet [concrete]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.bound: <bound method> = bound_method %.401, %TrivialRange.as.Iterate.impl.Next [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.4fc, @Optional.HasValue(%Copy.facet) [concrete]
@@ -126,10 +127,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc18_20.1: init %TrivialRange = converted %.loc18_18.1, %.loc18_18.3 [concrete = constants.%TrivialRange.val]
 // CHECK:STDOUT:   %.loc18_20.2: ref %TrivialRange = temporary %.loc18_18.2, %.loc18_20.1 [concrete = constants.%.401]
 // CHECK:STDOUT:   %impl.elem2: %.ccd = impl_witness_access constants.%Iterate.impl_witness, element2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.c71f42.2]
-// CHECK:STDOUT:   %bound_method.loc18_35.1: <bound method> = bound_method %.loc18_20.2, %impl.elem2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound]
-// CHECK:STDOUT:   %.loc18_20.3: %TrivialRange = acquire_value %.loc18_20.2
+// CHECK:STDOUT:   %bound_method.loc18_35.1: <bound method> = bound_method %.loc18_20.2, %impl.elem2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound.fe4]
+// CHECK:STDOUT:   %.loc18_20.3: %TrivialRange = acquire_value %.loc18_20.2 [concrete = constants.%TrivialRange.val]
 // CHECK:STDOUT:   %NewCursor.ref: %TrivialRange.as.Iterate.impl.NewCursor.type.408fa8.1 = name_ref NewCursor, @TrivialRange.as.Iterate.impl.%TrivialRange.as.Iterate.impl.NewCursor.decl.loc6_39.1 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.c71f42.1]
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound: <bound method> = bound_method %.loc18_20.3, %NewCursor.ref
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound: <bound method> = bound_method %.loc18_20.3, %NewCursor.ref [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound.28d]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.call: init %empty_tuple.type = call %TrivialRange.as.Iterate.impl.NewCursor.bound(%.loc18_20.3)
 // CHECK:STDOUT:   %var: ref %empty_tuple.type = var invalid
 // CHECK:STDOUT:   assign %var, %TrivialRange.as.Iterate.impl.NewCursor.call
@@ -140,7 +141,7 @@ fn Run() {
 // CHECK:STDOUT:   %impl.elem3: %.827 = impl_witness_access constants.%Iterate.impl_witness, element3 [concrete = constants.%TrivialRange.as.Iterate.impl.Next]
 // CHECK:STDOUT:   %bound_method.loc18_35.2: <bound method> = bound_method %.loc18_20.2, %impl.elem3 [concrete = constants.%TrivialRange.as.Iterate.impl.Next.bound]
 // CHECK:STDOUT:   %.loc18_35.1: ref %Optional.311 = temporary_storage
-// CHECK:STDOUT:   %.loc18_20.4: %TrivialRange = acquire_value %.loc18_20.2
+// CHECK:STDOUT:   %.loc18_20.4: %TrivialRange = acquire_value %.loc18_20.2 [concrete = constants.%TrivialRange.val]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.call: init %Optional.311 to %.loc18_35.1 = call %bound_method.loc18_35.2(%.loc18_20.4, %addr)
 // CHECK:STDOUT:   %.loc18_35.2: ref %Optional.311 = temporary %.loc18_35.1, %TrivialRange.as.Iterate.impl.Next.call
 // CHECK:STDOUT:   %.loc18_35.3: %Optional.HasValue.type.4db = specific_constant imports.%Core.import_ref.228, @Optional(constants.%Copy.facet) [concrete = constants.%Optional.HasValue.4fc]

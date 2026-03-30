@@ -316,7 +316,7 @@ fn G() {
 // CHECK:STDOUT:     %.2: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) to %.1 = class_init () [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.3: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = converted %x.param, %.2 [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.4: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary %.1, %.3 [symbolic = %.6 (constants.%.5fa)]
-// CHECK:STDOUT:     %.5: @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = acquire_value %.4
+// CHECK:STDOUT:     %.5: @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = acquire_value %.4 [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn.loc8_24.1(%.5)
 // CHECK:STDOUT:     %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.06b [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.1: @C.as.I.impl.F.loc8_24.2.%.7 (%.371) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.2 (constants.%impl.elem0)]
@@ -547,7 +547,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc7_16.4: init %C.387 to %.loc7_16.3 = class_init () [concrete = constants.%C.val.135]
 // CHECK:STDOUT:   %.loc7_16.5: init %C.387 = converted %.loc7_16.2, %.loc7_16.4 [concrete = constants.%C.val.135]
 // CHECK:STDOUT:   %.loc7_16.6: ref %C.387 = temporary %.loc7_16.3, %.loc7_16.5 [concrete = constants.%.e94e]
-// CHECK:STDOUT:   %.loc7_16.7: %C.387 = acquire_value %.loc7_16.6
+// CHECK:STDOUT:   %.loc7_16.7: %C.387 = acquire_value %.loc7_16.6 [concrete = constants.%C.val.135]
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn(%.loc7_16.7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

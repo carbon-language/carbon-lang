@@ -26,7 +26,7 @@ fn G(n: i32) -> i32 {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_symbolic_decl.carbon
+// --- symbolic_decl.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -36,10 +36,6 @@ interface I {
 
 class C {}
 
-// CHECK:STDERR: fail_todo_symbolic_decl.carbon:[[@LINE+4]]:28: error: expression is runtime; expected constant [EvalRequiresConstantValue]
-// CHECK:STDERR: impl C as I where .value = (1,) {}
-// CHECK:STDERR:                            ^~~~
-// CHECK:STDERR:
 impl C as I where .value = (1,) {}
 
 // --- fail_todo_import_symbolic_decl.carbon
@@ -49,9 +45,12 @@ import library "symbolic_decl";
 
 fn F() -> array(i32, 1) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+4]]:11: error: cannot convert type `C` into type implementing `I` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+7]]:10: error: cannot copy value of type `array(i32, 1)` [CopyOfUncopyableType]
   // CHECK:STDERR:   return (C as I).value;
-  // CHECK:STDERR:           ^~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+4]]:10: note: type `array(i32, 1)` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   return (C as I).value;
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   return (C as I).value;
   //@dump-sem-ir-end
@@ -114,22 +113,38 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %i32 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.5d2) [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
+// CHECK:STDOUT:   %assoc0.5b3: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.ae1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.353: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.5b3]
+// CHECK:STDOUT:   %Main.import_ref.e29: %array_type = import_ref Main//symbolic_decl, loc10_33, loaded [concrete = constants.%array]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.e29), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.ae1: %array_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
+// CHECK:STDOUT:   %value: %array_type = assoc_const_decl @value [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %array_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:   %value.ref: <error> = name_ref value, <error> [concrete = <error>]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.ref, (constants.%I.impl_witness) [concrete = constants.%I.facet]
+// CHECK:STDOUT:   %.loc14_13: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc14_13 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc14_18: type = converted %.loc14_13, %as_type [concrete = constants.%C]
+// CHECK:STDOUT:   %value.ref: %I.assoc_type = name_ref value, imports.%Main.import_ref.353 [concrete = constants.%assoc0.5b3]
+// CHECK:STDOUT:   %impl.elem0: %array_type = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%array]
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1929,7 +1929,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_55.3: init %S to %.loc13_55.2 = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc13_57.1: init %S = converted %.loc13_55.1, %.loc13_55.3 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc13_57.2: ref %S = temporary %.loc13_55.2, %.loc13_57.1 [concrete = constants.%.6ef]
-// CHECK:STDOUT:   %.loc13_57.3: %S = acquire_value %.loc13_57.2
+// CHECK:STDOUT:   %.loc13_57.3: %S = acquire_value %.loc13_57.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc13_57.4: ref %S = value_as_ref %.loc13_57.3
 // CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %.loc13_57.4
 // CHECK:STDOUT:   %Indirect__carbon_thunk.call: init %Optional.065 = call imports.%Indirect__carbon_thunk.decl(%addr.loc13)

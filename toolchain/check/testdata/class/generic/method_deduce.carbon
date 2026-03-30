@@ -312,7 +312,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.3: init %A to %.loc28_25.2 = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc28_25.4: init %A = converted %.loc28_25.1, %.loc28_25.3 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = temporary %.loc28_25.2, %.loc28_25.4 [concrete = constants.%.33f]
-// CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
+// CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param
 // CHECK:STDOUT: }

@@ -135,6 +135,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
 // CHECK:STDOUT: @int_42.c68 = internal constant i32 42
+// CHECK:STDOUT: @C.val.loc19_20.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #0 {
@@ -205,7 +206,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !19
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C(ptr %c.var), !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !20
-// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr @C.val), !dbg !25
+// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr @C.val.loc19_20.3), !dbg !25
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C.carbon_thunk(ptr %c.var), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !21
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !21
@@ -302,6 +303,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
 // CHECK:STDOUT: @int_42.c68 = internal constant i32 42
+// CHECK:STDOUT: @C.val.loc20_20.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #0 {
@@ -402,7 +404,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !21
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.2.temp), !dbg !22
-// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr @C.val), !dbg !27
+// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr @C.val.loc20_20.3), !dbg !27
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !23
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !23

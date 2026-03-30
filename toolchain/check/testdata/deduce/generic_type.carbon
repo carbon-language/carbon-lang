@@ -934,7 +934,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_15.1: init %WithNontype.6bb = converted %.loc9_13.1, %.loc9_13.3 [concrete = constants.%WithNontype.val]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_0.6a9) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc9_15.2: ref %WithNontype.6bb = temporary %.loc9_13.2, %.loc9_15.1 [concrete = constants.%.0bf]
-// CHECK:STDOUT:   %.loc9_15.3: %WithNontype.6bb = acquire_value %.loc9_15.2
+// CHECK:STDOUT:   %.loc9_15.3: %WithNontype.6bb = acquire_value %.loc9_15.2 [concrete = constants.%WithNontype.val]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.3)
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }

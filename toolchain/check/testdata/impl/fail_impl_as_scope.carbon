@@ -457,7 +457,7 @@ class X {
 // CHECK:STDOUT:   %impl.elem1: %.429 = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Point.as.Z.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1 [concrete = constants.%Point.as.Z.impl.Method.bound]
 // CHECK:STDOUT:   %.loc29_7.2: ref %Point = temporary %.loc29_5.2, %.loc29_7.1 [concrete = constants.%.fcf]
-// CHECK:STDOUT:   %.loc29_7.3: %Point = acquire_value %.loc29_7.2
+// CHECK:STDOUT:   %.loc29_7.3: %Point = acquire_value %.loc29_7.2 [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.call: init %empty_tuple.type = call %bound_method(%.loc29_7.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

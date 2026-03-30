@@ -368,7 +368,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2 [concrete = constants.%.4e1]
-// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1
+// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %b_value: %B = value_binding b_value, %.loc14_42.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -408,7 +408,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc39_20.2: ref %Class = temporary %.loc39_18.3, %.loc39_20.1 [concrete = constants.%.ae5]
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc39_20.2, %F.ref [concrete = constants.%Class.F.bound]
-// CHECK:STDOUT:   %.loc39_20.3: %Class = acquire_value %.loc39_20.2
+// CHECK:STDOUT:   %.loc39_20.3: %Class = acquire_value %.loc39_20.2 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc39_20.3)
 // CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }

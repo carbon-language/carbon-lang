@@ -151,7 +151,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc23_24: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc23_17.2: ref %Goat = temporary %.loc23_15.2, %.loc23_17.1 [concrete = constants.%.aec]
-// CHECK:STDOUT:   %.loc23_17.3: %Goat = acquire_value %.loc23_17.2
+// CHECK:STDOUT:   %.loc23_17.3: %Goat = acquire_value %.loc23_17.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

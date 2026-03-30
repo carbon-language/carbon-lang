@@ -2448,7 +2448,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_21.3: init %NoFields to %.loc9_21.2 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc9_21.4: init %NoFields = converted %.loc9_21.1, %.loc9_21.3 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc9_21.5: ref %NoFields = temporary %.loc9_21.2, %.loc9_21.4 [concrete = constants.%.413]
-// CHECK:STDOUT:   %.loc9_21.6: %NoFields = acquire_value %.loc9_21.5
+// CHECK:STDOUT:   %.loc9_21.6: %NoFields = acquire_value %.loc9_21.5 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc9_21.7: ref %NoFields = value_as_ref %.loc9_21.6
 // CHECK:STDOUT:   %addr.loc9: %ptr.dd0 = addr_of %.loc9_21.7
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc9)
@@ -2459,7 +2459,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_20.2: init %NoFields to %.loc11_20.1 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc11_20.3: init %NoFields = converted %value.ref, %.loc11_20.2 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc11_20.4: ref %NoFields = temporary %.loc11_20.1, %.loc11_20.3 [concrete = constants.%.413]
-// CHECK:STDOUT:   %.loc11_20.5: %NoFields = acquire_value %.loc11_20.4
+// CHECK:STDOUT:   %.loc11_20.5: %NoFields = acquire_value %.loc11_20.4 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc11_20.6: ref %NoFields = value_as_ref %.loc11_20.5
 // CHECK:STDOUT:   %addr.loc11: %ptr.dd0 = addr_of %.loc11_20.6
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc11)
@@ -2470,7 +2470,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_20.2: init %NoFields to %.loc13_20.1 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc13_20.3: init %NoFields = converted %reference.ref, %.loc13_20.2 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc13_20.4: ref %NoFields = temporary %.loc13_20.1, %.loc13_20.3 [concrete = constants.%.413]
-// CHECK:STDOUT:   %.loc13_20.5: %NoFields = acquire_value %.loc13_20.4
+// CHECK:STDOUT:   %.loc13_20.5: %NoFields = acquire_value %.loc13_20.4 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc13_20.6: ref %NoFields = value_as_ref %.loc13_20.5
 // CHECK:STDOUT:   %addr.loc13: %ptr.dd0 = addr_of %.loc13_20.6
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc13)
@@ -2484,7 +2484,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_30.4: init %NoFields to %.loc15_30.3 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc15_30.5: init %NoFields = converted %MakeEmpty.call, %.loc15_30.4 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc15_30.6: ref %NoFields = temporary %.loc15_30.3, %.loc15_30.5 [concrete = constants.%.413]
-// CHECK:STDOUT:   %.loc15_30.7: %NoFields = acquire_value %.loc15_30.6
+// CHECK:STDOUT:   %.loc15_30.7: %NoFields = acquire_value %.loc15_30.6 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc15_30.8: ref %NoFields = value_as_ref %.loc15_30.7
 // CHECK:STDOUT:   %addr.loc15: %ptr.dd0 = addr_of %.loc15_30.8
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc15)

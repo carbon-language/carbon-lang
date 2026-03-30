@@ -391,7 +391,7 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method.loc12_16: <bound method> = bound_method %.loc12_7.2, %D.ref [concrete = constants.%bound_method.d5c]
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc12_7.3: %X = acquire_value %.loc12_7.2
+// CHECK:STDOUT:   %.loc12_7.3: %X = acquire_value %.loc12_7.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %impl.elem0.loc12_19: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc12_19.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc12_19: <specific function> = specific_function %impl.elem0.loc12_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -787,7 +787,7 @@ fn Call() {
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc13_16: <bound method> = bound_method %.loc13_7.2, %D.ref [concrete = constants.%bound_method.d5c]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc13_7.3: %X = acquire_value %.loc13_7.2
+// CHECK:STDOUT:   %.loc13_7.3: %X = acquire_value %.loc13_7.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %impl.elem0.loc13: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc13_19.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

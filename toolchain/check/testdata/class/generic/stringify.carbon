@@ -76,19 +76,12 @@ class D {
 
 class E(F:! D) {}
 
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+14]]:8: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `E({.a = 3, .b = 4})` to `E({.a = 1, .b = 2})` [ConversionFailure]
 // CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE-5]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
-// CHECK:STDERR: class E(F:! D) {}
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+7]]:36: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+4]]:1: note: type `E({.a = 3, .b = 4})` does not implement interface `Core.ImplicitAs(E({.a = 1, .b = 2}))` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
-// CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE-12]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
-// CHECK:STDERR: class E(F:! D) {}
-// CHECK:STDERR:         ^~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 
@@ -514,7 +507,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %F: %D = symbolic_binding F, 0 [symbolic]
 // CHECK:STDOUT:   %E.type: type = generic_class_type @E [concrete]
 // CHECK:STDOUT:   %E.generic: %E.type = struct_value () [concrete]
-// CHECK:STDOUT:   %E: type = class_type @E, @E(%F) [symbolic]
+// CHECK:STDOUT:   %E.bcb: type = class_type @E, @E(%F) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -542,6 +535,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %D.val.525: %D = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %.88a: ref %D = temporary invalid, %D.val.525 [concrete]
+// CHECK:STDOUT:   %E.254: type = class_type @E, @E(%D.val.525) [concrete]
+// CHECK:STDOUT:   %pattern_type.663: type = pattern_type %E.254 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
@@ -554,6 +549,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %D.val.659: %D = struct_value (%int_3.822, %int_4.940) [concrete]
 // CHECK:STDOUT:   %.aec: ref %D = temporary invalid, %D.val.659 [concrete]
+// CHECK:STDOUT:   %E.1a1: type = class_type @E, @E(%D.val.659) [concrete]
+// CHECK:STDOUT:   %E.val: %E.1a1 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -588,38 +585,39 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %F.loc9_10.2: %D = symbolic_binding F, 0 [symbolic = %F.loc9_10.1 (constants.%F)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %g.patt: <error> = ref_binding_pattern g [concrete]
-// CHECK:STDOUT:     %g.var_patt: <error> = var_pattern %g.patt [concrete]
+// CHECK:STDOUT:     %g.patt: %pattern_type.663 = ref_binding_pattern g [concrete]
+// CHECK:STDOUT:     %g.var_patt: %pattern_type.663 = var_pattern %g.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g.var: ref <error> = var %g.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:   %g.var: ref %E.254 = var %g.var_patt [concrete]
+// CHECK:STDOUT:   %.loc18_26.1: type = splice_block %E [concrete = constants.%E.254] {
 // CHECK:STDOUT:     %E.ref: %E.type = name_ref E, %E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %.loc25_25.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2) [concrete = constants.%struct.4aa]
-// CHECK:STDOUT:     %impl.elem0.loc25_25.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:     %bound_method.loc25_25.1: <bound method> = bound_method %int_1, %impl.elem0.loc25_25.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
-// CHECK:STDOUT:     %specific_fn.loc25_25.1: <specific function> = specific_function %impl.elem0.loc25_25.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc25_25.2: <bound method> = bound_method %int_1, %specific_fn.loc25_25.1 [concrete = constants.%bound_method.38b]
-// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_25.1: init %i32 = call %bound_method.loc25_25.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %.loc25_25.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_25.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %.loc25_25.3: ref %D = temporary_storage
-// CHECK:STDOUT:     %.loc25_25.4: ref %i32 = class_element_access %.loc25_25.3, element0
-// CHECK:STDOUT:     %.loc25_25.5: init %i32 to %.loc25_25.4 = in_place_init %.loc25_25.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc25_25.2: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:     %bound_method.loc25_25.3: <bound method> = bound_method %int_2, %impl.elem0.loc25_25.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
-// CHECK:STDOUT:     %specific_fn.loc25_25.2: <specific function> = specific_function %impl.elem0.loc25_25.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc25_25.4: <bound method> = bound_method %int_2, %specific_fn.loc25_25.2 [concrete = constants.%bound_method.646]
-// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_25.2: init %i32 = call %bound_method.loc25_25.4(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc25_25.6: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_25.2 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc25_25.7: ref %i32 = class_element_access %.loc25_25.3, element1
-// CHECK:STDOUT:     %.loc25_25.8: init %i32 to %.loc25_25.7 = in_place_init %.loc25_25.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:     %.loc25_25.9: init %D to %.loc25_25.3 = class_init (%.loc25_25.5, %.loc25_25.8) [concrete = constants.%D.val.525]
-// CHECK:STDOUT:     %.loc25_26.1: init %D = converted %.loc25_25.1, %.loc25_25.9 [concrete = constants.%D.val.525]
-// CHECK:STDOUT:     %.loc25_26.2: ref %D = temporary %.loc25_25.3, %.loc25_26.1 [concrete = constants.%.88a]
-// CHECK:STDOUT:     %.loc25_26.3: %D = acquire_value %.loc25_26.2
+// CHECK:STDOUT:     %.loc18_25.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2) [concrete = constants.%struct.4aa]
+// CHECK:STDOUT:     %impl.elem0.loc18_25.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:     %bound_method.loc18_25.1: <bound method> = bound_method %int_1, %impl.elem0.loc18_25.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
+// CHECK:STDOUT:     %specific_fn.loc18_25.1: <specific function> = specific_function %impl.elem0.loc18_25.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:     %bound_method.loc18_25.2: <bound method> = bound_method %int_1, %specific_fn.loc18_25.1 [concrete = constants.%bound_method.38b]
+// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_25.1: init %i32 = call %bound_method.loc18_25.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:     %.loc18_25.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:     %.loc18_25.3: ref %D = temporary_storage
+// CHECK:STDOUT:     %.loc18_25.4: ref %i32 = class_element_access %.loc18_25.3, element0
+// CHECK:STDOUT:     %.loc18_25.5: init %i32 to %.loc18_25.4 = in_place_init %.loc18_25.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:     %impl.elem0.loc18_25.2: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:     %bound_method.loc18_25.3: <bound method> = bound_method %int_2, %impl.elem0.loc18_25.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
+// CHECK:STDOUT:     %specific_fn.loc18_25.2: <specific function> = specific_function %impl.elem0.loc18_25.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:     %bound_method.loc18_25.4: <bound method> = bound_method %int_2, %specific_fn.loc18_25.2 [concrete = constants.%bound_method.646]
+// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_25.2: init %i32 = call %bound_method.loc18_25.4(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:     %.loc18_25.6: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_25.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:     %.loc18_25.7: ref %i32 = class_element_access %.loc18_25.3, element1
+// CHECK:STDOUT:     %.loc18_25.8: init %i32 to %.loc18_25.7 = in_place_init %.loc18_25.6 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:     %.loc18_25.9: init %D to %.loc18_25.3 = class_init (%.loc18_25.5, %.loc18_25.8) [concrete = constants.%D.val.525]
+// CHECK:STDOUT:     %.loc18_26.2: init %D = converted %.loc18_25.1, %.loc18_25.9 [concrete = constants.%D.val.525]
+// CHECK:STDOUT:     %.loc18_26.3: ref %D = temporary %.loc18_25.3, %.loc18_26.2 [concrete = constants.%.88a]
+// CHECK:STDOUT:     %.loc18_26.4: %D = acquire_value %.loc18_26.3 [concrete = constants.%D.val.525]
+// CHECK:STDOUT:     %E: type = class_type @E, @E(constants.%D.val.525) [concrete = constants.%E.254]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g: ref <error> = ref_binding g, <error> [concrete = <error>]
+// CHECK:STDOUT:   %g: ref %E.254 = ref_binding g, %g.var [concrete = %g.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -646,44 +644,61 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%E
+// CHECK:STDOUT:     .Self = constants.%E.bcb
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %.loc25_53.1: %struct_type.a.b.cfd = struct_literal (%int_3, %int_4) [concrete = constants.%struct.cb7]
+// CHECK:STDOUT:   %.loc18_53.1: %struct_type.a.b.cfd = struct_literal (%int_3, %int_4) [concrete = constants.%struct.cb7]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %impl.elem0.loc25_53.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:   %bound_method.loc25_53.1: <bound method> = bound_method %int_3, %impl.elem0.loc25_53.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
-// CHECK:STDOUT:   %specific_fn.loc25_53.1: <specific function> = specific_function %impl.elem0.loc25_53.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25_53.2: <bound method> = bound_method %int_3, %specific_fn.loc25_53.1 [concrete = constants.%bound_method.fa7]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_53.1: init %i32 = call %bound_method.loc25_53.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc25_53.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_53.1 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc25_53.3: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc25_53.4: ref %i32 = class_element_access %.loc25_53.3, element0
-// CHECK:STDOUT:   %.loc25_53.5: init %i32 to %.loc25_53.4 = in_place_init %.loc25_53.2 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %impl.elem0.loc25_53.2: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:   %bound_method.loc25_53.3: <bound method> = bound_method %int_4, %impl.elem0.loc25_53.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f0c]
-// CHECK:STDOUT:   %specific_fn.loc25_53.2: <specific function> = specific_function %impl.elem0.loc25_53.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25_53.4: <bound method> = bound_method %int_4, %specific_fn.loc25_53.2 [concrete = constants.%bound_method.6d7]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_53.2: init %i32 = call %bound_method.loc25_53.4(%int_4) [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc25_53.6: init %i32 = converted %int_4, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25_53.2 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc25_53.7: ref %i32 = class_element_access %.loc25_53.3, element1
-// CHECK:STDOUT:   %.loc25_53.8: init %i32 to %.loc25_53.7 = in_place_init %.loc25_53.6 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc25_53.9: init %D to %.loc25_53.3 = class_init (%.loc25_53.5, %.loc25_53.8) [concrete = constants.%D.val.659]
-// CHECK:STDOUT:   %.loc25_55.1: init %D = converted %.loc25_53.1, %.loc25_53.9 [concrete = constants.%D.val.659]
-// CHECK:STDOUT:   %.loc25_55.2: ref %D = temporary %.loc25_53.3, %.loc25_55.1 [concrete = constants.%.aec]
-// CHECK:STDOUT:   %.loc25_55.3: %D = acquire_value %.loc25_55.2
+// CHECK:STDOUT:   %impl.elem0.loc18_53.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc18_53.1: <bound method> = bound_method %int_3, %impl.elem0.loc18_53.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
+// CHECK:STDOUT:   %specific_fn.loc18_53.1: <specific function> = specific_function %impl.elem0.loc18_53.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_53.2: <bound method> = bound_method %int_3, %specific_fn.loc18_53.1 [concrete = constants.%bound_method.fa7]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_53.1: init %i32 = call %bound_method.loc18_53.2(%int_3) [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc18_53.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_53.1 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc18_53.3: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc18_53.4: ref %i32 = class_element_access %.loc18_53.3, element0
+// CHECK:STDOUT:   %.loc18_53.5: init %i32 to %.loc18_53.4 = in_place_init %.loc18_53.2 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %impl.elem0.loc18_53.2: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc18_53.3: <bound method> = bound_method %int_4, %impl.elem0.loc18_53.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f0c]
+// CHECK:STDOUT:   %specific_fn.loc18_53.2: <specific function> = specific_function %impl.elem0.loc18_53.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_53.4: <bound method> = bound_method %int_4, %specific_fn.loc18_53.2 [concrete = constants.%bound_method.6d7]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_53.2: init %i32 = call %bound_method.loc18_53.4(%int_4) [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc18_53.6: init %i32 = converted %int_4, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_53.2 [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc18_53.7: ref %i32 = class_element_access %.loc18_53.3, element1
+// CHECK:STDOUT:   %.loc18_53.8: init %i32 to %.loc18_53.7 = in_place_init %.loc18_53.6 [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc18_53.9: init %D to %.loc18_53.3 = class_init (%.loc18_53.5, %.loc18_53.8) [concrete = constants.%D.val.659]
+// CHECK:STDOUT:   %.loc18_55.1: init %D = converted %.loc18_53.1, %.loc18_53.9 [concrete = constants.%D.val.659]
+// CHECK:STDOUT:   %.loc18_55.2: ref %D = temporary %.loc18_53.3, %.loc18_55.1 [concrete = constants.%.aec]
+// CHECK:STDOUT:   %.loc18_55.3: %D = acquire_value %.loc18_55.2 [concrete = constants.%D.val.659]
+// CHECK:STDOUT:   %E: type = class_type @E, @E(constants.%D.val.659) [concrete = constants.%E.1a1]
+// CHECK:STDOUT:   %.loc18_31.2: ref %E.1a1 = temporary_storage
+// CHECK:STDOUT:   %.loc18_31.3: init %E.1a1 to %.loc18_31.2 = class_init () [concrete = constants.%E.val]
+// CHECK:STDOUT:   %.loc18_33: init %E.1a1 = converted %.loc18_31.1, %.loc18_31.3 [concrete = constants.%E.val]
+// CHECK:STDOUT:   %.loc18_1: %E.254 = converted %.loc18_33, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%g.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%F) {
 // CHECK:STDOUT:   %F.loc9_10.1 => constants.%F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @E(constants.%D.val.525) {
+// CHECK:STDOUT:   %F.loc9_10.1 => constants.%D.val.525
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @E(constants.%D.val.659) {
+// CHECK:STDOUT:   %F.loc9_10.1 => constants.%D.val.659
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -33,6 +33,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @int_1.5d2 = internal constant i32 1
 // CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc27_18.6 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %_) #0 !dbg !4 {
@@ -83,7 +84,7 @@ fn Call() {
 // CHECK:STDOUT:   call void @_CTwoVars.Main(ptr @int_1.5d2, ptr @X.val), !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_15.1.temp), !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_18.2.temp), !dbg !43
-// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr @int_1.5d2, ptr @X.val), !dbg !48
+// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr @int_1.5d2, ptr @X.val.loc27_18.6), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_23.1.temp), !dbg !44
 // CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr @X.val), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !50

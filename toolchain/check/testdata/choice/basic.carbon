@@ -114,7 +114,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.8: init %Always to %.loc6_1.4 = class_init (%.loc6_1.7) [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.9: init %Always = converted %.loc6_1.3, %.loc6_1.8 [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.10: ref %Always = temporary %.loc6_1.4, %.loc6_1.9 [concrete = constants.%.bc0]
-// CHECK:STDOUT:   %.loc6_1.11: %Always = acquire_value %.loc6_1.10
+// CHECK:STDOUT:   %.loc6_1.11: %Always = acquire_value %.loc6_1.10 [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %Sunny: %Always = value_binding Sunny, %.loc6_1.11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -251,7 +251,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc5_7.7: init %Ordering to %.loc5_7.4 = class_init (%.loc5_7.6) [concrete = constants.%Ordering.val.9ea]
 // CHECK:STDOUT:   %.loc5_7.8: init %Ordering = converted %.loc5_7.3, %.loc5_7.7 [concrete = constants.%Ordering.val.9ea]
 // CHECK:STDOUT:   %.loc5_7.9: ref %Ordering = temporary %.loc5_7.4, %.loc5_7.8 [concrete = constants.%.917]
-// CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9
+// CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9 [concrete = constants.%Ordering.val.9ea]
 // CHECK:STDOUT:   %Less: %Ordering = value_binding Less, %.loc5_7.10
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1: %.055 = impl_witness_access constants.%ImplicitAs.impl_witness.762, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0ed]
@@ -273,7 +273,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_13.7: init %Ordering to %.loc6_13.4 = class_init (%.loc6_13.6) [concrete = constants.%Ordering.val.d41]
 // CHECK:STDOUT:   %.loc6_13.8: init %Ordering = converted %.loc6_13.3, %.loc6_13.7 [concrete = constants.%Ordering.val.d41]
 // CHECK:STDOUT:   %.loc6_13.9: ref %Ordering = temporary %.loc6_13.4, %.loc6_13.8 [concrete = constants.%.1a9]
-// CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9
+// CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9 [concrete = constants.%Ordering.val.d41]
 // CHECK:STDOUT:   %Equivalent: %Ordering = value_binding Equivalent, %.loc6_13.10
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc7_10.1: %.055 = impl_witness_access constants.%ImplicitAs.impl_witness.762, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0ed]
@@ -295,7 +295,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc7_10.7: init %Ordering to %.loc7_10.4 = class_init (%.loc7_10.6) [concrete = constants.%Ordering.val.e86]
 // CHECK:STDOUT:   %.loc7_10.8: init %Ordering = converted %.loc7_10.3, %.loc7_10.7 [concrete = constants.%Ordering.val.e86]
 // CHECK:STDOUT:   %.loc7_10.9: ref %Ordering = temporary %.loc7_10.4, %.loc7_10.8 [concrete = constants.%.c4a]
-// CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9
+// CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9 [concrete = constants.%Ordering.val.e86]
 // CHECK:STDOUT:   %Greater: %Ordering = value_binding Greater, %.loc7_10.10
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc9_1.1: %.055 = impl_witness_access constants.%ImplicitAs.impl_witness.762, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0ed]
@@ -317,7 +317,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc9_1.7: init %Ordering to %.loc9_1.4 = class_init (%.loc9_1.6) [concrete = constants.%Ordering.val.a17]
 // CHECK:STDOUT:   %.loc9_1.8: init %Ordering = converted %.loc9_1.3, %.loc9_1.7 [concrete = constants.%Ordering.val.a17]
 // CHECK:STDOUT:   %.loc9_1.9: ref %Ordering = temporary %.loc9_1.4, %.loc9_1.8 [concrete = constants.%.ab9]
-// CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9
+// CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9 [concrete = constants.%Ordering.val.a17]
 // CHECK:STDOUT:   %Incomparable: %Ordering = value_binding Incomparable, %.loc9_1.10
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -387,7 +387,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc45_12: %facet_type.dc7 = converted constants.%C, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%facet_value) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %.loc45_8.2: ref %C = temporary %.loc45_6.2, %.loc45_8.1 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc45_8.3: %C = acquire_value %.loc45_8.2
+// CHECK:STDOUT:   %.loc45_8.3: %C = acquire_value %.loc45_8.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc45_8.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

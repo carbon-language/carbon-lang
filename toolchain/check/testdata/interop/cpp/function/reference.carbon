@@ -561,7 +561,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_20.3: init %S to %.loc8_20.2 = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_22.1: init %S = converted %.loc8_20.1, %.loc8_20.3 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_22.2: ref %S = temporary %.loc8_20.2, %.loc8_22.1 [concrete = constants.%.6ef]
-// CHECK:STDOUT:   %.loc8_22.3: %S = acquire_value %.loc8_22.2
+// CHECK:STDOUT:   %.loc8_22.3: %S = acquire_value %.loc8_22.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_22.4: ref %S = value_as_ref %.loc8_22.3
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_22.4
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
@@ -813,7 +813,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_19.3: init %S to %.loc8_19.2 = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_19.4: init %S = converted %.loc8_19.1, %.loc8_19.3 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_19.5: ref %S = temporary %.loc8_19.2, %.loc8_19.4 [concrete = constants.%.6ef]
-// CHECK:STDOUT:   %.loc8_19.6: %S = acquire_value %.loc8_19.5
+// CHECK:STDOUT:   %.loc8_19.6: %S = acquire_value %.loc8_19.5 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %s: %S = value_binding s, %.loc8_19.6
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]

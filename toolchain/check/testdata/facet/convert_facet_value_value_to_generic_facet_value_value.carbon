@@ -424,9 +424,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_39.2: %Edible.type = converted constants.%Grass, %Edible.facet [concrete = constants.%Edible.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet, constants.%Edible.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc35_19.2: ref %Goat = temporary %.loc35_17.2, %.loc35_19.1 [concrete = constants.%.aec]
-// CHECK:STDOUT:   %.loc35_19.3: %Goat = acquire_value %.loc35_19.2
+// CHECK:STDOUT:   %.loc35_19.3: %Goat = acquire_value %.loc35_19.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc35_31.2: ref %Grass = temporary %.loc35_29.2, %.loc35_31.1 [concrete = constants.%.cf4]
-// CHECK:STDOUT:   %.loc35_31.3: %Grass = acquire_value %.loc35_31.2
+// CHECK:STDOUT:   %.loc35_31.3: %Grass = acquire_value %.loc35_31.2 [concrete = constants.%Grass.val]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.3, %.loc35_31.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -400,7 +400,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
 // CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1 [concrete = constants.%.730]
-// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2
+// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
 // CHECK:STDOUT:   <elided>

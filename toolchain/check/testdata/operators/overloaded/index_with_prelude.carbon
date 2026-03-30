@@ -175,7 +175,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.9ec to %.loc14_25.1 = class_init () [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: init %SubscriptType.9ec = converted @__global_init.%.loc14, %.loc14_25.2 [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.9ec = temporary %.loc14_25.1, %.loc14_25.3 [concrete = constants.%.e36]
-// CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.9ec = acquire_value %.loc14_25.4
+// CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.9ec = acquire_value %.loc14_25.4 [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %s: %SubscriptType.9ec = value_binding s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
@@ -185,7 +185,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_13.2: init %C to %.loc15_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc15_13.3: init %C = converted @__global_init.%.loc15, %.loc15_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.1, %.loc15_13.3 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4
+// CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.fde = value_binding_pattern x [concrete]
@@ -555,7 +555,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_13.2: init %C to %.loc14_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: init %C = converted @__global_init.%.loc14, %.loc14_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.4: ref %C = temporary %.loc14_13.1, %.loc14_13.3 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4
+// CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.fde = value_binding_pattern x [concrete]
@@ -683,7 +683,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_13.2: init %C to %.loc6_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.3: init %C = converted @__global_init.%.loc6, %.loc6_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.4: ref %C = temporary %.loc6_13.1, %.loc6_13.3 [concrete = constants.%.5ea]
-// CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4
+// CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = value_binding_pattern x [concrete]

@@ -156,7 +156,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.12: init %array_type to %.loc10_20.3 = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.13: init %array_type = converted %.loc10_20.1, %.loc10_20.12 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.14: ref %array_type = temporary %.loc10_20.3, %.loc10_20.13 [concrete = constants.%.fd3]
-// CHECK:STDOUT:   %.loc10_20.15: %array_type = acquire_value %.loc10_20.14
+// CHECK:STDOUT:   %.loc10_20.15: %array_type = acquire_value %.loc10_20.14 [concrete = constants.%array]
 // CHECK:STDOUT:   %impl.elem0.loc10_23: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_23.1: <bound method> = bound_method %int_1.loc10_23, %impl.elem0.loc10_23 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc10_23: <specific function> = specific_function %impl.elem0.loc10_23, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

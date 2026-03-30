@@ -169,7 +169,7 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:     %.loc22_15.3: type = converted %.loc22_15.2, %as_type.loc22 [concrete = constants.%Goat]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_30.2: ref %Goat = temporary %.loc22_28.2, %.loc22_30.1 [concrete = constants.%.aec]
-// CHECK:STDOUT:   %.loc22_30.3: %Goat = acquire_value %.loc22_30.2
+// CHECK:STDOUT:   %.loc22_30.3: %Goat = acquire_value %.loc22_30.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %x: %Goat = value_binding x, %.loc22_30.3
 // CHECK:STDOUT:   %x.ref.loc23: %Goat = name_ref x, %x
 // CHECK:STDOUT:   %Bleet.ref.loc23: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
