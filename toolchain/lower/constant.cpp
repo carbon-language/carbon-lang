@@ -100,8 +100,8 @@ class ConstantContext {
     return file_context_->llvm_module();
   }
   auto sem_ir() const -> const SemIR::File& { return file_context_->sem_ir(); }
-  auto inst_namer() const -> const SemIR::InstNamer& {
-    return *file_context_->inst_namer();
+  auto inst_namer() const -> const SemIR::InstNamer* {
+    return file_context_->inst_namer();
   }
 
  private:
@@ -304,7 +304,10 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::Temporary inst)
     -> llvm::Constant* {
   auto* const_value = context.GetConstant(inst.init_id);
 
-  auto const_name = context.inst_namer().GetUnscopedNameFor(inst.init_id);
+  llvm::StringRef const_name;
+  if (context.inst_namer()) {
+    const_name = context.inst_namer()->GetUnscopedNameFor(inst.init_id);
+  }
   if (const_name.empty()) {
     const_name = "const";
   }
