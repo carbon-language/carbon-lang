@@ -4,7 +4,6 @@
 
 #include "toolchain/check/custom_witness.h"
 
-#include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -81,8 +80,27 @@ static auto GetFacetTypeForQuerySpecificInterface(
   return const_id;
 }
 
+// Starts a block for lookup-related instructions, and returns the `FacetType`
+// for lookups in `HasWitnessForRepeatedField`.
+static auto PrepareForHasWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::ConstantId {
+  context.inst_block_stack().Push();
+  StartGenericDecl(context);
+
+  return GetFacetTypeForQuerySpecificInterface(context, loc_id,
+                                               query_specific_interface_id);
+}
+
+// Cleans up state `PrepareForHasWitness`.
+static auto CleanupAfterHasWitness(Context& context) -> void {
+  DiscardGenericDecl(context);
+  context.inst_block_stack().PopAndDiscard();
+}
+
 // Returns true if `type_inst_id` has a witness for the query interface, which
-// comes from `GetFacetTypeForQuerySpecificInterface`.
+// comes from `PrepareForHasWitness`.
 static auto HasWitnessForRepeatedField(
     Context& context, SemIR::LocId loc_id, SemIR::InstId type_inst_id,
     SemIR::ConstantId query_facet_type_const_id) -> bool {
@@ -100,17 +118,16 @@ enum class DestroyFormat {
 };
 
 // Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
-// field, this can handle the call to `GetFacetTypeForQuerySpecificInterface`.
+// field, this can handle the call to `PrepareForHasWitness`.
 static auto HasWitnessForOneField(
     Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> DestroyFormat {
-  auto query_facet_type_const_id = GetFacetTypeForQuerySpecificInterface(
-      context, loc_id, query_specific_interface_id);
-  if (HasWitnessForRepeatedField(context, loc_id, field_inst_id,
-                                 query_facet_type_const_id)) {
-    return DestroyFormat::NonTrivial;
-  }
-  return DestroyFormat::NoDestroy;
+  auto query_facet_type_const_id =
+      PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+  auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
+                                                query_facet_type_const_id);
+  CleanupAfterHasWitness(context);
+  return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
 }
 
 // Returns true if `class_type` should impl `Destroy`.
@@ -145,14 +162,6 @@ static auto CanDestroyType(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> DestroyFormat {
-  context.inst_block_stack().Push();
-  StartGenericDecl(context);
-
-  auto on_exit = llvm::scope_exit([&]() {
-    DiscardGenericDecl(context);
-    context.inst_block_stack().PopAndDiscard();
-  });
-
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
   auto destroy_interface_id = query_specific_interface.interface_id;
@@ -228,15 +237,18 @@ static auto CanDestroyType(
       if (fields.empty()) {
         return DestroyFormat::Trivial;
       }
-      auto query_facet_type_const_id = GetFacetTypeForQuerySpecificInterface(
-          context, loc_id, query_specific_interface_id);
+      auto query_facet_type_const_id =
+          PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+      bool has_witness = true;
       for (const auto& field : fields) {
         if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
                                         query_facet_type_const_id)) {
-          return DestroyFormat::NoDestroy;
+          has_witness = false;
+          break;
         }
       }
-      return DestroyFormat::NonTrivial;
+      CleanupAfterHasWitness(context);
+      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
     case CARBON_KIND(SemIR::SymbolicBindingType sym_binding): {
@@ -250,15 +262,18 @@ static auto CanDestroyType(
       if (block.empty()) {
         return DestroyFormat::Trivial;
       }
-      auto query_facet_type_const_id = GetFacetTypeForQuerySpecificInterface(
-          context, loc_id, query_specific_interface_id);
+      auto query_facet_type_const_id =
+          PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+      bool has_witness = true;
       for (const auto& element_id : block) {
         if (!HasWitnessForRepeatedField(context, loc_id, element_id,
                                         query_facet_type_const_id)) {
-          return DestroyFormat::NoDestroy;
+          has_witness = false;
+          break;
         }
       }
-      return DestroyFormat::NonTrivial;
+      CleanupAfterHasWitness(context);
+      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
     case SemIR::BoolType::Kind:
