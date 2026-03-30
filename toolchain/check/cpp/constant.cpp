@@ -325,6 +325,8 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
     auto parm_type = parm_var_decl->getType();
     auto new_arg_inst_id = arg_inst_id;
 
+    // TODO: reuse the logic in `check/cpp/thunk.cpp` to determine
+    // whether to dereference the argument.
     if (!parm_type->isPointerType()) {
       if (auto addr_of = context.insts().TryGetAs<SemIR::AddrOf>(arg_inst_id)) {
         new_arg_inst_id = addr_of->lvalue_id;
