@@ -493,11 +493,8 @@ auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::MarkInPlaceInit inst)
     -> ConstantEvalResult {
-  auto const_id = context.constant_values().Get(inst.src_id);
-  if (const_id.has_value() && const_id.is_constant()) {
-    return ConstantEvalResult::Existing(const_id);
-  }
-  return ConstantEvalResult::NotConstant;
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.src_id));
 }
 
 auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
