@@ -609,7 +609,7 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
-  auto function_info =
+  const auto& function_info =
       context.GetFileContext(callee_file)
           .GetOrCreateFunctionInfo(callee_function.function_id,
                                    callee_function.resolved_specific_id);
@@ -686,7 +686,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto& function_info =
+  const auto& function_info =
       context.GetFileContext(callee.file)
           .GetOrCreateFunctionInfo(callee_function.function_id,
                                    callee_function.resolved_specific_id);
