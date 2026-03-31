@@ -282,7 +282,7 @@ commit_trailers = '''
 
 [revsets]
 # Make `jj bookmark advance` / `jj b a` only move bookmarks that point to
-# mutable commits, and move them to the most recent non-empty descendent.
+# mutable commits, and move them to the most recent non-empty descendant.
 bookmark-advance-from = "heads(::to & bookmarks()) & ~immutable_heads()"
 bookmark-advance-to = 'heads(::@ & ~(description("") & empty() & ~merges()))'
 ```
