@@ -2,15 +2,25 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-
 # Build rules supporting the install data tree for the Carbon toolchain.
 #
-# This populates a synthetic Carbon toolchain installation under the
+# This populates a synthetic Carbon toolchain installation rooted at this
+# package in the output tree.
 #
-# We use a `toolchain_files` rule here to ensure these show up in the _output_
-# tree, as otherwise Bazel will try to reference them in the source tree. We
-# want the output tree to have a complete toolchain installation that we can
-# test against.
+# We use a `toolchain_files` rule organize the files in in the installation and
+# handle cases where we need to symlink existing files or build outputs
+# into the correct location.
+#
+# This package also includes the logic for building Carbon's runtimes, and Bazel
+# `cc_toolchain`s for using the installation as a C++ toolchain in Bazel. This
+# allows multi-stage bootstrapping to occur entirely within Bazel. Note that the
+# specific stage will be in a _configuration specific_ output tree, but always
+# rooted under the install package.
+#
+# Last but ont least, we provide rules to build packages of the installation in
+# conventional layouts for directly extracting and using a binary build. The
+# packaged installation includes custom Bazel files to handle a pre-built and
+# installed toolchain in the same way as these handle the just-built toolchain.
 
 load(
     "@llvm-project//:vars.bzl",
