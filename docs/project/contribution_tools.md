@@ -279,6 +279,21 @@ auto-track-bookmarks = "*"
 # Automatically add a trailer to commits to indicate that they were AI-assisted.
 commit_trailers = '''
 "Assisted-by: My AI Tool"'''
+
+[revsets]
+# Make `jj bookmark advance` / `jj b a` only move bookmarks that point to
+# mutable commits, and move them to the most recent non-empty descendent.
+bookmark-advance-from = "heads(::to & bookmarks()) & ~immutable_heads()"
+bookmark-advance-to = 'heads(::@ & ~(description("") & empty() & ~merges()))'
+```
+
+As well as this per-repository configuration (added to `.jj/config.toml`):
+
+```toml
+[revset-aliases]
+# Treat github.com/carbon-language/carbon-lang as immutable, but treat your fork
+# as mutable.
+"immutable_heads()" = "remote_bookmarks(*, upstream)"
 ```
 
 #### AI assistants
