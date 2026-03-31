@@ -223,7 +223,8 @@ static auto ConvertArgToTemplateArg(
     }
 
     // TODO: provide a better location.
-    auto template_loc = clang::TemplateArgumentLocInfo();
+    auto template_loc = clang::TemplateArgumentLocInfo(context.ast_context(),
+                                                       clang::SourceLocation());
 
     auto const_inst_id =
         context.constant_values().GetConstantInstId(converted_inst_id);

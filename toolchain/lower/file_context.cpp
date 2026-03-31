@@ -999,7 +999,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   if (entry_block->hasNPredecessorsOrMore(1)) {
     auto* new_entry_block = llvm::BasicBlock::Create(
         llvm_context(), "entry", function_info->llvm_function, entry_block);
-    llvm::BranchInst::Create(entry_block, new_entry_block);
+    llvm::UncondBrInst::Create(entry_block, new_entry_block);
   }
 
   // Emit fingerprint accumulated inside the function context.
