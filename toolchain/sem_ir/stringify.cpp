@@ -176,7 +176,7 @@ class StepStack {
           PushSpecificNamedConstraint(specific_named_constraint);
           break;
         }
-        case CARBON_KIND(llvm::ListSeparator * sep): {
+        case CARBON_KIND(llvm::ListSeparator* sep): {
           PushString(*sep);
           break;
         }

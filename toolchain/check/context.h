@@ -378,6 +378,7 @@ class Context {
     return sem_ir().inst_blocks();
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
+  auto total_ir_count() const -> int { return total_ir_count_; }
 
   // --------------------------------------------------------------------------
   // End of SemIR::File members.

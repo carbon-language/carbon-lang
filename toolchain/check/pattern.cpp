@@ -14,10 +14,12 @@ namespace Carbon::Check {
 
 auto BeginSubpattern(Context& context) -> void {
   context.inst_block_stack().Push();
+  // TODO: This allocates an InstBlockId even in the case where the pattern has
+  // no associated expression. Find a way to avoid this.
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
 }
 
-auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
+static auto PopSubpatternExpr(Context& context, SemIR::InstId result_id)
     -> SemIR::ExprRegionId {
   if (context.region_stack().PeekRegion().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
@@ -39,12 +41,43 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
        .result_id = result_id});
 }
 
-auto EndSubpatternAsNonExpr(Context& context) -> void {
-  auto block_id = context.inst_block_stack().Pop();
-  CARBON_CHECK(block_id == context.region_stack().PeekRegion().back());
-  CARBON_CHECK(context.region_stack().PeekRegion().size() == 1);
-  CARBON_CHECK(context.inst_blocks().Get(block_id).empty());
+auto ConsumeSubpatternExpr(Context& context, SemIR::InstId result_id)
+    -> SemIR::ExprRegionId {
+  auto region_id = PopSubpatternExpr(context, result_id);
+  // Push an empty, unreachable region so that we can later detect the region
+  // has been consumed.
+  context.region_stack().PushUnreachableRegion();
+  return region_id;
+}
+
+auto EndEmptySubpattern(Context& context) -> void {
+  if (!context.region_stack().PeekRegion().empty()) {
+    CARBON_CHECK(context.inst_block_stack().PeekCurrentBlockContents().empty());
+    auto block_id = context.inst_block_stack().Pop();
+    CARBON_CHECK(block_id == context.region_stack().PeekRegion().back());
+    CARBON_CHECK(context.region_stack().PeekRegion().size() == 1);
+  }
   context.region_stack().PopAndDiscardRegion();
+}
+
+auto EndSubpattern(Context& context, NodeStack& node_stack) -> void {
+  auto [node_id, maybe_expr_id] =
+      node_stack.PopWithNodeIdIf<Parse::NodeCategory::Expr>();
+  if (maybe_expr_id) {
+    // We formed an expression, not a pattern, so convert it to an expression
+    // pattern now.
+    auto expr_region_id = PopSubpatternExpr(context, *maybe_expr_id);
+    auto pattern_type_id =
+        GetPatternType(context, context.insts().Get(*maybe_expr_id).type_id());
+    node_stack.Push(node_id, AddPatternInst<SemIR::ExprPattern>(
+                                 context, node_id,
+                                 {.type_id = pattern_type_id,
+                                  .expr_region_id = expr_region_id}));
+  } else {
+    // The expression region should have been consumed when forming the pattern
+    // instruction, so should now effectively be empty.
+    EndEmptySubpattern(context);
+  }
 }
 
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,

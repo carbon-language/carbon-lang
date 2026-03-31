@@ -155,7 +155,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   }
 
   SemIR::ExprRegionId type_expr_region_id =
-      EndSubpatternAsExpr(context, type_expr.inst_id);
+      ConsumeSubpatternExpr(context, type_expr.inst_id);
 
   // The name in a generic binding may be wrapped in `template`.
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
@@ -453,7 +453,9 @@ auto HandleParseNode(Context& context,
   auto [cast_type_inst_id, cast_type_id] =
       ExprAsType(context, type_node, parsed_type_id);
 
-  EndSubpatternAsExpr(context, cast_type_inst_id);
+  auto region_id = ConsumeSubpatternExpr(context, cast_type_inst_id);
+  // TODO: Should we be tracking this somewhere?
+  (void)region_id;
 
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 

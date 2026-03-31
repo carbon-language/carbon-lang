@@ -3875,6 +3875,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::Temporary inst) -> ResolveResult {
+  CARBON_CHECK(inst.storage_id == SemIR::InstId::None);
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto init_id = GetLocalConstantInstId(resolver, inst.init_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Deduplicated<SemIR::Temporary>(
+      resolver,
+      {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(type_id),
+       .storage_id = SemIR::InstId::None,
+       .init_id = init_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::TupleAccess inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   auto tuple_id = GetLocalConstantInstId(resolver, inst.tuple_id);
@@ -4245,6 +4261,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::SymbolicBindingType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::Temporary inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::TupleAccess inst): {

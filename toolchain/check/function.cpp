@@ -126,8 +126,9 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.full_pattern_stack().StartImplicitParamList();
 
     BeginSubpattern(context);
-    auto self_type_region_id = EndSubpatternAsExpr(
+    auto self_type_region_id = ConsumeSubpatternExpr(
         context, context.types().GetTypeInstId(args.self_type_id));
+    EndEmptySubpattern(context);
 
     insts.self_param_id = AddParamPattern(
         context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
@@ -147,8 +148,9 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.inst_block_stack().Push();
     for (auto param_type_id : args.param_type_ids) {
       BeginSubpattern(context);
-      auto param_type_region_id = EndSubpatternAsExpr(
+      auto param_type_region_id = ConsumeSubpatternExpr(
           context, context.types().GetTypeInstId(param_type_id));
+      EndEmptySubpattern(context);
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,

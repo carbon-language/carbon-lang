@@ -113,6 +113,10 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @int_1.30e = internal constant i8 1
+// CHECK:STDOUT: @int_2.305 = internal constant i16 2
+// CHECK:STDOUT: @int_1.e80 = internal constant i8 1
+// CHECK:STDOUT: @int_2.fb2 = internal constant i16 2
 // CHECK:STDOUT: @_Cc.Main = global i16 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
@@ -183,15 +187,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc9_21.3.temp = alloca i8, align 1, !dbg !26
 // CHECK:STDOUT:   %.loc9_24.3.temp = alloca i16, align 2, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.3.temp), !dbg !24
-// CHECK:STDOUT:   store i8 1, ptr %.loc7_19.3.temp, align 1, !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_22.3.temp), !dbg !25
-// CHECK:STDOUT:   store i16 2, ptr %.loc7_22.3.temp, align 2, !dbg !25
-// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk(ptr %.loc7_19.3.temp, ptr %.loc7_22.3.temp, i32 3, i64 4), !dbg !28
+// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk(ptr @int_1.30e, ptr @int_2.305, i32 3, i64 4), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.3.temp), !dbg !26
-// CHECK:STDOUT:   store i8 1, ptr %.loc9_21.3.temp, align 1, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_24.3.temp), !dbg !27
-// CHECK:STDOUT:   store i16 2, ptr %.loc9_24.3.temp, align 2, !dbg !27
-// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %.loc9_21.3.temp, ptr %.loc9_24.3.temp, i32 3, i64 4), !dbg !29
+// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk(ptr @int_1.e80, ptr @int_2.fb2, i32 3, i64 4), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

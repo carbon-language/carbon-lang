@@ -1551,6 +1551,24 @@ auto Formatter::FormatArg(AbsoluteInstBlockId id) -> void {
   FormatArg(static_cast<InstBlockId>(id));
 }
 
+auto Formatter::FormatArg(ExprRegionId id) -> void {
+  const auto& region = sem_ir_->expr_regions().Get(id);
+
+  FormatArg(region.result_id);
+  out() << " in ";
+  OpenBrace();
+  for (auto [i, block_id] : llvm::enumerate(region.block_ids)) {
+    if (i != 0) {
+      IndentLabel();
+      FormatLabel(block_id);
+      out() << ":\n";
+    }
+
+    FormatCodeBlock(block_id);
+  }
+  CloseBrace();
+}
+
 auto Formatter::FormatArg(RealId id) -> void {
   // TODO: Format with a `.` when the exponent is near zero.
   const auto& real = sem_ir_->reals().Get(id);

@@ -2474,6 +2474,24 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), inst, phase);
 }
 
+template <>
+auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
+                                        SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto temporary = inst.As<SemIR::Temporary>();
+  temporary.storage_id = SemIR::InstId::None;
+
+  Phase phase = Phase::Concrete;
+  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &temporary,
+                                    &phase) ||
+      !ReplaceFieldWithConstantValue(eval_context, &temporary,
+                                     &SemIR::Temporary::init_id, &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  return MakeConstantResult(eval_context.context(), temporary, phase);
+}
+
 // Returns whether `const_id` is the same constant facet value as
 // `facet_value_inst_id`.
 //

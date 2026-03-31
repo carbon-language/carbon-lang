@@ -578,6 +578,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %pattern_type.efe: type = pattern_type %Int.553 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.val: %Int.553 = struct_value () [concrete]
+// CHECK:STDOUT:   %.fdf: ref %Int.553 = temporary invalid, %Int.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -607,8 +608,8 @@ let n: type = i32;
 // CHECK:STDOUT:   %.loc8_15.1: ref %Int.553 = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.2: init %Int.553 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
 // CHECK:STDOUT:   %.loc8_15.3: init %Int.553 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.4: ref %Int.553 = temporary %.loc8_15.1, %.loc8_15.3
-// CHECK:STDOUT:   %.loc8_15.5: %Int.553 = acquire_value %.loc8_15.4
+// CHECK:STDOUT:   %.loc8_15.4: ref %Int.553 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.fdf]
+// CHECK:STDOUT:   %.loc8_15.5: %Int.553 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
 // CHECK:STDOUT:   %n: %Int.553 = value_binding n, %.loc8_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

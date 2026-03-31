@@ -147,6 +147,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::ExprPattern expr_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::VarPattern var_pattern,
@@ -162,6 +164,8 @@ class MatchContext {
       -> void;
   auto DoPostWork(State state, SemIR::AnyParamPattern param_pattern,
                   WorkItem entry) -> void;
+  auto DoPostWork(State state, SemIR::ExprPattern expr_pattern, WorkItem entry)
+      -> void;
   auto DoPostWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::TuplePattern tuple_pattern,
@@ -468,7 +472,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
   }
 
   CARBON_KIND_SWITCH(state) {
-    case CARBON_KIND(CallerState * caller_state): {
+    case CARBON_KIND(CallerState* caller_state): {
       CARBON_CHECK(scrutinee_id.has_value());
       if (scrutinee_id == SemIR::ErrorInst::InstId) {
         caller_state->call_args.push_back(SemIR::ErrorInst::InstId);
@@ -487,7 +491,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       // of the pattern ends here.
       break;
     }
-    case CARBON_KIND(CalleeState * callee_state): {
+    case CARBON_KIND(CalleeState* callee_state): {
       SemIR::Inst param = SemIR::AnyParam{
           .kind = ParamKindFor(context_, param_pattern, entry),
           .type_id =
@@ -524,7 +528,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       callee_state->call_param_patterns.push_back(entry.pattern_id);
       break;
     }
-    case CARBON_KIND(ThunkState * thunk_state): {
+    case CARBON_KIND(ThunkState* thunk_state): {
       auto param_id = thunk_state->outer_call_args.consume_front();
       if (auto var_param_pattern =
               context_.insts().TryGetAs<SemIR::VarParamPattern>(
@@ -537,7 +541,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       }
       break;
     }
-    case CARBON_KIND(LocalState * _): {
+    case CARBON_KIND(LocalState* _): {
       CARBON_FATAL("Found ValueParamPattern during local pattern match");
     }
   }
@@ -550,6 +554,17 @@ auto MatchContext::DoPostWork(State /*state*/,
   // there were any post-work corresponding to DoVarPreWorkImpl, that work
   // would have to be done here.
 }
+
+auto MatchContext::DoPreWork(State /*state*/,
+                             SemIR::ExprPattern /*expr_pattern*/,
+                             SemIR::InstId /*scrutinee_id*/, WorkItem entry)
+    -> void {
+  context_.TODO(entry.pattern_id, "expression pattern");
+}
+
+auto MatchContext::DoPostWork(State /*state*/,
+                              SemIR::ExprPattern /*expr_pattern*/,
+                              WorkItem /*entry*/) -> void {}
 
 auto MatchContext::DoPreWork(State state,
                              SemIR::ReturnSlotPattern return_slot_pattern,
@@ -603,16 +618,16 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
                                     WorkItem entry) const -> SemIR::InstId {
   auto storage_id = SemIR::InstId::None;
   CARBON_KIND_SWITCH(state) {
-    case CARBON_KIND(CalleeState * _): {
+    case CARBON_KIND(CalleeState* _): {
       // We're emitting pattern-match IR for the callee, but we're still on
       // the caller side of the pattern, so we traverse without emitting any
       // insts.
       return scrutinee_id;
     }
-    case CARBON_KIND(ThunkState * _): {
+    case CARBON_KIND(ThunkState* _): {
       return scrutinee_id;
     }
-    case CARBON_KIND(LocalState * _): {
+    case CARBON_KIND(LocalState* _): {
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
       // we start pattern matching.
       auto lookup_result = context_.var_storage_map().Lookup(entry.pattern_id);
@@ -620,7 +635,7 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       storage_id = lookup_result.value();
       break;
     }
-    case CARBON_KIND(CallerState * _): {
+    case CARBON_KIND(CallerState* _): {
       storage_id = AddInst<SemIR::TemporaryStorage>(
           context_, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -786,6 +801,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, any_param_pattern, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
+          DoPreWork(state, expr_pattern, work.scrutinee_id, entry);
+          break;
+        }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
           DoPreWork(state, return_slot_pattern, work.scrutinee_id, entry);
           break;
@@ -812,6 +831,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND_ANY(SemIR::AnyParamPattern, any_param_pattern): {
           DoPostWork(state, any_param_pattern, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
+          DoPostWork(state, expr_pattern, entry);
           break;
         }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {

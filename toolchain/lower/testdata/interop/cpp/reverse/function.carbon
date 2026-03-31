@@ -20,8 +20,6 @@ library "[[@TEST_NAME]]";
 import Other;
 import Cpp inline '''
 void G() {
-  // TODO: this is not actually calling the Carbon function yet, because
-  // it's not using the right mangled name.
   Carbon::Other::F();
 }
 ''';
@@ -56,13 +54,11 @@ void G() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z1Gv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6Carbon5Other1FEv()
+// CHECK:STDOUT:   call void @_CF.Other()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN6Carbon5Other1FEv() #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Other()
+// CHECK:STDOUT: declare void @_CF.Other() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

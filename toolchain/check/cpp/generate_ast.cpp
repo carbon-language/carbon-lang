@@ -35,6 +35,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/mangler.h"
 
 namespace Carbon::Check {
 
@@ -424,12 +425,21 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           cpp_return_type, cpp_param_types,
           clang::FunctionProtoType::ExtProtoInfo());
 
-      return clang::FunctionDecl::Create(
+      auto* function_decl = clang::FunctionDecl::Create(
           *ast_context_, &decl_context,
           /*StartLoc=*/clang::SourceLocation(),
           /*NLoc=*/clang::SourceLocation(),
           clang::DeclarationName(identifier_info), cpp_function_type,
           /*TInfo=*/nullptr, clang::SC_Extern);
+
+      // Mangle the function name and attach it to the `FunctionDecl`.
+      SemIR::Mangler m(context_->sem_ir(), context_->total_ir_count());
+      std::string mangled_name =
+          m.Mangle(callee_function->function_id, SemIR::SpecificId::None);
+      function_decl->addAttr(
+          clang::AsmLabelAttr::Create(*ast_context_, mangled_name));
+
+      return function_decl;
     }
     default:
       return nullptr;
