@@ -49,31 +49,37 @@ static auto GenerateLineMarker(Context& context, llvm::raw_ostream& out,
       << FormatEscaped(context.tokens().source().filename()) << "\"\n";
 }
 
+// Appends a line marker and the specified `code` to `out`, adjusting the
+// `line` number if the `code_token` represents a block string literal.
+static auto AppendInlineCode(Context& context, llvm::raw_ostream& out,
+                             Lex::TokenIndex code_token, llvm::StringRef code)
+    -> void {
+  // Compute the line number on which the C++ code starts. Usually the code
+  // is specified as a block string literal and starts on the line after the
+  // start of the string token.
+  // TODO: Determine if this is a block string literal without calling
+  // `GetTokenText`, which re-lexes the string.
+  int line = context.tokens().GetLineNumber(code_token);
+  if (context.tokens().GetTokenText(code_token).contains('\n')) {
+    ++line;
+  }
+
+  GenerateLineMarker(context, out, line);
+  out << code << "\n";
+}
+
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
     Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> std::string {
-  std::string code;
-  llvm::raw_string_ostream code_stream(code);
+  RawStringOstream code_stream;
   for (const Parse::Tree::PackagingNames& import : imports) {
     if (import.inline_body_id.has_value()) {
       // Expand `import Cpp inline "code";` directly into the specified code.
       auto code_token = context.parse_tree().node_token(import.inline_body_id);
-
-      // Compute the line number on which the C++ code starts. Usually the code
-      // is specified as a block string literal and starts on the line after the
-      // start of the string token.
-      // TODO: Determine if this is a block string literal without calling
-      // `GetTokenText`, which re-lexes the string.
-      int line = context.tokens().GetLineNumber(code_token);
-      if (context.tokens().GetTokenText(code_token).contains('\n')) {
-        ++line;
-      }
-
-      GenerateLineMarker(context, code_stream, line);
-      code_stream << context.string_literal_values().Get(
-                         context.tokens().GetStringLiteralValue(code_token))
-                  << "\n";
+      AppendInlineCode(context, code_stream, code_token,
+                       context.string_literal_values().Get(
+                           context.tokens().GetStringLiteralValue(code_token)));
       // TODO: Inject a clang pragma here to produce an error if there are
       // unclosed scopes at the end of this inline C++ fragment.
     } else if (import.library_id.has_value()) {
@@ -90,7 +96,7 @@ static auto GenerateCppIncludesHeaderCode(
       }
     }
   }
-  return code;
+  return code_stream.TakeStr();
 }
 
 // Adds the given source location and an `ImportIRInst` referring to it in
@@ -347,6 +353,8 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   bool root_scope_initialized_ = false;
 };
 
+}  // namespace
+
 void CarbonExternalASTSource::StartTranslationUnit(
     clang::ASTConsumer* /*Consumer*/) {
   auto& translation_unit = *ast_context_->getTranslationUnitDecl();
@@ -526,6 +534,33 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   return true;
 }
 
+// Parses a sequence of top-level declarations and forms a corresponding
+// representation in the Clang AST. Unlike clang::ParseAST, does not finish the
+// translation unit when EOF is reached.
+static auto ParseTopLevelDecls(clang::Parser& parser,
+                               clang::ASTConsumer& consumer) -> void {
+  // Don't allow C++20 module declarations in inline Cpp code fragments.
+  auto module_import_state = clang::Sema::ModuleImportState::NotACXX20Module;
+
+  // Parse top-level declarations until we see EOF. Do not parse EOF, as that
+  // will cause the parser to end the translation unit prematurely.
+  while (parser.getCurToken().isNot(clang::tok::eof)) {
+    clang::Parser::DeclGroupPtrTy decl_group;
+    bool eof = parser.ParseTopLevelDecl(decl_group, module_import_state);
+    CARBON_CHECK(!eof, "Should not parse decls at EOF");
+    if (decl_group && !consumer.HandleTopLevelDecl(decl_group.get())) {
+      // If the consumer rejects the declaration, bail out of parsing.
+      //
+      // TODO: In this case, we shouldn't parse any more declarations even in
+      // separate inline C++ fragments. But our current AST consumer only ever
+      // returns true.
+      break;
+    }
+  }
+}
+
+namespace {
+
 // An action and a set of registered Clang callbacks used to generate an AST
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
@@ -583,20 +618,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     context_->set_cpp_context(
         std::make_unique<CppContext>(clang_instance, std::move(parser_ptr)));
 
-    // Don't allow C++20 module declarations in inline Cpp code fragments.
-    auto module_import_state = clang::Sema::ModuleImportState::NotACXX20Module;
-
-    // Parse top-level declarations until we see EOF. Do not parse EOF, as that
-    // will cause the parser to end the translation unit prematurely.
-    while (parser.getCurToken().isNot(clang::tok::eof)) {
-      clang::Parser::DeclGroupPtrTy decl_group;
-      bool eof = parser.ParseTopLevelDecl(decl_group, module_import_state);
-      CARBON_CHECK(!eof);
-      if (decl_group && !clang_instance.getASTConsumer().HandleTopLevelDecl(
-                            decl_group.get())) {
-        break;
-      }
-    }
+    ParseTopLevelDecls(parser, clang_instance.getASTConsumer());
   }
 
  private:
@@ -683,6 +705,43 @@ auto GenerateAst(Context& context,
   // diagnostic now.
   context.emitter().Flush();
 
+  return true;
+}
+
+auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
+                             llvm::StringRef source_code) -> bool {
+  auto* cpp_context = context.cpp_context();
+  if (!cpp_context) {
+    return false;
+  }
+
+  clang::Sema& sema = cpp_context->sema();
+  clang::Preprocessor& preprocessor = sema.getPreprocessor();
+  clang::Parser& parser = cpp_context->parser();
+
+  RawStringOstream code_stream;
+  AppendInlineCode(context, code_stream,
+                   context.parse_tree().node_token(loc_id.node_id()),
+                   source_code);
+
+  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(code_stream.TakeStr(),
+                                                     "<inline c++>");
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+
+  bool failed =
+      preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation());
+  if (failed) {
+    return false;
+  }
+
+  // The parser will typically have an EOF as its cached current token; consume
+  // that so we can reach the newly-injected tokens.
+  if (parser.getCurToken().is(clang::tok::eof)) {
+    parser.ConsumeToken();
+  }
+
+  ParseTopLevelDecls(parser, sema.getASTConsumer());
   return true;
 }
 

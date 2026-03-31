@@ -368,6 +368,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~
 //   1. Import
 //
+// inline ...
+// ^~~~~~
+//   1. InlineDeclAfterIntroducer (variant is Regular)
+//
 // interface ...
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
@@ -432,6 +436,13 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 //   2. DeclScopeLoopAs(Class|Interface|Regular)
 //
 CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface, Regular)
+
+// Handles processing of an inline declaration.
+//
+// inline Cpp "..." ;
+//        ^~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(InlineDeclAfterIntroducer)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.

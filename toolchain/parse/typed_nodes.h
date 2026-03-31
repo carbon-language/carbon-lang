@@ -251,6 +251,18 @@ struct InlineImportSpecifier {
   InlineImportBodyId body;
 };
 
+using InlineIntroducer =
+    LeafNode<NodeKind::InlineIntroducer, Lex::InlineTokenIndex>;
+struct InlineCppDecl {
+  static constexpr auto Kind = NodeKind::InlineCppDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = InlineIntroducer::Kind});
+
+  InlineIntroducerId introducer;
+  CppNameExprId cpp_name;
+  InlineImportBodyId body;
+  Lex::SemiTokenIndex token;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
