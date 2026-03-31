@@ -27,3 +27,8 @@ StatementMacros: ['ABSTRACT']
 QualifierAlignment: Custom
 QualifierOrder:
   [inline, static, friend, constexpr, const, volatile, restrict, type]
+Macros:
+  # These macros can contain variable declarations, so clang-format needs to
+  # "see through" them in order to format them correctly.
+  - CARBON_ASSIGN_OR_RETURN(x)=x
+  - CARBON_KIND(x)=x

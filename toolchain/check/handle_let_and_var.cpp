@@ -131,6 +131,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // Handle the end of the full-pattern of a let/var declaration (before the
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
+  EndSubpattern(context, context.node_stack());
   auto scope_id = context.scope_stack().PeekNameScopeId();
   if (scope_id.has_value() &&
       context.name_scopes().Get(scope_id).is_interface_definition()) {
@@ -179,10 +180,13 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
+  EndFullPattern(context);
   auto interface_decl =
       context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
   EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
-  return HandleInitializer(context, node_id);
+  context.node_stack().Push(node_id);
+  StartPatternInitializer(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
@@ -252,6 +256,8 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
     context.node_stack().PopAndDiscardSoloNodeId<InitializerNodeKind>();
     EndPatternInitializer(context);
   } else {
+    EndFullPattern(context);
+
     // For an associated constant declaration, handle the completed declaration
     // now. We will have done this at the `=` if there was an initializer.
     if constexpr (IntroducerNodeKind ==
@@ -261,8 +267,6 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
               .GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
       EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
     }
-
-    EndFullPattern(context);
 
     // A variable declaration without an explicit initializer is initialized by
     // calling `(T as Core.DefaultOrUnformed).Op()`.

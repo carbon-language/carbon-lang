@@ -1145,14 +1145,30 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //
 //   1. VariablePattern
 //
-//  ...
+//  unused ...
+// ^
+//   1. UnusedPattern
+//
+//  [identifier|self] [:|:!|:?]
+// ^
+//  template ...
+// ^
+//  ref ...
 // ^
 //   1. BindingPattern
 //
 //  ...
 // ^
-//   1. UnusedPattern
+//   1. Expr
+//   2. ExprPattern
 CARBON_PARSE_STATE(Pattern)
+
+// Tracks that we are parsing an expression as an expression pattern.
+//
+//  ...
+// ^
+//   (state done)
+CARBON_PARSE_STATE(ExprPattern)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.

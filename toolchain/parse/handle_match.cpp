@@ -142,7 +142,9 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
 
   context.AddLeafNode(NodeKind::MatchCaseIntroducer, context.Consume());
   context.PushState(state, StateKind::MatchCaseAfterPattern);
-  context.PushState(StateKind::Pattern);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
+                              /*in_unused_pattern=*/false,
+                              PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleMatchCaseAfterPattern(Context& context) -> void {

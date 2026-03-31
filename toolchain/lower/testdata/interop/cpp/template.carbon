@@ -263,7 +263,8 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %class.X = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc12_14.1 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc12_14.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #0 {
@@ -318,8 +319,7 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !17
-// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr %.loc12_12.2.temp), !dbg !18
+// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,8 +328,7 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !21
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr %.loc18_12.2.temp, i32 2), !dbg !22
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3, i32 2), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,26 +337,20 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc24_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !25
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr %.loc24_12.2.temp, i32 2, i32 3), !dbg !26
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #4
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

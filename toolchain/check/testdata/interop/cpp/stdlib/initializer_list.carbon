@@ -94,6 +94,7 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.fa7: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
+// CHECK:STDOUT:   %.fd3: ref %array_type = temporary invalid, %array [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.type: type = cpp_overload_set_type @Consume.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.82f: type = ptr_type %initializer_list [concrete]
@@ -112,8 +113,6 @@ fn F() {
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor: %InitListConstructor.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.type: type = fn_type @initializer_list.cpp_destructor [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor: %initializer_list.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc12 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -230,8 +229,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.12: init %i32 to %.loc8_50.11 = in_place_init %.loc8_50.10 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc8_50.13: init %array_type to %.loc8_50.4 = array_init (%.loc8_50.6, %.loc8_50.9, %.loc8_50.12) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc8_50.14: init %array_type = converted %.loc8_50.1, %.loc8_50.13 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc8_50.15: ref %array_type = temporary %.loc8_50.4, %.loc8_50.14
-// CHECK:STDOUT:   %.loc8_50.16: %array_type = acquire_value %.loc8_50.15
+// CHECK:STDOUT:   %.loc8_50.15: ref %array_type = temporary %.loc8_50.4, %.loc8_50.14 [concrete = constants.%.fd3]
+// CHECK:STDOUT:   %.loc8_50.16: %array_type = acquire_value %.loc8_50.15 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc8: init %initializer_list to %.loc8_50.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.1(%.loc8_50.16)
 // CHECK:STDOUT:   %.loc8_50.17: init %initializer_list = converted %.loc8_50.1, %initializer_list.initializer_list.call.loc8
 // CHECK:STDOUT:   %.loc8_50.18: ref %initializer_list = temporary %.loc8_50.2, %.loc8_50.17
@@ -277,8 +276,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.12: init %i32 to %.loc10_23.11 = in_place_init %.loc10_23.10 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc10_23.13: init %array_type to %.loc10_23.4 = array_init (%.loc10_23.6, %.loc10_23.9, %.loc10_23.12) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_23.14: init %array_type = converted %.loc10_23.1, %.loc10_23.13 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc10_23.15: ref %array_type = temporary %.loc10_23.4, %.loc10_23.14
-// CHECK:STDOUT:   %.loc10_23.16: %array_type = acquire_value %.loc10_23.15
+// CHECK:STDOUT:   %.loc10_23.15: ref %array_type = temporary %.loc10_23.4, %.loc10_23.14 [concrete = constants.%.fd3]
+// CHECK:STDOUT:   %.loc10_23.16: %array_type = acquire_value %.loc10_23.15 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc10: init %initializer_list to %.loc10_23.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.2(%.loc10_23.16)
 // CHECK:STDOUT:   %.loc10_23.17: init %initializer_list = converted %.loc10_23.1, %initializer_list.initializer_list.call.loc10
 // CHECK:STDOUT:   %.loc10_23.18: ref %initializer_list = temporary %.loc10_23.2, %.loc10_23.17
@@ -332,8 +331,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.13: init %i32 to %.loc12_44.12 = in_place_init %.loc12_44.11 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc12_44.14: init %array_type to %.loc12_44.5 = array_init (%.loc12_44.7, %.loc12_44.10, %.loc12_44.13) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc12_44.15: init %array_type = converted %.loc12_44.1, %.loc12_44.14 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc12_44.16: ref %array_type = temporary %.loc12_44.5, %.loc12_44.15
-// CHECK:STDOUT:   %.loc12_44.17: %array_type = acquire_value %.loc12_44.16
+// CHECK:STDOUT:   %.loc12_44.16: ref %array_type = temporary %.loc12_44.5, %.loc12_44.15 [concrete = constants.%.fd3]
+// CHECK:STDOUT:   %.loc12_44.17: %array_type = acquire_value %.loc12_44.16 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc12: init %initializer_list to %.loc12_44.3 = call generated.%initializer_list.initializer_list.decl.2bdc3e.3(%.loc12_44.17)
 // CHECK:STDOUT:   %.loc12_44.18: init %initializer_list = converted %.loc12_44.1, %initializer_list.initializer_list.call.loc12
 // CHECK:STDOUT:   %.loc12_44.19: ref %initializer_list = temporary %.loc12_44.3, %.loc12_44.18
@@ -351,16 +350,10 @@ fn F() {
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.call: init %empty_tuple.type = call %InitListConstructor.cpp_destructor.bound(%.loc12_44.24)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc12: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc12(%.loc12_44.19)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc12: <bound method> = bound_method %.loc12_44.16, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc12: init %empty_tuple.type = call %Destroy.Op.bound.loc12(%.loc12_44.16)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_23.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc10: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc10(%.loc10_23.18)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %.loc10_23.15, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%.loc10_23.15)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_50.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc8: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc8(%.loc8_50.18)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %.loc8_50.15, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%.loc8_50.15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

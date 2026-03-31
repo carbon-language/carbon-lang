@@ -829,6 +829,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %pattern_type.30b: type = pattern_type %tuple.type.65a [concrete]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.specific_fn.af6: <specific function> = specific_function %tuple.type.as.A.impl.F.cc8, @tuple.type.as.A.impl.F(%Y1, %Y2, %X, %Z) [concrete]
 // CHECK:STDOUT:   %Z.val: %Z = struct_value () [concrete]
+// CHECK:STDOUT:   %.318: ref %Z = temporary invalid, %Z.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc24_39 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
@@ -836,8 +837,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Destroy.facet.9fd: %Destroy.type = facet_value %tuple.type.65a, (%custom_witness.8d7fae.1) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.d36: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.9fd) [concrete]
 // CHECK:STDOUT:   %.498: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.d36, %Destroy.facet.9fd [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc24_38 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.143: type = pattern_type %A.type.ab6 [concrete]
 // CHECK:STDOUT:   %T.2bc: %A.type.ab6 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [concrete]
@@ -1157,14 +1156,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %.loc24_38.2: ref %Z = temporary_storage
 // CHECK:STDOUT:   %.loc24_38.3: init %Z to %.loc24_38.2 = class_init () [concrete = constants.%Z.val]
 // CHECK:STDOUT:   %.loc24_38.4: init %Z = converted %.loc24_38.1, %.loc24_38.3 [concrete = constants.%Z.val]
-// CHECK:STDOUT:   %.loc24_38.5: ref %Z = temporary %.loc24_38.2, %.loc24_38.4
-// CHECK:STDOUT:   %.loc24_38.6: %Z = acquire_value %.loc24_38.5
+// CHECK:STDOUT:   %.loc24_38.5: ref %Z = temporary %.loc24_38.2, %.loc24_38.4 [concrete = constants.%.318]
+// CHECK:STDOUT:   %.loc24_38.6: %Z = acquire_value %.loc24_38.5 [concrete = constants.%Z.val]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.call: init %tuple.type.65a to %.loc24_39.1 = call %specific_fn(%.loc24_38.6)
 // CHECK:STDOUT:   %.loc24_39.2: ref %tuple.type.65a = temporary %.loc24_39.1, %tuple.type.as.A.impl.F.call
-// CHECK:STDOUT:   %Destroy.Op.bound.loc24_39: <bound method> = bound_method %.loc24_39.2, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc24_39: init %empty_tuple.type = call %Destroy.Op.bound.loc24_39(%.loc24_39.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc24_38: <bound method> = bound_method %.loc24_38.5, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc24_38: init %empty_tuple.type = call %Destroy.Op.bound.loc24_38(%.loc24_38.5)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc24_39.2, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc24_39.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1206,8 +1203,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %.loc28_11.2: ref %Z = temporary_storage
 // CHECK:STDOUT:     %.loc28_11.3: init %Z to %.loc28_11.2 = class_init () [concrete = constants.%Z.val]
 // CHECK:STDOUT:     %.loc28_11.4: init %Z = converted %.loc28_11.1, %.loc28_11.3 [concrete = constants.%Z.val]
-// CHECK:STDOUT:     %.loc28_11.5: ref %Z = temporary %.loc28_11.2, %.loc28_11.4
-// CHECK:STDOUT:     %.loc28_11.6: %Z = acquire_value %.loc28_11.5
+// CHECK:STDOUT:     %.loc28_11.5: ref %Z = temporary %.loc28_11.2, %.loc28_11.4 [concrete = constants.%.318]
+// CHECK:STDOUT:     %.loc28_11.6: %Z = acquire_value %.loc28_11.5 [concrete = constants.%Z.val]
 // CHECK:STDOUT:     %A.WithSelf.F.call: init @CallGeneric.%tuple.type (%tuple.type.856) to %.loc28_12.1 = call %specific_impl_fn.loc28_4.1(%.loc28_11.6)
 // CHECK:STDOUT:     %.loc28_12.2: ref @CallGeneric.%tuple.type (%tuple.type.856) = temporary %.loc28_12.1, %A.WithSelf.F.call
 // CHECK:STDOUT:     %impl.elem0.loc28_12.1: @CallGeneric.%.loc28_12.3 (%.949) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28_12.2 (constants.%impl.elem0.487)]
@@ -1215,8 +1212,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %specific_impl_fn.loc28_12.1: <specific function> = specific_impl_function %impl.elem0.loc28_12.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.a1c) [symbolic = %specific_impl_fn.loc28_12.2 (constants.%specific_impl_fn.56d)]
 // CHECK:STDOUT:     %bound_method.loc28_12.2: <bound method> = bound_method %.loc28_12.2, %specific_impl_fn.loc28_12.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc28_12.2(%.loc28_12.2)
-// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc28_11.5, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc28_11.5)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

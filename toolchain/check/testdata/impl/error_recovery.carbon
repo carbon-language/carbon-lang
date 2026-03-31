@@ -118,13 +118,17 @@ class C {};
 //@dump-sem-ir-begin
 impl C as I {
   // This leaves the impl with a placeholder instruction in the witness table.
-  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+8]]:11: error: expected `:`, `:!`, or `:?` in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+12]]:9: error: name `x` not found [NameNotFound]
+  // CHECK:STDERR:   fn Op[x self: C]() {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+8]]:11: error: expected `,` or `]` [UnexpectedTokenAfterListElement]
   // CHECK:STDERR:   fn Op[x self: C]() {}
   // CHECK:STDERR:           ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:8: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   fn Op[x self: C]() {}
-  // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~
   // CHECK:STDERR:
   fn Op[x self: C]() {}
 }

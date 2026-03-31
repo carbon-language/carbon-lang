@@ -1,0 +1,95 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "semir",
+  "scopeName": "source.carbon-semir",
+  "fileTypes": ["semir"],
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#identifiers"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#labels"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "storage.type.semir",
+          "match": "\\b(var|ref|init|out|type|val)\\b"
+        },
+        {
+          "name": "storage.modifier.semir",
+          "match": "\\b(concrete)\\b"
+        },
+        {
+          "name": "support.function.semir",
+          "match": "\\b[a-z_][a-z0-9_]+\\b"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "entity.name.variable.semir",
+          "match": "(?:[a-zA-Z0-9_]+\\.)?%[a-zA-Z0-9_.]+"
+        },
+        {
+          "name": "entity.name.function.semir",
+          "match": "@[a-zA-Z0-9_.]+"
+        }
+      ]
+    },
+    "labels": {
+      "patterns": [
+        {
+          "name": "entity.name.label.semir",
+          "match": "![a-zA-Z0-9_]+:"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.semir",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.semir",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.semir",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "keyword.operator.semir",
+          "match": "(=>|->|=|:)"
+        }
+      ]
+    }
+  }
+}

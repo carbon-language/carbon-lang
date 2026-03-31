@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Style](#style)
     -   [Google Docs and Markdown](#google-docs-and-markdown)
     -   [Other files](#other-files)
+-   [Testing](#testing)
 -   [License](#license)
     -   [Google Docs](#google-docs)
     -   [Markdown](#markdown)
@@ -308,7 +309,6 @@ follow the Carbon documentation and coding styles.
         request.
 
 -   For code:
-
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
         includes modifications to preexisting designs.
@@ -426,6 +426,14 @@ Other style points to be aware of are:
 ### Other files
 
 If you're not sure what style to use, please ask on Discord or GitHub.
+
+## Testing
+
+Most development in the Carbon project is on the [toolchain](toolchain/). The
+toolchain contains some unit tests, but the majority of testing is done through
+`file_test` tests, which test the output of the different phases of the
+toolchain. The toolchain docs include instructions for
+[building and running tests](toolchain/docs/adding_features.md#tests-and-debugging).
 
 ## License
 

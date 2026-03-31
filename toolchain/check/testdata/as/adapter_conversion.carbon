@@ -354,6 +354,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
+// CHECK:STDOUT:   %.4e1: ref %B = temporary invalid, %B.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -366,8 +367,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_value.patt: %pattern_type.1f4 = value_binding_pattern b_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2
-// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1
+// CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2 [concrete = constants.%.4e1]
+// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %b_value: %B = value_binding b_value, %.loc14_42.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

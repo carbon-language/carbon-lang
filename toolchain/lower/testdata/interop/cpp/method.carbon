@@ -266,6 +266,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %struct.NeedThunk = type { i8 }
 // CHECK:STDOUT:
+// CHECK:STDOUT: @int_1.30e = internal constant i8 1
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %c) #0 {
 // CHECK:STDOUT: entry:
@@ -305,11 +307,9 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   %.loc7_14.3.temp = alloca i8, align 1, !dbg !24
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !24
-// CHECK:STDOUT:   store i8 1, ptr %.loc7_14.3.temp, align 1, !dbg !24
-// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr %.loc7_14.3.temp), !dbg !26
+// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr @int_1.30e), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !25
-// CHECK:STDOUT:   store i8 1, ptr %.loc8_14.3.temp, align 1, !dbg !25
-// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr %.loc8_14.3.temp), !dbg !27
+// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr @int_1.30e), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

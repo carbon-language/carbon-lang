@@ -630,6 +630,18 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// Represents an expression pattern.
+struct ExprPattern {
+  static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeId>(
+      {.ir_name = "expr_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
+  ExprRegionId expr_region_id;
+};
+
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetAccessType {
@@ -1898,6 +1910,7 @@ struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
        .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Conditional,
        .has_cleanup = true});
 
   TypeId type_id;

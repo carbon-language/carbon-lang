@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lower/mangler.h"
+#include "toolchain/sem_ir/mangler.h"
 
 #include <string>
 
@@ -15,7 +15,7 @@
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
-namespace Carbon::Lower {
+namespace Carbon::SemIR {
 
 auto Mangler::MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id)
     -> void {
@@ -286,4 +286,4 @@ auto Mangler::MangleUnqualifiedClass(llvm::raw_ostream& os,
   MangleNameId(os, class_info.name_id);
   MangleSpecificId(os, specific_id);
 }
-}  // namespace Carbon::Lower
+}  // namespace Carbon::SemIR

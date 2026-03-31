@@ -27,6 +27,15 @@
           ".carbon"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "semir",
+        "aliases": [
+          "SemIR"
+        ],
+        "extensions": [
+          ".semir"
+        ]
       }
     ],
     "grammars": [
@@ -34,6 +43,18 @@
         "language": "carbon",
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
+      },
+      {
+        "language": "semir",
+        "scopeName": "source.carbon-semir",
+        "path": "./semir.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.carbon-check-test",
+        "path": "./carbon-check-test.tmLanguage.json",
+        "injectTo": [
+          "source.carbon"
+        ]
       }
     ],
     "configuration": {

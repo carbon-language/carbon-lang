@@ -4560,7 +4560,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.5a3: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -4584,9 +4583,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.a7e: type = pattern_type %C.302 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C.302 = struct_value () [concrete]
+// CHECK:STDOUT:   %.cdd: ref %C.302 = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4723,11 +4721,9 @@ fn F() {
 // CHECK:STDOUT:     %.loc12_18.2: %Z.type = converted %D.ref.loc12_17, %Z.facet [concrete = constants.%Z.facet.59e]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.63b, element0 [concrete = constants.%C.302]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_30.2: ref %C.302 = temporary %.loc12_28.2, %.loc12_30.1
-// CHECK:STDOUT:   %.loc12_30.3: %C.302 = acquire_value %.loc12_30.2
+// CHECK:STDOUT:   %.loc12_30.2: ref %C.302 = temporary %.loc12_28.2, %.loc12_30.1 [concrete = constants.%.cdd]
+// CHECK:STDOUT:   %.loc12_30.3: %C.302 = acquire_value %.loc12_30.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %a: %C.302 = value_binding a, %.loc12_30.3
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc12_30.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc12_30.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -346,3 +346,19 @@ cc_test(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_library(
+    name = "mangler",
+    srcs = ["mangler.cpp"],
+    hdrs = ["mangler.h"],
+    deps = [
+        ":entry_point",
+        ":file",
+        ":inst_namer",
+        ":typed_insts",
+        "//common:raw_string_ostream",
+        "//toolchain/base:kind_switch",
+        "@llvm-project//clang:ast",
+        "@llvm-project//llvm:Support",
+    ],
+)
