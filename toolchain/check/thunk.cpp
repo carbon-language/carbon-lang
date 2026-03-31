@@ -262,7 +262,8 @@ static auto HasDeclaredReturnType(Context& context,
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id) -> SemIR::InstId {
+                      SemIR::InstId callee_id, bool for_reverse_interop)
+    -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
   auto param_pattern_ids =
@@ -300,7 +301,20 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
     auto result =
         llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
     if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
-      return call_arg_ids[result->index];
+      SemIR::InstId arg_inst_id = call_arg_ids[result->index];
+      if (!for_reverse_interop) {
+        return arg_inst_id;
+      }
+
+      // For reverse-interop thunks, the parameter types are all
+      // pointers and must be dereferenced to pass to the callee.
+      auto arg_inst = context.insts().Get(arg_inst_id);
+      auto pointee_type_id =
+          context.sem_ir().GetPointeeType(arg_inst.type_id());
+      auto deref = AddInst<SemIR::Deref>(
+          context, loc_id,
+          {.type_id = pointee_type_id, .pointer_id = arg_inst_id});
+      return deref;
     } else {
       if (param_pattern_id != SemIR::ErrorInst::InstId) {
         context.TODO(param_pattern_id,
@@ -340,7 +354,8 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
 // Build a call to a function that forwards the arguments of the enclosing
 // function, for use when constructing a thunk.
 static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
-                           SemIR::InstId callee_id) -> SemIR::InstId {
+                           SemIR::InstId callee_id, bool for_reverse_interop)
+    -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
   // Build a `NameRef` naming the callee, and a `SpecificConstant` if needed.
@@ -351,7 +366,8 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            callee_type.specific_id);
 
   auto call_params = context.inst_blocks().Get(function.call_params_id);
-  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id);
+  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id,
+                          for_reverse_interop);
 }
 
 // Given a declaration of a thunk and the function that it should call, build
@@ -360,7 +376,8 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::FunctionId signature_id,
                                  SemIR::FunctionId function_id,
                                  SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id) {
+                                 SemIR::InstId callee_id,
+                                 bool for_reverse_interop) {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining
@@ -391,7 +408,8 @@ static auto BuildThunkDefinition(Context& context,
                      ThunkSignature);
       });
 
-  auto call_id = BuildThunkCall(context, function_id, callee_id);
+  auto call_id =
+      BuildThunkCall(context, function_id, callee_id, for_reverse_interop);
   if (HasDeclaredReturnType(context, function_id)) {
     BuildReturnWithExpr(context, SemIR::LocId(callee_id), call_id);
   } else {
@@ -408,22 +426,24 @@ auto BuildThunkDefinition(Context& context,
   context.scope_stack().Restore(std::move(task.scope));
 
   BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
-                       task.info.decl_id, task.info.callee_id);
+                       task.info.decl_id, task.info.callee_id,
+                       /*for_reverse_interop=*/false);
 
   context.scope_stack().Pop();
 }
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id, bool defer_definition)
-    -> SemIR::InstId {
+                SemIR::InstId callee_id, bool defer_definition,
+                bool for_reverse_interop) -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
   // Check whether we can use the given function without a thunk.
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (CheckFunctionTypeMatches(
+  if (!for_reverse_interop &&
+      CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
@@ -454,9 +474,20 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] =
-      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
-                        signature_specific_id, callee.function_id);
+
+  SemIR::InstId thunk_id = SemIR::InstId::None;
+  SemIR::FunctionId function_id = SemIR::FunctionId::None;
+  if (for_reverse_interop) {
+    // For reverse interop, reuse the passed-in signature rather than
+    // creating a new function decl.
+    function_id = signature_id;
+    thunk_id = context.functions().Get(signature_id).first_decl_id();
+  } else {
+    auto p = CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                               signature_specific_id, callee.function_id);
+    function_id = p.first;
+    thunk_id = p.second;
+  }
 
   // Track that this function is a thunk.
   context.functions().Get(function_id).SetThunk(callee_id);
@@ -474,7 +505,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                  });
   } else {
     BuildThunkDefinition(context, signature_id, function_id, thunk_id,
-                         callee_id);
+                         callee_id, for_reverse_interop);
     context.scope_stack().Pop();
   }
 
