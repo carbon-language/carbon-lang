@@ -157,6 +157,41 @@ interface C {
 // CHECK:STDOUT:   %.loc14_14.2 => constants.%.805
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a14
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId, FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, IdentifierNameExprId, ImplDefinitionStartId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PatternType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, IdentifierNameExprId, ImplDefinitionStartId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_with_compound_member_access.carbon
 // CHECK:STDOUT:
@@ -238,4 +273,30 @@ interface C {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind BoundMethod: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, FunctionDefinitionStartId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

@@ -87,4 +87,16 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:

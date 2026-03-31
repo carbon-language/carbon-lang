@@ -41,6 +41,9 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: --- fail_todo_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_assignment.carbon
 // CHECK:STDOUT:
@@ -50,4 +53,16 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %i32) -> out %return.param: %i32;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

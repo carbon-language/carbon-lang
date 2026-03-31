@@ -230,4 +230,15 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric.WithSelf(constants.%T, constants.%Self.31c17c.3) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetType: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDeclId, NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:

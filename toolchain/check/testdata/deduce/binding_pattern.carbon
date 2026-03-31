@@ -252,6 +252,30 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.441
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId, MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, MemberAccessExprId, StructLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_compatible_deduce.carbon
 // CHECK:STDOUT:
@@ -467,4 +491,34 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.94b
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, StructLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: CallExprId
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId, MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, MemberAccessExprId, StructLiteralId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId, WhereExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

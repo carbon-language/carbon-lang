@@ -204,4 +204,29 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: ReturnStatementId
+// CHECK:STDOUT: InstKind Call: CallExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ReturnStatementId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: ReturnStatementId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

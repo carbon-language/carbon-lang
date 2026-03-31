@@ -207,4 +207,19 @@ impl () as B(1) {}
 // CHECK:STDOUT: specific @B(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(<error>, <error>) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind FacetType: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:

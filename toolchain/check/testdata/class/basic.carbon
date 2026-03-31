@@ -207,4 +207,28 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref(%.loc30_18.2)
 // CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId, IntLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, IntLiteralId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, IntLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

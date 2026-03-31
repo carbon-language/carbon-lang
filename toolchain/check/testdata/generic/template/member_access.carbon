@@ -305,6 +305,45 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc5_17.6 => constants.%i32
 // CHECK:STDOUT:   %.loc5_17.7 => constants.%inst.splice_block.48b
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AccessMemberAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind AsCompatible: MemberAccessExprId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ConvertToValueAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefineTypeAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, StructTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeOfInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_such_member.carbon
 // CHECK:STDOUT:
@@ -474,6 +513,41 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc5_17.6 => <error>
 // CHECK:STDOUT:   %.loc5_17.7 => constants.%inst.splice_block
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AccessMemberAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind AsCompatible: MemberAccessExprId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ConvertToValueAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefineTypeAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeOfInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_wrong_type.carbon
 // CHECK:STDOUT:
@@ -665,4 +739,42 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc5_17.6 => constants.%F.c40
 // CHECK:STDOUT:   %.loc5_17.7 => constants.%inst.splice_block.34e
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AccessMemberAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind AsCompatible: MemberAccessExprId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ConvertToValueAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: MemberAccessExprId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefineTypeAction: MemberAccessExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeOfInst: MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

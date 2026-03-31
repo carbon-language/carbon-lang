@@ -166,6 +166,21 @@ fn G() { F({}); }
 // CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_scope.carbon
 // CHECK:STDOUT:
@@ -253,6 +268,24 @@ fn G() { F({}); }
 // CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfConditionId, IfStatementId
+// CHECK:STDOUT: InstKind BranchIf: IfConditionId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- temp.carbon
 // CHECK:STDOUT:
@@ -312,6 +345,20 @@ fn G() { F({}); }
 // CHECK:STDOUT: fn @Destroy.Op.loc13(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_class.carbon
 // CHECK:STDOUT:
@@ -358,6 +405,26 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %D.213) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_use_inside_generic.carbon
 // CHECK:STDOUT:
@@ -468,4 +535,29 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PatternType: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

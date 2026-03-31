@@ -415,6 +415,44 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId, DesignatorExprId
+// CHECK:STDOUT: InstKind AssociatedEntityType: AssociatedConstantNameAndTypeId, DesignatorExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, DesignatorExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetType: IdentifierNameExprId, InterfaceDefinitionStartId, WhereExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CompileTimeBindingPatternId, DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: CompileTimeBindingPatternId, DesignatorExprId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PatternType: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: DesignatorExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId, WhereExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: AssociatedConstantNameAndTypeId, CompileTimeBindingPatternId, IdentifierNameExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: DesignatorExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- enclosing_specific_is_facet_value.carbon
 // CHECK:STDOUT:
@@ -904,4 +942,44 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId, DesignatorExprId
+// CHECK:STDOUT: InstKind AssociatedEntityType: AssociatedConstantNameAndTypeId, DesignatorExprId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorAmpId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId, ClassDeclId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, DesignatorExprId, InfixOperatorAsId, ParenExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: CallExprId, DesignatorExprId
+// CHECK:STDOUT: InstKind FacetType: IdentifierNameExprId, InterfaceDefinitionStartId, WhereExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CompileTimeBindingPatternId, DesignatorExprId, InfixOperatorAmpId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: CompileTimeBindingPatternId, DesignatorExprId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PatternType: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: DesignatorExprId, WhereExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, WhereExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: AssociatedConstantNameAndTypeId, CompileTimeBindingPatternId, IdentifierNameExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: DesignatorExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ParenExprId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:

@@ -281,4 +281,22 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.4 [concrete = constants.%tuple]
 // CHECK:STDOUT:   return %.loc17_17 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

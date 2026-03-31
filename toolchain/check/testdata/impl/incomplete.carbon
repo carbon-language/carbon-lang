@@ -245,6 +245,14 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class.carbon
 // CHECK:STDOUT:
@@ -293,6 +301,14 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class_no_forward_decl.carbon
 // CHECK:STDOUT:
@@ -334,6 +350,14 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class_with_rewrite.carbon
 // CHECK:STDOUT:
@@ -399,6 +423,18 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_class_with_qualified_rewrite.carbon
 // CHECK:STDOUT:
@@ -440,6 +476,20 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
@@ -517,6 +567,21 @@ interface B {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- declaration_incomplete_where_rewrite.carbon
 // CHECK:STDOUT:
@@ -640,6 +705,28 @@ interface B {
 // CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_declaration_lookup_into_incomplete.carbon
 // CHECK:STDOUT:
@@ -728,6 +815,22 @@ interface B {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_unidentified_constraint.carbon
 // CHECK:STDOUT:
@@ -762,6 +865,12 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_require_incomplete_interface.carbon
 // CHECK:STDOUT:
@@ -929,6 +1038,29 @@ interface B {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc16_14.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, StructLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: WhereExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon
 // CHECK:STDOUT:
@@ -963,4 +1095,12 @@ interface B {
 // CHECK:STDOUT: constraint @A;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
 // CHECK:STDOUT:

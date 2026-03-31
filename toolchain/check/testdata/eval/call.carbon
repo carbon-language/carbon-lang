@@ -197,6 +197,29 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type.189) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: TupleLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: TupleLiteralId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TupleAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_init.carbon
 // CHECK:STDOUT:
@@ -243,6 +266,34 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type.189) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: TupleLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind TupleAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_return_in_place_tuple.carbon
 // CHECK:STDOUT:
@@ -359,6 +410,42 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type.189) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, ReturnStatementId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TupleAccess: CallExprId, MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_class.carbon
 // CHECK:STDOUT:
@@ -412,4 +499,27 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
 // CHECK:STDOUT:

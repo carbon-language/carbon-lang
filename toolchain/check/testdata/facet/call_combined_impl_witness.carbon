@@ -500,4 +500,44 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc35_4.2 => constants.%C.as.B.impl.BB
 // CHECK:STDOUT:   %specific_impl_fn.loc35_4.2 => constants.%C.as.B.impl.BB
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorAmpId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, InfixOperatorAmpId, InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorAmpId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificImplFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, InfixOperatorAmpId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

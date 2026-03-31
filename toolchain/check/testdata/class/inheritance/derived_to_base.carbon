@@ -432,6 +432,45 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId, ReturnStatementId
+// CHECK:STDOUT: InstKind AsCompatible: StructLiteralId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind BoundMethod: PrefixOperatorAmpId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind Call: PrefixOperatorAmpId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: IdentifierNameExprId, InfixOperatorAsId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, InfixOperatorAsId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind Deref: PrefixOperatorStarId, ReturnStatementId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: PrefixOperatorAmpId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: PrefixOperatorAmpId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- qualified.carbon
 // CHECK:STDOUT:
@@ -472,6 +511,26 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %TakeConstAPtr.call: init %empty_tuple.type = call %TakeConstAPtr.ref(%.loc21_17.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AsCompatible: IdentifierNameExprId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ConstType: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Deref: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_qualified_non_ptr.carbon
 // CHECK:STDOUT:
@@ -502,4 +561,19 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ConstType: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

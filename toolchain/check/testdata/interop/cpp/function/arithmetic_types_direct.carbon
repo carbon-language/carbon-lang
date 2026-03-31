@@ -373,6 +373,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param_max.carbon
 // CHECK:STDOUT:
@@ -431,6 +445,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param_min.carbon
 // CHECK:STDOUT:
@@ -506,6 +534,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Call: CallExprId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Converted: PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind ValueOfInitializer: PrefixOperatorMinusId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_int_param.carbon
 // CHECK:STDOUT:
@@ -564,6 +606,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_param.carbon
 // CHECK:STDOUT:
@@ -622,6 +678,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unsigned_int_param.carbon
 // CHECK:STDOUT:
@@ -680,6 +750,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int32_t_param.carbon
 // CHECK:STDOUT:
@@ -738,6 +822,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_params.carbon
 // CHECK:STDOUT:
@@ -808,6 +906,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2, %.loc8_14.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_int_params.carbon
 // CHECK:STDOUT:
@@ -916,6 +1028,20 @@ fn F() {
 // CHECK:STDOUT:   %foo2.call: init %empty_tuple.type = call imports.%foo2.decl(%.loc9_12.2, %.loc9_15.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unnamed_int_param.carbon
 // CHECK:STDOUT:
@@ -974,6 +1100,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_return.carbon
 // CHECK:STDOUT:
@@ -1013,6 +1153,21 @@ fn F() {
 // CHECK:STDOUT:   %Carbon_foo.call: init %empty_tuple.type = call %Carbon_foo.ref(%.loc10_26.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_long_param.carbon
 // CHECK:STDOUT:
@@ -1071,4 +1226,18 @@ fn F() {
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:

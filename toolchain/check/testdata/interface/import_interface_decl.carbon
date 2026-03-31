@@ -44,6 +44,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.impl.carbon
 // CHECK:STDOUT:
@@ -79,4 +81,6 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.9f2 [from "fail_b.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

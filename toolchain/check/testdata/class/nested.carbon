@@ -425,4 +425,31 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc53_4.2, %ptr.as.Copy.impl.Op.call.loc53
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Assign: InfixOperatorEqualId, VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Deref: PointerMemberAccessExprId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId, PointerMemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, VariablePatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

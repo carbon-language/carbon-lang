@@ -88,6 +88,17 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   assign file.%v.var, %.loc4_9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
@@ -131,6 +142,19 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   assign file.%v2.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
 // CHECK:STDOUT:
@@ -164,6 +188,18 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_other_def.carbon
 // CHECK:STDOUT:
@@ -205,4 +241,17 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

@@ -183,6 +183,19 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
@@ -369,6 +382,28 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: PostfixOperatorStarId, VariablePatternId
+// CHECK:STDOUT: InstKind GenericClassType: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificConstant: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TypeTypeLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_value.carbon
 // CHECK:STDOUT:
@@ -489,6 +524,29 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: CallExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CallExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: CallExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class_param.carbon
 // CHECK:STDOUT:
@@ -701,4 +759,33 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: StructLiteralId
+// CHECK:STDOUT: InstKind Call: StructLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: StructLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, InfixOperatorAsId, StructLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: StructLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: StructLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

@@ -121,4 +121,26 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %f64.d77) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: VarBindingPatternId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: VariablePatternId
+// CHECK:STDOUT: InstKind Call: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: VariablePatternId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: VariablePatternId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

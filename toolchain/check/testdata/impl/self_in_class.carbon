@@ -175,4 +175,30 @@ class A {
 // CHECK:STDOUT:   %.loc16_16.1 => constants.%.a69
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7c7
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
 // CHECK:STDOUT:

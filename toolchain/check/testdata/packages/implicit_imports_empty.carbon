@@ -76,6 +76,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %WithImpl.import = import WithImpl
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_extra.impl.carbon
 // CHECK:STDOUT:
@@ -84,6 +86,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %WithImpl.import = import WithImpl
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_lib.carbon
 // CHECK:STDOUT:
@@ -98,6 +102,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %WithImpl.import = import WithImpl
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
 // CHECK:STDOUT:
@@ -118,4 +124,6 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

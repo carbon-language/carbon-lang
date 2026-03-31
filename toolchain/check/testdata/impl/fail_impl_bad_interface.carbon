@@ -96,6 +96,11 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId
+// CHECK:STDOUT: InstKind Converted: BoolLiteralFalseId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_type.carbon
 // CHECK:STDOUT:
@@ -128,6 +133,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_type_where.carbon
 // CHECK:STDOUT:
@@ -171,6 +179,13 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon
 // CHECK:STDOUT:
@@ -231,4 +246,15 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementImpls: RequirementImplsId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:

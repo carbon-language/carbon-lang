@@ -290,4 +290,48 @@ class Declaration(T:! type);
 // CHECK:STDOUT: specific @Declaration(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc17_20.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ClassType: FieldNameAndTypeId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind FacetValue: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId, MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind LookupImplWitness: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: IdentifierNameExprId, LetBindingPatternId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: IdentifierNameExprId, LetBindingPatternId, MemberAccessExprId, PostfixOperatorStarId, ReturnStatementId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificImplFunction: MemberAccessExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructType: ClassDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind UnboundElementType: FieldNameAndTypeId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

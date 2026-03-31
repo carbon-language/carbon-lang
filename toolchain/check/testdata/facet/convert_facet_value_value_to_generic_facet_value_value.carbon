@@ -601,4 +601,39 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc31_48 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc31_64 => constants.%complete_type.357
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, ImplDefinitionStartId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind FacetAccessType: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: CallExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PatternType: CompileTimeBindingPatternId, LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: CallExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, IdentifierNameExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, ImplDefinitionStartId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

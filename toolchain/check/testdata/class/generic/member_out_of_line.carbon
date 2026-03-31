@@ -377,6 +377,44 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:   %.loc7_25.1 => constants.%.076a48.2
 // CHECK:STDOUT:   %pattern_type.loc7_25 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ClassType: FieldNameAndTypeId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId
+// CHECK:STDOUT: InstKind LookupImplWitness: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PatternType: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: IdentifierNameExprId, LetBindingPatternId, MemberAccessExprId, ReturnStatementId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificConstant: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructType: ClassDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind UnboundElementType: FieldNameAndTypeId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
@@ -543,4 +581,25 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:   %pattern_type.loc7_14 => constants.%pattern_type.830
 // CHECK:STDOUT:   %pattern_type.loc7_23 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind GenericClassType: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: CompileTimeBindingPatternId, LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, SelfTypeNameExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: ClassDefinitionStartId, FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

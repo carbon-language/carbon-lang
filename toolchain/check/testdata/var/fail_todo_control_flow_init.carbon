@@ -77,10 +77,56 @@ library "[[@TEST_NAME]]";
 var y2: bool = false or true;
 
 // CHECK:STDOUT: --- fail_if_true.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_if_false.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_true_or_false.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchIf: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_false_or_true.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchIf: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

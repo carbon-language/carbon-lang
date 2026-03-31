@@ -181,4 +181,37 @@ fn F(cond: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %struct_type.a.b.501) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoundMethod: StructLiteralId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId
+// CHECK:STDOUT: InstKind Call: CallExprId, StructLiteralId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, IfExprElseId, StructLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: StructLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: StructLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructAccess: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind StructInit: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

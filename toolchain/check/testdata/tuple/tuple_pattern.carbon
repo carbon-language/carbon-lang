@@ -207,6 +207,30 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type.b6b) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: TuplePatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind StructInit: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: IdentifierNameExprId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- variable.carbon
 // CHECK:STDOUT:
@@ -380,6 +404,34 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind StructInit: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: IdentifierNameExprId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
@@ -432,6 +484,18 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %z: %empty_struct_type = value_binding z, %.loc6_65.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: TuplePatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_scope.carbon
 // CHECK:STDOUT:
@@ -473,4 +537,14 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc5_29: %tuple.type = tuple_literal (%.loc5_24, %.loc5_28) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: TuplePatternId
+// CHECK:STDOUT: InstKind SpliceBlock: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

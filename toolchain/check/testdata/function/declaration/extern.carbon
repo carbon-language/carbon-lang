@@ -100,6 +100,8 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic_use.carbon
 // CHECK:STDOUT:
@@ -142,6 +144,19 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl.carbon
 // CHECK:STDOUT:
@@ -159,6 +174,8 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_extern.carbon
 // CHECK:STDOUT:
@@ -176,6 +193,8 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_extern.carbon
 // CHECK:STDOUT:
@@ -219,6 +238,15 @@ extern library "basic" fn F();
 // CHECK:STDOUT: fn @C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G(%self.param: %C);
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind NameRef: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_in_importer.carbon
 // CHECK:STDOUT:
@@ -236,4 +264,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F [from "basic.carbon"];
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:

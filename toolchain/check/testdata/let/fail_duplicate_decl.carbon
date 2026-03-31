@@ -109,4 +109,18 @@ fn F() {
 // CHECK:STDOUT:   %a.loc24: %i32 = value_binding a, %.loc24_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:

@@ -52,6 +52,9 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: type = alias_binding a, constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- bool.carbon
 // CHECK:STDOUT:
@@ -59,6 +62,9 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %.loc5: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: type = alias_binding b, bool [concrete = bool]
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bool_value.carbon
 // CHECK:STDOUT:
@@ -82,4 +88,12 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

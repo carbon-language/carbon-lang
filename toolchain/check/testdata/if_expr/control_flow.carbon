@@ -184,4 +184,29 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc19_10.2(%.loc19_10)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprIfId, ReturnStatementId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId
+// CHECK:STDOUT: InstKind Call: CallExprId, IfExprIfId, ReturnStatementId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IfExprElseId, ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprIfId, ReturnStatementId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IfExprIfId, ReturnStatementId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId, IfExprElseId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

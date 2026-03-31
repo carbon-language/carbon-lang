@@ -387,4 +387,43 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Assign: InfixOperatorEqualId, VariablePatternId
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprElseId, IfExprThenId, InfixOperatorEqualId, IntLiteralId, PostfixOperatorStarId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId
+// CHECK:STDOUT: InstKind Call: CallExprId, IfExprElseId, IfExprThenId, InfixOperatorEqualId, IntLiteralId, PostfixOperatorStarId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind Converted: IfExprElseId, IfExprThenId, InfixOperatorEqualId, StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprElseId, IfExprThenId, InfixOperatorEqualId, IntLiteralId, PostfixOperatorStarId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IfExprElseId, IfExprThenId, InfixOperatorEqualId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind StructAccess: StructLiteralId
+// CHECK:STDOUT: InstKind StructInit: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IfExprElseId, IfExprThenId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

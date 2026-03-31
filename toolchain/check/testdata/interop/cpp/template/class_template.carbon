@@ -108,4 +108,26 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_49
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: InfixOperatorAsId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

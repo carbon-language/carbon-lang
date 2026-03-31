@@ -162,4 +162,27 @@ fn Class(T:! type).F[unused self: Self](unused n: T) {}
 // CHECK:STDOUT:   %pattern_type.loc17_12 => constants.%pattern_type.466
 // CHECK:STDOUT:   %pattern_type.loc17_21 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: FieldNameAndTypeId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: SelfTypeNameExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructType: ClassDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind UnboundElementType: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

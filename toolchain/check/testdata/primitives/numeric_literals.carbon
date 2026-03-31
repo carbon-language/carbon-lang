@@ -165,4 +165,27 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %float.loc24: Core.FloatLiteral = float_literal_value 10e-9 [concrete = constants.%float.48b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ArrayIndex: TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayInit: TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: TupleLiteralId
+// CHECK:STDOUT: InstKind Call: TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

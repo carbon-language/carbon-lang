@@ -93,4 +93,18 @@ fn F() {
 // CHECK:STDOUT:   %X.f.call: init %empty_tuple.type = call imports.%X.f.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
 // CHECK:STDOUT:

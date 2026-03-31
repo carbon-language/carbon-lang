@@ -568,6 +568,33 @@ class V {
 // CHECK:STDOUT:   %AcceptVal.call: init %empty_tuple.type = call %AcceptVal.ref(%.loc16_13.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: ReturnStatementId
+// CHECK:STDOUT: InstKind BoundMethod: ReturnStatementId
+// CHECK:STDOUT: InstKind Call: CallExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind ClassElementAccess: IdentifierNameExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Deref: ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ReturnStatementId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: ReturnStatementId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_static_member.carbon
 // CHECK:STDOUT:
@@ -618,6 +645,14 @@ class V {
 // CHECK:STDOUT:   %Derived.derived_fn.call: init %empty_tuple.type = call imports.%Derived.derived_fn.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_base_field.carbon
 // CHECK:STDOUT:
@@ -685,6 +720,30 @@ class V {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_11.2(%.loc14_11.4)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_base_method.carbon
 // CHECK:STDOUT:
@@ -769,4 +828,21 @@ class V {
 // CHECK:STDOUT:   %f__carbon_thunk.call.loc24: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassElementAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:

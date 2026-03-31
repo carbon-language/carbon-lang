@@ -425,9 +425,10 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
 auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
   SemIR::FacetTypeId facet_type_id =
       context.facet_types().Add(SemIR::FacetTypeInfo{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, SemIR::LocId::None,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
+  auto const_id = EvalOrAddInst(
+      context,
+      SemIR::LocIdAndInst::NoLoc(SemIR::FacetType{
+          .type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id}));
   return context.types().GetTypeIdForTypeConstantId(const_id);
 }
 
@@ -437,11 +438,11 @@ auto GetConstantFacetValueForType(Context& context,
   // We use an empty facet type because values of type `type` do not provide any
   // witnesses of their own.
   auto type_facet_type = GetEmptyFacetType(context);
-  return EvalOrAddInst<SemIR::FacetValue>(
-      context, SemIR::LocId::None,
-      {.type_id = type_facet_type,
-       .type_inst_id = type_inst_id,
-       .witnesses_block_id = SemIR::InstBlockId::Empty});
+  return EvalOrAddInst(context,
+                       SemIR::LocIdAndInst::NoLoc(SemIR::FacetValue{
+                           .type_id = type_facet_type,
+                           .type_inst_id = type_inst_id,
+                           .witnesses_block_id = SemIR::InstBlockId::Empty}));
 }
 
 auto GetConstantFacetValueForTypeAndInterface(
@@ -449,19 +450,19 @@ auto GetConstantFacetValueForTypeAndInterface(
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId {
   // Get the type of the inner `Self`, which is the facet type of the interface.
-  auto interface_facet_type = EvalOrAddInst(
-      context, SemIR::LocId::None,
-      FacetTypeFromInterface(context, specific_interface.interface_id,
-                             specific_interface.specific_id));
+  auto interface_facet_type =
+      EvalOrAddInst(context, SemIR::LocIdAndInst::NoLoc(FacetTypeFromInterface(
+                                 context, specific_interface.interface_id,
+                                 specific_interface.specific_id)));
   auto self_facet_type_in_generic_without_self =
       context.types().GetTypeIdForTypeConstantId(interface_facet_type);
 
   auto witnesses_block_id = context.inst_blocks().AddCanonical({witness_id});
-  auto self_value_const_id = EvalOrAddInst<SemIR::FacetValue>(
-      context, SemIR::LocId::None,
-      {.type_id = self_facet_type_in_generic_without_self,
-       .type_inst_id = type_inst_id,
-       .witnesses_block_id = witnesses_block_id});
+  auto self_value_const_id = EvalOrAddInst(
+      context, SemIR::LocIdAndInst::NoLoc(SemIR::FacetValue{
+                   .type_id = self_facet_type_in_generic_without_self,
+                   .type_inst_id = type_inst_id,
+                   .witnesses_block_id = witnesses_block_id}));
   return self_value_const_id;
 }
 

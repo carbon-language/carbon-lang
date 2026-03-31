@@ -138,4 +138,31 @@ fn F() {
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind AsCompatible: CallExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IntLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

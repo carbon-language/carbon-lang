@@ -269,4 +269,40 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc41(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc36(%self.param: ref %ptr.235) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IndexExprId
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ArrayIndex: IndexExprId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind Assign: InfixOperatorEqualId, VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorEqualId, IntLiteralId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorEqualId, IntLiteralId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorEqualId, IntLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorEqualId, IntLiteralId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind InitForm: ArrayExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: ArrayExprId
+// CHECK:STDOUT: InstKind OutParamPattern: ArrayExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: ArrayExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: ArrayExprId
+// CHECK:STDOUT: InstKind SpecificFunction: InfixOperatorEqualId, IntLiteralId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IndexExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

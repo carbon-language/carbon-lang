@@ -241,6 +241,23 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%false]
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_char.carbon
 // CHECK:STDOUT:
@@ -290,6 +307,22 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %char.as.Copy.impl.Op.call: init %char = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%int_97]
 // CHECK:STDOUT:   return %char.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParamPattern: MemberAccessExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: MemberAccessExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: MemberAccessExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_char_literal.carbon
 // CHECK:STDOUT:
@@ -338,6 +371,23 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Core.CharLiteral.as.Copy.impl.Op.call: init Core.CharLiteral = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%.54f]
 // CHECK:STDOUT:   return %Core.CharLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: CallExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_float.carbon
 // CHECK:STDOUT:
@@ -395,6 +445,24 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc7_18.2(%impl.elem0.loc7_18.1) [concrete = constants.%float]
 // CHECK:STDOUT:   return %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_float_literal.carbon
 // CHECK:STDOUT:
@@ -443,6 +511,23 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.Copy.impl.Op.call: init Core.FloatLiteral = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%float.d5ab3d.2]
 // CHECK:STDOUT:   return %Core.FloatLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: CallExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int.carbon
 // CHECK:STDOUT:
@@ -500,6 +585,24 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_18.2(%impl.elem0.loc7_18.1) [concrete = constants.%int_8]
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_literal.carbon
 // CHECK:STDOUT:
@@ -548,6 +651,23 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%int_7]
 // CHECK:STDOUT:   return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: CallExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_uint.carbon
 // CHECK:STDOUT:
@@ -605,4 +725,22 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call: init %u32 = call %bound_method.loc7_18.2(%impl.elem0.loc7_18.1) [concrete = constants.%int_8]
 // CHECK:STDOUT:   return %UInt.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: UnsignedIntTypeLiteralId
 // CHECK:STDOUT:

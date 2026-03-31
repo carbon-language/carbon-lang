@@ -151,4 +151,28 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.a1f
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.cc3
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

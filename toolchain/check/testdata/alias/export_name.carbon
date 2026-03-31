@@ -106,6 +106,11 @@ var d: D* = &c;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
 // CHECK:STDOUT:
@@ -143,6 +148,9 @@ var d: D* = &c;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.743
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ExportDecl: ExportDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_orig.carbon
 // CHECK:STDOUT:
@@ -180,6 +188,9 @@ var d: D* = &c;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.743
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ExportDecl: ExportDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export.carbon
 // CHECK:STDOUT:
@@ -234,6 +245,18 @@ var d: D* = &c;
 // CHECK:STDOUT:   assign file.%d.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon
 // CHECK:STDOUT:
@@ -274,6 +297,16 @@ var d: D* = &c;
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_compat.carbon
 // CHECK:STDOUT:
@@ -369,4 +402,23 @@ var d: D* = &c;
 // CHECK:STDOUT:   assign file.%d.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

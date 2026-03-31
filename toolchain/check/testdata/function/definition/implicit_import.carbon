@@ -140,6 +140,8 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.impl.carbon
 // CHECK:STDOUT:
@@ -161,6 +163,10 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_api.carbon
 // CHECK:STDOUT:
@@ -177,6 +183,8 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_api.impl.carbon
 // CHECK:STDOUT:
@@ -198,6 +206,10 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_impl.carbon
 // CHECK:STDOUT:
@@ -214,6 +226,8 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_impl.impl.carbon
 // CHECK:STDOUT:
@@ -235,6 +249,10 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl_after_def.carbon
 // CHECK:STDOUT:
@@ -254,6 +272,9 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
 // CHECK:STDOUT:
@@ -272,6 +293,9 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "redecl_after_def.carbon"];
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redef_after_def.carbon
 // CHECK:STDOUT:
@@ -291,6 +315,9 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
@@ -320,6 +347,10 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def_alias.carbon
 // CHECK:STDOUT:
@@ -339,6 +370,10 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_alias.impl.carbon
 // CHECK:STDOUT:
@@ -370,4 +405,8 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:

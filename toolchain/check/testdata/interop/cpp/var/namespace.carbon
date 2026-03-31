@@ -74,4 +74,12 @@ fn F() {
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, imports.%c.var [concrete = imports.%c.var]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBindingPattern: MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind VarStorage: MemberAccessExprId
 // CHECK:STDOUT:

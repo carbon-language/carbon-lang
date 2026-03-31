@@ -74,6 +74,9 @@ import B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.import = import B
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
@@ -89,6 +92,9 @@ import B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.import = import C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_c.carbon
 // CHECK:STDOUT:
@@ -104,6 +110,9 @@ import B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.import = import A
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_c.impl.carbon
 // CHECK:STDOUT:
@@ -113,6 +122,8 @@ import B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_cycle_child.carbon
 // CHECK:STDOUT:
@@ -128,4 +139,7 @@ import B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.import = import B
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

@@ -400,4 +400,40 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Class.GetNoDeduce => constants.%Class.GetNoDeduce.472
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn.loc20_53.2 => constants.%Class.GetNoDeduce.specific_fn.83b
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: StructLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId, TupleLiteralId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpecificConstant: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TupleLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: StructLiteralId
+// CHECK:STDOUT: InstKind TemporaryStorage: StructLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleType: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

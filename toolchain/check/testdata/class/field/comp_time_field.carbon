@@ -100,6 +100,15 @@ var x: Class = {};
 // CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .B = %B
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind NameBindingDecl: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: CompileTimeBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon
 // CHECK:STDOUT:
@@ -113,4 +122,6 @@ var x: Class = {};
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
 // CHECK:STDOUT:

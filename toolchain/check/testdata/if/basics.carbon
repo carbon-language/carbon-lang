@@ -153,6 +153,18 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Branch: IfConditionId, IfStatementId
+// CHECK:STDOUT: InstKind BranchIf: IfConditionId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- no_else.carbon
 // CHECK:STDOUT:
@@ -193,6 +205,18 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Branch: IfConditionId, IfStatementId
+// CHECK:STDOUT: InstKind BranchIf: IfConditionId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unreachable_fallthrough.carbon
 // CHECK:STDOUT:
@@ -255,4 +279,24 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc8: init bool = call %bound_method.loc8(%true) [concrete = constants.%true]
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind BoundMethod: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfConditionId
+// CHECK:STDOUT: InstKind BranchIf: IfConditionId
+// CHECK:STDOUT: InstKind Call: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

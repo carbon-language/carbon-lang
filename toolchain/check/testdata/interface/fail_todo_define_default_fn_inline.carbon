@@ -128,4 +128,23 @@ interface Interface {
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.G(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDefinitionStartId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

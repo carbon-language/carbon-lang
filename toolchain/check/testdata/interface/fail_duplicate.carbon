@@ -131,6 +131,14 @@ interface Class { }
 // CHECK:STDOUT: specific @Interface.WithSelf.loc13(constants.%Self.8875a4.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.8875a4.2) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redefine_with_dependents.carbon
 // CHECK:STDOUT:
@@ -210,6 +218,24 @@ interface Class { }
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon
 // CHECK:STDOUT:
@@ -230,6 +256,9 @@ interface Class { }
 // CHECK:STDOUT: interface @Function.loc13;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Function.loc4();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_conflict_with_class.carbon
 // CHECK:STDOUT:
@@ -261,4 +290,9 @@ interface Class { }
 // CHECK:STDOUT: class @Class.loc2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
 // CHECK:STDOUT:

@@ -258,6 +258,29 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.EqWith.impl.NotEqual.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId
+// CHECK:STDOUT: InstKind Call: InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
 // CHECK:STDOUT:
@@ -359,6 +382,22 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl_for_args.carbon
 // CHECK:STDOUT:
@@ -538,4 +577,24 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

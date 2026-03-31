@@ -126,4 +126,14 @@ interface BeingDefined {
 // CHECK:STDOUT: specific @BeingDefined.WithSelf.H(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BeingDefined.WithSelf.I(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId
 // CHECK:STDOUT:

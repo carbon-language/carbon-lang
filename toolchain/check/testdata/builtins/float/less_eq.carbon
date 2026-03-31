@@ -59,4 +59,32 @@ fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LessEq.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IfExprIfId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

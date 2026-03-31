@@ -343,6 +343,16 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- method.carbon
 // CHECK:STDOUT:
@@ -442,6 +452,21 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%I.facet) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- combine.carbon
 // CHECK:STDOUT:
@@ -533,6 +558,20 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAmpId, StructLiteralId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind ValueOfInitializer: InfixOperatorAmpId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_const.carbon
 // CHECK:STDOUT:
@@ -641,6 +680,26 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_const_compound_member_access.carbon
 // CHECK:STDOUT:
@@ -780,6 +839,33 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_const_of_facet.carbon
 // CHECK:STDOUT:
@@ -921,6 +1007,33 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, InfixOperatorAsId, MemberAccessExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_unset_associated_const.carbon
 // CHECK:STDOUT:
@@ -1025,6 +1138,28 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_associated_const_before_interface_definition.carbon
 // CHECK:STDOUT:
@@ -1129,6 +1264,19 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_const_of_parameterized.carbon
 // CHECK:STDOUT:
@@ -1309,6 +1457,31 @@ interface I {
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.2e0
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.501
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntityType: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SpecificConstant: DesignatorExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: AssociatedConstantNameAndTypeId, CompileTimeBindingPatternId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- find_incomplete_impl.carbon
 // CHECK:STDOUT:
@@ -1471,6 +1644,27 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_two_interfaces.carbon
 // CHECK:STDOUT:
@@ -1556,6 +1750,18 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self.8a1) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAmpId, StructLiteralId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorAmpId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind ValueOfInitializer: InfixOperatorAmpId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_never_assigned_associated_const.carbon
 // CHECK:STDOUT:
@@ -1678,6 +1884,27 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- example_from_proposal_5168.carbon
 // CHECK:STDOUT:
@@ -1945,6 +2172,32 @@ interface I {
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_in_interface_definition.carbon
 // CHECK:STDOUT:
@@ -2070,6 +2323,22 @@ interface I {
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.5dd
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.f5e
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: ClassDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: ClassDefinitionStartId, FunctionDefinitionStartId, IdentifierNameExprId, InterfaceDefinitionStartId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_in_interface_definition_with_associated.carbon
 // CHECK:STDOUT:
@@ -2241,4 +2510,31 @@ interface I {
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.000
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.a8c
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: ClassDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetType: WhereExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: WhereExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: ClassDefinitionStartId, FunctionDefinitionStartId, IdentifierNameExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:

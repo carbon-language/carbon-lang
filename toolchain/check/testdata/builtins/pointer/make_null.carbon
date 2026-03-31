@@ -123,6 +123,28 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNullC.call: init %.edf = call %MakeNullC.ref()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_generic.carbon
 // CHECK:STDOUT:
@@ -189,4 +211,32 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNull.call.loc11: init %.edf = call %MakeNull.specific_fn.loc11()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind MaybeUnformedType: CallExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: CallExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

@@ -191,6 +191,9 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c2.carbon
 // CHECK:STDOUT:
@@ -214,6 +217,9 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ns.carbon
 // CHECK:STDOUT:
@@ -240,6 +246,10 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Namespace: NamespaceId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- o1.carbon
 // CHECK:STDOUT:
@@ -263,6 +273,9 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O1
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- o2.carbon
 // CHECK:STDOUT:
@@ -286,6 +299,9 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- local_other.carbon
 // CHECK:STDOUT:
@@ -309,6 +325,9 @@ import Other library "o1";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.carbon
 // CHECK:STDOUT:
@@ -322,6 +341,8 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.impl.carbon
 // CHECK:STDOUT:
@@ -397,6 +418,18 @@ import Other library "o1";
 // CHECK:STDOUT:   assign file.%c2.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.carbon
 // CHECK:STDOUT:
@@ -410,6 +443,8 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.impl.carbon
 // CHECK:STDOUT:
@@ -459,6 +494,18 @@ import Other library "o1";
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.carbon
 // CHECK:STDOUT:
@@ -476,6 +523,8 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.impl.carbon
 // CHECK:STDOUT:
@@ -532,6 +581,19 @@ import Other library "o1";
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_other.carbon
 // CHECK:STDOUT:
@@ -547,6 +609,9 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_other.impl.carbon
 // CHECK:STDOUT:
@@ -634,6 +699,20 @@ import Other library "o1";
 // CHECK:STDOUT:   assign file.%o2.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId, LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_o1.carbon
 // CHECK:STDOUT:
@@ -649,6 +728,9 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_o1.impl.carbon
 // CHECK:STDOUT:
@@ -706,6 +788,20 @@ import Other library "o1";
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId, LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_conflict.carbon
 // CHECK:STDOUT:
@@ -721,6 +817,9 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_conflict.impl.carbon
 // CHECK:STDOUT:
@@ -738,6 +837,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc11_31.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_conflict_reverse.carbon
 // CHECK:STDOUT:
@@ -751,6 +852,8 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon
 // CHECK:STDOUT:
@@ -768,4 +871,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_39.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId, LibraryDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

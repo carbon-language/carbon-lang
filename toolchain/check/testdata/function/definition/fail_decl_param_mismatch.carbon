@@ -249,4 +249,24 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %.loc70_25: init %empty_struct_type = converted %.loc70_24.1, %.loc70_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc70_25
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind OutParam: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: TupleLiteralId
+// CHECK:STDOUT: InstKind StructInit: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind TupleInit: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

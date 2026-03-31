@@ -124,4 +124,32 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Eq.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: IfExprIfId, IntLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

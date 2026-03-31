@@ -169,6 +169,37 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IndexExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayIndex: IndexExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayInit: TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind BoundMethod: IndexExprId, IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IndexExprId, IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IndexExprId, IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IndexExprId, IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId
+// CHECK:STDOUT: InstKind Temporary: TupleLiteralId
+// CHECK:STDOUT: InstKind TemporaryStorage: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IndexExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- index_non_literal.carbon
 // CHECK:STDOUT:
@@ -226,4 +257,32 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc6_31: init %empty_struct_type = converted %.loc6_30.3, %.loc6_30.4 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc6_31
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ArrayIndex: IndexExprId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: IndexExprId, MemberAccessExprId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind InitForm: StructLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: StructLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StructLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId
+// CHECK:STDOUT: InstKind StructAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructInit: IndexExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: IndexExprId, StructLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IndexExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

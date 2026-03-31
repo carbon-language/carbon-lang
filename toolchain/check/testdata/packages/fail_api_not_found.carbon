@@ -44,6 +44,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_api_lib.impl.carbon
 // CHECK:STDOUT:
@@ -53,6 +55,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_api_main_lib.impl.carbon
 // CHECK:STDOUT:
@@ -62,4 +66,6 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

@@ -65,10 +65,11 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_value_id = SemIR::ErrorInst::InstId;
   }
   auto alias_id =
-      AddInst<SemIR::AliasBinding>(context, name_context.loc_id,
-                                   {.type_id = alias_type_id,
-                                    .entity_name_id = entity_name_id,
-                                    .value_id = alias_value_id});
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), name_context.loc_id,
+                           SemIR::AliasBinding{.type_id = alias_type_id,
+                                               .entity_name_id = entity_name_id,
+                                               .value_id = alias_value_id}));
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();

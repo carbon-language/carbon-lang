@@ -48,9 +48,11 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   // not the declaration itself.
   auto type_id = GetAssociatedEntityType(context, interface_id,
                                          interface_without_self_specific_id);
-  return AddInst<SemIR::AssociatedEntity>(
-      context, SemIR::LocId(decl_id),
-      {.type_id = type_id, .index = index, .decl_id = decl_id});
+  return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                              context.sem_ir(), SemIR::LocId(decl_id),
+                              SemIR::AssociatedEntity{.type_id = type_id,
+                                                      .index = index,
+                                                      .decl_id = decl_id}));
 }
 
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
@@ -143,11 +145,12 @@ auto AddSelfSymbolicBindingToScope(Context& context,
       /*is_unused=*/false);
   // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `SymbolicBinding`.
-  auto self_param_inst_id =
-      AddInst<SemIR::SymbolicBinding>(context, definition_loc_id,
-                                      {.type_id = type_id,
-                                       .entity_name_id = entity_name_id,
-                                       .value_id = SemIR::InstId::None});
+  auto self_param_inst_id = AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), definition_loc_id,
+                   SemIR::SymbolicBinding{.type_id = type_id,
+                                          .entity_name_id = entity_name_id,
+                                          .value_id = SemIR::InstId::None}));
   context.name_scopes().AddRequiredName(scope_id, SemIR::NameId::SelfType,
                                         self_param_inst_id);
   return self_param_inst_id;

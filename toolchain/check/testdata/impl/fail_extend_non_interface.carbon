@@ -64,4 +64,10 @@ class C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind NameRef: ImplDefaultSelfAsId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:

@@ -78,4 +78,35 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
 // CHECK:STDOUT:   %.loc4_27.1 => constants.%.cb6
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind LookupImplWitness: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, PostfixOperatorStarId, ReturnStatementId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

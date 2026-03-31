@@ -261,6 +261,37 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorMinusId, InfixOperatorSlashId, TupleLiteralId
+// CHECK:STDOUT: InstKind Call: InfixOperatorMinusId, InfixOperatorSlashId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, InfixOperatorMinusId, InfixOperatorSlashId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, InfixOperatorMinusId, InfixOperatorSlashId, TupleLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccessSubstituted: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SpecificFunction: TupleLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: PrefixOperatorNotId
+// CHECK:STDOUT: InstKind ValueOfInitializer: InfixOperatorMinusId, InfixOperatorSlashId, TupleLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_non_type.carbon
 // CHECK:STDOUT:
@@ -447,4 +478,31 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedConstantDecl: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind AssociatedEntity: AssociatedConstantNameAndTypeId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId
+// CHECK:STDOUT: InstKind BoundMethod: TupleLiteralId
+// CHECK:STDOUT: InstKind Call: TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: DesignatorExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccessSubstituted: DesignatorExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: DesignatorExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind SpecificFunction: TupleLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: TupleLiteralId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
 // CHECK:STDOUT:

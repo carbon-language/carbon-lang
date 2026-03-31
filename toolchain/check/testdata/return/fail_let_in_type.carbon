@@ -139,4 +139,14 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %i32.loc39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: CompileTimeBindingPatternId, LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: CompileTimeBindingPatternId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: CompileTimeBindingPatternId, LetBindingPatternId
 // CHECK:STDOUT:

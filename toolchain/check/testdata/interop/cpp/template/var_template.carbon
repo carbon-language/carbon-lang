@@ -148,4 +148,16 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %addr.loc10: %ptr.a04 = addr_of imports.%var.var.bab [concrete = constants.%addr.594]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBindingPattern: CallExprId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarStorage: CallExprId
 // CHECK:STDOUT:

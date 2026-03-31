@@ -87,4 +87,18 @@ fn F(c: C) {
 // CHECK:STDOUT:   %F.ref.loc30: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, ImplDefaultSelfAsId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

@@ -108,4 +108,36 @@ fn F(unused b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc16: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   return %.loc16
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId, ShortCircuitOperatorAndId, ShortCircuitOperatorOrId
+// CHECK:STDOUT: InstKind BoolLiteral: ShortCircuitOperandAndId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprElseId, IfExprIfId, IfExprThenId, ReturnStatementId
+// CHECK:STDOUT: InstKind Branch: IfStatementId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperatorAndId, ShortCircuitOperatorOrId
+// CHECK:STDOUT: InstKind Call: IfExprElseId, IfExprIfId, IfExprThenId, ReturnStatementId
+// CHECK:STDOUT: InstKind Converted: IfExprElseId, IfExprThenId, ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprElseId, IfExprIfId, IfExprThenId, ReturnStatementId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IfExprElseId, IfExprIfId, IfExprThenId, ReturnStatementId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IfExprElseId, IfExprThenId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

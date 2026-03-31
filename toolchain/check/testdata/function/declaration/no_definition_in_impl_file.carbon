@@ -91,6 +91,8 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -113,6 +115,10 @@ fn D();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
 // CHECK:STDOUT:
@@ -133,6 +139,8 @@ fn D();
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.carbon
 // CHECK:STDOUT:
@@ -149,6 +157,8 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
@@ -163,6 +173,8 @@ fn D();
 // CHECK:STDOUT:   %default.import.loc2_32.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_32.2 = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -179,6 +191,8 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -197,6 +211,9 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C [from "decl_in_api_decl_in_impl.carbon"];
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
@@ -221,4 +238,7 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

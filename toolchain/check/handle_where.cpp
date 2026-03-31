@@ -70,7 +70,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // resulting facet type.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementBaseFacetType>(
-          context, SemIR::LocId(node_id),
+          context, node_id,
           {.base_type_inst_id =
                context.types().GetTypeInstId(self_with_constraints_type_id)}));
 

@@ -305,6 +305,31 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
+// CHECK:STDOUT: InstKind InPlaceInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind TupleAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: TupleLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
 // CHECK:STDOUT:
@@ -367,4 +392,25 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %.loc7_24: init %tuple.type.a1c = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.246]
 // CHECK:STDOUT:   return %.loc7_24
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId, ReturnStatementId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: TupleLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: TupleLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TupleLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TupleLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind TupleAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind TupleInit: MemberAccessExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:

@@ -87,10 +87,35 @@ fn F() {
 }
 
 // CHECK:STDOUT: --- fail_basic.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprThenId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind Call: IfExprThenId
+// CHECK:STDOUT: InstKind Converted: IfExprThenId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprThenId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IfExprThenId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IfExprThenId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_types.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_in_param.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class.carbon
 // CHECK:STDOUT:
@@ -107,6 +132,12 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested_class.carbon
 // CHECK:STDOUT:
@@ -151,4 +182,16 @@ fn F() {
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
 // CHECK:STDOUT:

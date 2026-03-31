@@ -1730,10 +1730,11 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
   // anything.
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
-  SemIR::InstId binding_pattern_inst_id =
-      AddInstInNoBlock<SemIR::RefBindingPattern>(
-          context, loc_id,
-          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  SemIR::InstId binding_pattern_inst_id = AddInstInNoBlock(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::RefBindingPattern{.type_id = pattern_type_id,
+                                            .entity_name_id = entity_name_id}));
   context.imports().push_back(binding_pattern_inst_id);
   auto pattern_id = AddInstInNoBlock<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
@@ -1744,8 +1745,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // untyped form of `AddInstInNoBlock` to bypass the check on adding an
   // instruction that requires a cleanup, because we don't want a cleanup here!
   SemIR::InstId var_storage_inst_id = AddInstInNoBlock(
-      context, {loc_id, SemIR::VarStorage{.type_id = var_type_id,
-                                          .pattern_id = pattern_id}});
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::VarStorage{.type_id = var_type_id, .pattern_id = pattern_id}));
   context.imports().push_back(var_storage_inst_id);
 
   // Register the variable so we don't create it again, and track the
@@ -1971,8 +1974,9 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
     if (*name == "nullptr") {
       // Map `Cpp.nullptr` to an uninitialized value of type `Core.CppNullptrT`.
       auto type_id = MapNullptrType(context, loc_id).type_id;
-      return GetOrAddInst<SemIR::UninitializedValue>(
-          context, SemIR::LocId::None, {.type_id = type_id});
+      return GetOrAddInst(context,
+                          SemIR::LocIdAndInst::NoLoc(
+                              SemIR::UninitializedValue{.type_id = type_id}));
     }
     return SemIR::InstId::None;
   }
@@ -1999,11 +2003,13 @@ auto ImportCppOverloadSet(
                             .naming_class = naming_class,
                             .candidate_functions = std::move(overload_set),
                             .operator_rewrite_info = operator_rewrite_info});
-  auto overload_set_inst_id = AddInstInNoBlock<SemIR::CppOverloadSetValue>(
-      context, loc_id,
-      {.type_id = GetCppOverloadSetType(context, overload_set_id,
-                                        SemIR::SpecificId::None),
-       .overload_set_id = overload_set_id});
+  auto overload_set_inst_id = AddInstInNoBlock(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::CppOverloadSetValue{
+                       .type_id = GetCppOverloadSetType(
+                           context, overload_set_id, SemIR::SpecificId::None),
+                       .overload_set_id = overload_set_id}));
 
   context.imports().push_back(overload_set_inst_id);
   return overload_set_inst_id;

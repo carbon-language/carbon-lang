@@ -168,11 +168,12 @@ static auto CloneInstId(Context& context, SemIR::SpecificId specific_id,
     return SemIR::InstId::None;
   }
 
-  return GetOrAddInst<SemIR::SpecificConstant>(
-      context, SemIR::LocId(inst_id),
-      {.type_id = SemIR::TypeType::TypeId,
-       .inst_id = inst_id,
-       .specific_id = specific_id});
+  return GetOrAddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), SemIR::LocId(inst_id),
+                   SemIR::SpecificConstant{.type_id = SemIR::TypeType::TypeId,
+                                           .inst_id = inst_id,
+                                           .specific_id = specific_id}));
 }
 
 static auto CloneTypeInstId(Context& context, SemIR::SpecificId specific_id,

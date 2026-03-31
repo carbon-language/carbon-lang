@@ -318,6 +318,20 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %I.type.loc5_27.2 => constants.%I.type.1ab
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind SpecificConstant: RequireDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, InterfaceDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic_import_generic_interface.impl.carbon
 // CHECK:STDOUT:
@@ -534,6 +548,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type => constants.%I.type.ab5
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic_import_generic_constraint.carbon
 // CHECK:STDOUT:
@@ -667,6 +692,22 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %I.type.loc5_27.2 => constants.%I.type.1ab
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind SpecificConstant: RequireDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic_import_generic_constraint.impl.carbon
 // CHECK:STDOUT:
@@ -856,6 +897,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_generic.carbon
 // CHECK:STDOUT:
@@ -1119,6 +1171,28 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %I.type.loc15_27.2 => constants.%I.type.1ab
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind SpecificConstant: RequireDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic.impl.carbon
 // CHECK:STDOUT:
@@ -1515,6 +1589,16 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %ptr.loc37_32.2 => constants.%ptr
 // CHECK:STDOUT:   %N.type.loc37_33.2 => constants.%N.type.d682d6.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_generic_with_different_specific.carbon
 // CHECK:STDOUT:
@@ -1704,6 +1788,27 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %I.type.loc10_27.2 => constants.%I.type.1ab
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind SpecificConstant: RequireDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_generic_with_different_specific.impl.carbon
 // CHECK:STDOUT:
@@ -2005,6 +2110,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: specific @I.WithSelf(constants.%ptr.125, constants.%I.facet.3e9) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic_decl.carbon
 // CHECK:STDOUT:
@@ -2216,6 +2334,28 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type.loc21_33.2 => constants.%J.type.80f
 // CHECK:STDOUT:   %J.impl_witness.loc21_34.2 => constants.%J.impl_witness.f4f
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FacetAccessType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId
+// CHECK:STDOUT: InstKind RequireImplsDecl: RequireDeclId
+// CHECK:STDOUT: InstKind SpecificConstant: RequireDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, InterfaceDefinitionStartId, NamedConstraintDefinitionStartId, RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: RequireDefaultSelfImplsId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic_decl.impl.carbon
 // CHECK:STDOUT:
@@ -2603,4 +2743,14 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %ptr.loc38_32.2 => constants.%ptr
 // CHECK:STDOUT:   %N.type.loc38_33.2 => constants.%N.type.d682d6.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetType: CallExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId, ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:

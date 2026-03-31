@@ -276,11 +276,14 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
       context.inst_block_stack().AddInstId(exit_block.front());
       return region.result_id;
     }
-    return AddInst<SemIR::SpliceBlock>(
-        context, SemIR::LocId(region.result_id),
-        {.type_id = context.insts().Get(region.result_id).type_id(),
-         .block_id = region.block_ids.front(),
-         .result_id = region.result_id});
+    return AddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), SemIR::LocId(region.result_id),
+            SemIR::SpliceBlock{
+                .type_id = context.insts().Get(region.result_id).type_id(),
+                .block_id = region.block_ids.front(),
+                .result_id = region.result_id}));
   }
   if (context.region_stack().empty()) {
     context.TODO(region.result_id,
@@ -540,13 +543,19 @@ auto MatchContext::DoPreWork(Context& context,
       // TODO: find a way to avoid this boilerplate.
       switch (param.kind()) {
         case SemIR::OutParam::Kind:
-          param_id = AddInst(context, loc_id, param.As<SemIR::OutParam>());
+          param_id = AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                          context.sem_ir(), loc_id,
+                                          param.As<SemIR::OutParam>()));
           break;
         case SemIR::RefParam::Kind:
-          param_id = AddInst(context, loc_id, param.As<SemIR::RefParam>());
+          param_id = AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                          context.sem_ir(), loc_id,
+                                          param.As<SemIR::RefParam>()));
           break;
         case SemIR::ValueParam::Kind:
-          param_id = AddInst(context, loc_id, param.As<SemIR::ValueParam>());
+          param_id = AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                          context.sem_ir(), loc_id,
+                                          param.As<SemIR::ValueParam>()));
           break;
         default:
           CARBON_FATAL("Unexpected parameter kind");
@@ -608,11 +617,13 @@ auto MatchContext::DoPostWork(Context& context,
   CARBON_CHECK(kind_ == MatchKind::Callee);
   auto type_id =
       ExtractScrutineeType(context.sem_ir(), return_slot_pattern.type_id);
-  auto return_slot_id = AddInst<SemIR::ReturnSlot>(
-      context, SemIR::LocId(entry.pattern_id),
-      {.type_id = type_id,
-       .type_inst_id = context.types().GetTypeInstId(type_id),
-       .storage_id = PopResult()});
+  auto return_slot_id = AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), SemIR::LocId(entry.pattern_id),
+                   SemIR::ReturnSlot{
+                       .type_id = type_id,
+                       .type_inst_id = context.types().GetTypeInstId(type_id),
+                       .storage_id = PopResult()}));
   bool already_in_lookup =
       context.scope_stack()
           .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
@@ -657,9 +668,12 @@ auto MatchContext::DoVarPreWorkImpl(Context& context,
       break;
     }
     case MatchKind::Caller: {
-      storage_id = AddInst<SemIR::TemporaryStorage>(
-          context, SemIR::LocId(entry.pattern_id),
-          {.type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id)});
+      storage_id = AddInst(
+          context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), SemIR::LocId(entry.pattern_id),
+              SemIR::TemporaryStorage{.type_id = ExtractScrutineeType(
+                                          context.sem_ir(), pattern_type_id)}));
       CARBON_CHECK(scrutinee_id.has_value());
       break;
     }
@@ -679,16 +693,20 @@ auto MatchContext::DoVarPreWorkImpl(Context& context,
     // parameter variable in the callee instead of the caller so that we can
     // support destructive move from it.
     if (kind_ == MatchKind::Caller) {
-      storage_id = AddInstWithCleanup<SemIR::Temporary>(
-          context, SemIR::LocId(entry.pattern_id),
-          {.type_id = context.insts().Get(storage_id).type_id(),
-           .storage_id = storage_id,
-           .init_id = init_id});
+      storage_id = AddInstWithCleanup(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), SemIR::LocId(entry.pattern_id),
+                       SemIR::Temporary{
+                           .type_id = context.insts().Get(storage_id).type_id(),
+                           .storage_id = storage_id,
+                           .init_id = init_id}));
     } else {
       // TODO: Consider using different instruction kinds for assignment
       // versus initialization.
-      AddInst<SemIR::Assign>(context, SemIR::LocId(entry.pattern_id),
-                             {.lhs_id = storage_id, .rhs_id = init_id});
+      AddInst(context,
+              SemIR::LocIdAndInst::RuntimeVerified(
+                  context.sem_ir(), SemIR::LocId(entry.pattern_id),
+                  SemIR::Assign{.lhs_id = storage_id, .rhs_id = init_id}));
     }
   }
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
@@ -769,11 +787,12 @@ auto MatchContext::DoPreWork(Context& context,
   subscrutinee_ids.reserve(element_type_inst_ids.size());
   for (auto [i, element_type_id] : llvm::enumerate(
            context.types().GetBlockAsTypeIds(element_type_inst_ids))) {
-    subscrutinee_ids.push_back(
-        AddInst<SemIR::TupleAccess>(context, scrutinee.loc_id,
-                                    {.type_id = element_type_id,
-                                     .tuple_id = converted_scrutinee_id,
-                                     .index = SemIR::ElementIndex(i)}));
+    subscrutinee_ids.push_back(AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), scrutinee.loc_id,
+                     SemIR::TupleAccess{.type_id = element_type_id,
+                                        .tuple_id = converted_scrutinee_id,
+                                        .index = SemIR::ElementIndex(i)})));
   }
   add_all_subscrutinees(subscrutinee_ids);
 }
@@ -783,11 +802,13 @@ auto MatchContext::DoPostWork(Context& context,
     -> void {
   auto elements_id = context.inst_blocks().Add(results_stack_.PeekArray());
   results_stack_.PopArray();
-  auto tuple_value_id =
-      AddInst<SemIR::TupleValue>(context, SemIR::LocId(entry.pattern_id),
-                                 {.type_id = SemIR::ExtractScrutineeType(
-                                      context.sem_ir(), tuple_pattern.type_id),
-                                  .elements_id = elements_id});
+  auto tuple_value_id = AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), SemIR::LocId(entry.pattern_id),
+          SemIR::TupleValue{.type_id = SemIR::ExtractScrutineeType(
+                                context.sem_ir(), tuple_pattern.type_id),
+                            .elements_id = elements_id}));
   results_stack_.AppendToTop(tuple_value_id);
 }
 

@@ -55,6 +55,8 @@ fn Other.Nested.F();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Nested: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Namespace: NamespaceId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
@@ -94,4 +96,8 @@ fn Other.Nested.F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId, NamespaceId
 // CHECK:STDOUT:

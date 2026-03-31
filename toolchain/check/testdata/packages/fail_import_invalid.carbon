@@ -136,6 +136,8 @@ import ImportNotFound;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_lib.carbon
 // CHECK:STDOUT:
@@ -150,6 +152,8 @@ import ImportNotFound;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_found.carbon
 // CHECK:STDOUT:
@@ -165,4 +169,7 @@ import ImportNotFound;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImportNotFound.import = import ImportNotFound
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

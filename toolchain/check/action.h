@@ -69,8 +69,10 @@ auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
   if (ActionIsDependent(context, action_inst) ||
       (result_type_inst_id.has_value() &&
        OperandIsDependent(context, result_type_inst_id))) {
-    return AddDependentActionSplice(
-        context, SemIR::LocIdAndInst(loc_id, action_inst), result_type_inst_id);
+    return AddDependentActionSplice(context,
+                                    SemIR::LocIdAndInst::RuntimeVerified(
+                                        context.sem_ir(), loc_id, action_inst),
+                                    result_type_inst_id);
   }
 
   return PerformAction(context, loc_id, action_inst);

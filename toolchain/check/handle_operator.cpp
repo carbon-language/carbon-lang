@@ -409,13 +409,17 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   SemIR::InstId branch_value_id =
-      is_or ? AddInst<SemIR::UnaryOperatorNot>(
-                  context, node_id,
-                  {.type_id = bool_type_id, .operand_id = cond_value_id})
+      is_or ? AddInst(context,
+                      SemIR::LocIdAndInst::RuntimeVerified(
+                          context.sem_ir(), node_id,
+                          SemIR::UnaryOperatorNot{.type_id = bool_type_id,
+                                                  .operand_id = cond_value_id}))
             : cond_value_id;
-  auto short_circuit_result_id = AddInst<SemIR::BoolLiteral>(
-      context, node_id,
-      {.type_id = bool_type_id, .value = SemIR::BoolValue::From(is_or)});
+  auto short_circuit_result_id = AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), node_id,
+                   SemIR::BoolLiteral{.type_id = bool_type_id,
+                                      .value = SemIR::BoolValue::From(is_or)}));
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =
@@ -452,8 +456,10 @@ auto HandleParseNode(Context& context, Parse::ShortCircuitOperandOrId node_id)
 
 // Short circuit operator handling is uniform because the branching logic
 // occurs during operand handling.
-static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
-    -> bool {
+static auto HandleShortCircuitOperator(
+    Context& context, Parse::NodeIdOneOf<Parse::ShortCircuitOperatorAndId,
+                                         Parse::ShortCircuitOperatorOrId>
+                          node_id) -> bool {
   if (!context.scope_stack().IsInFunctionScope()) {
     return context.TODO(node_id,
                         "Control flow expressions are currently only supported "
@@ -471,16 +477,16 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   // When the second operand is evaluated, the result of `and` and `or` is
   // its value.
   auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
-  AddInst<SemIR::BranchWithArg>(
-      context, node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
+  AddInst(context, node_id,
+          SemIR::BranchWithArg{.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
   context.region_stack().AddToRegion(resume_block_id, node_id);
 
   // Collect the result from either the first or second operand.
-  auto result_id = AddInst<SemIR::BlockArg>(
-      context, node_id,
-      {.type_id = context.insts().Get(rhs_id).type_id(),
-       .block_id = resume_block_id});
+  auto result_id =
+      AddInst(context, node_id,
+              SemIR::BlockArg{.type_id = context.insts().Get(rhs_id).type_id(),
+                              .block_id = resume_block_id});
   SetBlockArgResultBeforeConstantUse(context, result_id, branch_value_id,
                                      rhs_id, short_circuit_result_id);
   context.node_stack().Push(node_id, result_id);

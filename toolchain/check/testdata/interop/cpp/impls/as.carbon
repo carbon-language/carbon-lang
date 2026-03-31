@@ -332,6 +332,25 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc26_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: InfixOperatorAsId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAsId
+// CHECK:STDOUT: InstKind Call: InfixOperatorAsId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: InfixOperatorAsId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: InfixOperatorAsId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: InfixOperatorAsId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: InfixOperatorAsId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: InfixOperatorAsId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: InfixOperatorAsId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conditionally_explicit.carbon
 // CHECK:STDOUT:
@@ -552,6 +571,28 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc28_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: IdentifierNameExprId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conditionally_explicit_implicit.carbon
 // CHECK:STDOUT:
@@ -651,4 +692,25 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: IdentifierNameExprId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: IdentifierNameExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: IdentifierNameExprId, LetBindingPatternId
 // CHECK:STDOUT:

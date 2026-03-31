@@ -275,6 +275,35 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
+// CHECK:STDOUT: InstKind InPlaceInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, StructTypeLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind StructAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: StructLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
 // CHECK:STDOUT:
@@ -337,4 +366,25 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %.loc7_24: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   return %.loc7_24
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: MemberAccessExprId
+// CHECK:STDOUT: InstKind Converted: InfixOperatorAsId, MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind FacetAccessType: MemberAccessExprId
+// CHECK:STDOUT: InstKind FacetValue: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: StructTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: StructTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructInit: MemberAccessExprId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:

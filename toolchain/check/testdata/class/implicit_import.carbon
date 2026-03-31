@@ -99,6 +99,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.impl.carbon
 // CHECK:STDOUT:
@@ -124,6 +126,10 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl_after_def.carbon
 // CHECK:STDOUT:
@@ -147,6 +153,9 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
 // CHECK:STDOUT:
@@ -176,6 +185,9 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.743
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redef_after_def.carbon
 // CHECK:STDOUT:
@@ -199,6 +211,9 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
@@ -238,6 +253,10 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C.17abfe.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def_alias.carbon
 // CHECK:STDOUT:
@@ -256,6 +275,10 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_alias.impl.carbon
 // CHECK:STDOUT:
@@ -290,4 +313,8 @@ class B {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

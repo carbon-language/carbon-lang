@@ -113,4 +113,22 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   assign file.%a_ptr.var, %ptr.as.Copy.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ConstType: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

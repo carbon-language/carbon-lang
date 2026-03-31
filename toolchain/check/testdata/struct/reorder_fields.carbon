@@ -186,4 +186,30 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
 // CHECK:STDOUT:   return %.loc21_11 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InPlaceInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind InitForm: FloatTypeLiteralId, IntTypeLiteralId, StructTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: FloatTypeLiteralId, IntTypeLiteralId, StructTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: FloatTypeLiteralId, IntTypeLiteralId, StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: FloatTypeLiteralId, IntTypeLiteralId, StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: FloatTypeLiteralId, IntTypeLiteralId, StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructInit: IdentifierNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: StructLiteralId
 // CHECK:STDOUT:

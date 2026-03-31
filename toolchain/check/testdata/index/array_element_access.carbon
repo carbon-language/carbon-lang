@@ -197,4 +197,27 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   assign file.%d.var, %Int.as.Copy.impl.Op.call.loc18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, IndexExprId
+// CHECK:STDOUT: InstKind ArrayIndex: IndexExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayInit: TupleLiteralId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IndexExprId, IntLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind Call: IndexExprId, IntLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IndexExprId, IntLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind InPlaceInit: TupleLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IndexExprId, IntLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

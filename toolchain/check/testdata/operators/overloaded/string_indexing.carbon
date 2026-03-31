@@ -100,6 +100,15 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind IntValue: StringLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StringLiteral: StringLiteralId
+// CHECK:STDOUT: InstKind StructValue: StringLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- test_string_indexing.carbon
 // CHECK:STDOUT:
@@ -184,4 +193,21 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %d: %char = value_binding d, %.loc6_32.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IndexExprId
+// CHECK:STDOUT: InstKind Call: IndexExprId
+// CHECK:STDOUT: InstKind Converted: IndexExprId
+// CHECK:STDOUT: InstKind FacetValue: IndexExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IndexExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId, StringLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IndexExprId
+// CHECK:STDOUT: InstKind StringLiteral: StringLiteralId
+// CHECK:STDOUT: InstKind StructValue: StringLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: CharTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IndexExprId
 // CHECK:STDOUT:

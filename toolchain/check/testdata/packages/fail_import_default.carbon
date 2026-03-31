@@ -63,6 +63,8 @@ import library default;
 // CHECK:STDOUT:   %A.import = import A
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_import_default.carbon
 // CHECK:STDOUT:

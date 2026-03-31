@@ -111,4 +111,27 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.20a = call %bound_method.loc17_10.2(%.loc17_10.2)
 // CHECK:STDOUT:   return %const.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind BoundMethod: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind Call: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind ConstType: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind Deref: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind InitForm: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind OutParamPattern: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind SpecificFunction: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind SpliceBlock: PrefixOperatorConstId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

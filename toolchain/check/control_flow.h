@@ -71,6 +71,10 @@ auto IsCurrentPositionReachable(Context& context) -> bool;
 auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void;
 
 // Adds an instruction that has cleanup associated.
+auto AddInstWithCleanup(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId;
+
+// Adds an instruction that has cleanup associated.
 template <typename InstT, typename LocT>
   requires(InstT::Kind.has_cleanup() && std::convertible_to<LocT, SemIR::LocId>)
 auto AddInstWithCleanup(Context& context, LocT loc, InstT inst)
@@ -79,6 +83,11 @@ auto AddInstWithCleanup(Context& context, LocT loc, InstT inst)
   MaybeAddCleanupForInst(context, inst_id);
   return inst_id;
 }
+
+// Adds an instruction that has cleanup associated.
+auto AddInstWithCleanupInNoBlock(Context& context,
+                                 SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId;
 
 // Adds an instruction that has cleanup associated.
 template <typename InstT, typename LocT>
@@ -124,12 +133,14 @@ auto AddReturnCleanupBlock(Context& context,
 
 template <typename LocT>
 auto AddReturnCleanupBlock(Context& context, LocT loc) -> void {
-  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, SemIR::Return{}));
+  AddReturnCleanupBlock(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                     context.sem_ir(), loc, SemIR::Return{}));
 }
 template <typename LocT>
 auto AddReturnCleanupBlockWithExpr(Context& context, LocT loc,
                                    SemIR::ReturnExpr inst) -> void {
-  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, inst));
+  AddReturnCleanupBlock(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                     context.sem_ir(), loc, inst));
 }
 
 }  // namespace Carbon::Check

@@ -345,6 +345,28 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc15_4.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind AsCompatible: IdentifierNameExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Deref: PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: CallExprId
+// CHECK:STDOUT: InstKind RefParam: CallExprId
+// CHECK:STDOUT: InstKind RefParamPattern: CallExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_object_param_qualifiers_overloaded.carbon
 // CHECK:STDOUT:
@@ -491,6 +513,31 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind Deref: PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId, PointerMemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: CallExprId, VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: CallExprId
+// CHECK:STDOUT: InstKind RefParamPattern: CallExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_explicit_object_param.carbon
 // CHECK:STDOUT:
@@ -572,6 +619,23 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %H__carbon_thunk.call: init %empty_tuple.type = call imports.%H__carbon_thunk.decl(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_explicit_object_param_overloaded.carbon
 // CHECK:STDOUT:
@@ -647,4 +711,21 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.e1b8ec.2(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:

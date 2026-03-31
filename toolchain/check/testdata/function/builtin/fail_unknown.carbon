@@ -42,4 +42,6 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnknownBuiltin();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId
 // CHECK:STDOUT:

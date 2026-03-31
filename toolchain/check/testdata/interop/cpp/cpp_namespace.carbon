@@ -120,6 +120,11 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MyCpp: <namespace> = alias_binding MyCpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.carbon
 // CHECK:STDOUT:
@@ -128,8 +133,13 @@ fn F() {
 // CHECK:STDOUT:     import Cpp "header.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.impl.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- system_header.carbon
 // CHECK:STDOUT:
@@ -163,4 +173,12 @@ fn F() {
 // CHECK:STDOUT:   %system_function.call: init %empty_tuple.type = call imports.%system_function.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
 // CHECK:STDOUT:

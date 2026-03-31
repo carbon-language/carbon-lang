@@ -110,10 +110,12 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
-  return GetOrAddInst<SemIR::ClassType>(context, loc_id,
-                                        {.type_id = SemIR::TypeType::TypeId,
-                                         .class_id = class_id,
-                                         .specific_id = *callee_specific_id});
+  return GetOrAddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
+                                    .class_id = class_id,
+                                    .specific_id = *callee_specific_id}));
 }
 
 static auto EntityFromInterfaceOrNamedConstraint(
@@ -155,7 +157,8 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
   } else {
     facet_type = FacetTypeFromNamedConstraint(context, id, *callee_specific_id);
   }
-  return GetOrAddInst(context, loc_id, *facet_type);
+  return GetOrAddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                   context.sem_ir(), loc_id, *facet_type));
 }
 
 // Builds an appropriate specific function for the callee, also handling
@@ -177,32 +180,35 @@ static auto BuildCalleeSpecificFunction(
     // This is an associated function in an interface; the callee is the
     // specific function in the impl that corresponds to the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
+    callee_id = GetOrAddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), SemIR::LocId(generic_callee_id),
                      SemIR::SpecificImplFunction{
                          .type_id = GetSingletonType(
                              context, SemIR::SpecificFunctionType::TypeInstId),
                          .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+                         .specific_id = callee_specific_id}));
   } else {
     // This is a regular generic function. The callee is the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
+    callee_id = GetOrAddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), SemIR::LocId(generic_callee_id),
                      SemIR::SpecificFunction{
                          .type_id = GetSingletonType(
                              context, SemIR::SpecificFunctionType::TypeInstId),
                          .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+                         .specific_id = callee_specific_id}));
   }
 
   // Add the `self` argument back if there was one.
   if (bound_method) {
-    callee_id =
-        GetOrAddInst<SemIR::BoundMethod>(context, loc_id,
-                                         {.type_id = bound_method->type_id,
-                                          .object_id = bound_method->object_id,
-                                          .function_decl_id = callee_id});
+    callee_id = GetOrAddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::BoundMethod{.type_id = bound_method->type_id,
+                                        .object_id = bound_method->object_id,
+                                        .function_decl_id = callee_id}));
   }
 
   return callee_id;
@@ -255,8 +261,10 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       case SemIR::InitRepr::Dependent:
         // Tentatively use storage for a temporary as the return argument.
         // This will be replaced if necessary when we perform initialization.
-        return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
-            context, loc_id, {.type_id = arg_type_id}));
+        return_arg_ids.push_back(AddInst(
+            context, SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), loc_id,
+                         SemIR::TemporaryStorage{.type_id = arg_type_id})));
         break;
       case SemIR::InitRepr::None:
       case SemIR::InitRepr::ByCopy:
@@ -296,10 +304,12 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::Function::SpecialFunctionKind::None:
     case SemIR::Function::SpecialFunctionKind::Builtin:
     case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      return GetOrAddInst<SemIR::Call>(context, loc_id,
-                                       {.type_id = return_type_id,
-                                        .callee_id = callee_id,
-                                        .args_id = converted_args_id});
+      return GetOrAddInst(context,
+                          SemIR::LocIdAndInst::RuntimeVerified(
+                              context.sem_ir(), loc_id,
+                              SemIR::Call{.type_id = return_type_id,
+                                          .callee_id = callee_id,
+                                          .args_id = converted_args_id}));
     }
   }
 }

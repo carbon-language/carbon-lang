@@ -386,6 +386,14 @@ var test_str: str = ();
 // CHECK:STDOUT:   assign file.%test_i64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
@@ -484,6 +492,14 @@ var test_str: str = ();
 // CHECK:STDOUT:   assign file.%test_u64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fN.carbon
 // CHECK:STDOUT:
@@ -582,6 +598,14 @@ var test_str: str = ();
 // CHECK:STDOUT:   assign file.%test_f128.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- char.carbon
 // CHECK:STDOUT:
@@ -623,6 +647,17 @@ var test_str: str = ();
 // CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: CharLiteralId
+// CHECK:STDOUT: InstKind Call: CharLiteralId
+// CHECK:STDOUT: InstKind CharLiteralValue: CharLiteralId
+// CHECK:STDOUT: InstKind Converted: CharLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CharLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: CharTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CharLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- string.carbon
 // CHECK:STDOUT:
@@ -654,6 +689,14 @@ var test_str: str = ();
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind IntValue: StringLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind StringLiteral: StringLiteralId
+// CHECK:STDOUT: InstKind StructValue: StringLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: StringTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- type.carbon
 // CHECK:STDOUT:
@@ -695,4 +738,15 @@ var test_str: str = ();
 // CHECK:STDOUT:   assign file.%test_type.var, %type.as.Copy.impl.Op.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IntTypeLiteralId
+// CHECK:STDOUT: InstKind Call: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

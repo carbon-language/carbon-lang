@@ -128,4 +128,17 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc11_14.1 = call %F.ref()
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: MemberAccessExprId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParamPattern: MemberAccessExprId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: MemberAccessExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
 // CHECK:STDOUT:

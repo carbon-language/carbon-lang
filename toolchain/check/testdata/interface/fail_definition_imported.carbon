@@ -47,6 +47,8 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
@@ -82,4 +84,9 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: InterfaceDefinitionStartId
 // CHECK:STDOUT:

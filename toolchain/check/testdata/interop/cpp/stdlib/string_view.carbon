@@ -158,6 +158,28 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %.loc14: init %str.ee0 to %.loc13_11.1 = mark_in_place_init %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: StringTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: StringLiteralId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: StringTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StringTypeLiteralId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StringTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StringTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: StringTypeLiteralId
+// CHECK:STDOUT: InstKind StringLiteral: StringLiteralId
+// CHECK:STDOUT: InstKind StructValue: StringLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: StringTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: StringLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_base_method.carbon
 // CHECK:STDOUT:
@@ -230,4 +252,27 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %.loc8_53.2: init bool to %.loc8_53.1 = mark_in_place_init %starts_with__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_53.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, StringTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:

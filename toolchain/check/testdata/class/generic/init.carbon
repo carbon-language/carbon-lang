@@ -283,6 +283,53 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc9 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT:   %.loc9_50.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId, StructLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId, FieldNameAndTypeId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, VariablePatternId
+// CHECK:STDOUT: InstKind FacetAccessType: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind LookupImplWitness: IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId, VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, IdentifierNameExprId, LetBindingPatternId, MemberAccessExprId, ReturnStatementId, StructLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, IdentifierNameExprId, MemberAccessExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: ClassDefinitionId, StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind UnboundElementType: FieldNameAndTypeId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt.carbon
 // CHECK:STDOUT:
@@ -449,4 +496,39 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT:   %.loc9_51.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AdaptDecl: AdaptDeclId
+// CHECK:STDOUT: InstKind AsCompatible: InfixOperatorAsId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorAsId
+// CHECK:STDOUT: InstKind Call: InfixOperatorAsId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind FacetAccessType: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: InfixOperatorAsId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: InfixOperatorAsId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: InfixOperatorAsId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind LookupImplWitness: InfixOperatorAsId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: AdaptDeclId, InfixOperatorAsId, LetBindingPatternId, ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: InfixOperatorAsId
+// CHECK:STDOUT: InstKind SpecificImplFunction: InfixOperatorAsId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, MemberAccessExprId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

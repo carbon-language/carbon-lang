@@ -45,4 +45,7 @@ fn Six() -> x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error>;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
 // CHECK:STDOUT:

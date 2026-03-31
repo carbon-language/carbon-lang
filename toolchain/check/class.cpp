@@ -48,7 +48,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
 // Checks that the specified finished adapter definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto CheckCompleteAdapterClassType(
-    Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
+    Context& context, Parse::ClassDefinitionId node_id, SemIR::ClassId class_id,
     llvm::ArrayRef<SemIR::InstId> field_decls,
     llvm::ArrayRef<SemIR::InstId> body) -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);

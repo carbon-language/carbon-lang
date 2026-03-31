@@ -409,6 +409,40 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %struct_type.d.c.b36) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, LetBindingPatternId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: StructTypeLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: StructTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificConstant: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructAccess: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind StructInit: FunctionDeclId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind Temporary: FunctionDeclId
+// CHECK:STDOUT: InstKind TemporaryStorage: FunctionDeclId
+// CHECK:STDOUT: InstKind TupleInit: FunctionDeclId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_conversion.carbon
 // CHECK:STDOUT:
@@ -505,6 +539,49 @@ impl () as I({}) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, LetBindingPatternId, PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind Deref: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind FacetAccessType: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: FunctionDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: FunctionDeclId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion.carbon
 // CHECK:STDOUT:
@@ -556,6 +633,35 @@ impl () as I({}) {
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.loc8_12.3, %.loc8_25.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: LetBindingPatternId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: LetBindingPatternId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: LetBindingPatternId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer.carbon
 // CHECK:STDOUT:
@@ -652,6 +758,49 @@ impl () as I({}) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, LetBindingPatternId, PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind Deref: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind FacetAccessType: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: FunctionDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: FunctionDeclId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon
 // CHECK:STDOUT:
@@ -748,6 +897,49 @@ impl () as I({}) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, LetBindingPatternId, PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind Deref: FunctionDeclId, LetBindingPatternId
+// CHECK:STDOUT: InstKind FacetAccessType: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: FunctionDeclId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: FunctionDeclId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon
 // CHECK:STDOUT:
@@ -806,6 +998,37 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %B) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: FunctionDeclId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: FunctionDeclId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetAccessType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificConstant: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: SelfTypeNameExprId
+// CHECK:STDOUT: InstKind Temporary: FunctionDeclId
+// CHECK:STDOUT: InstKind TemporaryStorage: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_function.carbon
 // CHECK:STDOUT:
@@ -967,6 +1190,48 @@ impl () as I({}) {
 // CHECK:STDOUT:   %impl.elem0.loc10_43.2 => constants.%impl.elem0.1c7
 // CHECK:STDOUT:   %specific_impl_fn.loc10_43.2 => constants.%specific_impl_fn.366
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind Converted: FunctionDefinitionStartId, IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind FacetValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, FunctionDefinitionStartId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: LetBindingPatternId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, ReturnStatementId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDefinitionStartId, ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, MemberAccessExprId, PostfixOperatorStarId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_method.carbon
 // CHECK:STDOUT:
@@ -1141,6 +1406,48 @@ impl () as I({}) {
 // CHECK:STDOUT:   %impl.elem0.loc10_60.2 => constants.%impl.elem0.1c7
 // CHECK:STDOUT:   %specific_impl_fn.loc10_60.2 => constants.%specific_impl_fn.366
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind Converted: FunctionDefinitionStartId, IdentifierNameExprId, SelfTypeNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FacetValue: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind LookupImplWitness: FunctionDefinitionStartId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, FunctionDefinitionStartId, IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PatternType: LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: LetBindingPatternId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequireCompleteType: LetBindingPatternId, ReturnStatementId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDefinitionStartId, ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IdentifierNameExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificConstant: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: IdentifierNameExprId, MemberAccessExprId, PostfixOperatorStarId, SelfTypeNameExprId, TupleLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingType: IdentifierNameExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_interface.carbon
 // CHECK:STDOUT:
@@ -1212,4 +1519,38 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %struct_type.b.a.1b0) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind AssociatedEntityType: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind Converted: CallExprId, FunctionDeclId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetType: CallExprId, FunctionDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: StructTypeLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: StructTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificConstant: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructAccess: FunctionDeclId
+// CHECK:STDOUT: InstKind StructInit: FunctionDeclId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId, FunctionDeclId, IdentifierNameExprId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: FunctionDeclId
+// CHECK:STDOUT: InstKind TemporaryStorage: FunctionDeclId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
 // CHECK:STDOUT:

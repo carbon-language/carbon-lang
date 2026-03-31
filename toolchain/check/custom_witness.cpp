@@ -90,7 +90,8 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
     context.inst_block_stack().PopAndDiscard();
     return SemIR::InstBlockId::None;
   }
-  AddInst(context, loc_id, SemIR::Return{});
+  AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), loc_id, SemIR::Return{}));
   return context.inst_block_stack().Pop();
 }
 
@@ -127,11 +128,15 @@ static auto MakeCustomWitnessConstantInst(
     SemIR::InstBlockId associated_entities_block_id) -> SemIR::InstId {
   // The witness is a CustomWitness of the query interface with a table that
   // contains each associated entity.
-  auto const_id = EvalOrAddInst<SemIR::CustomWitness>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .elements_id = associated_entities_block_id,
-       .query_specific_interface_id = query_specific_interface_id});
+  auto const_id = EvalOrAddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::CustomWitness{
+              .type_id =
+                  GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+              .elements_id = associated_entities_block_id,
+              .query_specific_interface_id = query_specific_interface_id}));
   return context.constant_values().GetInstId(const_id);
 }
 
@@ -152,12 +157,12 @@ static auto GetTypesForSelfFacet(
 
   // The Self facet will have type FacetType, for the query interface.
   auto facet_type_for_query_specific_interface =
-      context.types().GetTypeIdForTypeConstantId(
-          EvalOrAddInst<SemIR::FacetType>(
-              context, loc_id,
-              FacetTypeFromInterface(context,
-                                     query_specific_interface.interface_id,
-                                     query_specific_interface.specific_id)));
+      context.types().GetTypeIdForTypeConstantId(EvalOrAddInst(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), loc_id,
+                       FacetTypeFromInterface(
+                           context, query_specific_interface.interface_id,
+                           query_specific_interface.specific_id))));
   // The Self facet needs to point to a type value. If it's not one already,
   // convert to type.
   auto query_self_as_type_id = GetFacetAsType(context, query_self_const_id);
@@ -177,12 +182,15 @@ static auto MakeSelfFacetWithCustomWitness(
           context, loc_id, query_specific_interface_id,
           associated_entities_block_id)});
 
-  return EvalOrAddInst<SemIR::FacetValue>(
-      context, loc_id,
-      {.type_id = query_types.facet_type_for_query_specific_interface,
-       .type_inst_id =
-           context.types().GetTypeInstId(query_types.query_self_as_type_id),
-       .witnesses_block_id = witnesses_block_id});
+  return EvalOrAddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::FacetValue{
+              .type_id = query_types.facet_type_for_query_specific_interface,
+              .type_inst_id = context.types().GetTypeInstId(
+                  query_types.query_self_as_type_id),
+              .witnesses_block_id = witnesses_block_id}));
 }
 
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
@@ -267,8 +275,10 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         CARBON_CHECK(type_id == SemIR::TypeType::TypeId ||
                      type_id == SemIR::ErrorInst::TypeId);
         auto impl_witness_associated_constant =
-            AddInst<SemIR::ImplWitnessAssociatedConstant>(
-                context, loc_id, {.type_id = type_id, .inst_id = value_id});
+            AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                 context.sem_ir(), loc_id,
+                                 SemIR::ImplWitnessAssociatedConstant{
+                                     .type_id = type_id, .inst_id = value_id}));
         entries.push_back(impl_witness_associated_constant);
         break;
       }

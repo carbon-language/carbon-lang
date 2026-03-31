@@ -95,4 +95,22 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.loc16_18: init %struct_type.a.ba9 = converted %.loc16_17.1, %.loc16_17.3 [concrete = constants.%struct.384]
 // CHECK:STDOUT:   return %.loc16_18
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: StructLiteralId
+// CHECK:STDOUT: InstKind Call: StructLiteralId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId, StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: StructLiteralId
+// CHECK:STDOUT: InstKind InitForm: StructTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind OutParam: StructTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StructTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: StructLiteralId
+// CHECK:STDOUT: InstKind StructInit: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:

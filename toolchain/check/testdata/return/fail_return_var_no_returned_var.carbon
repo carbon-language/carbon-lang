@@ -51,4 +51,14 @@ fn Procedure() -> {} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: StructLiteralId
+// CHECK:STDOUT: InstKind OutParam: StructLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: StructLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: StructLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:

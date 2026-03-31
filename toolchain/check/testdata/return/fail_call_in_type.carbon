@@ -96,4 +96,20 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntTypeLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntTypeLiteralId
+// CHECK:STDOUT: InstKind InitForm: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId
 // CHECK:STDOUT:

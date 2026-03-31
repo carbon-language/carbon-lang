@@ -731,11 +731,13 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
       arg_id = Convert(context, loc_id, arg_id,
                        {.kind = ConversionTarget::CppThunkRef,
                         .type_id = callee_param_type_id});
-      arg_id = AddInst<SemIR::AddrOf>(
-          context, loc_id,
-          {.type_id = GetPointerType(
-               context, context.types().GetTypeInstId(callee_param_type_id)),
-           .lvalue_id = arg_id});
+      arg_id = AddInst(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), loc_id,
+                       SemIR::AddrOf{.type_id = GetPointerType(
+                                         context, context.types().GetTypeInstId(
+                                                      callee_param_type_id)),
+                                     .lvalue_id = arg_id}));
       arg_id =
           ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
     }
@@ -747,16 +749,22 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   if (thunk_takes_return_address) {
     // Create a temporary if the caller didn't provide a return slot.
     if (!return_slot_id.has_value()) {
-      return_slot_id = AddInst<SemIR::TemporaryStorage>(
-          context, loc_id, {.type_id = return_type_id});
+      return_slot_id = AddInst(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), loc_id,
+                       SemIR::TemporaryStorage{.type_id = return_type_id}));
     }
 
-    auto arg_id = AddInst<SemIR::AddrOf>(
-        context, loc_id,
-        {.type_id = GetPointerType(
-             context, context.types().GetTypeInstId(
-                          context.insts().Get(return_slot_id).type_id())),
-         .lvalue_id = return_slot_id});
+    auto arg_id =
+        AddInst(context,
+                SemIR::LocIdAndInst::RuntimeVerified(
+                    context.sem_ir(), loc_id,
+                    SemIR::AddrOf{
+                        .type_id = GetPointerType(
+                            context,
+                            context.types().GetTypeInstId(
+                                context.insts().Get(return_slot_id).type_id())),
+                        .lvalue_id = return_slot_id}));
     thunk_arg_ids.push_back(arg_id);
   } else if (return_slot_id.has_value()) {
     thunk_arg_ids.push_back(return_slot_id);
@@ -772,18 +780,22 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(thunk_return_type_id == return_type_id);
   }
 
-  auto result_id = GetOrAddInst<SemIR::Call>(
-      context, loc_id,
-      {.type_id = thunk_return_type_id,
-       .callee_id = thunk_callee_id,
-       .args_id = context.inst_blocks().Add(thunk_arg_ids)});
+  auto result_id = GetOrAddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::Call{.type_id = thunk_return_type_id,
+                      .callee_id = thunk_callee_id,
+                      .args_id = context.inst_blocks().Add(thunk_arg_ids)}));
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {
-    result_id = AddInst<SemIR::MarkInPlaceInit>(context, loc_id,
-                                                {.type_id = return_type_id,
-                                                 .src_id = result_id,
-                                                 .dest_id = return_slot_id});
+    result_id = AddInst(context,
+                        SemIR::LocIdAndInst::RuntimeVerified(
+                            context.sem_ir(), loc_id,
+                            SemIR::MarkInPlaceInit{.type_id = return_type_id,
+                                                   .src_id = result_id,
+                                                   .dest_id = return_slot_id}));
   }
 
   return result_id;

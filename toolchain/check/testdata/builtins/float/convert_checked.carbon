@@ -192,6 +192,16 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %FloatLiteralToFloatLiteral.call: init Core.FloatLiteral = call %FloatLiteralToFloatLiteral.ref(%float) [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f64.carbon
 // CHECK:STDOUT:
@@ -250,6 +260,16 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %FloatLiteralToFloat64.call.loc8: init %f64.d77 = call %FloatLiteralToFloat64.ref.loc8(%float.loc8) [concrete = constants.%float.bde]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f32.carbon
 // CHECK:STDOUT:
@@ -308,6 +328,16 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %FloatLiteralToFloat32.call.loc8: init %f32.97e = call %FloatLiteralToFloat32.ref.loc8(%float.loc8) [concrete = constants.%float.520]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f64.carbon
 // CHECK:STDOUT:
@@ -406,6 +436,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat64.call.loc8: init %f64.d77 = call %Float64ToFloat64.ref.loc8(%.loc8_31.2) [concrete = constants.%float.bde]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f32.carbon
 // CHECK:STDOUT:
@@ -504,6 +548,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float32ToFloat32.call.loc8: init %f32.97e = call %Float32ToFloat32.ref.loc8(%.loc8_31.2) [concrete = constants.%float.520]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- truncate.carbon
 // CHECK:STDOUT:
@@ -563,6 +621,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat32.call: init %f32.97e = call %Float64ToFloat32.ref(%.loc6_31.2) [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_truncate_overflow.carbon
 // CHECK:STDOUT:
@@ -650,6 +722,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %FloatLiteralToFloat64.call: init %f64.d77 = call %FloatLiteralToFloat64.ref(%float.loc21) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extend.carbon
 // CHECK:STDOUT:
@@ -731,6 +817,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float32ToFloat64.call.loc7: init %f64.d77 = call %Float32ToFloat64.ref.loc7(%.loc7_31.2) [concrete = constants.%float.6a7]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_constant.carbon
 // CHECK:STDOUT:
@@ -793,4 +893,18 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat64.call: init %f64.d77 = call %Float64ToFloat64.ref(%not_constant_64.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: RealLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind Converted: CallExprId, RealLiteralId
+// CHECK:STDOUT: InstKind FloatLiteralValue: RealLiteralId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: RealLiteralId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: RealLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: FloatTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: RealLiteralId
 // CHECK:STDOUT:

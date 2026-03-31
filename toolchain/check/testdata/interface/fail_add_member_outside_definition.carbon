@@ -148,4 +148,13 @@ interface Outer {
 // CHECK:STDOUT: specific @Inner.WithSelf.F.loc30(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.WithSelf.F.loc36(constants.%Self.672, constants.%Self.920) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FacetType: FunctionDeclId, InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId
 // CHECK:STDOUT:

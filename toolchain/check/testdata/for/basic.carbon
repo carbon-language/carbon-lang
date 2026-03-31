@@ -193,4 +193,53 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.2(%self.param: ref %Optional.311) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_20(%self.param: ref %TrivialRange) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: ForHeaderId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind AddrOf: ForHeaderId
+// CHECK:STDOUT: InstKind Assign: ForHeaderId
+// CHECK:STDOUT: InstKind BoundMethod: ForHeaderId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind Branch: ForHeaderId, ForHeaderStartId, ForStatementId
+// CHECK:STDOUT: InstKind BranchIf: ForHeaderId
+// CHECK:STDOUT: InstKind Call: CallExprId, ForHeaderId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, DesignatorExprId, ForHeaderId, InfixOperatorAsId, PostfixOperatorStarId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: CallExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: ForInId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, DesignatorExprId, ForHeaderId, FunctionDefinitionStartId, IdentifierNameExprId, ImplDefaultSelfAsId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDefinitionStartId, ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId
+// CHECK:STDOUT: InstKind SpecificConstant: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, PostfixOperatorStarId, TupleLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind Temporary: ForHeaderId, InfixOperatorAsId
+// CHECK:STDOUT: InstKind TemporaryStorage: ForHeaderId, StructLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: ForHeaderId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ForHeaderId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarStorage: ForHeaderId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

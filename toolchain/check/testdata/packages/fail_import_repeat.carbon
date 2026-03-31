@@ -104,6 +104,9 @@ import library default;
 // CHECK:STDOUT:   %Api.import = import Api
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_default_import.carbon
 // CHECK:STDOUT:
@@ -111,4 +114,6 @@ import library default;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:

@@ -62,7 +62,8 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
 // loop header, and starts emitting in the loop exit block.
-static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
+template <typename NodeIdT>
+static auto FinishLoopBody(Context& context, NodeIdT node_id) -> void {
   auto blocks = context.break_continue_stack().pop_back_val();
 
   // Add the loop backedge.

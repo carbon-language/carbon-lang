@@ -114,6 +114,8 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %default.import.loc6_24.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc6_24.2 = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_package.incorrect
 // CHECK:STDOUT:
@@ -128,6 +130,8 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Package.import = import Package
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_package_lib.incorrect
 // CHECK:STDOUT:
@@ -142,6 +146,8 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Package.import = import Package
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_swapped_ext.impl.carbon
 // CHECK:STDOUT:
@@ -156,4 +162,6 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %SwappedExt.import = import SwappedExt
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:

@@ -141,8 +141,10 @@ static auto EndFullPattern(Context& context) -> void {
     return;
   }
   auto pattern_block_id = context.pattern_block_stack().Pop();
-  AddInst<SemIR::NameBindingDecl>(context, context.node_stack().PeekNodeId(),
-                                  {.pattern_block_id = pattern_block_id});
+  AddInst(context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), context.node_stack().PeekNodeId(),
+              SemIR::NameBindingDecl{.pattern_block_id = pattern_block_id}));
 
   // Emit storage for any `var`s in the pattern now.
   bool returned =

@@ -450,6 +450,9 @@ void f(const int n) {
 // CHECK:STDOUT:     import Cpp "one_warning.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon
 // CHECK:STDOUT:
@@ -458,6 +461,9 @@ void f(const int n) {
 // CHECK:STDOUT:     import Cpp "multiple_warnings.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon
 // CHECK:STDOUT:
@@ -467,6 +473,9 @@ void f(const int n) {
 // CHECK:STDOUT:     import Cpp "multiple_warnings.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_indirect_warning.carbon
 // CHECK:STDOUT:
@@ -475,4 +484,7 @@ void f(const int n) {
 // CHECK:STDOUT:     import Cpp "indirect_warning.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

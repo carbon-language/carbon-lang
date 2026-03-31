@@ -64,4 +64,23 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_33: init %Derived = converted %.loc14_32.2, %.loc14_32.4
 // CHECK:STDOUT:   return %.loc14_33 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AsCompatible: StructLiteralId
+// CHECK:STDOUT: InstKind BaseDecl: BaseDeclId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: StructLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: PrefixOperatorPartialId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: PrefixOperatorPartialId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: PrefixOperatorPartialId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PartialType: PrefixOperatorPartialId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: PrefixOperatorPartialId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: PrefixOperatorPartialId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:

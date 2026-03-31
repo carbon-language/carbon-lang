@@ -780,12 +780,14 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.is_symbolic()) {
     // TODO: Deduplicate these.
-    AddInstInNoBlock(
-        context, loc_id,
-        SemIR::RequireCompleteType{
-            .type_id =
-                GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-            .complete_type_inst_id = context.types().GetTypeInstId(type_id)});
+    AddInstInNoBlock(context,
+                     SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), loc_id,
+                         SemIR::RequireCompleteType{
+                             .type_id = GetSingletonType(
+                                 context, SemIR::WitnessType::TypeInstId),
+                             .complete_type_inst_id =
+                                 context.types().GetTypeInstId(type_id)}));
   }
 
   return true;

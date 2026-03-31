@@ -123,8 +123,40 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprIfId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind Call: IfExprIfId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprIfId
+// CHECK:STDOUT: InstKind InitForm: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, FloatTypeLiteralId, IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind BranchIf: ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or.carbon
 // CHECK:STDOUT:
@@ -162,8 +194,42 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BoundMethod: IfExprIfId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind Call: IfExprIfId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IfExprIfId
+// CHECK:STDOUT: InstKind InitForm: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, FloatTypeLiteralId, IntTypeLiteralId, TypeTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralTrueId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchIf: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
@@ -211,4 +277,17 @@ fn F() {
 // CHECK:STDOUT: specific @C(constants.%B.a76) {
 // CHECK:STDOUT:   %B => constants.%B.a76
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId, ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchIf: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind BranchWithArg: ShortCircuitOperandOrId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind UnaryOperatorNot: ShortCircuitOperandOrId
 // CHECK:STDOUT:

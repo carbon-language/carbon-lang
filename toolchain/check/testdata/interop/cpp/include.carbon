@@ -33,4 +33,7 @@ import Cpp library "including_file.h";
 // CHECK:STDOUT:     import Cpp "including_file.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

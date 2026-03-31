@@ -178,4 +178,29 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   assign file.%y.var, %.loc16_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind Call: IdentifierNameExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind Converted: IdentifierNameExprId, StructLiteralId, TupleLiteralId, VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind InPlaceInit: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId, StructLiteralId, TupleLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructAccess: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind StructInit: IdentifierNameExprId, StructLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind TupleAccess: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleInit: IdentifierNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/formatter.h"
 
+#include <set>
 #include <string>
 #include <utility>
 
@@ -138,6 +139,66 @@ auto Formatter::Format() -> void {
 
   for (const auto& [id, specific] : sem_ir_->specifics().enumerate()) {
     FormatSpecific(id, specific);
+  }
+
+  // Track used InstKinds and their associated NodeKinds.
+  llvm::SmallVector<std::pair<InstKind, llvm::SmallVector<Parse::NodeKind>>>
+      used_kinds;
+
+  for (auto [inst_id, inst] : sem_ir_->insts().enumerate()) {
+    auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
+    if (!loc_id.is_desugared() && loc_id.kind() == LocId::Kind::NodeId) {
+      auto kind = inst.kind();
+      auto node_kind = sem_ir_->parse_tree().node_kind(loc_id.node_id());
+
+      std::pair<InstKind, llvm::SmallVector<Parse::NodeKind>>* kind_entry =
+          nullptr;
+      for (auto& entry : used_kinds) {
+        if (entry.first == kind) {
+          kind_entry = &entry;
+          break;
+        }
+      }
+      if (!kind_entry) {
+        used_kinds.push_back({kind, {}});
+        kind_entry = &used_kinds.back();
+      }
+
+      bool node_found = false;
+      for (auto nk : kind_entry->second) {
+        if (nk == node_kind) {
+          node_found = true;
+          break;
+        }
+      }
+      if (!node_found) {
+        kind_entry->second.push_back(node_kind);
+      }
+    }
+  }
+
+  // Sort InstKinds by ir_name().
+  llvm::sort(used_kinds, [](const auto& a, const auto& b) {
+    return a.first.name() < b.first.name();
+  });
+
+  // Sort NodeKinds within each InstKind.
+  for (auto& entry : used_kinds) {
+    llvm::sort(entry.second, [](Parse::NodeKind a, Parse::NodeKind b) {
+      return a.name() < b.name();
+    });
+  }
+
+  if (!used_kinds.empty()) {
+    out() << "--- Associated NodeIds\n";
+    for (const auto& [kind, node_kinds] : used_kinds) {
+      out() << "InstKind " << kind.name() << ": ";
+      llvm::ListSeparator sep;
+      for (auto node_kind : node_kinds) {
+        out() << sep << node_kind.name() << "Id";
+      }
+      out() << "\n";
+    }
   }
 
   out() << "\n";

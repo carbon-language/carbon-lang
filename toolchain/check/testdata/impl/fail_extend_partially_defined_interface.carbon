@@ -95,4 +95,15 @@ interface I {
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %I.impl_witness.loc24_21.2 => constants.%I.impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassType: ClassDefinitionStartId, ImplDefaultSelfAsId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDeclId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDeclId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, ImplDefaultSelfAsId
+// CHECK:STDOUT: InstKind SymbolicBinding: ClassDefinitionStartId, ImplDefaultSelfAsId, InterfaceDefinitionStartId
 // CHECK:STDOUT:

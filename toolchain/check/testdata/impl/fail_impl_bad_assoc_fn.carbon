@@ -1511,4 +1511,49 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc211_57.1 => constants.%.369
 // CHECK:STDOUT:   %pattern_type.loc211_57 => constants.%pattern_type.1fd
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AliasBinding: IdentifierNameNotBeforeSignatureId
+// CHECK:STDOUT: InstKind ArrayType: ArrayExprId
+// CHECK:STDOUT: InstKind AssociatedEntity: FunctionDeclId
+// CHECK:STDOUT: InstKind BoundMethod: FunctionDeclId
+// CHECK:STDOUT: InstKind Call: FunctionDeclId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId, ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: FunctionDeclId, LetBindingPatternId, PostfixOperatorStarId, SelfTypeNameExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind FacetAccessType: PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDeclId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: ArrayExprId, BoolTypeLiteralId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind InterfaceDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind InterfaceWithSelfDecl: InterfaceDefinitionStartId
+// CHECK:STDOUT: InstKind NameRef: FunctionDeclId, IdentifierNameExprId, ImplDefaultSelfAsId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParam: ArrayExprId, BoolTypeLiteralId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: ArrayExprId, BoolTypeLiteralId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: ArrayExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind Return: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnExpr: FunctionDeclId
+// CHECK:STDOUT: InstKind ReturnSlot: ArrayExprId, BoolTypeLiteralId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: ArrayExprId, BoolTypeLiteralId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificConstant: ArrayExprId, BoolTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: ArrayExprId, TupleLiteralId
+// CHECK:STDOUT: InstKind StructAccess: LetBindingPatternId
+// CHECK:STDOUT: InstKind StructType: StructTypeLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDeclId
+// CHECK:STDOUT: InstKind SymbolicBinding: FunctionDeclId, InterfaceDefinitionStartId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind TemporaryStorage: FunctionDeclId
+// CHECK:STDOUT: InstKind TupleAccess: LetBindingPatternId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleType: TupleLiteralId
+// CHECK:STDOUT: InstKind TupleValue: TupleLiteralId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

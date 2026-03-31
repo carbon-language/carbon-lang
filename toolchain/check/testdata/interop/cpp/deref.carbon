@@ -183,6 +183,24 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.call: ref %i32 = call imports.%operator_Star__carbon_thunk.decl(%.loc13)
 // CHECK:STDOUT:   return %operator_Star__carbon_thunk.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind BoundMethod: CallExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CallExprId, CoreNameExprId, CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefForm: PrefixOperatorRefId
+// CHECK:STDOUT: InstKind RefParam: VariablePatternId
+// CHECK:STDOUT: InstKind RefTagExpr: PrefixOperatorRefId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarParamPattern: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mutable_deref.carbon
 // CHECK:STDOUT:
@@ -231,4 +249,21 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %MutableDeref.cpp_operator.call: ref %i32 = call %bound_method(%int_ptr.ref)
 // CHECK:STDOUT:   return %MutableDeref.cpp_operator.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefForm: PrefixOperatorRefId
+// CHECK:STDOUT: InstKind RefParam: VariablePatternId
+// CHECK:STDOUT: InstKind RefTagExpr: PrefixOperatorRefId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarParamPattern: VariablePatternId
 // CHECK:STDOUT:

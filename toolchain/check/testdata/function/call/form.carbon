@@ -266,6 +266,30 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind FormBinding: FormBindingPatternId
+// CHECK:STDOUT: InstKind FormParamPattern: FormBindingPatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: VariablePatternId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefForm: RefPrimitiveFormId
+// CHECK:STDOUT: InstKind RefParam: FormBindingPatternId
+// CHECK:STDOUT: InstKind RefTagExpr: PrefixOperatorRefId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: VariablePatternId
+// CHECK:STDOUT: InstKind SpliceBlock: RefPrimitiveFormId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: FormBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_form_param.carbon
 // CHECK:STDOUT:
@@ -333,6 +357,25 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: FormBindingPatternId
+// CHECK:STDOUT: InstKind Call: CallExprId, FormBindingPatternId
+// CHECK:STDOUT: InstKind Converted: FormBindingPatternId
+// CHECK:STDOUT: InstKind FormBinding: FormBindingPatternId
+// CHECK:STDOUT: InstKind FormParamPattern: FormBindingPatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: FormBindingPatternId
+// CHECK:STDOUT: InstKind InitForm: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefParam: FormBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: FormBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind Temporary: FormBindingPatternId
+// CHECK:STDOUT: InstKind TemporaryStorage: FormBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: FormBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_form_param.carbon
 // CHECK:STDOUT:
@@ -396,6 +439,24 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IntLiteralId
+// CHECK:STDOUT: InstKind FormBinding: FormBindingPatternId
+// CHECK:STDOUT: InstKind FormParamPattern: FormBindingPatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: ValPrimitiveFormId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueForm: ValPrimitiveFormId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: FormBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: FormBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- type_component_needs_conversion.carbon
 // CHECK:STDOUT:
@@ -424,6 +485,16 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: ref %empty_tuple.type);
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Converted: TupleLiteralId
+// CHECK:STDOUT: InstKind FormBinding: FormBindingPatternId
+// CHECK:STDOUT: InstKind FormParamPattern: FormBindingPatternId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind RefForm: RefPrimitiveFormId
+// CHECK:STDOUT: InstKind RefParam: FormBindingPatternId
+// CHECK:STDOUT: InstKind SpliceBlock: RefPrimitiveFormId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: FormBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ref_return_form.carbon
 // CHECK:STDOUT:
@@ -456,6 +527,16 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %_: ref %i32 = ref_binding _, %F.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind RefBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind RefForm: RefPrimitiveFormId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_return_form.carbon
 // CHECK:STDOUT:
@@ -503,6 +584,23 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind InitForm: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind OutParamPattern: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnSlot: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: VarPrimitiveFormId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_return_form.carbon
 // CHECK:STDOUT:
@@ -535,4 +633,14 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %_: %i32 = value_binding _, %F.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueForm: ValPrimitiveFormId
 // CHECK:STDOUT:

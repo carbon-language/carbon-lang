@@ -189,11 +189,12 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
     -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
-      return AddInst(context, binding.node_id,
-                     SemIR::TupleLiteral{
-                         .type_id = GetTupleType(context, {}),
-                         .elements_id = SemIR::InstBlockId::Empty,
-                     });
+      return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                  context.sem_ir(), binding.node_id,
+                                  SemIR::TupleLiteral{
+                                      .type_id = GetTupleType(context, {}),
+                                      .elements_id = SemIR::InstBlockId::Empty,
+                                  }));
     } else {
       return MakeIntLiteral(context, binding.node_id,
                             context.ints().Add(alternative_index));

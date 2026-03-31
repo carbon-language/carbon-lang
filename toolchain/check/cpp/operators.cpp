@@ -241,11 +241,12 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
   // TODO: This will eventually be called from impl lookup, possibly while
   // forming a specific, so we should not be adding instructions here.
   auto bound_id = AddInst(
-      context, SemIR::LocIdAndInst(
-                   loc_id, SemIR::IntValue{
-                               .type_id = GetSingletonType(
-                                   context, SemIR::IntLiteralType::TypeInstId),
-                               .int_id = context.ints().Add(size)}));
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::IntValue{.type_id = GetSingletonType(
+                              context, SemIR::IntLiteralType::TypeInstId),
+                          .int_id = context.ints().Add(size)}));
   auto array_type_inst_id = AddTypeInst(
       context,
       SemIR::LocIdAndInst::RuntimeVerified(

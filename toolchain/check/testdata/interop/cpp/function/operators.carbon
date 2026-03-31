@@ -1189,6 +1189,29 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, PrefixOperatorCaretId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, PrefixOperatorCaretId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId, PrefixOperatorCaretId, PrefixOperatorMinusId, PrefixOperatorMinusMinusId, PrefixOperatorPlusPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, PrefixOperatorCaretId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Temporary: PrefixOperatorCaretId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind TemporaryStorage: PrefixOperatorCaretId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_binary_operators.carbon
 // CHECK:STDOUT:
@@ -1985,6 +2008,39 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, InfixOperatorAmpId, InfixOperatorCaretId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorMinusId, InfixOperatorPercentId, InfixOperatorPipeId, InfixOperatorPlusId, InfixOperatorSlashId, InfixOperatorStarId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorAmpId, InfixOperatorAmpEqualId, InfixOperatorCaretId, InfixOperatorCaretEqualId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorMinusId, InfixOperatorMinusEqualId, InfixOperatorPercentId, InfixOperatorPercentEqualId, InfixOperatorPipeId, InfixOperatorPipeEqualId, InfixOperatorPlusId, InfixOperatorPlusEqualId, InfixOperatorSlashId, InfixOperatorSlashEqualId, InfixOperatorStarId, InfixOperatorStarEqualId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IndexExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IndexExprId, InfixOperatorAmpId, InfixOperatorAmpEqualId, InfixOperatorCaretId, InfixOperatorCaretEqualId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorGreaterGreaterEqualId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorLessLessEqualId, InfixOperatorMinusId, InfixOperatorMinusEqualId, InfixOperatorPercentId, InfixOperatorPercentEqualId, InfixOperatorPipeId, InfixOperatorPipeEqualId, InfixOperatorPlusId, InfixOperatorPlusEqualId, InfixOperatorSlashId, InfixOperatorSlashEqualId, InfixOperatorStarId, InfixOperatorStarEqualId, IntLiteralId
+// CHECK:STDOUT: InstKind Converted: IndexExprId, IntLiteralId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IntLiteralId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorAmpId, InfixOperatorCaretId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorMinusId, InfixOperatorPercentId, InfixOperatorPipeId, InfixOperatorPlusId, InfixOperatorSlashId, InfixOperatorStarId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: IndexExprId, VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: IndexExprId
+// CHECK:STDOUT: InstKind RefParamPattern: IndexExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IntLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorAmpId, InfixOperatorCaretId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorMinusId, InfixOperatorPercentId, InfixOperatorPipeId, InfixOperatorPlusId, InfixOperatorSlashId, InfixOperatorStarId
+// CHECK:STDOUT: InstKind TemporaryStorage: InfixOperatorAmpId, InfixOperatorCaretId, InfixOperatorEqualEqualId, InfixOperatorExclaimEqualId, InfixOperatorGreaterId, InfixOperatorGreaterEqualId, InfixOperatorGreaterGreaterId, InfixOperatorLessId, InfixOperatorLessEqualId, InfixOperatorLessLessId, InfixOperatorMinusId, InfixOperatorPercentId, InfixOperatorPipeId, InfixOperatorPlusId, InfixOperatorSlashId, InfixOperatorStarId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: IndexExprId, IntLiteralId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: IndexExprId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_calls.carbon
 // CHECK:STDOUT:
@@ -2150,6 +2206,24 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_27.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon
 // CHECK:STDOUT:
@@ -2314,6 +2388,30 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind TemporaryStorage: InfixOperatorGreaterId, InfixOperatorLessEqualId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
@@ -2443,6 +2541,30 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind NameBindingDecl: UnusedPatternId, VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind Temporary: InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind TemporaryStorage: InfixOperatorEqualEqualId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_single_namespace.carbon
 // CHECK:STDOUT:
@@ -2569,6 +2691,24 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
 // CHECK:STDOUT:
@@ -2758,6 +2898,24 @@ fn F() {
 // CHECK:STDOUT:   %C1.cpp_destructor.call: init %empty_tuple.type = call %C1.cpp_destructor.bound(%.loc8_36.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorMinusId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon
 // CHECK:STDOUT:
@@ -2863,6 +3021,23 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId
+// CHECK:STDOUT: InstKind Call: CallExprId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class.carbon
 // CHECK:STDOUT:
@@ -2987,6 +3162,24 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class_in_namespace.carbon
 // CHECK:STDOUT:
@@ -3120,6 +3313,24 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_35.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_member_add_with.carbon
 // CHECK:STDOUT:
@@ -3268,6 +3479,29 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c1.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: InfixOperatorPlusId, PrefixOperatorMinusId, VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefParam: InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind RefParamPattern: InfixOperatorPlusId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, VariablePatternId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: InfixOperatorPlusId, PrefixOperatorMinusId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_template_instantiation.carbon
 // CHECK:STDOUT:
@@ -3299,6 +3533,26 @@ fn F() {
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %i32 = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc14_12.1, %addr.loc14_12.2)
 // CHECK:STDOUT:   return %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AddrOf: InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: InfixOperatorPlusId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloading.carbon
 // CHECK:STDOUT:
@@ -3365,4 +3619,22 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_29.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind AddrOf: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind Call: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind MarkInPlaceInit: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId, UnusedPatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, InfixOperatorPlusId
+// CHECK:STDOUT: InstKind ValueAsRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

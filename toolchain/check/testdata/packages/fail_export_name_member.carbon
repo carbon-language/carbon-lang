@@ -67,6 +67,12 @@ export C.n;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .n = %.loc5_8
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: StructLiteralId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
@@ -98,4 +104,6 @@ export C.n;
 // CHECK:STDOUT:   .Self = imports.%Foo.import_ref.1d1
 // CHECK:STDOUT:   .n = imports.%Foo.import_ref.8c5
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:

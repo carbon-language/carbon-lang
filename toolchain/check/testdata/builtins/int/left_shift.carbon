@@ -245,6 +245,41 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %LeftShift.call: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LeftShift.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: CallExprId, IntLiteralId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IntLiteralId, PrefixOperatorMinusId, ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CallExprId, IntLiteralId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind InitForm: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: CallExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId, IntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: CallExprId, IdentifierNameExprId, IntLiteralId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind SpliceBlock: IntTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId, IntLiteralId, PrefixOperatorMinusId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- u32.carbon
 // CHECK:STDOUT:
@@ -264,4 +299,39 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %LeftShift.call: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LeftShift.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BoundMethod: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind Call: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IntLiteralId, ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: BuiltinFunctionDefinitionStartId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind InitForm: CallExprId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind PatternType: CallExprId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind SpecificFunction: CallExprId, IdentifierNameExprId, IntLiteralId
+// CHECK:STDOUT: InstKind SpliceBlock: UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: StructLiteralId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: CallExprId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId, UnsignedIntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId, IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

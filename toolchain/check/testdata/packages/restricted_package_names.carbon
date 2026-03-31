@@ -132,6 +132,8 @@ package Cpp library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %Cpp.import = import Cpp
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportDecl: PackageDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- raw_cpp.carbon
 // CHECK:STDOUT:

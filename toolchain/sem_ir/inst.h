@@ -426,6 +426,12 @@ struct LocIdAndInst {
   static auto RuntimeVerified(const File& file, LocId loc_id, Inst inst)
       -> LocIdAndInst;
 
+  // Constructs a `LocIdAndInst` with a guaranteed-desugared location.
+  static auto Desugared(LocId loc_id, Inst inst) -> LocIdAndInst {
+    CARBON_CHECK(loc_id.is_desugared());
+    return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
+  }
+
   // Construction for the common case with a typed node.
   template <typename InstT>
     requires(Internal::HasNodeId<InstT>)

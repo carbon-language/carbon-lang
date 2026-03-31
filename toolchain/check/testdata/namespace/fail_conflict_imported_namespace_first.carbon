@@ -53,6 +53,8 @@ fn NS.Foo();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Namespace: NamespaceId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
@@ -88,4 +90,7 @@ fn NS.Foo();
 // CHECK:STDOUT: fn @NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
 // CHECK:STDOUT:

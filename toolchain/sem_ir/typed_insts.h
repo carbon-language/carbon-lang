@@ -78,7 +78,7 @@ struct SingletonTypeInst {
 // An action that performs simple member access, `base.name`.
 struct AccessMemberAction {
   static constexpr auto Kind =
-      InstKind::AccessMemberAction.Define<Parse::NodeId>(
+      InstKind::AccessMemberAction.Define<Parse::MemberAccessExprId>(
           {.ir_name = "access_member_action",
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
@@ -92,7 +92,7 @@ struct AccessMemberAction {
 // example, `base.destroy`.
 struct AccessOptionalMemberAction {
   static constexpr auto Kind =
-      InstKind::AccessOptionalMemberAction.Define<Parse::NodeId>(
+      InstKind::AccessOptionalMemberAction.Define<Parse::NoneNodeId>(
           {.ir_name = "access_optional_member_action",
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
@@ -105,7 +105,24 @@ struct AccessOptionalMemberAction {
 // A value acquisition. Used when an expression contains a reference and we want
 // a value.
 struct AcquireValue {
-  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>({
+  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ChoiceAlternativeListCommaId,
+      Parse::ChoiceDefinitionId, Parse::ForHeaderId, Parse::FunctionDeclId,
+      Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretId, Parse::InfixOperatorEqualEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessId, Parse::InfixOperatorMinusId,
+      Parse::InfixOperatorPercentId, Parse::InfixOperatorPipeId,
+      Parse::InfixOperatorPlusId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::PrefixOperatorAmpId, Parse::PrefixOperatorCaretId,
+      Parse::PrefixOperatorMinusId, Parse::PrefixOperatorStarId,
+      Parse::ReturnStatementId, Parse::StructLiteralId, Parse::TupleLiteralId,
+      Parse::VarBindingPatternId, Parse::WhereExprId>>({
       .ir_name = "acquire_value",
       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
   });
@@ -129,7 +146,25 @@ struct AdaptDecl {
 // operator, `&lvalue`.
 struct AddrOf {
   // Parse node is usually Parse::PrefixOperatorAmpId.
-  static constexpr auto Kind = InstKind::AddrOf.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::AddrOf.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ForHeaderId, Parse::FunctionDeclId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAmpEqualId,
+      Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorCaretId,
+      Parse::InfixOperatorEqualEqualId, Parse::InfixOperatorExclaimEqualId,
+      Parse::InfixOperatorGreaterEqualId, Parse::InfixOperatorGreaterGreaterId,
+      Parse::InfixOperatorGreaterId, Parse::InfixOperatorLessEqualId,
+      Parse::InfixOperatorLessId, Parse::InfixOperatorLessLessId,
+      Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorMinusId,
+      Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPercentId,
+      Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPipeId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorPlusId,
+      Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarEqualId, Parse::InfixOperatorStarId,
+      Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+      Parse::PrefixOperatorAmpId, Parse::PrefixOperatorCaretId,
+      Parse::PrefixOperatorMinusId, Parse::ReturnStatementId,
+      Parse::TupleLiteralId>>(
       {.ir_name = "addr_of",
        .constant_kind = InstConstantKind::WheneverPossible});
 
@@ -139,9 +174,10 @@ struct AddrOf {
 
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
-  static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
-      {.ir_name = "alias_binding",
-       .expr_category = ComputedExprCategory::SameAsSecondOperand});
+  static constexpr auto Kind =
+      InstKind::AliasBinding.Define<Parse::IdentifierNameNotBeforeSignatureId>(
+          {.ir_name = "alias_binding",
+           .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -151,7 +187,9 @@ struct AliasBinding {
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
-  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ArrayIndex.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::IdentifierNameExprId,
+                         Parse::IndexExprId, Parse::TupleLiteralId>>(
       {.ir_name = "array_index",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
@@ -167,7 +205,8 @@ struct ArrayIndex {
 // expression. `inits_id` contains one initializer per array element.
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
-  static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::IdentifierNameExprId, Parse::TupleLiteralId>>(
       {.ir_name = "array_init",
        .expr_category = ExprCategory::ReprInitializing});
 
@@ -178,7 +217,8 @@ struct ArrayInit {
 
 // An array of `element_type_id` values, sized to `bound_id`.
 struct ArrayType {
-  static constexpr auto Kind = InstKind::ArrayType.Define<Parse::ArrayExprId>(
+  static constexpr auto Kind = InstKind::ArrayType.Define<
+      Parse::NodeIdOneOf<Parse::ArrayExprId, Parse::TupleLiteralId>>(
       {.ir_name = "array_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -192,7 +232,11 @@ struct ArrayType {
 
 // Perform a no-op conversion to a compatible type.
 struct AsCompatible {
-  static constexpr auto Kind = InstKind::AsCompatible.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::AsCompatible.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorAsId, Parse::MemberAccessExprId,
+      Parse::PrefixOperatorAmpId, Parse::ReturnStatementId,
+      Parse::StructLiteralId, Parse::VariablePatternId>>(
       {.ir_name = "as_compatible",
        .expr_category = ComputedExprCategory::SameAsFirstOperand});
 
@@ -205,7 +249,9 @@ struct AsCompatible {
 // it is required to already be `lhs_id`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Assign.Define<
+      Parse::NodeIdOneOf<Parse::ForHeaderId, Parse::InfixOperatorEqualId,
+                         Parse::VariablePatternId>>(
       {.ir_name = "assign", .constant_kind = InstConstantKind::Never});
 
   // Assignments are statements, and so have no type.
@@ -232,8 +278,14 @@ struct AssociatedConstantDecl {
 // This represents the entity before impl lookup is performed, and identifies
 // the slot within a witness where the constant value will be found.
 struct AssociatedEntity {
-  static constexpr auto Kind = InstKind::AssociatedEntity.Define<Parse::NodeId>(
-      {.ir_name = "assoc_entity", .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind =
+      InstKind::AssociatedEntity.Define<Parse::NodeIdOneOf<
+          Parse::AssociatedConstantNameAndTypeId,
+          Parse::BuiltinFunctionDefinitionStartId, Parse::DesignatorExprId,
+          Parse::FunctionDeclId, Parse::FunctionDefinitionStartId,
+          Parse::MemberAccessExprId>>(
+          {.ir_name = "assoc_entity",
+           .constant_kind = InstConstantKind::Always});
 
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
@@ -245,7 +297,9 @@ struct AssociatedEntity {
 // `InterfaceName.Function`.
 struct AssociatedEntityType {
   static constexpr auto Kind =
-      InstKind::AssociatedEntityType.Define<Parse::NoneNodeId>(
+      InstKind::AssociatedEntityType.Define<Parse::NodeIdOneOf<
+          Parse::AssociatedConstantNameAndTypeId, Parse::DesignatorExprId,
+          Parse::FunctionDeclId, Parse::MemberAccessExprId>>(
           {.ir_name = "assoc_entity_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});
@@ -281,7 +335,9 @@ struct BaseDecl {
 
 // Reads an argument from `BranchWithArg`.
 struct BlockArg {
-  static constexpr auto Kind = InstKind::BlockArg.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::BlockArg.Define<
+      Parse::NodeIdOneOf<Parse::IfExprIfId, Parse::ShortCircuitOperatorAndId,
+                         Parse::ShortCircuitOperatorOrId>>(
       {.ir_name = "block_arg", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -291,7 +347,9 @@ struct BlockArg {
 // A literal bool value, `true` or `false`.
 struct BoolLiteral {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BoolLiteral.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::BoolLiteral.Define<Parse::NodeIdOneOf<
+      Parse::BoolLiteralFalseId, Parse::BoolLiteralTrueId, Parse::CallExprId,
+      Parse::ShortCircuitOperandAndId, Parse::ShortCircuitOperandOrId>>(
       {.ir_name = "bool_literal", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -308,7 +366,39 @@ using BoolType = SingletonTypeInst<InstKind::BoolType, "bool">;
 // with the value to use for `self`. This is a callable structure; `Call` will
 // handle the argument assignment.
 struct BoundMethod {
-  static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeIdOneOf<
+      Parse::AssociatedConstantDeclId, Parse::BoolLiteralFalseId,
+      Parse::BoolLiteralTrueId, Parse::BuiltinFunctionDefinitionStartId,
+      Parse::CallExprId, Parse::CharLiteralId,
+      Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+      Parse::ForHeaderId, Parse::FormBindingPatternId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::IfExprElseId, Parse::IfExprIfId, Parse::IfExprThenId,
+      Parse::IndexExprId, Parse::InfixOperatorAmpEqualId,
+      Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorCaretId,
+      Parse::InfixOperatorEqualEqualId, Parse::InfixOperatorEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorLessLessId,
+      Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorMinusId,
+      Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPercentId,
+      Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPipeId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorPlusId,
+      Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarEqualId, Parse::InfixOperatorStarId,
+      Parse::IntLiteralId, Parse::IntTypeLiteralId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::PrefixOperatorAmpId,
+      Parse::PrefixOperatorCaretId, Parse::PrefixOperatorMinusId,
+      Parse::PrefixOperatorMinusMinusId, Parse::PrefixOperatorNotId,
+      Parse::PrefixOperatorPlusPlusId, Parse::PrefixOperatorStarId,
+      Parse::RealLiteralId, Parse::ReturnStatementId,
+      Parse::SelfValueNameExprId, Parse::ShortCircuitOperatorAndId,
+      Parse::ShortCircuitOperatorOrId, Parse::StructLiteralId,
+      Parse::TupleLiteralId, Parse::VariablePatternId, Parse::WhereExprId>>(
       {.ir_name = "bound_method",
        .constant_kind = InstConstantKind::WheneverPossible});
 
@@ -331,7 +421,12 @@ using BoundMethodType =
 // Control flow to branch to the target block.
 struct Branch {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::Branch.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Branch.Define<Parse::NodeIdOneOf<
+      Parse::BreakStatementStartId, Parse::ContinueStatementStartId,
+      Parse::ForHeaderId, Parse::ForHeaderStartId, Parse::ForStatementId,
+      Parse::IfConditionId, Parse::IfExprIfId, Parse::IfStatementId,
+      Parse::WhileConditionId, Parse::WhileConditionStartId,
+      Parse::WhileStatementId>>(
       {.ir_name = "br",
        .constant_kind = InstConstantKind::Never,
        .terminator_kind = TerminatorKind::Terminator});
@@ -343,7 +438,10 @@ struct Branch {
 // Control flow to branch to the target block if `cond_id` is true.
 struct BranchIf {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BranchIf.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::BranchIf.Define<Parse::NodeIdOneOf<
+      Parse::ForHeaderId, Parse::IfConditionId, Parse::IfExprIfId,
+      Parse::ShortCircuitOperandAndId, Parse::ShortCircuitOperandOrId,
+      Parse::WhileConditionId>>(
       {.ir_name = "br",
        .constant_kind = InstConstantKind::Never,
        .terminator_kind = TerminatorKind::TerminatorSequence});
@@ -357,10 +455,14 @@ struct BranchIf {
 // `BlockArg` to read.
 struct BranchWithArg {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BranchWithArg.Define<Parse::NodeId>(
-      {.ir_name = "br",
-       .constant_kind = InstConstantKind::Never,
-       .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind =
+      InstKind::BranchWithArg.Define<Parse::NodeIdOneOf<
+          Parse::IfExprIfId, Parse::ShortCircuitOperandAndId,
+          Parse::ShortCircuitOperandOrId, Parse::ShortCircuitOperatorAndId,
+          Parse::ShortCircuitOperatorOrId>>(
+          {.ir_name = "br",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
   LabelId target_id;
@@ -373,7 +475,39 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeIdOneOf<
+      Parse::AssociatedConstantDeclId, Parse::BoolLiteralFalseId,
+      Parse::BoolLiteralTrueId, Parse::BuiltinFunctionDefinitionStartId,
+      Parse::CallExprId, Parse::CharLiteralId,
+      Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+      Parse::ForHeaderId, Parse::FormBindingPatternId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::IfExprElseId, Parse::IfExprIfId, Parse::IfExprThenId,
+      Parse::IndexExprId, Parse::InfixOperatorAmpEqualId,
+      Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorCaretId,
+      Parse::InfixOperatorEqualEqualId, Parse::InfixOperatorEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorLessLessId,
+      Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorMinusId,
+      Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPercentId,
+      Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPipeId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorPlusId,
+      Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarEqualId, Parse::InfixOperatorStarId,
+      Parse::IntLiteralId, Parse::IntTypeLiteralId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::PrefixOperatorAmpId,
+      Parse::PrefixOperatorCaretId, Parse::PrefixOperatorMinusId,
+      Parse::PrefixOperatorMinusMinusId, Parse::PrefixOperatorNotId,
+      Parse::PrefixOperatorPlusPlusId, Parse::PrefixOperatorStarId,
+      Parse::RealLiteralId, Parse::ReturnStatementId,
+      Parse::SelfValueNameExprId, Parse::ShortCircuitOperatorAndId,
+      Parse::ShortCircuitOperatorOrId, Parse::StructLiteralId,
+      Parse::TupleLiteralId, Parse::VariablePatternId, Parse::WhereExprId>>(
       {.ir_name = "call",
        .expr_category = ComputedExprCategory::DependsOnOperands,
        .is_type = InstIsType::Maybe,
@@ -399,8 +533,9 @@ using CharLiteralType =
 // A unicode code point character value, whose type is `CharLiteralType`.
 struct CharLiteralValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::CharLiteralValue.Define<Parse::NodeId>(
-      {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind =
+      InstKind::CharLiteralValue.Define<Parse::CharLiteralId>(
+          {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
 
@@ -409,9 +544,10 @@ struct CharLiteralValue {
 
 // A class declaration.
 struct ClassDecl {
-  static constexpr auto Kind =
-      InstKind::ClassDecl.Define<Parse::AnyClassDeclId>(
-          {.ir_name = "class_decl"});
+  static constexpr auto Kind = InstKind::ClassDecl.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceDefinitionStartId, Parse::ClassDeclId,
+                         Parse::ClassDefinitionStartId>>(
+      {.ir_name = "class_decl"});
 
   TypeId type_id;
   // TODO: For a generic class declaration, the name of the class declaration
@@ -427,7 +563,13 @@ struct ClassDecl {
 struct ClassElementAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::ClassElementAccess.Define<Parse::NodeId>(
+      InstKind::ClassElementAccess.Define<Parse::NodeIdOneOf<
+          Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+          Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+          Parse::InfixOperatorAsId, Parse::LetBindingPatternId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PrefixOperatorStarId, Parse::ReturnStatementId,
+          Parse::StructLiteralId>>(
           {.ir_name = "class_element_access",
            .expr_category = ComputedExprCategory::DependsOnOperands,
            .is_type = InstIsType::Maybe,
@@ -440,7 +582,10 @@ struct ClassElementAccess {
 
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
-  static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ClassInit.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::ChoiceAlternativeListCommaId,
+                         Parse::ChoiceDefinitionId, Parse::IdentifierNameExprId,
+                         Parse::StructLiteralId>>(
       {.ir_name = "class_init",
        .expr_category = ExprCategory::ReprInitializing});
 
@@ -451,11 +596,15 @@ struct ClassInit {
 
 // The type for a class, either non-generic or specific.
 struct ClassType {
-  static constexpr auto Kind = InstKind::ClassType.Define<Parse::NodeId>(
-      {.ir_name = "class_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .deduce_through = true});
+  static constexpr auto Kind = InstKind::ClassType.Define<Parse::NodeIdOneOf<
+      Parse::BaseDeclId, Parse::CallExprId, Parse::ChoiceDefinitionId,
+      Parse::ClassDeclId, Parse::ClassDefinitionStartId,
+      Parse::FieldNameAndTypeId, Parse::IdentifierNameExprId,
+      Parse::ImplDefaultSelfAsId, Parse::MemberAccessExprId,
+      Parse::SelfTypeNameExprId>>({.ir_name = "class_type",
+                                   .is_type = InstIsType::Always,
+                                   .constant_kind = InstConstantKind::Always,
+                                   .deduce_through = true});
 
   TypeId type_id;
   ClassId class_id;
@@ -471,10 +620,10 @@ struct ClassType {
 // models type completeness, and should track other information such as the
 // value representation.
 struct CompleteTypeWitness {
-  static constexpr auto Kind =
-      InstKind::CompleteTypeWitness.Define<Parse::NodeId>(
-          {.ir_name = "complete_type_witness",
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::CompleteTypeWitness.Define<
+      Parse::NodeIdOneOf<Parse::ChoiceDefinitionId, Parse::ClassDefinitionId>>(
+      {.ir_name = "complete_type_witness",
+       .constant_kind = InstConstantKind::Always});
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is used as the object representation of this type.
@@ -497,7 +646,41 @@ struct ConstType {
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {
-  static constexpr auto Kind = InstKind::Converted.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Converted.Define<Parse::NodeIdOneOf<
+      Parse::AdaptDeclId, Parse::AssociatedConstantDeclId,
+      Parse::BoolLiteralFalseId, Parse::BoolLiteralTrueId,
+      Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+      Parse::CharLiteralId, Parse::ChoiceAlternativeListCommaId,
+      Parse::ChoiceDefinitionId, Parse::DesignatorExprId, Parse::ForHeaderId,
+      Parse::FormBindingPatternId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::IfConditionId, Parse::IfExprElseId, Parse::IfExprIfId,
+      Parse::IfExprThenId, Parse::ImplDeclId, Parse::ImplDefinitionStartId,
+      Parse::IndexExprId, Parse::InfixOperatorAmpEqualId,
+      Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorEqualEqualId,
+      Parse::InfixOperatorEqualId, Parse::InfixOperatorExclaimEqualId,
+      Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterEqualId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorMinusEqualId,
+      Parse::InfixOperatorMinusId, Parse::InfixOperatorPercentEqualId,
+      Parse::InfixOperatorPercentId, Parse::InfixOperatorPipeEqualId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorPlusId,
+      Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarEqualId, Parse::InfixOperatorStarId,
+      Parse::IntLiteralId, Parse::IntTypeLiteralId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::ParenExprId,
+      Parse::PointerMemberAccessExprId, Parse::PostfixOperatorStarId,
+      Parse::PrefixOperatorAmpId, Parse::PrefixOperatorConstId,
+      Parse::PrefixOperatorMinusId, Parse::PrefixOperatorNotId,
+      Parse::PrefixOperatorPartialId, Parse::PrefixOperatorStarId,
+      Parse::RealLiteralId, Parse::ReturnStatementId, Parse::SelfTypeNameExprId,
+      Parse::SelfValueNameExprId, Parse::ShortCircuitOperandAndId,
+      Parse::ShortCircuitOperandOrId, Parse::ShortCircuitOperatorAndId,
+      Parse::ShortCircuitOperatorOrId, Parse::StructLiteralId,
+      Parse::TupleLiteralId, Parse::VariablePatternId, Parse::WhereExprId,
+      Parse::WhileConditionId>>(
       {.ir_name = "converted",
        .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
@@ -512,7 +695,8 @@ struct Converted {
 // type.
 struct ConvertToValueAction {
   static constexpr auto Kind =
-      InstKind::ConvertToValueAction.Define<Parse::NodeId>(
+      InstKind::ConvertToValueAction.Define<Parse::NodeIdOneOf<
+          Parse::IdentifierNameExprId, Parse::MemberAccessExprId>>(
           {.ir_name = "convert_to_value_action",
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
@@ -525,7 +709,7 @@ struct ConvertToValueAction {
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
-      InstKind::CppOverloadSetType.Define<Parse::NodeId>(
+      InstKind::CppOverloadSetType.Define<Parse::NoneNodeId>(
           {.ir_name = "cpp_overload_set_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});
@@ -537,10 +721,11 @@ struct CppOverloadSetType {
 
 // An unresolved C++ overload set value.
 struct CppOverloadSetValue {
-  static constexpr auto Kind =
-      InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
-          {.ir_name = "cpp_overload_set_value",
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::CppOverloadSetValue.Define<
+      Parse::NodeIdOneOf<Parse::IdentifierNameExprId, Parse::MemberAccessExprId,
+                         Parse::PointerMemberAccessExprId>>(
+      {.ir_name = "cpp_overload_set_value",
+       .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   CppOverloadSetId overload_set_id;
@@ -565,11 +750,12 @@ struct CppTemplateNameType {
 // A type whose layout is determined externally. This is used as the object
 // representation of class types imported from C++.
 struct CustomLayoutType {
-  static constexpr auto Kind = InstKind::CustomLayoutType.Define<Parse::NodeId>(
-      {.ir_name = "custom_layout_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::WheneverPossible,
-       .deduce_through = true});
+  static constexpr auto Kind =
+      InstKind::CustomLayoutType.Define<Parse::NoneNodeId>(
+          {.ir_name = "custom_layout_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
+           .deduce_through = true});
 
   TypeId type_id;
   StructTypeFieldsId fields_id;
@@ -579,12 +765,13 @@ struct CustomLayoutType {
 // A witness synthesized for an arbitrary construct. For example, a `Destroy`
 // witness, or a C++ overloaded operator.
 struct CustomWitness {
-  static constexpr auto Kind = InstKind::CustomWitness.Define<Parse::NodeId>(
-      {.ir_name = "custom_witness",
-       .constant_kind = InstConstantKind::Always,
-       // TODO: For dynamic dispatch, we might want to lower witness tables as
-       // constants.
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::CustomWitness.Define<Parse::NoneNodeId>(
+          {.ir_name = "custom_witness",
+           .constant_kind = InstConstantKind::Always,
+           // TODO: For dynamic dispatch, we might want to lower witness tables
+           // as constants.
+           .is_lowered = false});
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
@@ -596,7 +783,10 @@ struct CustomWitness {
 
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
-  static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeIdOneOf<
+      Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+      Parse::LetBindingPatternId, Parse::PointerMemberAccessExprId,
+      Parse::PrefixOperatorStarId, Parse::ReturnStatementId>>(
       {.ir_name = "deref", .expr_category = ExprCategory::DurableRef});
 
   TypeId type_id;
@@ -632,7 +822,8 @@ struct ExportDecl {
 
 // Represents an expression pattern.
 struct ExprPattern {
-  static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeIdOneOf<
+      Parse::IfExprElseId, Parse::ShortCircuitOperatorAndId>>(
       {.ir_name = "expr_pattern",
        .expr_category = ExprCategory::Pattern,
        .constant_kind = InstConstantKind::AlwaysUnique,
@@ -645,10 +836,17 @@ struct ExprPattern {
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetAccessType {
-  static constexpr auto Kind = InstKind::FacetAccessType.Define<Parse::NodeId>(
-      {.ir_name = "facet_access_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+  static constexpr auto Kind =
+      InstKind::FacetAccessType.Define<Parse::NodeIdOneOf<
+          Parse::CallExprId, Parse::DesignatorExprId,
+          Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+          Parse::MemberAccessExprId, Parse::ParenExprId,
+          Parse::PostfixOperatorStarId, Parse::RequireDefaultSelfImplsId,
+          Parse::SelfTypeNameExprId, Parse::TupleLiteralId,
+          Parse::VariablePatternId>>(
+          {.ir_name = "facet_access_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   // Always the builtin type TypeType.
   TypeId type_id;
@@ -658,10 +856,14 @@ struct FacetAccessType {
 
 // A facet type value.
 struct FacetType {
-  static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
-      {.ir_name = "facet_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+      Parse::ImplDefinitionStartId, Parse::InterfaceDefinitionStartId,
+      Parse::MemberAccessExprId, Parse::NamedConstraintDefinitionStartId,
+      Parse::RequireDefaultSelfImplsId, Parse::SelfTypeNameExprId,
+      Parse::WhereExprId>>({.ir_name = "facet_type",
+                            .is_type = InstIsType::Always,
+                            .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   // TODO: Rename this to facet_type_info_id.
@@ -678,7 +880,22 @@ struct FacetType {
 // If the FacetValue is just a wrapper around a SymbolicBinding (converted to
 // `type` and back, for example), it evaluates back to the SymbolicBinding.
 struct FacetValue {
-  static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::FunctionDefinitionStartId,
+      Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorAmpEqualId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorEqualEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterEqualId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorMinusEqualId,
+      Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPipeEqualId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorSlashEqualId,
+      Parse::InfixOperatorStarEqualId, Parse::MemberAccessExprId,
+      Parse::PointerMemberAccessExprId, Parse::PrefixOperatorAmpId,
+      Parse::PrefixOperatorPlusPlusId, Parse::PrefixOperatorStarId,
+      Parse::SelfValueNameExprId, Parse::TupleLiteralId,
+      Parse::VariablePatternId>>(
       {.ir_name = "facet_value",
        .constant_kind = InstConstantKind::Conditional,
        .deduce_through = true});
@@ -749,10 +966,8 @@ struct FloatType {
 
 // A floating point value.
 struct FloatValue {
-  static constexpr auto Kind =
-      InstKind::FloatValue.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_value",
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::FloatValue.Define<Parse::NoneNodeId>(
+      {.ir_name = "float_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   FloatId float_id;
@@ -776,7 +991,7 @@ struct FormBinding {
 // `AnyBindingPattern` for member documentation.
 struct FormBindingPattern {
   static constexpr auto Kind =
-      InstKind::FormBindingPattern.Define<Parse::FormBindingPatternId>(
+      InstKind::FormBindingPattern.Define<Parse::NoneNodeId>(
           {.ir_name = "form_binding_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
@@ -792,11 +1007,12 @@ struct FormBindingPattern {
 // See `AnyParamPattern` for member documentation.
 struct FormParamPattern {
   // TODO: Replace `Parse::NodeId` with `Parse::FormBindingPattern`.
-  static constexpr auto Kind = InstKind::FormParamPattern.Define<Parse::NodeId>(
-      {.ir_name = "form_param_pattern",
-       .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::FormParamPattern.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_param_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
 
   TypeId type_id;
   NameId pretty_name_id;
@@ -812,11 +1028,12 @@ struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
 
 // A function declaration.
 struct FunctionDecl {
-  static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::FunctionDecl.Define<Parse::NodeIdOneOf<
+      Parse::BuiltinFunctionDefinitionStartId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::TupleLiteralId>>(
+      {.ir_name = "fn_decl",
+       .expr_category = ExprCategory::NotExpr,
+       .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;
@@ -827,11 +1044,17 @@ struct FunctionDecl {
 
 // The type of a function.
 struct FunctionType {
-  static constexpr auto Kind =
-      InstKind::FunctionType.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
+  static constexpr auto Kind = InstKind::FunctionType.Define<Parse::NodeIdOneOf<
+      Parse::BuiltinFunctionDefinitionStartId, Parse::ClassDefinitionId,
+      Parse::FunctionDeclId, Parse::FunctionDefinitionStartId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorLessId, Parse::MemberAccessExprId,
+      Parse::PointerMemberAccessExprId, Parse::PrefixOperatorAmpId,
+      Parse::PrefixOperatorPlusPlusId, Parse::PrefixOperatorStarId,
+      Parse::SelfValueNameExprId>>(
+      {.ir_name = "fn_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   FunctionId function_id;
@@ -843,7 +1066,12 @@ struct FunctionType {
 // `(SelfType as Interface).AssociatedFunction`.
 struct FunctionTypeWithSelfType {
   static constexpr auto Kind =
-      InstKind::FunctionTypeWithSelfType.Define<Parse::NoneNodeId>(
+      InstKind::FunctionTypeWithSelfType.Define<Parse::NodeIdOneOf<
+          Parse::BuiltinFunctionDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::InfixOperatorAsId, Parse::InfixOperatorLessId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PrefixOperatorAmpId, Parse::PrefixOperatorPlusPlusId,
+          Parse::PrefixOperatorStarId, Parse::SelfValueNameExprId>>(
           {.ir_name = "fn_type_with_self_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible,
@@ -864,7 +1092,9 @@ struct FunctionTypeWithSelfType {
 struct GenericClassType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
+      InstKind::GenericClassType.Define<Parse::NodeIdOneOf<
+          Parse::ClassDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::MemberAccessExprId>>(
           {.ir_name = "generic_class_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});
@@ -879,7 +1109,7 @@ struct GenericClassType {
 struct GenericInterfaceType {
   // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericInterfaceType.Define<Parse::NoneNodeId>(
+      InstKind::GenericInterfaceType.Define<Parse::InterfaceDefinitionStartId>(
           {.ir_name = "generic_interface_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});
@@ -906,7 +1136,8 @@ struct GenericNamedConstraintType {
 
 // An `impl` declaration.
 struct ImplDecl {
-  static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
+  static constexpr auto Kind = InstKind::ImplDecl.Define<
+      Parse::NodeIdOneOf<Parse::ImplDeclId, Parse::ImplDefinitionStartId>>(
       {.ir_name = "impl_decl",
        // TODO: Modeling impls as unique doesn't properly handle impl
        // redeclarations.
@@ -922,7 +1153,9 @@ struct ImplDecl {
 
 // A witness that a type implements an interface.
 struct ImplWitness {
-  static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ImplDeclId, Parse::ImplDefinitionStartId,
+      Parse::InfixOperatorLessId, Parse::MemberAccessExprId>>(
       {.ir_name = "impl_witness",
        .constant_kind = InstConstantKind::Always,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
@@ -941,7 +1174,42 @@ struct ImplWitness {
 // Accesses an element of an impl witness by index.
 struct ImplWitnessAccess {
   static constexpr auto Kind =
-      InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
+      InstKind::ImplWitnessAccess.Define<Parse::NodeIdOneOf<
+          Parse::AssociatedConstantDeclId, Parse::BoolLiteralFalseId,
+          Parse::BoolLiteralTrueId, Parse::BuiltinFunctionDefinitionStartId,
+          Parse::CallExprId, Parse::CharLiteralId,
+          Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+          Parse::CompileTimeBindingPatternId, Parse::DesignatorExprId,
+          Parse::ForHeaderId, Parse::FormBindingPatternId,
+          Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+          Parse::IfExprElseId, Parse::IfExprIfId, Parse::IfExprThenId,
+          Parse::ImplDefinitionStartId, Parse::IndexExprId,
+          Parse::InfixOperatorAmpEqualId, Parse::InfixOperatorAmpId,
+          Parse::InfixOperatorAsId, Parse::InfixOperatorCaretEqualId,
+          Parse::InfixOperatorCaretId, Parse::InfixOperatorEqualEqualId,
+          Parse::InfixOperatorEqualId, Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+          Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+          Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorLessLessId,
+          Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorMinusId,
+          Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPercentId,
+          Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPipeId,
+          Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorPlusId,
+          Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorSlashId,
+          Parse::InfixOperatorStarEqualId, Parse::InfixOperatorStarId,
+          Parse::IntLiteralId, Parse::IntTypeLiteralId,
+          Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+          Parse::PointerMemberAccessExprId, Parse::PostfixOperatorStarId,
+          Parse::PrefixOperatorAmpId, Parse::PrefixOperatorCaretId,
+          Parse::PrefixOperatorMinusId, Parse::PrefixOperatorMinusMinusId,
+          Parse::PrefixOperatorNotId, Parse::PrefixOperatorPlusPlusId,
+          Parse::PrefixOperatorStarId, Parse::RealLiteralId,
+          Parse::ReturnStatementId, Parse::SelfValueNameExprId,
+          Parse::ShortCircuitOperatorAndId, Parse::ShortCircuitOperatorOrId,
+          Parse::StructLiteralId, Parse::TupleLiteralId,
+          Parse::VariablePatternId, Parse::WhereExprId>>(
           {.ir_name = "impl_witness_access",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
@@ -961,7 +1229,7 @@ struct ImplWitnessAccess {
 // losing what is being rewritten by them.
 struct ImplWitnessAccessSubstituted {
   static constexpr auto Kind =
-      InstKind::ImplWitnessAccessSubstituted.Define<Parse::NodeId>(
+      InstKind::ImplWitnessAccessSubstituted.Define<Parse::DesignatorExprId>(
           {.ir_name = "impl_witness_access_substituted",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
@@ -980,14 +1248,14 @@ struct ImplWitnessAccessSubstituted {
 // constant value of this instruction to be be substituted to be associated with
 // the generic.
 struct ImplWitnessAssociatedConstant {
-  static constexpr auto Kind =
-      InstKind::ImplWitnessAssociatedConstant.Define<Parse::NodeId>(
-          {.ir_name = "impl_witness_assoc_constant",
-           .expr_category = ComputedExprCategory::SameAsFirstOperand,
-           .is_type = InstIsType::Maybe,
-           // TODO: For dynamic dispatch, we might want to lower witness tables
-           // as constants.
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::ImplWitnessAssociatedConstant.Define<
+      Parse::NodeIdOneOf<Parse::ImplDeclId, Parse::ImplDefinitionStartId>>(
+      {.ir_name = "impl_witness_assoc_constant",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .is_type = InstIsType::Maybe,
+       // TODO: For dynamic dispatch, we might want to lower witness tables
+       // as constants.
+       .is_lowered = false});
 
   // The type of the `inst_id`.
   TypeId type_id;
@@ -1016,7 +1284,8 @@ struct ImplWitnessAssociatedConstant {
 // `ImplWitnessAssociatedConstant` which serves this purpose for associated
 // constant values.
 struct ImplWitnessTable {
-  static constexpr auto Kind = InstKind::ImplWitnessTable.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ImplWitnessTable.Define<
+      Parse::NodeIdOneOf<Parse::ImplDeclId, Parse::ImplDefinitionStartId>>(
       {.ir_name = "impl_witness_table",
        .constant_kind = InstConstantKind::AlwaysUnique,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
@@ -1052,11 +1321,11 @@ struct ImportCppDecl {
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
-  static constexpr auto Kind =
-      InstKind::ImportDecl.Define<Parse::AnyPackagingDeclId>(
-          {.ir_name = "import",
-           .constant_kind = InstConstantKind::Never,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::NodeIdOneOf<
+      Parse::ImportDeclId, Parse::LibraryDeclId, Parse::PackageDeclId>>(
+      {.ir_name = "import",
+       .constant_kind = InstConstantKind::Never,
+       .is_lowered = false});
 
   NameId package_id;
 };
@@ -1065,7 +1334,7 @@ struct ImportDecl {
 // member documentation.
 struct ImportRefUnloaded {
   static constexpr auto Kind =
-      InstKind::ImportRefUnloaded.Define<Parse::NodeId>(
+      InstKind::ImportRefUnloaded.Define<Parse::NoneNodeId>(
           {.ir_name = "import_ref",
            .expr_category = ComputedExprCategory::DependsOnOperands,
            .is_lowered = false});
@@ -1077,10 +1346,11 @@ struct ImportRefUnloaded {
 // A imported entity that is loaded, and may be used. See `AnyImportRef` for
 // member documentation.
 struct ImportRefLoaded {
-  static constexpr auto Kind = InstKind::ImportRefLoaded.Define<Parse::NodeId>(
-      {.ir_name = "import_ref",
-       .expr_category = ComputedExprCategory::DependsOnOperands,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::ImportRefLoaded.Define<Parse::NoneNodeId>(
+          {.ir_name = "import_ref",
+           .expr_category = ComputedExprCategory::DependsOnOperands,
+           .is_lowered = false});
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
@@ -1089,10 +1359,18 @@ struct ImportRefLoaded {
 
 // An initializing primitive form.
 struct InitForm {
-  static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
-      {.ir_name = "init_form",
-       .constant_kind = InstConstantKind::Always,
-       .is_lowered = false});
+  static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeIdOneOf<
+      Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+      Parse::FloatTypeLiteralId, Parse::IdentifierNameExprId,
+      Parse::IntTypeLiteralId, Parse::MemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::PrefixOperatorConstId,
+      Parse::PrefixOperatorPartialId, Parse::SelfTypeNameExprId,
+      Parse::StringTypeLiteralId, Parse::StructLiteralId,
+      Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+      Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+      Parse::VarPrimitiveFormId>>({.ir_name = "init_form",
+                                   .constant_kind = InstConstantKind::Always,
+                                   .is_lowered = false});
 
   // Always FormType
   TypeId type_id;
@@ -1108,7 +1386,11 @@ struct InPlaceInit {
   // Note this Parse::NodeId is unused. InPlaceInit is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
-  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeIdOneOf<
+      Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+      Parse::ReturnStatementId, Parse::StructLiteralId, Parse::TupleLiteralId,
+      Parse::VariablePatternId>>(
       {.ir_name = "in_place_init",
        .expr_category = ExprCategory::InPlaceInitializing});
 
@@ -1136,7 +1418,8 @@ struct InstValue {
 // An interface declaration.
 struct InterfaceDecl {
   static constexpr auto Kind =
-      InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
+      InstKind::InterfaceDecl.Define<Parse::NodeIdOneOf<
+          Parse::InterfaceDeclId, Parse::InterfaceDefinitionStartId>>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
   // If the interface is not generic, this is `type`, otherwise it's
@@ -1150,7 +1433,7 @@ struct InterfaceDecl {
 
 struct InterfaceWithSelfDecl {
   static constexpr auto Kind =
-      InstKind::InterfaceWithSelfDecl.Define<Parse::AnyInterfaceDeclId>(
+      InstKind::InterfaceWithSelfDecl.Define<Parse::InterfaceDefinitionStartId>(
           {.ir_name = "interface_with_self_decl",
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
@@ -1172,7 +1455,7 @@ using IntLiteralType =
 // the toolchain. The `Core.Int` and `Core.UInt` classes are defined as adapters
 // for this type.
 struct IntType {
-  static constexpr auto Kind = InstKind::IntType.Define<Parse::NoneNodeId>(
+  static constexpr auto Kind = InstKind::IntType.Define<Parse::CallExprId>(
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -1189,7 +1472,10 @@ struct IntType {
 // An integer value.
 struct IntValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ChoiceAlternativeListCommaId,
+      Parse::ChoiceDefinitionId, Parse::IdentifierNameExprId,
+      Parse::IntLiteralId, Parse::StringLiteralId, Parse::TupleLiteralId>>(
       {.ir_name = "int_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -1203,7 +1489,14 @@ struct IntValue {
 // are monomorphized to be concrete, this evaluates to that final witness.
 struct LookupImplWitness {
   static constexpr auto Kind =
-      InstKind::LookupImplWitness.Define<Parse::NodeId>(
+      InstKind::LookupImplWitness.Define<Parse::NodeIdOneOf<
+          Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+          Parse::CompileTimeBindingPatternId, Parse::DesignatorExprId,
+          Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::ImplDefinitionStartId, Parse::InfixOperatorAsId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PrefixOperatorAmpId, Parse::PrefixOperatorPlusPlusId,
+          Parse::PrefixOperatorStarId, Parse::SelfValueNameExprId>>(
           {.ir_name = "lookup_impl_witness",
            .constant_kind = InstConstantKind::Conditional,
            .constant_needs_inst_id =
@@ -1227,10 +1520,23 @@ struct LookupImplWitness {
 // in-place initialization is used even for types that would normally have a
 // copy initializing representation.
 struct MarkInPlaceInit {
-  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "mark_in_place_init",
-       .expr_category = ExprCategory::InPlaceInitializing,
-       .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind =
+      InstKind::MarkInPlaceInit.Define<Parse::NodeIdOneOf<
+          Parse::CallExprId, Parse::IdentifierNameExprId,
+          Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+          Parse::InfixOperatorCaretId, Parse::InfixOperatorEqualEqualId,
+          Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+          Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+          Parse::InfixOperatorLessLessId, Parse::InfixOperatorMinusId,
+          Parse::InfixOperatorPercentId, Parse::InfixOperatorPipeId,
+          Parse::InfixOperatorPlusId, Parse::InfixOperatorSlashId,
+          Parse::InfixOperatorStarId, Parse::PrefixOperatorCaretId,
+          Parse::PrefixOperatorMinusId, Parse::TupleLiteralId>>(
+          {.ir_name = "mark_in_place_init",
+           .expr_category = ExprCategory::InPlaceInitializing,
+           .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   // Used only to track the source of the initialization; this has no semantic
@@ -1244,7 +1550,7 @@ struct MarkInPlaceInit {
 // state.
 struct MaybeUnformedType {
   static constexpr auto Kind =
-      InstKind::MaybeUnformedType.Define<Parse::NodeId>({
+      InstKind::MaybeUnformedType.Define<Parse::CallExprId>({
           .ir_name = "maybe_unformed_type",
           .is_type = InstIsType::Always,
           .constant_kind = InstConstantKind::WheneverPossible,
@@ -1259,7 +1565,11 @@ struct MaybeUnformedType {
 // `var`.
 struct NameBindingDecl {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::NameBindingDecl.Define<
+      Parse::NodeIdOneOf<Parse::CompileTimeBindingPatternId, Parse::ForInId,
+                         Parse::LetBindingPatternId, Parse::ParenPatternId,
+                         Parse::TuplePatternId, Parse::UnusedPatternId,
+                         Parse::VariablePatternId>>(
       {.ir_name = "name_binding_decl",
        .expr_category = ExprCategory::NotExpr,
        .constant_kind = InstConstantKind::Never});
@@ -1270,8 +1580,10 @@ struct NameBindingDecl {
 // A named constraint declaration.
 struct NamedConstraintDecl {
   static constexpr auto Kind =
-      InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
-          {.ir_name = "constraint_decl", .is_lowered = false});
+      InstKind::NamedConstraintDecl
+          .Define<Parse::NodeIdOneOf<Parse::NamedConstraintDeclId,
+                                     Parse::NamedConstraintDefinitionStartId>>(
+              {.ir_name = "constraint_decl", .is_lowered = false});
 
   // If the constraint is not generic, this is `type`, otherwise it's
   // `GenericNamedConstraintType`.
@@ -1285,7 +1597,7 @@ struct NamedConstraintDecl {
 struct NamedConstraintWithSelfDecl {
   static constexpr auto Kind =
       InstKind::NamedConstraintWithSelfDecl
-          .Define<Parse::AnyNamedConstraintDeclId>(
+          .Define<Parse::NamedConstraintDefinitionStartId>(
               {.ir_name = "constraint_with_self_decl",
                .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});
@@ -1297,7 +1609,22 @@ struct NamedConstraintWithSelfDecl {
 // resolution; the value may be used for reading or writing.
 struct NameRef {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::NameRef.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::NameRef.Define<Parse::NodeIdOneOf<
+      Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+      Parse::CoreNameExprId, Parse::CppNameExprId, Parse::DesignatorExprId,
+      Parse::ForHeaderId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::ImplDefaultSelfAsId, Parse::InfixOperatorAmpEqualId,
+      Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorEqualEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterEqualId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessEqualId, Parse::InfixOperatorMinusEqualId,
+      Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPipeEqualId,
+      Parse::InfixOperatorPlusEqualId, Parse::InfixOperatorSlashEqualId,
+      Parse::InfixOperatorStarEqualId, Parse::MemberAccessExprId,
+      Parse::PackageExprId, Parse::PointerMemberAccessExprId,
+      Parse::SelfTypeNameExprId, Parse::SelfValueNameExprId>>(
       {.ir_name = "name_ref",
        .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
@@ -1309,12 +1636,14 @@ struct NameRef {
 // A namespace declaration.
 struct Namespace {
   static constexpr auto Kind =
-      InstKind::Namespace.Define<Parse::AnyNamespaceId>(
-          {.ir_name = "namespace",
-           .expr_category = ExprCategory::NotExpr,
-           // TODO: Modeling namespaces as unique doesn't properly handle
-           // namespace redeclarations.
-           .constant_kind = InstConstantKind::AlwaysUnique});
+      InstKind::Namespace
+          .Define<Parse::NodeIdOneOf<Parse::ImportDeclId, Parse::LibraryDeclId,
+                                     Parse::NamespaceId, Parse::PackageDeclId>>(
+              {.ir_name = "namespace",
+               .expr_category = ExprCategory::NotExpr,
+               // TODO: Modeling namespaces as unique doesn't properly handle
+               // namespace redeclarations.
+               .constant_kind = InstConstantKind::AlwaysUnique});
   // The file's package namespace is a well-known instruction to help `package.`
   // qualified names. It will always be immediately after singletons.
   static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
@@ -1335,7 +1664,16 @@ using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 // An output `Call` parameter. See AnyParam for member documentation.
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeIdOneOf<
+      Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+      Parse::FloatTypeLiteralId, Parse::IdentifierNameExprId,
+      Parse::IntTypeLiteralId, Parse::MemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::PrefixOperatorConstId,
+      Parse::PrefixOperatorPartialId, Parse::SelfTypeNameExprId,
+      Parse::StringTypeLiteralId, Parse::StructLiteralId,
+      Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+      Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+      Parse::VarPrimitiveFormId>>(
       {.ir_name = "out_param",
        // TODO: Consider introducing a separate category for OutParam:
        // unlike other DurableRefs, it permits initialization.
@@ -1350,11 +1688,21 @@ struct OutParam {
 // A pattern that represents an output `Call` parameter. See `AnyParamPattern`
 // for member documentation.
 struct OutParamPattern {
-  static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
-      {.ir_name = "out_param_pattern",
-       .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::OutParamPattern.Define<Parse::NodeIdOneOf<
+          Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+          Parse::FloatTypeLiteralId, Parse::IdentifierNameExprId,
+          Parse::IntTypeLiteralId, Parse::MemberAccessExprId,
+          Parse::PostfixOperatorStarId, Parse::PrefixOperatorConstId,
+          Parse::PrefixOperatorPartialId, Parse::SelfTypeNameExprId,
+          Parse::StringTypeLiteralId, Parse::StructLiteralId,
+          Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+          Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+          Parse::VarPrimitiveFormId>>(
+          {.ir_name = "out_param_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
 
   TypeId type_id;
   NameId pretty_name_id;
@@ -1376,7 +1724,12 @@ struct PartialType {
 // The type of a pattern that matches scrutinees of type
 // `scrutinee_type_inst_id`.
 struct PatternType {
-  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NoneNodeId>(
+  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NodeIdOneOf<
+      Parse::ArrayExprId, Parse::CallExprId, Parse::CompileTimeBindingPatternId,
+      Parse::IdentifierNameExprId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PostfixOperatorStarId,
+      Parse::SelfTypeNameExprId, Parse::StructTypeLiteralId,
+      Parse::TupleLiteralId, Parse::VarBindingPatternId>>(
       {.ir_name = "pattern_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -1389,12 +1742,14 @@ struct PatternType {
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
 // `x: i32*`, where `pointee_id` is `i32` and `type_id` is `type`.
 struct PointerType {
-  static constexpr auto Kind =
-      InstKind::PointerType.Define<Parse::PostfixOperatorStarId>(
-          {.ir_name = "ptr_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible,
-           .deduce_through = true});
+  static constexpr auto Kind = InstKind::PointerType.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::IdentifierNameExprId,
+      Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::SelfTypeNameExprId>>(
+      {.ir_name = "ptr_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible,
+       .deduce_through = true});
 
   TypeId type_id;
   TypeInstId pointee_id;
@@ -1404,7 +1759,10 @@ struct PointerType {
 // See AnyBinding for member documentation.
 struct RefBinding {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorPlusId, Parse::LetBindingPatternId,
+      Parse::PrefixOperatorMinusId, Parse::VarBindingPatternId>>(
       {.ir_name = "ref_binding",
        .expr_category = ExprCategory::DurableRef,
        .constant_kind = InstConstantKind::Indirect});
@@ -1417,10 +1775,12 @@ struct RefBinding {
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
-  static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_type_action",
-       .constant_kind = InstConstantKind::InstAction,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::RefineTypeAction.Define<Parse::NodeIdOneOf<
+          Parse::IdentifierNameExprId, Parse::MemberAccessExprId>>(
+          {.ir_name = "refine_type_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
 
   TypeId type_id;
   MetaInstId inst_id;
@@ -1430,12 +1790,14 @@ struct RefineTypeAction {
 // Represents a reference binding pattern that is not a parameter. See
 // `AnyBindingPattern` for member documentation.
 struct RefBindingPattern {
-  static constexpr auto Kind =
-      InstKind::RefBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "ref_binding_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::RefBindingPattern.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::IdentifierNameExprId,
+                         Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+                         Parse::VarBindingPatternId>>(
+      {.ir_name = "ref_binding_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -1457,7 +1819,11 @@ struct RefForm {
 // that this may correspond to either a RefParamPattern or a VarParamPattern.
 struct RefParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::FormBindingPatternId,
+      Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorPlusId, Parse::LetBindingPatternId,
+      Parse::PrefixOperatorMinusId, Parse::VariablePatternId>>(
       {.ir_name = "ref_param",
        .expr_category = ExprCategory::DurableRef,
        .constant_kind = InstConstantKind::Never});
@@ -1471,11 +1837,15 @@ struct RefParam {
 // `AnyParamPattern` for member documentation.
 struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
-      {.ir_name = "ref_param_pattern",
-       .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::RefParamPattern.Define<Parse::NodeIdOneOf<
+          Parse::CallExprId, Parse::IdentifierNameExprId, Parse::IndexExprId,
+          Parse::InfixOperatorPlusId, Parse::LetBindingPatternId,
+          Parse::PrefixOperatorMinusId>>(
+          {.ir_name = "ref_param_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
 
   TypeId type_id;
   NameId pretty_name_id;
@@ -1509,7 +1879,16 @@ struct RefTagExpr {
 // value representation.
 struct RequireCompleteType {
   static constexpr auto Kind =
-      InstKind::RequireCompleteType.Define<Parse::NodeId>(
+      InstKind::RequireCompleteType.Define<Parse::NodeIdOneOf<
+          Parse::AdaptDeclId, Parse::ArrayExprId, Parse::CallExprId,
+          Parse::ChoiceDefinitionId, Parse::DesignatorExprId,
+          Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+          Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+          Parse::PointerMemberAccessExprId, Parse::PostfixOperatorStarId,
+          Parse::PrefixOperatorStarId, Parse::ReturnStatementId,
+          Parse::SelfTypeNameExprId, Parse::SelfValueNameExprId,
+          Parse::StructLiteralId, Parse::StructTypeLiteralId,
+          Parse::TupleLiteralId, Parse::VariablePatternId, Parse::WhereExprId>>(
           {.ir_name = "require_complete_type",
            .constant_kind = InstConstantKind::SymbolicOnly,
            .constant_needs_inst_id =
@@ -1537,7 +1916,12 @@ struct RequireImplsDecl {
 // of a symbolic specific be defined once a concrete specific is formed.
 struct RequireSpecificDefinition {
   static constexpr auto Kind =
-      InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
+      InstKind::RequireSpecificDefinition.Define<Parse::NodeIdOneOf<
+          Parse::CallExprId, Parse::FunctionDefinitionStartId,
+          Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PrefixOperatorAmpId, Parse::PrefixOperatorPlusPlusId,
+          Parse::PrefixOperatorStarId, Parse::SelfValueNameExprId>>(
           {.ir_name = "require_specific_def",
            .constant_kind = InstConstantKind::Conditional,
            .is_lowered = false});
@@ -1560,7 +1944,7 @@ using RequireSpecificDefinitionType =
 // facet type.
 struct RequirementBaseFacetType {
   static constexpr auto Kind =
-      InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
+      InstKind::RequirementBaseFacetType.Define<Parse::WhereOperandId>(
           {.ir_name = "requirement_base_facet_type",
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
@@ -1617,7 +2001,9 @@ struct RequirementRewrite {
 };
 
 struct Return {
-  static constexpr auto Kind = InstKind::Return.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Return.Define<Parse::NodeIdOneOf<
+      Parse::FunctionDeclId, Parse::FunctionDefinitionId,
+      Parse::FunctionDefinitionStartId, Parse::ReturnStatementId>>(
       {.ir_name = "return",
        .constant_kind = InstConstantKind::Never,
        .terminator_kind = TerminatorKind::Terminator});
@@ -1630,7 +2016,9 @@ struct Return {
 // If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
 // and `expr_id` has a storage argument, the storage argument must be `dest_id`.
 struct ReturnExpr {
-  static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeIdOneOf<
+      Parse::BuiltinFunctionDefinitionStartId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::ReturnStatementId>>(
       {.ir_name = "return",
        .constant_kind = InstConstantKind::Never,
        .terminator_kind = TerminatorKind::Terminator});
@@ -1645,10 +2033,18 @@ struct ReturnExpr {
 // This acts as an output parameter, analogous to `BindName` for input
 // parameters.
 struct ReturnSlot {
-  static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
-      {.ir_name = "return_slot",
-       .expr_category = ExprCategory::DurableRef,
-       .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeIdOneOf<
+      Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+      Parse::FloatTypeLiteralId, Parse::IdentifierNameExprId,
+      Parse::IntTypeLiteralId, Parse::MemberAccessExprId,
+      Parse::PostfixOperatorStarId, Parse::PrefixOperatorConstId,
+      Parse::PrefixOperatorPartialId, Parse::SelfTypeNameExprId,
+      Parse::StringTypeLiteralId, Parse::StructLiteralId,
+      Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+      Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+      Parse::VarPrimitiveFormId>>({.ir_name = "return_slot",
+                                   .expr_category = ExprCategory::DurableRef,
+                                   .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1668,7 +2064,16 @@ struct ReturnSlot {
 // for input parameters.
 struct ReturnSlotPattern {
   static constexpr auto Kind =
-      InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
+      InstKind::ReturnSlotPattern.Define<Parse::NodeIdOneOf<
+          Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+          Parse::FloatTypeLiteralId, Parse::IdentifierNameExprId,
+          Parse::IntTypeLiteralId, Parse::MemberAccessExprId,
+          Parse::PostfixOperatorStarId, Parse::PrefixOperatorConstId,
+          Parse::PrefixOperatorPartialId, Parse::SelfTypeNameExprId,
+          Parse::StringTypeLiteralId, Parse::StructLiteralId,
+          Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+          Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+          Parse::VarPrimitiveFormId>>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
@@ -1691,10 +2096,27 @@ struct ReturnSlotPattern {
 // corresponding to a particular specific.
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
-  static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
-      {.ir_name = "specific_constant",
-       .expr_category = ComputedExprCategory::SameAsFirstOperand,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::SpecificConstant.Define<Parse::NodeIdOneOf<
+          Parse::ArrayExprId, Parse::BoolTypeLiteralId,
+          Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+          Parse::DesignatorExprId, Parse::ForHeaderId,
+          Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::InfixOperatorAmpEqualId, Parse::InfixOperatorCaretEqualId,
+          Parse::InfixOperatorEqualEqualId, Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterEqualId,
+          Parse::InfixOperatorGreaterId, Parse::InfixOperatorLessEqualId,
+          Parse::InfixOperatorLessId, Parse::InfixOperatorLessLessEqualId,
+          Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorPercentEqualId,
+          Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPlusEqualId,
+          Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorStarEqualId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PostfixOperatorStarId, Parse::RequireDeclId,
+          Parse::SelfTypeNameExprId, Parse::StructTypeLiteralId>>(
+          {.ir_name = "specific_constant",
+           .expr_category = ComputedExprCategory::SameAsFirstOperand,
+           .is_lowered = false});
 
   TypeId type_id;
   AbsoluteInstId inst_id;
@@ -1709,11 +2131,36 @@ struct SpecificConstant {
 // in the overloaded calls design. Eventually we should represent it more
 // directly as a member of the `Call` interface.
 struct SpecificFunction {
-  static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
-      {.ir_name = "specific_function",
-       .constant_kind = InstConstantKind::Conditional,
-       // InstId is added to definitions_required_by_use.
-       .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
+  static constexpr auto Kind =
+      InstKind::SpecificFunction.Define<Parse::NodeIdOneOf<
+          Parse::AssociatedConstantDeclId,
+          Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+          Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+          Parse::ClassDefinitionId, Parse::ForHeaderId,
+          Parse::FormBindingPatternId, Parse::FunctionDeclId,
+          Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::IfExprElseId, Parse::IfExprIfId, Parse::IfExprThenId,
+          Parse::IndexExprId, Parse::InfixOperatorAmpEqualId,
+          Parse::InfixOperatorAsId, Parse::InfixOperatorCaretEqualId,
+          Parse::InfixOperatorEqualEqualId, Parse::InfixOperatorEqualId,
+          Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterEqualId,
+          Parse::InfixOperatorGreaterId, Parse::InfixOperatorLessEqualId,
+          Parse::InfixOperatorLessId, Parse::InfixOperatorLessLessEqualId,
+          Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorPercentEqualId,
+          Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPlusEqualId,
+          Parse::InfixOperatorSlashEqualId, Parse::InfixOperatorStarEqualId,
+          Parse::IntLiteralId, Parse::MemberAccessExprId,
+          Parse::PointerMemberAccessExprId, Parse::PrefixOperatorAmpId,
+          Parse::PrefixOperatorMinusId, Parse::PrefixOperatorStarId,
+          Parse::RealLiteralId, Parse::ReturnStatementId,
+          Parse::SelfValueNameExprId, Parse::StructLiteralId,
+          Parse::TupleLiteralId, Parse::VariablePatternId, Parse::WhereExprId>>(
+          {.ir_name = "specific_function",
+           .constant_kind = InstConstantKind::Conditional,
+           // InstId is added to definitions_required_by_use.
+           .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1740,7 +2187,12 @@ using SpecificFunctionType =
 // instruction computes that specific function.
 struct SpecificImplFunction {
   static constexpr auto Kind =
-      InstKind::SpecificImplFunction.Define<Parse::NodeId>(
+      InstKind::SpecificImplFunction.Define<Parse::NodeIdOneOf<
+          Parse::BuiltinFunctionDefinitionStartId, Parse::IdentifierNameExprId,
+          Parse::InfixOperatorAsId, Parse::LetBindingPatternId,
+          Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+          Parse::PrefixOperatorAmpId, Parse::PrefixOperatorPlusPlusId,
+          Parse::PrefixOperatorStarId, Parse::SelfValueNameExprId>>(
           {.ir_name = "specific_impl_function",
            .constant_kind = InstConstantKind::SymbolicOnly,
            // InstId is added to definitions_required_by_use.
@@ -1761,7 +2213,18 @@ struct SpecificImplFunction {
 // constructing from aggregates we may figure out which conversions are required
 // late, and splice parts together.
 struct SpliceBlock {
-  static constexpr auto Kind = InstKind::SpliceBlock.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::SpliceBlock.Define<Parse::NodeIdOneOf<
+      Parse::ArrayExprId, Parse::BoolTypeLiteralId, Parse::CallExprId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAmpId,
+      Parse::InfixOperatorAsId, Parse::IntTypeLiteralId,
+      Parse::MemberAccessExprId, Parse::PostfixOperatorStarId,
+      Parse::PrefixOperatorConstId, Parse::PrefixOperatorPartialId,
+      Parse::RefPrimitiveFormId, Parse::SelfTypeNameExprId,
+      Parse::StringTypeLiteralId, Parse::StructLiteralId,
+      Parse::StructTypeLiteralId, Parse::TupleLiteralId,
+      Parse::TypeTypeLiteralId, Parse::UnsignedIntTypeLiteralId,
+      Parse::ValPrimitiveFormId, Parse::VarPrimitiveFormId,
+      Parse::VariablePatternId, Parse::WhereExprId>>(
       {.ir_name = "splice_block",
        .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
@@ -1773,7 +2236,8 @@ struct SpliceBlock {
 // Splices an instruction computed by an action into the location where this
 // appears.
 struct SpliceInst {
-  static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeIdOneOf<
+      Parse::IdentifierNameExprId, Parse::MemberAccessExprId>>(
       {.ir_name = "splice_inst",
        // TODO: The expression category is in general dependent on
        // instantiation. Use ExprCategory::Dependent to model this.
@@ -1800,7 +2264,12 @@ struct StringLiteral {
 // Access to a struct type, with the index into the struct_id representation.
 struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+      Parse::InfixOperatorAsId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::ReturnStatementId, Parse::StructLiteralId,
+      Parse::VariablePatternId>>(
       {.ir_name = "struct_access",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
@@ -1813,7 +2282,11 @@ struct StructAccess {
 
 // Initializes a dest struct with the provided elements.
 struct StructInit {
-  static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::StructInit.Define<
+      Parse::NodeIdOneOf<Parse::FunctionDeclId, Parse::IdentifierNameExprId,
+                         Parse::IndexExprId, Parse::InfixOperatorAsId,
+                         Parse::MemberAccessExprId, Parse::ReturnStatementId,
+                         Parse::StructLiteralId, Parse::VariablePatternId>>(
       {.ir_name = "struct_init",
        .expr_category = ExprCategory::ReprInitializing});
 
@@ -1838,7 +2311,8 @@ struct StructLiteral {
 // The type of a struct.
 struct StructType {
   static constexpr auto Kind = InstKind::StructType.Define<
-      Parse::NodeIdOneOf<Parse::StructTypeLiteralId, Parse::ClassDefinitionId>>(
+      Parse::NodeIdOneOf<Parse::ClassDefinitionId, Parse::StructLiteralId,
+                         Parse::StructTypeLiteralId>>(
       {.ir_name = "struct_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::WheneverPossible,
@@ -1850,7 +2324,15 @@ struct StructType {
 
 // A struct value.
 struct StructValue {
-  static constexpr auto Kind = InstKind::StructValue.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::StructValue.Define<Parse::NodeIdOneOf<
+      Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+      Parse::ChoiceDefinitionId, Parse::ClassDefinitionId,
+      Parse::ClassDefinitionStartId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::IndexExprId, Parse::InfixOperatorLessId,
+      Parse::InterfaceDefinitionStartId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::StringLiteralId, Parse::StructLiteralId>>(
       {.ir_name = "struct_value",
        .constant_kind = InstConstantKind::WheneverPossible});
 
@@ -1861,10 +2343,20 @@ struct StructValue {
 // Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBinding for
 // member documentation.
 struct SymbolicBinding {
-  static constexpr auto Kind = InstKind::SymbolicBinding.Define<Parse::NodeId>(
-      {.ir_name = "symbolic_binding",
-       .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+  static constexpr auto Kind =
+      InstKind::SymbolicBinding.Define<Parse::NodeIdOneOf<
+          Parse::AssociatedConstantNameAndTypeId, Parse::CallExprId,
+          Parse::ClassDefinitionStartId, Parse::CompileTimeBindingPatternId,
+          Parse::FunctionDeclId, Parse::FunctionDefinitionStartId,
+          Parse::IdentifierNameExprId, Parse::ImplDeclId,
+          Parse::ImplDefaultSelfAsId, Parse::ImplDefinitionStartId,
+          Parse::InterfaceDefinitionStartId, Parse::LetBindingPatternId,
+          Parse::NamedConstraintDefinitionStartId,
+          Parse::RequireDefaultSelfImplsId, Parse::SelfTypeNameExprId,
+          Parse::VariablePatternId>>(
+          {.ir_name = "symbolic_binding",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -1875,12 +2367,13 @@ struct SymbolicBinding {
 // documentation.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
-      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
-          .ir_name = "symbolic_binding_pattern",
-          .expr_category = ExprCategory::Pattern,
-          .constant_kind = InstConstantKind::AlwaysUnique,
-          .is_lowered = false,
-      });
+      InstKind::SymbolicBindingPattern
+          .Define<Parse::CompileTimeBindingPatternId>({
+              .ir_name = "symbolic_binding_pattern",
+              .expr_category = ExprCategory::Pattern,
+              .constant_kind = InstConstantKind::AlwaysUnique,
+              .is_lowered = false,
+          });
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -1889,7 +2382,12 @@ struct SymbolicBindingPattern {
 // The constant value of a FacetAccessType for a symbolic facet value.
 struct SymbolicBindingType {
   static constexpr auto Kind =
-      InstKind::SymbolicBindingType.Define<Parse::NodeId>(
+      InstKind::SymbolicBindingType.Define<Parse::NodeIdOneOf<
+          Parse::CallExprId, Parse::DesignatorExprId,
+          Parse::IdentifierNameExprId, Parse::LetBindingPatternId,
+          Parse::MemberAccessExprId, Parse::PostfixOperatorStarId,
+          Parse::RequireDefaultSelfImplsId, Parse::SelfTypeNameExprId,
+          Parse::TupleLiteralId, Parse::VariablePatternId>>(
           {.ir_name = "symbolic_binding_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::SymbolicOnly});
@@ -1907,7 +2405,25 @@ struct SymbolicBindingType {
 // object, and forms an ephemeral reference to it. If `init_id` has a
 // storage arg, it must be a `TemporaryStorage` inst.
 struct Temporary {
-  static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeIdOneOf<
+      Parse::BoolLiteralFalseId, Parse::BoolLiteralTrueId, Parse::CallExprId,
+      Parse::CharLiteralId, Parse::ChoiceAlternativeListCommaId,
+      Parse::ChoiceDefinitionId, Parse::ForHeaderId,
+      Parse::FormBindingPatternId, Parse::FunctionDeclId,
+      Parse::FunctionDefinitionStartId, Parse::IdentifierNameExprId,
+      Parse::IndexExprId, Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+      Parse::InfixOperatorCaretId, Parse::InfixOperatorEqualEqualId,
+      Parse::InfixOperatorExclaimEqualId, Parse::InfixOperatorGreaterEqualId,
+      Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+      Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+      Parse::InfixOperatorLessLessId, Parse::InfixOperatorMinusId,
+      Parse::InfixOperatorPercentId, Parse::InfixOperatorPipeId,
+      Parse::InfixOperatorPlusId, Parse::InfixOperatorSlashId,
+      Parse::InfixOperatorStarId, Parse::IntLiteralId,
+      Parse::MemberAccessExprId, Parse::PrefixOperatorAmpId,
+      Parse::PrefixOperatorCaretId, Parse::PrefixOperatorMinusId,
+      Parse::RealLiteralId, Parse::StructLiteralId, Parse::TupleLiteralId,
+      Parse::VariablePatternId, Parse::WhereExprId>>(
       {.ir_name = "temporary",
        .expr_category = ExprCategory::EphemeralRef,
        .constant_kind = InstConstantKind::Conditional,
@@ -1922,10 +2438,31 @@ struct Temporary {
 struct TemporaryStorage {
   // The cleanup is owned by the `Temporary` instruction, so has_cleanup is set
   // to `false` here.
-  static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
-      {.ir_name = "temporary_storage",
-       .expr_category = ExprCategory::EphemeralRef,
-       .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind =
+      InstKind::TemporaryStorage.Define<Parse::NodeIdOneOf<
+          Parse::BoolLiteralFalseId, Parse::BoolLiteralTrueId,
+          Parse::CallExprId, Parse::CharLiteralId,
+          Parse::ChoiceAlternativeListCommaId, Parse::ChoiceDefinitionId,
+          Parse::ForHeaderId, Parse::FormBindingPatternId,
+          Parse::FunctionDeclId, Parse::FunctionDefinitionStartId,
+          Parse::IdentifierNameExprId, Parse::IndexExprId,
+          Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+          Parse::InfixOperatorCaretId, Parse::InfixOperatorEqualEqualId,
+          Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterId, Parse::InfixOperatorGreaterId,
+          Parse::InfixOperatorLessEqualId, Parse::InfixOperatorLessId,
+          Parse::InfixOperatorLessLessId, Parse::InfixOperatorMinusId,
+          Parse::InfixOperatorPercentId, Parse::InfixOperatorPipeId,
+          Parse::InfixOperatorPlusId, Parse::InfixOperatorSlashId,
+          Parse::InfixOperatorStarId, Parse::IntLiteralId,
+          Parse::MemberAccessExprId, Parse::PrefixOperatorAmpId,
+          Parse::PrefixOperatorCaretId, Parse::PrefixOperatorMinusId,
+          Parse::RealLiteralId, Parse::StructLiteralId, Parse::TupleLiteralId,
+          Parse::VariablePatternId, Parse::WhereExprId>>(
+          {.ir_name = "temporary_storage",
+           .expr_category = ExprCategory::EphemeralRef,
+           .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
 };
@@ -1933,7 +2470,11 @@ struct TemporaryStorage {
 // Access to a tuple member.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ForHeaderId, Parse::IdentifierNameExprId,
+      Parse::InfixOperatorAsId, Parse::LetBindingPatternId,
+      Parse::MemberAccessExprId, Parse::ReturnStatementId,
+      Parse::TupleLiteralId, Parse::VariablePatternId>>(
       {.ir_name = "tuple_access",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
@@ -1946,7 +2487,11 @@ struct TupleAccess {
 
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
-  static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ChoiceDefinitionId, Parse::FunctionDeclId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+      Parse::MemberAccessExprId, Parse::ReturnStatementId,
+      Parse::TupleLiteralId, Parse::VariablePatternId>>(
       {.ir_name = "tuple_init",
        .expr_category = ExprCategory::ReprInitializing});
 
@@ -1958,8 +2503,7 @@ struct TupleInit {
 // A literal tuple value.
 struct TupleLiteral {
   static constexpr auto Kind = InstKind::TupleLiteral.Define<
-      Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
-                         Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
+      Parse::NodeIdOneOf<Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
       {.ir_name = "tuple_literal",
        .expr_category = ExprCategory::Mixed,
        .constant_kind = InstConstantKind::Indirect});
@@ -1970,12 +2514,12 @@ struct TupleLiteral {
 
 // A tuple pattern, such as `(x, y: i32)`.
 struct TuplePattern {
-  static constexpr auto Kind =
-      InstKind::TuplePattern.Define<Parse::TuplePatternId>(
-          {.ir_name = "tuple_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::TuplePattern.Define<
+      Parse::NodeIdOneOf<Parse::TupleLiteralId, Parse::TuplePatternId>>(
+      {.ir_name = "tuple_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is a tuple of the scrutinee
   // types of the elements.
@@ -1985,11 +2529,12 @@ struct TuplePattern {
 
 // The type of a tuple.
 struct TupleType {
-  static constexpr auto Kind = InstKind::TupleType.Define<Parse::NoneNodeId>(
-      {.ir_name = "tuple_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::WheneverPossible,
-       .deduce_through = true});
+  static constexpr auto Kind =
+      InstKind::TupleType.Define<Parse::TupleLiteralId>(
+          {.ir_name = "tuple_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
+           .deduce_through = true});
 
   TypeId type_id;
   InstBlockId type_elements_id;
@@ -1997,7 +2542,11 @@ struct TupleType {
 
 // A tuple value.
 struct TupleValue {
-  static constexpr auto Kind = InstKind::TupleValue.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::TupleValue.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ChoiceDefinitionId, Parse::ForHeaderId,
+      Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::MemberAccessExprId, Parse::PointerMemberAccessExprId,
+      Parse::TupleLiteralId>>(
       {.ir_name = "tuple_value",
        .constant_kind = InstConstantKind::WheneverPossible,
        .deduce_through = true});
@@ -2025,7 +2574,11 @@ struct TypeComponentOf {
 // instruction will be the type value that the type literal evaluates to, which
 // is typically either a builtin type or a class defined in the prelude.
 struct TypeLiteral {
-  static constexpr auto Kind = InstKind::TypeLiteral.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::TypeLiteral.Define<
+      Parse::NodeIdOneOf<Parse::BoolTypeLiteralId, Parse::CharTypeLiteralId,
+                         Parse::FloatTypeLiteralId, Parse::IntTypeLiteralId,
+                         Parse::StringTypeLiteralId, Parse::TypeTypeLiteralId,
+                         Parse::UnsignedIntTypeLiteralId>>(
       {.ir_name = "type_literal", .expr_category = ExprCategory::Value});
 
   // Always the builtin type TypeType.
@@ -2041,10 +2594,11 @@ struct TypeLiteral {
 // the instruction `type_of_inst %inst` evaluates to the type of the instruction
 // that the action generates.
 struct TypeOfInst {
-  static constexpr auto Kind = InstKind::TypeOfInst.Define<Parse::NodeId>(
-      {.ir_name = "type_of_inst",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+  static constexpr auto Kind =
+      InstKind::TypeOfInst.Define<Parse::MemberAccessExprId>(
+          {.ir_name = "type_of_inst",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   // The instruction that computes the instruction whose type is returned. The
@@ -2064,7 +2618,9 @@ struct TypeType : public SingletonTypeInst<InstKind::TypeType, "type"> {
 struct UnaryOperatorNot {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::UnaryOperatorNot.Define<Parse::NodeId>({.ir_name = "not"});
+      InstKind::UnaryOperatorNot.Define<Parse::NodeIdOneOf<
+          Parse::PrefixOperatorNotId, Parse::ShortCircuitOperandOrId>>(
+          {.ir_name = "not"});
 
   TypeId type_id;
   InstId operand_id;
@@ -2074,11 +2630,13 @@ struct UnaryOperatorNot {
 // `Class.field`. This can be used as the operand of a compound member access
 // expression, such as `instance.(Class.field)`.
 struct UnboundElementType {
-  static constexpr auto Kind = InstKind::UnboundElementType.Define<
-      Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::VarBindingPatternId>>(
-      {.ir_name = "unbound_element_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::WheneverPossible});
+  static constexpr auto Kind =
+      InstKind::UnboundElementType.Define<Parse::NodeIdOneOf<
+          Parse::BaseDeclId, Parse::FieldNameAndTypeId,
+          Parse::IdentifierNameExprId, Parse::MemberAccessExprId>>(
+          {.ir_name = "unbound_element_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
   // The `ClassType` that a value of this type is an element of.
@@ -2090,7 +2648,7 @@ struct UnboundElementType {
 // An uninitialized constant value.
 struct UninitializedValue {
   static constexpr auto Kind =
-      InstKind::UninitializedValue.Define<Parse::NodeId>(
+      InstKind::UninitializedValue.Define<Parse::StructLiteralId>(
           {.ir_name = "uninitialized_value",
            .constant_kind = InstConstantKind::Always});
 
@@ -2100,9 +2658,10 @@ struct UninitializedValue {
 // Initializes an object by performing a base initialization followed by an
 // update step.
 struct UpdateInit {
-  static constexpr auto Kind = InstKind::UpdateInit.Define<Parse::NodeId>(
-      {.ir_name = "update_init",
-       .expr_category = ExprCategory::InPlaceInitializing});
+  static constexpr auto Kind =
+      InstKind::UpdateInit.Define<Parse::StructLiteralId>(
+          {.ir_name = "update_init",
+           .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   // The base initializer. Always an in-place initializer.
@@ -2116,10 +2675,12 @@ struct UpdateInit {
 // example, when indexing a value expression of array type, this is used to
 // form a reference to the array object.
 struct ValueAsRef {
-  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeId>(
-      {.ir_name = "value_as_ref",
-       .expr_category = ExprCategory::EphemeralRef,
-       .constant_kind = InstConstantKind::Never});
+  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::IdentifierNameExprId, Parse::IndexExprId,
+      Parse::InfixOperatorAsId, Parse::StringLiteralId, Parse::StructLiteralId,
+      Parse::TupleLiteralId>>({.ir_name = "value_as_ref",
+                               .expr_category = ExprCategory::EphemeralRef,
+                               .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstId value_id;
@@ -2129,7 +2690,11 @@ struct ValueAsRef {
 // AnyBinding for member documentation.
 struct ValueBinding {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ChoiceAlternativeListCommaId,
+      Parse::ChoiceDefinitionId, Parse::CompileTimeBindingPatternId,
+      Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+      Parse::LetBindingPatternId, Parse::TupleLiteralId>>(
       {.ir_name = "value_binding",
        .constant_kind = InstConstantKind::Indirect});
 
@@ -2142,7 +2707,8 @@ struct ValueBinding {
 // `AnyBindingPattern` for member documentation.
 struct ValueBindingPattern {
   static constexpr auto Kind =
-      InstKind::ValueBindingPattern.Define<Parse::NodeId>(
+      InstKind::ValueBindingPattern.Define<Parse::NodeIdOneOf<
+          Parse::CompileTimeBindingPatternId, Parse::LetBindingPatternId>>(
           {.ir_name = "value_binding_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
@@ -2170,7 +2736,33 @@ struct ValueForm {
 struct ValueOfInitializer {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::ValueOfInitializer.Define<Parse::NodeId>(
+      InstKind::ValueOfInitializer.Define<Parse::NodeIdOneOf<
+          Parse::AdaptDeclId, Parse::AssociatedConstantDeclId,
+          Parse::BuiltinFunctionDefinitionStartId, Parse::CallExprId,
+          Parse::CharLiteralId, Parse::ChoiceAlternativeListCommaId,
+          Parse::ChoiceDefinitionId, Parse::ForHeaderId, Parse::FunctionDeclId,
+          Parse::IdentifierNameExprId, Parse::IfConditionId,
+          Parse::IfExprElseId, Parse::IfExprIfId, Parse::IfExprThenId,
+          Parse::IndexExprId, Parse::InfixOperatorAmpEqualId,
+          Parse::InfixOperatorAmpId, Parse::InfixOperatorAsId,
+          Parse::InfixOperatorCaretEqualId, Parse::InfixOperatorEqualEqualId,
+          Parse::InfixOperatorExclaimEqualId,
+          Parse::InfixOperatorGreaterEqualId,
+          Parse::InfixOperatorGreaterGreaterEqualId,
+          Parse::InfixOperatorGreaterId, Parse::InfixOperatorLessEqualId,
+          Parse::InfixOperatorLessId, Parse::InfixOperatorLessLessEqualId,
+          Parse::InfixOperatorMinusEqualId, Parse::InfixOperatorMinusId,
+          Parse::InfixOperatorPercentEqualId, Parse::InfixOperatorPercentId,
+          Parse::InfixOperatorPipeEqualId, Parse::InfixOperatorPlusEqualId,
+          Parse::InfixOperatorPlusId, Parse::InfixOperatorSlashEqualId,
+          Parse::InfixOperatorSlashId, Parse::InfixOperatorStarEqualId,
+          Parse::InfixOperatorStarId, Parse::IntLiteralId,
+          Parse::LetBindingPatternId, Parse::MemberAccessExprId,
+          Parse::ParenExprId, Parse::PrefixOperatorMinusId,
+          Parse::RealLiteralId, Parse::ShortCircuitOperandAndId,
+          Parse::ShortCircuitOperandOrId, Parse::ShortCircuitOperatorAndId,
+          Parse::ShortCircuitOperatorOrId, Parse::StructLiteralId,
+          Parse::TupleLiteralId, Parse::WhereExprId, Parse::WhileConditionId>>(
           {.ir_name = "value_of_initializer"});
 
   TypeId type_id;
@@ -2180,7 +2772,10 @@ struct ValueOfInitializer {
 // A by-value `Call` parameter. See AnyParam for member documentation.
 struct ValueParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::ValueParam.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::ValueParam.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::FormBindingPatternId,
+                         Parse::IdentifierNameExprId, Parse::InfixOperatorAsId,
+                         Parse::LetBindingPatternId, Parse::TupleLiteralId>>(
       {.ir_name = "value_param", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -2192,12 +2787,14 @@ struct ValueParam {
 // for member documentation.
 struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::ValueParamPattern.Define<Parse::NodeId>(
-          {.ir_name = "value_param_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::ValueParamPattern.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::IdentifierNameExprId,
+                         Parse::InfixOperatorAsId, Parse::LetBindingPatternId,
+                         Parse::TupleLiteralId>>(
+      {.ir_name = "value_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
   NameId pretty_name_id;
@@ -2236,7 +2833,9 @@ struct VarPattern {
 // Tracks storage for a `var` pattern.
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeIdOneOf<
+      Parse::CallExprId, Parse::ForHeaderId, Parse::IdentifierNameExprId,
+      Parse::MemberAccessExprId, Parse::VariablePatternId>>(
       {.ir_name = "var",
        .expr_category = ExprCategory::DurableRef,
        .constant_kind = InstConstantKind::ConditionalUnique,
@@ -2258,7 +2857,7 @@ using VtableType = SingletonTypeInst<InstKind::VtableType, "<vtable>">;
 
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
-  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NoneNodeId>(
       {.ir_name = "vtable_ptr",
        .expr_category = ExprCategory::EphemeralRef,
        .constant_kind = InstConstantKind::Always});
@@ -2268,11 +2867,12 @@ struct VtablePtr {
 };
 
 struct VtableDecl {
-  static constexpr auto Kind = InstKind::VtableDecl.Define<Parse::NodeId>(
-      {.ir_name = "vtable_decl",
-       .expr_category = ExprCategory::EphemeralRef,
-       .constant_kind = InstConstantKind::Always,
-       .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::VtableDecl.Define<Parse::ClassDefinitionId>(
+          {.ir_name = "vtable_decl",
+           .expr_category = ExprCategory::EphemeralRef,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
   TypeId type_id;
   VtableId vtable_id;
 };
@@ -2307,12 +2907,16 @@ using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
 // explicit syntax for such a pattern, but it arises implicitly when handling
 // function parameters, and particularly `:?` form bindings.
 struct WrapperBindingPattern {
-  static constexpr auto Kind =
-      InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "at_binding_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::WrapperBindingPattern.Define<
+      Parse::NodeIdOneOf<Parse::CallExprId, Parse::FormBindingPatternId,
+                         Parse::IdentifierNameExprId, Parse::IndexExprId,
+                         Parse::InfixOperatorAsId, Parse::InfixOperatorPlusId,
+                         Parse::LetBindingPatternId,
+                         Parse::PrefixOperatorMinusId, Parse::TupleLiteralId>>(
+      {.ir_name = "at_binding_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
   EntityNameId entity_name_id;

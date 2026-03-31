@@ -22,9 +22,11 @@ namespace Carbon::Check {
 static auto MakeTypeLiteral(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId value_id) -> SemIR::TypeInstId {
   auto type_inst_id = ExprAsType(context, loc_id, value_id).inst_id;
-  return AddTypeInst<SemIR::TypeLiteral>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId, .value_id = type_inst_id});
+  return AddTypeInst(context,
+                     SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), loc_id,
+                         SemIR::TypeLiteral{.type_id = SemIR::TypeType::TypeId,
+                                            .value_id = type_inst_id}));
 }
 
 auto MakeTypeTypeLiteral(Context& context, Parse::NodeId node_id)
@@ -43,27 +45,35 @@ auto MakeBoolTypeLiteral(Context& context, Parse::NodeId node_id)
 
 auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
                      SemIR::BoolValue value) -> SemIR::InstId {
-  return AddInst<SemIR::BoolLiteral>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
-       .value = value});
+  return AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::BoolLiteral{.type_id = GetSingletonType(
+                                          context, SemIR::BoolType::TypeInstId),
+                                      .value = value}));
 }
 
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {
-  return AddInst<SemIR::IntValue>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
-       .int_id = int_id});
+  return AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), node_id,
+          SemIR::IntValue{.type_id = GetSingletonType(
+                              context, SemIR::IntLiteralType::TypeInstId),
+                          .int_id = int_id}));
 }
 
 // Returns an instruction with the given constant integer value.
 static auto GetOrAddIntValue(Context& context, SemIR::LocId loc_id,
                              IntId int_id) -> SemIR::InstId {
-  return GetOrAddInst<SemIR::IntValue>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
-       .int_id = int_id});
+  return GetOrAddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::IntValue{.type_id = GetSingletonType(
+                              context, SemIR::IntLiteralType::TypeInstId),
+                          .int_id = int_id}));
 }
 
 auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)

@@ -327,11 +327,13 @@ static auto TryGetSpecificWitnessIdForImpl(
     // as that creates a cycle where resolving the definition must resolve the
     // definition.
     AddInstInNoBlock(
-        context, loc_id,
-        SemIR::RequireSpecificDefinition{
-            .type_id = GetSingletonType(
-                context, SemIR::RequireSpecificDefinitionType::TypeInstId),
-            .specific_id = specific_id});
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::RequireSpecificDefinition{
+                .type_id = GetSingletonType(
+                    context, SemIR::RequireSpecificDefinitionType::TypeInstId),
+                .specific_id = specific_id}));
   }
 
   return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
@@ -962,13 +964,18 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
-        context, context.insts().GetLocIdForDesugaring(loc_id),
-        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-         .query_self_inst_id =
-             context.constant_values().GetInstId(req_impl.self_facet_value),
-         .query_specific_interface_id =
-             context.specific_interfaces().Add(req_impl.specific_interface)});
+    auto witness_const_id = EvalOrAddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), context.insts().GetLocIdForDesugaring(loc_id),
+            SemIR::LookupImplWitness{
+                .type_id =
+                    GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+                .query_self_inst_id = context.constant_values().GetInstId(
+                    req_impl.self_facet_value),
+                .query_specific_interface_id =
+                    context.specific_interfaces().Add(
+                        req_impl.specific_interface)}));
     result_witness_id = context.constant_values().GetInstId(witness_const_id);
     if (!context.insts().Is<SemIR::LookupImplWitness>(result_witness_id)) {
       // Found a final witness, use it.

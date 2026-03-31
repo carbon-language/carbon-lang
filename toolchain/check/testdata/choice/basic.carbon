@@ -77,6 +77,9 @@ let never: Never = {};
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Never
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ChoiceDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ChoiceDefinitionId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- one_alternative.carbon
 // CHECK:STDOUT:
@@ -129,6 +132,23 @@ let never: Never = {};
 // CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassDecl: ChoiceDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassInit: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Converted: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind StructLiteral: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Temporary: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TemporaryStorage: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleInit: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleLiteral: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleValue: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ValueBinding: ChoiceDefinitionId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_alternatives.carbon
 // CHECK:STDOUT:
@@ -341,4 +361,25 @@ let never: Never = {};
 // CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind BoundMethod: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Call: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassDecl: ChoiceDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassInit: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Converted: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind InPlaceInit: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind IntValue: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind NameBindingDecl: LetBindingPatternId
+// CHECK:STDOUT: InstKind NameRef: IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind StructLiteral: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Temporary: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TemporaryStorage: ChoiceAlternativeListCommaId, ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ValueBinding: ChoiceAlternativeListCommaId, ChoiceDefinitionId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ChoiceAlternativeListCommaId, ChoiceDefinitionId
 // CHECK:STDOUT:

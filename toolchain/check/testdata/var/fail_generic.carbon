@@ -27,4 +27,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
 // CHECK:STDOUT:

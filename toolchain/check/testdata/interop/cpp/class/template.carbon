@@ -164,6 +164,34 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc17_11.2(%.loc17_11.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind AddrOf: ReturnStatementId
+// CHECK:STDOUT: InstKind BoundMethod: MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Call: CallExprId, MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind Converted: ReturnStatementId
+// CHECK:STDOUT: InstKind CppOverloadSetValue: MemberAccessExprId
+// CHECK:STDOUT: InstKind Deref: ReturnStatementId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind InitForm: IntTypeLiteralId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind OutParam: IntTypeLiteralId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind OutParamPattern: IntTypeLiteralId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: IntTypeLiteralId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: IntTypeLiteralId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind SpecificFunction: MemberAccessExprId, ReturnStatementId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId, PostfixOperatorStarId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParam: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: CallExprId, LetBindingPatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: CallExprId, LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_instantiation_error.carbon
 // CHECK:STDOUT:
@@ -249,4 +277,21 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   assign file.%y.var, %.loc21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: VariablePatternId
+// CHECK:STDOUT: InstKind Call: VariablePatternId
+// CHECK:STDOUT: InstKind Converted: VariablePatternId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: VariablePatternId
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CppNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind SpecificFunction: VariablePatternId
+// CHECK:STDOUT: InstKind SpliceBlock: MemberAccessExprId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

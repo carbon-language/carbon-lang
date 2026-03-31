@@ -131,4 +131,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_66: %tuple.type = tuple_literal (%true.loc16_56, %true.loc16_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind BlockArg: IfExprIfId, ShortCircuitOperatorAndId
+// CHECK:STDOUT: InstKind BoolLiteral: BoolLiteralFalseId, BoolLiteralTrueId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind Branch: IfExprIfId
+// CHECK:STDOUT: InstKind BranchIf: IfExprIfId, ShortCircuitOperandAndId
+// CHECK:STDOUT: InstKind BranchWithArg: IfExprIfId, ShortCircuitOperandAndId, ShortCircuitOperatorAndId
+// CHECK:STDOUT: InstKind ExprPattern: IfExprElseId, ShortCircuitOperatorAndId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind NameBindingDecl: TuplePatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
 // CHECK:STDOUT:

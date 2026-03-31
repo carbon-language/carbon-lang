@@ -33,8 +33,10 @@ auto PerformPointerDereference(
   } else if (type_id != SemIR::ErrorInst::TypeId) {
     diagnose_not_pointer(type_id);
   }
-  return AddInst<SemIR::Deref>(
-      context, loc_id, {.type_id = result_type_id, .pointer_id = base_id});
+  return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                              context.sem_ir(), loc_id,
+                              SemIR::Deref{.type_id = result_type_id,
+                                           .pointer_id = base_id}));
 }
 
 }  // namespace Carbon::Check

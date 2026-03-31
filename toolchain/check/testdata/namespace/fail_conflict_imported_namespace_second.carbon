@@ -68,6 +68,8 @@ fn NS.Foo();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
@@ -100,4 +102,8 @@ fn NS.Foo();
 // CHECK:STDOUT: fn @NS [from "fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: NamespaceId
 // CHECK:STDOUT:

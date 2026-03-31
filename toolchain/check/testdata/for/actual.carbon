@@ -842,6 +842,70 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %impl.elem0.loc6_22.2 => constants.%Int.as.Copy.impl.Op.664
 // CHECK:STDOUT:   %specific_impl_fn.loc6_22.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: IdentifierNameExprId, MemberAccessExprId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId, InfixOperatorLessId, IntLiteralId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind Branch: IfConditionId
+// CHECK:STDOUT: InstKind BranchIf: IfConditionId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId, InfixOperatorLessId, IntLiteralId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: MemberAccessExprId, StructLiteralId
+// CHECK:STDOUT: InstKind ClassInit: StructLiteralId
+// CHECK:STDOUT: InstKind ClassType: CallExprId, FieldNameAndTypeId, ImplDefaultSelfAsId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind Converted: CallExprId, DesignatorExprId, IfConditionId, IntLiteralId, ReturnStatementId
+// CHECK:STDOUT: InstKind Deref: PrefixOperatorStarId
+// CHECK:STDOUT: InstKind FacetAccessType: DesignatorExprId
+// CHECK:STDOUT: InstKind FacetType: WhereExprId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId, IdentifierNameExprId, InfixOperatorLessId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind FieldDecl: FieldNameAndTypeId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind FunctionType: FunctionDefinitionStartId, IdentifierNameExprId, InfixOperatorLessId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind FunctionTypeWithSelfType: IdentifierNameExprId, InfixOperatorLessId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind ImplDecl: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitness: ImplDefinitionStartId, InfixOperatorLessId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: DesignatorExprId, IdentifierNameExprId, InfixOperatorLessId, IntLiteralId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind ImplWitnessAssociatedConstant: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessTable: ImplDefinitionStartId
+// CHECK:STDOUT: InstKind InPlaceInit: StructLiteralId
+// CHECK:STDOUT: InstKind InitForm: CallExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind LookupImplWitness: CallExprId, IdentifierNameExprId, MemberAccessExprId, PrefixOperatorPlusPlusId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, DesignatorExprId, IdentifierNameExprId, ImplDefaultSelfAsId, MemberAccessExprId, SelfTypeNameExprId, SelfValueNameExprId
+// CHECK:STDOUT: InstKind OutParam: CallExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind OutParamPattern: CallExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind PatternType: CallExprId, LetBindingPatternId, SelfTypeNameExprId, VarBindingPatternId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind RequireCompleteType: CallExprId, IdentifierNameExprId, LetBindingPatternId, MemberAccessExprId, ReturnStatementId, SelfTypeNameExprId, SelfValueNameExprId, StructLiteralId, VariablePatternId, WhereExprId
+// CHECK:STDOUT: InstKind RequireSpecificDefinition: CallExprId, IdentifierNameExprId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind RequirementBaseFacetType: WhereOperandId
+// CHECK:STDOUT: InstKind RequirementRewrite: RequirementEqualId
+// CHECK:STDOUT: InstKind ReturnExpr: ReturnStatementId
+// CHECK:STDOUT: InstKind ReturnSlot: CallExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind ReturnSlotPattern: CallExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificConstant: MemberAccessExprId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SpecificFunction: InfixOperatorLessId, IntLiteralId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificImplFunction: IdentifierNameExprId, MemberAccessExprId, PrefixOperatorPlusPlusId, PrefixOperatorStarId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, PostfixOperatorStarId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind StructLiteral: StructLiteralId
+// CHECK:STDOUT: InstKind StructType: ClassDefinitionId, StructLiteralId
+// CHECK:STDOUT: InstKind StructValue: FunctionDefinitionStartId, InfixOperatorLessId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SymbolicBinding: CallExprId, CompileTimeBindingPatternId, IdentifierNameExprId, ImplDefaultSelfAsId, SelfTypeNameExprId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind TypeLiteral: IntTypeLiteralId
+// CHECK:STDOUT: InstKind UnboundElementType: FieldNameAndTypeId, MemberAccessExprId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId, IfConditionId, IntLiteralId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
+// CHECK:STDOUT: InstKind WhereExpr: WhereExprId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- trivial.carbon
 // CHECK:STDOUT:
@@ -1090,4 +1154,26 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %struct_type.start.end => constants.%struct_type.start.end.0fe
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.a43
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind Assign: VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: IdentifierNameExprId
+// CHECK:STDOUT: InstKind Call: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: IdentifierNameExprId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind IntValue: IntLiteralId
+// CHECK:STDOUT: InstKind NameBindingDecl: VariablePatternId
+// CHECK:STDOUT: InstKind NameRef: CoreNameExprId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificFunction: IdentifierNameExprId
+// CHECK:STDOUT: InstKind SpliceBlock: CallExprId, VariablePatternId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: CallExprId, IdentifierNameExprId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: VariablePatternId
 // CHECK:STDOUT:

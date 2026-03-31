@@ -77,6 +77,10 @@ constraint Declared {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Declared.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: NamedConstraintDefinitionStartId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_declaration.carbon
 // CHECK:STDOUT:
@@ -104,4 +108,8 @@ constraint Declared {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self) {}
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind NamedConstraintDecl: NamedConstraintDeclId, NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind NamedConstraintWithSelfDecl: NamedConstraintDefinitionStartId
+// CHECK:STDOUT: InstKind SymbolicBinding: NamedConstraintDefinitionStartId
 // CHECK:STDOUT:

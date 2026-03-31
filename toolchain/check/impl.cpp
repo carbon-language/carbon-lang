@@ -240,11 +240,14 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
     // using the instruction later. To do so, we wrap the constraint facet type
     // it in a SpecificConstant, which preserves the impl declaration's
     // specific along with the facet type.
-    auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
-        context, SemIR::LocId(impl.constraint_id),
-        {.type_id = SemIR::TypeType::TypeId,
-         .inst_id = impl.constraint_id,
-         .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
+    auto constraint_id_in_self_specific = AddTypeInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), SemIR::LocId(impl.constraint_id),
+                     SemIR::SpecificConstant{
+                         .type_id = SemIR::TypeType::TypeId,
+                         .inst_id = impl.constraint_id,
+                         .specific_id = context.generics().GetSelfSpecific(
+                             impl.generic_id)}));
     parent_scope.AddExtendedScope(constraint_id_in_self_specific);
   }
   return true;
@@ -358,15 +361,20 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
   if (rewrites_into_interface_to_witness.empty()) {
     // The witness table is not needed until the definition. Make a placeholder
     // for the declaration.
-    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-        context, loc_id,
-        {.elements_id = context.inst_blocks().AddPlaceholder(),
-         .impl_id = SemIR::ImplId::None});
-    return AddInst<SemIR::ImplWitness>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-         .witness_table_id = witness_table_inst_id,
-         .specific_id = self_specific_id});
+    auto witness_table_inst_id = AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::ImplWitnessTable{
+                         .elements_id = context.inst_blocks().AddPlaceholder(),
+                         .impl_id = SemIR::ImplId::None}));
+    return AddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::ImplWitness{.type_id = GetSingletonType(
+                                   context, SemIR::WitnessType::TypeInstId),
+                               .witness_table_id = witness_table_inst_id,
+                               .specific_id = self_specific_id}));
   }
 
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
@@ -396,15 +404,20 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       uninit = SemIR::InstId::ImplWitnessTablePlaceholder;
     }
 
-    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-        context, loc_id,
-        {.elements_id = elements_id, .impl_id = SemIR::ImplId::None});
+    auto witness_table_inst_id = AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::ImplWitnessTable{.elements_id = elements_id,
+                                             .impl_id = SemIR::ImplId::None}));
 
-    witness_inst_id = AddInst<SemIR::ImplWitness>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-         .witness_table_id = witness_table_inst_id,
-         .specific_id = self_specific_id});
+    witness_inst_id = AddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::ImplWitness{.type_id = GetSingletonType(
+                                   context, SemIR::WitnessType::TypeInstId),
+                               .witness_table_id = witness_table_inst_id,
+                               .specific_id = self_specific_id}));
   }
 
   for (auto rewrite : rewrites_into_interface_to_witness) {
@@ -497,10 +510,13 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                         rewrite_inst_id),
                  "Rewritten value for associated constant is not canonical.");
 
-    table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
-        context, loc_id,
-        {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
-         .inst_id = rewrite_inst_id});
+    table_entry = AddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::ImplWitnessAssociatedConstant{
+                .type_id = context.insts().Get(rewrite_inst_id).type_id(),
+                .inst_id = rewrite_inst_id}));
   }
   return witness_inst_id;
 }

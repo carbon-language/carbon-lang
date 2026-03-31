@@ -48,6 +48,8 @@ class ForwardDecl {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDeclId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
@@ -82,4 +84,8 @@ class ForwardDecl {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%ForwardDecl
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ClassDecl: ClassDefinitionStartId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ClassDefinitionId
+// CHECK:STDOUT: InstKind ImportDecl: LibraryDeclId
 // CHECK:STDOUT:

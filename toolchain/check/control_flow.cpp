@@ -24,7 +24,9 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddPlaceholder();
-  AddInst<BranchNode>(context, node_id, {block_id, args...});
+  AddInst(context,
+          SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(), node_id,
+                                               BranchNode{block_id, args...}));
   return block_id;
 }
 
@@ -57,7 +59,9 @@ auto AddConvergenceBlockAndPush(Context& context, Parse::NodeId node_id,
         new_block_id = context.inst_blocks().AddPlaceholder();
       }
       CARBON_CHECK(node_id.has_value());
-      AddInst<SemIR::Branch>(context, node_id, {.target_id = new_block_id});
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), node_id,
+                           SemIR::Branch{.target_id = new_block_id}));
     }
     context.inst_block_stack().Pop();
   }
@@ -76,8 +80,10 @@ auto AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = context.inst_blocks().AddPlaceholder();
       }
-      AddInst<SemIR::BranchWithArg>(
-          context, node_id, {.target_id = new_block_id, .arg_id = arg_id});
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), node_id,
+                           SemIR::BranchWithArg{.target_id = new_block_id,
+                                                .arg_id = arg_id}));
     }
     context.inst_block_stack().Pop();
   }
@@ -87,8 +93,10 @@ auto AddConvergenceBlockWithArgAndPush(
   // Acquire the result value.
   SemIR::TypeId result_type_id =
       context.insts().Get(*block_args.begin()).type_id();
-  return AddInst<SemIR::BlockArg>(
-      context, node_id, {.type_id = result_type_id, .block_id = new_block_id});
+  return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                              context.sem_ir(), node_id,
+                              SemIR::BlockArg{.type_id = result_type_id,
+                                              .block_id = new_block_id}));
 }
 
 auto SetBlockArgResultBeforeConstantUse(Context& context,
@@ -145,6 +153,21 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   }
 
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
+}
+
+auto AddInstWithCleanupInNoBlock(Context& context,
+                                 SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+  MaybeAddCleanupForInst(context, inst_id);
+  return inst_id;
+}
+
+auto AddInstWithCleanup(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInst(context, loc_id_and_inst);
+  MaybeAddCleanupForInst(context, inst_id);
+  return inst_id;
 }
 
 // Common support for cleanup blocks.

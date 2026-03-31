@@ -35,4 +35,7 @@ import Cpp library "file2.h";
 // CHECK:STDOUT:     import Cpp "file2.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind ImportCppDecl: ImportDeclId
+// CHECK:STDOUT: InstKind Namespace: ImportDeclId
 // CHECK:STDOUT:

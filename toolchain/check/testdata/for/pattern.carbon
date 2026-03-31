@@ -278,6 +278,34 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_35(%self.param: ref %EmptyRange.77b) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind AddrOf: ForHeaderId
+// CHECK:STDOUT: InstKind Assign: ForHeaderId
+// CHECK:STDOUT: InstKind BoundMethod: ForHeaderId
+// CHECK:STDOUT: InstKind Branch: ForHeaderId, ForHeaderStartId, ForStatementId
+// CHECK:STDOUT: InstKind BranchIf: ForHeaderId
+// CHECK:STDOUT: InstKind Call: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ForHeaderId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: ForInId
+// CHECK:STDOUT: InstKind NameRef: ForHeaderId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ForHeaderId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarStorage: ForHeaderId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
@@ -443,6 +471,38 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.2(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_39(%self.param: ref %EmptyRange.77b) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind AddrOf: ForHeaderId, PrefixOperatorAmpId
+// CHECK:STDOUT: InstKind Assign: ForHeaderId, VariablePatternId
+// CHECK:STDOUT: InstKind BoundMethod: ForHeaderId
+// CHECK:STDOUT: InstKind Branch: ForHeaderId, ForHeaderStartId, ForStatementId
+// CHECK:STDOUT: InstKind BranchIf: ForHeaderId
+// CHECK:STDOUT: InstKind Call: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ForHeaderId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: ForInId
+// CHECK:STDOUT: InstKind NameRef: ForHeaderId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind PointerType: PostfixOperatorStarId
+// CHECK:STDOUT: InstKind RefBinding: VarBindingPatternId
+// CHECK:STDOUT: InstKind RefBindingPattern: VarBindingPatternId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpliceBlock: PostfixOperatorStarId, VariablePatternId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ForHeaderId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarPattern: VariablePatternId
+// CHECK:STDOUT: InstKind VarStorage: ForHeaderId, VariablePatternId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple.carbon
 // CHECK:STDOUT:
@@ -624,6 +684,38 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_60(%self.param: ref %EmptyRange.717) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind AddrOf: ForHeaderId
+// CHECK:STDOUT: InstKind Assign: ForHeaderId
+// CHECK:STDOUT: InstKind BoundMethod: ForHeaderId
+// CHECK:STDOUT: InstKind Branch: ForHeaderId, ForHeaderStartId, ForStatementId
+// CHECK:STDOUT: InstKind BranchIf: ForHeaderId
+// CHECK:STDOUT: InstKind Call: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ForHeaderId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: ForInId
+// CHECK:STDOUT: InstKind NameRef: ForHeaderId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TupleAccess: ForHeaderId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind TypeLiteral: BoolTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ForHeaderId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarStorage: ForHeaderId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_class.carbon
 // CHECK:STDOUT:
@@ -807,4 +899,35 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_48(%self.param: ref %EmptyRange.849) = "no_op";
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind AddrOf: ForHeaderId
+// CHECK:STDOUT: InstKind Assign: ForHeaderId
+// CHECK:STDOUT: InstKind BoundMethod: ForHeaderId
+// CHECK:STDOUT: InstKind Branch: ForHeaderId, ForHeaderStartId, ForStatementId
+// CHECK:STDOUT: InstKind BranchIf: ForHeaderId
+// CHECK:STDOUT: InstKind Call: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind ClassType: CallExprId
+// CHECK:STDOUT: InstKind Converted: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind FacetValue: CallExprId
+// CHECK:STDOUT: InstKind FunctionDecl: FunctionDeclId, FunctionDefinitionStartId
+// CHECK:STDOUT: InstKind ImplWitnessAccess: ForHeaderId
+// CHECK:STDOUT: InstKind ImportDecl: ImportDeclId
+// CHECK:STDOUT: InstKind NameBindingDecl: ForInId
+// CHECK:STDOUT: InstKind NameRef: ForHeaderId, IdentifierNameExprId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Return: FunctionDefinitionId
+// CHECK:STDOUT: InstKind SpecificConstant: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind SpecificFunction: ForHeaderId, MemberAccessExprId
+// CHECK:STDOUT: InstKind Temporary: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TemporaryStorage: CallExprId, ForHeaderId
+// CHECK:STDOUT: InstKind TupleAccess: ForHeaderId
+// CHECK:STDOUT: InstKind TupleLiteral: TupleLiteralId
+// CHECK:STDOUT: InstKind TuplePattern: TuplePatternId
+// CHECK:STDOUT: InstKind ValueBinding: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueBindingPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueOfInitializer: ForHeaderId
+// CHECK:STDOUT: InstKind ValueParam: LetBindingPatternId
+// CHECK:STDOUT: InstKind ValueParamPattern: LetBindingPatternId
+// CHECK:STDOUT: InstKind VarStorage: ForHeaderId
+// CHECK:STDOUT: InstKind WrapperBindingPattern: LetBindingPatternId
 // CHECK:STDOUT:

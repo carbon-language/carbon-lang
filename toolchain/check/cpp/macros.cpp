@@ -34,8 +34,9 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
     return inst_id;
   } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
     auto type_id = ImportCppType(context, loc_id, expr->getType()).type_id;
-    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
-                                                   {.type_id = type_id});
+    return GetOrAddInst(context,
+                        SemIR::LocIdAndInst::NoLoc(
+                            SemIR::UninitializedValue{.type_id = type_id}));
   }
 
   context.TODO(loc_id,

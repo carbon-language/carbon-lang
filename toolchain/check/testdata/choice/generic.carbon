@@ -81,4 +81,25 @@ choice Always(T:! type) {
 // CHECK:STDOUT: specific @Always(constants.%T) {
 // CHECK:STDOUT:   %T.loc14_16.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- Associated NodeIds
+// CHECK:STDOUT: InstKind AcquireValue: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassDecl: ChoiceDefinitionStartId
+// CHECK:STDOUT: InstKind ClassElementAccess: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassInit: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind ClassType: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind CompleteTypeWitness: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind Converted: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind RequireCompleteType: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind SpliceBlock: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind StructLiteral: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind StructValue: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind SymbolicBinding: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind SymbolicBindingPattern: CompileTimeBindingPatternId
+// CHECK:STDOUT: InstKind Temporary: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TemporaryStorage: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleInit: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleLiteral: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TupleValue: ChoiceDefinitionId
+// CHECK:STDOUT: InstKind TypeLiteral: TypeTypeLiteralId
+// CHECK:STDOUT: InstKind ValueBinding: ChoiceDefinitionId
 // CHECK:STDOUT:

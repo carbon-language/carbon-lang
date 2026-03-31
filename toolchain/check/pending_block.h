@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -51,10 +52,23 @@ class PendingBlock {
     return inst_id;
   }
 
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = AddInstInNoBlock(*context_, loc_id_and_inst);
+    insts_.push_back(inst_id);
+    return inst_id;
+  }
+
   template <typename InstT, typename LocT>
     requires(std::convertible_to<LocT, SemIR::LocId>)
   auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
     auto inst_id = AddInstWithCleanupInNoBlock(*context_, loc_id, inst);
+    insts_.push_back(inst_id);
+    return inst_id;
+  }
+
+  auto AddInstWithCleanup(SemIR::LocIdAndInst loc_id_and_inst)
+      -> SemIR::InstId {
+    auto inst_id = AddInstWithCleanupInNoBlock(*context_, loc_id_and_inst);
     insts_.push_back(inst_id);
     return inst_id;
   }

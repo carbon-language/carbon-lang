@@ -17,11 +17,13 @@ namespace Carbon::Check {
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::RefineTypeAction action) -> SemIR::InstId {
-  return AddInst<SemIR::AsCompatible>(
-      context, loc_id,
-      {.type_id =
-           context.types().GetTypeIdForTypeInstId(action.inst_type_inst_id),
-       .source_id = action.inst_id});
+  return AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::AsCompatible{.type_id = context.types().GetTypeIdForTypeInstId(
+                                  action.inst_type_inst_id),
+                              .source_id = action.inst_id}));
 }
 
 static auto OperandIsDependent(Context& context, SemIR::ConstantId const_id)
@@ -101,16 +103,20 @@ static auto AddDependentActionSpliceImpl(Context& context,
     -> SemIR::InstId {
   auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_inst_id.has_value()) {
-    result_type_inst_id = AddDependentActionTypeInst(
-        context, action.loc_id,
-        SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
-                          .inst_id = inst_id});
+    auto type_of_inst_id = AddDependentActionInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), action.loc_id,
+                     SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
+                                       .inst_id = inst_id}));
+    result_type_inst_id = context.types().GetAsTypeInstId(type_of_inst_id);
   }
   return AddInst(
-      context, action.loc_id,
-      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
-                            result_type_inst_id),
-                        .inst_id = inst_id});
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), action.loc_id,
+          SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
+                                result_type_inst_id),
+                            .inst_id = inst_id}));
 }
 
 // Refine one operand of an action. Given an argument from a template, this
@@ -133,8 +139,8 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
       auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
       inst_id = AddDependentActionSpliceImpl(
           context,
-          SemIR::LocIdAndInst(
-              loc_id,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
               SemIR::RefineTypeAction{.type_id = GetSingletonType(
                                           context, SemIR::InstType::TypeInstId),
                                       .inst_id = *inst_id,
@@ -189,10 +195,12 @@ auto Internal::EndPerformDelayedAction(Context& context,
   // created by the action.
   auto result = context.insts().GetWithLocId(result_id);
   return AddInstInNoBlock(
-      context, result.loc_id,
-      SemIR::SpliceBlock{.type_id = result.inst.type_id(),
-                         .block_id = context.inst_block_stack().Pop(),
-                         .result_id = result_id});
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), result.loc_id,
+          SemIR::SpliceBlock{.type_id = result.inst.type_id(),
+                             .block_id = context.inst_block_stack().Pop(),
+                             .result_id = result_id}));
 }
 
 }  // namespace Carbon::Check

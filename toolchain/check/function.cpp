@@ -45,15 +45,19 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::InitForm _): {
       auto pattern_type_id =
           GetPatternType(context, form_expr.type_component_id);
-      auto out_param_id = AddPatternInst<SemIR::OutParamPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
-           .pretty_name_id = SemIR::NameId::ReturnSlot});
-      return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
-           .subpattern_id = out_param_id,
-           .type_inst_id = form_expr.type_component_inst_id}));
+      auto out_param_id = AddPatternInst(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), SemIR::LocId(form_expr.form_inst_id),
+                       SemIR::OutParamPattern{
+                           .type_id = pattern_type_id,
+                           .pretty_name_id = SemIR::NameId::ReturnSlot}));
+      return_patterns.push_back(AddPatternInst(
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), SemIR::LocId(form_expr.form_inst_id),
+                       SemIR::ReturnSlotPattern{
+                           .type_id = pattern_type_id,
+                           .subpattern_id = out_param_id,
+                           .type_inst_id = form_expr.type_component_inst_id})));
       break;
     }
     case SemIR::ErrorInst::Kind: {

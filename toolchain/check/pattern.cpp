@@ -69,10 +69,13 @@ auto EndSubpattern(Context& context, NodeStack& node_stack) -> void {
     auto expr_region_id = PopSubpatternExpr(context, *maybe_expr_id);
     auto pattern_type_id =
         GetPatternType(context, context.insts().Get(*maybe_expr_id).type_id());
-    node_stack.Push(node_id, AddPatternInst<SemIR::ExprPattern>(
-                                 context, node_id,
-                                 {.type_id = pattern_type_id,
-                                  .expr_region_id = expr_region_id}));
+    node_stack.Push(
+        node_id,
+        AddPatternInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                    context.sem_ir(), node_id,
+                                    SemIR::ExprPattern{
+                                        .type_id = pattern_type_id,
+                                        .expr_region_id = expr_region_id})));
   } else {
     // The expression region should have been consumed when forming the pattern
     // instruction, so should now effectively be empty.
@@ -178,10 +181,12 @@ static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
   auto pattern = context.insts().GetWithLocId(var_pattern_id);
 
   return AddInstWithCleanup(
-      context, pattern.loc_id,
-      SemIR::VarStorage{.type_id = ExtractScrutineeType(context.sem_ir(),
-                                                        pattern.inst.type_id()),
-                        .pattern_id = var_pattern_id});
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), pattern.loc_id,
+          SemIR::VarStorage{.type_id = ExtractScrutineeType(
+                                context.sem_ir(), pattern.inst.type_id()),
+                            .pattern_id = var_pattern_id}));
 }
 
 auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
@@ -204,8 +209,10 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::ExprRegionId type_expr_region_id,
                      SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
   auto pattern_type_id = GetPatternType(context, type_id);
-  const auto& param_pattern_kind =
-      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
+  SemIR::InstKind param_pattern_kind = SemIR::ValueParamPattern::Kind;
+  if (is_ref) {
+    param_pattern_kind = SemIR::RefParamPattern::Kind;
+  }
   auto pattern_id = AddPatternInst(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), loc_id,
