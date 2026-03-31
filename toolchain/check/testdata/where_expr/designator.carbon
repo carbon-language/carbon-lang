@@ -91,35 +91,41 @@ class D {
   fn G() -> .Self { return Self; }
 }
 
-// --- todo_fail_impls_constraint_does_not_constrain_self.carbon
+// --- fail_impls_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {}
 
-// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
-// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:27: error: `where` clause without a designator; expected `.Self` to appear in a requirement, or a member of `.Self` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(U:! type, unused T:! type where U impls I) {}
+// CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(U:! type, unused T:! type where U impls I) {}
 
-// --- todo_fail_equality_constraint_does_not_constrain_self.carbon
+// --- fail_equality_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
   let X:! type;
 }
 
-// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
-// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:24: error: `where` clause without a designator; expected `.Self` to appear in a requirement, or a member of `.Self` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(U:! I, unused T:! type where U.X == ()) {}
+// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(U:! I, unused T:! type where U.X == ()) {}
 
-// --- todo_fail_combined_constraint_does_not_constrain_self.carbon
+// --- fail_combined_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
   let X:! type;
 }
 
-// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
-// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:24: error: `where` clause without a designator; expected `.Self` to appear in a requirement, or a member of `.Self` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
+// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
 
 // --- impls_constraint_does_constrain_self.carbon

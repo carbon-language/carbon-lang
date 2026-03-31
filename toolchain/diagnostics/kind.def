@@ -544,6 +544,7 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+CARBON_DIAGNOSTIC_KIND(WhereWithoutDesignator)
 
 // Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)

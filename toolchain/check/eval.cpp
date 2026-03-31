@@ -2489,16 +2489,22 @@ static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
 // providing a `GetConstantValue` overload for a requirement block.
 template <>
 auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
-                                        SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::ConstantId {
+                                        SemIR::InstId where_inst_id,
+                                        SemIR::Inst inst) -> SemIR::ConstantId {
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
+  if (typed_inst.period_self_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
   // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
     auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
+    // Note that these requirement instructions don't have a constant value, but
+    // they contain only canonical instructions.
     for (auto inst_id : insts) {
       if (auto base =
               eval_context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
@@ -2571,7 +2577,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   }
 
   auto const_info = GetConstantFacetTypeInfo(
-      eval_context, SemIR::LocId(inst_id), info, &phase);
+      eval_context, SemIR::LocId(where_inst_id), info, &phase);
   return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 
