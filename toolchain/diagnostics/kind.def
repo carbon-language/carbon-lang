@@ -134,6 +134,7 @@ CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
 // Inline declaration diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedCppAfterInline)
 CARBON_DIAGNOSTIC_KIND(ExpectedStringAfterInlineCpp)
+CARBON_DIAGNOSTIC_KIND(InlineDeclNotAtFileScope)
 
 // Match diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)

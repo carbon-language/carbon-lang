@@ -114,11 +114,9 @@ int n;
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 
-// --- todo_fail_nested.carbon
-
-class C {
-  inline Cpp "";
-}
+// --- eof.carbon
+// This split exists to avoid the "no `;` at EOF" diagnostic above pointing to
+// the last CHECK:STDOUT line below.
 
 // CHECK:STDOUT: - filename: fail_bad_syntax.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -232,16 +230,8 @@ class C {
 // CHECK:STDOUT: '''', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: todo_fail_nested.carbon
+// CHECK:STDOUT: - filename: eof.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:         {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: '""'},
-// CHECK:STDOUT:       {kind: 'InlineCppDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

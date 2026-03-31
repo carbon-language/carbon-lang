@@ -41,7 +41,14 @@ auto HandleParseNode(Context& context, Parse::InlineCppDeclId node_id) -> bool {
   auto string_value_id = context.tokens().GetStringLiteralValue(string_token);
   auto string_value = context.string_literal_values().Get(string_value_id);
 
-  InjectAstFromInlineCode(context, SemIR::LocId(node_id), string_value);
+  if (context.scope_stack().PeekIndex() != ScopeIndex::Package) {
+    CARBON_DIAGNOSTIC(InlineDeclNotAtFileScope, Error,
+                      "`inline Cpp` declaration not at file scope");
+    context.emitter().Emit(node_id, InlineDeclNotAtFileScope);
+    return true;
+  }
+
+  InjectAstFromInlineCode(context, SemIR::LocId(body_id), string_value);
   AddInst<SemIR::InlineCppDecl>(context, node_id, {.text_id = string_value_id});
   return true;
 }

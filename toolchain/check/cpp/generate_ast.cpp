@@ -711,9 +711,7 @@ auto GenerateAst(Context& context,
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
                              llvm::StringRef source_code) -> bool {
   auto* cpp_context = context.cpp_context();
-  if (!cpp_context) {
-    return false;
-  }
+  CARBON_CHECK(cpp_context);
 
   clang::Sema& sema = cpp_context->sema();
   clang::Preprocessor& preprocessor = sema.getPreprocessor();
