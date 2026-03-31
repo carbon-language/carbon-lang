@@ -24,6 +24,7 @@ contributions.
     -   [Optional tools](#optional-tools)
         -   [Jujutsu (`jj`)](#jujutsu-jj)
         -   [AI assistants](#ai-assistants)
+    -   [Running tests with AddressSanitizer (ASan)](#running-tests-with-addresssanitizer-asan)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
@@ -309,6 +310,20 @@ git log
 git show
 git status
 ```
+
+### Running tests with AddressSanitizer (ASan)
+
+By default, the Bazel build mode for the toolchain does not enable
+AddressSanitizer (ASan). If you wish to enable ASan for local testing, you must
+pass the `--config=asan` flag explicitly:
+
+```shell
+bazelisk test --config=asan //...
+```
+
+Note that our Continuous Integration (CI) infrastructure runs a separate
+configuration for ASan to ensure test coverage without slowing down the default
+test cycle.
 
 ### Manually building Clang and LLVM (not recommended)
 

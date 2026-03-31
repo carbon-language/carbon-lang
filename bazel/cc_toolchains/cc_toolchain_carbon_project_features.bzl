@@ -27,10 +27,9 @@ carbon_project_fastbuild_feature = feature(
     enabled = True,
     requires = [feature_set(["fastbuild"])],
     implies = [
-        "asan",
-        "asan_min_size",
         "minimal_optimization_flags",
         "minimal_debug_info_flags",
+        "preserve_call_stacks",
     ],
 )
 
