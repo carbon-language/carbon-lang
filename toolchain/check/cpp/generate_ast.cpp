@@ -728,8 +728,8 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
       preprocessor.getSourceManager().createFileID(std::move(buffer));
 
   if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
-    // Clang will have generated a suitable error. There's no anything more to
-    // do here.
+    // Clang will have generated a suitable error. There's nothing more to do
+    // here.
     return;
   }
 
