@@ -665,7 +665,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+4]]:7: warning: binding `carbon_u32` unused [UnusedBinding]
   // CHECK:STDERR:   let carbon_u32: u32 = cpp_unsigned_long;
-  // CHECK:STDERR:       ^~~~~~~~~~
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let carbon_u32: u32 = cpp_unsigned_long;
 }

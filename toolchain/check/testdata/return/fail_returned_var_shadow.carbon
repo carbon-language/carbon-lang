@@ -17,10 +17,10 @@ fn SameScope() -> i32 {
     returned var v: i32 = 0;
     // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:25: error: cannot declare a `returned var` in the scope of another `returned var` [ReturnedVarShadowed]
     // CHECK:STDERR:     returned var unused w: i32 = 1;
-    // CHECK:STDERR:                         ^
+    // CHECK:STDERR:                         ^~~~~~
     // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: note: `returned var` was declared here [ReturnedVarHere]
     // CHECK:STDERR:     returned var v: i32 = 0;
-    // CHECK:STDERR:                  ^
+    // CHECK:STDERR:                  ^~~~~~
     // CHECK:STDERR:
     returned var unused w: i32 = 1;
   }
@@ -33,10 +33,10 @@ fn DifferentScopes() -> i32 {
     if (true) {
       // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:27: error: cannot declare a `returned var` in the scope of another `returned var` [ReturnedVarShadowed]
       // CHECK:STDERR:       returned var unused w: i32 = 1;
-      // CHECK:STDERR:                           ^
+      // CHECK:STDERR:                           ^~~~~~
       // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: note: `returned var` was declared here [ReturnedVarHere]
       // CHECK:STDERR:     returned var v: i32 = 0;
-      // CHECK:STDERR:                  ^
+      // CHECK:STDERR:                  ^~~~~~
       // CHECK:STDERR:
       returned var unused w: i32 = 1;
     }
@@ -108,8 +108,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %SameScope.decl: %SameScope.type = fn_decl @SameScope [concrete = constants.%SameScope] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc15 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15 [concrete = constants.%.ff5]
@@ -117,8 +117,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DifferentScopes.decl: %DifferentScopes.type = fn_decl @DifferentScopes [concrete = constants.%DifferentScopes] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc30 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc30: Core.Form = init_form %i32.loc30 [concrete = constants.%.ff5]

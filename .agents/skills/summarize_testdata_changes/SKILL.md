@@ -1,17 +1,17 @@
+---
+name: Summarize testdata changes
+description:
+    Instructions for summarizing changes to Carbon testdata files
+    (`toolchain/*/testdata`).
+---
+
+# Summarize testdata changes
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
----
-
-name: Summarize testdata changes description: Instructions for summarizing
-changes to Carbon testdata files (`toolchain/*/testdata`).
-
----
-
-# Summarize testdata changes
 
 This skill provides instructions for creating a comprehensive report summarizing
 changes to Carbon testdata files (`toolchain/*/testdata`) and associating them

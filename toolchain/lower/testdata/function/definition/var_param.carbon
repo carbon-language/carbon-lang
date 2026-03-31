@@ -31,7 +31,9 @@ fn Call() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc16_13.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @int_1.5d2 = internal constant i32 1
+// CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc27_18.6 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %_) #0 !dbg !4 {
@@ -74,40 +76,28 @@ fn Call() {
 // CHECK:STDOUT:   %.loc27_18.2.temp = alloca {}, align 8, !dbg !43
 // CHECK:STDOUT:   %.loc21_23.1.temp = alloca {}, align 8, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_15.1.temp), !dbg !38
-// CHECK:STDOUT:   store i32 1, ptr %.loc15_15.1.temp, align 4, !dbg !38
-// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %.loc15_15.1.temp), !dbg !45
+// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr @int_1.5d2), !dbg !45
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_13.1.temp), !dbg !39
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc16_13.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !39
-// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr %.loc16_13.1.temp), !dbg !46
+// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr @X.val), !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.1.temp), !dbg !40
-// CHECK:STDOUT:   store i32 1, ptr %.loc18_12.1.temp, align 4, !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_24.1.temp), !dbg !41
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_24.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !41
-// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr %.loc18_12.1.temp, ptr %.loc18_24.1.temp), !dbg !47
+// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr @int_1.5d2, ptr @X.val), !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_15.1.temp), !dbg !42
-// CHECK:STDOUT:   store i32 1, ptr %.loc20_15.1.temp, align 4, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_18.2.temp), !dbg !43
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc27_18.2.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !43
-// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %.loc20_15.1.temp, ptr %.loc27_18.2.temp), !dbg !48
+// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr @int_1.5d2, ptr @X.val.loc27_18.6), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_23.1.temp), !dbg !44
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc21_23.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !44
-// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr %.loc21_23.1.temp), !dbg !49
+// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr @X.val), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -15,6 +15,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -247,10 +248,29 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
             /*defer_thunk_definition=*/false));
         break;
       }
-      case SemIR::AssociatedConstantDecl::Kind: {
-        context.TODO(loc_id,
-                     "Associated constant in interface with synthesized impl");
-        return SemIR::ErrorInst::InstId;
+      case CARBON_KIND(SemIR::AssociatedConstantDecl decl): {
+        if (decl.type_id == SemIR::ErrorInst::TypeId) {
+          return SemIR::ErrorInst::InstId;
+        }
+
+        // TODO: remove once we have a test-case for all associated constants.
+        // Special-case the ones we want to support in this if-statement, until
+        // we're able to account for everything.
+        if (decl.type_id != SemIR::TypeType::TypeId) {
+          context.TODO(loc_id,
+                       "Associated constant of type other than `TypeType` in "
+                       "synthesized impl");
+          return SemIR::ErrorInst::InstId;
+        }
+
+        auto type_id = context.insts().Get(value_id).type_id();
+        CARBON_CHECK(type_id == SemIR::TypeType::TypeId ||
+                     type_id == SemIR::ErrorInst::TypeId);
+        auto impl_witness_associated_constant =
+            AddInst<SemIR::ImplWitnessAssociatedConstant>(
+                context, loc_id, {.type_id = type_id, .inst_id = value_id});
+        entries.push_back(impl_witness_associated_constant);
+        break;
       }
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
@@ -263,7 +283,10 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // then a second after all associated functions, rather than building one in
   // each `StructValue`. Right now the code is written assuming at most one
   // function, though this CHECK can be removed as a temporary workaround.
-  CARBON_CHECK(entries.size() <= 1,
+  auto associated_functions = llvm::count_if(entries, [&](SemIR::InstId id) {
+    return context.insts().Get(id).kind() == SemIR::InstKind::FunctionDecl;
+  });
+  CARBON_CHECK(associated_functions <= 1,
                "TODO: Support multiple associated functions");
 
   return MakeCustomWitnessConstantInst(context, loc_id,
@@ -281,9 +304,10 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 
   constexpr auto CoreIdentifiersToInterfaces = std::array{
       std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
+      std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref},
+      std::pair{CoreIdentifier::Default, CoreInterface::Default},
       std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
-      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn},
-      std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref}};
+      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}};
 
   for (auto [core_identifier, core_interface] : CoreIdentifiersToInterfaces) {
     if (interface.name_id ==
@@ -353,7 +377,7 @@ static auto TypeCanDestroy(Context& context,
 static auto MakeDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id)
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
     -> std::optional<SemIR::InstId> {
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
@@ -361,6 +385,10 @@ static auto MakeDestroyWitness(
   if (!TypeCanDestroy(context, query_self_const_id,
                       query_specific_interface.interface_id)) {
     return std::nullopt;
+  }
+
+  if (!build_witness) {
+    return SemIR::InstId::None;
   }
 
   if (query_self_const_id.is_symbolic()) {
@@ -383,7 +411,7 @@ static auto MakeDestroyWitness(
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id)
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
     -> std::optional<SemIR::InstId> {
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
@@ -446,6 +474,10 @@ static auto MakeIntFitsInWitness(
     return std::nullopt;
   }
 
+  if (!build_witness) {
+    return SemIR::InstId::None;
+  }
+
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {});
 }
@@ -453,17 +485,18 @@ static auto MakeIntFitsInWitness(
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> std::optional<SemIR::InstId> {
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
     case CoreInterface::Destroy:
       return MakeDestroyWitness(context, loc_id, query_self_const_id,
-                                query_specific_interface_id);
+                                query_specific_interface_id, build_witness);
     case CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
-                                  query_specific_interface_id);
-    case CoreInterface::CppUnsafeDeref:
+                                  query_specific_interface_id, build_witness);
     case CoreInterface::Copy:
+    case CoreInterface::CppUnsafeDeref:
+    case CoreInterface::Default:
     case CoreInterface::Unknown:
       // TODO: Handle more interfaces, particularly copy, move, and conversion.
       return std::nullopt;

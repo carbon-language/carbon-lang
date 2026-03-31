@@ -371,6 +371,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.c03) [concrete]
 // CHECK:STDOUT:   %.84a: type = fn_type_with_self_type %As.WithSelf.Convert.type.edc, %As.facet.c03 [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.bound: <bound method> = bound_method %X.val, %X.as.As.impl.Convert [concrete]
+// CHECK:STDOUT:   %.730: ref %X = temporary invalid, %X.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -398,8 +399,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %impl.elem0: %.84a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
-// CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1
-// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2
+// CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1 [concrete = constants.%.730]
+// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
 // CHECK:STDOUT:   <elided>

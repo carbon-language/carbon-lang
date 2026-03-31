@@ -22,7 +22,8 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'iterate.carbon'
 // CHECK:STDOUT: source_filename = "iterate.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.loc16_43.22 = internal constant [6 x i32] [i32 1, i32 2, i32 3, i32 4, i32 5, i32 6]
+// CHECK:STDOUT: @array = internal constant [6 x i32] [i32 1, i32 2, i32 3, i32 4, i32 5, i32 6]
+// CHECK:STDOUT: @array.loc16_43.24 = internal constant [6 x i32] [i32 1, i32 2, i32 3, i32 4, i32 5, i32 6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CG.Main(i32)
 // CHECK:STDOUT:
@@ -39,15 +40,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_43.13.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 3, !dbg !7
 // CHECK:STDOUT:   %.loc16_43.16.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 4, !dbg !7
 // CHECK:STDOUT:   %.loc16_43.19.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 5, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_43.3.temp, ptr align 4 @array.loc16_43.22, i64 24, i1 false), !dbg !7
-// CHECK:STDOUT:   %array_type.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.7711e6f0e1563534:Iterate.Core.355bb079bb00aa16"(ptr %.loc16_43.3.temp), !dbg !8
+// CHECK:STDOUT:   %array_type.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.7711e6f0e1563534:Iterate.Core.355bb079bb00aa16"(ptr @array.loc16_43.24), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !8
 // CHECK:STDOUT:   store i32 %array_type.as.Iterate.impl.NewCursor.call, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_19.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.7711e6f0e1563534:Iterate.Core.355bb079bb00aa16"(ptr %.loc17_19.1.temp, ptr %.loc16_43.3.temp, ptr %var), !dbg !8
+// CHECK:STDOUT:   call void @"_CNext.7711e6f0e1563534:Iterate.Core.355bb079bb00aa16"(ptr %.loc17_19.1.temp, ptr @array.loc16_43.24, ptr %var), !dbg !8
 // CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.b5e6acce74484d77(ptr %.loc17_19.1.temp), !dbg !8
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
@@ -62,9 +62,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CNewCursor.7711e6f0e1563534:Iterate.Core.355bb079bb00aa16"(ptr %self) #0 !dbg !12 {
@@ -137,7 +134,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.23ea0ff7335d4fdc"(ptr %self, i32 %other) #3 !dbg !79 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.23ea0ff7335d4fdc"(ptr %self, i32 %other) #2 !dbg !79 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.93210ed0b06d6c25:ImplicitAs.11da3bb3c3dce533.Core.5da21217b3d19eab"(i32 %other), !dbg !85
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !86
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !86
@@ -177,8 +174,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

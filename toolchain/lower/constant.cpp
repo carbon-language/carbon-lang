@@ -100,6 +100,9 @@ class ConstantContext {
     return file_context_->llvm_module();
   }
   auto sem_ir() const -> const SemIR::File& { return file_context_->sem_ir(); }
+  auto inst_namer() const -> const SemIR::InstNamer* {
+    return file_context_->inst_namer();
+  }
 
  private:
   FileContext* file_context_;
@@ -117,7 +120,11 @@ static auto EmitAggregateConstant(ConstantContext& context,
   llvm::SmallVector<llvm::Constant*> elements;
   elements.reserve(refs.size());
   for (auto ref : refs) {
-    elements.push_back(context.GetConstant(ref));
+    if (auto* constant = context.GetConstant(ref)) {
+      elements.push_back(constant);
+    } else {
+      return nullptr;
+    }
   }
 
   return ConstantType::get(llvm_type, elements);
@@ -172,6 +179,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
   auto* aggr_addr = context.GetConstant(inst.aggregate_id);
+  if (!aggr_addr) {
+    return nullptr;
+  }
   auto* aggr_type = context.GetType(
       context.sem_ir().insts().Get(inst.aggregate_id).type_id());
 
@@ -290,6 +300,25 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
           /*Name=*/"", /*AddressSpace=*/0, &context.llvm_module());
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::Temporary inst)
+    -> llvm::Constant* {
+  auto* const_value = context.GetConstant(inst.init_id);
+
+  llvm::StringRef const_name;
+  if (context.inst_namer()) {
+    const_name = context.inst_namer()->GetUnscopedNameFor(inst.init_id);
+  }
+  if (const_name.empty()) {
+    const_name = "const";
+  }
+
+  auto* global_variable = new llvm::GlobalVariable(
+      context.llvm_module(), context.GetType(inst.type_id),
+      /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
+      const_name);
+  return global_variable;
+}
+
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::UninitializedValue inst) -> llvm::Constant* {
   return llvm::PoisonValue::get(context.GetType(inst.type_id));
@@ -297,6 +326,10 @@ static auto EmitAsConstant(ConstantContext& context,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
     -> llvm::Constant* {
+  if (!inst.pattern_id.has_value()) {
+    // This constant is a placeholder and should not be used by lowering.
+    return nullptr;
+  }
   // Create the corresponding global variable declaration.
   return context.BuildGlobalVariableDecl(inst);
 }

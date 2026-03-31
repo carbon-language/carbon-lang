@@ -225,8 +225,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %TrivialDestructor.decl: type = class_decl @TrivialDestructor [concrete = constants.%TrivialDestructor] {} {}
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.decl: %TrivialDestructor.cpp_destructor.type = fn_decl @TrivialDestructor.cpp_destructor [concrete = constants.%TrivialDestructor.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b8 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.1b8 = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.1b8 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b8 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
@@ -306,8 +306,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %TrivialDestructor = ref_binding a, %a.var
 // CHECK:STDOUT:   %TrivialDestructor.Op.decl: %TrivialDestructor.Op.type = fn_decl @TrivialDestructor.Op [concrete = constants.%TrivialDestructor.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b8 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.1b8 = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.1b8 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b8 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
@@ -324,9 +324,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT: fn @TrivialDestructor.Op(%self.param: ref %TrivialDestructor) [thunk imports.%TrivialDestructor.cpp_destructor.decl] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Op.ref: %TrivialDestructor.cpp_destructor.type = name_ref Op, imports.%TrivialDestructor.cpp_destructor.decl [concrete = constants.%TrivialDestructor.cpp_destructor]
-// CHECK:STDOUT:   %self.ref: ref %TrivialDestructor = name_ref self, %self.param
-// CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.bound: <bound method> = bound_method %self.ref, %Op.ref
-// CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.call: init %empty_tuple.type = call %TrivialDestructor.cpp_destructor.bound(%self.ref)
+// CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref
+// CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.call: init %empty_tuple.type = call %TrivialDestructor.cpp_destructor.bound(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

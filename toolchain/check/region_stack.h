@@ -27,6 +27,9 @@ class RegionStack {
     stack_.AppendToTop(entry_block_id);
   }
 
+  // Mark the start of a new empty, unreachable region.
+  auto PushUnreachableRegion() -> void { stack_.PushArray(); }
+
   // Add `block_id` to the most recently pushed single-entry region. To preserve
   // the single-entry property, `block_id` must not be directly reachable from
   // any block outside the region. To ensure the region's blocks are in lexical

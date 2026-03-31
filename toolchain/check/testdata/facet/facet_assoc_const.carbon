@@ -150,7 +150,7 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // CHECK:STDERR:                      ^~~~~~~
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let unused c: {} = H(T, a);
 }

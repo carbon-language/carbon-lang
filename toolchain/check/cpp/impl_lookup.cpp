@@ -26,8 +26,8 @@ namespace Carbon::Check {
 static auto TypeAsClassDecl(Context& context,
                             SemIR::ConstantId query_self_const_id)
     -> clang::CXXRecordDecl* {
-  auto self_inst_id = context.constant_values().GetInstId(query_self_const_id);
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(self_inst_id);
+  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
+      query_self_const_id);
   if (!class_type) {
     // Not a class.
     return nullptr;
@@ -61,9 +61,7 @@ struct DeclInfo {
 // Returns SemIR::InstId::None if a C++ function is not found, and
 // SemIR::ErrorInst::InstId if an error occurs.
 static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
-                          DeclInfo decl_info,
-                          const TypeStructure* best_impl_type_structure,
-                          SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+                          DeclInfo decl_info) -> SemIR::InstId {
   if (!decl_info.decl) {
     // The C++ type is not able to implement the interface.
     return SemIR::InstId::None;
@@ -85,20 +83,13 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
       context, loc_id, clang::DeclAccessPair::make(cpp_fn, cpp_fn->getAccess()),
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
-  // TODO: Infer a C++ type structure and check whether it's less strict than
-  // the best Carbon type structure.
-  static_cast<void>(best_impl_type_structure);
-  static_cast<void>(best_impl_loc_id);
-
   return fn_id;
 }
 
 static auto BuildCopyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   // TODO: This should provide `Copy` for enums and other trivially copyable
@@ -110,33 +101,7 @@ static auto BuildCopyWitness(
   auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                 class_decl, clang::Qualifiers::Const),
                             .signature = {.num_params = 1}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
-  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
-    return fn_id;
-  }
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
-}
-
-static auto BuildDestroyWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  auto& clang_sema = context.clang_sema();
-
-  // TODO: This should provide `Destroy` for enums and other trivially
-  // destructible types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
-    return SemIR::InstId::None;
-  }
-  auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
-                            .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -147,9 +112,7 @@ static auto BuildDestroyWitness(
 static auto BuildCppUnsafeDerefWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
@@ -168,8 +131,7 @@ static auto BuildCppUnsafeDerefWitness(
   }
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info,
-                             best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
@@ -187,25 +149,79 @@ static auto BuildCppUnsafeDerefWitness(
                             {result_type_id, fn_id});
 }
 
+static auto BuildDefaultWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto& clang_sema = context.clang_sema();
+
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
+  }
+  // Clang would produce a warning for classes with uninitialized
+  // [[clang::requires_init]] fields for which default initialization is
+  // performed, and we don't have a good place to produce that warning.
+  // That happens if class_decl->hasUninitializedExplicitInitFields() is true.
+  //
+  // TODO: Consider treating such types as not implementing `Default`.
+  auto decl_info =
+      DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
+               .signature = {.num_params = 0}};
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
+static auto BuildDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto& clang_sema = context.clang_sema();
+
+  // TODO: This should provide `Destroy` for enums and other trivially
+  // destructible types.
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
+  }
+  auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
+                            .signature = {.num_params = 0}};
+  auto fn_id = GetFunctionId(context, loc_id, decl_info);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  // TODO: Infer a C++ type structure and check whether it's less strict than
+  // the best Carbon type structure.
+  static_cast<void>(best_impl_type_structure);
+  static_cast<void>(best_impl_loc_id);
+
   switch (core_interface) {
     case CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id,
-                              best_impl_type_structure, best_impl_loc_id);
+                              query_specific_interface_id);
+    case CoreInterface::CppUnsafeDeref:
+      return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
+                                        query_specific_interface_id);
+    case CoreInterface::Default:
+      return BuildDefaultWitness(context, loc_id, query_self_const_id,
+                                 query_specific_interface_id);
     case CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id,
-                                 best_impl_type_structure, best_impl_loc_id);
-    case CoreInterface::CppUnsafeDeref:
-      return BuildCppUnsafeDerefWitness(
-          context, loc_id, query_self_const_id, query_specific_interface_id,
-          best_impl_type_structure, best_impl_loc_id);
+                                 query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
     case CoreInterface::IntFitsIn:

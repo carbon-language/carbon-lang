@@ -79,6 +79,10 @@ constexpr int f(bool b) {
 }
 ''';
 
+// CHECK:STDERR: function_bool_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: let a: array(i32, Cpp.f(true)) = (1, 2, 3);
+// CHECK:STDERR:                   ^~~~~~~~~~~
+// CHECK:STDERR:
 let a: array(i32, Cpp.f(true)) = (1, 2, 3);
 
 // --- function_float_param.carbon
@@ -91,6 +95,10 @@ constexpr int f(float b) {
 }
 ''';
 
+// CHECK:STDERR: function_float_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
+// CHECK:STDERR:                   ^~~~~~~~~~
+// CHECK:STDERR:
 let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
 
 // --- function_return_bool.carbon
@@ -120,8 +128,14 @@ constexpr int f(int a) {
 }
 ''';
 
-// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+4]]:19: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-// CHECK:STDERR: let a: array(i32, Cpp.f(5)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+10]]:26: error: call to immediate function 'f' is not a constant expression [CppInteropParseError]
+// CHECK:STDERR:    21 | let a: array(i32, Cpp.f(5)) = (1, 2, 3);
+// CHECK:STDERR:       |                          ^
+// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE-7]]:10: note: cannot refer to element 5 of array of 1 element in a constant expression [CppInteropParseNote]
+// CHECK:STDERR:     7 |   return arr[a];
+// CHECK:STDERR:       |          ^
+// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+4]]:26: note: in call to 'f(5)' [CppInteropParseNote]
+// CHECK:STDERR:    21 | let a: array(i32, Cpp.f(5)) = (1, 2, 3);
+// CHECK:STDERR:       |                          ^
 // CHECK:STDERR:
 let a: array(i32, Cpp.f(5)) = (1, 2, 3);

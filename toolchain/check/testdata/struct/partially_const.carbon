@@ -84,10 +84,10 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.8ae = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.8ae = return_slot_pattern %return.param_patt, %struct_type.a.b.c [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15_25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc15_34: type = type_literal constants.%i32 [concrete = constants.%i32]

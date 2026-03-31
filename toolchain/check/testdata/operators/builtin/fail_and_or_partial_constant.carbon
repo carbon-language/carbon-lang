@@ -81,8 +81,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
@@ -124,9 +124,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_17: type = block_arg !if.expr.result.loc9
-// CHECK:STDOUT:   br !.loc9_14
+// CHECK:STDOUT:   br !.loc9_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc9_14:
+// CHECK:STDOUT: !.loc9_15:
 // CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete]
@@ -161,9 +161,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
 // CHECK:STDOUT:   %.loc14_17: type = block_arg !if.expr.result.loc14
-// CHECK:STDOUT:   br !.loc14_14
+// CHECK:STDOUT:   br !.loc14_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14_14:
+// CHECK:STDOUT: !.loc14_15:
 // CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -201,8 +201,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [concrete = constants.%KnownValueButNonConstantCondition] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
@@ -244,9 +244,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_17: type = block_arg !if.expr.result.loc11
-// CHECK:STDOUT:   br !.loc11_14
+// CHECK:STDOUT:   br !.loc11_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_14:
+// CHECK:STDOUT: !.loc11_15:
 // CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete]
@@ -281,9 +281,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc16:
 // CHECK:STDOUT:   %.loc16_17: type = block_arg !if.expr.result.loc16
-// CHECK:STDOUT:   br !.loc16_14
+// CHECK:STDOUT:   br !.loc16_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc16_14:
+// CHECK:STDOUT: !.loc16_15:
 // CHECK:STDOUT:   %d: ref <error> = ref_binding d, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

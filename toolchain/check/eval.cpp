@@ -588,24 +588,29 @@ static auto GetConstantValue(EvalContext& eval_context,
                              Phase* phase) -> SemIR::InstBlockId = delete;
 
 // If the given instruction block contains only constants, returns a
-// corresponding block of those values.
-static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::InstBlockId inst_block_id, Phase* phase)
-    -> SemIR::InstBlockId {
+// corresponding block of those values. Ignores the instructions in the
+// specified range of indexes, replacing those elements with `None`.
+static auto GetConstantBlockValueIgnoringIndexRange(
+    EvalContext& eval_context, SemIR::InstBlockId inst_block_id, Phase* phase,
+    std::pair<int, int> ignored_range) -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
   auto insts = eval_context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
-    auto const_inst_id = GetConstantValue(eval_context, inst_id, phase);
-    if (!const_inst_id.has_value()) {
-      return SemIR::InstBlockId::None;
+    auto const_inst_id = SemIR::InstId::None;
+    if (static_cast<int>(const_insts.size()) < ignored_range.first ||
+        static_cast<int>(const_insts.size()) >= ignored_range.second) {
+      const_inst_id = GetConstantValue(eval_context, inst_id, phase);
+      if (!const_inst_id.has_value()) {
+        return SemIR::InstBlockId::None;
+      }
     }
 
     // Once we leave the small buffer, we know the first few elements are all
-    // constant, so it's likely that the entire block is constant. Resize to the
-    // target size given that we're going to allocate memory now anyway.
+    // constant, so it's likely that the entire block is constant. Resize to
+    // the target size given that we're going to allocate memory now anyway.
     if (const_insts.size() == const_insts.capacity()) {
       const_insts.reserve(insts.size());
     }
@@ -615,6 +620,15 @@ static auto GetConstantValue(EvalContext& eval_context,
   // TODO: If the new block is identical to the original block, and we know the
   // old ID was canonical, return the original ID.
   return eval_context.inst_blocks().AddCanonical(const_insts);
+}
+
+// If the given instruction block contains only constants, returns a
+// corresponding block of those values.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::InstBlockId inst_block_id, Phase* phase)
+    -> SemIR::InstBlockId {
+  return GetConstantBlockValueIgnoringIndexRange(eval_context, inst_block_id,
+                                                 phase, {0, 0});
 }
 
 // Compute the constant value of a type block. This may be different from the
@@ -2088,6 +2102,39 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         SemIR::SpecificId specific_id,
                         SemIR::InstBlockId args_id) -> SemIR::ConstantId;
 
+// Returns the range of parameter indexes that contain the return storage for
+// this function call.
+static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
+                                            const SemIR::Callee& callee)
+    -> std::pair<int, int> {
+  if (const auto* callee_function =
+          std::get_if<SemIR::CalleeFunction>(&callee)) {
+    const auto& function =
+        eval_context.functions().Get(callee_function->function_id);
+    return {function.call_param_ranges.return_begin().index,
+            function.call_param_ranges.return_end().index};
+  }
+
+  return {0, 0};
+}
+
+// Replace the `args_id` field of a call with its constant value. The return
+// storage argument, if any, is instead replaced with `None`.
+static auto ReplaceCallArgsFieldWithConstantValue(EvalContext& eval_context,
+                                                  const SemIR::Callee& callee,
+                                                  SemIR::Call* call,
+                                                  Phase* phase) -> bool {
+  auto return_storage_param_index_range =
+      GetReturnStorageParamIndexRange(eval_context, callee);
+  auto args_id = GetConstantBlockValueIgnoringIndexRange(
+      eval_context, call->args_id, phase, return_storage_param_index_range);
+  if (!args_id.has_value() && call->args_id.has_value()) {
+    return false;
+  }
+  call->args_id = args_id;
+  return IsConstantOrError(*phase);
+}
+
 // Makes a constant for a call instruction.
 static auto MakeConstantForCall(EvalContext& eval_context,
                                 SemIR::InstId inst_id, SemIR::Call call)
@@ -2133,8 +2180,8 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   bool has_constant_operands =
       has_constant_callee &&
       ReplaceTypeWithConstantValue(eval_context, inst_id, &call, &phase) &&
-      ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::args_id,
-                                    &phase);
+      ReplaceCallArgsFieldWithConstantValue(eval_context, callee, &call,
+                                            &phase);
   if (phase == Phase::UnknownDueToError) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -2204,14 +2251,20 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
 // TryEvalTypedInst to avoid repeated instantiation of common code.
 static auto ConvertEvalResultToConstantId(Context& context,
                                           ConstantEvalResult result,
+                                          SemIR::InstKind orig_inst_kind,
                                           Phase orig_phase)
     -> SemIR::ConstantId {
   if (result.is_new()) {
-    return MakeConstantResult(
-        context, result.new_inst(),
-        result.same_phase_as_inst()
-            ? orig_phase
-            : ComputeInstPhase(context, result.new_inst()));
+    auto is_symbolic_only =
+        orig_inst_kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
+    auto new_phase = result.same_phase_as_inst()
+                         ? orig_phase
+                         : ComputeInstPhase(context, result.new_inst());
+    CARBON_CHECK(!is_symbolic_only || new_phase > Phase::Concrete ||
+                     result.new_inst().kind() != orig_inst_kind,
+                 "SymbolicOnly instruction `{0}` has a concrete value",
+                 orig_inst_kind);
+    return MakeConstantResult(context, result.new_inst(), new_phase);
   }
   return result.existing();
 }
@@ -2292,11 +2345,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return ConvertEvalResultToConstantId(
           eval_context.context(),
           EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
-          phase);
+          InstT::Kind, phase);
     } else {
       return ConvertEvalResultToConstantId(
           eval_context.context(),
-          EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
+          EvalConstantInst(eval_context.context(), inst.As<InstT>()),
+          InstT::Kind, phase);
     }
   }
 }
@@ -2393,6 +2447,7 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
       return ConvertEvalResultToConstantId(
           eval_context.context(),
           EvalConstantInst(eval_context.context(), access),
+          SemIR::SymbolicBindingType::Kind,
           ComputeInstPhase(eval_context.context(), access));
     }
   }
@@ -2421,6 +2476,24 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
   }
 
   return MakeConstantResult(eval_context.context(), inst, phase);
+}
+
+template <>
+auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
+                                        SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto temporary = inst.As<SemIR::Temporary>();
+  temporary.storage_id = SemIR::InstId::None;
+
+  Phase phase = Phase::Concrete;
+  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &temporary,
+                                    &phase) ||
+      !ReplaceFieldWithConstantValue(eval_context, &temporary,
+                                     &SemIR::Temporary::init_id, &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  return MakeConstantResult(eval_context.context(), temporary, phase);
 }
 
 // Returns whether `const_id` is the same constant facet value as
@@ -2548,7 +2621,7 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
-    -> SemIR::InstBlockId {
+    -> std::pair<SemIR::InstBlockId, bool> {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
@@ -2570,15 +2643,19 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  bool has_error = false;
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
+    if (const_id == SemIR::ErrorInst::ConstantId) {
+      has_error = true;
+    }
     result[i] = context.constant_values().GetInstId(const_id);
     CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
   }
 
-  return context.inst_blocks().Add(result);
+  return {context.inst_blocks().Add(result), has_error};
 }
 
 // Information about the function call we are currently executing. Unlike
@@ -2830,6 +2907,24 @@ auto TryExecTypedInst<SemIR::OutParam>(FunctionExecContext& eval_context,
     // TODO: Remove this once we stop adding out parameters with no
     // corresponding argument.
     eval_context.locals().Insert(inst_id, SemIR::ConstantId::None);
+    return SemIR::ConstantId::None;
+  }
+
+  if (!eval_context.args()[param.index.index].has_value()) {
+    // The argument will be `None` for an index corresponding to a return
+    // storage argument for return values that have an in-place initializing
+    // representation. Produce an opaque "out parameter" variable for now, so
+    // that references to it can still successfully evaluate.
+    //
+    // TODO: Create and track mutable storage for the return value here. This is
+    // necessary to support things like `returned var`.
+    eval_context.locals().Insert(
+        inst_id,
+        MakeConstantResult(
+            eval_context.context(),
+            SemIR::VarStorage{.type_id = inst.type_id(),
+                              .pattern_id = SemIR::AbsoluteInstId::None},
+            Phase::Concrete));
     return SemIR::ConstantId::None;
   }
 

@@ -87,6 +87,12 @@ auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
 // Adds the instruction to the current block if it might be referenced by its
 // constant value; otherwise, does not add the instruction to an instruction
 // block.
+//
+// The resulting ConstantId should be used immediately, or its canonical
+// instruction can be inserted into some other instruction (though it won't have
+// location information, so GetOrAddInst is typically better unless a canonical
+// instruction is required). The constant value can't be modified by specifics
+// unless it is done so as part of some other instruction.
 auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId;
 

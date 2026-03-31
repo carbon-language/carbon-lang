@@ -34,7 +34,7 @@ fn F() {
   // CHECK:STDERR:         ^
   // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+4]]:11: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   class C(C:! type) {
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR:
   class C(C:! type) {
   }
@@ -124,18 +124,18 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc5_11.2: type) {
-// CHECK:STDOUT:   %T.loc5_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_11.1 (constants.%T)]
+// CHECK:STDOUT: generic class @C(%T.loc5_12.2: type) {
+// CHECK:STDOUT:   %T.loc5_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_12.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5_11.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_11.1) [symbolic = %C (constants.%C.5d4)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc5_11.1 [symbolic = %C.elem (constants.%C.elem.d15)]
-// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_11.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5_12.1 [symbolic = %require_complete (constants.%require_complete.944)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_12.1) [symbolic = %C (constants.%C.5d4)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc5_12.1 [symbolic = %C.elem (constants.%C.elem.d15)]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_12.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_11.2 [symbolic = %T.loc5_11.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_12.2 [symbolic = %T.loc5_12.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6: @C.%C.elem (%C.elem.d15) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
@@ -156,7 +156,7 @@ class C(C:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc5_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_11.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_12.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7db = ref_binding_pattern v [concrete]
@@ -190,11 +190,11 @@ class C(C:! type) {
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C.d45) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   %T.loc5_11.1 => constants.%T
+// CHECK:STDOUT:   %T.loc5_12.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
-// CHECK:STDOUT:   %T.loc5_11.1 => constants.%i32
+// CHECK:STDOUT:   %T.loc5_12.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -236,8 +236,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc13_11.2: type) {
-// CHECK:STDOUT:   %C.loc13_11.1: type = symbolic_binding C, 0 [symbolic = %C.loc13_11.1 (constants.%C.67d)]
+// CHECK:STDOUT: generic class @C(%C.loc13_12.2: type) {
+// CHECK:STDOUT:   %C.loc13_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc13_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -259,13 +259,13 @@ class C(C:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc13_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.loc13_11.2: type = symbolic_binding C, 0 [symbolic = %C.loc13_11.1 (constants.%C.67d)]
+// CHECK:STDOUT:     %C.loc13_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc13_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.67d) {
-// CHECK:STDOUT:   %C.loc13_11.1 => constants.%C.67d
+// CHECK:STDOUT:   %C.loc13_12.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon
@@ -302,12 +302,12 @@ class C(C:! type) {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.loc4_9.2: type = symbolic_binding C, 0 [symbolic = %C.loc4_9.1 (constants.%C.67d)]
+// CHECK:STDOUT:     %C.loc4_10.2: type = symbolic_binding C, 0 [symbolic = %C.loc4_10.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc4_9.2: type) {
-// CHECK:STDOUT:   %C.loc4_9.1: type = symbolic_binding C, 0 [symbolic = %C.loc4_9.1 (constants.%C.67d)]
+// CHECK:STDOUT: generic class @C(%C.loc4_10.2: type) {
+// CHECK:STDOUT:   %C.loc4_10.1: type = symbolic_binding C, 0 [symbolic = %C.loc4_10.1 (constants.%C.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -321,6 +321,6 @@ class C(C:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.67d) {
-// CHECK:STDOUT:   %C.loc4_9.1 => constants.%C.67d
+// CHECK:STDOUT:   %C.loc4_10.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

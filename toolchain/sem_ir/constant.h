@@ -181,6 +181,27 @@ class ConstantValueStore {
     return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }
 
+  // Returns whether the underlying constant inst for the given constant is the
+  // specified type.
+  template <typename InstT>
+  auto InstIs(ConstantId const_id) const -> bool {
+    return insts_->Is<InstT>(GetInstId(const_id));
+  }
+
+  // Returns the requested instruction from the underlying constant inst, which
+  // is known to have the specified type.
+  template <typename InstT>
+  auto GetInstAs(ConstantId const_id) const -> InstT {
+    return insts_->GetAs<InstT>(GetInstId(const_id));
+  }
+
+  // Returns the requested instruction from the underlying constant inst as the
+  // specified type, if it is of the that type.
+  template <typename InstT>
+  auto TryGetInstAs(ConstantId const_id) const -> std::optional<InstT> {
+    return insts_->TryGetAs<InstT>(GetInstId(const_id));
+  }
+
   // Given an instruction, returns the unique constant instruction that is
   // equivalent to it. Returns `None` for a non-constant instruction.
   auto GetConstantInstId(InstId inst_id) const -> InstId {

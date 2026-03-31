@@ -10,30 +10,38 @@
 
 namespace Carbon::Check {
 
-// Marks the start of a region of insts in a pattern context that might
-// represent an expression or a pattern. Typically this is called when
-// handling a parse node that can immediately precede a subpattern (such
-// as `let` or a `,` in a pattern list), and the handler for the subpattern
-// node makes the matching `EndSubpatternAs*` call.
+// Marks the start of a region of insts in a pattern context that might contain
+// an expression. Typically this is called when handling a parse node that can
+// immediately precede a subpattern (such as `let` or a `,` in a pattern list).
+// `End[Empty]Subpattern` should be called later by the consumer of the
+// subpattern.
 auto BeginSubpattern(Context& context) -> void;
 
-// Ends a region started by BeginSubpattern (in stack order), treating it as
-// an expression with the given result, and returns the ID of the region. The
-// region will not yet have any control-flow edges into or out of it.
-auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
+// Consumes the expression in a region started by the most recent
+// BeginSubpattern, and returns the ID of the region. The region will not yet
+// have any control-flow edges into or out of it.
+auto ConsumeSubpatternExpr(Context& context, SemIR::InstId result_id)
     -> SemIR::ExprRegionId;
 
 // Ends a region started by BeginSubpattern (in stack order), asserting that
-// it had no expression content.
-auto EndSubpatternAsNonExpr(Context& context) -> void;
+// it either had no expression content or the expression has been consumed.
+auto EndEmptySubpattern(Context& context) -> void;
+
+// Ends a region started by BeginSubpattern (in stack order). If the top of the
+// node stack is an expression, the subpattern region is consumed and converted
+// to an expression pattern, which replaces the expression on the node stack.
+// Otherwise, the top of the node stack should be a pattern, in which case this
+// asserts that the subpattern region is either empty or has been consumed.
+//
+// The node stack is passed explicitly as a reminder that this function affects
+// the node stack, unlike the other *Subpattern functions.
+auto EndSubpattern(Context& context, NodeStack& node_stack) -> void;
 
 // Information about a created binding pattern.
 struct BindingPatternInfo {
   SemIR::InstId pattern_id;
   SemIR::InstId bind_id;
 };
-
-// TODO: Add EndSubpatternAsPattern, when needed.
 
 // The phase of a binding pattern.
 enum class BindingPhase { Template, Symbolic, Runtime };

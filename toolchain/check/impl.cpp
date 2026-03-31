@@ -729,11 +729,8 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     // requires LookupImplWitness to return a partial result, or take a
     // diagnostic lambda or something.
     if (!result.has_value()) {
-      auto facet_type_inst_id =
-          context.constant_values().GetInstId(facet_type_const_id);
-
       if (!result.has_error_value() &&
-          facet_type_inst_id != SemIR::ErrorInst::InstId) {
+          facet_type_const_id != SemIR::ErrorInst::ConstantId) {
         CARBON_DIAGNOSTIC(RequireImplsNotImplemented, Error,
                           "interface `{0}` being implemented requires that {1} "
                           "implements {2}",
@@ -742,8 +739,8 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
         context.emitter().Emit(
             loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
-            context.insts()
-                .GetAs<SemIR::FacetType>(facet_type_inst_id)
+            context.constant_values()
+                .GetInstAs<SemIR::FacetType>(facet_type_const_id)
                 .facet_type_id);
       }
     }

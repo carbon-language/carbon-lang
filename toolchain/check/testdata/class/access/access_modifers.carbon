@@ -52,7 +52,7 @@ fn Run() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
@@ -129,7 +129,7 @@ class A {
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   protected let x: i32 = 5;
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~~~~~
 // CHECK:STDERR:
 let x: i32 = A.x;
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
@@ -137,7 +137,7 @@ let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   private let y: i32 = 5;
-// CHECK:STDERR:               ^
+// CHECK:STDERR:               ^~~~~~
 // CHECK:STDERR:
 let y: i32 = A.y;
 
@@ -244,8 +244,8 @@ class A {
 // CHECK:STDOUT:   %.loc6_45.2: %i32 = converted %int_5, %.loc6_45.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT: %i32 = value_binding SOME_INTERNAL_CONSTANT, %.loc6_45.2
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.decl: %Circle.SomeInternalFunction.type = fn_decl @Circle.SomeInternalFunction [concrete = constants.%Circle.SomeInternalFunction] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -253,8 +253,8 @@ class A {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Circle.Make.decl: %Circle.Make.type = fn_decl @Circle.Make [concrete = constants.%Circle.Make] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.fcb = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.fcb = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fcb = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.fcb = return_slot_pattern %return.param_patt, %Self.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %Self.ref [concrete = constants.%.f65]
@@ -475,10 +475,10 @@ class A {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %Circle.elem = field_decl radius, element0 [concrete]
 // CHECK:STDOUT:   %Circle.GetRadius.decl: %Circle.GetRadius.type = fn_decl @Circle.GetRadius [concrete = constants.%Circle.GetRadius] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.fcb = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.fcb = value_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fcb = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.fcb = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc7: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -489,8 +489,8 @@ class A {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.decl: %Circle.SomeInternalFunction.type = fn_decl @Circle.SomeInternalFunction [concrete = constants.%Circle.SomeInternalFunction] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc11: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -498,10 +498,10 @@ class A {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Circle.Compute.decl: %Circle.Compute.type = fn_decl @Circle.Compute [concrete = constants.%Circle.Compute] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.fcb = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.fcb = value_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fcb = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.fcb = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32 [concrete = constants.%.ff5]

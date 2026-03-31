@@ -2,18 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LOWER_MANGLER_H_
-#define CARBON_TOOLCHAIN_LOWER_MANGLER_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
+#define CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
 
 #include <string>
 
 #include "clang/AST/Mangle.h"
-#include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
-namespace Carbon::Lower {
+namespace Carbon::SemIR {
 
 // A class for producing mangled (deterministically unique, at least partially
 // human readable) names for externally referenceable entities such as
@@ -21,10 +20,9 @@ namespace Carbon::Lower {
 class Mangler {
  public:
   // Initialize a new Mangler instance for mangling entities within the
-  // specified `FileContext`.
-  explicit Mangler(FileContext& file_context)
-      : file_context_(file_context),
-        fingerprinter_(file_context_.context().total_ir_count()) {}
+  // specified `File`.
+  Mangler(const SemIR::File& sem_ir, int total_ir_count)
+      : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.
@@ -66,7 +64,7 @@ class Mangler {
   // Generates a mangled name using Clang mangling for imported C++ functions.
   auto MangleCppClang(const clang::NamedDecl* decl) -> std::string;
 
-  auto sem_ir() const -> const SemIR::File& { return file_context_.sem_ir(); }
+  auto sem_ir() const -> const SemIR::File& { return sem_ir_; }
 
   auto names() const -> SemIR::NameStoreWrapper { return sem_ir().names(); }
 
@@ -78,13 +76,10 @@ class Mangler {
     return sem_ir().constant_values();
   }
 
-  FileContext& file_context_;
-
-  // TODO: If `file_context_` has an `InstNamer`, we could share its
-  // fingerprinter.
+  const SemIR::File& sem_ir_;
   SemIR::InstFingerprinter fingerprinter_;
 };
 
-}  // namespace Carbon::Lower
+}  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_LOWER_MANGLER_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_

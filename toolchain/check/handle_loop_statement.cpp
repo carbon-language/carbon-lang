@@ -123,6 +123,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
+  EndSubpattern(context, context.node_stack());
   auto pattern_block_id = context.pattern_block_stack().Pop();
   AddInst<SemIR::NameBindingDecl>(context, node_id,
                                   {.pattern_block_id = pattern_block_id});

@@ -184,7 +184,7 @@ auto HandleParseNode(Context& context,
       context.inst_block_stack().PeekOrAdd();
 
   context.inst_block_stack().Push();
-  context.require_impls_stack().PushArray();
+  context.require_impls_stack().Push(interface_id);
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -213,8 +213,8 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
   auto require_impls_block_id = context.require_impls_blocks().Add(
-      context.require_impls_stack().PeekArray());
-  context.require_impls_stack().PopArray();
+      context.require_impls_stack().PeekTop());
+  context.require_impls_stack().Pop();
 
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {

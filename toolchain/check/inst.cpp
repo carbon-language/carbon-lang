@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -178,11 +179,17 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     }
 
     case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
-      // Evaluation temporarily needs an InstId. Add one for now.
-      auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+      // Evaluation temporarily needs an InstId. Add one for now. We add the
+      // instruction outside of a block, and never call `FinishInst` for this
+      // non-canonical instruction. This means it never gets attached to the
+      // constant value, and is not added to any enclosing generic context's
+      // eval block.
+      auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+      CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n",
+                     loc_id_and_inst.inst);
       // TODO: Consider removing `inst_id` from `insts` if it's still the most
       // recently added instruction.
-      return context.constant_values().Get(inst_id);
+      return TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
     }
 
     case SemIR::InstConstantNeedsInstIdKind::Permanent: {

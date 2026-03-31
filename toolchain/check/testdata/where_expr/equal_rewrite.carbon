@@ -88,7 +88,7 @@ fn WithBool(R:! O where .P = bool) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:23: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn WithInteger(unused Q:! O where .P = i32) {}
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   WithInteger(R);
 }
@@ -110,7 +110,7 @@ fn WithU(W:! S where .U = ()) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:17: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn WithT(unused V:! S where .T = ()) {}
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   WithT(W);
 }
@@ -129,7 +129,7 @@ fn Calls() {
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-7]]:1: in import [InImport]
   // CHECK:STDERR: equal_constraint.carbon:9:10: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Equal(T:! N where .P = {});
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Equal(bool);
 
@@ -139,7 +139,7 @@ fn Calls() {
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-17]]:1: in import [InImport]
   // CHECK:STDERR: nested_rewrites.carbon:10:18: note: initializing generic parameter `D` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn NestedRewrite(D:! (A where .B = bool) where .C = ());
-  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   NestedRewrite(i32);
 }
@@ -260,18 +260,18 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_28.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_10.2: %N_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_10.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_11.2: %N_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_11.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(%T.loc9_10.2: %N_where.type) {
-// CHECK:STDOUT:   %T.loc9_10.1: %N_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_10.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @Equal(%T.loc9_11.2: %N_where.type) {
+// CHECK:STDOUT:   %T.loc9_11.1: %N_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_11.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
-// CHECK:STDOUT:   %T.loc9_10.1 => constants.%T
+// CHECK:STDOUT:   %T.loc9_11.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_rewrites.carbon
@@ -327,18 +327,18 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_54.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %D.loc10_18.2: %A_where.type.321 = symbolic_binding D, 0 [symbolic = %D.loc10_18.1 (constants.%D)]
+// CHECK:STDOUT:     %D.loc10_19.2: %A_where.type.321 = symbolic_binding D, 0 [symbolic = %D.loc10_19.1 (constants.%D)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NestedRewrite(%D.loc10_18.2: %A_where.type.321) {
-// CHECK:STDOUT:   %D.loc10_18.1: %A_where.type.321 = symbolic_binding D, 0 [symbolic = %D.loc10_18.1 (constants.%D)]
+// CHECK:STDOUT: generic fn @NestedRewrite(%D.loc10_19.2: %A_where.type.321) {
+// CHECK:STDOUT:   %D.loc10_19.1: %A_where.type.321 = symbolic_binding D, 0 [symbolic = %D.loc10_19.1 (constants.%D)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
-// CHECK:STDOUT:   %D.loc10_18.1 => constants.%D
+// CHECK:STDOUT:   %D.loc10_19.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeated_rewrite.carbon
@@ -384,7 +384,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G.loc9_22.2: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_22.1 (constants.%G)]
+// CHECK:STDOUT:     %G.loc9_23.2: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_23.1 (constants.%G)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [concrete = constants.%RepeatedRewrite] {
 // CHECK:STDOUT:     %H.patt: %pattern_type.606 = symbolic_binding_pattern H, 0 [concrete]
@@ -412,12 +412,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.subst, %i32.loc11_50
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %H.loc11_20.2: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_20.1 (constants.%H)]
+// CHECK:STDOUT:     %H.loc11_21.2: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_21.1 (constants.%H)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_22.2: %E_where.type) {
-// CHECK:STDOUT:   %G.loc9_22.1: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_22.1 (constants.%G)]
+// CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_23.2: %E_where.type) {
+// CHECK:STDOUT:   %G.loc9_23.1: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_23.1 (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -427,8 +427,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_20.2: %E_where.type) {
-// CHECK:STDOUT:   %H.loc11_20.1: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_20.1 (constants.%H)]
+// CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_21.2: %E_where.type) {
+// CHECK:STDOUT:   %H.loc11_21.1: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_21.1 (constants.%H)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
@@ -440,28 +440,28 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%G) {
-// CHECK:STDOUT:   %G.loc9_22.1 => constants.%G
+// CHECK:STDOUT:   %G.loc9_23.1 => constants.%G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%H) {
-// CHECK:STDOUT:   %H.loc11_20.1 => constants.%H
+// CHECK:STDOUT:   %H.loc11_21.1 => constants.%H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%H) {
-// CHECK:STDOUT:   %G.loc9_22.1 => constants.%H
+// CHECK:STDOUT:   %G.loc9_23.1 => constants.%H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%I) {
-// CHECK:STDOUT:   %H.loc11_20.1 => constants.%I
+// CHECK:STDOUT:   %H.loc11_21.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.43f8b6.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
-// CHECK:STDOUT:   %G.loc9_22.1 => constants.%I
+// CHECK:STDOUT:   %G.loc9_23.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -517,7 +517,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_53
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %M.loc10_24.2: %J_where.type = symbolic_binding M, 0 [symbolic = %M.loc10_24.1 (constants.%M)]
+// CHECK:STDOUT:     %M.loc10_25.2: %J_where.type = symbolic_binding M, 0 [symbolic = %M.loc10_25.1 (constants.%M)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reversed.decl: %Reversed.type = fn_decl @Reversed [concrete = constants.%Reversed] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.a2c = symbolic_binding_pattern N, 0 [concrete]
@@ -545,12 +545,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc12_45.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc12_13.2: %J_where.type = symbolic_binding N, 0 [symbolic = %N.loc12_13.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc12_14.2: %J_where.type = symbolic_binding N, 0 [symbolic = %N.loc12_14.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Alphabetical(%M.loc10_24.2: %J_where.type) {
-// CHECK:STDOUT:   %M.loc10_24.1: %J_where.type = symbolic_binding M, 0 [symbolic = %M.loc10_24.1 (constants.%M)]
+// CHECK:STDOUT: generic fn @Alphabetical(%M.loc10_25.2: %J_where.type) {
+// CHECK:STDOUT:   %M.loc10_25.1: %J_where.type = symbolic_binding M, 0 [symbolic = %M.loc10_25.1 (constants.%M)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -560,8 +560,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Reversed(%N.loc12_13.2: %J_where.type) {
-// CHECK:STDOUT:   %N.loc12_13.1: %J_where.type = symbolic_binding N, 0 [symbolic = %N.loc12_13.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @Reversed(%N.loc12_14.2: %J_where.type) {
+// CHECK:STDOUT:   %N.loc12_14.1: %J_where.type = symbolic_binding N, 0 [symbolic = %N.loc12_14.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
@@ -573,15 +573,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%M) {
-// CHECK:STDOUT:   %M.loc10_24.1 => constants.%M
+// CHECK:STDOUT:   %M.loc10_25.1 => constants.%M
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Reversed(constants.%N) {
-// CHECK:STDOUT:   %N.loc12_13.1 => constants.%N
+// CHECK:STDOUT:   %N.loc12_14.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%N) {
-// CHECK:STDOUT:   %M.loc10_24.1 => constants.%N
+// CHECK:STDOUT:   %M.loc10_25.1 => constants.%N
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

@@ -100,8 +100,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %UnrelatedScopes.decl: %UnrelatedScopes.type = fn_decl @UnrelatedScopes [concrete = constants.%UnrelatedScopes] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc15 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15 [concrete = constants.%.ff5]
@@ -109,10 +109,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EnclosingButAfter.decl: %EnclosingButAfter.type = fn_decl @EnclosingButAfter [concrete = constants.%EnclosingButAfter] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc25 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc25_34: Core.Form = init_form %i32.loc25 [concrete = constants.%.ff5]
@@ -207,10 +207,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   assign %v.var, %.loc27_14
 // CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
-// CHECK:STDOUT:   %.loc27_18: %i32 = acquire_value %v
+// CHECK:STDOUT:   %.loc27_19: %i32 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.1: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.1: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.1(%v.var)
-// CHECK:STDOUT:   return %.loc27_18
+// CHECK:STDOUT:   return %.loc27_19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
@@ -228,11 +228,11 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   assign %w.var, %.loc30_12
 // CHECK:STDOUT:   %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
-// CHECK:STDOUT:   %.loc30_16: %i32 = acquire_value %w
+// CHECK:STDOUT:   %.loc30_17: %i32 = acquire_value %w
 // CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %w.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%w.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.2: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.2: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.2(%v.var)
-// CHECK:STDOUT:   return %.loc30_16
+// CHECK:STDOUT:   return %.loc30_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -405,6 +405,16 @@ LLVM_DUMP_METHOD auto Dump(const File& file, RequireImplsId require_impls_id)
   return out.TakeStr();
 }
 
+static auto DumpEvalBlock(const File& file, llvm::StringRef region_name,
+                          InstBlockId block_id, bool has_error) -> std::string {
+  RawStringOstream out;
+  if (block_id.has_value()) {
+    out << "\nspecific " << region_name << " block"
+        << (has_error ? " (has error)" : "") << ": " << Dump(file, block_id);
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
     -> std::string {
   RawStringOstream out;
@@ -413,14 +423,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
     const auto& specific = file.specifics().Get(specific_id);
     out << '\n'
         << Dump(file, specific.args_id) << '\n'
-        << DumpGenericSummary(file, specific.generic_id);
-    if (specific.decl_block_id.has_value()) {
-      out << "\nspecific decl block: " << Dump(file, specific.decl_block_id);
-    }
-    if (specific.definition_block_id.has_value()) {
-      out << "\nspecific definition block: "
-          << Dump(file, specific.definition_block_id);
-    }
+        << DumpGenericSummary(file, specific.generic_id)
+        << DumpEvalBlock(file, "decl", specific.decl_block_id,
+                         specific.decl_block_has_error)
+        << DumpEvalBlock(file, "definition", specific.definition_block_id,
+                         specific.definition_block_has_error);
   }
   return out.TakeStr();
 }

@@ -113,10 +113,10 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestEmptyStruct.decl: %TestEmptyStruct.type = fn_decl @TestEmptyStruct [concrete = constants.%TestEmptyStruct] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern %s.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc11_45.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_45.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc11_45.2: Core.Form = init_form %.loc11_45.1 [concrete = constants.%.f34]
@@ -135,10 +135,10 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_34.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_34.2: Core.Form = init_form %.loc15_34.1 [concrete = constants.%.f34]
@@ -201,10 +201,10 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestEmptyStruct.decl: %TestEmptyStruct.type = fn_decl @TestEmptyStruct [concrete = constants.%TestEmptyStruct] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern %s.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc10_45.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_45.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc10_45.2: Core.Form = init_form %.loc10_45.1 [concrete = constants.%.f34]
@@ -223,10 +223,10 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_34.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc14_34.2: Core.Form = init_form %.loc14_34.1 [concrete = constants.%.f34]

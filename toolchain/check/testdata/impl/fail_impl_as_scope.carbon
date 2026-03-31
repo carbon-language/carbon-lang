@@ -270,9 +270,8 @@ class X {
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
 // CHECK:STDOUT:   %.429: type = fn_type_with_self_type %Z.WithSelf.Method.type.707, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.bound: <bound method> = bound_method %Point.val, %Point.as.Z.impl.Method [concrete]
+// CHECK:STDOUT:   %.fcf: ref %Point = temporary invalid, %Point.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -305,8 +304,8 @@ class X {
 // CHECK:STDOUT:   %Z.WithSelf.Zero.decl: @Z.WithSelf.%Z.WithSelf.Zero.type (%Z.WithSelf.Zero.type.e4a) = fn_decl @Z.WithSelf.Zero [symbolic = @Z.WithSelf.%Z.WithSelf.Zero (constants.%Z.WithSelf.Zero.3f4)] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.WithSelf.Zero.decl [concrete = constants.%assoc0.cc0]
 // CHECK:STDOUT:   %Z.WithSelf.Method.decl: @Z.WithSelf.%Z.WithSelf.Method.type (%Z.WithSelf.Method.type.dfd) = fn_decl @Z.WithSelf.Method [symbolic = @Z.WithSelf.%Z.WithSelf.Method (constants.%Z.WithSelf.Method.324)] {
-// CHECK:STDOUT:     %self.patt: @Z.WithSelf.Method.%pattern_type (%pattern_type.84b) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Z.WithSelf.Method.%pattern_type (%pattern_type.84b) = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Z.WithSelf.Method.%pattern_type (%pattern_type.84b) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @Z.WithSelf.Method.%pattern_type (%pattern_type.84b) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Z.WithSelf.Method.%Self.binding.as_type (%Self.binding.as_type.62d) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.62d)] {
@@ -343,8 +342,8 @@ class X {
 // CHECK:STDOUT:   impl: <error> as %Z.ref {
 // CHECK:STDOUT:     %<error>.as.Z.impl.Zero.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Zero.type (%<error>.as.Z.impl.Zero.type) = fn_decl @<error>.as.Z.impl.Zero [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Zero (constants.%<error>.as.Z.impl.Zero)] {} {}
 // CHECK:STDOUT:     %<error>.as.Z.impl.Method.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Method.type (%<error>.as.Z.impl.Method.type) = fn_decl @<error>.as.Z.impl.Method [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Method (constants.%<error>.as.Z.impl.Method)] {
-// CHECK:STDOUT:       %self.patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.84b) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.84b) = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:       %self.param_patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.84b) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.84b) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.62d) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_28.1: type = splice_block %.loc13_28.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.62d)] {
@@ -365,8 +364,8 @@ class X {
 // CHECK:STDOUT: impl @Point.as.Z.impl: %Self.ref as %Z.ref {
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.decl: %Point.as.Z.impl.Zero.type = fn_decl @Point.as.Z.impl.Zero [concrete = constants.%Point.as.Z.impl.Zero] {} {}
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.decl: %Point.as.Z.impl.Method.type = fn_decl @Point.as.Z.impl.Method [concrete = constants.%Point.as.Z.impl.Method] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c86 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c86 = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c86 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c86 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Point = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
@@ -457,11 +456,9 @@ class X {
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.WithSelf.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %impl.elem1: %.429 = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Point.as.Z.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1 [concrete = constants.%Point.as.Z.impl.Method.bound]
-// CHECK:STDOUT:   %.loc29_7.2: ref %Point = temporary %.loc29_5.2, %.loc29_7.1
-// CHECK:STDOUT:   %.loc29_7.3: %Point = acquire_value %.loc29_7.2
+// CHECK:STDOUT:   %.loc29_7.2: ref %Point = temporary %.loc29_5.2, %.loc29_7.1 [concrete = constants.%.fcf]
+// CHECK:STDOUT:   %.loc29_7.3: %Point = acquire_value %.loc29_7.2 [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.call: init %empty_tuple.type = call %bound_method(%.loc29_7.3)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc29_7.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc29_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

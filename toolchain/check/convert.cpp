@@ -434,10 +434,9 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
 
-  auto value_const_inst_id =
-      context.constant_values().GetInstId(value_const_id);
   if (auto tuple_value =
-          context.insts().TryGetAs<SemIR::TupleValue>(value_const_inst_id)) {
+          context.constant_values().TryGetInstAs<SemIR::TupleValue>(
+              value_const_id)) {
     for (auto tuple_inst_id :
          context.inst_blocks().Get(tuple_value->elements_id)) {
       // TODO: This call recurses back into conversion. Switch to an
@@ -448,8 +447,8 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
   } else {
     // A value of type TupleType that isn't a TupleValue must be a symbolic
     // binding.
-    CARBON_CHECK(
-        context.insts().Is<SemIR::SymbolicBinding>(value_const_inst_id));
+    CARBON_CHECK(context.constant_values().InstIs<SemIR::SymbolicBinding>(
+        value_const_id));
     // Form a TupleAccess for each element in the symbolic value, which is then
     // converted to a `type` or diagnosed as an error.
     auto tuple_type = context.types().GetAs<SemIR::TupleType>(value_type_id);
@@ -1512,7 +1511,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // by finding impl witnesses for the target FacetType.
     auto lookup_result = LookupImplWitness(
         context, loc_id, sem_ir.constant_values().Get(type_inst_id),
-        sem_ir.types().GetConstantId(target.type_id));
+        sem_ir.types().GetConstantId(target.type_id), target.diagnose);
     if (lookup_result.has_value()) {
       if (lookup_result.has_error_value()) {
         return SemIR::ErrorInst::InstId;
@@ -2276,8 +2275,8 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
     }
     form_inst_id = AddInst(
         context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
             SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
                            .type_component_inst_id =
                                context.types().GetAsTypeInstId(type_inst_id)}));
@@ -2292,12 +2291,12 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
       return Context::FormExpr::Error;
     }
     form_inst_id = AddInst(
-        context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id, SemIR::InitForm{
-                        .type_id = SemIR::FormType::TypeId,
-                        .type_component_inst_id =
-                            context.types().GetAsTypeInstId(type_inst_id)}));
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::InitForm{
+                         .type_id = SemIR::FormType::TypeId,
+                         .type_component_inst_id =
+                             context.types().GetAsTypeInstId(type_inst_id)}));
   }
 
   auto type_const_id = context.constant_values().Get(type_inst_id);

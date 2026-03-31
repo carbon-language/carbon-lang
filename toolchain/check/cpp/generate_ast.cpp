@@ -20,18 +20,22 @@
 #include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
+#include "common/map.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/mangler.h"
 
 namespace Carbon::Check {
 
@@ -86,34 +90,6 @@ static auto GenerateCppIncludesHeaderCode(
       }
     }
   }
-
-  // Inject a declaration of placement operator new, because the code we
-  // generate in thunks depends on it for placement new expressions. Clang has
-  // special-case logic for lowering a new-expression using this, so a
-  // definition is not required.
-  // TODO: This is a hack. We should be able to directly generate Clang AST to
-  // construct objects in-place without this.
-  // TODO: Once we can rely on libc++ being available, consider including
-  // `<__new/placement_new_delete.h>` instead.
-  code_stream << R"(# 1 "<carbon-internal>"
-#undef constexpr
-#if __cplusplus > 202302L
-constexpr
-#endif
-#undef void
-#undef operator
-#undef new
-void* operator new(__SIZE_TYPE__, void*)
-#if __cplusplus < 201103L
-#undef throw
-throw()
-#else
-#undef noexcept
-noexcept
-#endif
-;
-)";
-
   return code;
 }
 
@@ -334,22 +310,41 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
+// Provides clang AST nodes representing Carbon SemIR entities.
 class CarbonExternalASTSource : public clang::ExternalASTSource {
  public:
   explicit CarbonExternalASTSource(Context* context,
                                    clang::ASTContext* ast_context)
       : context_(context), ast_context_(ast_context) {}
 
+  // Look up decls for `decl_name` inside `decl_context`, adding the decls to
+  // `decl_context`. Returns true if any decls were added.
   auto FindExternalVisibleDeclsByName(
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
+  // See clang::ExternalASTSource.
   auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
 
  private:
+  // Map a Carbon entity to a Clang NamedDecl. Returns null if the entity cannot
+  // currently be represented in C++.
+  auto MapInstIdToClangDecl(clang::DeclContext& decl_context,
+                            LookupResult lookup) -> clang::NamedDecl*;
+
   Check::Context* context_;
   clang::ASTContext* ast_context_;
-  clang::NamespaceDecl* carbon_cpp_namespace_ = nullptr;
+  // The association between clang DeclContexts and the corresponding
+  // SemIR::Namespaces in Carbon.
+  // TODO: reuse the SemIR::File::ClangDeclStore to avoid duplicates, and to
+  // enable roundtripping through forward and reverse interop (once we have
+  // syntax/support for that).
+  Map<clang::DeclContext*, SemIR::InstId> scope_map_;
+
+  // Has the "Carbon" C++ namespace been created yet
+  // (this could be replaced with `!scope_map_.empty()` if Carbon::Map supported
+  // `empty()`)
+  bool root_scope_initialized_ = false;
 };
 
 void CarbonExternalASTSource::StartTranslationUnit(
@@ -360,34 +355,106 @@ void CarbonExternalASTSource::StartTranslationUnit(
   translation_unit.setHasExternalVisibleStorage();
 }
 
-// Map a Carbon entity to a Clang NamedDecl.
-static auto MapInstIdToClangDecl(Context& context,
-                                 clang::ASTContext& ast_context,
-                                 clang::DeclContext& decl_context,
-                                 LookupResult lookup) -> clang::NamedDecl* {
+auto CarbonExternalASTSource::MapInstIdToClangDecl(
+    clang::DeclContext& decl_context, LookupResult lookup)
+    -> clang::NamedDecl* {
   auto target_inst_id = lookup.scope_result.target_inst_id();
-  if (auto target_inst =
-          context.insts().TryGetAs<SemIR::Namespace>(target_inst_id)) {
-    auto& name_scope = context.name_scopes().Get(target_inst->name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, name_scope.name_id());
-    // TODO: Don't immediately use the decl_context - build any intermediate
-    // namespaces iteratively.
-    // Eventually add a mapping and use that/populate it/keep it up to date.
-    // decl_context could be prepopulated in that mapping and not passed
-    // explicitly to MapInstIdToClangDecl.
-    return clang::NamespaceDecl::Create(
-        ast_context, &decl_context, false, clang::SourceLocation(),
-        clang::SourceLocation(), identifier_info, nullptr, false);
+  auto target_constant =
+      context_->constant_values().GetConstantInstId(target_inst_id);
+  auto target_inst = context_->insts().Get(target_constant);
+  CARBON_KIND_SWITCH(target_inst) {
+    case CARBON_KIND(SemIR::Namespace namespace_info): {
+      auto& name_scope =
+          context_->name_scopes().Get(namespace_info.name_scope_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, name_scope.name_id());
+      // TODO: Don't immediately use the decl_context - build any intermediate
+      // namespaces iteratively.
+      // Eventually add a mapping and use that/populate it/keep it up to date.
+      // decl_context could be prepopulated in that mapping and not passed
+      // explicitly to MapInstIdToClangDecl.
+      auto* namespace_decl = clang::NamespaceDecl::Create(
+          *ast_context_, &decl_context, false, clang::SourceLocation(),
+          clang::SourceLocation(), identifier_info, nullptr, false);
+      auto result = scope_map_.Insert(namespace_decl->getPrimaryContext(),
+                                      target_inst_id);
+      CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
+      namespace_decl->setHasExternalVisibleStorage();
+      return namespace_decl;
+    }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      const auto& class_info = context_->classes().Get(class_type.class_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, class_info.name_id);
+      return clang::CXXRecordDecl::Create(
+          *ast_context_, clang::TagTypeKind::Class, &decl_context,
+          clang::SourceLocation(), clang::SourceLocation(), identifier_info);
+    }
+    case SemIR::StructValue::Kind: {
+      auto callee = GetCallee(context_->sem_ir(), target_constant);
+      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
+      if (!callee_function) {
+        return nullptr;
+      }
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function->function_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, function.name_id);
+
+      if (function.call_param_ranges.explicit_size() != 0) {
+        context_->TODO(target_inst_id,
+                       "unsupported: C++ calling a Carbon function with "
+                       "parameters");
+        return nullptr;
+      }
+
+      if (function.return_type_inst_id != SemIR::TypeInstId::None) {
+        context_->TODO(target_inst_id,
+                       "unsupported: C++ calling a Carbon function with "
+                       "return type other than `()`");
+        return nullptr;
+      }
+
+      // TODO: support non-empty parameter lists.
+      llvm::SmallVector<clang::QualType> cpp_param_types;
+
+      // TODO: support non-void return types.
+      auto cpp_return_type = ast_context_->VoidTy;
+
+      auto cpp_function_type = ast_context_->getFunctionType(
+          cpp_return_type, cpp_param_types,
+          clang::FunctionProtoType::ExtProtoInfo());
+
+      auto* function_decl = clang::FunctionDecl::Create(
+          *ast_context_, &decl_context,
+          /*StartLoc=*/clang::SourceLocation(),
+          /*NLoc=*/clang::SourceLocation(),
+          clang::DeclarationName(identifier_info), cpp_function_type,
+          /*TInfo=*/nullptr, clang::SC_Extern);
+
+      // Mangle the function name and attach it to the `FunctionDecl`.
+      SemIR::Mangler m(context_->sem_ir(), context_->total_ir_count());
+      std::string mangled_name =
+          m.Mangle(callee_function->function_id, SemIR::SpecificId::None);
+      function_decl->addAttr(
+          clang::AsmLabelAttr::Create(*ast_context_, mangled_name));
+
+      return function_decl;
+    }
+    default:
+      return nullptr;
   }
-  return nullptr;
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  if (decl_context != carbon_cpp_namespace_) {
-    if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
+  if (decl_context->getDeclKind() == clang::Decl::Kind::TranslationUnit) {
+    // If the context doesn't already have a mapping between C++ and Carbon,
+    // check if this is the root mapping (for the "Carbon" namespace in the
+    // translation unit scope) and if so, create that mapping.
+
+    if (root_scope_initialized_) {
       return false;
     }
 
@@ -400,17 +467,25 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     // Build the top level 'Carbon' namespace
     auto& ast_context = decl_context->getParentASTContext();
     auto& mutable_tu_decl_context = *ast_context.getTranslationUnitDecl();
-    carbon_cpp_namespace_ = clang::NamespaceDecl::Create(
+    auto* carbon_cpp_namespace = clang::NamespaceDecl::Create(
         ast_context, &mutable_tu_decl_context, false, clang::SourceLocation(),
         clang::SourceLocation(), &ast_context.Idents.get(carbon_namespace_name),
         nullptr, false);
-    carbon_cpp_namespace_->setHasExternalVisibleStorage();
+    carbon_cpp_namespace->setHasExternalVisibleStorage();
+    auto result = scope_map_.Insert(carbon_cpp_namespace->getPrimaryContext(),
+                                    SemIR::Namespace::PackageInstId);
+    CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     SetExternalVisibleDeclsForName(decl_context, decl_name,
-                                   {carbon_cpp_namespace_});
+                                   {carbon_cpp_namespace});
+    root_scope_initialized_ = true;
     return true;
   }
 
-  // Lookup the name in Carbon package scope
+  auto decl_context_inst_id =
+      scope_map_.Lookup(decl_context->getPrimaryContext());
+  CARBON_CHECK(
+      decl_context_inst_id,
+      "The DeclContext should already be associated with a Carbon InstId.");
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
 
@@ -418,7 +493,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(SemIR::Namespace::PackageInstId),
+          context_->constant_values().Get(decl_context_inst_id.value()),
           SemIR::ConstantId::None, &lookup_scopes)) {
     return false;
   }
@@ -441,8 +516,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
-  auto* clang_decl = MapInstIdToClangDecl(*context_, *ast_context_,
-                                          *carbon_cpp_namespace_, result);
+  // Use the key to reach the owned, mutable copy of decl_context.
+  auto* clang_decl = MapInstIdToClangDecl(*decl_context_inst_id.key(), result);
   if (!clang_decl) {
     return false;
   }

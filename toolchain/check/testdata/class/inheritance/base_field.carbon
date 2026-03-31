@@ -89,10 +89,10 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.0dd = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.0dd = value_param_pattern %p.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.0dd = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.0dd = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern %return.param_patt, %ptr.loc28_30 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc28_30: type = ptr_type %i32 [concrete = constants.%ptr.235]

@@ -73,8 +73,8 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.ce6 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.ce6 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %.2ba = value_param call_param0
 // CHECK:STDOUT:     %.loc7_29.1: type = splice_block %.loc7_29.3 [concrete = constants.%.2ba] {

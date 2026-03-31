@@ -19,7 +19,7 @@ fn F() {
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:14: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   let unused a: i32 = 1;
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR:              ^~~~~~
   // CHECK:STDERR:
   let unused a: i32 = 2;
 }

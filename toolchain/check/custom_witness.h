@@ -23,9 +23,10 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 // can have custom witnesses.
 enum class CoreInterface {
   Copy,
+  CppUnsafeDeref,
+  Default,
   Destroy,
   IntFitsIn,
-  CppUnsafeDeref,
 
   Unknown,
 };
@@ -38,11 +39,15 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 // Returns a witness for a `CoreInterface` `CustomWitness`. A return value of
 // `None` indicates a non-final witness should be produced, while `std::nullopt`
 // indicates the query is final and no witness can be produced.
+//
+// If `build_witness` is false, this function always returns `None` as the
+// witness, whether it would be final or not. It is used to indicate the
+// presence of such a witness without adding instructions for it.
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> std::optional<SemIR::InstId>;
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         bool build_witness) -> std::optional<SemIR::InstId>;
 
 }  // namespace Carbon::Check
 

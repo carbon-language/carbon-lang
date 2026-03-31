@@ -836,9 +836,9 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.0da [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.0da, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.a48: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.dde: ref %i16 = temporary invalid, %int_1.f90 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.dde [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -860,8 +860,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %bar__carbon_thunk.decl: %bar__carbon_thunk.type = fn_decl @bar__carbon_thunk [concrete = constants.%bar__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.54c = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.251 [concrete = constants.%ptr.251] {
@@ -909,11 +909,9 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc7_13.2: <specific function> = specific_function %impl.elem0.loc7_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_13.4: <bound method> = bound_method %.loc7_13.2, %specific_fn.loc7_13.2 [concrete = constants.%bound_method.a48]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc7_13.4(%.loc7_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc7_13.4: ref %i16 = temporary %.loc7_13.3, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.loc7_13.4
+// CHECK:STDOUT:   %.loc7_13.4: ref %i16 = temporary %.loc7_13.3, %Int.as.Copy.impl.Op.call [concrete = constants.%.dde]
+// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.loc7_13.4 [concrete = constants.%addr]
 // CHECK:STDOUT:   %bar__carbon_thunk.call: init %empty_tuple.type = call imports.%bar__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_13.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_13.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -974,8 +972,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1081,9 +1079,9 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.0da [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.0da, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.a48: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.dde: ref %i16 = temporary invalid, %int_1.f90 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.dde [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1105,8 +1103,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl.bd967b.1: %foo.type.a5abd1.1 = fn_decl @foo.1 [concrete = constants.%foo.23ea43.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1117,8 +1115,8 @@ fn F() {
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.54c = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.251 [concrete = constants.%ptr.251] {
@@ -1178,11 +1176,9 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.a48]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.loc8_13.4
+// CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call [concrete = constants.%.dde]
+// CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.loc8_13.4 [concrete = constants.%addr]
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc8_13.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc8_13.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1250,8 +1246,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1263,8 +1259,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.cpp_overload_set.value: %bar.cpp_overload_set.type = cpp_overload_set_value @bar.cpp_overload_set [concrete = constants.%bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %bar.decl: %bar.type = fn_decl @bar [concrete = constants.%bar] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1407,24 +1403,32 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.def: <bound method> = bound_method %int_9223372036854775808.f14, %Int.as.Copy.impl.Op.bc1 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.bc1, @Int.as.Copy.impl.Op(%int_128) [concrete]
 // CHECK:STDOUT:   %bound_method.b4e: <bound method> = bound_method %int_9223372036854775808.f14, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.5bc: ref %i128 = temporary invalid, %int_9223372036854775808.f14 [concrete]
+// CHECK:STDOUT:   %addr.e72: %ptr.974 = addr_of %.5bc [concrete]
 // CHECK:STDOUT:   %int_18446744073709551615.5ec: Core.IntLiteral = int_value 18446744073709551615 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9ac: <bound method> = bound_method %int_18446744073709551615.5ec, %Core.IntLiteral.as.ImplicitAs.impl.Convert.75a [concrete]
 // CHECK:STDOUT:   %bound_method.422: <bound method> = bound_method %int_18446744073709551615.5ec, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.e59 [concrete]
 // CHECK:STDOUT:   %int_18446744073709551615.f56: %i128 = int_value 18446744073709551615 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.cf0: <bound method> = bound_method %int_18446744073709551615.f56, %Int.as.Copy.impl.Op.bc1 [concrete]
 // CHECK:STDOUT:   %bound_method.2cb: <bound method> = bound_method %int_18446744073709551615.f56, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.2ee: ref %i128 = temporary invalid, %int_18446744073709551615.f56 [concrete]
+// CHECK:STDOUT:   %addr.9bf: %ptr.974 = addr_of %.2ee [concrete]
 // CHECK:STDOUT:   %int_18446744073709551616.1ee: Core.IntLiteral = int_value 18446744073709551616 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.6a3: <bound method> = bound_method %int_18446744073709551616.1ee, %Core.IntLiteral.as.ImplicitAs.impl.Convert.75a [concrete]
 // CHECK:STDOUT:   %bound_method.e31: <bound method> = bound_method %int_18446744073709551616.1ee, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.e59 [concrete]
 // CHECK:STDOUT:   %int_18446744073709551616.92b: %i128 = int_value 18446744073709551616 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.bcd: <bound method> = bound_method %int_18446744073709551616.92b, %Int.as.Copy.impl.Op.bc1 [concrete]
 // CHECK:STDOUT:   %bound_method.6a9: <bound method> = bound_method %int_18446744073709551616.92b, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.4db: ref %i128 = temporary invalid, %int_18446744073709551616.92b [concrete]
+// CHECK:STDOUT:   %addr.84d: %ptr.974 = addr_of %.4db [concrete]
 // CHECK:STDOUT:   %int_170141183460469231731687303715884105727.fea: Core.IntLiteral = int_value 170141183460469231731687303715884105727 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8e8: <bound method> = bound_method %int_170141183460469231731687303715884105727.fea, %Core.IntLiteral.as.ImplicitAs.impl.Convert.75a [concrete]
 // CHECK:STDOUT:   %bound_method.d00: <bound method> = bound_method %int_170141183460469231731687303715884105727.fea, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.e59 [concrete]
 // CHECK:STDOUT:   %int_170141183460469231731687303715884105727.ff5: %i128 = int_value 170141183460469231731687303715884105727 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.78b: <bound method> = bound_method %int_170141183460469231731687303715884105727.ff5, %Int.as.Copy.impl.Op.bc1 [concrete]
 // CHECK:STDOUT:   %bound_method.2fb: <bound method> = bound_method %int_170141183460469231731687303715884105727.ff5, %Int.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.7df: ref %i128 = temporary invalid, %int_170141183460469231731687303715884105727.ff5 [concrete]
+// CHECK:STDOUT:   %addr.6a2: %ptr.974 = addr_of %.7df [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -1446,10 +1450,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl.bd967b.1: %foo.type.a5abd1.1 = fn_decl @foo.1 [concrete = constants.%foo.23ea43.1] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1468,10 +1472,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %foo.decl.bd967b.2: %foo.type.a5abd1.2 = fn_decl @foo.2 [concrete = constants.%foo.23ea43.2] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.95b = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.95b = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.95b = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.95b = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.95b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.95b = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.95b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.95b = return_slot_pattern %return.param_patt, %i64.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.1: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.1: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
@@ -1487,10 +1491,10 @@ fn F() {
 // CHECK:STDOUT:     %return: ref %i64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.662 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.662 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.662 = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.662 = value_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.662 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.662 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.662 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.662 = at_binding_pattern r#return, %return.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.974 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.974 [concrete = constants.%ptr.974] {
@@ -1637,8 +1641,8 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc22_32.2: <specific function> = specific_function %impl.elem0.loc22_32.2, @Int.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_32.4: <bound method> = bound_method %.loc22_32.2, %specific_fn.loc22_32.2 [concrete = constants.%bound_method.b4e]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc22: init %i128 = call %bound_method.loc22_32.4(%.loc22_32.2) [concrete = constants.%int_9223372036854775808.f14]
-// CHECK:STDOUT:   %.loc22_32.4: ref %i128 = temporary %.loc22_32.3, %Int.as.Copy.impl.Op.call.loc22
-// CHECK:STDOUT:   %addr.loc22_51.1: %ptr.974 = addr_of %.loc22_32.4
+// CHECK:STDOUT:   %.loc22_32.4: ref %i128 = temporary %.loc22_32.3, %Int.as.Copy.impl.Op.call.loc22 [concrete = constants.%.5bc]
+// CHECK:STDOUT:   %addr.loc22_51.1: %ptr.974 = addr_of %.loc22_32.4 [concrete = constants.%addr.e72]
 // CHECK:STDOUT:   %.loc22_51.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc22_51.2: %ptr.974 = addr_of %.loc22_51.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc22_51.1, %addr.loc22_51.2)
@@ -1666,8 +1670,8 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc25_32.2: <specific function> = specific_function %impl.elem0.loc25_32.2, @Int.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_32.4: <bound method> = bound_method %.loc25_32.2, %specific_fn.loc25_32.2 [concrete = constants.%bound_method.2cb]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc25: init %i128 = call %bound_method.loc25_32.4(%.loc25_32.2) [concrete = constants.%int_18446744073709551615.f56]
-// CHECK:STDOUT:   %.loc25_32.4: ref %i128 = temporary %.loc25_32.3, %Int.as.Copy.impl.Op.call.loc25
-// CHECK:STDOUT:   %addr.loc25_52.1: %ptr.974 = addr_of %.loc25_32.4
+// CHECK:STDOUT:   %.loc25_32.4: ref %i128 = temporary %.loc25_32.3, %Int.as.Copy.impl.Op.call.loc25 [concrete = constants.%.2ee]
+// CHECK:STDOUT:   %addr.loc25_52.1: %ptr.974 = addr_of %.loc25_32.4 [concrete = constants.%addr.9bf]
 // CHECK:STDOUT:   %.loc25_52.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc25_52.2: %ptr.974 = addr_of %.loc25_52.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc25: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc25_52.1, %addr.loc25_52.2)
@@ -1695,8 +1699,8 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc28_32.2: <specific function> = specific_function %impl.elem0.loc28_32.2, @Int.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc28_32.4: <bound method> = bound_method %.loc28_32.2, %specific_fn.loc28_32.2 [concrete = constants.%bound_method.6a9]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc28: init %i128 = call %bound_method.loc28_32.4(%.loc28_32.2) [concrete = constants.%int_18446744073709551616.92b]
-// CHECK:STDOUT:   %.loc28_32.4: ref %i128 = temporary %.loc28_32.3, %Int.as.Copy.impl.Op.call.loc28
-// CHECK:STDOUT:   %addr.loc28_52.1: %ptr.974 = addr_of %.loc28_32.4
+// CHECK:STDOUT:   %.loc28_32.4: ref %i128 = temporary %.loc28_32.3, %Int.as.Copy.impl.Op.call.loc28 [concrete = constants.%.4db]
+// CHECK:STDOUT:   %addr.loc28_52.1: %ptr.974 = addr_of %.loc28_32.4 [concrete = constants.%addr.84d]
 // CHECK:STDOUT:   %.loc28_52.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc28_52.2: %ptr.974 = addr_of %.loc28_52.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc28: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc28_52.1, %addr.loc28_52.2)
@@ -1724,8 +1728,8 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc31_32.2: <specific function> = specific_function %impl.elem0.loc31_32.2, @Int.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc31_32.4: <bound method> = bound_method %.loc31_32.2, %specific_fn.loc31_32.2 [concrete = constants.%bound_method.2fb]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc31: init %i128 = call %bound_method.loc31_32.4(%.loc31_32.2) [concrete = constants.%int_170141183460469231731687303715884105727.ff5]
-// CHECK:STDOUT:   %.loc31_32.4: ref %i128 = temporary %.loc31_32.3, %Int.as.Copy.impl.Op.call.loc31
-// CHECK:STDOUT:   %addr.loc31_71.1: %ptr.974 = addr_of %.loc31_32.4
+// CHECK:STDOUT:   %.loc31_32.4: ref %i128 = temporary %.loc31_32.3, %Int.as.Copy.impl.Op.call.loc31 [concrete = constants.%.7df]
+// CHECK:STDOUT:   %addr.loc31_71.1: %ptr.974 = addr_of %.loc31_32.4 [concrete = constants.%addr.6a2]
 // CHECK:STDOUT:   %.loc31_71.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc31_71.2: %ptr.974 = addr_of %.loc31_71.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc31: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc31_71.1, %addr.loc31_71.2)
@@ -1734,22 +1738,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc31_71.3: ref %i128 = temporary %.loc31_71.1, %.loc31_71.2
 // CHECK:STDOUT:   %.loc31_71.4: %i128 = acquire_value %.loc31_71.3
 // CHECK:STDOUT:   %g: %i128 = value_binding g, %.loc31_71.4
-// CHECK:STDOUT:   %Destroy.Op.bound.loc31_71: <bound method> = bound_method %.loc31_71.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc31_71: init %empty_tuple.type = call %Destroy.Op.bound.loc31_71(%.loc31_71.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc31_32: <bound method> = bound_method %.loc31_32.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc31_32: init %empty_tuple.type = call %Destroy.Op.bound.loc31_32(%.loc31_32.4)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc28_52: <bound method> = bound_method %.loc28_52.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc28_52: init %empty_tuple.type = call %Destroy.Op.bound.loc28_52(%.loc28_52.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc28_32: <bound method> = bound_method %.loc28_32.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc28_32: init %empty_tuple.type = call %Destroy.Op.bound.loc28_32(%.loc28_32.4)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc25_52: <bound method> = bound_method %.loc25_52.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc25_52: init %empty_tuple.type = call %Destroy.Op.bound.loc25_52(%.loc25_52.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc25_32: <bound method> = bound_method %.loc25_32.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc25_32: init %empty_tuple.type = call %Destroy.Op.bound.loc25_32(%.loc25_32.4)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22_51: <bound method> = bound_method %.loc22_51.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc22_51: init %empty_tuple.type = call %Destroy.Op.bound.loc22_51(%.loc22_51.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22_32: <bound method> = bound_method %.loc22_32.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc22_32: init %empty_tuple.type = call %Destroy.Op.bound.loc22_32(%.loc22_32.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc31: <bound method> = bound_method %.loc31_71.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc31: init %empty_tuple.type = call %Destroy.Op.bound.loc31(%.loc31_71.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc28: <bound method> = bound_method %.loc28_52.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc28: init %empty_tuple.type = call %Destroy.Op.bound.loc28(%.loc28_52.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %.loc25_52.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc25: init %empty_tuple.type = call %Destroy.Op.bound.loc25(%.loc25_52.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %.loc22_51.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%.loc22_51.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1880,8 +1876,8 @@ fn F() {
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.82e), @Core.IntLiteral.as.Negate.impl [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1994,8 +1990,8 @@ fn F() {
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.82e), @Core.IntLiteral.as.Negate.impl [concrete]
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/parts/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.4a9 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a9 = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a9 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a9 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %u32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %u32.2 [concrete = constants.%u32] {
@@ -2093,8 +2089,8 @@ fn F() {
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.bound: <bound method> = bound_method %float.d20, %Float.as.Copy.impl.Op.f05 [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.f05, @Float.as.Copy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method.9b6: <bound method> = bound_method %float.d20, %Float.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %.ee0: ref %f64.d77 = value_as_ref %float.d20 [concrete]
-// CHECK:STDOUT:   %addr: %ptr.bcc = addr_of %.ee0 [concrete]
+// CHECK:STDOUT:   %.4f3: ref %f64.d77 = temporary invalid, %float.d20 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.bcc = addr_of %.4f3 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -2116,10 +2112,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.0ce = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ce = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.0ce = at_binding_pattern r#return, %return.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.bcc = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.bcc [concrete = constants.%ptr.bcc] {
@@ -2179,7 +2175,7 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc7_31.2: <specific function> = specific_function %impl.elem0.loc7_31.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_31.4: <bound method> = bound_method %.loc7_31.2, %specific_fn.loc7_31.2 [concrete = constants.%bound_method.9b6]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc7_31.4(%.loc7_31.2) [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc7_31.4: ref %f64.d77 = temporary %.loc7_31.3, %Float.as.Copy.impl.Op.call [concrete = constants.%.ee0]
+// CHECK:STDOUT:   %.loc7_31.4: ref %f64.d77 = temporary %.loc7_31.3, %Float.as.Copy.impl.Op.call [concrete = constants.%.4f3]
 // CHECK:STDOUT:   %addr.loc7_34.1: %ptr.bcc = addr_of %.loc7_31.4 [concrete = constants.%addr]
 // CHECK:STDOUT:   %.loc7_34.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc7_34.2: %ptr.bcc = addr_of %.loc7_34.1
@@ -2264,10 +2260,10 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.0ce = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ce = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.0ce = at_binding_pattern r#return, %return.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.bcc = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.bcc [concrete = constants.%ptr.bcc] {
@@ -2363,9 +2359,8 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk: %PassNoFields__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %NoFields.val: %NoFields = struct_value () [concrete]
+// CHECK:STDOUT:   %.413: ref %NoFields = temporary invalid, %NoFields.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %NoFields.cpp_destructor.type: type = fn_type @NoFields.cpp_destructor [concrete]
-// CHECK:STDOUT:   %NoFields.cpp_destructor: %NoFields.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2382,8 +2377,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.value: %PassNoFields.cpp_overload_set.type = cpp_overload_set_value @PassNoFields.cpp_overload_set [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.decl: %PassNoFields__carbon_thunk.type = fn_decl @PassNoFields__carbon_thunk [concrete = constants.%PassNoFields__carbon_thunk] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.a92 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.a92 = at_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
@@ -2403,8 +2398,8 @@ fn F() {
 // CHECK:STDOUT:     import Cpp "struct_init.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeEmpty.decl: %MakeEmpty.type = fn_decl @MakeEmpty [concrete = constants.%MakeEmpty] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc6_20.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_20.2: type = converted %.loc6_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -2413,10 +2408,10 @@ fn F() {
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: %Empty.type = fn_decl @Empty [concrete = constants.%Empty] {
-// CHECK:STDOUT:     %value.patt: %pattern_type.a96 = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.a96 = value_param_pattern %value.patt [concrete]
-// CHECK:STDOUT:     %reference.patt: %pattern_type.a96 = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.a96 = ref_param_pattern %reference.patt [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.a96 = at_binding_pattern value, %value.param_patt [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.a96 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %reference.patt: %pattern_type.a96 = at_binding_pattern reference, %reference.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.3 [concrete = constants.%empty_struct_type] {
@@ -2452,8 +2447,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_21.2: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc9_21.3: init %NoFields to %.loc9_21.2 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc9_21.4: init %NoFields = converted %.loc9_21.1, %.loc9_21.3 [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc9_21.5: ref %NoFields = temporary %.loc9_21.2, %.loc9_21.4
-// CHECK:STDOUT:   %.loc9_21.6: %NoFields = acquire_value %.loc9_21.5
+// CHECK:STDOUT:   %.loc9_21.5: ref %NoFields = temporary %.loc9_21.2, %.loc9_21.4 [concrete = constants.%.413]
+// CHECK:STDOUT:   %.loc9_21.6: %NoFields = acquire_value %.loc9_21.5 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc9_21.7: ref %NoFields = value_as_ref %.loc9_21.6
 // CHECK:STDOUT:   %addr.loc9: %ptr.dd0 = addr_of %.loc9_21.7
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc9)
@@ -2463,8 +2458,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_20.1: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc11_20.2: init %NoFields to %.loc11_20.1 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc11_20.3: init %NoFields = converted %value.ref, %.loc11_20.2 [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc11_20.4: ref %NoFields = temporary %.loc11_20.1, %.loc11_20.3
-// CHECK:STDOUT:   %.loc11_20.5: %NoFields = acquire_value %.loc11_20.4
+// CHECK:STDOUT:   %.loc11_20.4: ref %NoFields = temporary %.loc11_20.1, %.loc11_20.3 [concrete = constants.%.413]
+// CHECK:STDOUT:   %.loc11_20.5: %NoFields = acquire_value %.loc11_20.4 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc11_20.6: ref %NoFields = value_as_ref %.loc11_20.5
 // CHECK:STDOUT:   %addr.loc11: %ptr.dd0 = addr_of %.loc11_20.6
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc11)
@@ -2474,8 +2469,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_20.1: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc13_20.2: init %NoFields to %.loc13_20.1 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc13_20.3: init %NoFields = converted %reference.ref, %.loc13_20.2 [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc13_20.4: ref %NoFields = temporary %.loc13_20.1, %.loc13_20.3
-// CHECK:STDOUT:   %.loc13_20.5: %NoFields = acquire_value %.loc13_20.4
+// CHECK:STDOUT:   %.loc13_20.4: ref %NoFields = temporary %.loc13_20.1, %.loc13_20.3 [concrete = constants.%.413]
+// CHECK:STDOUT:   %.loc13_20.5: %NoFields = acquire_value %.loc13_20.4 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc13_20.6: ref %NoFields = value_as_ref %.loc13_20.5
 // CHECK:STDOUT:   %addr.loc13: %ptr.dd0 = addr_of %.loc13_20.6
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc13)
@@ -2488,21 +2483,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_30.3: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc15_30.4: init %NoFields to %.loc15_30.3 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc15_30.5: init %NoFields = converted %MakeEmpty.call, %.loc15_30.4 [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc15_30.6: ref %NoFields = temporary %.loc15_30.3, %.loc15_30.5
-// CHECK:STDOUT:   %.loc15_30.7: %NoFields = acquire_value %.loc15_30.6
+// CHECK:STDOUT:   %.loc15_30.6: ref %NoFields = temporary %.loc15_30.3, %.loc15_30.5 [concrete = constants.%.413]
+// CHECK:STDOUT:   %.loc15_30.7: %NoFields = acquire_value %.loc15_30.6 [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc15_30.8: ref %NoFields = value_as_ref %.loc15_30.7
 // CHECK:STDOUT:   %addr.loc15: %ptr.dd0 = addr_of %.loc15_30.8
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc15)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_30.6, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc15: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc15(%.loc15_30.6)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_30.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_30.2)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_20.4, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc13: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc13(%.loc13_20.4)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_20.4, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc11: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc11(%.loc11_20.4)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_21.5, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc9: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc9(%.loc9_21.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2564,8 +2551,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
-// CHECK:STDOUT:     %t.patt: %pattern_type.7bb = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt [concrete]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.7bb = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: %ptr.f81 = value_param call_param0
 // CHECK:STDOUT:     %t: %ptr.f81 = value_binding t, %t.param
@@ -2585,8 +2572,8 @@ fn F() {
 // CHECK:STDOUT:     import Cpp "struct_init.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeThreeFields.decl: %MakeThreeFields.type = fn_decl @MakeThreeFields [concrete = constants.%MakeThreeFields] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.8ae = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.8ae = return_slot_pattern %return.param_patt, %struct_type.a.b.c [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc6_39: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -2597,10 +2584,10 @@ fn F() {
 // CHECK:STDOUT:     %return: ref %struct_type.a.b.c.0b6 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc8 [concrete = constants.%ThreeFields.c3a] {
-// CHECK:STDOUT:     %value.patt: %pattern_type.8ae = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.8ae = value_param_pattern %value.patt [concrete]
-// CHECK:STDOUT:     %reference.patt: %pattern_type.8ae = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.8ae = ref_param_pattern %reference.patt [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.8ae = value_param_pattern [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.8ae = at_binding_pattern value, %value.param_patt [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.8ae = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %reference.patt: %pattern_type.8ae = at_binding_pattern reference, %reference.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %struct_type.a.b.c.0b6 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_49: type = splice_block %struct_type.a.b.c.loc8_49 [concrete = constants.%struct_type.a.b.c.0b6] {
@@ -2863,8 +2850,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.value: %PassNoFields.cpp_overload_set.type = cpp_overload_set_value @PassNoFields.cpp_overload_set [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.decl: %PassNoFields__carbon_thunk.type = fn_decl @PassNoFields__carbon_thunk [concrete = constants.%PassNoFields__carbon_thunk] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.a92 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.a92 = at_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
@@ -2873,8 +2860,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
-// CHECK:STDOUT:     %t.patt: %pattern_type.7bb = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt [concrete]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.7bb = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: %ptr.f81 = value_param call_param0
 // CHECK:STDOUT:     %t: %ptr.f81 = value_binding t, %t.param
@@ -2895,8 +2882,8 @@ fn F() {
 // CHECK:STDOUT:     import Cpp "struct_init.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeEmpty.decl: %MakeEmpty.type = fn_decl @MakeEmpty [concrete = constants.%MakeEmpty] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc9_20.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_20.2: type = converted %.loc9_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -2905,10 +2892,10 @@ fn F() {
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: %Empty.type = fn_decl @Empty [concrete = constants.%Empty] {
-// CHECK:STDOUT:     %value.patt: %pattern_type.cb1 = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.cb1 = value_param_pattern %value.patt [concrete]
-// CHECK:STDOUT:     %reference.patt: %pattern_type.cb1 = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.cb1 = ref_param_pattern %reference.patt [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.cb1 = at_binding_pattern value, %value.param_patt [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %reference.patt: %pattern_type.cb1 = at_binding_pattern reference, %reference.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc11_18.1: type = splice_block %.loc11_18.3 [concrete = constants.%empty_tuple.type] {
@@ -2924,8 +2911,8 @@ fn F() {
 // CHECK:STDOUT:     %reference: ref %empty_tuple.type = ref_binding reference, %reference.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeThreeFields.decl: %MakeThreeFields.type = fn_decl @MakeThreeFields [concrete = constants.%MakeThreeFields] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern %return.param_patt, %.loc65_39.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc65_26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc65_31: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -2937,10 +2924,10 @@ fn F() {
 // CHECK:STDOUT:     %return: ref %tuple.type.189 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc67 [concrete = constants.%ThreeFields.c3a] {
-// CHECK:STDOUT:     %value.patt: %pattern_type.b5a = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.b5a = value_param_pattern %value.patt [concrete]
-// CHECK:STDOUT:     %reference.patt: %pattern_type.b5a = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.b5a = ref_param_pattern %reference.patt [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.b5a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.b5a = at_binding_pattern value, %value.param_patt [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.b5a = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %reference.patt: %pattern_type.b5a = at_binding_pattern reference, %reference.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %tuple.type.189 = value_param call_param0
 // CHECK:STDOUT:     %.loc67_37.1: type = splice_block %.loc67_37.3 [concrete = constants.%tuple.type.189] {
@@ -3105,8 +3092,8 @@ fn F() {
 // CHECK:STDOUT:   %PassInt.cpp_overload_set.value: %PassInt.cpp_overload_set.type = cpp_overload_set_value @PassInt.cpp_overload_set [concrete = constants.%PassInt.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassInt.decl: %PassInt.type = fn_decl @PassInt [concrete = constants.%PassInt] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3185,8 +3172,8 @@ fn F() {
 // CHECK:STDOUT:   %PassOverloaded.cpp_overload_set.value: %PassOverloaded.cpp_overload_set.type = cpp_overload_set_value @PassOverloaded.cpp_overload_set [concrete = constants.%PassOverloaded.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassOverloaded.decl: %PassOverloaded.type = fn_decl @PassOverloaded [concrete = constants.%PassOverloaded] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3331,8 +3318,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeB.cpp_overload_set.value: %TakeB.cpp_overload_set.type = cpp_overload_set_value @TakeB.cpp_overload_set [concrete = constants.%TakeB.cpp_overload_set.value]
 // CHECK:STDOUT:   %TakeB__carbon_thunk.decl: %TakeB__carbon_thunk.type = fn_decl @TakeB__carbon_thunk [concrete = constants.%TakeB__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.837 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.837 = value_param_pattern %_.patt [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.837 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.837 = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %ptr.a04 = value_param call_param0
 // CHECK:STDOUT:     %_: %ptr.a04 = value_binding _, %_.param
@@ -3460,8 +3447,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3564,8 +3551,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.54c = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {
@@ -3898,14 +3885,14 @@ fn F() {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ValueT.loc10_14.2: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:     %ValueT.loc10_20.2: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
 // CHECK:STDOUT:     %.loc10_41.1: type = splice_block %.loc10_41.2 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_14.2 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_20.2 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
 // CHECK:STDOUT:       %ValueT.as_type: type = facet_access_type %ValueT.ref [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
 // CHECK:STDOUT:       %.loc10_41.2: type = converted %ValueT.ref, %ValueT.as_type [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value.loc10_33.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_33.1 (constants.%value)]
+// CHECK:STDOUT:     %value.loc10_38.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -3921,10 +3908,10 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_33.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {
-// CHECK:STDOUT:   %ValueT.loc10_14.1: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
-// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT.loc10_14.1 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
-// CHECK:STDOUT:   %value.loc10_33.1: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_33.1 (constants.%value)]
+// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_20.2: %I.type, %value.loc10_38.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {
+// CHECK:STDOUT:   %ValueT.loc10_20.1: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
+// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT.loc10_20.1 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
+// CHECK:STDOUT:   %value.loc10_38.1: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.422)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -3948,9 +3935,9 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EchoValue(constants.%ValueT, constants.%value) {
-// CHECK:STDOUT:   %ValueT.loc10_14.1 => constants.%ValueT
+// CHECK:STDOUT:   %ValueT.loc10_20.1 => constants.%ValueT
 // CHECK:STDOUT:   %ValueT.binding.as_type => constants.%ValueT.binding.as_type
-// CHECK:STDOUT:   %value.loc10_33.1 => constants.%value
+// CHECK:STDOUT:   %value.loc10_38.1 => constants.%value
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -71,7 +71,7 @@ var b: C = {};
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
-// CHECK:STDERR:     ^
+// CHECK:STDERR:     ^~~~
 // CHECK:STDERR:
 alias b = C;
 
@@ -171,6 +171,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -187,8 +188,8 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc10_13.2: init %C to %.loc10_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.3: init %C = converted @__global_init.%.loc10, %.loc10_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3
-// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4
+// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

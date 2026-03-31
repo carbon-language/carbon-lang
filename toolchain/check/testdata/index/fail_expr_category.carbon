@@ -125,8 +125,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.5d8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.5d8 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.5d8 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.5d8 = return_slot_pattern %return.param_patt, %array_type [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -136,8 +136,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.5d8 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.5d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %array_type [concrete = constants.%array_type] {

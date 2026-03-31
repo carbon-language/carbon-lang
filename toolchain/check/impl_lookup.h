@@ -36,8 +36,8 @@ namespace Carbon::Check {
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
-                       SemIR::ConstantId query_facet_type_const_id)
-    -> SemIR::InstBlockIdOrError;
+                       SemIR::ConstantId query_facet_type_const_id,
+                       bool diagnose = true) -> SemIR::InstBlockIdOrError;
 
 // Returns whether the query matches against the given impl. This is like a
 // `LookupImplWitness` operation but for a single interface, and against only
@@ -47,57 +47,8 @@ auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
                        SemIR::SpecificInterface query_specific_interface,
                        SemIR::ImplId target_impl) -> bool;
 
-// The result of EvalLookupSingleImplWitness(). It can be one of:
-// - No value. Lookup failed to find an impl declaration.
-// - An effectively final value. Lookup found either a concrete impl or a
-//   `final` impl declaration; both can be used definitely. A witness is
-//   available.
-// - A non-`final` symbolic value. Lookup found an impl, but it is not returned
-//   since lookup will need to be done again with a more specific query to look
-//   for specializations.
-class [[nodiscard]] EvalImplLookupResult {
- public:
-  static auto MakeNone() -> EvalImplLookupResult {
-    return EvalImplLookupResult(FoundNone());
-  }
-  static auto MakeFinal(SemIR::InstId inst_id) -> EvalImplLookupResult {
-    return EvalImplLookupResult(inst_id);
-  }
-  static auto MakeNonFinal() -> EvalImplLookupResult {
-    return EvalImplLookupResult(FoundNonFinalImpl());
-  }
-
-  // True if an impl declaration was found, either effectively final or
-  // symbolic.
-  auto has_value() const -> bool {
-    return !std::holds_alternative<FoundNone>(value_);
-  }
-
-  // True if there is an effectively final witness in the result. If false, and
-  // `has_value()` is true, it means an impl was found that's not effectively
-  // final, and a further more specific query will need to be done.
-  auto has_final_value() const -> bool {
-    return std::holds_alternative<SemIR::InstId>(value_);
-  }
-
-  // Returns the witness id for an effectively final value's impl declaration.
-  // Only valid to call if `has_final_value` is true.
-  auto final_witness() const -> SemIR::InstId {
-    return std::get<SemIR::InstId>(value_);
-  }
-
- private:
-  struct FoundNone {};
-  struct FoundNonFinalImpl {};
-  using Value = std::variant<SemIR::InstId, FoundNone, FoundNonFinalImpl>;
-
-  explicit EvalImplLookupResult(Value value) : value_(value) {}
-
-  Value value_;
-};
-
 // The kind of impl lookup being performed by a call to
-// `EvalLookupSingleImplWitness`.
+// `EvalLookupSingleFinalWitness`.
 enum class EvalImplLookupMode {
   // This is a regular impl lookup performed during check. If we produce a final
   // witness value that uses a specializable impl, the query will be poisoned so
@@ -109,16 +60,15 @@ enum class EvalImplLookupMode {
   RecheckPoisonedLookup,
 };
 
-// Looks for a witness instruction of an impl declaration for a query consisting
-// of a type value or facet value, and a single interface. This is for eval to
-// execute lookup via the LookupImplWitness instruction. It does not consider
-// the self facet value for finding a witness, since LookupImplWitness() would
-// have found that and not caused us to defer lookup to here.
-auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId self_facet_value_inst_id,
-                                 EvalImplLookupMode mode)
-    -> EvalImplLookupResult;
+// Looks for a final witness for an impl lookup query consisting of a self (type
+// or facet) and a single interface. This is for eval to execute lookup via the
+// `LookupImplWitness` instruction. Since this query is re-evaluated against
+// specifics, it provides monomorphization of the impl lookup, which allows for
+// finding specializations.
+auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
+                                  SemIR::LookupImplWitness eval_query,
+                                  SemIR::InstId self_facet_value_inst_id,
+                                  EvalImplLookupMode mode) -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

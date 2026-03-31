@@ -261,8 +261,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {

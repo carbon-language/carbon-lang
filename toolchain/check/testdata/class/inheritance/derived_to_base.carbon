@@ -121,7 +121,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -201,8 +200,9 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %bound_method.fa7: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.822) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.6f9: ref %C = temporary invalid, %C.val [concrete]
+// CHECK:STDOUT:   %.797: ref %B = class_element_access %.6f9, element0 [concrete]
+// CHECK:STDOUT:   %.e51: ref %A = class_element_access %.797, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -214,10 +214,10 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [concrete = constants.%ConvertCToB] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.506 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.506 = value_param_pattern %p.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.191 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.191 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.506 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.506 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.191 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.191 = return_slot_pattern %return.param_patt, %ptr.loc19_27 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc19_27: type = ptr_type %B.ref [concrete = constants.%ptr.27c]
@@ -232,10 +232,10 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:     %return: ref %ptr.27c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [concrete = constants.%ConvertBToA] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.191 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern %p.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.191 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.191 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern %return.param_patt, %ptr.loc20_27 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc20_27: type = ptr_type %A.ref [concrete = constants.%ptr.643]
@@ -250,10 +250,10 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:     %return: ref %ptr.643 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [concrete = constants.%ConvertCToA] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.506 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.506 = value_param_pattern %p.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.506 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.506 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern %return.param_patt, %ptr.loc21_27 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc21_27: type = ptr_type %A.ref [concrete = constants.%ptr.643]
@@ -268,18 +268,18 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:     %return: ref %ptr.643 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [concrete = constants.%ConvertValue] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [concrete = constants.%ConvertRef] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.506 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.506 = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.506 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.506 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f29 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f29 = return_slot_pattern %return.param_patt, %ptr.loc27_26 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc27: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc27_26: type = ptr_type %A.ref.loc27 [concrete = constants.%ptr.643]
@@ -422,14 +422,12 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_64.9: init %C to %.loc32_64.2 = class_init (%.loc32_64.5, %.loc32_64.8) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc32_66.1: init %C = converted %.loc32_64.1, %.loc32_64.9 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc32_66.2: ref %C = temporary %.loc32_64.2, %.loc32_66.1
-// CHECK:STDOUT:   %.loc32_66.3: ref %B = class_element_access %.loc32_66.2, element0
-// CHECK:STDOUT:   %.loc32_66.4: ref %A = class_element_access %.loc32_66.3, element0
-// CHECK:STDOUT:   %.loc32_66.5: ref %A = converted %.loc32_66.1, %.loc32_66.4
+// CHECK:STDOUT:   %.loc32_66.2: ref %C = temporary %.loc32_64.2, %.loc32_66.1 [concrete = constants.%.6f9]
+// CHECK:STDOUT:   %.loc32_66.3: ref %B = class_element_access %.loc32_66.2, element0 [concrete = constants.%.797]
+// CHECK:STDOUT:   %.loc32_66.4: ref %A = class_element_access %.loc32_66.3, element0 [concrete = constants.%.e51]
+// CHECK:STDOUT:   %.loc32_66.5: ref %A = converted %.loc32_66.1, %.loc32_66.4 [concrete = constants.%.e51]
 // CHECK:STDOUT:   %.loc32_66.6: %A = acquire_value %.loc32_66.5
 // CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.6
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

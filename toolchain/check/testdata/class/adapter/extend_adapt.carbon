@@ -188,16 +188,16 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [concrete = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl.loc15: type = class_decl @SomeClassAdapter [concrete = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %TestStaticMemberFunction.decl: %TestStaticMemberFunction.type = fn_decl @TestStaticMemberFunction [concrete = constants.%TestStaticMemberFunction] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.31a = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.31a = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param call_param0
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [concrete = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a: %SomeClassAdapter = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [concrete = constants.%TestAdapterMethod] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.31a = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.31a = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param call_param0
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [concrete = constants.%SomeClassAdapter]
@@ -226,8 +226,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc8: %SomeClass.elem = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   %SomeClass.StaticMemberFunction.decl: %SomeClass.StaticMemberFunction.type = fn_decl @SomeClass.StaticMemberFunction [concrete = constants.%SomeClass.StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %SomeClass.AdapterMethod.decl: %SomeClass.AdapterMethod.type = fn_decl @SomeClass.AdapterMethod [concrete = constants.%SomeClass.AdapterMethod] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.31a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.31a = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.31a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.31a = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %SomeClassAdapter = value_param call_param0
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [concrete = constants.%SomeClassAdapter]
@@ -304,8 +304,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [concrete = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [concrete = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.31a = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.31a = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param call_param0
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [concrete = constants.%SomeClassAdapter]
@@ -315,8 +315,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
 // CHECK:STDOUT:   %SomeClass.F.decl: %SomeClass.F.type = fn_decl @SomeClass.F [concrete = constants.%SomeClass.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.ea0 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.ea0 = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.ea0 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.ea0 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %SomeClass = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [concrete = constants.%SomeClass]
@@ -398,10 +398,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [concrete = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [concrete = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.31a = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.31a = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.31a = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -484,10 +484,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %StructAdapter.decl: type = class_decl @StructAdapter [concrete = constants.%StructAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7d8 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7d8 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7d8 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -558,10 +558,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TupleAdapter.decl: type = class_decl @TupleAdapter [concrete = constants.%TupleAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3a8 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3a8 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3a8 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.3a8 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -638,10 +638,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %MakeInt.decl: %MakeInt.type = fn_decl @MakeInt [concrete = constants.%MakeInt] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = value_binding_pattern N [concrete]
-// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern %N.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc4_37.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_37.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc4_37.2: Core.Form = init_form %.loc4_37.1 [concrete = constants.%.805]
@@ -659,10 +659,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IntAdapter.decl: type = class_decl @IntAdapter [concrete = constants.%IntAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.f40 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.f40 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.f40 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.f40 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form %i32 [concrete = constants.%.ff5]

@@ -108,18 +108,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %AddAssignWith.type: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.16b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [concrete = constants.%TestIncNonRef] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.476 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [concrete = constants.%TestAddAssignNonRef] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.476 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.476 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.476 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc37_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -132,8 +132,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Inc.impl: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.decl: %C.as.Inc.impl.Op.type = fn_decl @C.as.Inc.impl.Op [concrete = constants.%C.as.Inc.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.476 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.476 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -150,10 +150,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.AddAssignWith.impl: %C.ref.loc22_6 as %AddAssignWith.type {
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.decl: %C.as.AddAssignWith.impl.Op.type = fn_decl @C.as.AddAssignWith.impl.Op [concrete = constants.%C.as.AddAssignWith.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.476 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = ref_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:     %other.patt: %pattern_type.476 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern %other.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.476 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.476 = at_binding_pattern other, %other.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, file.%C.decl [concrete = constants.%C]

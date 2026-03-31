@@ -58,7 +58,7 @@ export C2(T:! type);
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_10.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_11.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [concrete = constants.%C2.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
@@ -67,28 +67,28 @@ export C2(T:! type);
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc5_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_11.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C1(%T.loc4_10.2: type) {
-// CHECK:STDOUT:   %T.loc4_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_10.1 (constants.%T)]
+// CHECK:STDOUT: generic class @C1(%T.loc4_11.2: type) {
+// CHECK:STDOUT:   %T.loc4_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_11.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C2(%T.loc5_10.2: type) {
-// CHECK:STDOUT:   %T.loc5_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
+// CHECK:STDOUT: generic class @C2(%T.loc5_11.2: type) {
+// CHECK:STDOUT:   %T.loc5_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_11.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_10.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_11.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
-// CHECK:STDOUT:   %T.loc5_10.1 => constants.%T
+// CHECK:STDOUT:   %T.loc5_11.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -106,8 +106,8 @@ export C2(T:! type);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Foo.C1: %C1.type = import_ref Foo//a, C1, loaded [concrete = constants.%C1.generic]
 // CHECK:STDOUT:   %Foo.C2: %C2.type = import_ref Foo//a, C2, loaded [concrete = constants.%C2.generic]
-// CHECK:STDOUT:   %Foo.import_ref.b3bc94.1: type = import_ref Foo//a, loc4_10, loaded [symbolic = @C1.%T (constants.%T)]
-// CHECK:STDOUT:   %Foo.import_ref.b3bc94.2: type = import_ref Foo//a, loc5_10, loaded [symbolic = @C2.%T (constants.%T)]
+// CHECK:STDOUT:   %Foo.import_ref.b3bc94.1: type = import_ref Foo//a, loc4_11, loaded [symbolic = @C1.%T (constants.%T)]
+// CHECK:STDOUT:   %Foo.import_ref.b3bc94.2: type = import_ref Foo//a, loc5_11, loaded [symbolic = @C2.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

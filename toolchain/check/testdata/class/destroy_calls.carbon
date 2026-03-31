@@ -402,15 +402,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.loc6_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc6_15.2: type = symbolic_binding T, 0, template [template = %T.loc6_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_16.2: type = symbolic_binding T, 0, template [template = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc6_15.2: type) {
-// CHECK:STDOUT:   %T.loc6_15.1: type = symbolic_binding T, 0, template [template = %T.loc6_15.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc6_16.2: type) {
+// CHECK:STDOUT:   %T.loc6_16.1: type = symbolic_binding T, 0, template [template = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C.loc7_20.2: type = class_type @C, @C(%T.loc6_15.1) [template = %C.loc7_20.2 (constants.%C.5a3)]
+// CHECK:STDOUT:   %C.loc7_20.2: type = class_type @C, @C(%T.loc6_16.1) [template = %C.loc7_20.2 (constants.%C.5a3)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_20.2 [template = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc7_20.2 [template = %pattern_type (constants.%pattern_type.3d5)]
 // CHECK:STDOUT:   %C.val: @F.%C.loc7_20.2 (%C.5a3) = struct_value () [template = %C.val (constants.%C.val.8b3)]
@@ -434,7 +434,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     assign %v.var, %.loc7_3.1
 // CHECK:STDOUT:     %.loc7_20: type = splice_block %C.loc7_20.1 [template = %C.loc7_20.2 (constants.%C.5a3)] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_15.2 [template = %T.loc6_15.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_16.2 [template = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:       %C.loc7_20.1: type = class_type @C, @C(constants.%T) [template = %C.loc7_20.2 (constants.%C.5a3)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%C.loc7_20.2 (%C.5a3) = ref_binding v, %v.var
@@ -450,11 +450,11 @@ fn G() { F({}); }
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C.850) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc6_15.1 => constants.%T
+// CHECK:STDOUT:   %T.loc6_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T.loc6_15.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.loc6_16.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.loc7_20.2 => constants.%C.850

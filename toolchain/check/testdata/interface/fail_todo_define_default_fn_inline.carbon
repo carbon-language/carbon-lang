@@ -72,12 +72,12 @@ interface Interface {
 // CHECK:STDOUT:   %Interface.WithSelf.F.decl: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Interface.WithSelf.G.decl: @Interface.WithSelf.%Interface.WithSelf.G.type (%Interface.WithSelf.G.type) = fn_decl @Interface.WithSelf.G [symbolic = @Interface.WithSelf.%Interface.WithSelf.G (constants.%Interface.WithSelf.G)] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc26_35 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc26_35: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc26: Core.Form = init_form %i32.loc26_35 [concrete = constants.%.ff5]

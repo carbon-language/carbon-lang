@@ -72,9 +72,15 @@ class GenericStore : public ValueStore<GenericId, Generic, Tag<CheckIRId>> {
 // values for the compile-time parameters themselves.
 struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{generic: " << generic_id << ", args: " << args_id
-        << ", decl_block_id: " << decl_block_id
-        << ", definition_block_id: " << definition_block_id << "}";
+    auto print_block = [&](llvm::StringLiteral region, InstBlockId id,
+                           bool has_error) {
+      out << ", " << region << "_block_id: " << id << ", " << region
+          << "_has_error: " << has_error;
+    };
+    out << "{generic: " << generic_id << ", args: " << args_id;
+    print_block("decl", decl_block_id, decl_block_has_error);
+    print_block("definition", definition_block_id, definition_block_has_error);
+    out << "}";
   }
 
   // Returns true if this specific has never been resolved. Such specifics are
@@ -95,6 +101,11 @@ struct Specific : Printable<Specific> {
                : definition_block_id;
   }
 
+  // Returns whether either block has an error.
+  auto HasError() const -> bool {
+    return decl_block_has_error || definition_block_has_error;
+  }
+
   // The generic that this is a specific version of.
   GenericId generic_id;
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
@@ -107,6 +118,11 @@ struct Specific : Printable<Specific> {
   InstBlockId decl_block_id = InstBlockId::None;
   // The value block for the definition region of the specific.
   InstBlockId definition_block_id = InstBlockId::None;
+
+  // Whether the corresponding block contains an error. These are stored
+  // directly on Specific so that they pack together.
+  bool decl_block_has_error = false;
+  bool definition_block_has_error = false;
 };
 
 // Provides storage for deduplicated specifics, which represent generics plus

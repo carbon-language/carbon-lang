@@ -123,7 +123,7 @@ _prebuilt_clang_runtimes_internal = rule(
             doc = "Optional target for the built runtimes",
         ),
         "_builtin_headers": attr.label(
-            default = Label("//toolchain/install:clang_headers"),
+            default = Label("@llvm-project//clang:builtin_headers_gen"),
         ),
     },
 )

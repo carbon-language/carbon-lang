@@ -110,8 +110,8 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %AbstractFinal.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/pattern.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -16,13 +17,8 @@ static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto var_pattern = inst.TryAs<VarPattern>()) {
+  if (auto var_pattern = inst.TryAs<AnyVarPattern>()) {
     inst_id = var_pattern->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (auto param_pattern_inst = inst.TryAs<AnyParamPattern>()) {
-    inst_id = param_pattern_inst->subpattern_id;
     inst = sem_ir.insts().Get(inst_id);
   }
 
@@ -74,17 +70,16 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
 auto GetPrettyNameFromPatternId(const File& sem_ir, InstId pattern_id)
     -> NameId {
   auto [inst_id, inst] = GetUnwrapped(sem_ir, pattern_id);
-
-  if (auto [name_id, entity_name_id] = GetBoundEntityName(sem_ir, inst);
-      entity_name_id.has_value()) {
-    return name_id;
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND_ANY(SemIR::AnyLeafParamPattern, param_pattern): {
+      return param_pattern.pretty_name_id;
+    }
+    case CARBON_KIND_ANY(SemIR::AnyBindingPattern, _): {
+      return GetBoundEntityName(sem_ir, inst).first;
+    }
+    default:
+      return NameId::None;
   }
-
-  if (inst.Is<ReturnSlotPattern>()) {
-    return NameId::ReturnSlot;
-  }
-
-  return NameId::None;
 }
 
 }  // namespace Carbon::SemIR
