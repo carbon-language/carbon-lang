@@ -38,22 +38,16 @@ class C {}
 
 impl C as I where .value = (1,) {}
 
-// --- fail_todo_import_symbolic_decl.carbon
+// --- import_symbolic_decl.carbon
 
 library "[[@TEST_NAME]]";
 import library "symbolic_decl";
 
-fn F() -> array(i32, 1) {
+fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+7]]:10: error: cannot copy value of type `array(i32, 1)` [CopyOfUncopyableType]
-  // CHECK:STDERR:   return (C as I).value;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+4]]:10: note: type `array(i32, 1)` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return (C as I).value;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return (C as I).value;
+  let a: array(i32, 1) = (C as I).value;
   //@dump-sem-ir-end
+  return a[0];
 }
 
 // CHECK:STDOUT: --- user.carbon
@@ -108,13 +102,14 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_symbolic_decl.carbon
+// CHECK:STDOUT: --- import_symbolic_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.a98: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
@@ -135,16 +130,25 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %value: %array_type = assoc_const_decl @value [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> out %return.param: %array_type {
+// CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.a98 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.ref, (constants.%I.impl_witness) [concrete = constants.%I.facet]
-// CHECK:STDOUT:   %.loc14_13: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc14_13 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc14_18: type = converted %.loc14_13, %as_type [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc7_29: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_29 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc7_34: type = converted %.loc7_29, %as_type [concrete = constants.%C]
 // CHECK:STDOUT:   %value.ref: %I.assoc_type = name_ref value, imports.%Main.import_ref.353 [concrete = constants.%assoc0.5b3]
-// CHECK:STDOUT:   %impl.elem0: %array_type = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%array]
-// CHECK:STDOUT:   return <error> to %return.param
+// CHECK:STDOUT:   %impl.elem0.loc7: %array_type = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc7_22: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc7 [concrete = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %array_type = value_binding a, %impl.elem0.loc7
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
