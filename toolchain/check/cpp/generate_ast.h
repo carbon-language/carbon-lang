@@ -30,7 +30,7 @@ auto GenerateAst(Context& context,
 // Injects C++ code from `inline Cpp` into the active Clang AST context.
 // Returns a bool representing whether parsing was successful.
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
-                             llvm::StringRef source_code) -> bool;
+                             llvm::StringRef source_code) -> void;
 
 // Finishes AST generation for the given checking context. Performs end of file
 // steps such as template instantiation and warning on unused declarations.

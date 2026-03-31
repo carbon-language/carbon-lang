@@ -709,7 +709,7 @@ auto GenerateAst(Context& context,
 }
 
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
-                             llvm::StringRef source_code) -> bool {
+                             llvm::StringRef source_code) -> void {
   auto* cpp_context = context.cpp_context();
   CARBON_CHECK(cpp_context);
 
@@ -727,10 +727,10 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   clang::FileID file_id =
       preprocessor.getSourceManager().createFileID(std::move(buffer));
 
-  bool failed =
-      preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation());
-  if (failed) {
-    return false;
+  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
+    // Clang will have generated a suitable error. There's no anything more to
+    // do here.
+    return;
   }
 
   // The parser will typically have an EOF as its cached current token; consume
@@ -740,7 +740,6 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   }
 
   ParseTopLevelDecls(parser, sema.getASTConsumer());
-  return true;
 }
 
 auto FinishAst(Context& context) -> void {
