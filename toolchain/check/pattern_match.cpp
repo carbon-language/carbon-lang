@@ -915,7 +915,7 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
     }
   }
 
-  return {.syntactic_args = inner_args,
+  return {.syntactic_args = std::move(inner_args),
           .ignored_call_args = state.outer_call_args};
 }
 
