@@ -46,6 +46,29 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // These name constraints don't add interfaces as lookup contexts.
   llvm::SmallVector<SpecificNamedConstraint> self_impls_named_constraints;
 
+  // Requirements on types other than the generic self.
+  struct TypeImplsInterface {
+    // A facet or type value, which is required to implement the interface.
+    // Must be a canonical instruction to ensure comparison works correctly.
+    InstId self_type;
+    SpecificInterface specific_interface;
+
+    friend auto operator==(const TypeImplsInterface& lhs,
+                           const TypeImplsInterface& rhs) -> bool = default;
+  };
+  struct TypeImplsNamedConstraint {
+    // A facet or type value, which is required to implement the constraint.
+    // Must be a canonical instruction to ensure comparison works correctly.
+    InstId self_type;
+    SpecificNamedConstraint specific_named_constraint;
+
+    friend auto operator==(const TypeImplsNamedConstraint& lhs,
+                           const TypeImplsNamedConstraint& rhs)
+        -> bool = default;
+  };
+  llvm::SmallVector<TypeImplsInterface> type_impls_interfaces;
+  llvm::SmallVector<TypeImplsNamedConstraint> type_impls_named_constraints;
+
   // Rewrite constraints of the form `.T = U`.
   //
   // The InstIds here must be canonical instructions (which come from the
@@ -80,7 +103,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // has any other requirements.
   auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType> {
     if (!self_impls_constraints.empty() ||
-        !self_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
+        !self_impls_named_constraints.empty() ||
+        !type_impls_interfaces.empty() ||
+        !type_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
         other_requirements) {
       return std::nullopt;
     }
@@ -99,6 +124,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return extend_constraints.empty() && extend_named_constraints.empty() &&
            self_impls_constraints.empty() &&
            self_impls_named_constraints.empty() &&
+           type_impls_interfaces.empty() &&
+           type_impls_named_constraints.empty() &&
            rewrite_constraints.empty() && !other_requirements;
   }
 
@@ -109,6 +136,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
            lhs.extend_named_constraints == rhs.extend_named_constraints &&
            lhs.self_impls_named_constraints ==
                rhs.self_impls_named_constraints &&
+           lhs.type_impls_interfaces == rhs.type_impls_interfaces &&
+           lhs.type_impls_named_constraints ==
+               rhs.type_impls_named_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
            lhs.other_requirements == rhs.other_requirements;
   }

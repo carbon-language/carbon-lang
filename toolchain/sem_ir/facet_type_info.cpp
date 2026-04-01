@@ -46,6 +46,30 @@ static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
+static auto TypeImplsInterfacesLess(
+    const FacetTypeInfo::TypeImplsInterface& lhs,
+    const FacetTypeInfo::TypeImplsInterface& rhs) -> bool {
+  return std::tie(lhs.self_type.index,
+                  lhs.specific_interface.interface_id.index,
+                  lhs.specific_interface.specific_id.index) <
+         std::tie(rhs.self_type.index,
+                  rhs.specific_interface.interface_id.index,
+                  rhs.specific_interface.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto TypeImplsNamedConstraintsLess(
+    const FacetTypeInfo::TypeImplsNamedConstraint& lhs,
+    const FacetTypeInfo::TypeImplsNamedConstraint& rhs) -> bool {
+  return std::tie(lhs.self_type.index,
+                  lhs.specific_named_constraint.named_constraint_id.index,
+                  lhs.specific_named_constraint.specific_id.index) <
+         std::tie(rhs.self_type.index,
+                  rhs.specific_named_constraint.named_constraint_id.index,
+                  rhs.specific_named_constraint.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
 static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
                          const IdentifiedFacetType::RequiredImpl& rhs) -> bool {
   return std::tie(lhs.self_facet_value.index,
@@ -131,6 +155,11 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
   CombineVectors(info.self_impls_named_constraints,
                  lhs.self_impls_named_constraints,
                  rhs.self_impls_named_constraints);
+  CombineVectors(info.type_impls_interfaces, lhs.type_impls_interfaces,
+                 rhs.type_impls_interfaces);
+  CombineVectors(info.type_impls_named_constraints,
+                 lhs.type_impls_named_constraints,
+                 rhs.type_impls_named_constraints);
   CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
                  rhs.rewrite_constraints);
   info.other_requirements = lhs.other_requirements || rhs.other_requirements;
@@ -145,6 +174,9 @@ auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(self_impls_named_constraints, NamedConstraintsLess);
   SubtractSorted(self_impls_named_constraints, extend_named_constraints,
                  NamedConstraintsLess);
+  SortAndDeduplicate(type_impls_interfaces, TypeImplsInterfacesLess);
+  SortAndDeduplicate(type_impls_named_constraints,
+                     TypeImplsNamedConstraintsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
@@ -174,14 +206,6 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (!rewrite_constraints.empty()) {
-    out << outer_sep << "rewrites: ";
-    llvm::ListSeparator sep;
-    for (auto req : rewrite_constraints) {
-      out << sep << req.lhs_id << "=" << req.rhs_id;
-    }
-  }
-
   if (!extend_named_constraints.empty()) {
     out << outer_sep << "extends named constraint: ";
     llvm::ListSeparator sep;
@@ -201,6 +225,39 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
       if (self_impls.specific_id.has_value()) {
         out << "(" << self_impls.specific_id << ")";
       }
+    }
+  }
+
+  if (!type_impls_interfaces.empty()) {
+    out << outer_sep << "type impls interface: ";
+    llvm::ListSeparator sep;
+    for (const auto& type_impls : type_impls_interfaces) {
+      out << sep << type_impls.self_type;
+      out << " impls " << type_impls.specific_interface.interface_id;
+      if (type_impls.specific_interface.specific_id.has_value()) {
+        out << "(" << type_impls.specific_interface.specific_id << ")";
+      }
+    }
+  }
+
+  if (!type_impls_named_constraints.empty()) {
+    out << outer_sep << "type impls interface: ";
+    llvm::ListSeparator sep;
+    for (const auto& type_impls : type_impls_named_constraints) {
+      out << sep << type_impls.self_type;
+      out << " impls "
+          << type_impls.specific_named_constraint.named_constraint_id;
+      if (type_impls.specific_named_constraint.specific_id.has_value()) {
+        out << "(" << type_impls.specific_named_constraint.specific_id << ")";
+      }
+    }
+  }
+
+  if (!rewrite_constraints.empty()) {
+    out << outer_sep << "rewrites: ";
+    llvm::ListSeparator sep;
+    for (auto req : rewrite_constraints) {
+      out << sep << req.lhs_id << "=" << req.rhs_id;
     }
   }
 

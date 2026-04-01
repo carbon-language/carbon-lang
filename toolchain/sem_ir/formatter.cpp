@@ -1500,6 +1500,26 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
         }
       }
     }
+    for (const auto& type_impls : info.type_impls_interfaces) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_interface.interface_id);
+      if (type_impls.specific_interface.specific_id.has_value()) {
+        out() << ", ";
+        FormatName(type_impls.specific_interface.specific_id);
+      }
+    }
+    for (const auto& type_impls : info.type_impls_named_constraints) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_named_constraint.named_constraint_id);
+      if (type_impls.specific_named_constraint.specific_id.has_value()) {
+        out() << ", ";
+        FormatName(type_impls.specific_named_constraint.specific_id);
+      }
+    }
     for (auto rewrite : info.rewrite_constraints) {
       out() << and_sep;
       FormatArg(rewrite.lhs_id);
