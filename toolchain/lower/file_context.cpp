@@ -247,13 +247,17 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
   return global_variable;
 }
 
-auto FileContext::GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
-                                          SemIR::SpecificId specific_id)
-    -> std::optional<FunctionInfo>& {
+auto FileContext::GetOrCreateFunctionInfo(
+    SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+    FileContext* fallback_file, SemIR::FunctionId fallback_function_id,
+    SemIR::SpecificId fallback_specific_id) -> std::optional<FunctionInfo>& {
   // If we have already lowered a declaration of this function, just return it.
+  // TODO: If the existing declaration is inexact, and we now have a fallback,
+  // we should try again.
   auto& result = GetFunctionInfo(function_id, specific_id);
   if (!result) {
-    result = BuildFunctionDecl(function_id, specific_id);
+    result = BuildFunctionDecl(function_id, specific_id, fallback_file,
+                               fallback_function_id, fallback_specific_id);
   }
   return result;
 }
@@ -277,17 +281,26 @@ auto FileContext::GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
 // in which case there can be multiple output parameters for different pieces of
 // the return form, but it's not yet clear how we will lower such functions.
 //
+// We also deal with the case where the function signature involves incomplete
+// types. This can happen if the function is declared but never defined nor
+// called in this file. Declarations of such functions can still need to be
+// emitted; currently this happens if they are part of a class's vtable. Such
+// uses do not need an exact signature, so we emit them with the LLVM type
+// `void()` and set `inexact` on the result to indicate the type is not known.
+// LLVM can handle merging inexact and exact signatures, and this matches how
+// Clang handles the corresponding situation in C++.
+//
 // One additional complexity is that we may need to fetch information about the
-// same function from multiple different files. For a generic function, there
-// may be no single file in which all the relevant types are complete, so we may
-// need to look at multiple versions of the function in multiple files in order
-// to gather the full information. For example, when emitting a function
-// definition, we'll look at the specific function definition and the generic
-// function definition, and when emitting a function call, we'll look at the
-// specific function definition and the partially-specific function from the
-// call site. In each case, the first function in the list is the primary and
-// most specific function, and the others are used as fallbacks if an incomplete
-// type is encountered.
+// same function from multiple different files. For a call to a generic
+// function, there may be no single file in which all the relevant types are
+// complete, so we will look at both the specific function definition that is
+// the resolved callee, as well as the partially-specific function from the call
+// site.
+//
+// In general, we support being given a list of variants of the function, in
+// which the first function in the list is the primary declaration and should be
+// the most specific function, and the others are used as fallbacks if an
+// incomplete type is encountered.
 class FileContext::FunctionTypeInfoBuilder {
  public:
   struct FunctionInContext {
@@ -864,7 +877,10 @@ auto FileContext::GetOrCreateLLVMFunction(
 }
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
-                                    SemIR::SpecificId specific_id)
+                                    SemIR::SpecificId specific_id,
+                                    FileContext* fallback_file,
+                                    SemIR::FunctionId fallback_function_id,
+                                    SemIR::SpecificId fallback_specific_id)
     -> std::optional<FunctionInfo> {
   const auto& function = sem_ir().functions().Get(function_id);
 
@@ -891,8 +907,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // lowering it if it's needed.
 
   FunctionTypeInfoBuilder::FunctionInContext func_infos[] = {
-      {this, function_id, specific_id}};
-  auto function_type_info = FunctionTypeInfoBuilder(func_infos).Build();
+      {this, function_id, specific_id},
+      {fallback_file, fallback_function_id, fallback_specific_id}};
+  auto function_type_info =
+      FunctionTypeInfoBuilder(llvm::ArrayRef(func_infos, fallback_file ? 2 : 1))
+          .Build();
   auto* llvm_function =
       GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
 

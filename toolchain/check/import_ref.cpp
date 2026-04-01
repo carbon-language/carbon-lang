@@ -2448,12 +2448,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, resolver.import_classes()
                     .Get(resolver.import_vtables().Get(inst.vtable_id).class_id)
                     .vtable_decl_id);
-  auto vtable_const_inst = resolver.local_insts().Get(
-      resolver.local_constant_values().GetInstId(vtable_const_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
+  auto vtable_const_inst = resolver.local_insts().Get(
+      resolver.local_constant_values().GetInstId(vtable_const_id));
   return ResolveResult::Deduplicated<SemIR::VtablePtr>(
       resolver,
       {.type_id = GetPointerType(resolver.local_context(),
