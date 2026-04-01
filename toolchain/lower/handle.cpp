@@ -224,14 +224,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto inner_inst_id = inst.value_id;
-
-  if (auto bind_name =
-          context.sem_ir().insts().TryGetAs<SemIR::AnyBinding>(inner_inst_id)) {
-    inner_inst_id = bind_name->value_id;
-  }
-
-  context.SetLocal(inst_id, context.GetValue(inner_inst_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
