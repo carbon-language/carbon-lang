@@ -690,6 +690,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.GetFileContext(callee.file)
           .GetOrCreateFunctionInfo(callee_function.function_id,
                                    callee_function.resolved_specific_id);
+  CARBON_CHECK(!function_info->inexact,
+               "Attempting to emit call to inexact function: {0}",
+               *function_info->llvm_function);
 
   // Lower args in the LLVM parameter order, rather than the SemIR parameter
   // order.
