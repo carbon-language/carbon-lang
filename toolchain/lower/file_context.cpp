@@ -315,9 +315,9 @@ class FileContext::FunctionTypeInfoBuilder {
     CARBON_CHECK(!functions_.empty());
   }
 
-  // Retrieves various features of the function's type useful for constructing the
-  // `llvm::Type` and `llvm::DISubroutineType` for the `llvm::Function`. If any
-  // part of the type can't be manifest (eg: incomplete return or parameter
+  // Retrieves various features of the function's type useful for constructing
+  // the `llvm::Type` and `llvm::DISubroutineType` for the `llvm::Function`. If
+  // any part of the type can't be manifest (eg: incomplete return or parameter
   // types), then the result is as if the type was `void()`. Should only be
   // called once on a given builder.
   auto Build() && -> FunctionTypeInfo;
@@ -372,8 +372,8 @@ class FileContext::FunctionTypeInfoBuilder {
   // `return_type_id`.
   auto SetReturnByReference(const FunctionInContext& func_ctx,
                             SemIR::TypeId /*return_type_id*/) -> bool {
-    return_type_ =
-        llvm::PointerType::get(func_ctx.context->llvm_context(), /*AddressSpace=*/0);
+    return_type_ = llvm::PointerType::get(func_ctx.context->llvm_context(),
+                                          /*AddressSpace=*/0);
     // TODO: replace this with a reference type.
     param_di_types_.push_back(GetPointerDIType(nullptr));
     return true;
@@ -404,16 +404,18 @@ class FileContext::FunctionTypeInfoBuilder {
   // Tries to handle the parameter pattern at the given index using the given
   // context. Delegates to either `AddLoweredParam` or `IgnoreParam`, or returns
   // false if the parameter type is incomplete.
-  auto TryHandleParameter(const FunctionInContext& func_ctx, SemIR::CallParamIndex index) -> bool;
+  auto TryHandleParameter(const FunctionInContext& func_ctx,
+                          SemIR::CallParamIndex index) -> bool;
 
   // Records that the parameter pattern at the given index has the given ID, and
   // lowers to the given IR and DI types.
-  auto AddLoweredParam(const FunctionInContext& func_ctx, SemIR::CallParamIndex index,
+  auto AddLoweredParam(const FunctionInContext& func_ctx,
+                       SemIR::CallParamIndex index,
                        SemIR::InstId param_pattern_id, LoweredTypes param_types)
       -> bool {
     lowered_param_indices_.push_back(index);
-    param_name_ids_.push_back(
-        SemIR::GetPrettyNameFromPatternId(func_ctx.context->sem_ir(), param_pattern_id));
+    param_name_ids_.push_back(SemIR::GetPrettyNameFromPatternId(
+        func_ctx.context->sem_ir(), param_pattern_id));
     param_types_.push_back(param_types.llvm_ir_type);
     param_di_types_.push_back(param_types.llvm_di_type);
     return true;
@@ -579,7 +581,8 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleReturnForm(
   auto return_form_const_id = SemIR::GetConstantValueInSpecific(
       func_ctx.context->sem_ir(), func_ctx.specific_id, return_form_inst_id);
   auto return_form_inst = func_ctx.context->sem_ir().insts().Get(
-      func_ctx.context->sem_ir().constant_values().GetInstId(return_form_const_id));
+      func_ctx.context->sem_ir().constant_values().GetInstId(
+          return_form_const_id));
   CARBON_KIND_SWITCH(return_form_inst) {
     case CARBON_KIND(SemIR::InitForm init_form): {
       auto return_type_id =
@@ -588,7 +591,8 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleReturnForm(
                   func_ctx.context->sem_ir(), func_ctx.specific_id,
                   init_form.type_component_inst_id));
       switch (
-          SemIR::InitRepr::ForType(func_ctx.context->sem_ir(), return_type_id).kind) {
+          SemIR::InitRepr::ForType(func_ctx.context->sem_ir(), return_type_id)
+              .kind) {
         case SemIR::InitRepr::InPlace: {
           return SetReturnInPlace(func_ctx, return_type_id);
         }
@@ -620,7 +624,8 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleReturnForm(
                   func_ctx.context->sem_ir(), func_ctx.specific_id,
                   val_form.type_component_inst_id));
       switch (
-          SemIR::ValueRepr::ForType(func_ctx.context->sem_ir(), return_type_id).kind) {
+          SemIR::ValueRepr::ForType(func_ctx.context->sem_ir(), return_type_id)
+              .kind) {
         case SemIR::ValueRepr::Unknown:
           return false;
 
@@ -654,19 +659,22 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
 auto FileContext::FunctionTypeInfoBuilder::TryHandleParameter(
     const FunctionInContext& func_ctx, SemIR::CallParamIndex index) -> bool {
   const auto& sem_ir = func_ctx.context->sem_ir();
-  auto param_pattern_id = sem_ir.inst_blocks().Get(
-    sem_ir.functions().Get(func_ctx.function_id).call_param_patterns_id)[index.index];
+  auto param_pattern_id =
+      sem_ir.inst_blocks().Get(sem_ir.functions()
+                                   .Get(func_ctx.function_id)
+                                   .call_param_patterns_id)[index.index];
   auto param_pattern = sem_ir.insts().Get(param_pattern_id);
   auto param_type_id = ExtractScrutineeType(
-      sem_ir,
-      SemIR::GetTypeOfInstInSpecific(sem_ir, func_ctx.specific_id, param_pattern_id));
+      sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, func_ctx.specific_id,
+                                             param_pattern_id));
 
   // Returns the appropriate LoweredTypes for reference-like parameters.
   auto ref_lowered_types = [&]() -> LoweredTypes {
-    return {.llvm_ir_type = llvm::PointerType::get(func_ctx.context->llvm_context(),
-                                                   /*AddressSpace=*/0),
-            // TODO: replace this with a reference type.
-            .llvm_di_type = GetLoweredTypes(func_ctx, param_type_id).llvm_di_type};
+    return {
+        .llvm_ir_type = llvm::PointerType::get(func_ctx.context->llvm_context(),
+                                               /*AddressSpace=*/0),
+        // TODO: replace this with a reference type.
+        .llvm_di_type = GetLoweredTypes(func_ctx, param_type_id).llvm_di_type};
   };
 
   CARBON_CHECK(
@@ -702,12 +710,14 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleParameter(
   switch (param_kind) {
     case SemIR::RefParamPattern::Kind:
     case SemIR::VarParamPattern::Kind: {
-      return AddLoweredParam(func_ctx, index, param_pattern_id, ref_lowered_types());
+      return AddLoweredParam(func_ctx, index, param_pattern_id,
+                             ref_lowered_types());
     }
     case SemIR::OutParamPattern::Kind: {
       switch (SemIR::InitRepr::ForType(sem_ir, param_type_id).kind) {
         case SemIR::InitRepr::InPlace:
-          return AddLoweredParam(func_ctx, index, param_pattern_id, ref_lowered_types());
+          return AddLoweredParam(func_ctx, index, param_pattern_id,
+                                 ref_lowered_types());
         case SemIR::InitRepr::ByCopy:
         case SemIR::InitRepr::None:
           return IgnoreParam(index);
@@ -733,8 +743,9 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleParameter(
         case SemIR::ValueRepr::Custom:
         case SemIR::ValueRepr::Pointer: {
           if (value_rep.type_id.has_value()) {
-            return AddLoweredParam(func_ctx, index, param_pattern_id,
-                                   GetLoweredTypes(func_ctx, value_rep.type_id));
+            return AddLoweredParam(
+                func_ctx, index, param_pattern_id,
+                GetLoweredTypes(func_ctx, value_rep.type_id));
           } else {
             return IgnoreParam(index);
           }
@@ -766,8 +777,9 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
 auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
     const FunctionInContext& func_ctx, SemIR::TypeId type_id) -> LoweredTypes {
   if (!type_id.has_value()) {
-    return {.llvm_ir_type = llvm::Type::getVoidTy(func_ctx.context->llvm_context()),
-            .llvm_di_type = nullptr};
+    return {
+        .llvm_ir_type = llvm::Type::getVoidTy(func_ctx.context->llvm_context()),
+        .llvm_di_type = nullptr};
   }
   auto result = func_ctx.context->GetTypeAndDIType(type_id);
   if (result.llvm_di_type == nullptr) {
