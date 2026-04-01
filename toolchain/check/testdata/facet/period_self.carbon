@@ -280,9 +280,9 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {
   let unused u: T = U.G();
 
   // Shows both `I(.Self)` are `I(T)`.
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(I(T).A)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `I(.Self) where .(I(.Self).A) = I(.Self) where .(I(.Self).B) = {} and .(I(.Self).A) = {} and .(I(.Self).B) = {}` into type implementing `I(T) where .(I(T).A) = I(T) where .(I(T).A) = {} and .(I(T).B) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T as (I(T) where .A = (I(T) where .A = {} and .B = {}));
-  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   T as (I(T) where .A = (I(T) where .A = {} and .B = {}));
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I(.Self) where .(I(.Self).B) = {} and .(I(.Self).A) = {}` into type implementing `I(T) where .(I(T).A) = {} and .(I(T).B) = {}` [ConversionFailureFacetToFacet]
