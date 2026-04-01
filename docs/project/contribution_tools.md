@@ -257,46 +257,45 @@ system that can be used instead of or alongside Git. See the
 for more information.
 
 If you use `jj`, you may find the following configuration snippets (added to
-`~/.config/jj/config.toml`) helpful for your workflow:
+`jj config path --user`) helpful for your workflow:
 
-```toml
-[aliases]
+```sh
 # Clean up untracked or abandoned commits.
-abandon-untagged = ["abandon", "all() & ~ancestors(@ | bookmarks() | remote_bookmarks())"]
+jj config set --user aliases.abandon-untagged '["abandon", "all() & ~ancestors(@ | bookmarks() | remote_bookmarks())"]'
 
-[ui]
 # Use Git-style conflict markers, which VS Code can provide merge support for.
-conflict-marker-style = "git"
+jj config set --user ui.conflict-marker-style 'git'
 
-[ui.diff]
 # Produce Git-compatible diff format.
-format = "git"
+jj config set --user ui.diff.format 'git'
 
-[templates]
 # Automatically add a trailer to commits to indicate that they were AI-assisted.
-commit_trailers = '''
-"Assisted-by: My AI Tool"'''
+jj config set --user templates.commit_trailers "$(echo -e "'''\n\"Assisted-by: My AI Tool\"'''")"
 
-[revsets]
 # Make `jj bookmark advance` / `jj b a` only move bookmarks that point to
 # mutable commits, and move them to the most recent non-empty descendant.
-bookmark-advance-from = "heads(::to & bookmarks()) & ~immutable_heads()"
-bookmark-advance-to = 'heads(::@ & ~(description("") & empty() & ~merges()))'
+jj config set --user revsets.bookmark-advance-from 'heads(::to & bookmarks()) & ~immutable_heads()'
+jj config set --user revsets.bookmark-advance-to 'heads(::@ & ~(description("") & empty() & ~merges()))'
 ```
 
-As well as this per-repository configuration (added to `.jj/config.toml`)
+<!-- google-doc-style-ignore -->
+
+As well as this per-repository configuration (added to `jj config path --repo`)
 describing how your GitHub checkout is configured:
 
-```toml
-[remotes.origin]
+```sh
 # Automatically track all remote bookmarks.
-auto-track-bookmarks = "*"
+jj config set --repo remotes.origin.auto-track-bookmarks '*'
 
-[revset-aliases]
+# `trunk()` is a jj builtin, but defaults to `main@upstream`.
+jj config set --repo 'revset-aliases."trunk()"' 'trunk@upstream'
+
 # Treat github.com/carbon-language/carbon-lang as immutable, but treat your fork
 # as mutable.
-"immutable_heads()" = "remote_bookmarks(*, upstream)"
+jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, upstream)'
 ```
+
+<!-- google-doc-style-resume -->
 
 The above assumes that you have configured the remote name `origin` to refer to
 your fork and `upstream` to refer to `github.com/carbon-language/carbon-lang`,
