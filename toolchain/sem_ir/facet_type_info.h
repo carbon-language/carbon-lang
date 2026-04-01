@@ -35,14 +35,10 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Replace these vectors with an array allocated in an
   // `llvm::BumpPtrAllocator`.
 
-  // `ImplsConstraint` holds the interfaces this facet type requires.
-  // TODO: extend this so it can represent named constraint requirements
-  // and requirements on members, not just `.Self`.
-  using ImplsConstraint = SpecificInterface;
   // These are the required interfaces that are lookup contexts.
-  llvm::SmallVector<ImplsConstraint> extend_constraints;
+  llvm::SmallVector<SpecificInterface> extend_constraints;
   // These are the required interfaces that are not lookup contexts.
-  llvm::SmallVector<ImplsConstraint> self_impls_constraints;
+  llvm::SmallVector<SpecificInterface> self_impls_constraints;
 
   // These name constraints add interfaces as lookup contexts, if they are
   // extended in the named constraint.

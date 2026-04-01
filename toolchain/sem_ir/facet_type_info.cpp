@@ -25,8 +25,8 @@ static auto SortAndDeduplicate(VecT& vec,
 }
 
 // Canonically ordered by the numerical ids.
-static auto ImplsLess(const FacetTypeInfo::ImplsConstraint& lhs,
-                      const FacetTypeInfo::ImplsConstraint& rhs) -> bool {
+static auto InterfacesLess(const SpecificInterface& lhs,
+                           const SpecificInterface& rhs) -> bool {
   return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
          std::tie(rhs.interface_id.index, rhs.specific_id.index);
 }
@@ -138,9 +138,9 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  SortAndDeduplicate(extend_constraints, ImplsLess);
-  SortAndDeduplicate(self_impls_constraints, ImplsLess);
-  SubtractSorted(self_impls_constraints, extend_constraints, ImplsLess);
+  SortAndDeduplicate(extend_constraints, InterfacesLess);
+  SortAndDeduplicate(self_impls_constraints, InterfacesLess);
+  SubtractSorted(self_impls_constraints, extend_constraints, InterfacesLess);
   SortAndDeduplicate(extend_named_constraints, NamedConstraintsLess);
   SortAndDeduplicate(self_impls_named_constraints, NamedConstraintsLess);
   SubtractSorted(self_impls_named_constraints, extend_named_constraints,
@@ -155,7 +155,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   if (!extend_constraints.empty()) {
     out << outer_sep << "extends interface: ";
     llvm::ListSeparator sep;
-    for (ImplsConstraint req : extend_constraints) {
+    for (auto req : extend_constraints) {
       out << sep << req.interface_id;
       if (req.specific_id.has_value()) {
         out << "(" << req.specific_id << ")";
@@ -166,7 +166,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   if (!self_impls_constraints.empty()) {
     out << outer_sep << "self impls interface: ";
     llvm::ListSeparator sep;
-    for (ImplsConstraint req : self_impls_constraints) {
+    for (auto req : self_impls_constraints) {
       out << sep << req.interface_id;
       if (req.specific_id.has_value()) {
         out << "(" << req.specific_id << ")";
@@ -177,7 +177,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   if (!rewrite_constraints.empty()) {
     out << outer_sep << "rewrites: ";
     llvm::ListSeparator sep;
-    for (RewriteConstraint req : rewrite_constraints) {
+    for (auto req : rewrite_constraints) {
       out << sep << req.lhs_id << "=" << req.rhs_id;
     }
   }
@@ -285,7 +285,7 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
   // canonical order in which the witnesses must appear for a given facet type
   // so that ImplWitnessAccess can find the appropriate witness.
   llvm::sort(sortable, [](auto& lhs, auto& rhs) {
-    return ImplsLess(lhs.first, rhs.first);
+    return InterfacesLess(lhs.first, rhs.first);
   });
 
   // Update the original list with the new order (reusing to avoid an
