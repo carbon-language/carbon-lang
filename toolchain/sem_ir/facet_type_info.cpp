@@ -25,8 +25,8 @@ static auto SortAndDeduplicate(VecT& vec,
 }
 
 // Canonically ordered by the numerical ids.
-static auto InterfacesLess(const SpecificInterface& lhs,
-                           const SpecificInterface& rhs) -> bool {
+static auto InterfaceLess(const SpecificInterface& lhs,
+                          const SpecificInterface& rhs) -> bool {
   return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
          std::tie(rhs.interface_id.index, rhs.specific_id.index);
 }
@@ -39,16 +39,16 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
-                                 const SpecificNamedConstraint& rhs) -> bool {
+static auto NamedConstraintLess(const SpecificNamedConstraint& lhs,
+                                const SpecificNamedConstraint& rhs) -> bool {
   return std::tie(lhs.named_constraint_id.index, lhs.specific_id.index) <
          std::tie(rhs.named_constraint_id.index, rhs.specific_id.index);
 }
 
 // Canonically ordered by the numerical ids.
-static auto TypeImplsInterfacesLess(
-    const FacetTypeInfo::TypeImplsInterface& lhs,
-    const FacetTypeInfo::TypeImplsInterface& rhs) -> bool {
+static auto TypeImplsInterfaceLess(const FacetTypeInfo::TypeImplsInterface& lhs,
+                                   const FacetTypeInfo::TypeImplsInterface& rhs)
+    -> bool {
   return std::tie(lhs.self_type.index,
                   lhs.specific_interface.interface_id.index,
                   lhs.specific_interface.specific_id.index) <
@@ -58,7 +58,7 @@ static auto TypeImplsInterfacesLess(
 }
 
 // Canonically ordered by the numerical ids.
-static auto TypeImplsNamedConstraintsLess(
+static auto TypeImplsNamedConstraintLess(
     const FacetTypeInfo::TypeImplsNamedConstraint& lhs,
     const FacetTypeInfo::TypeImplsNamedConstraint& rhs) -> bool {
   return std::tie(lhs.self_type.index,
@@ -167,16 +167,16 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  SortAndDeduplicate(extend_constraints, InterfacesLess);
-  SortAndDeduplicate(self_impls_constraints, InterfacesLess);
-  SubtractSorted(self_impls_constraints, extend_constraints, InterfacesLess);
-  SortAndDeduplicate(extend_named_constraints, NamedConstraintsLess);
-  SortAndDeduplicate(self_impls_named_constraints, NamedConstraintsLess);
+  SortAndDeduplicate(extend_constraints, InterfaceLess);
+  SortAndDeduplicate(self_impls_constraints, InterfaceLess);
+  SubtractSorted(self_impls_constraints, extend_constraints, InterfaceLess);
+  SortAndDeduplicate(extend_named_constraints, NamedConstraintLess);
+  SortAndDeduplicate(self_impls_named_constraints, NamedConstraintLess);
   SubtractSorted(self_impls_named_constraints, extend_named_constraints,
-                 NamedConstraintsLess);
-  SortAndDeduplicate(type_impls_interfaces, TypeImplsInterfacesLess);
+                 NamedConstraintLess);
+  SortAndDeduplicate(type_impls_interfaces, TypeImplsInterfaceLess);
   SortAndDeduplicate(type_impls_named_constraints,
-                     TypeImplsNamedConstraintsLess);
+                     TypeImplsNamedConstraintLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
@@ -342,7 +342,7 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
   // canonical order in which the witnesses must appear for a given facet type
   // so that ImplWitnessAccess can find the appropriate witness.
   llvm::sort(sortable, [](auto& lhs, auto& rhs) {
-    return InterfacesLess(lhs.first, rhs.first);
+    return InterfaceLess(lhs.first, rhs.first);
   });
 
   // Update the original list with the new order (reusing to avoid an
