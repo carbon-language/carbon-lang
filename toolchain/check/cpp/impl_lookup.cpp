@@ -108,8 +108,6 @@ static auto BuildCopyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Copy` for enums and other trivially copyable
-  // types.
   auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
   if (!tag_decl) {
     return SemIR::InstId::None;
