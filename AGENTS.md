@@ -15,6 +15,8 @@ assistant, **read this first** to avoid common pitfalls.
 -   [General instructions](#general-instructions)
 -   [Project structure](#project-structure)
 -   [Toolchain development](#toolchain-development)
+-   [GitHub CLI usage](#github-cli-usage)
+-   [Accessing GitHub issues](#accessing-github-issues)
 
 ## General instructions
 
@@ -49,3 +51,13 @@ code conventions to follow.
 
 See the "Toolchain Development" skill for instructions on architecture,
 building, testing, debugging, C++ patterns, and common pitfalls.
+
+## GitHub CLI usage
+
+See the "GitHub CLI usage" skill for instructions on using the `gh` command to
+query and inspect GitHub state safely.
+
+## Accessing GitHub issues
+
+See the "Accessing GitHub issues" skill for instructions on how to safely access
+and view GitHub issues via the command line.
