@@ -22,6 +22,18 @@ class File;
 using SingleExtendFacetType =
     std::variant<SpecificInterface, SpecificNamedConstraint>;
 
+// The canonical description of a FacetType. Contains the interfaces, named
+// constraints, and any constraints on types that are part of the facet type.
+// All values within are canonical in order to for comparison to be used for
+// type equality.
+//
+// The structure keeps separate dependencies on interfaces and named
+// constraints, even though named constraints ultimately just name interfaces,
+// as it provides a canonical but otherwise unprocessed representation of the
+// facet type.
+//
+// The flattening of the named constraints into interfaces is done by forming
+// the IdentifiedFacetType for a specific Self type.
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
@@ -164,6 +176,11 @@ struct IdentifiedFacetTypeKey {
                          const IdentifiedFacetTypeKey& rhs) -> bool = default;
 };
 
+// The IdentifiedFacetType represents all of the interfaces required by a facet
+// type against a given Self type, and any other types it constrains. The order
+// of the interfaces is fixed for a given facet type, and can thus be used as a
+// key for storing and finding witnesses or other data associated with a facet
+// type.
 struct IdentifiedFacetType {
   // A requirement that `self_facet_value` implements the `specific_interface`.
   struct RequiredImpl {
