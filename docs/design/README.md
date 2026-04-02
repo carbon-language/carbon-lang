@@ -1762,20 +1762,20 @@ Class type definitions can include methods:
 ```carbon
 class Point {
   // Method defined inline
-  fn Distance[self: Self](x2: i32, y2: i32) -> f32 {
+  fn Distance(self, x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - self.x;
     var dy: i32 = y2 - self.y;
     return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
-  fn Offset[ref self: Self](dx: i32, dy: i32);
+  fn Offset(ref self, dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
 // Out-of-line definition of method declared inline
-fn Point.Offset[ref self: Self](dx: i32, dy: i32) {
+fn Point.Offset(ref self, dx: i32, dy: i32) {
   self.x += dx;
   self.y += dy;
 }
@@ -1789,17 +1789,16 @@ Assert(origin.Distance(3, 4) == 0.0);
 This defines a `Point` class type with two integer data members `x` and `y` and
 two methods `Distance` and `Offset`:
 
--   Methods are defined as class functions with a `self` parameter inside square
-    brackets `[`...`]` before the regular explicit parameter list in parens
-    `(`...`)`.
+-   Methods are defined as class functions with a `self` parameter as the first
+    parameter in the parameter list in parens `(`...`)`.
 -   Methods are called using the member syntax, `origin.Distance(`...`)` and
     `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
-    modifying the `Point`. This is signified using `[self: Self]` in the method
+    modifying the `Point`. This is signified using `self` in the method
     declaration.
 -   `origin.Offset(`...`)` _does_ modify the value of `origin`. This is
-    signified using `[ref self: Self]` in the method declaration. It may only be
-    called on [reference expressions](#expression-categories).
+    signified using `ref self` in the method declaration. It may only be called
+    on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1808,6 +1807,8 @@ two methods `Distance` and `Offset`:
 > -   [Methods](classes.md#methods)
 > -   Proposal
 >     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+> -   Proposal
+>     [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
 
 #### Inheritance
 
@@ -1954,13 +1955,13 @@ names resolvable by the compiler, and don't act like forward declarations.
 #### Destructors
 
 A destructor for a class is custom code executed when the lifetime of a value of
-that type ends. They are defined with `fn destroy` followed by either
-`[self: Self]` or `[ref self: Self]` (as is done with [methods](#methods)) and
-the block of code in the class definition, as in:
+that type ends. They are defined with `fn destroy` followed by either `self` or
+`ref self` in the parameter list (as is done with [methods](#methods)) and the
+block of code in the class definition, as in:
 
 ```carbon
 class MyClass {
-  fn destroy[self: Self]() { ... }
+  fn destroy(self) { ... }
 }
 ```
 
@@ -1969,7 +1970,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[ref self: Self]() { ... }
+  fn destroy(ref self) { ... }
 }
 ```
 

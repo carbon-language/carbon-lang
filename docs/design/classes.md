@@ -30,7 +30,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
-    -   [Fields](#fields)
+    -   [Fields and static class variables](#fields-and-static-class-variables)
+        -   [Fields](#fields)
+        -   [Static class variables](#static-class-variables)
+        -   [Initializers](#initializers)
+        -   [Syntax](#syntax)
     -   [Forward declaration](#forward-declaration)
     -   [`Self`](#self)
     -   [Construction](#construction)
@@ -695,37 +699,49 @@ Declarations within a class should generally have the same syntax as
 declarations that occur in other contexts. For example, member functions are
 introduced with `fn`.
 
-### Fields
+### Fields and static class variables
 
-Fields of a nominal class type are declared with `var`:
+A class can contain both instance fields and static class variables.
 
-```
+#### Fields
+
+Instance fields are declared with `var`. They are associated with instances of
+the class, and determine the data layout of those instances.
+
+#### Static class variables
+
+Static class variables are declared with `static var`. They are associated with
+the type itself rather than instances of the type, and have static storage
+duration.
+
+```carbon
 class TextLabel {
   var x: i32;
   var y: i32;
+
+  // Static class variable.
+  static var count: i32;
 
   var text: String = "default";
 }
 ```
 
-Notice that this is subtly different from the meaning of `var` in other
-contexts: it declares an
-[instance variable](https://en.wikipedia.org/wiki/Instance_variable), not just a
-variable in the class's scope.
+#### Initializers
 
-> **Open question:** Is there a way to declare class variables (scoped to the
-> class, not an instance)?
+In both field and static class variable declarations, an initializer (such as
+`= "default"` above) specifies the default or initial value. For example fields,
+it will be ignored if another value is supplied for that field when constructing
+an instance of the class, and the default must be constants whose value can be
+determined at compile time. For static class variables, the initializer has the
+same behavior as an initializer of a global variable.
 
-In a field declaration, an initializer (such as `= "default"` above) specifies
-the default value of the field, and will be ignored if another value is supplied
-for that field when constructing an instance of the class. Defaults must be
-constants whose value can be determined at compile time.
+#### Syntax
 
-The pattern in a field declaration must be a run-time binding pattern, so the
+The pattern in a variable declaration must be a run-time binding pattern, so the
 full syntax is:
 
-_field-declaration_ ::= `var` _identifier_ `:` _expression_ [ `=` _expression_
-] `;`
+_variable-declaration_ ::= [ `static` ] `var` _identifier_ `:` _expression_ [
+`=` _expression_ ] `;`
 
 ### Forward declaration
 
@@ -894,24 +910,25 @@ var p2: Point = p1.CreateCentered();
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declarations are distinguished from [class function](#class-functions)
-declarations by having a `self` parameter in square brackets `[`...`]` before
-the explicit parameter list in parens `(`...`)`. There is no implicit member
-access in methods, so inside the method body members are accessed through the
-`self` parameter. Methods may be written lexically inline or after the class
-declaration.
+declarations by having a `self` parameter as the first parameter in the
+parameter list in parens `(`...`)`. The type in the binding syntax for the
+`self` parameter, typically `: Self`, is optional and the type defaults to
+`Self`. There is no implicit member access in methods, so inside the method body
+members are accessed through the `self` parameter. Methods may be written
+lexically inline or after the class declaration.
 
 ```carbon
 class Circle {
-  fn Diameter[self: Self]() -> f32 {
+  fn Diameter(self) -> f32 {
     return self.radius * 2;
   }
-  fn Expand[ref self: Self](distance: f32);
+  fn Expand(ref self, distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[ref self: Self](distance: f32) {
+fn Circle.Expand(ref self, distance: f32) {
   self.radius += distance;
 }
 
@@ -924,20 +941,31 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   Methods are called using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
-    the `Circle` instance. This is signified using `[self: Self]` in the method
+    the `Circle` instance. This is signified using `self` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[ref self: Self]` in the method declaration.
+    `ref self` in the method declaration.
 
-The pattern '`ref self:` _type_' means "the argument must be a
-[reference expression](/docs/design/values.md#reference-expressions), and must
-match the pattern '`self:` _type_'".
+The pattern `ref self` means "the argument must be a
+[reference expression](/docs/design/values.md#reference-expressions)".
+
+Because methods are modeled as functions with an explicit `self` parameter, they
+can also be called directly by way of the type name without using dot-notation:
+
+```carbon
+var d: f32 = Circle.Diameter(c);
+```
 
 If the method declaration also includes
 [deduced compile-time parameters](/docs/design/generics/overview.md#deduced-parameters),
-the `self` parameter must be in the same list in square brackets `[`...`]`. The
-`self` parameter may appear in any position in that list, as long as it appears
-after any names needed to describe its type.
+they appear in square brackets `[`...`]` as usual, while `self` remains the
+first parameter in the parens `(`...`)`:
+
+```carbon
+class Wrapper(T:! type) {
+  fn Print[U:! type](self, x: U);
+}
+```
 
 #### Deferred member function definitions
 
@@ -2304,6 +2332,14 @@ the type of `U.x`."
 
 -   [#6008: Replace `impl fn` with `override fn`](https://github.com/carbon-language/carbon-lang/pull/6008)
 
+-   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
+
+    -   [`class` modifier for non-instance members](/proposals/p7016.md#class-modifier-for-non-instance-members)
+    -   [`shared` or `global` keywords for non-instance fields](/proposals/p7016.md#shared-or-global-keywords-for-non-instance-fields)
+    -   [`static` for non-instance class functions as well as non-instance fields](/proposals/p7016.md#static-for-non-instance-class-functions-as-well-as-non-instance-fields)
+    -   [Distinct `method` introducer](/proposals/p7016.md#distinct-method-introducer)
+    -   [Special `self` syntax in square brackets `[]`](/proposals/p7016.md#special-self-syntax-in-square-brackets-)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
@@ -2317,3 +2353,4 @@ the type of `U.x`."
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
+-   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
