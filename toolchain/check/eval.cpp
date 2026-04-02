@@ -718,6 +718,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.extend_constraints.push_back(
         {.interface_id = extend.interface_id,
          .specific_id =
@@ -726,6 +727,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
   for (const auto& self_impls : orig.self_impls_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.self_impls_constraints.push_back(
         {.interface_id = self_impls.interface_id,
          .specific_id =
@@ -734,6 +736,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
   for (const auto& extend : orig.extend_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.extend_named_constraints.push_back(
         {.named_constraint_id = extend.named_constraint_id,
          .specific_id =
@@ -743,6 +746,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   info.self_impls_named_constraints.reserve(
       orig.self_impls_named_constraints.size());
   for (const auto& self_impls : orig.self_impls_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.self_impls_named_constraints.push_back(
         {.named_constraint_id = self_impls.named_constraint_id,
          .specific_id =
@@ -754,6 +758,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     info.type_impls_interfaces.push_back(
         {.self_type =
              GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificInterface.
          .specific_interface = {
              .interface_id = type_impls.specific_interface.interface_id,
              .specific_id = GetConstantValue(
@@ -767,6 +772,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     info.type_impls_named_constraints.push_back(
         {.self_type =
              GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificNamedConstraint.
          .specific_named_constraint = {
              .named_constraint_id =
                  type_impls.specific_named_constraint.named_constraint_id,
