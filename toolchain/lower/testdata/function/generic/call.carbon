@@ -97,25 +97,25 @@ fn G() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.0c4ab795cec6cb27(ptr %_) #0 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.0c4ab795cec6cb27(ptr %_) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.b88d1103f417c6d4(i32 %_) #0 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(i32 %_) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.d4b5665541d5d7a8(double %_) #0 !dbg !49 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d4b5665541d5d7a8(double %_) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.5754c7a55c7cbe4a(%type %_) #0 !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.5754c7a55c7cbe4a(%type %_) #0 !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }

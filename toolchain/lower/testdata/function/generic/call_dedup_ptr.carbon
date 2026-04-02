@@ -51,7 +51,7 @@ fn M() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @_CF.Main.779b9c0f3b54a7f8(ptr %x) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.779b9c0f3b54a7f8(ptr %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !23
 // CHECK:STDOUT: }

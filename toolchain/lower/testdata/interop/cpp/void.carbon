@@ -142,7 +142,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb"(ptr %self) #0 !dbg !54 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb"(ptr %self) #0 !dbg !54 {
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504"(ptr %self), !dbg !60
 // CHECK:STDOUT:   ret ptr %1, !dbg !61
 // CHECK:STDOUT: }
@@ -151,25 +151,25 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.295aa3526801a9d4"(ptr %self) #0 !dbg !62 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.295aa3526801a9d4"(ptr %self) #0 !dbg !62 {
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.57bd8d0c2213b1aa"(ptr %self), !dbg !65
 // CHECK:STDOUT:   ret ptr %1, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e995c7ea1c3d1cc3"(ptr %self) #0 !dbg !67 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e995c7ea1c3d1cc3"(ptr %self) #0 !dbg !67 {
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.02dd0be934e1c38a"(ptr %self), !dbg !70
 // CHECK:STDOUT:   ret ptr %1, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504"(ptr %self) #0 !dbg !72 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504"(ptr %self) #0 !dbg !72 {
 // CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %self), !dbg !75
 // CHECK:STDOUT:   ret ptr %1, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.57bd8d0c2213b1aa"(ptr %self) #0 !dbg !77 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.57bd8d0c2213b1aa"(ptr %self) #0 !dbg !77 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !80
 // CHECK:STDOUT:   store ptr %self, ptr %temp, align 8, !dbg !80
@@ -179,7 +179,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.02dd0be934e1c38a"(ptr %self) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.02dd0be934e1c38a"(ptr %self) #0 !dbg !83 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !86
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self), !dbg !86
@@ -190,24 +190,24 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %value) #0 !dbg !89 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %value) #0 !dbg !89 {
 // CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %value), !dbg !92
 // CHECK:STDOUT:   ret ptr %1, !dbg !93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #3 !dbg !94 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #3 !dbg !94 {
 // CHECK:STDOUT:   ret ptr %self, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @_CSome.Optional.Core.9544e72a46e24ed6(ptr %value) #0 !dbg !99 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.9544e72a46e24ed6(ptr %value) #0 !dbg !99 {
 // CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f"(ptr %value), !dbg !102
 // CHECK:STDOUT:   ret ptr %1, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %self) #0 !dbg !104 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %self) #0 !dbg !104 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !107
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !107
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !107
@@ -218,7 +218,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f"(ptr %self) #0 !dbg !111 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f"(ptr %self) #0 !dbg !111 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !114
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !114
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !114

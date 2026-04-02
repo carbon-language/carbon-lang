@@ -184,7 +184,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CMake.Main.64ccbb8e5d9a0b8e(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.64ccbb8e5d9a0b8e(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !23
 // CHECK:STDOUT:   store i32 %x, ptr %.loc10_25.2.x, align 4, !dbg !23
@@ -194,7 +194,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CMake.Main.335f6bfc3bd91486(ptr sret({ {}, {} }) %return) #0 !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.335f6bfc3bd91486(ptr sret({ {}, {} }) %return) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !26
 // CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !26
@@ -202,7 +202,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CMake.Main.7af4aab1086ddeeb(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %x, ptr %y) #0 !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.7af4aab1086ddeeb(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %x, ptr %y) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !34
 // CHECK:STDOUT:   call void @"_COp.e4daa70d026fdea2:Copy.Core.3e36085cb869f630"(ptr %.loc10_25.2.x, ptr %x), !dbg !35
@@ -212,7 +212,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.e4daa70d026fdea2:Copy.Core.3e36085cb869f630"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.e4daa70d026fdea2:Copy.Core.3e36085cb869f630"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !44
 // CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !44
 // CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !45
@@ -397,7 +397,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i1 @_CGetBool.C.Main.64ccbb8e5d9a0b8e(ptr %self) #0 !dbg !69 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.64ccbb8e5d9a0b8e(ptr %self) #0 !dbg !69 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_16.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !74
 // CHECK:STDOUT:   %.loc6_16.2 = load i8, ptr %.loc6_16.1.v, align 1, !dbg !74
@@ -406,7 +406,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CGetT.C.Main.64ccbb8e5d9a0b8e(ptr %self) #0 !dbg !76 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.64ccbb8e5d9a0b8e(ptr %self) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !81
 // CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !81
@@ -414,14 +414,14 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CGetT.C.Main.335f6bfc3bd91486(ptr %self) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.335f6bfc3bd91486(ptr %self) #0 !dbg !83 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !86
 // CHECK:STDOUT:   ret void, !dbg !87
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CGetT.C.Main.3ae0849a77989a11(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !88 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.3ae0849a77989a11(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !88 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !91
 // CHECK:STDOUT:   call void @"_COp.a02bcb1b1383357d:Copy.Core.975a30a52004fa2c"(ptr %return, ptr %.loc9_16.1.w), !dbg !91
@@ -429,7 +429,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.a02bcb1b1383357d:Copy.Core.975a30a52004fa2c"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !93 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.a02bcb1b1383357d:Copy.Core.975a30a52004fa2c"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !93 {
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !97
 // CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !97
 // CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !98

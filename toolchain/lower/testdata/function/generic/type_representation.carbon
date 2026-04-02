@@ -197,7 +197,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CF.Main.07d7f3268607f0bc(i32 %a) #0 !dbg !84 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.07d7f3268607f0bc(i32 %a) #0 !dbg !84 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !87
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !87
@@ -209,7 +209,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.f2c09195b9db5815(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !91 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.f2c09195b9db5815(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !94
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !94
@@ -220,7 +220,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.94af6b585cb77bfd() #0 !dbg !98 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.94af6b585cb77bfd() #0 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !99
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !99
@@ -230,7 +230,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.4381e7f8def4ed9d(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.4381e7f8def4ed9d(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !103 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !106
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !106
@@ -241,7 +241,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.389b355d0ba7c2d7(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !110 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.389b355d0ba7c2d7(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !110 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !113
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !113

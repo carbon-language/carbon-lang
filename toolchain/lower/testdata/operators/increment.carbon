@@ -43,13 +43,13 @@ fn IncrSigned() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT:   call void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8"(ptr %self, i32 1), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8"(ptr %self, i32 %other) #2 !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8"(ptr %self, i32 %other) #2 !dbg !23 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d"(i32 %other), !dbg !29
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !30
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !30
@@ -58,13 +58,13 @@ fn IncrSigned() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @"_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d"(i32 %self) #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d"(i32 %self) #0 !dbg !31 {
 // CHECK:STDOUT:   %1 = call i32 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8"(i32 %self), !dbg !36
 // CHECK:STDOUT:   ret i32 %1, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8"(i32 %self) #0 !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8"(i32 %self) #0 !dbg !38 {
 // CHECK:STDOUT:   ret i32 %self, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -49,7 +49,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CG.Main.5b70bb1fa120a73d() #0 !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.5b70bb1fa120a73d() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
@@ -58,7 +58,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CG.Main.81fba156b0d338bf() #0 !dbg !13 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.81fba156b0d338bf() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14

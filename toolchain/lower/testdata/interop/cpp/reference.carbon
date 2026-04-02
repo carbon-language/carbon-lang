@@ -244,7 +244,7 @@ fn GetRefs() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #3 !dbg !43 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #3 !dbg !43 {
 // CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
@@ -455,7 +455,7 @@ fn GetRefs() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #3 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #3 !dbg !45 {
 // CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }

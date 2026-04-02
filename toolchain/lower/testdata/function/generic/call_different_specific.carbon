@@ -70,7 +70,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.582d60b54baf6b63(%type zeroinitializer), !dbg !30
 // CHECK:STDOUT:   call void @_CB.Main.bfb441135f07cbe1(ptr %x), !dbg !31
@@ -78,7 +78,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !33 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.582d60b54baf6b63(%type zeroinitializer), !dbg !36
 // CHECK:STDOUT:   call void @_CB.Main.29cf1dfeccef7249(ptr %x), !dbg !37
@@ -86,13 +86,13 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr %type @_CA.Main.582d60b54baf6b63(%type %x) #0 !dbg !39 {
+// CHECK:STDOUT: define linkonce_odr %type @_CA.Main.582d60b54baf6b63(%type %x) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type %x, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc34_7.2.temp = alloca i32, align 4, !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.2.temp), !dbg !48
@@ -104,7 +104,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc34_7.2.temp = alloca double, align 8, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.2.temp), !dbg !54
@@ -119,13 +119,13 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x) #0 !dbg !57 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %x) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr double @_CD.Main.de5b400758c39a65(double %x) #0 !dbg !63 {
+// CHECK:STDOUT: define linkonce_odr double @_CD.Main.de5b400758c39a65(double %x) #0 !dbg !63 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !66
 // CHECK:STDOUT: }

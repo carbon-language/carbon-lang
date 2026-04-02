@@ -64,7 +64,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Main.ea4dcbbefe9f139a() #0 !dbg !9 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.ea4dcbbefe9f139a() #0 !dbg !9 {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !11
 // CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !11

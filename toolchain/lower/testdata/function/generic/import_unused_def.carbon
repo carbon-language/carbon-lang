@@ -88,7 +88,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CGenericF.Main.084a2801e0f5d754({} %x) #0 !dbg !9 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGenericF.Main.084a2801e0f5d754({} %x) #0 !dbg !9 {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !17
 // CHECK:STDOUT:   %2 = call i32 @"_COp.Foo.Main:Copy.Core"(i32 0), !dbg !18
@@ -129,7 +129,7 @@ fn Main() {
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{!13, !14}
 // CHECK:STDOUT: !13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !9, type: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 18, column: 3, scope: !9)

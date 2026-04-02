@@ -880,7 +880,7 @@ fn Make() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Base.Main.0a7c28d4c8b7893d(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.0a7c28d4c8b7893d(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !42
@@ -889,7 +889,7 @@ fn Make() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Base.Main.bdccbdc18ce76efa(ptr %self) #0 !dbg !44 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.bdccbdc18ce76efa(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { {} }, align 8, !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !47
@@ -1002,7 +1002,7 @@ fn Make() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_CF.Base.Main.c914672a22d4cb10(ptr %self) #0 !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.c914672a22d4cb10(ptr %self) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }

@@ -105,35 +105,8 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) local_unnamed_addr #0 !dbg !32 {
-// CHECK:STDOUT:   %1 = load i32, ptr %self, align 4, !dbg !47
-// CHECK:STDOUT:   %2 = add i32 %1, 1, !dbg !47
-// CHECK:STDOUT:   store i32 %2, ptr %self, align 4, !dbg !47
-// CHECK:STDOUT:   ret void, !dbg !49
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8"(ptr %self, i32 %other) local_unnamed_addr #2 !dbg !24 {
-// CHECK:STDOUT:   %1 = load i32, ptr %self, align 4, !dbg !50
-// CHECK:STDOUT:   %2 = add i32 %1, %other, !dbg !50
-// CHECK:STDOUT:   store i32 %2, ptr %self, align 4, !dbg !50
-// CHECK:STDOUT:   ret void, !dbg !50
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @"_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d"(i32 %self) local_unnamed_addr #0 !dbg !51 {
-// CHECK:STDOUT:   ret i32 %self, !dbg !56
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8"(i32 %self) local_unnamed_addr #0 !dbg !57 {
-// CHECK:STDOUT:   ret i32 %self, !dbg !60
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -185,17 +158,3 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !46 = !DILocation(line: 17, column: 3, scope: !43)
-// CHECK:STDOUT: !47 = !DILocation(line: 299, column: 3, scope: !24, inlinedAt: !48)
-// CHECK:STDOUT: !48 = distinct !DILocation(line: 365, column: 5, scope: !32)
-// CHECK:STDOUT: !49 = !DILocation(line: 363, column: 3, scope: !32)
-// CHECK:STDOUT: !50 = !DILocation(line: 299, column: 3, scope: !24)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.272fc3e88346d0d9:ImplicitAs.d993a5132e000405.Core.628184612c80324d", scope: null, file: !25, line: 62, type: !52, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !54)
-// CHECK:STDOUT: !52 = !DISubroutineType(types: !53)
-// CHECK:STDOUT: !53 = !{!7, !7}
-// CHECK:STDOUT: !54 = !{!55}
-// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !51, type: !7)
-// CHECK:STDOUT: !56 = !DILocation(line: 64, column: 5, scope: !51)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "AsInt", linkageName: "_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8", scope: null, file: !25, line: 57, type: !52, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !58)
-// CHECK:STDOUT: !58 = !{!59}
-// CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !57, type: !7)
-// CHECK:STDOUT: !60 = !DILocation(line: 57, column: 36, scope: !57)

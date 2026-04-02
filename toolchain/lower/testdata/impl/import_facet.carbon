@@ -108,13 +108,13 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr sret({}) %return, ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr sret({}) %return, ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.23a.anon, i64 0, i1 false), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr ptr @_CGetC.C.Main.541f3e0ecf5901d3(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.541f3e0ecf5901d3(ptr %self) #0 !dbg !23 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !27
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !27

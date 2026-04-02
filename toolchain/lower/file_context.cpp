@@ -765,6 +765,11 @@ auto FileContext::GetOrCreateLLVMFunction(
     // The global constructor name would collide with global constructors for
     // other files in the same package, so use an internal linkage symbol.
     linkage = llvm::Function::InternalLinkage;
+  } else if (specific_id.has_value()) {
+    // Specific functions are allowed to be duplicated across files.
+    // TODO: CoreWitness should have the same behavior; see its use of
+    // WeakODRLinkage in BuildFunctionDefinition.
+    linkage = llvm::Function::LinkOnceODRLinkage;
   }
 
   auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
@@ -911,11 +916,10 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                "Attempting to emit definition of inexact function: {0}",
                *function_info->llvm_function);
 
-  // Both specifics and core witnesses can have duplicate definitions. Update
-  // linkage after we've decided to emit a definition.
-  if (specific_id.has_value() ||
-      declaration_function.special_function_kind ==
-          SemIR::Function::SpecialFunctionKind::CoreWitness) {
+  // TODO: Build CoreWitness functions when they're called instead of when
+  // they're defined. That should allow LinkOnceODRLinkage.
+  if (declaration_function.special_function_kind ==
+      SemIR::Function::SpecialFunctionKind::CoreWitness) {
     function_info->llvm_function->setLinkage(llvm::Function::WeakODRLinkage);
   }
 

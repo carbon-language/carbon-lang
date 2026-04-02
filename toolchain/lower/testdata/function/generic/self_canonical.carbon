@@ -100,7 +100,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_Cfourth_function.Main.1ef1de437a217ee4(ptr %arg) #0 !dbg !11 {
+// CHECK:STDOUT: define linkonce_odr void @_Cfourth_function.Main.1ef1de437a217ee4(ptr %arg) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !18
@@ -116,7 +116,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_Cfirst_function.Main.cf543a2f19840c22(ptr %arg) #0 !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr void @_Cfirst_function.Main.cf543a2f19840c22(ptr %arg) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !28
@@ -131,7 +131,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_Csecond_function.Main.fa07ebc2c86fcc7a(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !33 {
+// CHECK:STDOUT: define linkonce_odr void @_Csecond_function.Main.fa07ebc2c86fcc7a(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !40
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !41
@@ -151,7 +151,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @_Cthird_function.Main.4704114ae40540d8(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !49 {
+// CHECK:STDOUT: define linkonce_odr void @_Cthird_function.Main.4704114ae40540d8(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !54
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !55

@@ -62,7 +62,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CF.C.Main.64ccbb8e5d9a0b8e(ptr %self, i32 %x) #0 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.64ccbb8e5d9a0b8e(ptr %self, i32 %x) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !32
 // CHECK:STDOUT: }

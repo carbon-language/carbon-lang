@@ -83,19 +83,19 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CLib1CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !10 {
 // CHECK:STDOUT:   %1 = call i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %b), !dbg !18
 // CHECK:STDOUT:   ret i32 %1, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CLib2CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !20 {
 // CHECK:STDOUT:   %1 = call i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %b), !dbg !25
 // CHECK:STDOUT:   ret i32 %1, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %_) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %_) #0 !dbg !27 {
 // CHECK:STDOUT:   ret i32 %a, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

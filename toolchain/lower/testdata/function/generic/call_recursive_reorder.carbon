@@ -82,7 +82,7 @@ fn M() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) #0 !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !41
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !42

@@ -420,7 +420,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #6
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #4 !dbg !30 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #4 !dbg !30 {
 // CHECK:STDOUT:   call void @"_COp:thunk.X.Cpp"(ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
