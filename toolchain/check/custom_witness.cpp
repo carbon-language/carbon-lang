@@ -40,6 +40,28 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
+// Returns a manufactured `Copy.Op` function with the `self` parameter typed
+// to `self_type_id`.
+static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
+                               SemIR::TypeId self_type_id,
+                               SemIR::NameScopeId parent_scope_id)
+    -> SemIR::InstId {
+  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+
+  auto [decl_id, function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = parent_scope_id,
+                                 .name_id = name_id,
+                                 .self_type_id = self_type_id,
+                                 .self_is_ref = false,
+                                 .return_type_id = self_type_id});
+
+  auto& function = context.functions().Get(function_id);
+  function.SetCoreWitness(SemIR::BuiltinFunctionKind::PrimitiveCopy);
+
+  return decl_id;
+}
+
 // Returns the body for `Destroy.Op`. This will return `None` if using the
 // builtin `NoOp` is appropriate.
 //
@@ -316,6 +338,17 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     }
   }
   return CoreInterface::Unknown;
+}
+
+auto BuildPrimitiveCopyWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId parent_scope_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto op_id =
+      MakeCopyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {op_id});
 }
 
 // Returns true if the `Self` should impl `Destroy`.

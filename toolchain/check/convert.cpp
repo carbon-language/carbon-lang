@@ -1544,32 +1544,10 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   return value_id;
 }
 
-// Determine whether this is a C++ enum type.
-// TODO: This should be removed once we can properly add a `Copy` impl for C++
-// enum types.
-static auto IsCppEnum(Context& context, SemIR::TypeId type_id) -> bool {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return false;
-  }
-
-  // A C++-imported class type that is an adapter is an enum.
-  auto& class_info = context.classes().Get(class_type->class_id);
-  return class_info.adapt_id.has_value() &&
-         context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
-}
-
 // Given a value expression, form a corresponding initializer that copies from
 // that value to the specified target, if it is possible to do so.
 static auto PerformCopy(Context& context, SemIR::InstId expr_id,
                         const ConversionTarget& target) -> SemIR::InstId {
-  // TODO: We don't have a mechanism yet to generate `Copy` impls for each enum
-  // type imported from C++. For now we fake it by providing a direct copy.
-  auto type_id = context.insts().Get(expr_id).type_id();
-  if (IsCppEnum(context, type_id)) {
-    return expr_id;
-  }
-
   auto copy_id = BuildUnaryOperator(
       context, SemIR::LocId(expr_id), {.interface_name = CoreIdentifier::Copy},
       expr_id, target.diagnose, [&](auto& builder) {
@@ -1695,10 +1673,7 @@ class CategoryConverter {
 auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                                const SemIR::ExprCategory category) const
     -> State {
-  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category ||
-                // TODO: Drop this special case once PerformCopy on C++ enums
-                // produces an initializing expression.
-                IsCppEnum(context_, target_.type_id));
+  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category);
   switch (category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
@@ -1721,11 +1696,8 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         // hasn't already been set. However, we skip this if the type is a C++
         // enum: in that case, we don't actually have an initializing
         // expression, we're just pretending we do.
-        auto new_storage_id = target_.storage_id;
-        if (!IsCppEnum(context_, target_.type_id)) {
-          new_storage_id =
-              OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
-        }
+        auto new_storage_id =
+            OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
 
         // If in-place initialization was requested, and it hasn't already
         // happened, ensure it happens now.
@@ -1842,27 +1814,8 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         if (copy_id == SemIR::ErrorInst::InstId) {
           return Done{SemIR::ErrorInst::InstId};
         }
-        // Deal with special-case category behavior of PerformCopy.
-        switch (SemIR::GetExprCategory(sem_ir_, copy_id)) {
-          case SemIR::ExprCategory::Value:
-            // As a temporary workaround, PerformCopy on a C++ enum currently
-            // returns the unchanged value, but we treat it as an initializing
-            // expression.
-            // TODO: Drop this case once it's no longer applicable.
-            CARBON_CHECK(IsCppEnum(context_, target_.type_id));
-            [[fallthrough]];
-          case SemIR::ExprCategory::ReprInitializing:
-            // The common case: PerformCopy produces an initializing expression.
-            return NextStep{.expr_id = copy_id,
-                            .category = SemIR::ExprCategory::ReprInitializing};
-          case SemIR::ExprCategory::InPlaceInitializing:
-            // A C++ copy operation produces an ephemeral entire reference.
-            return NextStep{
-                .expr_id = copy_id,
-                .category = SemIR::ExprCategory::InPlaceInitializing};
-          default:
-            CARBON_FATAL("Unexpected category of copy operation {0}", category);
-        }
+        return NextStep{.expr_id = copy_id,
+                        .category = SemIR::GetExprCategory(sem_ir_, copy_id)};
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a

@@ -121,7 +121,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   StartFunctionSignature(context);
 
-  // Build and add a `[ref self: Self]` parameter if needed.
+  // Build and add a `self: Self` or `ref self: Self` parameter if needed.
   if (args.self_type_id.has_value()) {
     context.full_pattern_stack().StartImplicitParamList();
 
