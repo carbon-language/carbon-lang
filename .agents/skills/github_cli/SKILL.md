@@ -108,10 +108,13 @@ For queries that are not supported by standard `gh` commands, you can use the
 Query the REST API using paths relative to the API root.
 
 -   **List contributors**:
+
     ```bash
     gh api repos/carbon-language/carbon-lang/contributors
     ```
+
 -   **List issue comments**:
+
     ```bash
     gh api repos/carbon-language/carbon-lang/issues/<issue_number>/comments
     ```
@@ -121,6 +124,7 @@ Query the REST API using paths relative to the API root.
 For complex queries, use GraphQL to fetch exactly the data needed.
 
 -   **Get repository information**:
+
     ```bash
     gh api graphql -f query='
       query {
@@ -146,10 +150,13 @@ Use `--json` to request JSON output, and `--jq` or `--template` to filter or
 format the results.
 
 -   **List PR titles and authors**:
+
     ```bash
     gh pr list --json title,author --jq '.[] | "\(.title) by \(.author.login)"'
     ```
+
 -   **Format with Go templates**:
+
     ```bash
     gh issue list --template '{{range .}}{{.number}} - {{.title}}{{"\n"}}{{end}}'
     ```

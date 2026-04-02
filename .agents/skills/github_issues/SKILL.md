@@ -65,10 +65,13 @@ gh issue view <issue_number> -R <owner>/<repo> --comments
 Examples:
 
 -   **LLVM Issue**:
+
     ```bash
     gh issue view 5678 -R llvm/llvm-project --comments
     ```
+
 -   **Carbon Issue (Explicit)**:
+
     ```bash
     gh issue view 1234 -R carbon-language/carbon-lang --comments
     ```
