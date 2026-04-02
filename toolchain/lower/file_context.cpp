@@ -311,7 +311,7 @@ class FileContext::FunctionTypeInfoBuilder {
 
   // Creates a FunctionTypeInfoBuilder that uses the given functions.
   explicit FunctionTypeInfoBuilder(llvm::ArrayRef<FunctionInContext> functions)
-      : functions_(functions) {
+      : context_(&functions.front().context->context()), functions_(functions) {
     CARBON_CHECK(!functions_.empty());
   }
 
@@ -327,20 +327,34 @@ class FileContext::FunctionTypeInfoBuilder {
   // we could not manifest the complete function type successfully in this
   // context.
 
-  // Resets the builder to the fallback state `void()`. This puts the builder in
-  // a state where Finalize can be called, and no other operation should be
-  // called.
-  auto Abort() -> bool {
-    num_params_ = 0;
-    lowered_param_indices_.clear();
-    unused_param_indices_.clear();
-    param_name_ids_.clear();
-    param_types_.clear();
-    param_di_types_.clear();
-    return_type_ = nullptr;
-    inexact_ = true;
-    SetReturnByCopy(functions_.front(), SemIR::TypeId::None);
-    return false;
+  // Information about how a function is called in SemIR.
+  struct SemIRIndexInfo {
+    // The number of parameters in the SemIR call signature.
+    int num_params;
+    // The index of the first return parameter in the SemIR call signature.
+    int return_param_index;
+
+    friend auto operator==(const SemIRIndexInfo& lhs, const SemIRIndexInfo& rhs)
+        -> bool = default;
+  };
+
+  // Get information about the SemIR function signature.
+  auto GetSemIRIndexInfo(const FunctionInContext& fn_in_context)
+      -> SemIRIndexInfo {
+    const auto& sem_ir = fn_in_context.context->sem_ir();
+    const auto& function = sem_ir.functions().Get(fn_in_context.function_id);
+
+    int num_params =
+        sem_ir.inst_blocks().Get(function.call_param_patterns_id).size();
+
+    int return_param_index = -1;
+    if (function.call_param_ranges.return_size() > 0) {
+      CARBON_CHECK(function.call_param_ranges.return_size() == 1,
+                   "TODO: support multiple return forms");
+      return_param_index = function.call_param_ranges.return_begin().index;
+    }
+
+    return {.num_params = num_params, .return_param_index = return_param_index};
   }
 
   // Handles the function's return form.
@@ -431,6 +445,10 @@ class FileContext::FunctionTypeInfoBuilder {
   // Builds and returns a FunctionTypeInfo from the accumulated information.
   auto Finalize() -> FunctionTypeInfo;
 
+  // Clears out accumulated state and returns a FunctionTypeInfo with the
+  // fallback state `void()`.
+  auto Abort() -> FunctionTypeInfo;
+
   // Returns LLVM IR and DI types for the given SemIR type. This is not a state
   // transition. It mostly delegates to context_.GetTypeAndDIType, but treats
   // TypeId::None as equivalent to the unit type, and uses an untyped pointer as
@@ -442,11 +460,12 @@ class FileContext::FunctionTypeInfoBuilder {
   // be null.
   auto GetPointerDIType(llvm::DIType* pointee_type, unsigned address_space = 0)
       -> llvm::DIDerivedType* {
-    auto& context = functions_.front().context->context();
-    const auto& data_layout = context.llvm_module().getDataLayout();
-    return context.di_builder().createPointerType(
+    const auto& data_layout = context_->llvm_module().getDataLayout();
+    return context_->di_builder().createPointerType(
         pointee_type, data_layout.getPointerSizeInBits(address_space));
   }
+
+  Context* context_;
 
   llvm::ArrayRef<FunctionInContext> functions_;
 
@@ -497,63 +516,43 @@ auto FileContext::FunctionTypeInfoBuilder::Build() && -> FunctionTypeInfo {
   // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
   // return a value.
 
-  const auto& first_func_in_ctx = functions_.front();
-  const auto& function = first_func_in_ctx.context->sem_ir().functions().Get(
-      first_func_in_ctx.function_id);
-
-  num_params_ = first_func_in_ctx.context->sem_ir()
-                    .inst_blocks()
-                    .Get(function.call_param_patterns_id)
-                    .size();
-  lowered_param_indices_.reserve(num_params_);
-  param_name_ids_.reserve(num_params_);
-  param_types_.reserve(num_params_);
-  param_di_types_.reserve(num_params_);
-
-  int semir_return_param_index = -1;
-  if (function.call_param_ranges.return_size() > 0) {
-    CARBON_CHECK(function.call_param_ranges.return_size() == 1,
-                 "TODO: support multiple return forms");
-    semir_return_param_index = function.call_param_ranges.return_begin().index;
-  }
-
-  // Check all the functions have the same parameter numbering.
+  // Determine how the parameters are numbered in SemIR, and make sure it's the
+  // same for all versions of the function.
   //
   // TODO: This is wrong; the numbering can change. When it does, we'll need to
   // carefully handle the numbering differences here, and also when building a
   // call to the function, as the call will use the numbering from its version
   // of the function.
-  for (const auto& func_ctx : functions_.drop_front()) {
-    const auto& other_function =
-        func_ctx.context->sem_ir().functions().Get(func_ctx.function_id);
-    CARBON_CHECK(
-        static_cast<int>(func_ctx.context->sem_ir()
-                             .inst_blocks()
-                             .Get(other_function.call_param_patterns_id)
-                             .size()) == num_params_);
-    CARBON_CHECK((other_function.call_param_ranges.return_size() == 0 &&
-                  function.call_param_ranges.return_size() == 0) ||
-                 other_function.call_param_ranges.return_begin().index ==
-                     semir_return_param_index);
-  }
+  auto semir_info = GetSemIRIndexInfo(functions_.front());
+  CARBON_CHECK(
+      llvm::all_of(functions_.drop_front(), [&](const auto& fn_in_context) {
+        return GetSemIRIndexInfo(fn_in_context) == semir_info;
+      }));
+
+  num_params_ = semir_info.num_params;
+  lowered_param_indices_.reserve(num_params_);
+  param_name_ids_.reserve(num_params_);
+  param_types_.reserve(num_params_);
+  param_di_types_.reserve(num_params_);
 
   if (!HandleReturnForm()) {
-    return Finalize();
+    return Abort();
   }
   int params_end = num_params_;
-  if (semir_return_param_index >= 0) {
-    CARBON_CHECK(semir_return_param_index == static_cast<int>(num_params_) - 1,
+  if (semir_info.return_param_index >= 0) {
+    CARBON_CHECK(semir_info.return_param_index == semir_info.num_params - 1,
                  "Unexpected parameter order");
-    params_end = semir_return_param_index;
+    params_end = semir_info.return_param_index;
     // Handle the return parameter first, because it goes first in the LLVM
     // convention.
-    if (!HandleParameter(SemIR::CallParamIndex(semir_return_param_index))) {
-      return Finalize();
+    if (!HandleParameter(
+            SemIR::CallParamIndex(semir_info.return_param_index))) {
+      return Abort();
     }
   }
   for (int i : llvm::seq(params_end)) {
     if (!HandleParameter(SemIR::CallParamIndex(i))) {
-      return Finalize();
+      return Abort();
     }
   }
 
@@ -566,7 +565,7 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm() -> bool {
       return true;
     }
   }
-  return Abort();
+  return false;
 }
 
 auto FileContext::FunctionTypeInfoBuilder::TryHandleReturnForm(
@@ -653,7 +652,7 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
       return true;
     }
   }
-  return Abort();
+  return false;
 }
 
 auto FileContext::FunctionTypeInfoBuilder::TryHandleParameter(
@@ -761,7 +760,7 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
   CARBON_CHECK(lowered_param_indices_.size() + unused_param_indices_.size() ==
                static_cast<size_t>(num_params_));
   CARBON_CHECK(!param_di_types_.empty());
-  auto& di_builder = functions_.front().context->context().di_builder();
+  auto& di_builder = context_->di_builder();
   return {.type = llvm::FunctionType::get(return_type_, param_types_,
                                           /*isVarArg=*/false),
           .di_type = di_builder.createSubroutineType(
@@ -772,6 +771,19 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
           .param_name_ids = std::move(param_name_ids_),
           .sret_type = sret_type_,
           .inexact = inexact_};
+}
+
+auto FileContext::FunctionTypeInfoBuilder::Abort() -> FunctionTypeInfo {
+  num_params_ = 0;
+  lowered_param_indices_.clear();
+  unused_param_indices_.clear();
+  param_name_ids_.clear();
+  param_types_.clear();
+  param_di_types_.clear();
+  return_type_ = llvm::Type::getVoidTy(context_->llvm_context());
+  param_di_types_.push_back(nullptr);
+  inexact_ = true;
+  return Finalize();
 }
 
 auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
