@@ -24,7 +24,7 @@ using SingleExtendFacetType =
 
 // The canonical description of a FacetType. Contains the interfaces, named
 // constraints, and any constraints on types that are part of the facet type.
-// All values within are canonical in order to for comparison to be used for
+// All values within are canonical in order for comparison to be used for
 // type equality.
 //
 // The structure keeps separate dependencies on interfaces and named
