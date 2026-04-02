@@ -323,9 +323,9 @@ class FileContext::FunctionTypeInfoBuilder {
   auto Build() && -> FunctionTypeInfo;
 
  private:
-  // By convention, state transition methods return false to indicate that
-  // we could not manifest the complete function type successfully in this
-  // context.
+  // By convention, state transition methods return false without changing the
+  // accumulated information about the function to indicate that we could not
+  // manifest the complete function type successfully in this context.
 
   // Information about how a function is called in SemIR.
   struct SemIRIndexInfo {
