@@ -37,6 +37,11 @@ struct FunctionInfo {
 
   // The lowered function declaration.
   llvm::Function* llvm_function;
+
+  // Whether the function type information is inexact, because some component
+  // type was incomplete. If this is set, the function should not be used to
+  // emit a definition or a call.
+  bool inexact;
 };
 
 // Context and shared functionality for lowering within a SemIR file.
@@ -213,6 +218,10 @@ class FileContext {
     // When `return_param_id` is not `None`, the corresponding lowered parameter
     // should be given an `sret` attribute with this type.
     llvm::Type* sret_type = nullptr;
+
+    // Whether the function type information is inexact, because some component
+    // type was incomplete.
+    bool inexact;
   };
 
   class FunctionTypeInfoBuilder;

@@ -34,6 +34,12 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
                  SemIR::ClangDeclId clang_decl_id, SemIR::InstBlockId args_id)
     -> SemIR::ConstantId;
 
+// If the callee is a C++ thunk, modify `call` to directly call the
+// callee of the C++ thunk. Otherwise, does nothing and leaves `call`
+// unmodified.
+auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
+    -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_CONSTANT_H_

@@ -1239,8 +1239,7 @@ struct LookupImplWitness {
 struct MarkInPlaceInit {
   static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
       {.ir_name = "mark_in_place_init",
-       .expr_category = ExprCategory::InPlaceInitializing,
-       .constant_kind = InstConstantKind::Never});
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   // Used only to track the source of the initialization; this has no semantic

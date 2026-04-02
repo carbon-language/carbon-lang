@@ -1587,8 +1587,10 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
               context, loc_id, import_ir_inst_id, thunk_clang_decl,
               {.num_params =
                    static_cast<int32_t>(thunk_clang_decl->getNumParams())})) {
+        auto& thunk_function = context.functions().Get(*thunk_function_id);
+        thunk_function.SetCppThunk(function_info.first_owning_decl_id);
         SemIR::InstId thunk_function_decl_id =
-            context.functions().Get(*thunk_function_id).first_owning_decl_id;
+            thunk_function.first_owning_decl_id;
         function_info.SetHasCppThunk(thunk_function_decl_id);
       }
     }

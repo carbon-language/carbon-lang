@@ -69,6 +69,46 @@ constexpr int f(int a, int b) { return a + b; }
 
 let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
 
+// --- function_bool_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr int f(bool b) {
+  return b ? 3 : 0;
+}
+''';
+
+let a: array(i32, Cpp.f(true)) = (1, 2, 3);
+
+// --- function_float_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr int f(float b) {
+  return static_cast<int>(b);
+}
+''';
+
+let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
+
+// --- function_return_bool.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr bool f() {
+  return true;
+}
+''';
+
+musteval fn F(b: bool) -> i32 {
+  return if b then 3 else 0;
+}
+
+let a: array(i32, F(Cpp.f())) = (1, 2, 3);
+
 // --- fail_invalid_constant_eval.carbon
 
 library "[[@TEST_NAME]]";

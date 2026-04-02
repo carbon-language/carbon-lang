@@ -2149,6 +2149,10 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     return SemIR::ErrorInst::ConstantId;
   }
 
+  // If the callee is a C++ thunk, modify the `call` to directly call
+  // the thunk's callee.
+  MaybeModifyCppThunkCallForConstEval(eval_context.context(), &call);
+
   // Find the constant value of the callee.
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);

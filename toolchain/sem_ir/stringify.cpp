@@ -46,10 +46,14 @@ namespace {
 // lifetime of `Stringify`.
 class StepStack {
  public:
+  struct StopQualifiedNames {};
+  struct ResumeQualifiedNames {};
+
   // An individual step in the stack, which stringifies some component of a type
   // name.
   using Step =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId>;
+      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId,
+                   StopQualifiedNames, ResumeQualifiedNames>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -78,10 +82,19 @@ class StepStack {
   auto PushFacetType(FacetTypeId facet_type_id) -> void {
     steps_.push_back(facet_type_id);
   }
+  auto PushResumeQualfiedNames() -> void {
+    steps_.push_back(ResumeQualifiedNames{});
+  }
+  auto PushStopQualfiedNames() -> void {
+    steps_.push_back(StopQualifiedNames{});
+  }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
     PushNameId(name_id);
+    if (!qualified_names_) {
+      return;
+    }
     while (name_scope_id.has_value() && name_scope_id != NameScopeId::Package) {
       const auto& name_scope = sem_ir_->name_scopes().Get(name_scope_id);
       // TODO: Decide how to print unnamed scopes.
@@ -193,6 +206,10 @@ class StepStack {
   auto empty() const -> bool { return steps_.empty(); }
   auto Pop() -> Step { return steps_.pop_back_val(); }
 
+  auto SetQualifiedNames(bool qualified_names) -> void {
+    qualified_names_ = qualified_names;
+  }
+
  private:
   // Handles the generic portion of a specific entity name, such as `(T)` in
   // `A.B(T)`.
@@ -242,6 +259,7 @@ class StepStack {
   const File* sem_ir_;
   // Remaining steps to take.
   llvm::SmallVector<Step> steps_;
+  bool qualified_names_ = true;
 };
 
 // Provides `StringifyInst` overloads for each instruction.
@@ -468,6 +486,7 @@ class Stringifier {
       CARBON_CHECK(index < entities.size(), "Access out of bounds.");
       auto entity_inst_id = entities[index];
       step_stack_->PushString(")");
+      step_stack_->PushResumeQualfiedNames();
       if (auto associated_const =
               sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
                   entity_inst_id)) {
@@ -482,10 +501,12 @@ class Stringifier {
       } else {
         step_stack_->PushInstId(entity_inst_id);
       }
+      // Don't qualify names after the `.` operator, until the closing `)`.
+      step_stack_->PushStopQualfiedNames();
+      step_stack_->Push(".");
       step_stack_->Push(
-          ".(",
-          StepStack::EntityNameItem{interface, specific_interface.specific_id},
-          ".");
+          StepStack::EntityNameItem{interface, specific_interface.specific_id});
+      step_stack_->Push(".(");
     }
 
     if (auto lookup =
@@ -776,18 +797,30 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         }
         break;
       }
-      case CARBON_KIND(llvm::StringRef string):
+      case CARBON_KIND(llvm::StringRef string): {
         out << string;
         break;
-      case CARBON_KIND(NameId name_id):
+      }
+      case CARBON_KIND(NameId name_id): {
         out << sem_ir.names().GetFormatted(name_id);
         break;
-      case CARBON_KIND(ElementIndex element_index):
+      }
+      case CARBON_KIND(ElementIndex element_index): {
         out << element_index.index;
         break;
-      case CARBON_KIND(FacetTypeId facet_type_id):
+      }
+      case CARBON_KIND(FacetTypeId facet_type_id): {
         stringifier.StringifyFacetType(facet_type_id);
         break;
+      }
+      case CARBON_KIND(StepStack::StopQualifiedNames _): {
+        step_stack.SetQualifiedNames(false);
+        break;
+      }
+      case CARBON_KIND(StepStack::ResumeQualifiedNames _): {
+        step_stack.SetQualifiedNames(true);
+        break;
+      }
     }
   }
 

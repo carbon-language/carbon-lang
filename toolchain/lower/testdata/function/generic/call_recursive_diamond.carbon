@@ -286,7 +286,7 @@ fn M() {
 // CHECK:STDOUT: !36 = distinct !DISubprogram(name: "A", linkageName: "_CA.Main.de5b400758c39a65", scope: null, file: !3, line: 21, type: !37, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !40)
 // CHECK:STDOUT: !37 = !DISubroutineType(types: !38)
 // CHECK:STDOUT: !38 = !{!39, !39, !23}
-// CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !40 = !{!41, !42}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !39)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 2, scope: !36, type: !23)

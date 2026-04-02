@@ -399,9 +399,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id)
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, LocId loc_id) -> std::string {
-  RawStringOstream out;
-  out << DumpLocSummary(file, loc_id);
-  return out.TakeStr();
+  return DumpLocSummary(file, loc_id);
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, NameId name_id) -> std::string {
@@ -477,9 +475,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 
 LLVM_DUMP_METHOD auto Dump(const File& file, RequireImplsId require_impls_id)
     -> std::string {
-  RawStringOstream out;
-  out << DumpRequireImplsSummary(file, require_impls_id);
-  return out.TakeStr();
+  return DumpRequireImplsSummary(file, require_impls_id);
 }
 
 static auto DumpEvalBlock(const File& file, llvm::StringRef region_name,
@@ -541,9 +537,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
-  RawStringOstream out;
-  out << DumpTypeSummary(file, type_id);
-  return out.TakeStr();
+  return DumpTypeSummary(file, type_id);
 }
 
 // Functions that can be used instead of the corresponding constructor, which is

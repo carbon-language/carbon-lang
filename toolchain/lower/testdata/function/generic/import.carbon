@@ -175,7 +175,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !15 = !DIFile(filename: "directly_imported.carbon", directory: "")
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{!18, !18}
-// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !14, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !14)

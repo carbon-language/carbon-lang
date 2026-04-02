@@ -194,6 +194,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   // For a special function, add a marker to disambiguate.
   switch (function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::None:
+    case SemIR::Function::SpecialFunctionKind::CppThunk:
       break;
 
     case SemIR::Function::SpecialFunctionKind::CoreWitness:

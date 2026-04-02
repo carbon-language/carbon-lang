@@ -361,7 +361,7 @@ fn Four() {
 // CHECK:STDOUT: !23 = !DIFile(filename: "./default.h", directory: "")
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{!26}
-// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !27 = !DILocation(line: 4, column: 3, scope: !22)
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !29, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !29 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
@@ -514,7 +514,7 @@ fn Four() {
 // CHECK:STDOUT: !29 = !DIFile(filename: "./defaulted_default.h", directory: "")
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{!32}
-// CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !33 = !DILocation(line: 2, column: 8, scope: !28)
 // CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.ExplicitlyDefaultedDefault.Cpp", scope: null, file: !29, line: 7, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !35 = !DILocation(line: 7, column: 3, scope: !34)
@@ -591,7 +591,7 @@ fn Four() {
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !6, line: 6, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !18)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{!17, !17}
-// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
 // CHECK:STDOUT: !20 = !DILocation(line: 7, column: 10, scope: !14)

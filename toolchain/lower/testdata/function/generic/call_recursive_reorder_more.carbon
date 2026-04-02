@@ -326,7 +326,7 @@ fn M() {
 // CHECK:STDOUT: !67 = !{!68, !69, !70, !70, !68}
 // CHECK:STDOUT: !68 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !69 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !70 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !70 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !71 = !{!72, !73, !74, !75}
 // CHECK:STDOUT: !72 = !DILocalVariable(arg: 1, scope: !65, type: !69)
 // CHECK:STDOUT: !73 = !DILocalVariable(arg: 2, scope: !65, type: !70)

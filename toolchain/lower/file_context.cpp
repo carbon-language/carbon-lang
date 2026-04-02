@@ -307,6 +307,7 @@ class FileContext::FunctionTypeInfoBuilder {
     param_types_.clear();
     param_di_types_.clear();
     return_type_ = nullptr;
+    inexact_ = true;
     SetReturnByCopy(SemIR::TypeId::None);
     return false;
   }
@@ -337,8 +338,7 @@ class FileContext::FunctionTypeInfoBuilder {
     return_type_ =
         llvm::PointerType::get(context_.llvm_context(), /*AddressSpace=*/0);
     // TODO: replace this with a reference type.
-    param_di_types_.push_back(
-        context_.context().di_builder().createPointerType(nullptr, 8));
+    param_di_types_.push_back(GetPointerDIType(nullptr));
     return true;
   }
 
@@ -392,6 +392,15 @@ class FileContext::FunctionTypeInfoBuilder {
   // a placeholder DI type if context_ doesn't provide one.
   auto GetLoweredTypes(SemIR::TypeId type_id) -> LoweredTypes;
 
+  // Returns a DI type for a pointer to the given pointee. The pointee type may
+  // be null.
+  auto GetPointerDIType(llvm::DIType* pointee_type, unsigned address_space = 0)
+      -> llvm::DIDerivedType* {
+    const auto& data_layout = context_.llvm_module().getDataLayout();
+    return context_.context().di_builder().createPointerType(
+        pointee_type, data_layout.getPointerSizeInBits(address_space));
+  }
+
   FileContext& context_;
   const SemIR::SpecificId specific_id_;
 
@@ -435,6 +444,12 @@ class FileContext::FunctionTypeInfoBuilder {
   // If not null, the LLVM function's first parameter should have a `sret`
   // attribute with this type.
   llvm::Type* sret_type_ = nullptr;
+
+  // Whether we failed to form an exact description of the function type. This
+  // can happen if a parameter or return type is incomplete. In this case, we
+  // can still sometimes need to emit a declaration of the function, for example
+  // because it appears in a vtable, but we cannot emit a definition or a call.
+  bool inexact_ = false;
 };
 
 auto FileContext::FunctionTypeInfoBuilder::Build(
@@ -506,6 +521,8 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
         case SemIR::InitRepr::None:
           return SetReturnByCopy(SemIR::TypeId::None);
         case SemIR::InitRepr::Dependent:
+          CARBON_FATAL("Lowering function return with dependent type: {0}",
+                       return_form_inst);
         case SemIR::InitRepr::Incomplete:
         case SemIR::InitRepr::Abstract:
           return Abort();
@@ -528,8 +545,10 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
       switch (
           SemIR::ValueRepr::ForType(context_.sem_ir(), return_type_id).kind) {
         case SemIR::ValueRepr::Unknown:
-        case SemIR::ValueRepr::Dependent:
           return Abort();
+        case SemIR::ValueRepr::Dependent:
+          CARBON_FATAL("Lowering function return with dependent type: {0}",
+                       return_form_inst);
         case SemIR::ValueRepr::None:
           return SetReturnByCopy(SemIR::TypeId::None);
         case SemIR::ValueRepr::Copy:
@@ -604,6 +623,8 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
         case SemIR::InitRepr::None:
           return IgnoreParam(index);
         case SemIR::InitRepr::Dependent:
+          CARBON_FATAL("Lowering function parameter with dependent type: {0}",
+                       param_pattern);
         case SemIR::InitRepr::Incomplete:
         case SemIR::InitRepr::Abstract:
           return Abort();
@@ -649,7 +670,8 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
           .lowered_param_indices = std::move(lowered_param_indices_),
           .unused_param_indices = std::move(unused_param_indices_),
           .param_name_ids = std::move(param_name_ids_),
-          .sret_type = sret_type_};
+          .sret_type = sret_type_,
+          .inexact = inexact_};
 }
 
 auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
@@ -662,8 +684,7 @@ auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
   if (result.llvm_di_type == nullptr) {
     // TODO: figure out what type should go here, or ensure this doesn't
     // happen.
-    result.llvm_di_type =
-        context_.context().di_builder().createPointerType(nullptr, 8);
+    result.llvm_di_type = GetPointerDIType(nullptr);
   }
   return result;
 }
@@ -719,6 +740,8 @@ auto FileContext::GetOrCreateLLVMFunction(
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
     // file. That's OK.
+    // TODO: If the prior function was inexact and the new one is not, we should
+    // lower this new one and replace the existing function with it.
     // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
     // produced by declarations of the same Carbon function. Name collisions
     // between non-private members of the same library should have been
@@ -802,7 +825,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                std::move(function_type_info.lowered_param_indices),
            .unused_param_indices =
                std::move(function_type_info.unused_param_indices),
-           .llvm_function = llvm_function}};
+           .llvm_function = llvm_function,
+           .inexact = function_type_info.inexact}};
 }
 
 // Find the file and function ID describing the definition of a function.
@@ -884,6 +908,9 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   auto function_info = GetFunctionInfo(function_id, specific_id);
   CARBON_CHECK(function_info && function_info->llvm_function,
                "Attempting to define function that was not declared");
+  CARBON_CHECK(!function_info->inexact,
+               "Attempting to emit definition of inexact function: {0}",
+               *function_info->llvm_function);
 
   const auto& body_block_ids = definition_function.body_block_ids;
   CARBON_DCHECK(!body_block_ids.empty(),

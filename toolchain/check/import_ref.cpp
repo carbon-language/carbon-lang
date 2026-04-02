@@ -2340,6 +2340,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   switch (import_function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::CppThunk:
     case SemIR::Function::SpecialFunctionKind::None: {
       break;
     }
