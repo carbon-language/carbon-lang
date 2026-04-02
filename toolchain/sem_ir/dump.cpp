@@ -235,6 +235,21 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
       out << "; " << DumpSpecificSummary(file, impls.specific_id);
     }
   }
+  for (auto impls : facet_type.extend_named_constraints) {
+    out << "\n  - "
+        << DumpNamedConstraintSummary(file, impls.named_constraint_id);
+    if (impls.specific_id.has_value()) {
+      out << "; " << DumpSpecificSummary(file, impls.specific_id);
+    }
+    out << " (extend)";
+  }
+  for (auto impls : facet_type.self_impls_named_constraints) {
+    out << "\n  - "
+        << DumpNamedConstraintSummary(file, impls.named_constraint_id);
+    if (impls.specific_id.has_value()) {
+      out << "; " << DumpSpecificSummary(file, impls.specific_id);
+    }
+  }
   for (auto rewrite : facet_type.rewrite_constraints) {
     out << "\n"
         << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
@@ -287,18 +302,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   for (auto [i, req_impl] :
        llvm::enumerate(identified_facet_type.required_impls())) {
     auto [self, req_interface] = req_impl;
-    // TODO: Dump the self too.
-    out << "\n  - " << DumpInterfaceSummary(file, req_interface.interface_id);
+    out << "\n  - self: " << DumpConstantSummary(file, self);
+    out << "\n    impls "
+        << DumpInterfaceSummary(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
     }
     if (req_interface == identified_facet_type.impl_as_target_interface()) {
-      out << " (to impl)";
+      out << "\n     - `impl as` target";
     }
   }
   if (!identified_facet_type.is_valid_impl_as_target()) {
-    out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
-        << " to impl)\n";
+    out << "\n  - " << identified_facet_type.num_interfaces_to_impl()
+        << " possible `impl as` targets";
   }
   return out.TakeStr();
 }
