@@ -2550,22 +2550,15 @@ static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
   return canon_const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
-// Returns whether the `requirement_id` was handled as a
-// RequirementBaseFacetType.
-static auto AddRequirementBase(Context& context, SemIR::InstId requirement_id,
+static auto AddRequirementBase(Context& context,
+                               SemIR::RequirementBaseFacetType base,
                                SemIR::FacetTypeInfo* info, Phase* phase)
-    -> bool {
-  auto base =
-      context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(requirement_id);
-  if (!base) {
-    return false;
-  }
-
+    -> void {
   auto base_type_inst_id =
-      context.constant_values().GetConstantTypeInstId(base->base_type_inst_id);
+      context.constant_values().GetConstantTypeInstId(base.base_type_inst_id);
   if (base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     *phase = Phase::UnknownDueToError;
-    return true;
+    return;
   }
 
   if (auto base_facet_type =
@@ -2580,61 +2573,64 @@ static auto AddRequirementBase(Context& context, SemIR::InstId requirement_id,
     info->rewrite_constraints.append(base_info.rewrite_constraints);
     info->other_requirements |= base_info.other_requirements;
   }
-  return true;
 }
 
-// Returns whether the `requirement_id` was handled as a RequirementRewrite.
 static auto AddRequirementRewrite(Context& context,
-                                  SemIR::InstId requirement_id,
+                                  SemIR::RequirementRewrite rewrite,
                                   SemIR::FacetTypeInfo* info, Phase* phase)
-    -> bool {
-  auto rewrite =
-      context.insts().TryGetAs<SemIR::RequirementRewrite>(requirement_id);
-  if (!rewrite) {
-    return false;
-  }
-
-  auto lhs_id = context.constant_values().GetConstantInstId(rewrite->lhs_id);
-  auto rhs_id = context.constant_values().GetConstantInstId(rewrite->rhs_id);
+    -> void {
+  auto lhs_id = context.constant_values().GetConstantInstId(rewrite.lhs_id);
+  auto rhs_id = context.constant_values().GetConstantInstId(rewrite.rhs_id);
   if (lhs_id == SemIR::ErrorInst::InstId ||
       rhs_id == SemIR::ErrorInst::InstId) {
     *phase = Phase::UnknownDueToError;
-    return true;
+    return;
   }
   if (!rhs_id.has_value()) {
     // The RHS may be an arbitrary expression, which means it could have a
     // runtime value, which we reject since we can't evaluate that.
-    DiagnoseNonConstantValue(context, SemIR::LocId(rewrite->rhs_id));
+    DiagnoseNonConstantValue(context, SemIR::LocId(rewrite.rhs_id));
     *phase = Phase::UnknownDueToError;
-    return true;
+    return;
   }
 
-  info->rewrite_constraints.push_back({.lhs_id = lhs_id, .rhs_id = rhs_id});
-  return true;
+  // The FacetTypeInfo must hold canonical IDs for constant comparison, yet here
+  // we must insert the non-canonical IDs:
+  // * Rewrite constraints are resolved once the FacetTypeInfo is fully
+  //   constructed in order to produce the constant value of the facet type.
+  //   That resolution step needs the non-canonical insts to do its job
+  //   correctly. For instance, the LHS may be a `ImplWitnessAccessSubstituted`
+  //   instruction which preserves which element in the witness is being
+  //   assigned to but evaluates to the RHS of some other rewrite. So the
+  //   constant value would be incorrect to use.
+  // * We use the id of the non-canonical RHS instruction as a hint to order
+  //   diagnostics in the resolution of rewrites, so that they can usually refer
+  //   to the rewrites in the same order as they are written in the code. Using
+  //   the constant value of the RHS reorders the diagnostics in a worse way.
+  // * The final step of constructing the facet type from the WhereExpr
+  //   canonicalizes all the instructions, so we don't need to store canonical
+  //   values here. We only need to use canonical values if we need to observe
+  //   the constant value, such as to determine in the RHS has a runtime value
+  //   above.
+  info->rewrite_constraints.push_back(
+      {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
 }
 
-// Returns whether the `requirement_id` was handled as a RequirementImpls.
-static auto AddRequirementImpls(Context& context, SemIR::InstId requirement_id,
+static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
                                 SemIR::InstId period_self_id,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
-    -> bool {
-  auto impls =
-      context.insts().TryGetAs<SemIR::RequirementImpls>(requirement_id);
-  if (!impls) {
-    return false;
-  }
-
-  auto lhs_id = context.constant_values().GetConstantInstId(impls->lhs_id);
-  auto rhs_id = context.constant_values().GetConstantInstId(impls->rhs_id);
+    -> void {
+  auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
+  auto rhs_id = context.constant_values().GetConstantInstId(impls.rhs_id);
   if (lhs_id == SemIR::ErrorInst::InstId ||
       rhs_id == SemIR::ErrorInst::InstId) {
     *phase = Phase::UnknownDueToError;
-    return true;
+    return;
   }
 
   if (rhs_id == SemIR::TypeType::TypeInstId) {
     // `<type> impls type` -> nothing to do.
-    return true;
+    return;
   }
 
   if (IsSameFacetValue(context, context.constant_values().Get(lhs_id),
@@ -2662,13 +2658,11 @@ static auto AddRequirementImpls(Context& context, SemIR::InstId requirement_id,
     llvm::append_range(info->rewrite_constraints,
                        more_info.rewrite_constraints);
     info->other_requirements |= more_info.other_requirements;
-    return true;
+    return;
   }
 
   // TODO: Handle `impls` constraints beyond `.Self impls`.
   info->other_requirements = true;
-
-  return true;
 }
 
 // Add the constraints from the WhereExpr instruction into a FacetTypeInfo in
@@ -2699,19 +2693,30 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       return SemIR::ErrorInst::ConstantId;
     }
 
-    if (AddRequirementBase(eval_context.context(), inst_id, &info, &phase)) {
-      continue;
+    auto inst = eval_context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
+        AddRequirementBase(eval_context.context(), base, &info, &phase);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        AddRequirementRewrite(eval_context.context(), rewrite, &info, &phase);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        AddRequirementImpls(eval_context.context(), impls,
+                            typed_inst.period_self_id, &info, &phase);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent _): {
+        // TODO: Handle equality requirements.
+        info.other_requirements = true;
+        break;
+      }
+      default:
+        CARBON_FATAL("unexpected inst {0} in WhereExpr requirements block",
+                     inst);
     }
-    if (AddRequirementRewrite(eval_context.context(), inst_id, &info, &phase)) {
-      continue;
-    }
-    if (AddRequirementImpls(eval_context.context(), inst_id,
-                            typed_inst.period_self_id, &info, &phase)) {
-      continue;
-    }
-
-    // TODO: Handle equality requirements.
-    info.other_requirements = true;
   }
 
   auto const_info = GetConstantFacetTypeInfo(

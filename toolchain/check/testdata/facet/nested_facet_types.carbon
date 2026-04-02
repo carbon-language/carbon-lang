@@ -41,10 +41,6 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: nested_facet_types_same_associated.carbon:[[@LINE+4]]:19: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
 
 // --- nested_facet_types_same_two_associated.carbon
@@ -56,10 +52,6 @@ interface Z {
   let V:! type;
 }
 
-// CHECK:STDERR: nested_facet_types_same_two_associated.carbon:[[@LINE+4]]:19: error: found cycle in facet type constraint for `.(Z.V)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
 
 // --- nested_facet_types_same_associated_in_generic_parameter.carbon
@@ -80,6 +72,10 @@ interface Z {
   let T:! type;
 }
 
+// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = ()) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused FF:! (Z where .T = ()) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated.carbon
@@ -90,6 +86,10 @@ interface Z {
   let U:! type;
 }
 
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = .U) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused FF:! (Z where .T = .U) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon
@@ -101,6 +101,10 @@ interface Z {
 }
 class C(T:! type) {}
 
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = C(.U)) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused FF:! (Z where .T = C(.U)) where .T = {}) {}
 
 // --- nested_facet_types_same_with_bitand.carbon
@@ -111,10 +115,6 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: nested_facet_types_same_with_bitand.carbon:[[@LINE+4]]:19: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = .U)) {}
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = .U)) {}
 
 // --- fail_nested_facet_types_different_with_bitand.carbon
@@ -125,9 +125,9 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:19: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
 

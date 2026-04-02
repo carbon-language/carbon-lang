@@ -29,6 +29,10 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = {} and .W = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused T:! L where .W = {} and .W = ()) {}
 
 // --- fail_two_different_first_associated.carbon
@@ -36,6 +40,10 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
+// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `.(L.X)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = .X and .W = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused T:! L where .W = .X and .W = ()) {}
 
 // --- fail_two_different_second_associated.carbon
@@ -43,6 +51,10 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
+// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `()` and `.(L.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = () and .W = .X) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused T:! L where .W = () and .W = .X) {}
 
 // --- fail_two_different_first_bad.carbon
@@ -148,6 +160,10 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
+// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn G(unused T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(unused T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
 
 // --- rewrite_uses_second_facet.carbon
@@ -164,6 +180,10 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
+// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:38: error: associated constant `.(M.Y)` given two different values `T.(M.X)` and `.(M.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! M where .X = (), unused U:! M where .Y = T.X and .Y = .X) {}
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! M where .X = (), unused U:! M where .Y = T.X and .Y = .X) {}
 
 // --- repeated.carbon
@@ -182,10 +202,6 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: repeated_associated.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused T:! M where .X = .Y and .X = .Y) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused T:! M where .X = .Y and .X = .Y) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
@@ -224,6 +240,10 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:17: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! M where .X = {} and .X = () and .X = {}) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused T:! M where .X = {} and .X = () and .X = {}) {}
 
 // --- fail_cycle_single.carbon
@@ -425,6 +445,10 @@ interface N {
   let Y:! {.a: type};
 }
 
+// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:17: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 
 // --- self_repeated_explicitly.carbon
@@ -435,10 +459,6 @@ interface N {
   let Y2:! type;
 }
 
-// CHECK:STDERR: self_repeated_explicitly.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(N.Y1)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused T:! N where .Y2 = .Y1 and .Y2 = .Self.Y1) { }
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused T:! N where .Y2 = .Y1 and .Y2 = .Self.Y1) { }
 
 // --- self_repeated_explicitly_with_value.carbon
