@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <iterator>
 #include <optional>
 
