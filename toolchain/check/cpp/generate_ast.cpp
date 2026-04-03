@@ -523,7 +523,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     return true;
   }
 
-  auto* decl = clang::Decl::castFromDeclContext(
+  // Find the Carbon declaration corresponding to this Clang declaration.
+  auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
   auto decl_id = context_->clang_decls().Lookup(key);
@@ -561,10 +562,11 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
-  // Use the key to reach the owned, mutable copy of decl_context.
-  auto* decl_context_ptr = clang::Decl::castToDeclContext(
-      context_->clang_decls().Get(decl_id).key.decl);
-  auto* clang_decl = MapInstIdToClangDecl(*decl_context_ptr, result);
+  // TODO: Stop passing in the `DeclContext` here; the context in which we
+  // performed the lookup that first found the Carbon declaration should not
+  // affect the Clang declaration we produce.
+  auto* clang_decl = MapInstIdToClangDecl(
+      *const_cast<clang::DeclContext*>(decl_context), result);
   if (!clang_decl) {
     return false;
   }
