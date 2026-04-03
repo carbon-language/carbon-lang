@@ -15,26 +15,34 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
-// If the given type is a C++ class type, returns the corresponding class
-// declaration. Otherwise returns nullptr.
-// TODO: Handle qualified types.
-static auto TypeAsClassDecl(Context& context,
-                            SemIR::ConstantId query_self_const_id)
-    -> clang::CXXRecordDecl* {
+// Given a type constant, return the corresponding class scope if there is one.
+static auto GetClassScope(Context& context,
+                          SemIR::ConstantId query_self_const_id)
+    -> SemIR::NameScopeId {
   auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
       query_self_const_id);
   if (!class_type) {
     // Not a class.
-    return nullptr;
+    return SemIR::NameScopeId::None;
   }
 
+  return context.classes().Get(class_type->class_id).scope_id;
+}
+
+// If the given type is a C++ tag (class or enumeration) type, returns the
+// corresponding tag declaration. Otherwise returns nullptr.
+// TODO: Handle qualified types.
+static auto TypeAsTagDecl(Context& context,
+                          SemIR::ConstantId query_self_const_id)
+    -> clang::TagDecl* {
   SemIR::NameScopeId class_scope_id =
-      context.classes().Get(class_type->class_id).scope_id;
+      GetClassScope(context, query_self_const_id);
   if (!class_scope_id.has_value()) {
     return nullptr;
   }
@@ -45,8 +53,16 @@ static auto TypeAsClassDecl(Context& context,
     return nullptr;
   }
 
-  return dyn_cast<clang::CXXRecordDecl>(
-      context.clang_decls().Get(decl_id).key.decl);
+  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).key.decl);
+}
+
+// If the given type is a C++ class type, returns the corresponding class
+// declaration. Otherwise returns nullptr.
+static auto TypeAsClassDecl(Context& context,
+                            SemIR::ConstantId query_self_const_id)
+    -> clang::CXXRecordDecl* {
+  return dyn_cast_or_null<clang::CXXRecordDecl>(
+      TypeAsTagDecl(context, query_self_const_id));
 }
 
 namespace {
@@ -92,21 +108,26 @@ static auto BuildCopyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Copy` for enums and other trivially copyable
-  // types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
     return SemIR::InstId::None;
   }
-  auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
-                                class_decl, clang::Qualifiers::Const),
-                            .signature = {.num_params = 1}};
-  auto fn_id = GetFunctionId(context, loc_id, decl_info);
-  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
-    return fn_id;
+  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
+                                  class_decl, clang::Qualifiers::Const),
+                              .signature = {.num_params = 1}};
+    auto fn_id = GetFunctionId(context, loc_id, decl_info);
+    if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+      return fn_id;
+    }
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id, {fn_id});
   }
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+  // Otherwise it's an enum (or eventually a C struct type). Perform a primitive
+  // copy.
+  return BuildPrimitiveCopyWitness(
+      context, loc_id, GetClassScope(context, query_self_const_id),
+      query_self_const_id, query_specific_interface_id);
 }
 
 static auto BuildCppUnsafeDerefWitness(

@@ -135,89 +135,87 @@ fn M() {
 // CHECK:STDOUT:   %.loc52_15 = load ptr, ptr %ptr_bool.var, align 8, !dbg !61
 // CHECK:STDOUT:   %.loc52_25 = load ptr, ptr %ptr_bool.var, align 8, !dbg !62
 // CHECK:STDOUT:   %F.call.loc52 = call i32 @_CF.Main.7776e910959584d9(ptr %.loc52_5, ptr %.loc52_15, ptr %.loc52_25, i32 0), !dbg !63
+// CHECK:STDOUT:   call void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %val_f64.var), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.0d6779e60704359e:core.Destroy.Core"(ptr %val_i64.var), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %val_i32.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %val_i16.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !64
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.98006a366c2ffd6c:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.0d6779e60704359e:core.Destroy.Core"(ptr %self) #0 !dbg !72 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !78
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !79 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !85
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %self) #0 !dbg !86 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !65 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !93 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !76
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !77
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !101
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !102
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !78
+// CHECK:STDOUT:   ret i32 %count, !dbg !103
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !79
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !80
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !81
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !104
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !105
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !106
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !82 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !107 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !90
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !91
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !115
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !116
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !92
+// CHECK:STDOUT:   ret i32 %count, !dbg !117
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !93
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !94
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !95
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !118
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !119
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !120
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !96 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !121 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !104
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !105
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !129
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !130
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !106
+// CHECK:STDOUT:   ret i32 %count, !dbg !131
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !107
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !108
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !109
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !132
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !133
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !134
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %y, ptr %z, i32 %count) #0 !dbg !110 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !119
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !120
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !121
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !122
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %z, i1 %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !123
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !124
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %y, ptr %z, i32 %count) #0 !dbg !125 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !131
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !132
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !133
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !134
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !135
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !136
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %y, ptr %z, i32 %count) #0 !dbg !137 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %y, ptr %z, i32 %count) #0 !dbg !135 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !143
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !144
@@ -227,12 +225,12 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !146
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !147
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %z, i1 %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !147
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !148
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %y, i1 %z, i32 %count) #0 !dbg !149 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %y, ptr %z, i32 %count) #0 !dbg !149 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !155
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !156
@@ -242,8 +240,38 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !158
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !159
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !159
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !160
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %y, ptr %z, i32 %count) #0 !dbg !161 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !167
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !168
+// CHECK:STDOUT:
+// CHECK:STDOUT: if.then:                                          ; preds = %entry
+// CHECK:STDOUT:   ret i32 %count, !dbg !169
+// CHECK:STDOUT:
+// CHECK:STDOUT: if.else:                                          ; preds = %entry
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !170
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !171
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !172
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %y, i1 %z, i32 %count) #0 !dbg !173 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !179
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !180
+// CHECK:STDOUT:
+// CHECK:STDOUT: if.then:                                          ; preds = %entry
+// CHECK:STDOUT:   ret i32 %count, !dbg !181
+// CHECK:STDOUT:
+// CHECK:STDOUT: if.else:                                          ; preds = %entry
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !182
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !183
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -321,99 +349,123 @@ fn M() {
 // CHECK:STDOUT: !62 = !DILocation(line: 52, column: 25, scope: !4)
 // CHECK:STDOUT: !63 = !DILocation(line: 52, column: 3, scope: !4)
 // CHECK:STDOUT: !64 = !DILocation(line: 22, column: 1, scope: !4)
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.077d2bb2ab5eee86", scope: null, file: !3, line: 15, type: !66, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !71)
+// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "Op", linkageName: "_COp.98006a366c2ffd6c:core.Destroy.Core", scope: null, file: !3, line: 26, type: !66, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !69)
 // CHECK:STDOUT: !66 = !DISubroutineType(types: !67)
-// CHECK:STDOUT: !67 = !{!68, !69, !70, !70, !68}
-// CHECK:STDOUT: !68 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !69 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !70 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !71 = !{!72, !73, !74, !75}
-// CHECK:STDOUT: !72 = !DILocalVariable(arg: 1, scope: !65, type: !69)
-// CHECK:STDOUT: !73 = !DILocalVariable(arg: 2, scope: !65, type: !70)
-// CHECK:STDOUT: !74 = !DILocalVariable(arg: 3, scope: !65, type: !70)
-// CHECK:STDOUT: !75 = !DILocalVariable(arg: 4, scope: !65, type: !68)
-// CHECK:STDOUT: !76 = !DILocation(line: 16, column: 7, scope: !65)
-// CHECK:STDOUT: !77 = !DILocation(line: 16, column: 6, scope: !65)
-// CHECK:STDOUT: !78 = !DILocation(line: 17, column: 5, scope: !65)
-// CHECK:STDOUT: !79 = !DILocation(line: 19, column: 21, scope: !65)
-// CHECK:STDOUT: !80 = !DILocation(line: 19, column: 10, scope: !65)
-// CHECK:STDOUT: !81 = !DILocation(line: 19, column: 3, scope: !65)
-// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.9a89ac9e10448feb", scope: null, file: !3, line: 15, type: !83, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !85)
-// CHECK:STDOUT: !83 = !DISubroutineType(types: !84)
-// CHECK:STDOUT: !84 = !{!68, !68, !70, !70, !68}
-// CHECK:STDOUT: !85 = !{!86, !87, !88, !89}
-// CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !82, type: !68)
-// CHECK:STDOUT: !87 = !DILocalVariable(arg: 2, scope: !82, type: !70)
-// CHECK:STDOUT: !88 = !DILocalVariable(arg: 3, scope: !82, type: !70)
-// CHECK:STDOUT: !89 = !DILocalVariable(arg: 4, scope: !82, type: !68)
-// CHECK:STDOUT: !90 = !DILocation(line: 16, column: 7, scope: !82)
-// CHECK:STDOUT: !91 = !DILocation(line: 16, column: 6, scope: !82)
-// CHECK:STDOUT: !92 = !DILocation(line: 17, column: 5, scope: !82)
-// CHECK:STDOUT: !93 = !DILocation(line: 19, column: 21, scope: !82)
-// CHECK:STDOUT: !94 = !DILocation(line: 19, column: 10, scope: !82)
-// CHECK:STDOUT: !95 = !DILocation(line: 19, column: 3, scope: !82)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.76a945443862cc1f", scope: null, file: !3, line: 15, type: !97, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !99)
-// CHECK:STDOUT: !97 = !DISubroutineType(types: !98)
-// CHECK:STDOUT: !98 = !{!68, !70, !70, !70, !68}
-// CHECK:STDOUT: !99 = !{!100, !101, !102, !103}
-// CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !96, type: !70)
-// CHECK:STDOUT: !101 = !DILocalVariable(arg: 2, scope: !96, type: !70)
-// CHECK:STDOUT: !102 = !DILocalVariable(arg: 3, scope: !96, type: !70)
-// CHECK:STDOUT: !103 = !DILocalVariable(arg: 4, scope: !96, type: !68)
-// CHECK:STDOUT: !104 = !DILocation(line: 16, column: 7, scope: !96)
-// CHECK:STDOUT: !105 = !DILocation(line: 16, column: 6, scope: !96)
-// CHECK:STDOUT: !106 = !DILocation(line: 17, column: 5, scope: !96)
-// CHECK:STDOUT: !107 = !DILocation(line: 19, column: 21, scope: !96)
-// CHECK:STDOUT: !108 = !DILocation(line: 19, column: 10, scope: !96)
-// CHECK:STDOUT: !109 = !DILocation(line: 19, column: 3, scope: !96)
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.02da1a7614ea56b6", scope: null, file: !3, line: 15, type: !111, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !114)
-// CHECK:STDOUT: !111 = !DISubroutineType(types: !112)
-// CHECK:STDOUT: !112 = !{!68, !113, !70, !70, !68}
-// CHECK:STDOUT: !113 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !114 = !{!115, !116, !117, !118}
-// CHECK:STDOUT: !115 = !DILocalVariable(arg: 1, scope: !110, type: !113)
-// CHECK:STDOUT: !116 = !DILocalVariable(arg: 2, scope: !110, type: !70)
-// CHECK:STDOUT: !117 = !DILocalVariable(arg: 3, scope: !110, type: !70)
-// CHECK:STDOUT: !118 = !DILocalVariable(arg: 4, scope: !110, type: !68)
-// CHECK:STDOUT: !119 = !DILocation(line: 16, column: 7, scope: !110)
-// CHECK:STDOUT: !120 = !DILocation(line: 16, column: 6, scope: !110)
-// CHECK:STDOUT: !121 = !DILocation(line: 17, column: 5, scope: !110)
-// CHECK:STDOUT: !122 = !DILocation(line: 19, column: 21, scope: !110)
-// CHECK:STDOUT: !123 = !DILocation(line: 19, column: 10, scope: !110)
-// CHECK:STDOUT: !124 = !DILocation(line: 19, column: 3, scope: !110)
-// CHECK:STDOUT: !125 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4dcab66ec095dfec", scope: null, file: !3, line: 15, type: !97, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !126)
-// CHECK:STDOUT: !126 = !{!127, !128, !129, !130}
-// CHECK:STDOUT: !127 = !DILocalVariable(arg: 1, scope: !125, type: !70)
-// CHECK:STDOUT: !128 = !DILocalVariable(arg: 2, scope: !125, type: !70)
-// CHECK:STDOUT: !129 = !DILocalVariable(arg: 3, scope: !125, type: !70)
-// CHECK:STDOUT: !130 = !DILocalVariable(arg: 4, scope: !125, type: !68)
-// CHECK:STDOUT: !131 = !DILocation(line: 16, column: 7, scope: !125)
-// CHECK:STDOUT: !132 = !DILocation(line: 16, column: 6, scope: !125)
-// CHECK:STDOUT: !133 = !DILocation(line: 17, column: 5, scope: !125)
-// CHECK:STDOUT: !134 = !DILocation(line: 19, column: 21, scope: !125)
-// CHECK:STDOUT: !135 = !DILocation(line: 19, column: 10, scope: !125)
-// CHECK:STDOUT: !136 = !DILocation(line: 19, column: 3, scope: !125)
-// CHECK:STDOUT: !137 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.7776e910959584d9", scope: null, file: !3, line: 15, type: !97, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !138)
+// CHECK:STDOUT: !67 = !{null, !68}
+// CHECK:STDOUT: !68 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !69 = !{!70}
+// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !65, type: !68)
+// CHECK:STDOUT: !71 = !DILocation(line: 26, column: 3, scope: !65)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0d6779e60704359e:core.Destroy.Core", scope: null, file: !3, line: 25, type: !73, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !76)
+// CHECK:STDOUT: !73 = !DISubroutineType(types: !74)
+// CHECK:STDOUT: !74 = !{null, !75}
+// CHECK:STDOUT: !75 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !76 = !{!77}
+// CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !72, type: !75)
+// CHECK:STDOUT: !78 = !DILocation(line: 25, column: 3, scope: !72)
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 24, type: !80, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !83)
+// CHECK:STDOUT: !80 = !DISubroutineType(types: !81)
+// CHECK:STDOUT: !81 = !{null, !82}
+// CHECK:STDOUT: !82 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !83 = !{!84}
+// CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !79, type: !82)
+// CHECK:STDOUT: !85 = !DILocation(line: 24, column: 3, scope: !79)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "Op", linkageName: "_COp.406738f1b62008ed:core.Destroy.Core", scope: null, file: !3, line: 23, type: !87, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !90)
+// CHECK:STDOUT: !87 = !DISubroutineType(types: !88)
+// CHECK:STDOUT: !88 = !{null, !89}
+// CHECK:STDOUT: !89 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !90 = !{!91}
+// CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !86, type: !89)
+// CHECK:STDOUT: !92 = !DILocation(line: 23, column: 3, scope: !86)
+// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.077d2bb2ab5eee86", scope: null, file: !3, line: 15, type: !94, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !96)
+// CHECK:STDOUT: !94 = !DISubroutineType(types: !95)
+// CHECK:STDOUT: !95 = !{!82, !89, !68, !68, !82}
+// CHECK:STDOUT: !96 = !{!97, !98, !99, !100}
+// CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !93, type: !89)
+// CHECK:STDOUT: !98 = !DILocalVariable(arg: 2, scope: !93, type: !68)
+// CHECK:STDOUT: !99 = !DILocalVariable(arg: 3, scope: !93, type: !68)
+// CHECK:STDOUT: !100 = !DILocalVariable(arg: 4, scope: !93, type: !82)
+// CHECK:STDOUT: !101 = !DILocation(line: 16, column: 7, scope: !93)
+// CHECK:STDOUT: !102 = !DILocation(line: 16, column: 6, scope: !93)
+// CHECK:STDOUT: !103 = !DILocation(line: 17, column: 5, scope: !93)
+// CHECK:STDOUT: !104 = !DILocation(line: 19, column: 21, scope: !93)
+// CHECK:STDOUT: !105 = !DILocation(line: 19, column: 10, scope: !93)
+// CHECK:STDOUT: !106 = !DILocation(line: 19, column: 3, scope: !93)
+// CHECK:STDOUT: !107 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.9a89ac9e10448feb", scope: null, file: !3, line: 15, type: !108, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !110)
+// CHECK:STDOUT: !108 = !DISubroutineType(types: !109)
+// CHECK:STDOUT: !109 = !{!82, !82, !68, !68, !82}
+// CHECK:STDOUT: !110 = !{!111, !112, !113, !114}
+// CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !107, type: !82)
+// CHECK:STDOUT: !112 = !DILocalVariable(arg: 2, scope: !107, type: !68)
+// CHECK:STDOUT: !113 = !DILocalVariable(arg: 3, scope: !107, type: !68)
+// CHECK:STDOUT: !114 = !DILocalVariable(arg: 4, scope: !107, type: !82)
+// CHECK:STDOUT: !115 = !DILocation(line: 16, column: 7, scope: !107)
+// CHECK:STDOUT: !116 = !DILocation(line: 16, column: 6, scope: !107)
+// CHECK:STDOUT: !117 = !DILocation(line: 17, column: 5, scope: !107)
+// CHECK:STDOUT: !118 = !DILocation(line: 19, column: 21, scope: !107)
+// CHECK:STDOUT: !119 = !DILocation(line: 19, column: 10, scope: !107)
+// CHECK:STDOUT: !120 = !DILocation(line: 19, column: 3, scope: !107)
+// CHECK:STDOUT: !121 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.76a945443862cc1f", scope: null, file: !3, line: 15, type: !122, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !124)
+// CHECK:STDOUT: !122 = !DISubroutineType(types: !123)
+// CHECK:STDOUT: !123 = !{!82, !68, !68, !68, !82}
+// CHECK:STDOUT: !124 = !{!125, !126, !127, !128}
+// CHECK:STDOUT: !125 = !DILocalVariable(arg: 1, scope: !121, type: !68)
+// CHECK:STDOUT: !126 = !DILocalVariable(arg: 2, scope: !121, type: !68)
+// CHECK:STDOUT: !127 = !DILocalVariable(arg: 3, scope: !121, type: !68)
+// CHECK:STDOUT: !128 = !DILocalVariable(arg: 4, scope: !121, type: !82)
+// CHECK:STDOUT: !129 = !DILocation(line: 16, column: 7, scope: !121)
+// CHECK:STDOUT: !130 = !DILocation(line: 16, column: 6, scope: !121)
+// CHECK:STDOUT: !131 = !DILocation(line: 17, column: 5, scope: !121)
+// CHECK:STDOUT: !132 = !DILocation(line: 19, column: 21, scope: !121)
+// CHECK:STDOUT: !133 = !DILocation(line: 19, column: 10, scope: !121)
+// CHECK:STDOUT: !134 = !DILocation(line: 19, column: 3, scope: !121)
+// CHECK:STDOUT: !135 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.02da1a7614ea56b6", scope: null, file: !3, line: 15, type: !136, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !138)
+// CHECK:STDOUT: !136 = !DISubroutineType(types: !137)
+// CHECK:STDOUT: !137 = !{!82, !75, !68, !68, !82}
 // CHECK:STDOUT: !138 = !{!139, !140, !141, !142}
-// CHECK:STDOUT: !139 = !DILocalVariable(arg: 1, scope: !137, type: !70)
-// CHECK:STDOUT: !140 = !DILocalVariable(arg: 2, scope: !137, type: !70)
-// CHECK:STDOUT: !141 = !DILocalVariable(arg: 3, scope: !137, type: !70)
-// CHECK:STDOUT: !142 = !DILocalVariable(arg: 4, scope: !137, type: !68)
-// CHECK:STDOUT: !143 = !DILocation(line: 16, column: 7, scope: !137)
-// CHECK:STDOUT: !144 = !DILocation(line: 16, column: 6, scope: !137)
-// CHECK:STDOUT: !145 = !DILocation(line: 17, column: 5, scope: !137)
-// CHECK:STDOUT: !146 = !DILocation(line: 19, column: 21, scope: !137)
-// CHECK:STDOUT: !147 = !DILocation(line: 19, column: 10, scope: !137)
-// CHECK:STDOUT: !148 = !DILocation(line: 19, column: 3, scope: !137)
-// CHECK:STDOUT: !149 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.bea8bae6e14e4034", scope: null, file: !3, line: 15, type: !111, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !150)
+// CHECK:STDOUT: !139 = !DILocalVariable(arg: 1, scope: !135, type: !75)
+// CHECK:STDOUT: !140 = !DILocalVariable(arg: 2, scope: !135, type: !68)
+// CHECK:STDOUT: !141 = !DILocalVariable(arg: 3, scope: !135, type: !68)
+// CHECK:STDOUT: !142 = !DILocalVariable(arg: 4, scope: !135, type: !82)
+// CHECK:STDOUT: !143 = !DILocation(line: 16, column: 7, scope: !135)
+// CHECK:STDOUT: !144 = !DILocation(line: 16, column: 6, scope: !135)
+// CHECK:STDOUT: !145 = !DILocation(line: 17, column: 5, scope: !135)
+// CHECK:STDOUT: !146 = !DILocation(line: 19, column: 21, scope: !135)
+// CHECK:STDOUT: !147 = !DILocation(line: 19, column: 10, scope: !135)
+// CHECK:STDOUT: !148 = !DILocation(line: 19, column: 3, scope: !135)
+// CHECK:STDOUT: !149 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4dcab66ec095dfec", scope: null, file: !3, line: 15, type: !122, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !150)
 // CHECK:STDOUT: !150 = !{!151, !152, !153, !154}
-// CHECK:STDOUT: !151 = !DILocalVariable(arg: 1, scope: !149, type: !113)
-// CHECK:STDOUT: !152 = !DILocalVariable(arg: 2, scope: !149, type: !70)
-// CHECK:STDOUT: !153 = !DILocalVariable(arg: 3, scope: !149, type: !70)
-// CHECK:STDOUT: !154 = !DILocalVariable(arg: 4, scope: !149, type: !68)
+// CHECK:STDOUT: !151 = !DILocalVariable(arg: 1, scope: !149, type: !68)
+// CHECK:STDOUT: !152 = !DILocalVariable(arg: 2, scope: !149, type: !68)
+// CHECK:STDOUT: !153 = !DILocalVariable(arg: 3, scope: !149, type: !68)
+// CHECK:STDOUT: !154 = !DILocalVariable(arg: 4, scope: !149, type: !82)
 // CHECK:STDOUT: !155 = !DILocation(line: 16, column: 7, scope: !149)
 // CHECK:STDOUT: !156 = !DILocation(line: 16, column: 6, scope: !149)
 // CHECK:STDOUT: !157 = !DILocation(line: 17, column: 5, scope: !149)
 // CHECK:STDOUT: !158 = !DILocation(line: 19, column: 21, scope: !149)
 // CHECK:STDOUT: !159 = !DILocation(line: 19, column: 10, scope: !149)
 // CHECK:STDOUT: !160 = !DILocation(line: 19, column: 3, scope: !149)
+// CHECK:STDOUT: !161 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.7776e910959584d9", scope: null, file: !3, line: 15, type: !122, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !162)
+// CHECK:STDOUT: !162 = !{!163, !164, !165, !166}
+// CHECK:STDOUT: !163 = !DILocalVariable(arg: 1, scope: !161, type: !68)
+// CHECK:STDOUT: !164 = !DILocalVariable(arg: 2, scope: !161, type: !68)
+// CHECK:STDOUT: !165 = !DILocalVariable(arg: 3, scope: !161, type: !68)
+// CHECK:STDOUT: !166 = !DILocalVariable(arg: 4, scope: !161, type: !82)
+// CHECK:STDOUT: !167 = !DILocation(line: 16, column: 7, scope: !161)
+// CHECK:STDOUT: !168 = !DILocation(line: 16, column: 6, scope: !161)
+// CHECK:STDOUT: !169 = !DILocation(line: 17, column: 5, scope: !161)
+// CHECK:STDOUT: !170 = !DILocation(line: 19, column: 21, scope: !161)
+// CHECK:STDOUT: !171 = !DILocation(line: 19, column: 10, scope: !161)
+// CHECK:STDOUT: !172 = !DILocation(line: 19, column: 3, scope: !161)
+// CHECK:STDOUT: !173 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.bea8bae6e14e4034", scope: null, file: !3, line: 15, type: !136, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !174)
+// CHECK:STDOUT: !174 = !{!175, !176, !177, !178}
+// CHECK:STDOUT: !175 = !DILocalVariable(arg: 1, scope: !173, type: !75)
+// CHECK:STDOUT: !176 = !DILocalVariable(arg: 2, scope: !173, type: !68)
+// CHECK:STDOUT: !177 = !DILocalVariable(arg: 3, scope: !173, type: !68)
+// CHECK:STDOUT: !178 = !DILocalVariable(arg: 4, scope: !173, type: !82)
+// CHECK:STDOUT: !179 = !DILocation(line: 16, column: 7, scope: !173)
+// CHECK:STDOUT: !180 = !DILocation(line: 16, column: 6, scope: !173)
+// CHECK:STDOUT: !181 = !DILocation(line: 17, column: 5, scope: !173)
+// CHECK:STDOUT: !182 = !DILocation(line: 19, column: 21, scope: !173)
+// CHECK:STDOUT: !183 = !DILocation(line: 19, column: 10, scope: !173)
+// CHECK:STDOUT: !184 = !DILocation(line: 19, column: 3, scope: !173)

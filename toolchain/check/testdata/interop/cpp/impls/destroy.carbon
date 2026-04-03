@@ -65,7 +65,7 @@ fn TrivialDestroy() {
   var unused a: Cpp.TrivialDestructor = {};
 }
 
-// --- destroy_protected_base_destructor.carbon
+// --- fail_todo_destroy_protected_base_destructor.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -77,11 +77,19 @@ class Derived {
 
 fn DestroyClassWithProtectedBaseDestructor() {
   //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~ProtectedDestructor();
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_destroy_private_base_destructor.carbon
+// --- fail_destroy_private_base_destructor.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -94,6 +102,14 @@ class Derived {
 fn DestroyClassWithPrivateBaseDestructor() {
   //@dump-sem-ir-begin
   // TODO: We should not allow this, as the destructor of the base class is private.
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~PrivateDestructor();
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
 }
@@ -329,13 +345,14 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- destroy_protected_base_destructor.carbon
+// CHECK:STDOUT: --- fail_todo_destroy_protected_base_destructor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ProtectedDestructor: type = class_type @ProtectedDestructor [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %struct_type.base.e31: type = struct_type {.base: %ProtectedDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
@@ -344,8 +361,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %empty_struct.377: %.ce2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ProtectedDestructor.val: %ProtectedDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%ProtectedDestructor.val) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
@@ -355,31 +372,40 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9f6 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
-// CHECK:STDOUT:   %.loc12_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc12_38.1: %struct_type.base.f5e = struct_literal (%.loc12_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc12_38.2: ref %.ce2 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc12_37.2: init %.ce2 to %.loc12_38.2 = class_init () [concrete = constants.%empty_struct.377]
-// CHECK:STDOUT:   %.loc12_38.3: init %.ce2 = converted %.loc12_37.1, %.loc12_37.2 [concrete = constants.%empty_struct.377]
-// CHECK:STDOUT:   %.loc12_38.4: init %ProtectedDestructor = as_compatible %.loc12_38.3 [concrete = constants.%ProtectedDestructor.val]
-// CHECK:STDOUT:   %.loc12_38.5: init %Derived to %a.var = class_init (%.loc12_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc12_3: init %Derived = converted %.loc12_38.1, %.loc12_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc12_3
+// CHECK:STDOUT:   %.loc20_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc20_38.1: %struct_type.base.f5e = struct_literal (%.loc20_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc20_38.2: ref %.ce2 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc20_37.2: init %.ce2 to %.loc20_38.2 = class_init () [concrete = constants.%empty_struct.377]
+// CHECK:STDOUT:   %.loc20_38.3: init %.ce2 = converted %.loc20_37.1, %.loc20_37.2 [concrete = constants.%empty_struct.377]
+// CHECK:STDOUT:   %.loc20_38.4: init %ProtectedDestructor = as_compatible %.loc20_38.3 [concrete = constants.%ProtectedDestructor.val]
+// CHECK:STDOUT:   %.loc20_38.5: init %Derived to %a.var = class_init (%.loc20_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc20_3: init %Derived = converted %.loc20_38.1, %.loc20_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc20_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Derived) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %struct_type.base.e31) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_destroy_private_base_destructor.carbon
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_destroy_private_base_destructor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %PrivateDestructor: type = class_type @PrivateDestructor [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %struct_type.base.616: type = struct_type {.base: %PrivateDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
@@ -388,8 +414,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %empty_struct.361: %.b20 = struct_value () [concrete]
 // CHECK:STDOUT:   %PrivateDestructor.val: %PrivateDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%PrivateDestructor.val) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc21_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {
@@ -399,21 +425,29 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9f6 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
-// CHECK:STDOUT:   %.loc13_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc13_38.1: %struct_type.base.f5e = struct_literal (%.loc13_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc13_38.2: ref %.b20 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc13_37.2: init %.b20 to %.loc13_38.2 = class_init () [concrete = constants.%empty_struct.361]
-// CHECK:STDOUT:   %.loc13_38.3: init %.b20 = converted %.loc13_37.1, %.loc13_37.2 [concrete = constants.%empty_struct.361]
-// CHECK:STDOUT:   %.loc13_38.4: init %PrivateDestructor = as_compatible %.loc13_38.3 [concrete = constants.%PrivateDestructor.val]
-// CHECK:STDOUT:   %.loc13_38.5: init %Derived to %a.var = class_init (%.loc13_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc13_3: init %Derived = converted %.loc13_38.1, %.loc13_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc13_3
+// CHECK:STDOUT:   %.loc21_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc21_38.1: %struct_type.base.f5e = struct_literal (%.loc21_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc21_38.2: ref %.b20 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc21_37.2: init %.b20 to %.loc21_38.2 = class_init () [concrete = constants.%empty_struct.361]
+// CHECK:STDOUT:   %.loc21_38.3: init %.b20 = converted %.loc21_37.1, %.loc21_37.2 [concrete = constants.%empty_struct.361]
+// CHECK:STDOUT:   %.loc21_38.4: init %PrivateDestructor = as_compatible %.loc21_38.3 [concrete = constants.%PrivateDestructor.val]
+// CHECK:STDOUT:   %.loc21_38.5: init %Derived to %a.var = class_init (%.loc21_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc21_3: init %Derived = converted %.loc21_38.1, %.loc21_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc21_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Derived) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc21_3.1(%self.param: ref %struct_type.base.616) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc21_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

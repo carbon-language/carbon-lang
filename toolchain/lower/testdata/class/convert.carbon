@@ -53,7 +53,26 @@ fn DoIt() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !22
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.b88d1103f417c6d4.Core"(ptr %w.var), !dbg !24
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !25
+// CHECK:STDOUT:   call void @"_COp.01fa374da497ff8a:core.Destroy.Core"(ptr %w.var), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.e7a76f28c4ef4db5:core.Destroy.Core"(ptr %self) #0 !dbg !31 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.01fa374da497ff8a:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -96,3 +115,17 @@ fn DoIt() {
 // CHECK:STDOUT: !24 = !DILocation(line: 25, column: 11, scope: !19)
 // CHECK:STDOUT: !25 = !DILocation(line: 25, column: 3, scope: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 23, column: 1, scope: !19)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 24, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
+// CHECK:STDOUT: !28 = !{!29}
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
+// CHECK:STDOUT: !30 = !DILocation(line: 24, column: 3, scope: !27)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e7a76f28c4ef4db5:core.Destroy.Core", scope: null, file: !3, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
+// CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
+// CHECK:STDOUT: !33 = !{null, !8}
+// CHECK:STDOUT: !34 = !{!35}
+// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !31, type: !8)
+// CHECK:STDOUT: !36 = !DILocation(line: 24, column: 3, scope: !31)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.01fa374da497ff8a:core.Destroy.Core", scope: null, file: !3, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !38)
+// CHECK:STDOUT: !38 = !{!39}
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !37, type: !8)
+// CHECK:STDOUT: !40 = !DILocation(line: 24, column: 3, scope: !37)

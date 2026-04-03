@@ -41,7 +41,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !17
 // CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !17
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr @array.loc18_20.15, i32 1), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.bfd302cd235977c4:core.Destroy.Core"(ptr @array), !dbg !17
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !20 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.bfd302cd235977c4:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -73,3 +86,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: !17 = !DILocation(line: 18, column: 12, scope: !14)
 // CHECK:STDOUT: !18 = !DILocation(line: 18, column: 10, scope: !14)
 // CHECK:STDOUT: !19 = !DILocation(line: 18, column: 3, scope: !14)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 18, type: !21, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !22 = !{null, !7}
+// CHECK:STDOUT: !23 = !{!24}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !20, type: !7)
+// CHECK:STDOUT: !25 = !DILocation(line: 18, column: 12, scope: !20)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.bfd302cd235977c4:core.Destroy.Core", scope: null, file: !3, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
+// CHECK:STDOUT: !28 = !{null, !8}
+// CHECK:STDOUT: !29 = !{!30}
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !8)
+// CHECK:STDOUT: !31 = !DILocation(line: 18, column: 12, scope: !26)

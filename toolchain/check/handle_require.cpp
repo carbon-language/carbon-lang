@@ -222,9 +222,13 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                    "facet type has constraints that we don't handle yet");
       return std::nullopt;
     }
+    auto named_constraints_from_type_impls = llvm::map_range(
+        constraint_facet_type_info.type_impls_named_constraints,
+        [](auto impls) { return impls.specific_named_constraint; });
     auto named_constraints = llvm::concat<const SemIR::SpecificNamedConstraint>(
         constraint_facet_type_info.extend_named_constraints,
-        constraint_facet_type_info.self_impls_named_constraints);
+        constraint_facet_type_info.self_impls_named_constraints,
+        named_constraints_from_type_impls);
     for (auto c : named_constraints) {
       if (c.named_constraint_id == named_constraint->named_constraint_id) {
         const auto& named_constraint =

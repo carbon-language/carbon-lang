@@ -77,7 +77,14 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %y.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main(ptr %y.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %y.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -99,6 +106,13 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 6, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null, !13}
+// CHECK:STDOUT: !13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 3, scope: !10)
 // CHECK:STDOUT: ; ModuleID = 'var_form_param.carbon'
 // CHECK:STDOUT: source_filename = "var_form_param.carbon"
 // CHECK:STDOUT:
@@ -112,7 +126,14 @@ fn G() {
 // CHECK:STDOUT:   %.loc3_7.1.temp = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc3_7.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main(ptr @int_0.6a9), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_0.6a9), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -134,6 +155,13 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 3, column: 6, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 3, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null, !13}
+// CHECK:STDOUT: !13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
+// CHECK:STDOUT: !16 = !DILocation(line: 3, column: 6, scope: !10)
 // CHECK:STDOUT: ; ModuleID = 'val_form_param.carbon'
 // CHECK:STDOUT: source_filename = "val_form_param.carbon"
 // CHECK:STDOUT:
@@ -198,7 +226,14 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(), !dbg !8
 // CHECK:STDOUT:   store i32 %F.call, ptr %x.var, align 4, !dbg !7
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %x.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -220,6 +255,13 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 14, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 27, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 6, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null, !13}
+// CHECK:STDOUT: !13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 14, scope: !10)
 // CHECK:STDOUT: ; ModuleID = 'val_return_form.carbon'
 // CHECK:STDOUT: source_filename = "val_return_form.carbon"
 // CHECK:STDOUT:

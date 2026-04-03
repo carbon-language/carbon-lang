@@ -153,7 +153,21 @@ impl C(B) as I {
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.96947bccc1c5e61b.Main"(ptr %a.var, ptr %x), !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !22
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.707dbe5ae2414d29.Main"(ptr %b.var, ptr %y), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.301c2cde953858ec:core.Destroy.Core"(ptr %b.var), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %a.var), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.301c2cde953858ec:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self) #0 !dbg !32 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -199,6 +213,16 @@ impl C(B) as I {
 // CHECK:STDOUT: !23 = !DILocation(line: 21, column: 21, scope: !15)
 // CHECK:STDOUT: !24 = !DILocation(line: 22, column: 21, scope: !15)
 // CHECK:STDOUT: !25 = !DILocation(line: 20, column: 1, scope: !15)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.301c2cde953858ec:core.Destroy.Core", scope: null, file: !3, line: 22, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
+// CHECK:STDOUT: !28 = !{null, !7}
+// CHECK:STDOUT: !29 = !{!30}
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !7)
+// CHECK:STDOUT: !31 = !DILocation(line: 22, column: 3, scope: !26)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1afa5e4ee26f3f8f:core.Destroy.Core", scope: null, file: !3, line: 21, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !33)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !7)
+// CHECK:STDOUT: !35 = !DILocation(line: 21, column: 3, scope: !32)
 // CHECK:STDOUT: ; ModuleID = 'generic_class_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_class_impls.carbon"
 // CHECK:STDOUT:

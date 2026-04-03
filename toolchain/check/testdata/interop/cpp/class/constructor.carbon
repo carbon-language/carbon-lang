@@ -871,10 +871,10 @@ fn F() {
 // CHECK:STDOUT:   %C.ref.loc9_31: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
-// CHECK:STDOUT:   %.loc9_34.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc9: %.86d = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %true, %impl.elem0.loc9 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method.loc9(%true) [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc9_34.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc9_34.2: ref bool = temporary %.loc9_34.1, %bool.as.Copy.impl.Op.call [concrete = constants.%.e3b]
 // CHECK:STDOUT:   %addr.loc9_38.1: %ptr.bb2 = addr_of %.loc9_34.2 [concrete = constants.%addr]
 // CHECK:STDOUT:   %addr.loc9_38.2: %ptr.d9e = addr_of %.loc9_3

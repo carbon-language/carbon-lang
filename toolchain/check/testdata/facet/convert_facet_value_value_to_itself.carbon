@@ -56,6 +56,9 @@ fn F() {
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT:   %.aec: ref %Goat = temporary invalid, %Goat.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc25_19.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.aec, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.cc5: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,10 +201,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_19.2: ref %Goat = temporary %.loc25_17.2, %.loc25_19.1 [concrete = constants.%.aec]
 // CHECK:STDOUT:   %.loc25_19.3: %Goat = acquire_value %.loc25_19.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc25_19.3)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.aec)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Goat) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc25_19.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc25_19.2(%self.param: ref %Goat) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:

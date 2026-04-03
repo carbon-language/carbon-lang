@@ -744,7 +744,24 @@ class Stringifier {
       step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
-    // TODO: Other restrictions from facet_type_info.
+    for (const auto& type_impls :
+         llvm::reverse(facet_type_info.type_impls_interfaces)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->Push(type_impls.self_type, " impls ",
+                        type_impls.specific_interface);
+      some_where = true;
+    }
+    for (const auto& type_impls :
+         llvm::reverse(facet_type_info.type_impls_named_constraints)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->Push(type_impls.self_type, " impls ",
+                        type_impls.specific_named_constraint);
+      some_where = true;
+    }
     if (some_where) {
       step_stack_->PushString(" where");
     }

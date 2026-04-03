@@ -546,6 +546,7 @@ fn F() {
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced: %ExplicitAndAlsoDeduced.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
@@ -561,6 +562,9 @@ fn F() {
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %.33f: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc11_37.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.33f, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT:   %complete_type.8a0: <witness> = complete_type_witness %ptr.643 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -658,10 +662,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_37.5: ref %A = temporary %.loc11_37.2, %.loc11_37.4 [concrete = constants.%.33f]
 // CHECK:STDOUT:   %.loc11_37.6: %A = acquire_value %.loc11_37.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.643 = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.33f)
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc11_37.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc11_37.2(%self.param: ref %A) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_28.1 => constants.%T
