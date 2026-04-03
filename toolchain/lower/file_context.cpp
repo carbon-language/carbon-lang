@@ -760,12 +760,16 @@ auto FileContext::GetOrCreateLLVMFunction(
 
   // TODO: For an imported inline function, consider generating an
   // `available_externally` definition.
-  auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
-                                         : llvm::Function::ExternalLinkage;
+  auto linkage = llvm::Function::ExternalLinkage;
   if (function_id == sem_ir().global_ctor_id()) {
     // The global constructor name would collide with global constructors for
     // other files in the same package, so use an internal linkage symbol.
     linkage = llvm::Function::InternalLinkage;
+  } else if (specific_id.has_value()) {
+    // Specific functions are allowed to be duplicated across files.
+    // TODO: CoreWitness should have the same behavior; see its use of
+    // WeakODRLinkage in BuildFunctionDefinition.
+    linkage = llvm::Function::LinkOnceODRLinkage;
   }
 
   auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
@@ -911,6 +915,13 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   CARBON_CHECK(!function_info->inexact,
                "Attempting to emit definition of inexact function: {0}",
                *function_info->llvm_function);
+
+  // TODO: Build CoreWitness functions when they're called instead of when
+  // they're defined. That should allow LinkOnceODRLinkage.
+  if (declaration_function.special_function_kind ==
+      SemIR::Function::SpecialFunctionKind::CoreWitness) {
+    function_info->llvm_function->setLinkage(llvm::Function::WeakODRLinkage);
+  }
 
   const auto& body_block_ids = definition_function.body_block_ids;
   CARBON_DCHECK(!body_block_ids.empty(),

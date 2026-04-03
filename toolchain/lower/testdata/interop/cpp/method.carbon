@@ -310,13 +310,22 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr @int_1.30e), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !25
 // CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr @int_1.30e), !dbg !27
+// CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !25
+// CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #2 !dbg !29 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @"_COp.43bece552030817c:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -357,3 +366,10 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !26 = !DILocation(line: 7, column: 3, scope: !18)
 // CHECK:STDOUT: !27 = !DILocation(line: 8, column: 3, scope: !18)
 // CHECK:STDOUT: !28 = !DILocation(line: 6, column: 1, scope: !18)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp.43bece552030817c:core.Destroy.Core", scope: null, file: !6, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
+// CHECK:STDOUT: !31 = !{null, !32}
+// CHECK:STDOUT: !32 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !29, type: !32)
+// CHECK:STDOUT: !35 = !DILocation(line: 8, column: 14, scope: !29)

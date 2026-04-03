@@ -64,54 +64,258 @@ static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
 
 // Returns the body for `Destroy.Op`. This will return `None` if using the
 // builtin `NoOp` is appropriate.
+// Returns a FacetType that contains only the query interface.
+static auto GetFacetTypeForQuerySpecificInterface(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::ConstantId {
+  const auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+
+  // The Self facet will have type FacetType, for the query interface.
+  auto const_id = EvalOrAddInst<SemIR::FacetType>(
+      context, loc_id,
+      FacetTypeFromInterface(context, query_specific_interface.interface_id,
+                             query_specific_interface.specific_id));
+  return const_id;
+}
+
+// Starts a block for lookup-related instructions, and returns the `FacetType`
+// for lookups in `HasWitnessForRepeatedField`.
+static auto PrepareForHasWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::ConstantId {
+  context.inst_block_stack().Push();
+  StartGenericDecl(context);
+
+  return GetFacetTypeForQuerySpecificInterface(context, loc_id,
+                                               query_specific_interface_id);
+}
+
+// Cleans up state `PrepareForHasWitness`.
+static auto CleanupAfterHasWitness(Context& context) -> void {
+  DiscardGenericDecl(context);
+  context.inst_block_stack().PopAndDiscard();
+}
+
+// Returns true if `type_inst_id` has a witness for the query interface, which
+// comes from `PrepareForHasWitness`.
+static auto HasWitnessForRepeatedField(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId type_inst_id,
+    SemIR::ConstantId query_facet_type_const_id) -> bool {
+  auto type_const_id = context.constant_values().Get(type_inst_id);
+  auto block_or_err = LookupImplWitness(context, loc_id, type_const_id,
+                                        query_facet_type_const_id);
+  return block_or_err.has_value();
+}
+
+// The format for `Destroy.Op`.
+enum class DestroyFormat {
+  NoDestroy,
+  Trivial,
+  NonTrivial,
+};
+
+// Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
+// field, this can handle the call to `PrepareForHasWitness`.
+static auto HasWitnessForOneField(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> DestroyFormat {
+  auto query_facet_type_const_id =
+      PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+  auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
+                                                query_facet_type_const_id);
+  CleanupAfterHasWitness(context);
+  return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+}
+
+// Returns true if `class_type` should impl `Destroy`.
+static auto CanDestroyClass(
+    Context& context, SemIR::LocId loc_id, SemIR::ClassType class_type,
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool is_partial)
+    -> DestroyFormat {
+  auto class_info = context.classes().Get(class_type.class_id);
+  // Incomplete and abstract classes can't be destroyed.
+  if (!class_info.is_complete() ||
+      (!is_partial && class_info.inheritance_kind ==
+                          SemIR::Class::InheritanceKind::Abstract)) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  // `LookupCppImpl` handles C++ types.
+  if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  auto object_repr_id =
+      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+  return HasWitnessForOneField(context, loc_id,
+                               context.types().GetTypeInstId(object_repr_id),
+                               query_specific_interface_id);
+}
+
+// Returns true if the `Self` should impl `Destroy`. This will recurse into impl
+// lookup of `Destroy` for members, similar to `where .Self.members each impls
+// Destroy`.
+static auto CanDestroyType(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> DestroyFormat {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto destroy_interface_id = query_specific_interface.interface_id;
+
+  auto inst = context.insts().Get(context.constant_values().GetInstId(
+      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
+
+  CARBON_KIND_SWITCH(inst) {
+    case SemIR::ImplWitnessAccess::Kind:
+    case SemIR::SymbolicBinding::Kind: {
+      // These are symbolic, so should never reach `MakeDestroyOpBody`.
+      // For facet values, look if the FacetType provides the same.
+      if (auto facet_type =
+              context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
+        const auto& info = context.facet_types().Get(facet_type->facet_type_id);
+        for (auto interface : info.extend_constraints) {
+          if (interface.interface_id == destroy_interface_id) {
+            return DestroyFormat::Trivial;
+          }
+        }
+      }
+      return DestroyFormat::NoDestroy;
+    }
+
+    case CARBON_KIND(SemIR::ArrayType array_type): {
+      // A zero element array is always trivially destructible.
+      if (auto int_bound =
+              context.sem_ir().GetArrayBoundValue(array_type.bound_id);
+          !int_bound || *int_bound == 0) {
+        return DestroyFormat::Trivial;
+      }
+
+      // Verify the element can be destroyed.
+      return HasWitnessForOneField(context, loc_id,
+                                   array_type.element_type_inst_id,
+                                   query_specific_interface_id);
+    }
+
+    case SemIR::Call::Kind:
+      // TODO: These seem like they shouldn't be getting directly queried for
+      // destroy. The use is in a test that was TODO before this TODO.
+      return DestroyFormat::NoDestroy;
+
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return CanDestroyClass(context, loc_id, class_type,
+                             query_specific_interface_id,
+                             /*is_partial=*/false);
+    }
+
+    case CARBON_KIND(SemIR::ConstType const_type): {
+      return HasWitnessForOneField(context, loc_id, const_type.inner_id,
+                                   query_specific_interface_id);
+    }
+
+    case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+      return HasWitnessForOneField(context, loc_id,
+                                   maybe_unformed_type.inner_id,
+                                   query_specific_interface_id);
+    }
+
+    case CARBON_KIND(SemIR::PartialType partial_type): {
+      // In contrast with something like `const`, need to treat the inner
+      // class differently based on the `partial` modifier.
+      auto class_type =
+          context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
+      return CanDestroyClass(context, loc_id, class_type,
+                             query_specific_interface_id,
+                             /*is_partial=*/true);
+    }
+
+    case CARBON_KIND(SemIR::StructType struct_type): {
+      auto fields = context.struct_type_fields().Get(struct_type.fields_id);
+      if (fields.empty()) {
+        return DestroyFormat::Trivial;
+      }
+      auto query_facet_type_const_id =
+          PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+      bool has_witness = true;
+      for (const auto& field : fields) {
+        if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
+                                        query_facet_type_const_id)) {
+          has_witness = false;
+          break;
+        }
+      }
+      CleanupAfterHasWitness(context);
+      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+    }
+
+    case CARBON_KIND(SemIR::SymbolicBindingType sym_binding): {
+      return HasWitnessForOneField(context, loc_id,
+                                   sym_binding.facet_value_inst_id,
+                                   query_specific_interface_id);
+    }
+
+    case CARBON_KIND(SemIR::TupleType tuple_type): {
+      auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
+      if (block.empty()) {
+        return DestroyFormat::Trivial;
+      }
+      auto query_facet_type_const_id =
+          PrepareForHasWitness(context, loc_id, query_specific_interface_id);
+      bool has_witness = true;
+      for (const auto& element_id : block) {
+        if (!HasWitnessForRepeatedField(context, loc_id, element_id,
+                                        query_facet_type_const_id)) {
+          has_witness = false;
+          break;
+        }
+      }
+      CleanupAfterHasWitness(context);
+      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+    }
+
+    case SemIR::BoolType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::PointerType::Kind:
+    case SemIR::TypeType::Kind:
+      // Trivially destructible.
+      return DestroyFormat::Trivial;
+
+    default:
+      CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
+  }
+}
+
+// Returns the body for `Destroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
 // maintain mostly-consistent behavior with current logic while working. That
 // also means using `self`.
-// TODO: This mirrors `TypeCanDestroy` below, think about ways to share what's
-// handled.
 static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                              SemIR::TypeId self_type_id)
+                              SemIR::TypeId self_type_id,
+                              SemIR::InstId self_param_id)
     -> SemIR::InstBlockId {
   context.inst_block_stack().Push();
   auto inst = context.types().GetAsInst(self_type_id);
 
-  while (auto class_type = inst.TryAs<SemIR::ClassType>()) {
-    // Switch to looking at the object representation.
-    auto class_info = context.classes().Get(class_type->class_id);
-    CARBON_CHECK(class_info.is_complete());
-    inst = context.types().GetAsInst(
-        class_info.GetObjectRepr(context.sem_ir(), class_type->specific_id));
-  }
-
   CARBON_KIND_SWITCH(inst) {
     case SemIR::ArrayType::Kind:
+    case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
     case SemIR::MaybeUnformedType::Kind:
     case SemIR::PartialType::Kind:
     case SemIR::StructType::Kind:
     case SemIR::TupleType::Kind:
-      // TODO: Implement iterative destruction of types.
-      break;
-    case SemIR::BoolType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // For trivially destructible types, we don't generate anything, so that
-      // this can collapse to a noop implementation when possible.
-      break;
-    case SemIR::ErrorInst::Kind:
-      // Errors can't be destroyed, but we'll still try to generate calls for
-      // other members.
+      (void)self_param_id;
+      // TODO: Implement destruction of the type.
       break;
     default:
-      CARBON_FATAL("Unexpected type for destroy: {0}", inst);
+      CARBON_FATAL("Unexpected type for MakeDestroyOpBody: {0}", inst);
   }
 
-  if (context.inst_block_stack().PeekCurrentBlockContents().empty()) {
-    context.inst_block_stack().PopAndDiscard();
-    return SemIR::InstBlockId::None;
-  }
   AddInst(context, loc_id, SemIR::Return{});
   return context.inst_block_stack().Pop();
 }
@@ -120,8 +324,8 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
 // to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
-                                  SemIR::NameScopeId parent_scope_id)
-    -> SemIR::InstId {
+                                  SemIR::NameScopeId parent_scope_id,
+                                  DestroyFormat format) -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
   auto [decl_id, function_id] =
@@ -132,12 +336,14 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
 
   auto& function = context.functions().Get(function_id);
 
-  auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id);
-  if (body_id.has_value()) {
-    function.SetCoreWitness();
-    function.body_block_ids.push_back(body_id);
-  } else {
+  if (format == DestroyFormat::Trivial) {
     function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
+  } else {
+    CARBON_CHECK(format == DestroyFormat::NonTrivial);
+    function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
+    auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
+                                     function.self_param_id);
+    function.body_block_ids.push_back(body_id);
   }
 
   return decl_id;
@@ -169,17 +375,11 @@ static auto GetTypesForSelfFacet(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id)
     -> TypesForSelfFacet {
-  const auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-
   // The Self facet will have type FacetType, for the query interface.
   auto facet_type_for_query_specific_interface =
       context.types().GetTypeIdForTypeConstantId(
-          EvalOrAddInst<SemIR::FacetType>(
-              context, loc_id,
-              FacetTypeFromInterface(context,
-                                     query_specific_interface.interface_id,
-                                     query_specific_interface.specific_id)));
+          GetFacetTypeForQuerySpecificInterface(context, loc_id,
+                                                query_specific_interface_id));
   // The Self facet needs to point to a type value. If it's not one already,
   // convert to type.
   auto query_self_as_type_id = GetFacetAsType(context, query_self_const_id);
@@ -248,6 +448,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, interface.generic_id, interface.generic_with_self_id,
         query_specific_interface.specific_id, self_facet);
+    CARBON_CHECK(
+        !context.specifics().Get(interface_with_self_specific_id).HasError());
 
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
@@ -350,93 +552,33 @@ auto BuildPrimitiveCopyWitness(
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }
-
-// Returns true if the `Self` should impl `Destroy`.
-static auto TypeCanDestroy(Context& context,
-                           SemIR::ConstantId query_self_const_id,
-                           SemIR::InterfaceId destroy_interface_id) -> bool {
-  auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
-
-  // For facet values, look if the FacetType provides the same.
-  if (auto facet_type =
-          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : info.extend_constraints) {
-      if (interface.interface_id == destroy_interface_id) {
-        return true;
-      }
-    }
-  }
-
-  CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      auto class_info = context.classes().Get(class_type.class_id);
-      // Incomplete and abstract classes can't be destroyed.
-      if (!class_info.is_complete() ||
-          class_info.inheritance_kind ==
-              SemIR::Class::InheritanceKind::Abstract) {
-        return false;
-      }
-
-      // `LookupCppImpl` handles C++ types.
-      if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
-        return false;
-      }
-
-      // TODO: Return false if the object repr doesn't impl `Destroy`.
-      return true;
-    }
-    case SemIR::ArrayType::Kind:
-    case SemIR::ConstType::Kind:
-    case SemIR::MaybeUnformedType::Kind:
-    case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
-    case SemIR::TupleType::Kind:
-      // TODO: Return false for types that indirectly reference a type that
-      // doesn't impl `Destroy`.
-      return true;
-    case SemIR::BoolType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return true;
-    default:
-      return false;
-  }
-}
-
 static auto MakeDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
     -> std::optional<SemIR::InstId> {
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-
-  if (!TypeCanDestroy(context, query_self_const_id,
-                      query_specific_interface.interface_id)) {
+  auto format = CanDestroyType(context, loc_id, query_self_const_id,
+                               query_specific_interface_id);
+  if (format == DestroyFormat::NoDestroy) {
     return std::nullopt;
   }
 
-  if (!build_witness) {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    // The type can be destroyed, but we shouldn't make a witness right now.
     return SemIR::InstId::None;
   }
 
-  if (query_self_const_id.is_symbolic()) {
-    return SemIR::InstId::None;
-  }
-
-  // Mark functions with the interface's scope as a hint to mangling. This does
-  // not add them to the scope.
+  // Mark functions with the interface's scope as a hint to mangling. This
+  // does not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
   auto parent_scope_id = context.interfaces()
                              .Get(query_specific_interface.interface_id)
                              .scope_without_self_id;
 
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id =
-      MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
+                                     parent_scope_id, format);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }

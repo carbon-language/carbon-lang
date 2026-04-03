@@ -99,6 +99,12 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   uselistorder i32 %index.next.1, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !43 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !46
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -148,3 +154,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !40 = !{!"llvm.loop.isvectorized", i32 1}
 // CHECK:STDOUT: !41 = !{!"llvm.loop.unroll.runtime.disable"}
 // CHECK:STDOUT: !42 = !DILocation(line: 15, column: 1, scope: !16)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 17, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !44)
+// CHECK:STDOUT: !44 = !{!45}
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
+// CHECK:STDOUT: !46 = !DILocation(line: 17, column: 3, scope: !43)

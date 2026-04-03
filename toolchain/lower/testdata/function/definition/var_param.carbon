@@ -87,13 +87,34 @@ fn Call() {
 // CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr @int_1.5d2, ptr @X.val.loc27_18.6), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_23.1.temp), !dbg !44
 // CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr @X.val), !dbg !49
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !44
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !43
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !41
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !40
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !39
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.607f187990247af9:core.Destroy.Core"(ptr %self) #0 !dbg !51 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !55 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @"_COp.607f187990247af9:core.Destroy.Core", { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.7e389eab4a7e5487:core.Destroy.Core", { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -153,3 +174,11 @@ fn Call() {
 // CHECK:STDOUT: !48 = !DILocation(line: 27, column: 3, scope: !35)
 // CHECK:STDOUT: !49 = !DILocation(line: 28, column: 3, scope: !35)
 // CHECK:STDOUT: !50 = !DILocation(line: 23, column: 1, scope: !35)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp.607f187990247af9:core.Destroy.Core", scope: null, file: !3, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !52)
+// CHECK:STDOUT: !52 = !{!53}
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !51, type: !14)
+// CHECK:STDOUT: !54 = !DILocation(line: 21, column: 23, scope: !51)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !7)
+// CHECK:STDOUT: !58 = !DILocation(line: 20, column: 15, scope: !55)

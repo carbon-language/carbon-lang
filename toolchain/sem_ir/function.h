@@ -263,10 +263,10 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Sets that this function is generated for a `Core` witness. These will
-  // typically have a custom implementation, but may use builtin functions, such
-  // as `NoOp`. We still track them differently in order to support mangling.
-  auto SetCoreWitness(BuiltinFunctionKind kind = BuiltinFunctionKind::None)
-      -> void {
+  // typically have a custom implementation for a `None` kind, but may use
+  // builtin functions, most often `NoOp`. We still track them differently in
+  // order to support mangling.
+  auto SetCoreWitness(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CoreWitness;
     special_function_kind_data = AnyRawId(kind.AsInt());
