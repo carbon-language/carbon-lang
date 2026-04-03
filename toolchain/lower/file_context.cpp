@@ -518,11 +518,6 @@ auto FileContext::FunctionTypeInfoBuilder::Build() && -> FunctionTypeInfo {
 
   // Determine how the parameters are numbered in SemIR, and make sure it's the
   // same for all versions of the function.
-  //
-  // TODO: This is wrong; the numbering can change. When it does, we'll need to
-  // carefully handle the numbering differences here, and also when building a
-  // call to the function, as the call will use the numbering from its version
-  // of the function.
   auto semir_info = GetSemIRIndexInfo(functions_.front());
   CARBON_CHECK(
       llvm::all_of(functions_.drop_front(), [&](const auto& fn_in_context) {

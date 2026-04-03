@@ -35,8 +35,6 @@ fn G(T:! type, t: T) {
   ({} as C(T)).G(t);
 }
 
-fn H() { G({}, {}); }
-
 // --- use_without_completion_in_call.carbon
 
 library "[[@TEST_NAME]]";
@@ -46,7 +44,6 @@ import library "require_completion_in_call";
 fn I() {
   // OK, even though nothing in the compilation of this file requires i123 or
   // i456 to be complete.
-  G({}, {});
   G((), ());
 }
 
@@ -98,48 +95,6 @@ fn CallF() {
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.09d = internal constant {} zeroinitializer
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.6944efcfbb6a8360(), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.6944efcfbb6a8360() #0 !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_5.2.temp = alloca {}, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc22_5.2.temp = alloca {}, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_5.2.temp), !dbg !10
-// CHECK:STDOUT:   %C.F.call = call i123 @_CF.C.Main.6944efcfbb6a8360(), !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_5.2.temp), !dbg !11
-// CHECK:STDOUT:   %C.G.call = call i456 @_CG.C.Main.6944efcfbb6a8360(), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i123 @_CF.C.Main.6944efcfbb6a8360() #0 !dbg !15 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i123 123, !dbg !19
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i456 @_CG.C.Main.6944efcfbb6a8360() #0 !dbg !20 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i456 456, !dbg !24
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
@@ -147,83 +102,44 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 25, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 25, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.6944efcfbb6a8360", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 4, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 4, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 19, column: 3, scope: !9)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 3, scope: !9)
-// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 1, scope: !9)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.6944efcfbb6a8360", scope: null, file: !3, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 123, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 5, scope: !15)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.6944efcfbb6a8360", scope: null, file: !3, line: 11, type: !21, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !22 = !{!23}
-// CHECK:STDOUT: !23 = !DIBasicType(name: "int", size: 456, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !24 = !DILocation(line: 12, column: 5, scope: !20)
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.09d = internal constant {} zeroinitializer
 // CHECK:STDOUT: @C.val.7d0 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @const = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CI.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.6944efcfbb6a8360(), !dbg !7
-// CHECK:STDOUT:   call void @_CG.Main.e43630e9a6c38c3f(), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   call void @_CG.Main.e43630e9a6c38c3f(), !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.6944efcfbb6a8360() #0 !dbg !10 {
-// CHECK:STDOUT:   %temp = alloca {}, align 8, !dbg !12
-// CHECK:STDOUT:   %temp1 = alloca {}, align 8, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !12
-// CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.6944efcfbb6a8360(), !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !13
-// CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.6944efcfbb6a8360(), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.e43630e9a6c38c3f() #0 !dbg !9 {
+// CHECK:STDOUT:   %temp = alloca {}, align 8, !dbg !11
+// CHECK:STDOUT:   %temp1 = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !11
+// CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.e43630e9a6c38c3f(), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !12
+// CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.e43630e9a6c38c3f(), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.e43630e9a6c38c3f() #0 !dbg !17 {
-// CHECK:STDOUT:   %temp = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %temp1 = alloca {}, align 8, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !18
-// CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.6944efcfbb6a8360(), !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !19
-// CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.6944efcfbb6a8360(), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i123 @_CF.C.Main.6944efcfbb6a8360() #0 !dbg !23 {
-// CHECK:STDOUT:   ret i123 123, !dbg !27
+// CHECK:STDOUT: define linkonce_odr i123 @_CF.C.Main.e43630e9a6c38c3f() #0 !dbg !16 {
+// CHECK:STDOUT:   ret i123 123, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i456 @_CG.C.Main.6944efcfbb6a8360() #0 !dbg !28 {
-// CHECK:STDOUT:   ret i456 456, !dbg !32
+// CHECK:STDOUT: define linkonce_odr i456 @_CG.C.Main.e43630e9a6c38c3f() #0 !dbg !21 {
+// CHECK:STDOUT:   ret i456 456, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CF.C.Main.6944efcfbb6a8360, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CG.C.Main.6944efcfbb6a8360, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -239,31 +155,24 @@ fn CallF() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 10, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.6944efcfbb6a8360", scope: null, file: !11, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
-// CHECK:STDOUT: !12 = !DILocation(line: 19, column: 4, scope: !10)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 4, scope: !10)
-// CHECK:STDOUT: !14 = !DILocation(line: 19, column: 3, scope: !10)
-// CHECK:STDOUT: !15 = !DILocation(line: 22, column: 3, scope: !10)
-// CHECK:STDOUT: !16 = !DILocation(line: 16, column: 1, scope: !10)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e43630e9a6c38c3f", scope: null, file: !11, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 4, scope: !17)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 4, scope: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 19, column: 3, scope: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 22, column: 3, scope: !17)
-// CHECK:STDOUT: !22 = !DILocation(line: 16, column: 1, scope: !17)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.6944efcfbb6a8360", scope: null, file: !11, line: 6, type: !24, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !25 = !{!26}
-// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 123, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !27 = !DILocation(line: 7, column: 5, scope: !23)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.6944efcfbb6a8360", scope: null, file: !11, line: 11, type: !29, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !30 = !{!31}
-// CHECK:STDOUT: !31 = !DIBasicType(name: "int", size: 456, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !32 = !DILocation(line: 12, column: 5, scope: !28)
+// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e43630e9a6c38c3f", scope: null, file: !10, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
+// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 4, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 4, scope: !9)
+// CHECK:STDOUT: !13 = !DILocation(line: 19, column: 3, scope: !9)
+// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 3, scope: !9)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 1, scope: !9)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.e43630e9a6c38c3f", scope: null, file: !10, line: 6, type: !17, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !18 = !{!19}
+// CHECK:STDOUT: !19 = !DIBasicType(name: "int", size: 123, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 5, scope: !16)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.e43630e9a6c38c3f", scope: null, file: !10, line: 11, type: !22, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !23 = !{!24}
+// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 456, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !25 = !DILocation(line: 12, column: 5, scope: !21)
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_vtable.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_vtable.carbon"
 // CHECK:STDOUT:
