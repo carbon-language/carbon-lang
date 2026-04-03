@@ -61,9 +61,9 @@ import Other;
 import Cpp inline '''
 void G() {
   // CHECK:STDERR: fail_todo_args.carbon:[[@LINE+4]]:18: error: no member named 'F3' in namespace 'Carbon::Other' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Carbon::Other::F3();
+  // CHECK:STDERR:    16 |   Carbon::Other::F3(123);
   // CHECK:STDERR:       |                  ^~
   // CHECK:STDERR:
-  Carbon::Other::F3();
+  Carbon::Other::F3(123);
 }
 ''';
