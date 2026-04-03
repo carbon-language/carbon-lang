@@ -31,6 +31,7 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -324,20 +325,43 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
                                    clang::ASTContext* ast_context)
       : context_(context), ast_context_(ast_context) {}
 
+  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+
   // Look up decls for `decl_name` inside `decl_context`, adding the decls to
   // `decl_context`. Returns true if any decls were added.
   auto FindExternalVisibleDeclsByName(
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
-  // See clang::ExternalASTSource.
-  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+  auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
  private:
   // Map a Carbon entity to a Clang NamedDecl. Returns null if the entity cannot
   // currently be represented in C++.
   auto MapInstIdToClangDecl(clang::DeclContext& decl_context,
                             LookupResult lookup) -> clang::NamedDecl*;
+
+  // Get a current best-effort location for the current position within C++
+  // processing.
+  auto GetCurrentCppLocId() -> SemIR::LocId {
+    auto* cpp_context = context_->cpp_context();
+    CARBON_CHECK(cpp_context);
+
+    // Use the current token location when parsing.
+    auto clang_source_loc = cpp_context->parser().getCurToken().getLocation();
+    if (auto& code_synthesis_contexts =
+            cpp_context->sema().CodeSynthesisContexts;
+        !code_synthesis_contexts.empty()) {
+      // Use the current point of instantiation during template instantiation.
+      clang_source_loc = code_synthesis_contexts.back().PointOfInstantiation;
+    }
+
+    // TODO: Refactor with AddImportIRInst in import.cpp.
+    SemIR::ClangSourceLocId clang_source_loc_id =
+        context_->sem_ir().clang_source_locs().Add(clang_source_loc);
+    return context_->import_ir_insts().Add(
+        SemIR::ImportIRInst(clang_source_loc_id));
+  }
 
   Check::Context* context_;
   clang::ASTContext* ast_context_;
@@ -419,11 +443,19 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           GetClangIdentifierInfo(*context_, class_info.name_id);
       CARBON_CHECK(identifier_info, "class with non-identifier name {0}",
                    class_info.name_id);
+      // TODO: Check whether we've already mapped this class and if so, return
+      // the prior mapping.
       auto* record_decl = clang::CXXRecordDecl::Create(
           *ast_context_, clang::TagTypeKind::Class, &decl_context,
           clang::SourceLocation(), clang::SourceLocation(), identifier_info);
       auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(record_decl);
       context_->clang_decls().Add({.key = key, .inst_id = target_inst_id});
+      record_decl->setHasExternalLexicalStorage();
+      record_decl->setHasExternalVisibleStorage();
+      if (isa<clang::CXXRecordDecl>(decl_context)) {
+        // TODO: Map Carbon access to C++ access.
+        record_decl->setAccess(clang::AS_public);
+      }
       return record_decl;
     }
     case SemIR::StructValue::Kind: {
@@ -442,16 +474,18 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           GetClangIdentifierInfo(*context_, function.name_id);
       CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
                    function.name_id);
+      clang::DeclarationNameInfo name_info(identifier_info,
+                                           clang::SourceLocation());
 
       if (function.call_param_ranges.explicit_size() != 0) {
-        context_->TODO(target_inst_id,
+        context_->TODO(SemIR::LocId(target_inst_id),
                        "unsupported: C++ calling a Carbon function with "
                        "parameters");
         return nullptr;
       }
 
       if (function.return_type_inst_id != SemIR::TypeInstId::None) {
-        context_->TODO(target_inst_id,
+        context_->TODO(SemIR::LocId(target_inst_id),
                        "unsupported: C++ calling a Carbon function with "
                        "return type other than `()`");
         return nullptr;
@@ -467,12 +501,27 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           cpp_return_type, cpp_param_types,
           clang::FunctionProtoType::ExtProtoInfo());
 
-      auto* function_decl = clang::FunctionDecl::Create(
-          *ast_context_, &decl_context,
-          /*StartLoc=*/clang::SourceLocation(),
-          /*NLoc=*/clang::SourceLocation(),
-          clang::DeclarationName(identifier_info), cpp_function_type,
-          /*TInfo=*/nullptr, clang::SC_Extern);
+      clang::FunctionDecl* function_decl = nullptr;
+      const bool uses_fp_intrin = false;
+      const bool inline_specified = false;
+      const auto constexpr_kind = clang::ConstexprSpecKind::Unspecified;
+      const auto trailing_requires_clause = clang::AssociatedConstraint();
+      if (auto* parent_class = dyn_cast<clang::CXXRecordDecl>(&decl_context)) {
+        // TODO: Support non-static methods.
+        function_decl = clang::CXXMethodDecl::Create(
+            *ast_context_, parent_class,
+            /*StartLoc=*/clang::SourceLocation(), name_info, cpp_function_type,
+            /*TInfo=*/nullptr, clang::SC_Static, uses_fp_intrin,
+            inline_specified, constexpr_kind,
+            /*EndLocation=*/clang::SourceLocation(), trailing_requires_clause);
+      } else {
+        function_decl = clang::FunctionDecl::Create(
+            *ast_context_, &decl_context,
+            /*StartLoc=*/clang::SourceLocation(), name_info, cpp_function_type,
+            /*TInfo=*/nullptr, clang::SC_Extern, uses_fp_intrin,
+            inline_specified, /*hasWrittenPrototype=*/false, constexpr_kind,
+            trailing_requires_clause);
+      }
 
       // Mangle the function name and attach it to the `FunctionDecl`.
       SemIR::Mangler m(context_->sem_ir(), context_->total_ir_count());
@@ -480,6 +529,10 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           m.Mangle(callee_function->function_id, SemIR::SpecificId::None);
       function_decl->addAttr(
           clang::AsmLabelAttr::Create(*ast_context_, mangled_name));
+      if (isa<clang::CXXRecordDecl>(decl_context)) {
+        // TODO: Map Carbon access to C++ access.
+        function_decl->setAccess(clang::AS_public);
+      }
 
       return function_decl;
     }
@@ -573,6 +626,46 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
   return true;
+}
+
+auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    // TODO: If we start producing clang EnumTypes, we may have to handle them
+    // here too.
+    return;
+  }
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(tag_decl->getFirstDecl());
+  auto clang_decl_id = context_->clang_decls().Lookup(key);
+  if (!clang_decl_id.has_value()) {
+    return;
+  }
+
+  auto inst_id = context_->clang_decls().Get(clang_decl_id).inst_id;
+  auto const_id = context_->constant_values().Get(inst_id);
+  if (!const_id.has_value()) {
+    return;
+  }
+
+  auto class_type =
+      context_->constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
+  if (!class_type) {
+    return;
+  }
+
+  auto class_type_id = context_->types().GetTypeIdForTypeConstantId(const_id);
+  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
+  if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(),
+                           context_fn)) {
+    return;
+  }
+
+  // const auto& class_info = context_->classes().Get(class_type->class_id);
+  class_decl->startDefinition();
+  // TODO: Import base class and fields, plus any special member functions that
+  // affect class properties.
+  class_decl->completeDefinition();
 }
 
 // Parses a sequence of top-level declarations and forms a corresponding
