@@ -1,0 +1,271 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/check/cpp/reverse_interop.h"
+
+#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/function.h"
+#include "toolchain/check/thunk.h"
+#include "toolchain/check/type.h"
+#include "toolchain/sem_ir/mangler.h"
+
+namespace Carbon::Check {
+
+// Create a `clang::FunctionDecl` for the given Carbon function. This
+// can be used to call the Carbon function from C++. The Carbon
+// function's ABI must be compatible with C++.
+//
+// The resulting decl is used to allow a generated C++ function to call
+// a generated Carbon function.
+static clang::FunctionDecl* BuildCppFunctionDeclForCarbonFn(
+    Context& context, clang::DeclContext& decl_context, SemIR::LocId loc_id,
+    SemIR::FunctionId function_id) {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const SemIR::Function& function = context.functions().Get(function_id);
+
+  // Get parameters types.
+  auto carbon_function_params =
+      context.inst_blocks().Get(function.call_param_patterns_id);
+  llvm::SmallVector<clang::QualType> cpp_param_types;
+  for (auto param_inst_id : carbon_function_params) {
+    SemIR::TypeId param_type_id =
+        context.insts().GetAs<SemIR::AnyParamPattern>(param_inst_id).type_id;
+
+    auto param_pattern_type =
+        context.types().GetAs<SemIR::PatternType>(param_type_id);
+    auto scrutinee_type_id = context.types().GetTypeIdForTypeInstId(
+        param_pattern_type.scrutinee_type_inst_id);
+
+    cpp_param_types.push_back(MapToCppType(context, scrutinee_type_id));
+  }
+
+  CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
+  auto cpp_return_type = context.ast_context().VoidTy;
+
+  auto cpp_function_type = context.ast_context().getFunctionType(
+      cpp_return_type, cpp_param_types,
+      clang::FunctionProtoType::ExtProtoInfo());
+
+  auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
+
+  auto* function_decl = clang::FunctionDecl::Create(
+      context.ast_context(), &decl_context,
+      /*StartLoc=*/clang::SourceLocation(),
+      /*NLoc=*/clang::SourceLocation(), clang::DeclarationName(identifier_info),
+      cpp_function_type,
+      /*TInfo=*/nullptr, clang::SC_Extern);
+
+  // Build parameter decls.
+  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
+  for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
+    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
+        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, /*TInfo=*/nullptr,
+        clang::SC_None, /*DefArg=*/nullptr);
+    param_var_decls.push_back(param);
+  }
+  function_decl->setParams(param_var_decls);
+
+  // Mangle the function name and attach it to the `FunctionDecl`.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count());
+  std::string mangled_name = m.Mangle(function_id, SemIR::SpecificId::None);
+  function_decl->addAttr(
+      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
+
+  return function_decl;
+}
+
+// Create the declaration of the C++ thunk.
+static auto BuildCppToCarbonThunkDecl(
+    Context& context, SemIR::LocId loc_id, clang::DeclarationName thunk_name,
+    llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
+  clang::ASTContext& ast_context = context.ast_context();
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
+  clang::QualType thunk_function_type = ast_context.getFunctionType(
+      ast_context.VoidTy, thunk_param_types, ext_proto_info);
+
+  clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
+  clang::FunctionDecl* thunk_function_decl =
+      clang::FunctionDecl::Create(ast_context, decl_context, clang_loc,
+                                  clang_loc, thunk_name, thunk_function_type,
+                                  /*TInfo=*/nullptr, clang::SC_Static);
+  decl_context->addDecl(thunk_function_decl);
+
+  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
+  for (auto [i, type] : llvm::enumerate(thunk_param_types)) {
+    clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
+        ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
+        /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
+    param_var_decls.push_back(thunk_param);
+  }
+  thunk_function_decl->setParams(param_var_decls);
+
+  // Set always_inline.
+  thunk_function_decl->addAttr(
+      clang::AlwaysInlineAttr::CreateImplicit(ast_context));
+
+  // Set function declaration type source info.
+  thunk_function_decl->setTypeSourceInfo(ast_context.getTrivialTypeSourceInfo(
+      thunk_function_decl->getType(), clang_loc));
+
+  return thunk_function_decl;
+}
+
+// Create the body of a C++ thunk that calls a Carbon thunk. The
+// arguments are passed by pointer to the callee.
+static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
+                                      clang::FunctionDecl* function_decl,
+                                      clang::FunctionDecl* callee_function_decl)
+    -> clang::StmtResult {
+  clang::SourceLocation clang_loc = function_decl->getLocation();
+
+  clang::ExprResult callee = sema.BuildDeclRefExpr(
+      callee_function_decl, callee_function_decl->getType(), clang::VK_PRValue,
+      clang_loc);
+
+  llvm::SmallVector<clang::Expr*> call_args;
+  for (auto* param : function_decl->parameters()) {
+    clang::Expr* call_arg =
+        sema.BuildDeclRefExpr(param, param->getType().getNonReferenceType(),
+                              clang::VK_LValue, clang_loc);
+
+    clang::ExprResult addr_of_result =
+        sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_AddrOf, call_arg);
+
+    call_args.push_back(addr_of_result.get());
+  }
+  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
+                                              call_args, clang_loc);
+  CARBON_CHECK(call.isUsable());
+
+  return call.get();
+}
+
+// Create a C++ thunk that calls the Carbon thunk. The C++ thunk's
+// parameter types are mapped from the parameters of the target function
+// with `MapToCppType`. (Note that the target function here is the
+// callee of the Carbon thunk.)
+static auto BuildCppToCarbonThunk(
+    Context& context, SemIR::LocId loc_id, llvm::StringRef base_name,
+    clang::FunctionDecl* carbon_function_decl,
+    llvm::ArrayRef<SemIR::TypeId> callee_param_type_ids)
+    -> clang::FunctionDecl* {
+  // Create the thunk's name.
+  llvm::SmallString<64> thunk_name = base_name;
+  thunk_name += "__cpp_thunk";
+  auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
+
+  llvm::SmallVector<clang::QualType> param_types;
+  for (auto type_id : callee_param_type_ids) {
+    param_types.push_back(MapToCppType(context, type_id));
+  }
+
+  auto thunk_function_decl =
+      BuildCppToCarbonThunkDecl(context, loc_id, &thunk_ident, param_types);
+
+  // Build the thunk function body.
+  clang::Sema& sema = context.clang_sema();
+  clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
+  sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
+  clang::StmtResult body = BuildCppToCarbonThunkBody(sema, thunk_function_decl,
+                                                     carbon_function_decl);
+  sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
+  CARBON_CHECK(!body.isInvalid());
+
+  context.clang_sema().getASTConsumer().HandleTopLevelDecl(
+      clang::DeclGroupRef(thunk_function_decl));
+  return thunk_function_decl;
+}
+
+// Create a Carbon thunk that calls `callee`. The thunk's parameters are
+// all pointers to the callee parameter type.
+static auto BuildCarbonToCarbonThunk(
+    Context& context, SemIR::LocId loc_id, SemIR::Function callee,
+    llvm::ArrayRef<SemIR::TypeId> callee_param_type_ids) -> SemIR::FunctionId {
+  // Create the thunk's name.
+  llvm::SmallString<64> thunk_name =
+      context.names().GetFormatted(callee.name_id);
+  thunk_name += "__carbon_thunk";
+  auto& ident = context.ast_context().Idents.get(thunk_name);
+  auto thunk_name_id =
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
+
+  // Create the thunk's parameter list. Each parameter's type is a
+  // pointer to the callee's parameter type.
+  llvm::SmallVector<SemIR::TypeId> param_type_ids;
+  for (auto callee_param_type_id : callee_param_type_ids) {
+    auto pointer = GetPointerType(
+        context, context.types().GetTypeInstId(callee_param_type_id));
+    param_type_ids.push_back(pointer);
+  }
+
+  auto carbon_thunk_function_id =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = callee.parent_scope_id,
+                                 .name_id = thunk_name_id,
+                                 .param_type_ids = param_type_ids})
+          .second;
+  auto carbon_thunk_inst_id =
+      BuildThunk(context, carbon_thunk_function_id, SemIR::SpecificId::None,
+                 callee.first_decl_id(), /*defer_definition=*/false,
+                 /*for_reverse_interop=*/true);
+  CARBON_CHECK(carbon_thunk_inst_id != SemIR::ErrorInst::InstId);
+
+  return carbon_thunk_function_id;
+}
+
+auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
+                                   clang::DeclContext& decl_context,
+                                   SemIR::FunctionId callee_function_id)
+    -> clang::FunctionDecl* {
+  const SemIR::Function& callee = context.functions().Get(callee_function_id);
+
+  if (callee.return_type_inst_id != SemIR::TypeInstId::None) {
+    context.TODO(loc_id,
+                 "unsupported: C++ calling a Carbon function with "
+                 "return type other than `()`");
+    return nullptr;
+  }
+
+  // Get the parameter types of the Carbon function being called.
+  auto callee_function_params =
+      context.inst_blocks().Get(callee.call_param_patterns_id);
+  llvm::SmallVector<SemIR::TypeId> callee_param_type_ids;
+  for (auto callee_param_inst_id : callee_function_params) {
+    SemIR::TypeId callee_param_type_id =
+        context.insts()
+            .GetAs<SemIR::AnyParamPattern>(callee_param_inst_id)
+            .type_id;
+
+    auto callee_param_pattern_type =
+        context.types().GetAs<SemIR::PatternType>(callee_param_type_id);
+    auto scrutinee_type_id = context.types().GetTypeIdForTypeInstId(
+        callee_param_pattern_type.scrutinee_type_inst_id);
+
+    callee_param_type_ids.push_back(scrutinee_type_id);
+  }
+
+  // Create a Carbon thunk that calls the callee. The thunk's parameters
+  // are all pointers so that the ABI is compatible with C++ callers.
+  auto carbon_thunk_function_id =
+      BuildCarbonToCarbonThunk(context, loc_id, callee, callee_param_type_ids);
+
+  // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
+  auto carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
+      context, decl_context, loc_id, carbon_thunk_function_id);
+
+  // Create a C++ thunk that calls the Carbon thunk.
+  return BuildCppToCarbonThunk(context, loc_id,
+                               context.names().GetFormatted(callee.name_id),
+                               carbon_function_decl, callee_param_type_ids);
+}
+
+}  // namespace Carbon::Check

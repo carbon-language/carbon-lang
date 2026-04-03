@@ -48,22 +48,13 @@ void G() {
 }
 ''';
 
-// --- fail_todo_args.carbon
+// --- args.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_args.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: other.carbon:5:1: error: semantics TODO: `unsupported: C++ calling a Carbon function with parameters` [SemanticsTodo]
-// CHECK:STDERR: fn F3(_: i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_args.carbon:[[@LINE+4]]:18: error: no member named 'F3' in namespace 'Carbon::Other' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Carbon::Other::F3(123);
-  // CHECK:STDERR:       |                  ^~
-  // CHECK:STDERR:
   Carbon::Other::F3(123);
 }
 ''';
