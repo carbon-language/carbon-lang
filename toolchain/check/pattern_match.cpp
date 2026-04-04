@@ -664,9 +664,11 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
           SemIR::LocId(entry.pattern_id),
           {.type_id = ExtractScrutineeType(context_.sem_ir(), pattern_type_id),
            .pattern_id = entry.pattern_id});
-      auto init_result = Initialize(context_, SemIR::LocId(entry.pattern_id),
-                                    std::move(storage_id),
-                                    std::move(storage_block), scrutinee_id);
+      // Disable broken lint that suggests a "fix" that doesn't compile.
+      auto init_result = Initialize(
+          context_, SemIR::LocId(entry.pattern_id),
+          // NOLINTNEXTLINE(performance-move-const-arg)
+          std::move(storage_id), std::move(storage_block), scrutinee_id);
       // TODO: Consider instead creating something like a `Temporary`
       // instruction that returns a reference so that constant evaluation can
       // obtain the value of the var parameter.
