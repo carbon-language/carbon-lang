@@ -752,8 +752,8 @@ associated constants.
 // Stack using associated facets
 interface Stack {
   let ElementType:! type;
-  fn Push[ref self: Self](value: ElementType);
-  fn Pop[ref self: Self]() -> ElementType;
+  fn Push(ref self, value: ElementType);
+  fn Pop(ref self) -> ElementType;
 }
 
 // Works on any type implementing `Stack`. Return type
@@ -790,7 +790,7 @@ another type:
 ```
 interface AddWith(T:! type) {
   let ResultType:! type;
-  fn Add[self: Self](rhs: T) -> ResultType;
+  fn Add(self, rhs: T) -> ResultType;
 }
 ```
 

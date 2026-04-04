@@ -2793,7 +2793,7 @@ be assumed of types that satisfy that constraint.
 interface Printable {
   // Inside an interface definition `Self` means
   // "the type implementing this interface".
-  fn Print[self: Self]();
+  fn Print(self);
 }
 ```
 
@@ -2818,7 +2818,7 @@ sufficient.
 ```carbon
 // Class `Text` does not implement the `Printable` interface.
 class Text {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 class Circle {
@@ -2827,7 +2827,7 @@ class Circle {
   // This `impl` declaration establishes that `Circle` implements
   // `Printable`.
   impl as Printable {
-    fn Print[self: Self]() {
+    fn Print(self) {
       Core.Print("Circle with radius: {0}", self.radius);
     }
   }
@@ -2945,9 +2945,9 @@ semantics similar to C++ templates.
 
 ```carbon
 class Game {
-  fn Draw[self: Self]() -> bool;
+  fn Draw(self) -> bool;
   impl as Renderable {
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
 }
 
@@ -2997,9 +2997,9 @@ associated constant to represent the type of elements stored in the stack.
 ```
 interface StackInterface {
   let ElementType:! Movable;
-  fn Push[ref self: Self](value: ElementType);
-  fn Pop[ref self: Self]() -> ElementType;
-  fn IsEmpty[self: Self]() -> bool;
+  fn Push(ref self, value: ElementType);
+  fn Pop(ref self) -> ElementType;
+  fn IsEmpty(self) -> bool;
 }
 ```
 
@@ -3009,14 +3009,14 @@ for the `ElementType` member of the interface using a `where` clause:
 ```carbon
 class IntStack {
   extend impl as StackInterface where .ElementType = i32 {
-    fn Push[ref self: Self](value: i32);
+    fn Push(ref self, value: i32);
     // ...
   }
 }
 
 class FruitStack {
   extend impl as StackInterface where .ElementType = Fruit {
-    fn Push[ref self: Self](value: Fruit);
+    fn Push(ref self, value: Fruit);
     // ...
   }
 }
@@ -3044,8 +3044,8 @@ values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
-  fn Push[ref self: Self](value: T);
-  fn Pop[ref self: Self]() -> T;
+  fn Push(ref self, value: T);
+  fn Pop(ref self) -> T;
 
   var storage: Array(T);
 }
@@ -3252,7 +3252,7 @@ types in the `impl` declaration, as in:
 ```carbon
 impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
-  fn Op[self: Self](other: U) -> V { ... }
+  fn Op(self, other: U) -> V { ... }
 }
 ```
 
@@ -3261,7 +3261,7 @@ implementing the `Add` interface:
 
 ```carbon
 impl T as Add {
-  fn Op[self: Self](other: Self) -> Self { ... }
+  fn Op(self, other: Self) -> Self { ... }
 }
 ```
 

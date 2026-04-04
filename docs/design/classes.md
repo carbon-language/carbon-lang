@@ -1012,7 +1012,7 @@ For example, given a class with inline function definitions:
 
 ```carbon
 class Point {
-  fn Distance[self: Self]() -> f32 {
+  fn Distance(self) -> f32 {
     return Math.Sqrt(self.x * self.x + self.y * self.y);
   }
 
@@ -1029,14 +1029,14 @@ These are all parsed as if they were defined outside the class scope:
 
 ```carbon
 class Point {
-  fn Distance[self: Self]() -> f32;
+  fn Distance(self) -> f32;
   fn Make(x: f32, y: f32) -> Point;
 
   var x: f32;
   var y: f32;
 }
 
-fn Point.Distance[self: Self]() -> f32 {
+fn Point.Distance(self) -> f32 {
   return Math.Sqrt(self.x * self.x + self.y * self.y);
 }
 
@@ -1058,7 +1058,7 @@ For example:
 
 ```carbon
 class Square {
-  fn GetArea[self: Self]() -> f32 {
+  fn GetArea(self) -> f32 {
     // ✅ OK: performs name lookup on `self`.
     return self.size * self.size;
     // ❌ Error: finds `Square.size`, but an instance is required.
@@ -1072,7 +1072,7 @@ class Square {
     return self.(size) * self.(size);
   }
 
-  fn GetDoubled[self: Self]() -> Square {
+  fn GetDoubled(self) -> Square {
     // ✅ OK: performs name lookup on `Square` for `Create`.
     return Square.Make(self.size);
     // ✅ OK: performs unqualified name lookup within class scope for `Create`.
@@ -1278,7 +1278,7 @@ declaration before `fn`.
 
 ```
 base class MyBaseClass {
-  virtual fn Overridable[self: Self]() -> i32 { return 7; }
+  virtual fn Overridable(self) -> i32 { return 7; }
 }
 ```
 
@@ -1372,23 +1372,23 @@ class that uses `Self` in the declaration in the base class, only the type of
 
 ```
 base class B1 {
-  virtual fn F[self: Self](x: Self) -> Self;
+  virtual fn F(self, x: Self) -> Self;
   // Means exactly the same thing as:
-  //   virtual fn F[self: B1](x: B1) -> B1;
+  //   virtual fn F(self: B1, x: B1) -> B1;
 }
 
 class D1 {
   extend base: B1;
   // ❌ Illegal:
-  //   override fn F[self: Self](x: Self) -> Self;
+  //   override fn F(self, x: Self) -> Self;
   // since that would mean the same thing as:
-  //   override fn F[self: Self](x: D1) -> D1;
+  //   override fn F(self, x: D1) -> D1;
   // and `D1` is a different type than `B1`.
 
   // ✅ Allowed: Parameter and return types
   //  of `F` match declaration in `B1`.
-  override fn F[self: Self](x: B1) -> B1;
-  // Or: override fn F[self: D1](x: B1) -> B1;
+  override fn F(self, x: B1) -> B1;
+  // Or: override fn F(self: D1, x: B1) -> B1;
 }
 ```
 
@@ -1398,17 +1398,17 @@ calling the derived implementation, as in:
 
 ```
 base class B2 {
-  virtual fn Clone[self: Self]() -> Self*;
+  virtual fn Clone(self) -> Self*;
   // Means exactly the same thing as:
-  //   virtual fn Clone[self: B2]() -> B2*;
+  //   virtual fn Clone(self: B2) -> B2*;
 }
 
 class D2 {
   extend base: B2;
   // ✅ Allowed
-  override fn Clone[self: Self]() -> Self*;
+  override fn Clone(self) -> Self*;
   // Means the same thing as:
-  //   override fn Clone[self: D2]() -> D2*;
+  //   override fn Clone(self: D2) -> D2*;
   // which is allowed since `D2*` is a
   // subtype of `B2*`.
 }
@@ -1638,7 +1638,7 @@ the `destroy` method:
 
 ```carbon
 class MyClass {
-  fn destroy[self: Self]() { ... }
+  fn destroy(self) { ... }
 }
 ```
 
@@ -1647,12 +1647,12 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[ref self: Self]() { ... }
+  fn destroy(ref self) { ... }
 }
 ```
 
 If a class has no `destroy` method, it gets the default destructor, which is
-equivalent to `fn destroy[self: Self] { }`.
+equivalent to `fn destroy(self) { }`.
 
 The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
@@ -1670,9 +1670,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  fn destroy[ref self: Self]();
+  fn destroy(ref self);
 }
-fn MyClass.destroy[ref self: Self]() { ... }
+fn MyClass.destroy(ref self) { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1684,12 +1684,12 @@ must be `override`:
 
 ```carbon
 base class MyBaseClass {
-  virtual fn destroy[ref self: Self]() { ... }
+  virtual fn destroy(ref self) { ... }
 }
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  override fn destroy[ref self: Self]() { ... }
+  override fn destroy(ref self) { ... }
 }
 ```
 
@@ -1739,8 +1739,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable, ref self: Self](p: T*);
-  fn UnsafeDelete[T:! Destructible, ref self: Self](p: T*);
+  fn Delete[T:! Deletable](ref self, p: T*);
+  fn UnsafeDelete[T:! Destructible](ref self, p: T*);
 }
 ```
 
@@ -1789,7 +1789,7 @@ could potentially fail must be performed before the destructor is called.
 Unhandled failure during a destructor call will abort the program.
 
 **Future work:** Allow or require destructors to be declared as taking
-`[var self: Self]`.
+`(var self: Self)`.
 
 **Alternatives considered:**
 
@@ -1853,7 +1853,7 @@ As in C++, `private` means only accessible to members of the class and any
 
 ```carbon
 class Point {
-  fn Distance[self: Self]() -> f32;
+  fn Distance(self) -> f32;
   // These are only accessible to members of `Point`.
   private var x: f32;
   private var y: f32;
@@ -1891,13 +1891,13 @@ derived classes, and any [friends](#friends).
 ```
 base class MyBaseClass {
   protected fn HelperClassFunction(x: i32) -> i32;
-  protected fn HelperMethod[self: Self](x: i32) -> i32;
+  protected fn HelperMethod(self, x: i32) -> i32;
   protected var data: i32;
 }
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  fn UsesProtected[ref self: Self]() {
+  fn UsesProtected(ref self) {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
     self.data = self.HelperMethod(x);
