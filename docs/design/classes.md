@@ -30,9 +30,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
-    -   [Fields and static class variables](#fields-and-static-class-variables)
+    -   [Member variables](#member-variables)
         -   [Fields](#fields)
-        -   [Static class variables](#static-class-variables)
+        -   [Static member variables](#static-member-variables)
         -   [Initializers](#initializers)
         -   [Syntax](#syntax)
     -   [Forward declaration](#forward-declaration)
@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
-        -   [Class functions](#class-functions)
+        -   [Non-instance member functions](#non-instance-member-functions)
         -   [Methods](#methods)
         -   [Deferred member function definitions](#deferred-member-function-definitions)
         -   [Name lookup in classes](#name-lookup-in-classes)
@@ -699,27 +699,29 @@ Declarations within a class should generally have the same syntax as
 declarations that occur in other contexts. For example, member functions are
 introduced with `fn`.
 
-### Fields and static class variables
+### Member variables
 
-A class can contain both instance fields and static class variables.
+_Member variables_ are any `var`s declared within a class context (or in the
+future, potentially an interface or `impl` context).
 
 #### Fields
 
-Instance fields are declared with `var`. They are associated with instances of
-the class, and determine the data layout of those instances.
+Instance member variables, or _fields_, are declared with `var`. They are
+associated with instances of the class, and determine the data layout of those
+instances.
 
-#### Static class variables
+#### Static member variables
 
-Static class variables are declared with `static var`. They are associated with
-the type itself rather than instances of the type, and have static storage
-duration.
+Non-instance member variables, or _static member variables_, are declared with
+`static var`. They are associated with the type itself rather than instances of
+the type, and have static storage duration.
 
 ```carbon
 class TextLabel {
   var x: i32;
   var y: i32;
 
-  // Static class variable.
+  // Static member variable.
   static var count: i32;
 
   var text: String = "default";
@@ -728,11 +730,11 @@ class TextLabel {
 
 #### Initializers
 
-In both field and static class variable declarations, an initializer (such as
+In both field and static member variable declarations, an initializer (such as
 `= "default"` above) specifies the default or initial value. For example fields,
 it will be ignored if another value is supplied for that field when constructing
 an instance of the class, and the default must be constants whose value can be
-determined at compile time. For static class variables, the initializer has the
+determined at compile time. For static member variables, the initializer has the
 same behavior as an initializer of a global variable.
 
 #### Syntax
@@ -870,20 +872,20 @@ tl = {.x = 5, .y = 6};
 
 ### Member functions
 
-Member functions can either be class functions or methods. Class functions are
-members of the type, while methods can only be called on instances.
+We consider all functions declared within a class, interface, or `impl` to be
+_member functions_. Member functions can either be instance methods or
+non-instance functions.
 
-#### Class functions
+#### Non-instance member functions
 
-A class function is like a
-[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
-and is declared like a function at file scope. The declaration can include a
-definition of the function body, or that definition can be provided out of line
-after the class definition is finished. A common use is for constructor
-functions.
+Non-instance member functions don't use any special syntax. They don't take a
+`self` parameter and so are regular functions, and work similarly to
+[C++ static member functions](https://en.cppreference.com/w/cpp/language/static#Static_member_functions).
+A common use is for constructor functions (sometimes called factory functions).
 
-```
+```carbon
 class Point {
+  // No `self` parameter, so it's a regular, non-instance function.
   fn Origin() -> Self {
     return {.x = 0, .y = 0};
   }
@@ -898,10 +900,10 @@ fn Point.CreateCentered() -> Self {
 }
 ```
 
-Class functions are members of the type, and may be accessed as using dot `.`
-member access either the type or any instance.
+Non-instance member functions are members of the type, and may be accessed using
+dot `.` member access on either the type or any instance.
 
-```
+```carbon
 var p1: Point = Point.Origin();
 var p2: Point = p1.CreateCentered();
 ```
@@ -909,13 +911,14 @@ var p2: Point = p1.CreateCentered();
 #### Methods
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declarations are distinguished from [class function](#class-functions)
-declarations by having a `self` parameter as the first parameter in the
-parameter list in parens `(`...`)`. The type in the binding syntax for the
-`self` parameter, typically `: Self`, is optional and the type defaults to
-`Self`. There is no implicit member access in methods, so inside the method body
-members are accessed through the `self` parameter. Methods may be written
-lexically inline or after the class declaration.
+declarations are distinguished from
+[non-instance member functions](#non-instance-member-functions) declarations by
+having a `self` parameter as the first parameter in the parameter list in parens
+`(`...`)`. The type in the binding syntax for the `self` parameter, typically
+`: Self`, is optional and the type defaults to `Self`. There is no implicit
+member access in methods, so inside the method body members are accessed through
+the `self` parameter. Methods may be written lexically inline or after the class
+declaration.
 
 ```carbon
 class Circle {
@@ -1232,11 +1235,12 @@ Interface methods may be implemented using virtual methods when the
 those methods by way of the interface will do virtual dispatch just like a
 direct call to the method does.
 
-[Class functions](#class-functions) may not be declared virtual. Neither may
-functions with [compile-time parameters](/docs/design/generics/overview.md),
-whether those are `template` or checked, explicit or deduced. Compile-time
-parameters on the enclosing scope are allowed, though, so generic classes may
-have virtual methods.
+[Non-instance member functions](#non-instance-member-functions) may not be
+declared virtual. Neither may functions with
+[compile-time parameters](/docs/design/generics/overview.md), whether those are
+`template` or checked, explicit or deduced. Compile-time parameters on the
+enclosing scope are allowed, though, so generic classes may have virtual
+methods.
 
 ##### Virtual modifier keywords
 
@@ -2034,10 +2038,11 @@ witness table for the latter.
 
 #### Overloaded methods
 
-We allow a derived class to define a [class function](#class-functions) with the
-same name as a class function in the base class. For example, we expect it to be
-pretty common to have a constructor function named `Create` at all levels of the
-type hierarchy.
+We allow a derived class to define a
+[non-instance member function](#non-instance-member-functions) with the same
+name as a non-instance member function in the base class. For example, we expect
+it to be pretty common to have a constructor function named `Create` at all
+levels of the type hierarchy.
 
 Beyond that, we may want some rules or restrictions about defining methods in a
 derived class with the same name as a base class method without overriding it.

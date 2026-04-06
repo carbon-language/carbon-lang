@@ -64,7 +64,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
-        -   [Class functions and factory functions](#class-functions-and-factory-functions)
+        -   [Non-instance member functions](#non-instance-member-functions)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
@@ -972,7 +972,7 @@ _incomplete_, and in some cases there are limitations on what can be done with
 an incomplete name. Within a definition, the defined name is incomplete until
 the end of the definition is reached, but is complete in the bodies of member
 functions because they are
-[parsed as if they appeared after the definition](#class-functions-and-factory-functions).
+[parsed as if they appeared after the definition](classes.md#deferred-member-function-definitions).
 
 A name is valid until the end of the innermost enclosing
 [_scope_](<https://en.wikipedia.org/wiki/Scope_(computer_science)>). There are a
@@ -1655,7 +1655,7 @@ The order of the field declarations determines the fields' memory-layout order.
 
 Classes may have other kinds of members beyond fields declared in its scope:
 
--   [Class functions](#class-functions-and-factory-functions)
+-   [Non-instance member functions](#non-instance-member-functions)
 -   [Methods](#methods)
 -   [`alias`](#aliases)
 -   [`let`](#constant-let-declarations) to define class constants. **TODO:**
@@ -1705,20 +1705,20 @@ sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
-#### Class functions and factory functions
+#### Non-instance member functions
 
-Classes may also contain _class functions_. These are functions that are
-accessed as members of the type, like
+Classes may also contain _non-instance member functions_. These are functions
+that are accessed as members of the type, like
 [static member functions in C++](<https://en.wikipedia.org/wiki/Method_(computer_programming)#Static_methods>),
 as opposed to [methods](#methods) that are members of instances. They are
-commonly used to define a function that creates instances. Carbon does not have
-separate
+commonly used to define a function that creates instances (sometimes called
+factory functions). Carbon does not have separate
 [constructors](<https://en.wikipedia.org/wiki/Constructor_(object-oriented_programming)>)
 like C++ does.
 
 ```carbon
 class Point {
-  // Class function that instantiates `Point`.
+  // Non-instance member function that instantiates `Point`.
   // `Self` in class scope means the class currently being defined.
   fn Origin() -> Self {
     return {.x = 0, .y = 0};
@@ -1789,8 +1789,8 @@ Assert(origin.Distance(3, 4) == 0.0);
 This defines a `Point` class type with two integer data members `x` and `y` and
 two methods `Distance` and `Offset`:
 
--   Methods are defined as class functions with a `self` parameter as the first
-    parameter in the parameter list in parens `(`...`)`.
+-   Methods are defined by declaring `self` as the first parameter in the
+    parameter list in parens `(`...`)`.
 -   Methods are called using the member syntax, `origin.Distance(`...`)` and
     `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
@@ -2170,7 +2170,7 @@ names earlier in the source than they are declared. In executable scopes such as
 function bodies, names declared later are not found. In declarative scopes such
 as packages, classes, and interfaces, it is an error to refer to names declared
 later, except that inline class member function bodies are
-[parsed as if they appeared after the class](#class-functions-and-factory-functions).
+[parsed as if they appeared after the class](classes.md#deferred-member-function-definitions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
 and starts with a letter. We intend to follow

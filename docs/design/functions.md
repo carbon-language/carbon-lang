@@ -165,8 +165,8 @@ Other designs build upon basic function syntax to add advanced features:
 
 -   [Generic functions](generics/overview.md#generic-functions) adds support for
     deduced parameters and compile-time parameters.
--   [Class member functions](classes.md#member-functions) adds support for
-    methods and class functions.
+-   [Member functions](classes.md#member-functions) adds support for methods and
+    non-instance member functions.
 
 ## Alternatives considered
 
