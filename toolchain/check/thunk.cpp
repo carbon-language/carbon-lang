@@ -370,13 +370,9 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                           for_export);
 }
 
-// Given a declaration of a thunk and the function that it should call, build
-// the thunk body.
-static auto BuildThunkDefinition(Context& context,
-                                 SemIR::FunctionId signature_id,
-                                 SemIR::FunctionId function_id,
-                                 SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id, bool for_export) {
+auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
+                          SemIR::FunctionId function_id, SemIR::InstId thunk_id,
+                          SemIR::InstId callee_id, bool for_export) -> void {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining
