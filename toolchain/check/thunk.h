@@ -22,8 +22,8 @@ auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
 // unchanged if it can be used directly.
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id, bool defer_definition,
-                bool for_export = false) -> SemIR::InstId;
+                SemIR::InstId callee_id, bool defer_definition)
+    -> SemIR::InstId;
 
 // Builds a call to a function that forwards a call argument list built for
 // `function_id` to a call to `callee_id`, for use when building a call from a

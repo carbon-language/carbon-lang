@@ -428,7 +428,7 @@ auto BuildThunkDefinition(Context& context,
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id, bool defer_definition, bool for_export)
+                SemIR::InstId callee_id, bool defer_definition)
     -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
@@ -436,8 +436,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (!for_export &&
-      CheckFunctionTypeMatches(
+  if (CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
@@ -468,20 +467,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-
-  SemIR::InstId thunk_id = SemIR::InstId::None;
-  SemIR::FunctionId function_id = SemIR::FunctionId::None;
-  if (for_export) {
-    // For reverse interop, reuse the passed-in signature rather than
-    // creating a new function decl.
-    function_id = signature_id;
-    thunk_id = context.functions().Get(signature_id).first_decl_id();
-  } else {
-    auto p = CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
-                               signature_specific_id, callee.function_id);
-    function_id = p.first;
-    thunk_id = p.second;
-  }
+  auto [function_id, thunk_id] =
+      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                        signature_specific_id, callee.function_id);
 
   // Track that this function is a thunk.
   context.functions().Get(function_id).SetThunk(callee_id);
@@ -499,7 +487,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                  });
   } else {
     BuildThunkDefinition(context, signature_id, function_id, thunk_id,
-                         callee_id, for_export);
+                         callee_id, /*for_export=*/false);
     context.scope_stack().Pop();
   }
 
