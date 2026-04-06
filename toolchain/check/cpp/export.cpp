@@ -34,13 +34,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
       context.inst_blocks().Get(function.call_param_patterns_id);
   llvm::SmallVector<clang::QualType> cpp_param_types;
   for (auto param_inst_id : carbon_function_params) {
-    SemIR::TypeId param_type_id =
-        context.insts().GetAs<SemIR::AnyParamPattern>(param_inst_id).type_id;
-
-    auto param_pattern_type =
-        context.types().GetAs<SemIR::PatternType>(param_type_id);
-    auto scrutinee_type_id = context.types().GetTypeIdForTypeInstId(
-        param_pattern_type.scrutinee_type_inst_id);
+    auto scrutinee_type_id = ExtractScrutineeType(
+        context.sem_ir(), context.insts().Get(param_inst_id).type_id());
 
     cpp_param_types.push_back(MapToCppType(context, scrutinee_type_id));
   }
@@ -242,16 +237,8 @@ auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
       context.inst_blocks().Get(callee.call_param_patterns_id);
   llvm::SmallVector<SemIR::TypeId> callee_param_type_ids;
   for (auto callee_param_inst_id : callee_function_params) {
-    SemIR::TypeId callee_param_type_id =
-        context.insts()
-            .GetAs<SemIR::AnyParamPattern>(callee_param_inst_id)
-            .type_id;
-
-    auto callee_param_pattern_type =
-        context.types().GetAs<SemIR::PatternType>(callee_param_type_id);
-    auto scrutinee_type_id = context.types().GetTypeIdForTypeInstId(
-        callee_param_pattern_type.scrutinee_type_inst_id);
-
+    auto scrutinee_type_id = ExtractScrutineeType(
+        context.sem_ir(), context.insts().Get(callee_param_inst_id).type_id());
     callee_param_type_ids.push_back(scrutinee_type_id);
   }
 
