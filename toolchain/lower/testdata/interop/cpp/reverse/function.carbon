@@ -122,7 +122,7 @@ void G() {
 // CHECK:STDOUT:   %.addr = alloca i8, align 1
 // CHECK:STDOUT:   %storedv = zext i1 %0 to i8
 // CHECK:STDOUT:   store i8 %storedv, ptr %.addr, align 1, !tbaa !11
-// CHECK:STDOUT:   call void @_CBoolArg__carbon_thunk.Other(ptr noundef %.addr)
+// CHECK:STDOUT:   call void @_CBoolArg__carbon_thunk.Other(ptr noundef nonnull align 1 dereferenceable(1) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,7 +131,7 @@ void G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !7
-// CHECK:STDOUT:   call void @_CIntArg__carbon_thunk.Other(ptr noundef %.addr)
+// CHECK:STDOUT:   call void @_CIntArg__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -140,7 +140,7 @@ void G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca float, align 4
 // CHECK:STDOUT:   store float %0, ptr %.addr, align 4, !tbaa !13
-// CHECK:STDOUT:   call void @_CFloatArg__carbon_thunk.Other(ptr noundef %.addr)
+// CHECK:STDOUT:   call void @_CFloatArg__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,9 +158,9 @@ void G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CBoolArg__carbon_thunk.Other(ptr %_) #2 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.2 = load i8, ptr %_, align 1, !dbg !26
-// CHECK:STDOUT:   %.21 = trunc i8 %.2 to i1, !dbg !26
-// CHECK:STDOUT:   call void @_CBoolArg.Other(i1 %.21), !dbg !26
+// CHECK:STDOUT:   %.1 = load i8, ptr %_, align 1, !dbg !26
+// CHECK:STDOUT:   %.11 = trunc i8 %.1 to i1, !dbg !26
+// CHECK:STDOUT:   call void @_CBoolArg.Other(i1 %.11), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,19 +169,19 @@ void G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CIntArg__carbon_thunk.Other(ptr %_) #2 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.2 = load i32, ptr %_, align 4, !dbg !30
-// CHECK:STDOUT:   call void @_CIntArg.Other(i32 %.2), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !33
+// CHECK:STDOUT:   call void @_CIntArg.Other(i32 %.1), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CFloatArg.Other(float)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFloatArg__carbon_thunk.Other(ptr %_) #2 !dbg !31 {
+// CHECK:STDOUT: define void @_CFloatArg__carbon_thunk.Other(ptr %_) #2 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.2 = load float, ptr %_, align 4, !dbg !34
-// CHECK:STDOUT:   call void @_CFloatArg.Other(float %.2), !dbg !34
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   %.1 = load float, ptr %_, align 4, !dbg !37
+// CHECK:STDOUT:   call void @_CFloatArg.Other(float %.1), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -219,11 +219,14 @@ void G() {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
 // CHECK:STDOUT: !26 = !DILocation(line: 3, column: 1, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 6, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
-// CHECK:STDOUT: !28 = !{!29}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !23)
-// CHECK:STDOUT: !30 = !DILocation(line: 6, column: 1, scope: !27)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !32)
-// CHECK:STDOUT: !32 = !{!33}
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !23)
-// CHECK:STDOUT: !34 = !DILocation(line: 9, column: 1, scope: !31)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 6, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !29 = !{null, !30}
+// CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !31 = !{!32}
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 6, column: 1, scope: !27)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !35 = !{!36}
+// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !23)
+// CHECK:STDOUT: !37 = !DILocation(line: 9, column: 1, scope: !34)
