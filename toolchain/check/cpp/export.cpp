@@ -36,8 +36,12 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   for (auto param_inst_id : carbon_function_params) {
     auto scrutinee_type_id = ExtractScrutineeType(
         context.sem_ir(), context.insts().Get(param_inst_id).type_id());
-
-    cpp_param_types.push_back(MapToCppType(context, scrutinee_type_id));
+    auto cpp_type = MapToCppType(context, scrutinee_type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map C++ type to Carbon");
+      return nullptr;
+    }
+    cpp_param_types.push_back(cpp_type);
   }
 
   CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
@@ -162,7 +166,12 @@ static auto BuildCppToCarbonThunk(
 
   llvm::SmallVector<clang::QualType> param_types;
   for (auto type_id : callee_param_type_ids) {
-    param_types.push_back(MapToCppType(context, type_id));
+    auto cpp_type = MapToCppType(context, type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map C++ type to Carbon");
+      return nullptr;
+    }
+    param_types.push_back(cpp_type);
   }
 
   auto thunk_function_decl =
@@ -250,6 +259,9 @@ auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
   auto carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
       context, decl_context, loc_id, carbon_thunk_function_id);
+  if (!carbon_function_decl) {
+    return nullptr;
+  }
 
   // Create a C++ thunk that calls the Carbon thunk.
   return BuildCppToCarbonThunk(context, loc_id,
