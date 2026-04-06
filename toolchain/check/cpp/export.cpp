@@ -216,7 +216,7 @@ static auto BuildCarbonToCarbonThunk(
   auto carbon_thunk_inst_id =
       BuildThunk(context, carbon_thunk_function_id, SemIR::SpecificId::None,
                  callee.first_decl_id(), /*defer_definition=*/false,
-                 /*for_reverse_interop=*/true);
+                 /*for_export=*/true);
   CARBON_CHECK(carbon_thunk_inst_id != SemIR::ErrorInst::InstId);
 
   return carbon_thunk_function_id;

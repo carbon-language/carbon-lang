@@ -17,7 +17,7 @@ namespace Carbon::Check {
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
                 SemIR::InstId callee_id, bool defer_definition,
-                bool for_reverse_interop = false) -> SemIR::InstId;
+                bool for_export = false) -> SemIR::InstId;
 
 // Builds a call to a function that forwards a call argument list built for
 // `function_id` to a call to `callee_id`, for use when building a call from a
@@ -26,7 +26,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id, bool for_reverse_interop = false)
+                      SemIR::InstId callee_id, bool for_export = false)
     -> SemIR::InstId;
 
 // Builds the definition for a thunk whose definition was deferred until the end

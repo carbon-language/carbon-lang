@@ -262,7 +262,7 @@ static auto HasDeclaredReturnType(Context& context,
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id, bool for_reverse_interop)
+                      SemIR::InstId callee_id, bool for_export)
     -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
@@ -302,7 +302,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
         llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
     if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
       SemIR::InstId arg_inst_id = call_arg_ids[result->index];
-      if (!for_reverse_interop) {
+      if (!for_export) {
         return arg_inst_id;
       }
 
@@ -354,7 +354,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
 // Build a call to a function that forwards the arguments of the enclosing
 // function, for use when constructing a thunk.
 static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
-                           SemIR::InstId callee_id, bool for_reverse_interop)
+                           SemIR::InstId callee_id, bool for_export)
     -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
@@ -367,7 +367,7 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
 
   auto call_params = context.inst_blocks().Get(function.call_params_id);
   return PerformThunkCall(context, loc_id, function_id, call_params, callee_id,
-                          for_reverse_interop);
+                          for_export);
 }
 
 // Given a declaration of a thunk and the function that it should call, build
@@ -376,8 +376,7 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::FunctionId signature_id,
                                  SemIR::FunctionId function_id,
                                  SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id,
-                                 bool for_reverse_interop) {
+                                 SemIR::InstId callee_id, bool for_export) {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining
@@ -408,8 +407,7 @@ static auto BuildThunkDefinition(Context& context,
                      ThunkSignature);
       });
 
-  auto call_id =
-      BuildThunkCall(context, function_id, callee_id, for_reverse_interop);
+  auto call_id = BuildThunkCall(context, function_id, callee_id, for_export);
   if (HasDeclaredReturnType(context, function_id)) {
     BuildReturnWithExpr(context, SemIR::LocId(callee_id), call_id);
   } else {
@@ -427,22 +425,22 @@ auto BuildThunkDefinition(Context& context,
 
   BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
                        task.info.decl_id, task.info.callee_id,
-                       /*for_reverse_interop=*/false);
+                       /*for_export=*/false);
 
   context.scope_stack().Pop();
 }
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id, bool defer_definition,
-                bool for_reverse_interop) -> SemIR::InstId {
+                SemIR::InstId callee_id, bool defer_definition, bool for_export)
+    -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
   // Check whether we can use the given function without a thunk.
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (!for_reverse_interop &&
+  if (!for_export &&
       CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
@@ -477,7 +475,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 
   SemIR::InstId thunk_id = SemIR::InstId::None;
   SemIR::FunctionId function_id = SemIR::FunctionId::None;
-  if (for_reverse_interop) {
+  if (for_export) {
     // For reverse interop, reuse the passed-in signature rather than
     // creating a new function decl.
     function_id = signature_id;
@@ -505,7 +503,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                  });
   } else {
     BuildThunkDefinition(context, signature_id, function_id, thunk_id,
-                         callee_id, for_reverse_interop);
+                         callee_id, for_export);
     context.scope_stack().Pop();
   }
 
