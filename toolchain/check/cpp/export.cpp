@@ -55,8 +55,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
 
   auto* function_decl = clang::FunctionDecl::Create(
       context.ast_context(), &decl_context,
-      /*StartLoc=*/clang::SourceLocation(),
-      /*NLoc=*/clang::SourceLocation(), clang::DeclarationName(identifier_info),
+      /*StartLoc=*/clang_loc,
+      /*NLoc=*/clang_loc, clang::DeclarationName(identifier_info),
       cpp_function_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
 
