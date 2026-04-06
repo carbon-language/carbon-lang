@@ -41,6 +41,8 @@ struct FunctionDeclArgs {
   bool self_is_ref = true;
   // The types of the explicit parameters.
   llvm::ArrayRef<SemIR::TypeId> param_type_ids = {};
+  // Whether the parameters described by `param_type_ids` are references.
+  bool params_are_refs = false;
   // The return type, or `None` if the function doesn't declare a return type.
   SemIR::TypeId return_type_id = SemIR::TypeId::None;
 };
