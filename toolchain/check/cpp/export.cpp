@@ -93,10 +93,11 @@ static auto BuildCppToCarbonThunkDecl(
       ast_context.VoidTy, thunk_param_types, ext_proto_info);
 
   clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
-  clang::FunctionDecl* thunk_function_decl =
-      clang::FunctionDecl::Create(ast_context, decl_context, clang_loc,
-                                  clang_loc, thunk_name, thunk_function_type,
-                                  /*TInfo=*/nullptr, clang::SC_Static);
+  auto* tinfo =
+      ast_context.getTrivialTypeSourceInfo(thunk_function_type, clang_loc);
+  clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
+      ast_context, decl_context, clang_loc, clang_loc, thunk_name,
+      thunk_function_type, tinfo, clang::SC_Static);
   decl_context->addDecl(thunk_function_decl);
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
@@ -112,10 +113,6 @@ static auto BuildCppToCarbonThunkDecl(
   // Set always_inline.
   thunk_function_decl->addAttr(
       clang::AlwaysInlineAttr::CreateImplicit(ast_context));
-
-  // Set function declaration type source info.
-  thunk_function_decl->setTypeSourceInfo(ast_context.getTrivialTypeSourceInfo(
-      thunk_function_decl->getType(), clang_loc));
 
   return thunk_function_decl;
 }
