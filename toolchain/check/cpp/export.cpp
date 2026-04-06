@@ -238,6 +238,20 @@ auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
+  if (callee.generic_id.has_value()) {
+    context.TODO(loc_id,
+                 "unsupported: C++ calling a Carbon function with "
+                 "generic parameters");
+    return nullptr;
+  }
+
+  if (callee.call_param_ranges.implicit_size() != 0) {
+    context.TODO(loc_id,
+                 "unsupported: C++ calling a Carbon function with "
+                 "an implicit parameter");
+    return nullptr;
+  }
+
   // Get the parameter types of the Carbon function being called.
   auto callee_function_params =
       context.inst_blocks().Get(callee.call_param_patterns_id);
