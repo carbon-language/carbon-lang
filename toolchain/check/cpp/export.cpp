@@ -216,11 +216,10 @@ static auto BuildCarbonToCarbonThunk(
                                  .name_id = thunk_name_id,
                                  .param_type_ids = param_type_ids})
           .second;
-  auto carbon_thunk_inst_id =
-      BuildThunk(context, carbon_thunk_function_id, SemIR::SpecificId::None,
-                 callee.first_decl_id(), /*defer_definition=*/false,
-                 /*for_export=*/true);
-  CARBON_CHECK(carbon_thunk_inst_id != SemIR::ErrorInst::InstId);
+  BuildThunkDefinition(context, carbon_thunk_function_id,
+                       carbon_thunk_function_id, callee.first_decl_id(),
+                       callee.first_decl_id(),
+                       /*for_export=*/true);
 
   return carbon_thunk_function_id;
 }
