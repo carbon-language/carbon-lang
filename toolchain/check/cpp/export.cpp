@@ -191,7 +191,7 @@ static auto BuildCppToCarbonThunk(
 // Create a Carbon thunk that calls `callee`. The thunk's parameters are
 // all pointers to the callee parameter type.
 static auto BuildCarbonToCarbonThunk(
-    Context& context, SemIR::LocId loc_id, SemIR::Function callee,
+    Context& context, SemIR::LocId loc_id, const SemIR::Function& callee,
     llvm::ArrayRef<SemIR::TypeId> callee_param_type_ids) -> SemIR::FunctionId {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name =
