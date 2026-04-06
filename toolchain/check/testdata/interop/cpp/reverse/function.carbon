@@ -17,6 +17,13 @@ fn F1() {}
 fn F2() -> i32 { return 0; }
 fn F3(_: i32) {}
 
+fn HasGenericArg(T:! type, a: T) { a; }
+fn HasDeducedArg[T:! type](a: T) { a; }
+
+class C {
+  fn Method[self: Self]() { self; }
+}
+
 // --- function.carbon
 
 library "[[@TEST_NAME]]";
@@ -56,5 +63,81 @@ import Other;
 import Cpp inline '''
 void G() {
   Carbon::Other::F3(123);
+}
+''';
+
+// --- fail_todo_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+18]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+14]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+10]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: error: semantics TODO: `failed to map C++ type to Carbon` [SemanticsTodo]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import Other;
+import Cpp inline '''
+void G() {
+  // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+8]]:18: error: no member named 'HasGenericArg' in namespace 'Carbon::Other' [CppInteropParseError]
+  // CHECK:STDERR:    33 |   Carbon::Other::HasGenericArg<int>(123);
+  // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+4]]:35: error: expected '(' for function-style cast or type construction [CppInteropParseError]
+  // CHECK:STDERR:    33 |   Carbon::Other::HasGenericArg<int>(123);
+  // CHECK:STDERR:       |                                ~~~^
+  // CHECK:STDERR:
+  Carbon::Other::HasGenericArg<int>(123);
+}
+''';
+
+// --- fail_todo_deduced.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_deduced.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:8:1: error: semantics TODO: `failed to map C++ type to Carbon` [SemanticsTodo]
+// CHECK:STDERR: fn HasDeducedArg[T:! type](a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import Other;
+import Cpp inline '''
+void G() {
+  // CHECK:STDERR: fail_todo_deduced.carbon:[[@LINE+4]]:18: error: no member named 'HasDeducedArg' in namespace 'Carbon::Other' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Carbon::Other::HasDeducedArg(123);
+  // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Carbon::Other::HasDeducedArg(123);
+}
+''';
+
+// --- fail_todo_method.carbon
+
+library "[[@TEST_NAME]]";
+
+import Other;
+import Cpp inline '''
+void G() {
+  // CHECK:STDERR: fail_todo_method.carbon:[[@LINE+8]]:3: error: invalid use of incomplete type 'Carbon::Other::C' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   Carbon::Other::C().Method();
+  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_method.carbon:[[@LINE+4]]:21: error: member access into incomplete type 'Carbon::Other::C' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   Carbon::Other::C().Method();
+  // CHECK:STDERR:       |                     ^
+  // CHECK:STDERR:
+  Carbon::Other::C().Method();
 }
 ''';
