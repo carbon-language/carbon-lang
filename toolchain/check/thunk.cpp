@@ -262,8 +262,7 @@ static auto HasDeclaredReturnType(Context& context,
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id, bool for_export)
-    -> SemIR::InstId {
+                      SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
   auto param_pattern_ids =
@@ -301,20 +300,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
     auto result =
         llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
     if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
-      SemIR::InstId arg_inst_id = call_arg_ids[result->index];
-      if (!for_export) {
-        return arg_inst_id;
-      }
-
-      // For reverse-interop thunks, the parameter types are all
-      // pointers and must be dereferenced to pass to the callee.
-      auto arg_inst = context.insts().Get(arg_inst_id);
-      auto pointee_type_id =
-          context.sem_ir().GetPointeeType(arg_inst.type_id());
-      auto deref = AddInst<SemIR::Deref>(
-          context, loc_id,
-          {.type_id = pointee_type_id, .pointer_id = arg_inst_id});
-      return deref;
+      return call_arg_ids[result->index];
     } else {
       if (param_pattern_id != SemIR::ErrorInst::InstId) {
         context.TODO(param_pattern_id,
@@ -354,8 +340,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
 // Build a call to a function that forwards the arguments of the enclosing
 // function, for use when constructing a thunk.
 static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
-                           SemIR::InstId callee_id, bool for_export)
-    -> SemIR::InstId {
+                           SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
   // Build a `NameRef` naming the callee, and a `SpecificConstant` if needed.
@@ -366,13 +351,12 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            callee_type.specific_id);
 
   auto call_params = context.inst_blocks().Get(function.call_params_id);
-  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id,
-                          for_export);
+  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id);
 }
 
 auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
                           SemIR::FunctionId function_id, SemIR::InstId thunk_id,
-                          SemIR::InstId callee_id, bool for_export) -> void {
+                          SemIR::InstId callee_id) -> void {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining
@@ -403,7 +387,7 @@ auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
                      ThunkSignature);
       });
 
-  auto call_id = BuildThunkCall(context, function_id, callee_id, for_export);
+  auto call_id = BuildThunkCall(context, function_id, callee_id);
   if (HasDeclaredReturnType(context, function_id)) {
     BuildReturnWithExpr(context, SemIR::LocId(callee_id), call_id);
   } else {
@@ -420,8 +404,7 @@ auto BuildThunkDefinition(Context& context,
   context.scope_stack().Restore(std::move(task.scope));
 
   BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
-                       task.info.decl_id, task.info.callee_id,
-                       /*for_export=*/false);
+                       task.info.decl_id, task.info.callee_id);
 
   context.scope_stack().Pop();
 }
@@ -487,7 +470,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                  });
   } else {
     BuildThunkDefinition(context, signature_id, function_id, thunk_id,
-                         callee_id, /*for_export=*/false);
+                         callee_id);
     context.scope_stack().Pop();
   }
 

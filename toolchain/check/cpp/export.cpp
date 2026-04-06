@@ -207,8 +207,7 @@ static auto BuildCarbonToCarbonThunk(
           .second;
   BuildThunkDefinition(context, carbon_thunk_function_id,
                        carbon_thunk_function_id, callee.first_decl_id(),
-                       callee.first_decl_id(),
-                       /*for_export=*/false);
+                       callee.first_decl_id());
 
   return carbon_thunk_function_id;
 }
