@@ -20,9 +20,11 @@ namespace Carbon::Check {
 //
 // The resulting decl is used to allow a generated C++ function to call
 // a generated Carbon function.
-static clang::FunctionDecl* BuildCppFunctionDeclForCarbonFn(
-    Context& context, clang::DeclContext& decl_context, SemIR::LocId loc_id,
-    SemIR::FunctionId function_id) {
+static auto BuildCppFunctionDeclForCarbonFn(Context& context,
+                                            clang::DeclContext& decl_context,
+                                            SemIR::LocId loc_id,
+                                            SemIR::FunctionId function_id)
+    -> clang::FunctionDecl* {
   auto clang_loc = GetCppLocation(context, loc_id);
 
   const SemIR::Function& function = context.functions().Get(function_id);
