@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp/reverse_interop.h"
+#include "toolchain/check/cpp/export.h"
 
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"

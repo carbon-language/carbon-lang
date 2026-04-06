@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_CPP_REVERSE_INTEROP_H_
-#define CARBON_TOOLCHAIN_CHECK_CPP_REVERSE_INTEROP_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_EXPORT_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_EXPORT_H_
 
 #include "clang/AST/Decl.h"
 #include "toolchain/check/context.h"
@@ -19,4 +19,4 @@ auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_CPP_REVERSE_INTEROP_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_EXPORT_H_
