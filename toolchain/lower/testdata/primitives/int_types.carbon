@@ -143,7 +143,7 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !8, !7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 24, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !9 = !{!10, !11}
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocalVariable(arg: 2, scope: !4, type: !7)

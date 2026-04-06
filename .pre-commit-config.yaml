@@ -33,6 +33,11 @@ repos:
     rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
       - id: check-google-doc-style
+        exclude: |
+          (?x)^(
+            .*\.agents/.*|
+            .*AGENTS.md
+          )$
       - id: markdown-toc
   - repo: local
     hooks:

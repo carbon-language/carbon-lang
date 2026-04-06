@@ -476,6 +476,12 @@ auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
       context.generics().GetSelfSpecific(interface_info.generic_id)));
 }
 
+auto EvalConstantInst(Context& context, SemIR::MarkInPlaceInit inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.src_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
     -> ConstantEvalResult {
   const auto& named_constraint_info =

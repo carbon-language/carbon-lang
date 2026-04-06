@@ -630,10 +630,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %.loc13_30.3: init %.ec6 = converted %.loc13_20.1, %.loc13_20.2 [concrete = constants.%empty_struct.8eb]
 // CHECK:STDOUT:   %.loc13_30.4: init %Abstract = as_compatible %.loc13_30.3 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %.loc13_30.5: ref %empty_struct_type = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc13_29.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc13_29.2: init %empty_struct_type to %.loc13_30.5 = struct_init () [concrete = constants.%empty_struct.a40]
 // CHECK:STDOUT:   %.loc13_30.6: init %empty_struct_type = converted %.loc13_29.1, %.loc13_29.2 [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc13_30.7: init %Derived to %return.param = class_init (%.loc13_30.4, %.loc13_30.6) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc13_31: init %Derived = converted %.loc13_30.1, %.loc13_30.7 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc13_30.7: init %empty_struct_type to %.loc13_30.5 = in_place_init %.loc13_30.6 [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc13_30.8: init %Derived to %return.param = class_init (%.loc13_30.4, %.loc13_30.7) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc13_31: init %Derived = converted %.loc13_30.1, %.loc13_30.8 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   return %.loc13_31 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

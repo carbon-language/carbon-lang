@@ -9,4 +9,5 @@ values, for example using an invocation of `carbon config`.
 """
 
 clang_include_dirs = CLANG_INCLUDE_DIRS
+clang_resource_dir = "CLANG_RESOURCE_DIR"
 clang_sysroot = "CLANG_SYSROOT"

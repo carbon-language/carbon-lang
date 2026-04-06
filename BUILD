@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_setting")
+
 filegroup(
     name = "clang_tidy_config",
     srcs = [".clang-tidy"],
@@ -12,4 +14,9 @@ filegroup(
 alias(
     name = "generate_compile_commands",
     actual = "@wolfd_bazel_compile_commands//:generate_compile_commands",
+)
+
+string_list_setting(
+    name = "original_platforms",
+    build_setting_default = [],
 )

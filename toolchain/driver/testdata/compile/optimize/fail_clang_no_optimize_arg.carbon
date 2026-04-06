@@ -11,6 +11,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/optimize/fail_clang_no_optimize_arg.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/optimize/fail_clang_no_optimize_arg.carbon
-// CHECK:STDERR:  "{{.*}}/toolchain/install/prefix/lib/carbon/llvm/bin/clang" "-cc1" {{.*}} "-O1" {{.*}}
+// CHECK:STDERR:  "{{.*}}/toolchain/install/llvm/bin/clang" "-cc1" {{.*}} "-O1" {{.*}}
 
 // --- fail_foo.carbon

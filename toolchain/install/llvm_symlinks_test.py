@@ -20,13 +20,13 @@ from bazel_tools.tools.python.runfiles import runfiles
 class LLVMSymlinksTest(unittest.TestCase):
     def setUp(self) -> None:
         # The install root is adjacent to the test script
-        self.install_root = Path(sys.argv[0]).parent / "prefix"
+        self.install_root = Path(sys.argv[0]).parent
         self.tmpdir = Path(os.environ["TEST_TMPDIR"])
         self.test_o_file = self.tmpdir / "test.o"
         self.test_o_file.touch()
         self.runfiles = runfiles.Create()
         self.prebuilt_runtimes = self.runfiles.Rlocation(
-            "carbon/toolchain/driver/prebuilt_runtimes_tree"
+            "carbon/toolchain/install/runtimes"
         )
 
     def get_link_cmd(self, clang: Path) -> list[str | Path]:
@@ -58,7 +58,7 @@ class LLVMSymlinksTest(unittest.TestCase):
     # developing Carbon, and encode all the different platform results in the
     # test expectations.
     def test_clang(self) -> None:
-        bin = self.install_root / "lib/carbon/llvm/bin/clang"
+        bin = self.install_root / "llvm/bin/clang"
         # Most errors are caught by ensuring the command succeeds.
         run = subprocess.run(
             self.get_link_cmd(bin), check=True, capture_output=True, text=True
@@ -71,7 +71,7 @@ class LLVMSymlinksTest(unittest.TestCase):
     # Note that we can't test `clang` vs. `clang++` portably. See the comment on
     # `test_clang` for details.
     def test_clangplusplus(self) -> None:
-        bin = self.install_root / "lib/carbon/llvm/bin/clang++"
+        bin = self.install_root / "llvm/bin/clang++"
         run = subprocess.run(
             self.get_link_cmd(bin), check=True, capture_output=True, text=True
         )
@@ -81,7 +81,7 @@ class LLVMSymlinksTest(unittest.TestCase):
         self.assertRegex(run.stderr, r'"-lc\+\+"')
 
     def test_clang_cl(self) -> None:
-        bin = self.install_root / "lib/carbon/llvm/bin/clang-cl"
+        bin = self.install_root / "llvm/bin/clang-cl"
         run = subprocess.run(
             # Use the `cl.exe`-specific help flag to test the mode.
             [bin, "/?"],
@@ -104,7 +104,7 @@ class LLVMSymlinksTest(unittest.TestCase):
         # Run the preprocessor using a CPP-specific command line reading from
         # the test file and writing to stdout. We define a macro that we'll
         # check is expanded.
-        bin = self.install_root / "lib/carbon/llvm/bin/clang-cpp"
+        bin = self.install_root / "llvm/bin/clang-cpp"
         try:
             run = subprocess.run(
                 [bin, "-D", "TEST=SUCCESS", text_file, "-"],

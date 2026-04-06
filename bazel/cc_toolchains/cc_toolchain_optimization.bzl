@@ -26,7 +26,7 @@ minimal_optimization_flags = feature(
     name = "minimal_optimization_flags",
     flag_sets = [flag_set(
         actions = codegen_compile_actions,
-        flag_groups = [flag_group(flags = ["-O1"])],
+        flag_groups = [flag_group(flags = ["-Og"])],
     )],
 )
 default_optimization_flags = feature(

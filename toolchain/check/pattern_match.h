@@ -19,6 +19,14 @@ namespace Carbon::Check {
 // are matched by the callee, and pattern insts that have a `ParamPattern`
 // as a descendant are matched by the caller.
 
+// Return type for CalleePatternMatch.
+struct CalleePatternMatchResults {
+  SemIR::InstBlockId call_param_patterns_id;
+  SemIR::InstBlockId call_params_id;
+
+  SemIR::Function::CallParamIndexRanges param_ranges;
+};
+
 // Emits the pattern-match IR for the declaration of a parameterized entity with
 // the given implicit and explicit parameter patterns, and the given return
 // patterns (any of which may be `None` if not applicable). This IR performs the
@@ -28,17 +36,31 @@ namespace Carbon::Check {
 // Returns the IDs of inst blocks consisting of references to the `Call`
 // parameter patterns and `Call` parameters of the function, as well as
 // the implicit, explicit, and return index ranges of those blocks.
-struct CalleePatternMatchResults {
-  SemIR::InstBlockId call_param_patterns_id;
-  SemIR::InstBlockId call_params_id;
-
-  SemIR::Function::CallParamIndexRanges param_ranges;
-};
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstBlockId return_patterns_id)
     -> CalleePatternMatchResults;
+
+// Return type for ThunkPatternMatch.
+struct ThunkPatternMatchResults {
+  // The syntactic argument list. If `self_pattern_id` is not `None`, the first
+  // element will be the corresponding argument.
+  llvm::SmallVector<SemIR::InstId> syntactic_args;
+
+  // The trailing elements of `outer_call_args` that were not used in
+  // `syntactic_args`. These presumably represent the output arguments for the
+  // return.
+  llvm::ArrayRef<SemIR::InstId> ignored_call_args;
+};
+
+// Given the `Call` arguments for the outer part of a thunked function call,
+// computes the corresponding syntactic argument list, suitable for passing to
+// the inner part of the thunked function call.
+auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
+                       SemIR::InstBlockId param_patterns_id,
+                       llvm::ArrayRef<SemIR::InstId> outer_call_args)
+    -> ThunkPatternMatchResults;
 
 // Emits the pattern-match IR for matching the given arguments with the given
 // parameter patterns, and returns an inst block of the arguments that should

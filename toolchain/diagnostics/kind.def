@@ -131,6 +131,11 @@ CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
 
+// Inline declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedCppAfterInline)
+CARBON_DIAGNOSTIC_KIND(ExpectedStringAfterInlineCpp)
+CARBON_DIAGNOSTIC_KIND(InlineDeclNotAtFileScope)
+
 // Match diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseBlock)
@@ -544,6 +549,7 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+CARBON_DIAGNOSTIC_KIND(WhereWithoutDesignator)
 
 // Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)

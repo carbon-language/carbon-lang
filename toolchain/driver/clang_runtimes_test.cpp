@@ -33,6 +33,14 @@
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
+
+class ClangResourceDirBuilderTestPeer {
+ public:
+  static auto GetDarwinOsSuffix(llvm::Triple target_triple) -> llvm::StringRef {
+    return ClangResourceDirBuilder::GetDarwinOsSuffix(target_triple);
+  }
+};
+
 namespace {
 
 using ::bazel::tools::cpp::runfiles::Runfiles;
@@ -172,8 +180,20 @@ class ClangRuntimesTest : public ::testing::Test {
     // a relevant symbol by running the `llvm-nm` tool over it. Using `nm`
     // rather than directly inspecting the objects is a bit awkward, but lets us
     // easily ignore the wrapping in an archive file.
+    std::filesystem::path lib_path = "lib";
+    std::string builtins_name = "libclang_rt.builtins.a";
+    if (target_triple_.isOSDarwin()) {
+      lib_path /= "darwin";
+      builtins_name =
+          llvm::formatv("libclang_rt.{0}.a",
+                        ClangResourceDirBuilderTestPeer::GetDarwinOsSuffix(
+                            target_triple_))
+              .str();
+    } else {
+      lib_path /= target_;
+    }
     std::filesystem::path builtins_path =
-        resource_dir_path / "lib" / target_ / "libclang_rt.builtins.a";
+        resource_dir_path / lib_path / builtins_name;
     std::string builtins_symbols = NmListDefinedSymbols(builtins_path);
 
     // Check that we found a definition of `__mulodi4`, a builtin function
@@ -291,20 +311,20 @@ TEST_F(ClangRuntimesTest, DISABLED_Libcxx) {
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltResourceDir) {
-  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/driver/prebuilt_runtimes_tree");
+  std::filesystem::path prebuilt_runtimes_path =
+      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
   TestResourceDir(prebuilt_runtimes_path / "clang_resource_dir");
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltLibunwind) {
-  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/driver/prebuilt_runtimes_tree");
+  std::filesystem::path prebuilt_runtimes_path =
+      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
   TestLibunwind(prebuilt_runtimes_path / "libunwind/lib/libunwind.a");
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltLibcxx) {
-  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/driver/prebuilt_runtimes_tree");
+  std::filesystem::path prebuilt_runtimes_path =
+      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
   TestLibcxx(prebuilt_runtimes_path / "libcxx/lib/libc++.a");
 }
 

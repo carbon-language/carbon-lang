@@ -265,73 +265,20 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
-  auto param_pattern_ids =
-      context.inst_blocks().Get(function.call_param_patterns_id);
+  auto [args_vec, ignored_call_args] =
+      ThunkPatternMatch(context, function.self_param_id,
+                        function.param_patterns_id, call_arg_ids);
+  llvm::ArrayRef<SemIR::InstId> args = args_vec;
 
-  // Maps each `Call` parameter pattern ID to its index.
-  // TODO: is it possible to arrange for the param patterns to be created in
-  // order, so that we could use `param_pattern_ids` for this directly?
-  struct InstWithIndex {
-    SemIR::InstId inst_id;
-    int index;
-
-    auto operator<(InstWithIndex other) const -> bool {
-      return inst_id.index < other.inst_id.index;
-    }
-  };
-  llvm::SmallVector<InstWithIndex> param_to_index;
-
-  param_to_index.reserve(param_pattern_ids.size());
-  for (auto [index, inst_id] : llvm::enumerate(param_pattern_ids)) {
-    param_to_index.push_back({inst_id, static_cast<int>(index)});
-  }
-  llvm::sort(param_to_index);
-
-  // Given that `call_arg_ids` is a list of the _`Call`_ arguments for a call to
-  // `function_id`, this returns the _syntactic_ argument that was passed for
-  // param_pattern_id in that call.
-  auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
-    if (auto at_binding_pattern =
-            context.insts().TryGetAs<SemIR::WrapperBindingPattern>(
-                param_pattern_id)) {
-      param_pattern_id = at_binding_pattern->subpattern_id;
-    }
-    // NOLINTNEXTLINE(readability-qualified-auto)
-    auto result =
-        llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
-    if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
-      return call_arg_ids[result->index];
-    } else {
-      if (param_pattern_id != SemIR::ErrorInst::InstId) {
-        context.TODO(param_pattern_id,
-                     "don't know how to reconstruct the syntactic argument for "
-                     "this pattern in thunk");
-      }
-      return SemIR::ErrorInst::InstId;
-    }
-  };
-
-  llvm::SmallVector<SemIR::InstId> args;
-
-  // If we have a self parameter, form `self.<callee_id>`.
-  if (function.self_param_id.has_value()) {
-    auto self_arg_id = build_syntactic_arg(function.self_param_id);
-    if (IsCppConstructorOrNonMethodOperator(context, callee_id)) {
-      // When calling a C++ constructor to implement `Copy`, or calling a C++
-      // non-method operator to implement a Carbon operator, the interface has a
-      // `self` parameter but C++ models that parameter as an explicit argument
-      // instead, so add the `self` to the argument list instead in that case.
-      args.push_back(self_arg_id);
-    } else {
-      callee_id =
-          PerformCompoundMemberAccess(context, loc_id, self_arg_id, callee_id);
-    }
-  }
-
-  // Form an argument list.
-  for (auto pattern_id :
-       context.inst_blocks().Get(function.param_patterns_id)) {
-    args.push_back(build_syntactic_arg(pattern_id));
+  // If we have a self parameter, form `self.<callee_id>` if needed.
+  // When calling a C++ constructor to implement `Copy`, or calling a C++
+  // non-method operator to implement a Carbon operator, the interface has a
+  // `self` parameter but C++ models that parameter as an explicit argument
+  // instead, so add the `self` to the argument list instead in that case.
+  if (function.self_param_id.has_value() &&
+      !IsCppConstructorOrNonMethodOperator(context, callee_id)) {
+    callee_id = PerformCompoundMemberAccess(context, loc_id,
+                                            args.consume_front(), callee_id);
   }
 
   return PerformCall(context, loc_id, callee_id, args);

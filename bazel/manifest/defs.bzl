@@ -8,10 +8,6 @@ def _get_files(ctx):
     files = []
     for src in ctx.attr.srcs:
         files.extend([f.path for f in src[DefaultInfo].files.to_list()])
-        files.extend([
-            f.path
-            for f in src[DefaultInfo].default_runfiles.files.to_list()
-        ])
 
     if ctx.attr.strip_package_dir:
         # Files may or may not be prefixed with the bin directory, and then

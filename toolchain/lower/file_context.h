@@ -37,6 +37,11 @@ struct FunctionInfo {
 
   // The lowered function declaration.
   llvm::Function* llvm_function;
+
+  // Whether the function type information is inexact, because some component
+  // type was incomplete. If this is set, the function should not be used to
+  // emit a definition or a call.
+  bool inexact;
 };
 
 // Context and shared functionality for lowering within a SemIR file.
@@ -82,8 +87,14 @@ class FileContext {
   // Returns the FunctionInfo for the given function in the given specific. If
   // it's not already available, this function will compute it, including
   // creating the `llvm::Function` for it. Returns nullopt for a builtin.
-  auto GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
-                               SemIR::SpecificId specific_id)
+  //
+  // The fallback information is used if the specific function has incomplete
+  // types.
+  auto GetOrCreateFunctionInfo(
+      SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+      FileContext* fallback_file = nullptr,
+      SemIR::FunctionId fallback_function_id = SemIR::FunctionId::None,
+      SemIR::SpecificId fallback_specific_id = SemIR::SpecificId::None)
       -> std::optional<FunctionInfo>&;
 
   // Returns a lowered type for the given type_id.
@@ -213,6 +224,10 @@ class FileContext {
     // When `return_param_id` is not `None`, the corresponding lowered parameter
     // should be given an `sret` attribute with this type.
     llvm::Type* sret_type = nullptr;
+
+    // Whether the function type information is inexact, because some component
+    // type was incomplete.
+    bool inexact;
   };
 
   class FunctionTypeInfoBuilder;
@@ -229,7 +244,10 @@ class FileContext {
   // by the caller.
   auto BuildFunctionDecl(
       SemIR::FunctionId function_id,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::None)
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
+      FileContext* fallback_file = nullptr,
+      SemIR::FunctionId fallback_function_id = SemIR::FunctionId::None,
+      SemIR::SpecificId fallback_specific_id = SemIR::SpecificId::None)
       -> std::optional<FunctionInfo>;
 
   // Builds a function's body. Common functionality for all functions.

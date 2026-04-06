@@ -2340,6 +2340,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   switch (import_function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::CppThunk:
     case SemIR::Function::SpecialFunctionKind::None: {
       break;
     }
@@ -2348,7 +2349,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      new_function.SetCoreWitness();
+      new_function.SetCoreWitness(import_function.builtin_function_kind());
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {
@@ -2447,12 +2448,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, resolver.import_classes()
                     .Get(resolver.import_vtables().Get(inst.vtable_id).class_id)
                     .vtable_decl_id);
-  auto vtable_const_inst = resolver.local_insts().Get(
-      resolver.local_constant_values().GetInstId(vtable_const_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
+  auto vtable_const_inst = resolver.local_insts().Get(
+      resolver.local_constant_values().GetInstId(vtable_const_id));
   return ResolveResult::Deduplicated<SemIR::VtablePtr>(
       resolver,
       {.type_id = GetPointerType(resolver.local_context(),
@@ -3413,6 +3414,38 @@ static auto ResolveFacetTypeInfo(
     if (local_facet_type_info) {
       local_facet_type_info->self_impls_named_constraints.push_back(
           GetLocalSpecificNamedConstraint(resolver, constraint, data));
+    }
+  }
+
+  if (local_facet_type_info) {
+    local_facet_type_info->type_impls_interfaces.reserve(
+        import_facet_type_info.type_impls_interfaces.size());
+  }
+  for (const auto& type_impls : import_facet_type_info.type_impls_interfaces) {
+    auto self_type = GetLocalConstantInstId(resolver, type_impls.self_type);
+    auto data =
+        GetLocalSpecificInterfaceData(resolver, type_impls.specific_interface);
+    if (local_facet_type_info) {
+      local_facet_type_info->type_impls_interfaces.push_back(
+          {self_type, GetLocalSpecificInterface(
+                          resolver, type_impls.specific_interface, data)});
+    }
+  }
+
+  if (local_facet_type_info) {
+    local_facet_type_info->type_impls_named_constraints.reserve(
+        import_facet_type_info.type_impls_named_constraints.size());
+  }
+  for (const auto& type_impls :
+       import_facet_type_info.type_impls_named_constraints) {
+    auto self_type = GetLocalConstantInstId(resolver, type_impls.self_type);
+    auto data = GetLocalSpecificNamedConstraintData(
+        resolver, type_impls.specific_named_constraint);
+    if (local_facet_type_info) {
+      local_facet_type_info->type_impls_named_constraints.push_back(
+          {self_type,
+           GetLocalSpecificNamedConstraint(
+               resolver, type_impls.specific_named_constraint, data)});
     }
   }
 

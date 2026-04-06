@@ -226,7 +226,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
             "{CLANG_BINDIR}": str(clang.dirname),
-            "{CLANG_INCLUDE_DIRS_LIST}": str(
+            "{CLANG_INCLUDE_DIRS}": str(
                 [str(path) for path in include_dirs],
             ),
             "{CLANG_RESOURCE_DIR}": resource_dir,

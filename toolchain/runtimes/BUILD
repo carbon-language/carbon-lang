@@ -13,6 +13,8 @@ load("configure_cmake_file.bzl", "configure_cmake_file")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["carbon_runtimes.bzl"])
+
 # Collect the runtime sources that are collectively installed into the
 # `builtins` directory.
 filegroup(

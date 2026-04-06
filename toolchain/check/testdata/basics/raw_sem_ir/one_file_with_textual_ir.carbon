@@ -97,14 +97,16 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst5000002E:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000002F:    {kind: TupleLiteral, arg0: inst_block50000011, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000030:    {kind: TupleAccess, arg0: inst50000028, arg1: element0, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000031:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst<none>, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000031:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst50000030, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000032:    {kind: Converted, arg0: inst5000002D, arg1: inst50000031, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000033:    {kind: TupleAccess, arg0: inst50000028, arg1: element1, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000034:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst<none>, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000035:    {kind: Converted, arg0: inst5000002E, arg1: inst50000034, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000036:    {kind: TupleInit, arg0: inst_block50000013, arg1: inst50000028, type: type(inst5000001A)}
-// CHECK:STDOUT:     inst50000037:    {kind: Converted, arg0: inst5000002F, arg1: inst50000036, type: type(inst5000001A)}
-// CHECK:STDOUT:     inst50000038:    {kind: ReturnExpr, arg0: inst50000037, arg1: inst50000028}
+// CHECK:STDOUT:     inst50000033:    {kind: InPlaceInit, arg0: inst50000032, arg1: inst50000030, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000034:    {kind: TupleAccess, arg0: inst50000028, arg1: element1, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000035:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst50000034, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000036:    {kind: Converted, arg0: inst5000002E, arg1: inst50000035, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000037:    {kind: InPlaceInit, arg0: inst50000036, arg1: inst50000034, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000038:    {kind: TupleInit, arg0: inst_block50000013, arg1: inst50000028, type: type(inst5000001A)}
+// CHECK:STDOUT:     inst50000039:    {kind: Converted, arg0: inst5000002F, arg1: inst50000038, type: type(inst5000001A)}
+// CHECK:STDOUT:     inst5000003A:    {kind: ReturnExpr, arg0: inst50000039, arg1: inst50000028}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -136,10 +138,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       inst5000002E:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000031:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000032:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000034:    concrete_constant(inst50000012)
+// CHECK:STDOUT:       inst50000033:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000035:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000036:    concrete_constant(inst5000001C)
-// CHECK:STDOUT:       inst50000037:    concrete_constant(inst5000001C)
+// CHECK:STDOUT:       inst50000036:    concrete_constant(inst50000012)
+// CHECK:STDOUT:       inst50000037:    concrete_constant(inst50000012)
+// CHECK:STDOUT:       inst50000038:    concrete_constant(inst5000001C)
+// CHECK:STDOUT:       inst50000039:    concrete_constant(inst5000001C)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -204,13 +208,15 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       9:               inst50000036
 // CHECK:STDOUT:       10:              inst50000037
 // CHECK:STDOUT:       11:              inst50000038
+// CHECK:STDOUT:       12:              inst50000039
+// CHECK:STDOUT:       13:              inst5000003A
 // CHECK:STDOUT:     inst_block50000011:
 // CHECK:STDOUT:       0:               inst5000002D
 // CHECK:STDOUT:       1:               inst5000002E
 // CHECK:STDOUT:     inst_block50000012: {}
 // CHECK:STDOUT:     inst_block50000013:
-// CHECK:STDOUT:       0:               inst50000032
-// CHECK:STDOUT:       1:               inst50000035
+// CHECK:STDOUT:       0:               inst50000033
+// CHECK:STDOUT:       1:               inst50000037
 // CHECK:STDOUT:     inst_block50000014:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst5000002A
@@ -272,13 +278,15 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc17_15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.1: %tuple.type = tuple_literal (%n.ref, %.loc17_15.1)
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %return.param, element0
-// CHECK:STDOUT:   %.loc17_11: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_11: init %empty_tuple.type to %tuple.elem0 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = converted %n.ref, %.loc17_11 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_16.3: init %empty_tuple.type to %tuple.elem0 = in_place_init %.loc17_16.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %return.param, element1
-// CHECK:STDOUT:   %.loc17_15.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_16.3: init %empty_tuple.type = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_16.4: init %tuple.type to %return.param = tuple_init (%.loc17_16.2, %.loc17_16.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc17_15.2: init %empty_tuple.type to %tuple.elem1 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_16.4: init %empty_tuple.type = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_16.5: init %empty_tuple.type to %tuple.elem1 = in_place_init %.loc17_16.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_16.6: init %tuple.type to %return.param = tuple_init (%.loc17_16.3, %.loc17_16.5) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   return %.loc17_17 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

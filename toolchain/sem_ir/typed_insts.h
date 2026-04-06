@@ -1049,6 +1049,16 @@ struct ImportCppDecl {
            .is_lowered = false});
 };
 
+// An `inline Cpp` declaration.
+struct InlineCppDecl {
+  static constexpr auto Kind =
+      InstKind::InlineCppDecl.Define<Parse::InlineCppDeclId>(
+          {.ir_name = "inline_cpp",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+  StringLiteralValueId text_id;
+};
+
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
@@ -1229,8 +1239,7 @@ struct LookupImplWitness {
 struct MarkInPlaceInit {
   static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
       {.ir_name = "mark_in_place_init",
-       .expr_category = ExprCategory::InPlaceInitializing,
-       .constant_kind = InstConstantKind::Never});
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   // Used only to track the source of the initialization; this has no semantic

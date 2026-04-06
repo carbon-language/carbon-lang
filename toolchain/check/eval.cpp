@@ -718,6 +718,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.extend_constraints.push_back(
         {.interface_id = extend.interface_id,
          .specific_id =
@@ -726,6 +727,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
   for (const auto& self_impls : orig.self_impls_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.self_impls_constraints.push_back(
         {.interface_id = self_impls.interface_id,
          .specific_id =
@@ -734,6 +736,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
   for (const auto& extend : orig.extend_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.extend_named_constraints.push_back(
         {.named_constraint_id = extend.named_constraint_id,
          .specific_id =
@@ -743,10 +746,39 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   info.self_impls_named_constraints.reserve(
       orig.self_impls_named_constraints.size());
   for (const auto& self_impls : orig.self_impls_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.self_impls_named_constraints.push_back(
         {.named_constraint_id = self_impls.named_constraint_id,
          .specific_id =
              GetConstantValue(eval_context, self_impls.specific_id, phase)});
+  }
+
+  info.type_impls_interfaces.reserve(orig.type_impls_interfaces.size());
+  for (const auto& type_impls : orig.type_impls_interfaces) {
+    info.type_impls_interfaces.push_back(
+        {.self_type =
+             GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificInterface.
+         .specific_interface = {
+             .interface_id = type_impls.specific_interface.interface_id,
+             .specific_id = GetConstantValue(
+                 eval_context, type_impls.specific_interface.specific_id,
+                 phase)}});
+  }
+
+  info.type_impls_named_constraints.reserve(
+      orig.type_impls_named_constraints.size());
+  for (const auto& type_impls : orig.type_impls_named_constraints) {
+    info.type_impls_named_constraints.push_back(
+        {.self_type =
+             GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificNamedConstraint.
+         .specific_named_constraint = {
+             .named_constraint_id =
+                 type_impls.specific_named_constraint.named_constraint_id,
+             .specific_id = GetConstantValue(
+                 eval_context, type_impls.specific_named_constraint.specific_id,
+                 phase)}});
   }
 
   // Rewrite constraints are resolved first before replacing them with their
@@ -971,6 +1003,14 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         for (const auto& constraint : info.self_impls_named_constraints) {
           ResolveSpecificDeclForSpecificId(eval_context,
                                            constraint.specific_id);
+        }
+        for (const auto& type_impls : info.type_impls_interfaces) {
+          ResolveSpecificDeclForSpecificId(
+              eval_context, type_impls.specific_interface.specific_id);
+        }
+        for (const auto& type_impls : info.type_impls_named_constraints) {
+          ResolveSpecificDeclForSpecificId(
+              eval_context, type_impls.specific_named_constraint.specific_id);
         }
         break;
       }
@@ -2149,6 +2189,10 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     return SemIR::ErrorInst::ConstantId;
   }
 
+  // If the callee is a C++ thunk, modify the `call` to directly call
+  // the thunk's callee.
+  MaybeModifyCppThunkCallForConstEval(eval_context.context(), &call);
+
   // Find the constant value of the callee.
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);
@@ -2507,16 +2551,22 @@ static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
 // providing a `GetConstantValue` overload for a requirement block.
 template <>
 auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
-                                        SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::ConstantId {
+                                        SemIR::InstId where_inst_id,
+                                        SemIR::Inst inst) -> SemIR::ConstantId {
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
+  if (typed_inst.period_self_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
   // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
     auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
+    // Note that these requirement instructions don't have a constant value, but
+    // they contain only canonical instructions.
     for (auto inst_id : insts) {
       if (auto base =
               eval_context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
@@ -2532,6 +2582,9 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
               eval_context.facet_types().Get(base_facet_type->facet_type_id);
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
+          info.type_impls_interfaces.append(base_info.type_impls_interfaces);
+          info.type_impls_named_constraints.append(
+              base_info.type_impls_named_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
           info.other_requirements |= base_info.other_requirements;
         }
@@ -2572,6 +2625,12 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                more_info.extend_named_constraints);
             llvm::append_range(info.self_impls_named_constraints,
                                more_info.self_impls_named_constraints);
+            // If `.Self impls Z` and Z implies `C impls Y`, then the facet type
+            // of `.Self` also knows `C impls Y`.
+            llvm::append_range(info.type_impls_interfaces,
+                               more_info.type_impls_interfaces);
+            llvm::append_range(info.type_impls_named_constraints,
+                               more_info.type_impls_named_constraints);
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
@@ -2589,7 +2648,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   }
 
   auto const_info = GetConstantFacetTypeInfo(
-      eval_context, SemIR::LocId(inst_id), info, &phase);
+      eval_context, SemIR::LocId(where_inst_id), info, &phase);
   return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 

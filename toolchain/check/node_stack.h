@@ -478,6 +478,8 @@ class NodeStack {
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
+      case Parse::NodeKind::InlineImportBody:
+      case Parse::NodeKind::InlineIntroducer:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -511,7 +513,6 @@ class NodeStack {
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::InlineImportSpecifier:
-      case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
       case Parse::NodeKind::MatchCaseGuard:
       case Parse::NodeKind::MatchCaseGuardIntroducer:

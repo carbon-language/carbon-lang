@@ -109,13 +109,14 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.3: %struct_type.discriminant = struct_literal (%.loc6_1.2) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_1.4: ref %Always = temporary_storage
 // CHECK:STDOUT:   %.loc6_1.5: ref %empty_tuple.type = class_element_access %.loc6_1.4, element0
-// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type to %.loc6_1.5 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1.7: init %empty_tuple.type = converted %.loc6_1.2, %.loc6_1.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_1.8: init %Always to %.loc6_1.4 = class_init (%.loc6_1.7) [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %.loc6_1.9: init %Always = converted %.loc6_1.3, %.loc6_1.8 [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %.loc6_1.10: ref %Always = temporary %.loc6_1.4, %.loc6_1.9 [concrete = constants.%.bc0]
-// CHECK:STDOUT:   %.loc6_1.11: %Always = acquire_value %.loc6_1.10 [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %Sunny: %Always = value_binding Sunny, %.loc6_1.11
+// CHECK:STDOUT:   %.loc6_1.8: init %empty_tuple.type to %.loc6_1.5 = in_place_init %.loc6_1.7 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_1.9: init %Always to %.loc6_1.4 = class_init (%.loc6_1.8) [concrete = constants.%Always.val]
+// CHECK:STDOUT:   %.loc6_1.10: init %Always = converted %.loc6_1.3, %.loc6_1.9 [concrete = constants.%Always.val]
+// CHECK:STDOUT:   %.loc6_1.11: ref %Always = temporary %.loc6_1.4, %.loc6_1.10 [concrete = constants.%.bc0]
+// CHECK:STDOUT:   %.loc6_1.12: %Always = acquire_value %.loc6_1.11 [concrete = constants.%Always.val]
+// CHECK:STDOUT:   %Sunny: %Always = value_binding Sunny, %.loc6_1.12
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

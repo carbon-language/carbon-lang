@@ -6,6 +6,26 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(default_visibility = ["//visibility:public"])
 
+constraint_setting(
+    name = "bootstrap_stage",
+    default_constraint_value = ":stage0",
+)
+
+constraint_value(
+    name = "stage0",
+    constraint_setting = ":bootstrap_stage",
+)
+
+constraint_value(
+    name = "stage1",
+    constraint_setting = ":bootstrap_stage",
+)
+
+constraint_value(
+    name = "stage2",
+    constraint_setting = ":bootstrap_stage",
+)
+
 # For use by defs.bzl.
 # Matches when asan is enabled on a macOS platform.
 selects.config_setting_group(
@@ -50,6 +70,7 @@ config_setting(
 filegroup(
     name = "installed_cc_toolchain_starlark",
     srcs = [
+        "carbon_cc_toolchain_config.bzl",
         "cc_toolchain_actions.bzl",
         "cc_toolchain_base_features.bzl",
         "cc_toolchain_config_features.bzl",
@@ -61,5 +82,9 @@ filegroup(
         "cc_toolchain_optimization.bzl",
         "cc_toolchain_sanitizer_features.bzl",
         "cc_toolchain_tools.bzl",
+
+        # TODO: Remove this once we can remove the use of it from Carbon
+        # toolchain rules.
+        "cc_toolchain_carbon_project_features.bzl",
     ],
 )

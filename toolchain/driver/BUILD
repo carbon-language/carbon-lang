@@ -2,12 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
-load(":prebuilt_runtimes.bzl", "prebuilt_runtimes")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -90,7 +88,7 @@ cc_test(
     size = "medium",
     srcs = ["clang_runtimes_test.cpp"],
     data = [
-        ":prebuilt_runtimes",
+        "//toolchain/install:built_runtimes",
         "//toolchain/install:install_data",
     ],
     deps = [
@@ -189,7 +187,7 @@ cc_library(
         "driver_subcommand.h",
     ],
     data = [
-        "//toolchain/install:install_data.no_driver",
+        "//toolchain/install:all_data_files",
     ],
     textual_hdrs = ["flags.def"],
     deps = [
@@ -395,7 +393,7 @@ cc_library(
     srcs = ["tool_runner_base.cpp"],
     hdrs = ["tool_runner_base.h"],
     data = [
-        "//toolchain/install:install_data.no_driver",
+        "//toolchain/install:all_data_files",
     ],
     deps = [
         "//common:ostream",
@@ -403,57 +401,4 @@ cc_library(
         "//toolchain/base:install_paths",
         "@llvm-project//llvm:Support",
     ],
-)
-
-cc_binary(
-    name = "bazel_build_clang_runtimes",
-    srcs = ["bazel_build_clang_runtimes.cpp"],
-    data = [
-        "//toolchain/install:install_data.no_driver",
-        "@llvm-project//clang:clang",
-    ],
-    deps = [
-        ":clang_runner",
-        ":codegen_options",
-        ":runtimes_cache",
-        "//common:all_llvm_targets",
-        "//common:bazel_working_dir",
-        "//common:check",
-        "//common:command_line",
-        "//common:error",
-        "//common:exe_path",
-        "//common:filesystem",
-        "//common:init_llvm",
-        "//common:raw_string_ostream",
-        "//common:version",
-        "//toolchain/base:install_paths",
-        "@bazel_tools//tools/cpp/runfiles",
-        "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:TargetParser",
-    ],
-)
-
-# Flag controlling whether the target config is used for the
-# tools used by the `prebuilt_runtimes` rules.
-#
-# Using the exec config is more correct and will also optimize the tools used to
-# build the runtimes, potentially making them run faster. However, it will
-# likely double the number of compiles needed to build everything necessary in
-# that configuration. As a consequence, it is useful in development and CI when
-# the target config is compatible with the exec config to set this flag.
-bool_flag(
-    name = "use_target_config_runtimes_builder",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "use_target_config_runtimes_builder_config",
-    flag_values = {":use_target_config_runtimes_builder": "True"},
-)
-
-# TODO: Correctly set the `target` argument here based on the Bazel target
-# platform. Without this, we will generate invalid prebuilt runtimes when cross
-# compiling.
-prebuilt_runtimes(
-    name = "prebuilt_runtimes",
 )

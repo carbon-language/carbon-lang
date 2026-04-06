@@ -282,7 +282,7 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
                   "Invalid runtimes component for an archive runtime builder.");
   }
 
-  archive_.emplace(this, archive_path_, installation().runtimes_root(),
+  archive_.emplace(this, archive_path_, installation().root(),
                    CollectSrcFiles(), CollectCflags());
   tasks_.async([this]() mutable { Setup(); });
 }
@@ -374,6 +374,22 @@ auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
 template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
 template class ClangArchiveRuntimesBuilder<Runtimes::Libcxx>;
 
+auto ClangResourceDirBuilder::GetDarwinOsSuffix(llvm::Triple target_triple)
+    -> llvm::StringRef {
+  switch (target_triple.getOS()) {
+    case llvm::Triple::IOS:
+      return target_triple.isSimulatorEnvironment() ? "iossim" : "ios";
+    case llvm::Triple::WatchOS:
+      return target_triple.isSimulatorEnvironment() ? "watchossim" : "watchos";
+    case llvm::Triple::TvOS:
+      return target_triple.isSimulatorEnvironment() ? "tvossim" : "tvos";
+    case llvm::Triple::XROS:
+      return target_triple.isSimulatorEnvironment() ? "xrossim" : "xros";
+    default:
+      return "osx";
+  }
+}
+
 ClangResourceDirBuilder::ClangResourceDirBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
     llvm::Triple target_triple, Runtimes* runtimes)
@@ -400,7 +416,25 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   }
 
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
-  lib_path_ = std::filesystem::path("lib") / target_triple_.str();
+  lib_path_ = std::filesystem::path("lib");
+  std::filesystem::path builtins_name = "libclang_rt.builtins.a";
+  if (target_triple.isOSDarwin()) {
+    // Darwin targets don't use the full triple, and don't include the
+    // architecture in the resource directory naming structure.
+    //
+    // TODO: We should add support for embedded Darwin as well which uses a
+    // different layout.
+    lib_path_ /= "darwin";
+
+    // Darwin targets also use a custom naming convention for the builtins
+    // archive.
+    builtins_name =
+        llvm::formatv("libclang_rt.{0}.a", GetDarwinOsSuffix(target_triple_))
+            .str();
+  } else {
+    lib_path_ /= target_triple_.str();
+  }
+
   // TODO: Currently, we only need a single include path to see headers inside
   // the `builtins` directory. However, we're anticipating needing more, for
   // example to support SipHash. If that need doesn't materialize, we should
@@ -415,9 +449,8 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   for (const auto& include_path : include_paths_) {
     copts.append({"-I", include_path.native()});
   }
-  archive_.emplace(this, lib_path_ / "libclang_rt.builtins.a",
-                   installation().runtimes_root(), CollectBuiltinsSrcFiles(),
-                   copts);
+  archive_.emplace(this, lib_path_ / builtins_name, installation().root(),
+                   CollectBuiltinsSrcFiles(), copts);
   tasks_.async([this]() { Setup(); });
 }
 
@@ -513,7 +546,7 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
       (src_file == RuntimesBuildInfo::CrtBegin ? "clang_rt.crtbegin.o"
                                                : "clang_rt.crtend.o");
   std::filesystem::path src_path =
-      installation().runtimes_root() / std::string_view(src_file);
+      installation().root() / std::string_view(src_file);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   llvm::SmallVector<llvm::StringRef> copts = {

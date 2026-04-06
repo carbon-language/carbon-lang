@@ -224,15 +224,15 @@ constraint Z {
 // --- fail_require_impls_incomplete_self_in_class_impls.carbon
 library "[[@TEST_NAME]]";
 
-class C;
+class C(T:! type);
 constraint Z {
   // TODO: This should be a RequireImplsReferenceCycle error since `Z` is being
   // used inside `Z`.
   // CHECK:STDERR: fail_require_impls_incomplete_self_in_class_impls.carbon:[[@LINE+4]]:17: error: semantics TODO: `facet type has constraints that we don't handle yet` [SemanticsTodo]
-  // CHECK:STDERR:   require impls type where C impls Z;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   require impls type where C(.Self) impls Z;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  require impls type where C impls Z;
+  require impls type where C(.Self) impls Z;
 }
 
 // --- fail_require_impls_incomplete_indirect.carbon

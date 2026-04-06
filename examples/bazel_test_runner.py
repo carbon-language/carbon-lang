@@ -21,7 +21,7 @@ class BazelExampleTest(test_base.TestBase):
         test_base.TestBase.setUp(self)
         self.runfiles = runfiles.Create()
         self.install_module = self.runfiles.Rlocation(
-            "carbon/toolchain/install/prefix/lib/carbon"
+            "carbon/toolchain/install"
         )
         self.startup_flags = [
             "--ignore_all_rc_files",
@@ -62,7 +62,9 @@ class BazelExampleTest(test_base.TestBase):
             # Retry transient errors with a brief delay.
             print(f"Attempt {attempt + 1} failed with exit code {exit_code}")
             time.sleep(attempt)
+
         self.AssertExitCode(exit_code, 0, stderr)
+        return stdout
 
     def test_compile_lib(self) -> None:
         # TODO: Can remove this in favor of always running `test_run` if we can

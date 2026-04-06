@@ -99,8 +99,9 @@ auto HandleParseNode(Context& /*context*/,
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/,
-                     Parse::InlineImportBodyId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::InlineImportBodyId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
   return true;
 }
 
