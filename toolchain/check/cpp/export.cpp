@@ -168,7 +168,7 @@ static auto BuildCppToCarbonThunk(
     param_types.push_back(cpp_type);
   }
 
-  auto thunk_function_decl =
+  auto* thunk_function_decl =
       BuildCppToCarbonThunkDecl(context, loc_id, &thunk_ident, param_types);
 
   // Build the thunk function body.
@@ -255,7 +255,7 @@ auto GetReverseInteropFunctionDecl(Context& context, SemIR::LocId loc_id,
       BuildCarbonToCarbonThunk(context, loc_id, callee, callee_param_type_ids);
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
-  auto carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
+  auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
       context, decl_context, loc_id, carbon_thunk_function_id);
   if (!carbon_function_decl) {
     return nullptr;
