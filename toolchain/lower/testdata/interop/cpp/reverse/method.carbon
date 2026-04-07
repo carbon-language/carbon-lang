@@ -35,25 +35,39 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z5CallFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.A.Main()
+// CHECK:STDOUT:   call void @_ZN6Carbon1A12F__cpp_thunkEv()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
+// CHECK:STDOUT: define internal void @_ZN6Carbon1A12F__cpp_thunkEv() #1 align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CF__carbon_thunk.A.Main()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.A.Main() #1 !dbg !11 {
+// CHECK:STDOUT: define void @_CF.A.Main() #2 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallCallF.Main() #2 !dbg !15 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main() #2 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z5CallFv(), !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   call void @_CF.A.Main(), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallCallF.Main() #2 !dbg !17 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Z5CallFv(), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
@@ -75,6 +89,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !6, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 18, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 15, column: 1, scope: !15)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.A.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 3, scope: !15)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !6, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !18 = !DILocation(line: 15, column: 18, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 15, column: 1, scope: !17)

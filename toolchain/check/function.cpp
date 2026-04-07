@@ -139,8 +139,8 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.full_pattern_stack().EndImplicitParamList();
   }
 
-  // Build and add any explicit parameters. We always use value parameters for
-  // now.
+  // Build and add any explicit parameters. Whether these are references
+  // or not is controlled by `args.params_are_refs`.
   context.full_pattern_stack().StartExplicitParamList();
   if (args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
@@ -154,7 +154,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, /*is_ref=*/false));
+          param_type_id, /*is_ref=*/args.params_are_refs));
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }

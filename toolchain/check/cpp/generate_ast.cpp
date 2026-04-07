@@ -28,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
@@ -37,7 +38,6 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
-#include "toolchain/sem_ir/mangler.h"
 
 namespace Carbon::Check {
 
@@ -464,77 +464,17 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
       if (!callee_function) {
         return nullptr;
       }
+
       const SemIR::Function& function =
           context_->functions().Get(callee_function->function_id);
       if (function.clang_decl_id.has_value()) {
         return cast<clang::NamedDecl>(
             context_->clang_decls().Get(function.clang_decl_id).key.decl);
       }
-      auto* identifier_info =
-          GetClangIdentifierInfo(*context_, function.name_id);
-      CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
-                   function.name_id);
-      clang::DeclarationNameInfo name_info(identifier_info,
-                                           clang::SourceLocation());
 
-      if (function.call_param_ranges.explicit_size() != 0) {
-        context_->TODO(SemIR::LocId(target_inst_id),
-                       "unsupported: C++ calling a Carbon function with "
-                       "parameters");
-        return nullptr;
-      }
-
-      if (function.return_type_inst_id != SemIR::TypeInstId::None) {
-        context_->TODO(SemIR::LocId(target_inst_id),
-                       "unsupported: C++ calling a Carbon function with "
-                       "return type other than `()`");
-        return nullptr;
-      }
-
-      // TODO: support non-empty parameter lists.
-      llvm::SmallVector<clang::QualType> cpp_param_types;
-
-      // TODO: support non-void return types.
-      auto cpp_return_type = ast_context_->VoidTy;
-
-      auto cpp_function_type = ast_context_->getFunctionType(
-          cpp_return_type, cpp_param_types,
-          clang::FunctionProtoType::ExtProtoInfo());
-
-      clang::FunctionDecl* function_decl = nullptr;
-      const bool uses_fp_intrin = false;
-      const bool inline_specified = false;
-      const auto constexpr_kind = clang::ConstexprSpecKind::Unspecified;
-      const auto trailing_requires_clause = clang::AssociatedConstraint();
-      if (auto* parent_class = dyn_cast<clang::CXXRecordDecl>(&decl_context)) {
-        // TODO: Support non-static methods.
-        function_decl = clang::CXXMethodDecl::Create(
-            *ast_context_, parent_class,
-            /*StartLoc=*/clang::SourceLocation(), name_info, cpp_function_type,
-            /*TInfo=*/nullptr, clang::SC_Static, uses_fp_intrin,
-            inline_specified, constexpr_kind,
-            /*EndLocation=*/clang::SourceLocation(), trailing_requires_clause);
-      } else {
-        function_decl = clang::FunctionDecl::Create(
-            *ast_context_, &decl_context,
-            /*StartLoc=*/clang::SourceLocation(), name_info, cpp_function_type,
-            /*TInfo=*/nullptr, clang::SC_Extern, uses_fp_intrin,
-            inline_specified, /*hasWrittenPrototype=*/false, constexpr_kind,
-            trailing_requires_clause);
-      }
-
-      // Mangle the function name and attach it to the `FunctionDecl`.
-      SemIR::Mangler m(context_->sem_ir(), context_->total_ir_count());
-      std::string mangled_name =
-          m.Mangle(callee_function->function_id, SemIR::SpecificId::None);
-      function_decl->addAttr(
-          clang::AsmLabelAttr::Create(*ast_context_, mangled_name));
-      if (isa<clang::CXXRecordDecl>(decl_context)) {
-        // TODO: Map Carbon access to C++ access.
-        function_decl->setAccess(clang::AS_public);
-      }
-
-      return function_decl;
+      return GetReverseInteropFunctionDecl(
+          *context_, SemIR::LocId(target_inst_id), decl_context,
+          callee_function->function_id);
     }
     default:
       return nullptr;
