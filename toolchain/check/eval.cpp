@@ -3113,6 +3113,11 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
     return SemIR::ConstantId::NotConstant;
   }
 
+  if (specific_id.has_value()) {
+    ResolveSpecificDefinition(outer_eval_context.context(), loc_id,
+                              specific_id);
+  }
+
   // TODO: Consider tracking the lowest and highest inst_id in the function and
   // using an array instead of a map. We would still need a map for instantiated
   // portions of a function template.
