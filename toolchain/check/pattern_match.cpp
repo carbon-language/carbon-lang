@@ -641,7 +641,7 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       auto storage_id = lookup_result.value();
       if (scrutinee_id.has_value()) {
         auto init_id =
-            ConvertInitializer(context_, SemIR::LocId(entry.pattern_id),
+            InitializeExisting(context_, SemIR::LocId(entry.pattern_id),
                                storage_id, scrutinee_id, /*for_return=*/false);
         // TODO: It's a bit weird to use an `Assign` instruction to model
         // initialization. Consider adding a different instruction for this

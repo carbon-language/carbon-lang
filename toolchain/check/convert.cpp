@@ -2052,7 +2052,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto ConvertInitializer(Context& context, SemIR::LocId loc_id,
+auto InitializeExisting(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId storage_id, SemIR::InstId value_id,
                         bool for_return) -> SemIR::InstId {
   auto type_id = context.insts().Get(storage_id).type_id();
@@ -2089,8 +2089,11 @@ auto Initialize(Context& context, SemIR::LocId loc_id,
             .init_id = SemIR::ErrorInst::InstId};
   }
 
-  // If the initializer doesn't have a storage argument, the storage access
-  // block will have been inserted above, and we can use `storage_id` unchanged.
+  // Find the storage argument. If the storage block was spliced or written over
+  // an existing storage argument by `Convert`, the resulting expression will
+  // have a storage argument that points to the possibly-rewritten storage
+  // instruction, and we can use that. Otherwise, the storage access block will
+  // have been inserted above, and we can use `storage_id` unchanged.
   auto storage_arg_id =
       SemIR::FindStorageArgForInitializer(context.sem_ir(), result_id);
   return {
