@@ -749,7 +749,7 @@ class Stringifier {
       if (some_where) {
         step_stack_->PushString(" and");
       }
-      step_stack_->Push(type_impls.self_type, " impls ",
+      step_stack_->Push(" ", type_impls.self_type, " impls ",
                         type_impls.specific_interface);
       some_where = true;
     }
@@ -758,7 +758,7 @@ class Stringifier {
       if (some_where) {
         step_stack_->PushString(" and");
       }
-      step_stack_->Push(type_impls.self_type, " impls ",
+      step_stack_->Push(" ", type_impls.self_type, " impls ",
                         type_impls.specific_named_constraint);
       some_where = true;
     }

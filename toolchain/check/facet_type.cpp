@@ -403,6 +403,8 @@ auto ResolveFacetTypeRewriteConstraints(
 
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
     -> SemIR::InstId {
+  CARBON_CHECK(self_type_id == SemIR::ErrorInst::TypeId ||
+               context.types().Is<SemIR::FacetType>(self_type_id));
   auto entity_name_id = context.entity_names().AddCanonical({
       .name_id = SemIR::NameId::PeriodSelf,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),

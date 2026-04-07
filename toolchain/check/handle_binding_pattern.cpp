@@ -404,14 +404,7 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-
-  // The `.Self` must have a type of `FacetType`, so that it gets wrapped in
-  // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-  // This allows substitution with other facet values without requiring an
-  // additional `FacetAccessType` to be inserted.
-  auto type_id = GetEmptyFacetType(context);
-
-  MakePeriodSelfFacetValue(context, type_id);
+  MakePeriodSelfFacetValue(context, GetEmptyFacetType(context));
   return true;
 }
 

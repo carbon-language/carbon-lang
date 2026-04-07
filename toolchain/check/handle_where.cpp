@@ -41,15 +41,22 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Any references to `.Self` in constraints for the current `WhereExpr` will
   // not see constraints in the `Self` facet type, but they will resolve to
   // values through the constraints explicitly when they are combined together.
-  auto self_without_constraints_type_id = self_with_constraints_type_id;
-  if (auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-          self_without_constraints_type_id)) {
+  auto period_self_type_id = self_with_constraints_type_id;
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(period_self_type_id)) {
     const auto& info = context.facet_types().Get(facet_type->facet_type_id);
     // TODO: Missing named constraints here.
     auto stripped_info =
         SemIR::FacetTypeInfo{.extend_constraints = info.extend_constraints};
     stripped_info.Canonicalize();
-    self_without_constraints_type_id = GetFacetType(context, stripped_info);
+    period_self_type_id = GetFacetType(context, stripped_info);
+  } else if (period_self_type_id == SemIR::TypeType::TypeId) {
+    // The self may be `TypeType` in `type where X impls Y`, so we use an empty
+    // facet type.
+    period_self_type_id = GetEmptyFacetType(context);
+  } else {
+    CARBON_CHECK(period_self_type_id == SemIR::ErrorInst::TypeId,
+                 "unexpected .Self type {0}", period_self_type_id);
   }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
@@ -58,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, self_without_constraints_type_id);
+      MakePeriodSelfFacetValue(context, period_self_type_id);
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.

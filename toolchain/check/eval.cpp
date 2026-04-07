@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -2633,36 +2634,56 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     return;
   }
 
+  auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
+  const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
+
   if (IsSameFacetValue(context, context.constant_values().Get(lhs_id),
                        period_self_id)) {
-    auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
-    const auto& more_info = context.facet_types().Get(facet_type.facet_type_id);
-    // The way to prevent lookup into the interface requirements of a
-    // facet type is to put it to the right of a `.Self impls`, which we
-    // accomplish by putting them into `self_impls_constraints`.
+    // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
+    // type constrains for `.Self` gets forwarded to the output facet type to
+    // also constraint `.Self`. Nothing on the RHS of `impls` can extend the
+    // resulting facet type.
+    llvm::append_range(info->self_impls_constraints, rhs.extend_constraints);
     llvm::append_range(info->self_impls_constraints,
-                       more_info.extend_constraints);
-    llvm::append_range(info->self_impls_constraints,
-                       more_info.self_impls_constraints);
+                       rhs.self_impls_constraints);
     llvm::append_range(info->self_impls_named_constraints,
-                       more_info.extend_named_constraints);
+                       rhs.extend_named_constraints);
     llvm::append_range(info->self_impls_named_constraints,
-                       more_info.self_impls_named_constraints);
-    // If `.Self impls Z` and Z implies `C impls Y`, then the facet type
-    // of `.Self` also knows `C impls Y`.
-    llvm::append_range(info->type_impls_interfaces,
-                       more_info.type_impls_interfaces);
-    llvm::append_range(info->type_impls_named_constraints,
-                       more_info.type_impls_named_constraints);
-    // Other requirements are copied in.
-    llvm::append_range(info->rewrite_constraints,
-                       more_info.rewrite_constraints);
-    info->other_requirements |= more_info.other_requirements;
-    return;
+                       rhs.self_impls_named_constraints);
+  } else {
+    auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
+
+    auto impls_interface = [&](SemIR::SpecificInterface si)
+        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      return {lhs_facet_or_type, si};
+    };
+    auto impls_constraint = [&](SemIR::SpecificNamedConstraint sc)
+        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      return {lhs_facet_or_type, sc};
+    };
+
+    // A facet type with `T impls <RHS facet type>`. Whatever the RHS facet type
+    // constrains for `.Self` gets applied to `T` instead.
+    llvm::append_range(
+        info->type_impls_interfaces,
+        llvm::map_range(rhs.extend_constraints, impls_interface));
+    llvm::append_range(
+        info->type_impls_interfaces,
+        llvm::map_range(rhs.self_impls_constraints, impls_interface));
+    llvm::append_range(
+        info->type_impls_named_constraints,
+        llvm::map_range(rhs.extend_named_constraints, impls_constraint));
+    llvm::append_range(
+        info->type_impls_named_constraints,
+        llvm::map_range(rhs.self_impls_named_constraints, impls_constraint));
   }
 
-  // TODO: Handle `impls` constraints beyond `.Self impls`.
-  info->other_requirements = true;
+  // Other requirements are copied in.
+  llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+  llvm::append_range(info->type_impls_named_constraints,
+                     rhs.type_impls_named_constraints);
+  llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
+  info->other_requirements |= rhs.other_requirements;
 }
 
 // Add the constraints from the WhereExpr instruction into a FacetTypeInfo in
