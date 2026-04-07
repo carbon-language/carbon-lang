@@ -180,7 +180,6 @@ static auto CanDestroyType(
         return DestroyFormat::Trivial;
       }
     }
-    // These are symbolic, so should never reach `MakeDestroyOpBody`.
     return DestroyFormat::NoDestroy;
   }
 
@@ -191,6 +190,13 @@ static auto CanDestroyType(
   }
 
   CARBON_KIND_SWITCH(inst) {
+    case SemIR::ImplWitnessAccess::Kind:
+    case SemIR::SymbolicBinding::Kind: {
+      // A symbolic facet of type `type`. Such symbolic values can't be
+      // destroyed.
+      return DestroyFormat::NoDestroy;
+    }
+
     case CARBON_KIND(SemIR::ArrayType array_type): {
       // A zero element array is always trivially destructible.
       if (auto int_bound =
