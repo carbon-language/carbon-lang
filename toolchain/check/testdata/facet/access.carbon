@@ -80,7 +80,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 //@dump-sem-ir-end
 }
 
-// --- fail_todo_convert_from_period_self_to_full_facet_value.carbon
+// --- convert_from_period_self_to_full_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -88,15 +88,7 @@ interface I {
 }
 
 fn F(U:! I where .I1 = .Self) {
-  // CHECK:STDERR: fail_todo_convert_from_period_self_to_full_facet_value.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I where .(I.I1) = .Self` into type implementing `I where .(I.I1) = U` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   U as (I where .I1 = U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   U as (I where .I1 = U);
-  // CHECK:STDERR: fail_todo_convert_from_period_self_to_full_facet_value.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I where .(I.I1) = .Self` into type implementing `I where .(I.I1) = U` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   (U as type) as (I where .I1 = U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (U as type) as (I where .I1 = U);
 }
 
@@ -134,7 +126,7 @@ fn F(U:! I where .X = .Self, unused V: U) {
   F2(U.G());
 }
 
-// --- fail_todo_access_through_call.carbon
+// --- access_through_call.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -147,55 +139,18 @@ fn F3[U:! I where .X = .Self](unused V: U*) {}
 
 fn F(U:! I where .X = .Self, unused V: U*) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
-  //
-  // TODO: These should work.
-  // - The first `.` is on a NameRef of type FacetType for `I where .X = .Self`.
-  //   - This finds `G` through the FacetType.
-  // - The second `.` is on a Call of type FacetAccessType into `SymbolicBinding` with type FacetType for `I`.
-  //   - This finds `G` through the FacetType (impl lookup strips off FacetAccessType).
-  // - The third `.` is on a Call of type FacetAccessType into `ImplWitnessAccess` of `I.X` into `LookupImplWitness`, which has type `type`
-  //   - Can't make calls on an `ImplWitnessAccess`.
-  //   - We could expect that the constant value of the `ImplWitnessAccess` would
-  //     be the same type that we got for the second lookup.
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   U.G()->G()->G();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   U.G()->G()->G();
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   (U as type).G()->G()->G();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (U as type).G()->G()->G();
 
   // The returned value of type `U` can be used as a value of type `U`.
-  //
-  // TODO: This should work.
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   F2(U.G()->G()->G());
-  // CHECK:STDERR:      ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   F2(U.G()->G()->G());
 
   // The constraints in the type `U` are preserved.
-  //
-  // TODO: These should work.
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+7]]:3: error: cannot convert type `.Self` that implements `I` into type implementing `I where .(I.X) = .Self` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F3(U.G());
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE-40]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F3[U:! I where .X = .Self](unused V: U*) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   F3(U.G());
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   F3(U.G()->G()->G());
-  // CHECK:STDERR:      ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   F3(U.G()->G()->G());
 }
 
-// --- fail_todo_compound_access_through_call.carbon
+// --- fail_compound_access_through_call.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -203,30 +158,21 @@ interface I {
   fn G() -> X;
 }
 
-fn F(U:! I where .X = .Self) {
+fn F(U:! Core.Destroy & I where .X = .Self) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter. But it's not possible for methods without
   // `self`. For those you need to go directly throug the type.
   // See: https://github.com/carbon-language/carbon-lang/issues/6025
 
-  // TODO: This step should work.
-  //
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let u: U = U.(I.G)();
-  // CHECK:STDERR:              ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let u: U = U.(I.G)();
-  // CHECK:STDERR:              ^~~~~~~~~
-  // CHECK:STDERR:
   let u: U = U.(I.G)();
   // `u` is a non-type value. Can call methods with `self` through compound
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call_with_self_param.carbon` test for the former.
   //
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   u.(I.G)();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   u.(I.G)();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -235,17 +181,17 @@ fn F(U:! I where .X = .Self) {
   // This is the same as the above, since G() returns a non-type value of type
   // `U`.
   //
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `.Self` into type implementing `I` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   U.(I.G)().(I.G)();
 }
 
-// --- fail_todo_compound_access_through_call_with_self_param.carbon
+// --- compound_access_through_call_with_self_param.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -257,15 +203,6 @@ fn F(U:! I where .X = .Self, v: U) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter.
 
-  // TODO: This should all work.
-
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+7]]:15: error: cannot implicitly convert expression of type `.Self*` to `U*` [ConversionFailure]
-  // CHECK:STDERR:   let u: U* = v.(I.G)();
-  // CHECK:STDERR:               ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:15: note: type `.Self*` does not implement interface `Core.ImplicitAs(U*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let u: U* = v.(I.G)();
-  // CHECK:STDERR:               ^~~~~~~~~
-  // CHECK:STDERR:
   let u: U* = v.(I.G)();
   // `u` is a non-type value. Can call methods with `self` through compound
   // member lookup, but can't call methods without `self`. See the
@@ -831,11 +768,11 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %AB: %facet_type.82c = symbolic_binding AB, 0 [symbolic]
 // CHECK:STDOUT:   %AB.binding.as_type: type = symbolic_binding_type AB, 0, %AB [symbolic]
 // CHECK:STDOUT:   %A.lookup_impl_witness.1b9: <witness> = lookup_impl_witness %AB, @A [symbolic]
+// CHECK:STDOUT:   %B.lookup_impl_witness.97b: <witness> = lookup_impl_witness %AB, @B [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %B.lookup_impl_witness.97b: <witness> = lookup_impl_witness %AB, @B [symbolic]
 // CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]

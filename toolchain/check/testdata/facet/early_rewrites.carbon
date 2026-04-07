@@ -293,7 +293,7 @@ fn G(T:! J where .J1 = D) {
   F(T);
 }
 
-// --- fail_todo_early_rewrite_applied_extra_indirection.carbon
+// --- early_rewrite_applied_extra_indirection.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -310,20 +310,15 @@ impl () as Tuple {}
 class C(T:! Tuple) {}
 
 interface J {
-  // Implied: .Z1 == (), but this is also explicitly required for J1.
+  // .Z2 depends on an two nested accesses of rewrite constraints.
   let J1:! Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
 }
 
 fn F(unused T:! J) {}
 
 class D;
-// Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
 impl D as Y where .Y1 = D {}
-// CHECK:STDERR: fail_todo_early_rewrite_applied_extra_indirection.carbon:[[@LINE+4]]:24: error: cannot convert type `D` into type implementing `Z & Y where .(Y.Y1) = .Self as Z and .(Z.Z1) = () and .(Z.Z2) = C(() as Tuple)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(T:! J where .J1 = D) {
-// CHECK:STDERR:                        ^
-// CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
 }

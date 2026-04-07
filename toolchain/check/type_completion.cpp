@@ -962,7 +962,7 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 }
 
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
-                              SemIR::ConstantId self_const_id,
+                              SemIR::ConstantId initial_self_const_id,
                               const SemIR::FacetType& facet_type,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
@@ -975,7 +975,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // constant values into specifics).
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
-                                    .self_const_id = self_const_id};
+                                    .self_const_id = initial_self_const_id};
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;
@@ -989,12 +989,15 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
   // Work queue.
   llvm::SmallVector<SelfImplsFacetType> work = {
-      {true, self_const_id, facet_type.facet_type_id}};
+      {true, initial_self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
   bool partially_identified = false;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
+
+  // `.Self` is always replaced with the top-level self type.
+  SubstPeriodSelfCallbacks callbacks(&context, loc_id, initial_self_const_id);
 
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
@@ -1005,13 +1008,19 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
     auto self_and_interface = [&](SemIR::SpecificInterface interface)
         -> SemIR::IdentifiedFacetType::RequiredImpl {
-      return {self_const_id, interface};
+      // Note that we subst `.Self` in the interface, but we do not in the
+      // self type here, as that would be cyclical, replacing part of the self
+      // type with itself.
+      return {self_const_id, SubstPeriodSelf(context, callbacks, interface)};
     };
     auto type_and_interface =
-        [&](const SemIR::FacetTypeInfo::TypeImplsInterface& impls)
+        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
         -> SemIR::IdentifiedFacetType::RequiredImpl {
-      return {context.constant_values().Get(impls.self_type),
-              impls.specific_interface};
+      auto self = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(impls.self_type));
+      auto interface =
+          SubstPeriodSelf(context, callbacks, impls.specific_interface);
+      return {self, interface};
     };
 
     if (facet_type_extends) {

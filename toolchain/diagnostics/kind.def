@@ -189,6 +189,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
+CARBON_DIAGNOSTIC_KIND(AmbiguousPeriodSelf)
 
 // ============================================================================
 // Semantics diagnostics
