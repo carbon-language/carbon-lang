@@ -991,10 +991,6 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                              req_impl.specific_interface)) {
       // At least one queried interface in the facet type has no witness for the
       // given type, we can stop looking for more.
-      //
-      // TODO: The LookupImplWitness won't be used. We should find a way to
-      // discard it, which would remove it from the generic eval block if the
-      // lookup is within a generic context.
       break;
     }
 
