@@ -321,6 +321,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::RefReturn /*inst*/) -> void {
+  // A `RefReturn` is a placeholder that represents the absence of a storage
+  // location, so it should never actually be used, but in some cases it will
+  // be propagated, so we poison it.
+  context.SetLocal(inst_id,
+                   llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+}
+
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::SpecificFunction /*inst*/) -> void {
   // Nothing to do. This value should never be consumed.
@@ -363,6 +372,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.InitializeStorage(inst.update_init_id);
 
   // TODO: Add a helper to poison a value slot.
+  context.SetLocal(inst_id,
+                   llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ValueReturn /*inst*/) -> void {
+  // A `ValueReturn` is a placeholder that represents the absence of a storage
+  // location, so it should never actually be used, but in some cases it will
+  // be propagated, so we poison it.
   context.SetLocal(inst_id,
                    llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
 }

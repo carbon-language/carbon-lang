@@ -29,7 +29,7 @@ struct CalleePatternMatchResults {
 
 // Emits the pattern-match IR for the declaration of a parameterized entity with
 // the given implicit and explicit parameter patterns, and the given return
-// patterns (any of which may be `None` if not applicable). This IR performs the
+// pattern (any of which may be `None` if not applicable). This IR performs the
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
 // matching them against the corresponding `Call` parameters (see
 // entity_with_params_base.h for the definition of that term).
@@ -39,7 +39,7 @@ struct CalleePatternMatchResults {
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstBlockId return_patterns_id)
+                        SemIR::InstId return_pattern_id)
     -> CalleePatternMatchResults;
 
 // Return type for ThunkPatternMatch.
@@ -70,11 +70,11 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstBlockId return_patterns_id,
+                        SemIR::InstId return_pattern_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        llvm::ArrayRef<SemIR::InstId> return_arg_ids,
-                        bool is_operator_syntax) -> SemIR::InstBlockId;
+                        SemIR::InstId return_arg_id, bool is_operator_syntax)
+    -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the
 // given pattern and scrutinee.
