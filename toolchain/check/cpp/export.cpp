@@ -53,6 +53,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
       clang::FunctionProtoType::ExtProtoInfo());
 
   auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
+  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
+               function.name_id);
 
   auto* function_decl = clang::FunctionDecl::Create(
       context.ast_context(), &decl_context,
