@@ -117,8 +117,8 @@ static auto TypeStructureReferencesSelf(
           // Don't generate more diagnostics.
           return true;
         }
-        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
-          if (context.entity_names().Get(bind.entity_name_id).name_id ==
+        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicType symbolic): {
+          if (context.entity_names().Get(symbolic.entity_name_id).name_id ==
               SemIR::NameId::SelfType) {
             return true;
           }
