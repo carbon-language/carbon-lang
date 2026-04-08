@@ -214,18 +214,11 @@ fn F() ->? i32;
 // CHECK:STDERR:
 fn F() ->? ref i32;
 
-// -- fail_todo_form_generic_return.carbon
+// --- fail_todo_form_generic_return.carbon
 
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_form_generic_return.carbon:[[@LINE+4]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
 // CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDERR:                          ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE-23]]:1: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
-// CHECK:STDERR: fn F() ->? i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(Form:! Core.Form()) ->? Form;
 
