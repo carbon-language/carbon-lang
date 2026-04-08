@@ -116,8 +116,7 @@ static auto BuildCppToCarbonThunkDecl(
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, decl_context, clang_loc, name_info, thunk_function_type,
         tinfo, clang::SC_None, uses_fp_intrin, inline_specified,
-        /*hasWrittenPrototype=*/false, constexpr_kind,
-        trailing_requires_clause);
+        /*hasWrittenPrototype=*/true, constexpr_kind, trailing_requires_clause);
   }
   decl_context->addDecl(thunk_function_decl);
 

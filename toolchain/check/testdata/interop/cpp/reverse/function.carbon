@@ -47,13 +47,9 @@ library "[[@TEST_NAME]]";
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_non_void.carbon:[[@LINE+8]]:18: error: no member named 'F2' in namespace 'Carbon::Other' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::Other::F2();
+  // CHECK:STDERR: fail_todo_non_void.carbon:[[@LINE+4]]:18: error: no member named 'F2' in namespace 'Carbon::Other' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Carbon::Other::F2();
   // CHECK:STDERR:       |                  ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: other.carbon:5:15: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C23 [CppInteropParseWarning]
-  // CHECK:STDERR:     5 | fn F3(_: i32) {}
-  // CHECK:STDERR:       |               ^
   // CHECK:STDERR:
   Carbon::Other::F2();
 }

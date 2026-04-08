@@ -13,24 +13,12 @@
 // --- other.carbon
 package Other;
 fn NoArgs() {}
-// CHECK:STDERR: other.carbon:[[@LINE+4]]:21: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C23 [CppInteropParseWarning]
-// CHECK:STDERR:     7 | fn BoolArg(a: bool) {
-// CHECK:STDERR:       |                     ^
-// CHECK:STDERR:
 fn BoolArg(a: bool) {
   a;
 }
-// CHECK:STDERR: other.carbon:[[@LINE+4]]:19: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C23 [CppInteropParseWarning]
-// CHECK:STDERR:    14 | fn IntArg(a: i32) {
-// CHECK:STDERR:       |                   ^
-// CHECK:STDERR:
 fn IntArg(a: i32) {
   a;
 }
-// CHECK:STDERR: other.carbon:[[@LINE+4]]:21: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C23 [CppInteropParseWarning]
-// CHECK:STDERR:    21 | fn FloatArg(a: f32) {
-// CHECK:STDERR:       |                     ^
-// CHECK:STDERR:
 fn FloatArg(a: f32) {
   a;
 }
@@ -110,24 +98,24 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 2, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "BoolArg", linkageName: "_CBoolArg.Other", scope: null, file: !3, line: 7, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "BoolArg", linkageName: "_CBoolArg.Other", scope: null, file: !3, line: 3, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
 // CHECK:STDOUT: !10 = !{null, !11}
 // CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !12 = !{!13}
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !8, type: !11)
-// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 1, scope: !8)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "IntArg", linkageName: "_CIntArg.Other", scope: null, file: !3, line: 14, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !14 = !DILocation(line: 3, column: 1, scope: !8)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "IntArg", linkageName: "_CIntArg.Other", scope: null, file: !3, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{null, !18}
 // CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 14, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "FloatArg", linkageName: "_CFloatArg.Other", scope: null, file: !3, line: 21, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !15)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "FloatArg", linkageName: "_CFloatArg.Other", scope: null, file: !3, line: 9, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !11)
-// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 1, scope: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 9, column: 1, scope: !22)
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -246,24 +234,24 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{null}
 // CHECK:STDOUT: !19 = !DILocation(line: 2, column: 1, scope: !15)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "BoolArg__carbon_thunk", linkageName: "_CBoolArg__carbon_thunk.Other", scope: null, file: !16, line: 7, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "BoolArg__carbon_thunk", linkageName: "_CBoolArg__carbon_thunk.Other", scope: null, file: !16, line: 3, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{null, !23}
 // CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
-// CHECK:STDOUT: !26 = !DILocation(line: 7, column: 1, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 14, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !26 = !DILocation(line: 3, column: 1, scope: !20)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 6, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{null, !30}
 // CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
-// CHECK:STDOUT: !33 = !DILocation(line: 14, column: 1, scope: !27)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 21, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !33 = !DILocation(line: 6, column: 1, scope: !27)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !23)
-// CHECK:STDOUT: !37 = !DILocation(line: 21, column: 1, scope: !34)
+// CHECK:STDOUT: !37 = !DILocation(line: 9, column: 1, scope: !34)
 // CHECK:STDOUT: ; ModuleID = 'single_file.carbon'
 // CHECK:STDOUT: source_filename = "single_file.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
