@@ -284,12 +284,12 @@ static auto CanDestroyType(
     }
 
     case SemIR::BoolType::Kind:
+    case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
     case SemIR::TypeType::Kind:
-    case SemIR::FacetType::Kind:
       // Trivially destructible.
       return DestroyFormat::Trivial;
 

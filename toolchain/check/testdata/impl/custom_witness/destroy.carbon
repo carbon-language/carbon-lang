@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // This looks for a Destoy witness for a TypeType.
+  // This looks for a Destroy witness for a TypeType.
   type as Core.Destroy;
 }
 
@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 fn F() {
-  // This looks for a Destoy witness for a FacetType.
+  // This looks for a Destroy witness for a FacetType.
   (Z & Core.Destroy) as Core.Destroy;
 }
 
@@ -32,7 +32,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // This looks for a Destoy witness for an IntLiteralType.
+  // This looks for a Destroy witness for an IntLiteralType.
   Core.IntLiteral() as Core.Destroy;
 }
 
@@ -40,9 +40,18 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // This looks for a Destoy witness for a class type that adapts IntType, and
+  // This looks for a Destroy witness for a class type that adapts IntType, and
   // has a symbolic CompleteTypeWitness.
   Core.Int(32) as Core.Destroy;
+}
+
+// --- destroy_symbolic_int_type.carbon
+library "[[@TEST_NAME]]";
+
+fn F(N:! Core.IntLiteral()) {
+  // This looks for a Destroy witness for a class type that adapts IntType with a
+  // symbolic type.
+  Core.Int(N) as Core.Destroy;
 }
 
 // --- destroy_class_type.carbon
@@ -51,7 +60,7 @@ library "[[@TEST_NAME]]";
 class C(T:! type) {}
 
 fn F() {
-  // This looks for a Destoy witness for a class type.
+  // This looks for a Destroy witness for a class type.
   C({}) as Core.Destroy;
 }
 
@@ -61,7 +70,7 @@ library "[[@TEST_NAME]]";
 class C(T:! type);
 
 fn F() {
-  // This looks for a Destoy witness for an incomplete class type.
+  // This looks for a Destroy witness for an incomplete class type.
   // CHECK:STDERR: fail_destroy_incomplete_class.carbon:[[@LINE+4]]:3: error: cannot convert type `C({})` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C({}) as Core.Destroy;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
