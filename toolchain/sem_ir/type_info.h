@@ -84,8 +84,13 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // If this type is abstract, this is id of an abstract class it uses.
   ClassId abstract_class_id = ClassId::None;
 
-  // Returns whether the type is concrete. If false, the type is abstract.
-  auto IsConcrete() const -> bool { return !abstract_class_id.has_value(); }
+  // Returns whether the type is abtract.
+  //
+  // The type must be completed before we can determine if it's abstract.
+  auto IsAbstract() const -> bool {
+    CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
+    return abstract_class_id.has_value();
+  }
 };
 
 // The representation to use for an initializing expression of some type.

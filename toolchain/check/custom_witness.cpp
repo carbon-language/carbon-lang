@@ -138,7 +138,7 @@ static auto CanDestroyClass(
     SemIR::SpecificInterfaceId query_specific_interface_id, bool is_partial)
     -> DestroyFormat {
   // Abstract classes can't be destroyed.
-  if (!is_partial && !complete_info.IsConcrete()) {
+  if (!is_partial && complete_info.IsAbstract()) {
     return DestroyFormat::NoDestroy;
   }
 

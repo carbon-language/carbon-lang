@@ -824,7 +824,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   CARBON_CHECK(complete_info.value_repr.type_id.has_value(),
                "RequireConcreteType called for an incomplete type. Call "
                "RequireCompleteType first.");
-  if (complete_info.IsConcrete()) {
+  if (!complete_info.IsAbstract()) {
     return true;
   }
 
