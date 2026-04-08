@@ -632,7 +632,7 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::InstId scrutinee_id,
       break;
     }
     case CARBON_KIND(CallerState* caller): {
-      auto specific_type_id = SemIR::GetTypeOfInstInSpecific(
+      auto specific_pattern_type_id = SemIR::GetTypeOfInstInSpecific(
           context_.sem_ir(), caller->callee_specific_id, entry.pattern_id);
       storage_id = AddInst<SemIR::TemporaryStorage>(
           context_, SemIR::LocId(entry.pattern_id),
