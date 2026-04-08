@@ -566,9 +566,35 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
+  const auto& class_info = context_->classes().Get(class_type->class_id);
   class_decl->startDefinition();
-  // TODO: Import base class and fields, plus any special member functions that
-  // affect class properties.
+  CARBON_CHECK(class_decl->hasDefinition());
+
+  // If the Carbon class has a base class that we can map into C++, add that as
+  // a C++ base class.
+  auto base_type_id =
+      class_info.GetBaseType(context_->sem_ir(), class_type->specific_id);
+  if (base_type_id.has_value()) {
+    auto base_loc = GetCppLocation(*context_, SemIR::LocId(class_info.base_id));
+    if (auto base_type = MapToCppType(*context_, base_type_id);
+        !base_type.isNull() && base_type->isStructureOrClassType() &&
+        !context_->clang_sema().RequireCompleteType(
+            base_loc, base_type, clang::diag::err_incomplete_base_class)) {
+      const bool is_virtual = false;
+      const bool is_base_of_class = true;
+      clang::CXXBaseSpecifier base(
+          clang::SourceRange(base_loc, base_loc), is_virtual, is_base_of_class,
+          clang::AS_public,
+          context_->ast_context().getTrivialTypeSourceInfo(base_type, base_loc),
+          /*EllipsisLoc=*/clang::SourceLocation());
+      clang::CXXBaseSpecifier* bases[1] = {&base};
+      CARBON_CHECK(class_decl->hasDefinition());
+      class_decl->setBases(bases, 1);
+    }
+  }
+
+  // TODO: Import fields, plus any special member functions that affect class
+  // properties.
   class_decl->completeDefinition();
 }
 
