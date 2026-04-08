@@ -1,7 +1,7 @@
 {
   "name": "carbon-vscode",
   "displayName": "Carbon Language",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "carbon-lang",
   "description": "Carbon language support for the 'Code - OSS' family of editors.",
   "repository": {
