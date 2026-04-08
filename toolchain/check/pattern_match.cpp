@@ -181,13 +181,12 @@ class MatchContext {
   }
 
   // Performs the core logic of matching a variable pattern whose type is
-  // `pattern_type_id`, but returns the scrutinee that its subpattern should be
+  // `entry.pattern_id`, but returns the scrutinee that its subpattern should be
   // matched with, rather than pushing it onto the worklist. This is factored
   // out so it can be reused when handling a `FormBindingPattern` or
   // `FormParamPattern` with an initializing form.
-  auto DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
-                        SemIR::InstId scrutinee_id, WorkItem entry) const
-      -> SemIR::InstId;
+  auto DoVarPreWorkImpl(State state, SemIR::InstId scrutinee_id,
+                        WorkItem entry) const -> SemIR::InstId;
 
   // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
@@ -462,8 +461,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       [[fallthrough]];
     }
     case SemIR::VarParamPattern::Kind: {
-      scrutinee_id =
-          DoVarPreWorkImpl(state, param_pattern.type_id, scrutinee_id, entry);
+      scrutinee_id = DoVarPreWorkImpl(state, scrutinee_id, entry);
       entry.allow_unmarked_ref = true;
       break;
     }
@@ -603,8 +601,7 @@ auto MatchContext::DoPostWork(State state,
 auto MatchContext::DoPreWork(State state, SemIR::VarPattern var_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
-  auto new_scrutinee_id =
-      DoVarPreWorkImpl(state, var_pattern.type_id, scrutinee_id, entry);
+  auto new_scrutinee_id = DoVarPreWorkImpl(state, scrutinee_id, entry);
   if (need_subpattern_results()) {
     AddAsPostWork(entry);
   }
@@ -613,8 +610,7 @@ auto MatchContext::DoPreWork(State state, SemIR::VarPattern var_pattern,
            .allow_unmarked_ref = true});
 }
 
-auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
-                                    SemIR::InstId scrutinee_id,
+auto MatchContext::DoVarPreWorkImpl(State state, SemIR::InstId scrutinee_id,
                                     WorkItem entry) const -> SemIR::InstId {
   auto storage_id = SemIR::InstId::None;
   CARBON_KIND_SWITCH(state) {
@@ -635,11 +631,13 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       storage_id = lookup_result.value();
       break;
     }
-    case CARBON_KIND(CallerState* _): {
+    case CARBON_KIND(CallerState* caller): {
+      auto specific_type_id = SemIR::GetTypeOfInstInSpecific(
+          context_.sem_ir(), caller->callee_specific_id, entry.pattern_id);
       storage_id = AddInst<SemIR::TemporaryStorage>(
           context_, SemIR::LocId(entry.pattern_id),
           {.type_id =
-               ExtractScrutineeType(context_.sem_ir(), pattern_type_id)});
+               ExtractScrutineeType(context_.sem_ir(), specific_type_id)});
       CARBON_CHECK(scrutinee_id.has_value());
       break;
     }
