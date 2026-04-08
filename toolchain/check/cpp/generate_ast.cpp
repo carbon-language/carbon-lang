@@ -601,7 +601,6 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
-  // const auto& class_info = context_->classes().Get(class_type->class_id);
   class_decl->startDefinition();
   // TODO: Import base class and fields, plus any special member functions that
   // affect class properties.
