@@ -410,7 +410,8 @@ static auto BuildCppToCarbonThunk(
 // Create a Carbon thunk that calls `callee`. The thunk's parameters are
 // all references to the callee parameter type.
 static auto BuildCarbonToCarbonThunk(
-    Context& context, SemIR::LocId loc_id, const SemIR::Function& callee,
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionId callee_function_id,
+    const SemIR::Function& callee,
     llvm::ArrayRef<SemIR::TypeId> callee_param_type_ids) -> SemIR::FunctionId {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name =
@@ -420,16 +421,27 @@ static auto BuildCarbonToCarbonThunk(
   auto thunk_name_id =
       SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
 
+  // Get the thunk's parameters. These match the callee parameters, with
+  // the addition of an output parameter for the callee's return value
+  // (if it has one).
+  llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids(callee_param_type_ids);
+  auto callee_return_type_id = callee.GetDeclaredReturnType(context.sem_ir());
+  if (callee_return_type_id != SemIR::TypeId::None) {
+    thunk_param_type_ids.push_back(callee_return_type_id);
+  }
+
   auto carbon_thunk_function_id =
       MakeGeneratedFunctionDecl(context, loc_id,
                                 {.parent_scope_id = callee.parent_scope_id,
                                  .name_id = thunk_name_id,
-                                 .param_type_ids = callee_param_type_ids,
+                                 .param_type_ids = thunk_param_type_ids,
                                  .params_are_refs = true})
           .second;
-  BuildThunkDefinition(context, carbon_thunk_function_id,
-                       carbon_thunk_function_id, callee.first_decl_id(),
-                       callee.first_decl_id());
+
+  BuildThunkDefinitionForExport(
+      context, carbon_thunk_function_id, callee_function_id,
+      context.functions().Get(carbon_thunk_function_id).first_decl_id(),
+      callee.first_decl_id());
 
   return carbon_thunk_function_id;
 }
@@ -467,9 +479,13 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  // Get the parameter types of the Carbon function being called.
+  // Get the parameter types of the Carbon function being
+  // called. Exclude return params, if present.
   auto callee_function_params =
       context.inst_blocks().Get(callee.call_param_patterns_id);
+  callee_function_params =
+      callee_function_params.drop_back(callee.call_param_ranges.return_size());
+
   llvm::SmallVector<SemIR::TypeId> callee_param_type_ids;
   for (auto callee_param_inst_id : callee_function_params) {
     auto scrutinee_type_id = ExtractScrutineeType(
@@ -479,8 +495,8 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   // Create a Carbon thunk that calls the callee. The thunk's parameters
   // are all references so that the ABI is compatible with C++ callers.
-  auto carbon_thunk_function_id =
-      BuildCarbonToCarbonThunk(context, loc_id, callee, callee_param_type_ids);
+  auto carbon_thunk_function_id = BuildCarbonToCarbonThunk(
+      context, loc_id, callee_function_id, callee, callee_param_type_ids);
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
   auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
