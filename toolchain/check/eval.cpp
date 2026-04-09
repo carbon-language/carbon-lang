@@ -2641,7 +2641,7 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
                        period_self_id)) {
     // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
     // type constrains for `.Self` gets forwarded to the output facet type to
-    // also constraint `.Self`. Nothing on the RHS of `impls` can extend the
+    // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
     // resulting facet type.
     llvm::append_range(info->self_impls_constraints, rhs.extend_constraints);
     llvm::append_range(info->self_impls_constraints,
