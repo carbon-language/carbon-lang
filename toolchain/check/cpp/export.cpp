@@ -131,12 +131,8 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   }
 
   auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
-  if (!identifier_info) {
-    // TODO: Handle keyword package names like `Cpp` and `Core`. These can
-    // be named from C++ via an alias.
-    context.TODO(loc_id, "interop with non-identifier package name");
-    return nullptr;
-  }
+  CARBON_CHECK(identifier_info, "non-identifier class name {0}",
+               class_info.name_id);
 
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);

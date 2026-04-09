@@ -28,8 +28,11 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
@@ -38,6 +41,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -340,7 +344,8 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
 
   // Map a Carbon entity to a Clang NamedDecl. Returns null if the entity cannot
   // currently be represented in C++.
-  auto MapInstIdToClangDecl(LookupResult lookup) -> clang::NamedDecl*;
+  auto MapInstIdToClangDeclOrType(LookupResult lookup)
+      -> std::variant<clang::NamedDecl*, clang::QualType>;
 
   // Get a current best-effort location for the current position within C++
   // processing.
@@ -374,12 +379,23 @@ void CarbonExternalASTSource::StartTranslationUnit(
   BuildCarbonNamespace();
 }
 
-auto CarbonExternalASTSource::MapInstIdToClangDecl(LookupResult lookup)
-    -> clang::NamedDecl* {
+auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
+    -> std::variant<clang::NamedDecl*, clang::QualType> {
   auto target_inst_id = lookup.scope_result.target_inst_id();
-  auto target_constant =
-      context_->constant_values().GetConstantInstId(target_inst_id);
-  auto target_inst = context_->insts().Get(target_constant);
+  auto target_const_id = context_->constant_values().Get(target_inst_id);
+  auto target_inst = context_->constant_values().GetInst(target_const_id);
+
+  if (target_inst.type_id() == SemIR::TypeType::TypeId) {
+    auto type_id =
+        context_->types().GetTypeIdForTypeConstantId(target_const_id);
+    auto type = MapToCppType(*context_, type_id);
+    if (type.isNull()) {
+      context_->TODO(GetCurrentCppLocId(), "interop with unsupported type");
+      return nullptr;
+    }
+    return type;
+  }
+
   CARBON_KIND_SWITCH(target_inst) {
     case CARBON_KIND(SemIR::Namespace namespace_info): {
       auto* decl_context =
@@ -395,12 +411,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(LookupResult lookup)
       }
       return cast<clang::NamedDecl>(decl_context);
     }
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      return ExportClassToCpp(*context_, SemIR::LocId(target_inst_id),
-                              target_inst_id, class_type);
-    }
     case SemIR::StructValue::Kind: {
-      auto callee = GetCallee(context_->sem_ir(), target_constant);
+      auto callee = GetCallee(context_->sem_ir(), target_inst_id);
       auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
       if (!callee_function) {
         return nullptr;
@@ -490,13 +502,35 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
-  auto* clang_decl = MapInstIdToClangDecl(result);
-  if (!clang_decl) {
-    return false;
-  }
+  CARBON_KIND_SWITCH(MapInstIdToClangDeclOrType(result)) {
+    case CARBON_KIND(clang::NamedDecl* clang_decl): {
+      if (clang_decl) {
+        SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
+        return true;
+      } else {
+        SetNoExternalVisibleDeclsForName(decl_context, decl_name);
+        return false;
+      }
+    }
 
-  SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
-  return true;
+    case CARBON_KIND(clang::QualType type): {
+      // Create a typedef declaration to model the type result.
+      // TODO: If the type is a tag type that was declared with this name in
+      // this context, use the tag decl directly.
+      auto& ast_context = context_->ast_context();
+      auto loc = GetCppLocation(
+          *context_, SemIR::LocId(result.scope_result.target_inst_id()));
+      auto* typedef_decl = clang::TypedefDecl::Create(
+          ast_context, const_cast<clang::DeclContext*>(decl_context), loc, loc,
+          identifier, ast_context.getTrivialTypeSourceInfo(type, loc));
+      if (isa<clang::CXXRecordDecl>(decl_context)) {
+        typedef_decl->setAccess(
+            MapToCppAccess(result.scope_result.access_kind()));
+      }
+      SetExternalVisibleDeclsForName(decl_context, decl_name, {typedef_decl});
+      return true;
+    }
+  }
 }
 
 auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
