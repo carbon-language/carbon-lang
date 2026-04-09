@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
@@ -343,6 +344,26 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "import_recovery_test",
+    size = "small",
+    srcs = ["import_recovery_test.cpp"],
+    deps = [
+        ":check",
+        "//common:check",
+        "//common:raw_string_ostream",
+        "//testing/base:gtest_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/lex",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/source:source_buffer",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -100,7 +100,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& packaging = unit_info.parse_tree().packaging_decl();
   PackageNameId file_package_id =
       packaging ? packaging->names.package_id : PackageNameId::None;
-  const auto import_key = GetImportKey(unit_info, file_package_id, import);
+  auto import_key = GetImportKey(unit_info, file_package_id, import);
 
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
@@ -110,16 +110,20 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   // these in an order of imports that should be removed, followed by imports
   // that might be valid with syntax fixes.
   if (explicit_import_map) {
-    // Diagnose redundant imports.
-    if (auto insert_result =
-            explicit_import_map->Insert(import_key, import.node_id);
-        !insert_result.is_inserted()) {
+    auto diagnose_repeated_import = [&](Parse::NodeId first_import_id) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "library imported more than once");
       CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_result.value(), FirstImported)
+          .Note(first_import_id, FirstImported)
           .Emit();
+    };
+
+    // Diagnose redundant imports.
+    if (auto insert_result =
+            explicit_import_map->Insert(import_key, import.node_id);
+        !insert_result.is_inserted()) {
+      diagnose_repeated_import(insert_result.value());
       return;
     }
 
@@ -174,7 +178,15 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
             ImportCurrentPackageByName, Error,
             "imports from the current package must omit the package name");
         unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
-        return;
+
+        // Recover by treating this import as if it had used the implicit
+        // current-package syntax so that later name lookup still sees the
+        // imported library.
+        auto normalized_import = import;
+        normalized_import.package_id = PackageNameId::None;
+        import = normalized_import;
+        import_key =
+            GetImportKey(unit_info, file_package_id, normalized_import);
       }
 
       // Diagnose explicit imports from `Main`.
