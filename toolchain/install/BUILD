@@ -342,6 +342,7 @@ filegroup(
         ":libcxx_hdrs",
         ":libcxxabi_hdrs",
         ":libcxxabi_srcs",
+        ":libcxxabi_textual_srcs",
         ":libunwind_hdrs",
         ":libunwind_srcs",
     ],
@@ -728,11 +729,12 @@ filegroup(
 )
 
 py_test(
-    name = "llvm_symlinks_test",
-    size = "small",
-    srcs = ["llvm_symlinks_test.py"],
+    name = "install_test",
+    size = "large",
+    srcs = ["install_test.py"],
     data = [
         ":built_runtimes",
+        ":carbon-busybox",
         ":install_data",
     ],
     deps = ["@bazel_tools//tools/python/runfiles"],
