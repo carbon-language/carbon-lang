@@ -124,22 +124,22 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z1Gv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZL17NoArgs__cpp_thunkv()
-// CHECK:STDOUT:   call void @_ZL18BoolArg__cpp_thunkb(i1 noundef zeroext true)
-// CHECK:STDOUT:   call void @_ZL17IntArg__cpp_thunki(i32 noundef 123)
-// CHECK:STDOUT:   call void @_ZL19FloatArg__cpp_thunkf(float noundef 1.500000e+00)
+// CHECK:STDOUT:   call void @_ZN6Carbon5OtherL17NoArgs__cpp_thunkEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon5OtherL18BoolArg__cpp_thunkEb(i1 noundef zeroext true)
+// CHECK:STDOUT:   call void @_ZN6Carbon5OtherL17IntArg__cpp_thunkEi(i32 noundef 123)
+// CHECK:STDOUT:   call void @_ZN6Carbon5OtherL19FloatArg__cpp_thunkEf(float noundef 1.500000e+00)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZL17NoArgs__cpp_thunkv() #1 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL17NoArgs__cpp_thunkEv() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CNoArgs__carbon_thunk.Other()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZL18BoolArg__cpp_thunkb(i1 noundef zeroext %0) #1 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL18BoolArg__cpp_thunkEb(i1 noundef zeroext %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i8, align 1
 // CHECK:STDOUT:   %storedv = zext i1 %0 to i8
@@ -149,7 +149,7 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZL17IntArg__cpp_thunki(i32 noundef %0) #1 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL17IntArg__cpp_thunkEi(i32 noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !7
@@ -158,7 +158,7 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZL19FloatArg__cpp_thunkf(float noundef %0) #1 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL19FloatArg__cpp_thunkEf(float noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca float, align 4
 // CHECK:STDOUT:   store float %0, ptr %.addr, align 4, !tbaa !13
@@ -291,12 +291,12 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_Z2G1v() #1 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZL12F__cpp_thunkv()
+// CHECK:STDOUT:   call void @_ZN6CarbonL12F__cpp_thunkEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZL12F__cpp_thunkv() #2 {
+// CHECK:STDOUT: define internal void @_ZN6CarbonL12F__cpp_thunkEv() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.Main()
 // CHECK:STDOUT:   ret void

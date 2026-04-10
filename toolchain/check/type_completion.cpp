@@ -820,11 +820,11 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 
   // TODO: For symbolic types, should add an implicit constraint that they are
   // not abstract.
-  auto complete_info = context.types().GetCompleteTypeInfo(type_id);
+  const auto& complete_info = context.types().GetCompleteTypeInfo(type_id);
   CARBON_CHECK(complete_info.value_repr.type_id.has_value(),
                "RequireConcreteType called for an incomplete type. Call "
                "RequireCompleteType first.");
-  if (!complete_info.abstract_class_id.has_value()) {
+  if (!complete_info.IsAbstract()) {
     return true;
   }
 
