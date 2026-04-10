@@ -254,7 +254,7 @@ static auto BuildCppToCarbonThunkDecl(
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
-      ast_context.VoidTy, thunk_param_types, ext_proto_info);
+      cpp_return_type, thunk_param_types, ext_proto_info);
 
   auto* tinfo =
       ast_context.getTrivialTypeSourceInfo(thunk_function_type, clang_loc);
@@ -308,6 +308,31 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     -> clang::StmtResult {
   clang::SourceLocation clang_loc = function_decl->getLocation();
 
+  llvm::SmallVector<clang::Stmt*> stmts;
+
+  // Create return storage if the target function returns non-void.
+  const bool has_return_value = !function_decl->getReturnType()->isVoidType();
+  clang::ExprResult return_storage_expr;
+  if (has_return_value) {
+    auto& return_storage_ident =
+        sema.getASTContext().Idents.get("return_storage");
+    auto* return_storage_var_decl =
+        clang::VarDecl::Create(sema.getASTContext(), function_decl,
+                               /*StartLoc=*/clang_loc,
+                               /*IdLoc=*/clang_loc, &return_storage_ident,
+                               function_decl->getReturnType(),
+                               /*TInfo=*/nullptr, clang::SC_None);
+    return_storage_expr = sema.BuildDeclRefExpr(
+        return_storage_var_decl, return_storage_var_decl->getType(),
+        clang::VK_LValue, clang_loc);
+
+    auto decl_group_ref = clang::DeclGroupRef(return_storage_var_decl);
+    auto decl_stmt =
+        sema.ActOnDeclStmt(clang::Sema::DeclGroupPtrTy::make(decl_group_ref),
+                           clang_loc, clang_loc);
+    stmts.push_back(decl_stmt.get());
+  }
+
   clang::ExprResult callee = sema.BuildDeclRefExpr(
       callee_function_decl, callee_function_decl->getType(), clang::VK_PRValue,
       clang_loc);
@@ -319,11 +344,26 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
                               clang::VK_LValue, clang_loc);
     call_args.push_back(call_arg);
   }
+
+  // If the target function returns non-void, the Carbon thunk takes an
+  // extra output parameter referencing the return storage.
+  if (has_return_value) {
+    call_args.push_back(return_storage_expr.get());
+  }
+
   clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
                                               call_args, clang_loc);
   CARBON_CHECK(call.isUsable());
+  stmts.push_back(call.get());
 
-  return call.get();
+  if (has_return_value) {
+    stmts.push_back(
+        sema.BuildReturnStmt(clang_loc, return_storage_expr.get()).get());
+  }
+
+  return clang::CompoundStmt::Create(sema.getASTContext(), stmts,
+                                     clang::FPOptionsOverride(), clang_loc,
+                                     clang_loc);
 }
 
 // Create a C++ thunk that calls the Carbon thunk. The C++ thunk's
