@@ -636,8 +636,8 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::InstId scrutinee_id,
           context_.sem_ir(), caller->callee_specific_id, entry.pattern_id);
       storage_id = AddInst<SemIR::TemporaryStorage>(
           context_, SemIR::LocId(entry.pattern_id),
-          {.type_id =
-               ExtractScrutineeType(context_.sem_ir(), specific_type_id)});
+          {.type_id = ExtractScrutineeType(context_.sem_ir(),
+                                           specific_pattern_type_id)});
       CARBON_CHECK(scrutinee_id.has_value());
       break;
     }
