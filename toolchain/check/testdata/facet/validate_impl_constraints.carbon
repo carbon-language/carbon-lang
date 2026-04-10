@@ -143,13 +143,6 @@ constraint N {
 }
 
 // The RHS of `where` can see the extend constraints on the LHS of `where`.
-// CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE+7]]:34: error: cannot convert type `.Self` that implements `Z` into type implementing `Z & Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(_:! Z & N where .Self impls X(.Self)) {}
-// CHECK:STDERR:                                  ^~~~~~~~
-// CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: interface X(T:! Z & Y) {}
-// CHECK:STDERR:             ^~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z & N where .Self impls X(.Self)) {}
 
 fn G() {
@@ -157,6 +150,13 @@ fn G() {
   impl C as Z {}
   impl C as Y {}
   impl C as X(C) {}
+  // CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z where .Self impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(C);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(_:! Z & N where .Self impls X(.Self)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(C);
 }
 
@@ -174,20 +174,6 @@ constraint N {
 class R(T:! Z & Y);
 
 // The RHS of `where` can see the extend constraints on the LHS of `where`.
-// CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE+14]]:22: error: cannot convert type `.Self` that implements `Z` into type implementing `Z & Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(_:! Z & N where R(.Self) impls X(.Self)) {}
-// CHECK:STDERR:                      ^~~~~~~~
-// CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE-6]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: class R(T:! Z & Y);
-// CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE+7]]:37: error: cannot convert type `.Self` that implements `Z` into type implementing `Z & Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(_:! Z & N where R(.Self) impls X(.Self)) {}
-// CHECK:STDERR:                                     ^~~~~~~~
-// CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: interface X(T:! Z & Y) {}
-// CHECK:STDERR:             ^~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z & N where R(.Self) impls X(.Self)) {}
 
 fn G() {
@@ -195,5 +181,12 @@ fn G() {
   impl C as Z {}
   impl C as Y {}
   impl R(C) as X(C) {}
+  // CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z where R(.Self as Z & Y) impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(C);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(_:! Z & N where R(.Self) impls X(.Self)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(C);
 }

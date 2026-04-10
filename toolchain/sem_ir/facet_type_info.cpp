@@ -166,6 +166,11 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
   return info;
 }
 
+auto FacetTypeInfo::ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo {
+  return {.extend_constraints = info.extend_constraints,
+          .extend_named_constraints = info.extend_named_constraints};
+}
+
 auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(extend_constraints, InterfaceLess);
   SortAndDeduplicate(self_impls_constraints, InterfaceLess);

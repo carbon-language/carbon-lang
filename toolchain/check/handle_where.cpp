@@ -45,9 +45,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   if (auto facet_type =
           context.types().TryGetAs<SemIR::FacetType>(period_self_type_id)) {
     const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    // TODO: Missing named constraints here.
-    auto stripped_info =
-        SemIR::FacetTypeInfo{.extend_constraints = info.extend_constraints};
+    auto stripped_info = SemIR::FacetTypeInfo::ExtendedOnly(info);
     stripped_info.Canonicalize();
     period_self_type_id = GetFacetType(context, stripped_info);
   } else if (period_self_type_id == SemIR::TypeType::TypeId) {
