@@ -451,13 +451,6 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     -> clang::FunctionDecl* {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
 
-  if (callee.return_type_inst_id != SemIR::TypeInstId::None) {
-    context.TODO(loc_id,
-                 "unsupported: C++ calling a Carbon function with "
-                 "return type other than `()`");
-    return nullptr;
-  }
-
   if (callee.generic_id.has_value()) {
     context.TODO(loc_id,
                  "unsupported: C++ calling a Carbon function with "
