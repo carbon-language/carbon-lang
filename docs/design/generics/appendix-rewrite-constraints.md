@@ -338,7 +338,7 @@ Rewrites are applied in two different phases of program analysis.
 
 In each case, we always rewrite to a value that satisfies property 1 above, and
 these two steps are the only places where we might form a symbolic reference to
-an associated cosntant, so property 1 is recursively satisfied. Moreover, we
+an associated constant, so property 1 is recursively satisfied. Moreover, we
 apply only one rewrite in each of the above cases, satisfying property 2.
 
 ### Qualified name lookup

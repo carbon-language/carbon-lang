@@ -64,7 +64,7 @@ overloading in Carbon also simplifies what gets exported to C++ from Carbon.
 Interface implementations express intent by being explicit, in contrast to how
 adding a function to a cross-file overload set can be accidental.
 
-Interfaces provide an way to group functions together, and express the
+Interfaces provide a way to group functions together, and express the
 constraint that all of the functions in the group are implemented. Consider a
 random-access iterator, which has a number of methods. If a C++ template
 function only accesses some of those methods which happens to match the subset

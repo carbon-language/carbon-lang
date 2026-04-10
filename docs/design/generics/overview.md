@@ -97,7 +97,7 @@ Summary of how Carbon generics work:
 -   Interfaces may be used as the type of a generic parameter. Interfaces are
     _facet types_, whose values are the subset of all types that implement the
     interface. Facet types in general specify the capabilities and requirements
-    of the type. The value of a interface is called a _facet_. Facets are not
+    of the type. The value of an interface is called a _facet_. Facets are not
     types, but are usable as types.
 -   With a template generic, the concrete argument value used by the caller is
     used for name lookup and typechecking. With checked generics, that is all

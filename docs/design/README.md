@@ -1028,7 +1028,7 @@ patterns.
 The most common irrefutable pattern is a _binding pattern_, consisting of a new
 name, a colon (`:`), and a type. It binds the matched value of that type to that
 name. It can only match values that may be
-[implicitly converted](expressions/implicit_conversions.md) to that type. A
+[implicitly converted](expressions/implicit_conversions.md) to that type. An
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 

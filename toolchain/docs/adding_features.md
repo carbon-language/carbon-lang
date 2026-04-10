@@ -125,7 +125,7 @@ graph BT
 -   [parse/node_ids.h](/toolchain/parse/node_ids.h) defines a number of types
     that store a _node id_ that identifies a node in the `Tree`.
 
-    -   `NodeId` stores an node id with no restrictions.
+    -   `NodeId` stores a node id with no restrictions.
 
     -   `NodeIdForKind<Kind>` inherits from `NodeId` and stores the id of a node
         that must have the specified `NodeKind` "`Kind`". Note that this is not

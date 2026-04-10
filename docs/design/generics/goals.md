@@ -343,7 +343,7 @@ fix. What we want to avoid is the latter case, since it has bad properties:
 
 If we can't find acceptable restrictions to make problems efficiently decidable,
 the next best solution is to require the proof to be in the source instead of
-derived by the compiler. If authoring the proof is too painful for the user, the
+derived by the compiler. If authoring the proof is too painful for the user,
 we should invest in putting the proof search into IDEs or other tooling.
 
 ### Dispatch control
@@ -486,7 +486,7 @@ cases remain:
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
     orderings, such as by title or by artist. These would be represented by
-    having multiple implementations of a _Ordered_ interface.
+    having multiple implementations of an _Ordered_ interface.
 -   In order to allow libraries to be composed, there must be some way of saying
     a type implements an interface that is in another package that the authors
     of the type were unaware of. This is especially important since the library

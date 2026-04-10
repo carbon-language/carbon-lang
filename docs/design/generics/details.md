@@ -5190,7 +5190,7 @@ used.
 ### Declaring interfaces and named constraints
 
 > **TODO:** Update this section to reflect the additional things you can do with
-> a defined but incomplete type, as adoped in
+> a defined but incomplete type, as adopted in
 > [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
 
 The declaration for an interface or named constraint consists of:
@@ -5932,7 +5932,7 @@ to have a different assignment.
 
 An [`observe` declaration](#observe-declarations) can be used to show that two
 types are equal so code can pass type checking without explicitly writing casts,
-and without requiring the compiler to do a unbounded search that may not
+and without requiring the compiler to do an unbounded search that may not
 terminate. An `observe` declaration can also be used to show that a type
 implements an interface, in cases where the compiler will not work this out for
 itself.

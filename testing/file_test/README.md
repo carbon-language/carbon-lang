@@ -246,7 +246,7 @@ Supported comment markers are:
     // SET-CHECK-SUBSET
     ```
 
-    By default, all lines of output must have a `CHECK` match. Adding this as a
+    By default, all lines of output must have a `CHECK` match. Adding this as an
     option sets it so that non-matching lines are ignored. All provided
     `CHECK:STDOUT:` and `CHECK:STDERR:` lines must still have a match in output.
 

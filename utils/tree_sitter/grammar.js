@@ -511,7 +511,7 @@ module.exports = grammar({
         $.match_first_declaration
       ),
 
-    // Explorer only experimental featurues
+    // Explorer only experimental features
     mix_declaration: ($) => seq('__mix', $._expression, ';'),
 
     mixin_declaration: ($) =>

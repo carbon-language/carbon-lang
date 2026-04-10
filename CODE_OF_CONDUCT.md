@@ -285,14 +285,14 @@ involved:
     -   **Action:** A private, written message providing clarity around the
         nature of the violation and an explanation of why the behavior was
         inappropriate. A public apology may be requested.
-1.  **Warning**
+2.  **Warning**
     -   **Behavior:** A code of conduct violation through a single moderate
         incident, or a series of minor violations.
     -   **Action:** In addition to the correction action, a temporary
         restriction forbidding interaction with the people involved for a
         specified period of time, including unsolicited interaction with the
         conduct team. Violating these terms may lead to a ban.
-1.  **Temporary ban**
+3.  **Temporary ban**
     -   **Behavior:** A serious violation of the code of conduct, including
         sustained inappropriate behavior.
     -   **Action:** In addition to the warning action, a temporary ban from use
@@ -300,7 +300,7 @@ involved:
         channels, such as social media, should not be used to bypass these
         restrictions during the temporary ban. Violating these terms may lead to
         a permanent ban.
-1.  **Permanent ban**
+4.  **Permanent ban**
     -   **Behavior:** Demonstrating a pattern of violation of the code of
         conduct.
     -   **Action:** A permanent ban from use of Carbon's community spaces.

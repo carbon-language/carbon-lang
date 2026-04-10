@@ -196,7 +196,7 @@ _statements_ `}`
 The first form is a shorthand for the second: "`=>` _expression_" is equivalent
 to "`-> auto { return` _expression_ `; }`".
 
-_implicit-parameters_ consists of square brackets enclosing a optional default
+_implicit-parameters_ consists of square brackets enclosing an optional default
 capture mode and any number of explicit captures, function fields, and deduced
 parameters, all separated by commas. The default capture mode (if any) must come
 first; the other items can appear in any order. If _implicit-parameters_ is
