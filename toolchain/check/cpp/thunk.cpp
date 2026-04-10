@@ -419,19 +419,20 @@ static auto CreateThunkFunctionDecl(
       thunk_param_types, ext_proto_info);
 
   clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
-  // TODO: Thunks should not have external linkage, consider using `SC_Static`.
-  clang::FunctionDecl* thunk_function_decl =
-      clang::FunctionDecl::Create(ast_context, decl_context, clang_loc,
-                                  clang_loc, name, thunk_function_type,
-                                  /*TInfo=*/nullptr, clang::SC_Extern);
+  clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
+      ast_context, decl_context, clang_loc, clang_loc, name,
+      thunk_function_type, /*TInfo=*/nullptr, clang::SC_None,
+      /*UsesFPIntrin=*/false, /*isInlineSpecified=*/true);
   decl_context->addDecl(thunk_function_decl);
 
   thunk_function_decl->setParams(
       BuildThunkParameters(ast_context, callee_info, thunk_function_decl));
 
-  // Set always_inline.
+  // Force the thunk to be inlined and discarded.
   thunk_function_decl->addAttr(
       clang::AlwaysInlineAttr::CreateImplicit(ast_context));
+  thunk_function_decl->addAttr(
+      clang::InternalLinkageAttr::CreateImplicit(ast_context));
 
   // Set asm("<callee function mangled name>.carbon_thunk").
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(

@@ -22,13 +22,30 @@ concurrency:
 
 jobs:
   test:
+    name:
+      Testing ${{ matrix.config.name != 'Default' && format('({0})',
+      matrix.config.name) || '' }} (${{ matrix.runner }})
     strategy:
       matrix:
         # Test a recent version of each supported OS.
         runner: ['ubuntu-22.04', 'macos-14']
-        build_mode: [fastbuild, opt]
+        # Create a synthetic matrix dimension with the event name for filtering.
+        event: ['${{ github.event_name }}']
+        config:
+          - name: 'Default'
+            flags: ''
+          - name: 'Opt'
+            flags: '-c opt'
+          - name: 'ASan'
+            flags: '--config=asan'
+        exclude:
+          - runner: 'macos-14'
+            config: { name: 'ASan', flags: '--config=asan' }
+          - event: 'pull_request'
+            config: { name: 'ASan', flags: '--config=asan' }
+          - event: 'merge_group'
+            config: { name: 'ASan', flags: '--config=asan' }
     runs-on: ${{ matrix.runner }}
-
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
@@ -74,7 +91,7 @@ jobs:
           targets_file: ${{ runner.temp }}/targets
 
       # Build and run just the tests impacted by the PR or merge group.
-      - name: Test (${{ matrix.build_mode }})
+      - name: Test (${{ matrix.config.name }})
         if: steps.test-setup.outputs.has_code == 'true'
         shell: bash
         env:
@@ -89,7 +106,7 @@ jobs:
           # skip thim as-if we were using `//...` style wild card patterns.
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
-            test -c ${{ matrix.build_mode }} \
+            test ${{ matrix.config.flags }} \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build" in `test-setup`.

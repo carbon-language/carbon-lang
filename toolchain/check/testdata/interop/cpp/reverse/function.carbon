@@ -114,16 +114,17 @@ void G() {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_method.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:11:3: error: semantics TODO: `unsupported: C++ calling a Carbon function with an implicit parameter` [SemanticsTodo]
+// CHECK:STDERR:   fn Method[self: Self]() { self; }
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_method.carbon:[[@LINE+8]]:3: error: invalid use of incomplete type 'Carbon::Other::C' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Carbon::Other::C().Method();
-  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_method.carbon:[[@LINE+4]]:21: error: member access into incomplete type 'Carbon::Other::C' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Carbon::Other::C().Method();
-  // CHECK:STDERR:       |                     ^
+  // CHECK:STDERR: fail_todo_method.carbon:[[@LINE+4]]:22: error: no member named 'Method' in 'Carbon::Other::C' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Carbon::Other::C().Method();
+  // CHECK:STDERR:       |   ~~~~~~~~~~~~~~~~~~ ^
   // CHECK:STDERR:
   Carbon::Other::C().Method();
 }

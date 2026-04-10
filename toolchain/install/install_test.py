@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Checks various LLVM tool symlinks behave as expected."""
+"""Integration tests for the Carbon toolchain installation."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -13,11 +13,12 @@ import subprocess
 import os
 import platform
 import sys
+import textwrap
 import unittest
 from bazel_tools.tools.python.runfiles import runfiles
 
 
-class LLVMSymlinksTest(unittest.TestCase):
+class InstallTest(unittest.TestCase):
     def setUp(self) -> None:
         # The install root is adjacent to the test script
         self.install_root = Path(sys.argv[0]).parent
@@ -117,6 +118,95 @@ class LLVMSymlinksTest(unittest.TestCase):
             raise
         self.assertEqual(run.stderr, "")
         self.assertRegex(run.stdout, r"(^|\n)SUCCESS\n")
+
+    def run_carbon_test(
+        self, name: str, source: str, use_prebuilt: bool, expected_output: str
+    ) -> None:
+        src_file = self.tmpdir / f"{name}.carbon"
+        src_file.write_text(textwrap.dedent(source).lstrip())
+
+        output_bin = self.tmpdir / name
+
+        carbon = self.runfiles.Rlocation(
+            "carbon/toolchain/install/carbon-busybox"
+        )
+
+        try:
+            obj_file = self.tmpdir / f"{name}.o"
+            subprocess.run(
+                [carbon, "compile", f"--output={obj_file}", src_file],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            link_cmd = [carbon]
+            if use_prebuilt:
+                link_cmd.append(f"--prebuilt-runtimes={self.prebuilt_runtimes}")
+            link_cmd.extend(["link", f"--output={output_bin}", obj_file])
+            subprocess.run(link_cmd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as err:
+            self.fail(f"Subprocess failed: {err.stderr}")
+
+        run = subprocess.run(
+            [output_bin], check=True, capture_output=True, text=True
+        )
+        self.assertEqual(run.returncode, 0)
+        self.assertEqual(run.stdout.strip(), expected_output)
+
+    def run_cpp_test(
+        self, name: str, source: str, use_prebuilt: bool, expected_output: str
+    ) -> None:
+        src_file = self.tmpdir / f"{name}.cpp"
+        src_file.write_text(textwrap.dedent(source).lstrip())
+
+        output_bin = self.tmpdir / name
+
+        clang = self.install_root / "llvm/bin/clang++"
+
+        try:
+            cmd = [clang, f"-o{output_bin}", src_file]
+            if use_prebuilt:
+                cmd.append(
+                    f"-Xcarbon=--prebuilt-runtimes={self.prebuilt_runtimes}"
+                )
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as err:
+            self.fail(f"Subprocess failed: {err.stderr}")
+
+        run = subprocess.run(
+            [output_bin], check=True, capture_output=True, text=True
+        )
+        self.assertEqual(run.returncode, 0)
+        self.assertEqual(run.stdout.strip(), expected_output)
+
+    def test_carbon_end_to_end(self) -> None:
+        source = r"""
+        import Cpp library "<iostream>";
+        fn Run() -> i32 {
+          Cpp.std.cout << "Hello from Carbon\n";
+          return 0;
+        }
+        """
+        for use_prebuilt in [True, False]:
+            with self.subTest(use_prebuilt=use_prebuilt):
+                self.run_carbon_test(
+                    "simple_carbon", source, use_prebuilt, "Hello from Carbon"
+                )
+
+    def test_cpp_end_to_end(self) -> None:
+        source = r"""
+        #include <iostream>
+        int main() {
+          std::cout << "Hello from C++" << std::endl;
+          return 0;
+        }
+        """
+        for use_prebuilt in [True, False]:
+            with self.subTest(use_prebuilt=use_prebuilt):
+                self.run_cpp_test(
+                    "simple_cpp", source, use_prebuilt, "Hello from C++"
+                )
 
 
 if __name__ == "__main__":
