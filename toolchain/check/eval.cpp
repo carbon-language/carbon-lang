@@ -2650,7 +2650,36 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
                        rhs.extend_named_constraints);
     llvm::append_range(info->self_impls_named_constraints,
                        rhs.self_impls_named_constraints);
+    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+    llvm::append_range(info->type_impls_named_constraints,
+                       rhs.type_impls_named_constraints);
   } else {
+    // Consider `I where C(.Self) impls (J(.Self) where .Self impls K(.Self))`,
+    // when we are evaluating the `C(.Self) impls (<facet type>)` requirement.
+    // The <facet type> is our `rhs` here, and it will contain:
+    // * extend constraint: J(.Self)
+    // * self impls constraint: K(.Self)
+    //
+    // The value of `.Self` changes where we cross a `where` operator. This
+    // means extend constraints retain their original `.Self`, but self impls
+    // constraints should have their `.Self` replaced by the LHS of the impls
+    // requirement.
+    //
+    // However that is not quite enough. The view of the LHS of the impls
+    // requirement should be a facet with a facet type of the RHS extend
+    // constraints. In this case the LHS is C(.Self) and the RHS facet type is
+    // `J(.Self) where .Self impls K(.Self)`. The RHS facet type has impls
+    // constraints (which are on the RHS of a `where` operator), in which their
+    // `.Self` should be replaced by `C(.Self)` converted to the RHS facet
+    // type's extend constraints (which are on the LHS of a `where` operator),
+    // which is `C(.Self) as J(.Self)`. It should be enough to convert the LHS
+    // type to the type of the `.Self` that it is replacing, as that contains
+    // the extend constraints.
+    //
+    // So the final RHS facet type to be merged into `info` is:
+    //
+    // `J(.Self) where (C(.Self) as J(.Self)) impls K(C(.Self) as J(.Self))`.
+
     auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
 
     auto impls_interface = [&](SemIR::SpecificInterface si)
@@ -2662,26 +2691,50 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
       return {lhs_facet_or_type, sc};
     };
 
-    // A facet type with `T impls <RHS facet type>`. Whatever the RHS facet type
-    // constrains for `.Self` gets applied to `T` instead.
+    // Extend constraints are copied over without replacing anything, but are
+    // converted to type impls constraints so they apply to the LHS type.
     llvm::append_range(
         info->type_impls_interfaces,
         llvm::map_range(rhs.extend_constraints, impls_interface));
+    llvm::append_range(
+        info->type_impls_named_constraints,
+        llvm::map_range(rhs.extend_named_constraints, impls_constraint));
+
+    // To replace the `.Self` in `.Self impls X` we convert from a self impls
+    // constraint to a type impls constraint where the type is the impls LHS
+    // type. We must also replace any `.Self` references in the constraint in
+    // the same way. The LHS type needs to be converted to a facet with its type
+    // containing the RHS facet type's extend constraints so that the extend
+    // constraints can be referenced in impls constraints.
+    //
+    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
+    // with the RHS extend constraints (interfaces and named constraints).
+    //
+    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
+    // constraints.
     llvm::append_range(
         info->type_impls_interfaces,
         llvm::map_range(rhs.self_impls_constraints, impls_interface));
     llvm::append_range(
         info->type_impls_named_constraints,
-        llvm::map_range(rhs.extend_named_constraints, impls_constraint));
-    llvm::append_range(
-        info->type_impls_named_constraints,
         llvm::map_range(rhs.self_impls_named_constraints, impls_constraint));
+
+    // Type impls constraints are copied in, but need to have their `.Self`
+    // references replaced by the impls LHS type. Like above, the LHS type
+    // should be converted to a facet type containing the RHS facet type's
+    // extend constraints.
+    //
+    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
+    // with the RHS extend constraints (interfaces and named constraints).
+    //
+    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
+    // constraints.
+    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+    llvm::append_range(info->type_impls_named_constraints,
+                       rhs.type_impls_named_constraints);
   }
 
   // Other requirements are copied in.
-  llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
-  llvm::append_range(info->type_impls_named_constraints,
-                     rhs.type_impls_named_constraints);
   llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   info->other_requirements |= rhs.other_requirements;
 }
