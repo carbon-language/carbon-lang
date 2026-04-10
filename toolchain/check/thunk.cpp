@@ -301,6 +301,22 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
   return PerformThunkCall(context, loc_id, function_id, call_params, callee_id);
 }
 
+static auto StartThunkFunctionDefinition(Context& context,
+                                         SemIR::FunctionId function_id,
+                                         SemIR::InstId thunk_id,
+                                         SemIR::InstId callee_id) {
+  // The check below produces diagnostics referring to the signature, so also
+  // note the callee.
+  Diagnostics::AnnotationScope annot_scope(
+      &context.emitter(), [&](DiagnosticBuilder& builder) {
+        CARBON_DIAGNOSTIC(ThunkCallee, Note,
+                          "while building thunk calling this function");
+        builder.Note(callee_id, ThunkCallee);
+      });
+
+  StartFunctionDefinition(context, thunk_id, function_id);
+}
+
 auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
                           SemIR::FunctionId function_id, SemIR::InstId thunk_id,
                           SemIR::InstId callee_id) -> void {
@@ -310,18 +326,7 @@ auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
   // why, rather than the primary error message being whatever went wrong
   // building the thunk.
 
-  {
-    // The check below produces diagnostics referring to the signature, so also
-    // note the callee.
-    Diagnostics::AnnotationScope annot_scope(
-        &context.emitter(), [&](DiagnosticBuilder& builder) {
-          CARBON_DIAGNOSTIC(ThunkCallee, Note,
-                            "while building thunk calling this function");
-          builder.Note(callee_id, ThunkCallee);
-        });
-
-    StartFunctionDefinition(context, thunk_id, function_id);
-  }
+  StartThunkFunctionDefinition(context, function_id, thunk_id, callee_id);
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
