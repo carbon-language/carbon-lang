@@ -186,7 +186,7 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
         context.sem_ir(), context.insts().Get(param_inst_id).type_id());
     auto cpp_type = MapToCppType(context, scrutinee_type_id);
     if (cpp_type.isNull()) {
-      context.TODO(loc_id, "failed to map C++ type to Carbon");
+      context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
     }
     auto ref_type = context.ast_context().getLValueReferenceType(cpp_type);
