@@ -110,10 +110,10 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   // these in an order of imports that should be removed, followed by imports
   // that might be valid with syntax fixes.
   if (explicit_import_map) {
-    CARBON_DIAGNOSTIC(
-        ImportCurrentPackageByName, Error,
-        "imports from the current package must omit the package name");
     auto emit_import_current_package_by_name = [&] {
+      CARBON_DIAGNOSTIC(
+          ImportCurrentPackageByName, Error,
+          "imports from the current package must omit the package name");
       unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
     };
 
