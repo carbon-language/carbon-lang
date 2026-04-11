@@ -92,7 +92,7 @@ def cc_local_toolchain_suite(name, configs):
             target_cpu = cpu,
         )
         cc_toolchain(
-            name = config_name + "_tools",
+            name = config_name + "_toolchain",
             all_files = ":" + name + "_empty",
             ar_files = ":" + name + "_empty",
             as_files = ":" + name + "_empty",
@@ -109,7 +109,11 @@ def cc_local_toolchain_suite(name, configs):
         native.toolchain(
             name = config_name,
             exec_compatible_with = compatible_with,
-            target_compatible_with = compatible_with + ["@carbon//bazel/cc_toolchains:stage0"],
-            toolchain = config_name + "_tools",
+            target_settings = [
+                "@carbon//toolchain/install:is_bootstrap_stage_0",
+                "@carbon//toolchain/install:not_runtimes_build",
+            ],
+            target_compatible_with = compatible_with,
+            toolchain = config_name + "_toolchain",
             toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         )

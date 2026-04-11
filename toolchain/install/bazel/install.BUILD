@@ -2,10 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@bazel_skylib//rules:common_settings.bzl", "string_list_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "int_setting")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain_suite")
-load("//bazel:carbon_runtimes.bzl", "carbon_runtimes")
+load("//bazel:carbon_runtimes.bzl", "carbon_runtimes_build", "carbon_runtimes_config")
 load("//bazel:make_include_copts.bzl", "make_include_copts")
 load(
     "//bazel:runtimes_build_vars.bzl",
@@ -41,11 +41,29 @@ _libcxx_hdrs = libcxx_hdrs + [
 
 package(default_visibility = ["//visibility:public"])
 
-constraint_setting(name = "runtimes_build")
+bool_setting(
+    name = "runtimes_build",
+    build_setting_default = False,
+)
 
-constraint_value(
+config_setting(
     name = "is_runtimes_build",
-    constraint_setting = ":runtimes_build",
+    flag_values = {":runtimes_build": "True"},
+)
+
+config_setting(
+    name = "not_runtimes_build",
+    flag_values = {":runtimes_build": "False"},
+)
+
+int_setting(
+    name = "bootstrap_stage",
+    build_setting_default = 1,
+)
+
+config_setting(
+    name = "is_bootstrap_stage_1",
+    flag_values = {":bootstrap_stage": "1"},
 )
 
 filegroup(
@@ -185,10 +203,9 @@ filegroup(
     output_group = "archive",
 )
 
-carbon_runtimes(
-    name = "runtimes",
+carbon_runtimes_config(
+    name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
-    clang_hdrs = [":clang_hdrs"],
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(llvm_version_major),
     crt_copts = crt_copts,
     crtbegin_src = select({
@@ -224,6 +241,12 @@ carbon_runtimes(
     }),
 )
 
+carbon_runtimes_build(
+    name = "runtimes",
+    clang_hdrs = [":clang_hdrs"],
+    config = ":runtimes_cfg",
+)
+
 filegroup(
     name = "carbon_install_digest_file",
     srcs = ["install_digest.txt"],
@@ -237,11 +260,6 @@ filegroup(
 filegroup(
     name = "carbon_busybox_file",
     srcs = ["carbon-busybox"],
-)
-
-string_list_setting(
-    name = "original_platforms",
-    build_setting_default = [],
 )
 
 platforms = {
@@ -260,8 +278,8 @@ platforms = {
     config_setting(
         name = "is_{0}_{1}".format(os, cpu),
         constraint_values = [
-            "@platforms//os:" + os,
-            "@platforms//cpu:" + cpu,
+            "@platforms//os:{}".format(os),
+            "@platforms//cpu:{}".format(cpu),
         ],
     )
     for os, cpus in platforms.items()
@@ -283,5 +301,5 @@ carbon_cc_toolchain_suite(
     ],
     clang_hdrs = [":clang_hdrs"],
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_cfg = ":runtimes_cfg",
 )

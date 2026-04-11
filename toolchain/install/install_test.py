@@ -27,7 +27,7 @@ class InstallTest(unittest.TestCase):
         self.test_o_file.touch()
         self.runfiles = runfiles.Create()
         self.prebuilt_runtimes = self.runfiles.Rlocation(
-            "carbon/toolchain/install/runtimes"
+            "carbon/toolchain/install/carbon_stage1_runtimes_build"
         )
 
     def get_link_cmd(self, clang: Path) -> list[str | Path]:

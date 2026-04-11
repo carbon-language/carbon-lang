@@ -18,6 +18,7 @@ load(
     "cc_toolchain",
 )
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_build")
 load(
     "carbon_clang_variables.bzl",
     "clang_include_dirs",
@@ -174,7 +175,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
             "runtimes/libunwind/include",
             "runtimes/libcxx/include",
             "runtimes/libcxxabi/include",
-            clang_resource_dir + "/include",
+            "{}/include".format(clang_resource_dir),
             "runtimes/clang_resource_dir/include",
         ] + _compute_clang_system_include_dirs() + sysroot_include_search,
         builtin_sysroot = builtin_sysroot,
@@ -200,55 +201,66 @@ carbon_cc_toolchain_config = rule(
     provides = [CcToolchainConfigInfo],
 )
 
-def _set_platform_transition_impl(settings, attr):
-    original_platforms = settings["//:original_platforms"]
-
-    # If the requested platform is the special value of the setting where we
-    # store the original platforms on an initial transition, set the platform to
-    # the saved list and clear it. Otherwise, we will set the platform to the
-    # requested one.
-    if not attr.platform:
-        return {
-            "//:original_platforms": [],
-            "//command_line_option:platforms": original_platforms,
-        }
-
-    if original_platforms:
-        # If there is already a saved original platforms list, preserve it.
-        original_platforms = [str(label) for label in original_platforms]
-    else:
-        # If there is no saved original platforms list, save the current one.
-        current_platforms = settings["//command_line_option:platforms"]
-        original_platforms = [str(label) for label in current_platforms]
-
+def _set_runtimes_build_transition_impl(_, attr):
     return {
-        "//:original_platforms": original_platforms,
-        "//command_line_option:platforms": [str(attr.platform)],
+        "//:bootstrap_stage": attr.stage,
+        "//:runtimes_build": True,
     }
 
-set_platform_transition = transition(
-    inputs = [
-        "//command_line_option:platforms",
-        "//:original_platforms",
-    ],
+set_runtimes_build_transition = transition(
+    inputs = [],
     outputs = [
-        "//command_line_option:platforms",
-        "//:original_platforms",
+        "//:runtimes_build",
+        "//:bootstrap_stage",
     ],
-    implementation = _set_platform_transition_impl,
+    implementation = _set_runtimes_build_transition_impl,
 )
 
-def _set_platform_filegroup_impl(ctx):
+def _set_runtimes_build_filegroup_impl(ctx):
     return [DefaultInfo(files = depset(ctx.files.srcs))]
 
-set_platform_filegroup = rule(
-    implementation = _set_platform_filegroup_impl,
+set_runtimes_build_filegroup = rule(
+    implementation = _set_runtimes_build_filegroup_impl,
     attrs = {
-        # The platform to use when building the runtimes.
-        "platform": attr.label(mandatory = False),
-
         # Mark that our dependencies are built through a transition.
-        "srcs": attr.label_list(mandatory = True, cfg = set_platform_transition),
+        "srcs": attr.label_list(mandatory = True, cfg = set_runtimes_build_transition),
+
+        # The platform to use when building the runtimes.
+        "stage": attr.int(mandatory = True),
+
+        # Enable transitions in this rule.
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+)
+
+def _set_stage_transition_impl(_, attr):
+    return {
+        "//:bootstrap_stage": attr.stage,
+        "//:runtimes_build": False,
+    }
+
+set_stage_transition = transition(
+    inputs = [],
+    outputs = [
+        "//:bootstrap_stage",
+        "//:runtimes_build",
+    ],
+    implementation = _set_stage_transition_impl,
+)
+
+def _set_stage_filegroup_impl(ctx):
+    return [DefaultInfo(files = depset(ctx.files.srcs))]
+
+set_stage_filegroup = rule(
+    implementation = _set_stage_filegroup_impl,
+    attrs = {
+        # Mark that our dependencies are built through a transition.
+        "srcs": attr.label_list(mandatory = True, cfg = set_stage_transition),
+
+        # The stage to use when building the toolchain.
+        "stage": attr.int(mandatory = True),
 
         # Enable transitions in this rule.
         "_allowlist_function_transition": attr.label(
@@ -263,11 +275,17 @@ def carbon_cc_toolchain_suite(
         base_files,
         clang_hdrs,
         platforms,
-        runtimes,
-        build_stage = None,
-        base_stage = None,
+        runtimes_cfg,
+        build_stage = 1,
+        base_stage = 0,
         tags = []):
-    """Create a toolchain suite that uses the local Clang/LLVM install.
+    """Create a Carbon `cc_toolchain` for the current target platform.
+
+    This provides the final toolchain for Carbon, but also all of the
+    infrastructure for supporting on-demand built runtimes in this toolchain.
+
+    There is also support for bootstrapping, where one `build_stage` toolchain
+    builds on top of another `base_stage`.
 
     Args:
         name:
@@ -279,74 +297,50 @@ def carbon_cc_toolchain_suite(
         base_stage: The stage to use for the base files.
         clang_hdrs: A list of header files to include in the toolchain.
         platforms: An array of (os, cpu) pairs to support in the toolchain.
-        runtimes: A list of runtimes to include in the toolchain.
+        runtimes_cfg: The runtimes configuration to use in the toolchain.
         tags: Tags to apply to the toolchain.
     """
 
-    def _platform_name(os, cpu, name_suffix = ""):
-        return "{}{}_{}_{}_platform".format(name, name_suffix, os, cpu)
+    # First, declare file groups that explicitly built using the base stage, and
+    # not in the runtimes build. These allow us to form the inputs to both the
+    # runtimes toolchain and the main toolchain of this stage that are built
+    # entirely by the base toolchain.
+    set_stage_filegroup(
+        name = "{}_clang_hdrs".format(name),
+        srcs = clang_hdrs,
+        stage = base_stage,
+        tags = tags,
+    )
 
-    # Define platforms for each supported OS/CPU pair.
-    for os, cpus in platforms.items():
-        for cpu in cpus:
-            constraint_values = [
-                "@platforms//os:" + os,
-                "@platforms//cpu:" + cpu,
-            ]
-            if base_stage:
-                native.platform(
-                    name = _platform_name(os, cpu, "_base"),
-                    constraint_values = constraint_values + [base_stage],
-                )
-            if build_stage:
-                constraint_values.append(build_stage)
-            native.platform(
-                name = _platform_name(os, cpu),
-                constraint_values = constraint_values,
-            )
-            native.platform(
-                name = _platform_name(os, cpu, "_runtimes"),
-                constraint_values = constraint_values + [":is_runtimes_build"],
-            )
-
-    base_platform_select = None
-    if base_stage:
-        base_platform_select = select({
-            ":is_{}_{}".format(os, cpu): ":" + _platform_name(os, cpu, "_base")
-            for os, cpus in platforms.items()
-            for cpu in cpus
-        })
-
-    runtimes_platform_select = select({
-        ":is_{}_{}".format(os, cpu): ":" + _platform_name(os, cpu, "_runtimes")
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    })
-
-    set_platform_filegroup(
-        name = name + "_base_files",
+    set_stage_filegroup(
+        name = "{}_base_files".format(name),
         srcs = base_files,
-        platform = base_platform_select,
+        stage = base_stage,
         tags = tags,
     )
 
-    set_platform_filegroup(
-        name = name + "_runtimes_compile_files",
-        srcs = [":" + name + "_base_files"] + clang_hdrs,
-        platform = base_platform_select,
+    set_stage_filegroup(
+        name = "{}_runtimes_compile_files".format(name),
+        srcs = [
+            ":{}_base_files".format(name),
+            ":{}_clang_hdrs".format(name),
+        ],
+        stage = base_stage,
         tags = tags,
     )
 
-    set_platform_filegroup(
-        name = name + "_compile_files",
-        srcs = [":" + name + "_base_files"] + all_hdrs,
-        platform = base_platform_select,
+    set_stage_filegroup(
+        name = "{}_compile_files".format(name),
+        srcs = [":{}_base_files".format(name)] + all_hdrs,
+        stage = base_stage,
         tags = tags,
     )
 
+    # Now build a configuration and toolchain that is configured to work
+    # _without_ runtimes, and be used to _build_ the runtimes on-demand.
     carbon_cc_toolchain_config(
-        name = name + "_runtimes_toolchain_config",
-        identifier_prefix = name + "_runtimes",
+        name = "{}_runtimes_toolchain_config".format(name),
+        identifier_prefix = "{}_runtimes".format(name),
         target_cpu = select({
             # Note that we need to select on both OS and CPU so that we end up
             # spelling the CPU in the correct OS-specific ways.
@@ -355,26 +349,26 @@ def carbon_cc_toolchain_suite(
             for cpu in cpus
         }),
         target_os = select({
-            "@platforms//os:" + os: os
+            "@platforms//os:{}".format(os): os
             for os in platforms.keys()
         }),
-        bins = ":" + name + "_base_files",
+        bins = ":{}_base_files".format(name),
         tags = tags,
     )
 
     cc_toolchain(
-        name = name + "_runtimes_cc_toolchain",
-        all_files = ":" + name + "_runtimes_compile_files",
-        ar_files = ":" + name + "_base_files",
-        as_files = ":" + name + "_runtimes_compile_files",
-        compiler_files = ":" + name + "_runtimes_compile_files",
-        dwp_files = ":" + name + "_base_files",
-        linker_files = ":" + name + "_base_files",
-        objcopy_files = ":" + name + "_base_files",
-        strip_files = ":" + name + "_base_files",
-        toolchain_config = ":" + name + "_runtimes_toolchain_config",
+        name = "{}_runtimes_cc_toolchain".format(name),
+        all_files = ":{}_runtimes_compile_files".format(name),
+        ar_files = ":{}_base_files".format(name),
+        as_files = ":{}_runtimes_compile_files".format(name),
+        compiler_files = ":{}_runtimes_compile_files".format(name),
+        dwp_files = ":{}_base_files".format(name),
+        linker_files = ":{}_base_files".format(name),
+        objcopy_files = ":{}_base_files".format(name),
+        strip_files = ":{}_base_files".format(name),
+        toolchain_config = ":{}_runtimes_toolchain_config".format(name),
         toolchain_identifier = select({
-            ":is_{}_{}".format(os, cpu): _platform_name(os, cpu, "_runtimes")
+            ":is_{}_{}".format(os, cpu): "{}_{}_{}_runtimes_toolchain".format(name, os, cpu)
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
@@ -382,22 +376,41 @@ def carbon_cc_toolchain_suite(
     )
 
     native.toolchain(
-        name = name + "_runtimes_toolchain",
-        target_compatible_with = [":is_runtimes_build"],
-        toolchain = ":" + name + "_runtimes_cc_toolchain",
+        name = "{}_runtimes_toolchain".format(name),
+        target_settings = [
+            ":is_bootstrap_stage_{}".format(build_stage),
+            ":is_runtimes_build",
+        ],
+        use_target_platform_constraints = True,
+        toolchain = ":{}_runtimes_cc_toolchain".format(name),
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         tags = tags,
     )
 
-    set_platform_filegroup(
-        name = name + "_runtimes",
-        srcs = [runtimes],
-        platform = runtimes_platform_select,
+    # Now that we have a toolchain for building runtimes, actually do the build
+    # here using the runtimes config provided to us. This is important to do
+    # here because we need each runtimes build for a particular stage of
+    # toolchain to be distinct.
+    carbon_runtimes_build(
+        name = "{}_runtimes_build".format(name),
+        config = runtimes_cfg,
+        clang_hdrs = [":{}_clang_hdrs".format(name)],
         tags = tags,
     )
 
+    # Wrap the built runtimes for this stage in a filegroup that enforces that
+    # the runtimes toolchain for this stage.
+    set_runtimes_build_filegroup(
+        name = "{}_runtimes".format(name),
+        srcs = ["{}_runtimes_build".format(name)],
+        stage = build_stage,
+        tags = tags,
+    )
+
+    # Now we can build the main toolchain configuration, filegroups including
+    # the on-demand built runtimes, and the final tolochain itself.
     carbon_cc_toolchain_config(
-        name = name + "_toolchain_config",
+        name = "{}_toolchain_config".format(name),
         identifier_prefix = name,
         target_cpu = select({
             # Note that we need to select on both OS and CPU so that we end up
@@ -407,35 +420,35 @@ def carbon_cc_toolchain_suite(
             for cpu in cpus
         }),
         target_os = select({
-            "@platforms//os:" + os: os
+            "@platforms//os:{}".format(os): os
             for os in platforms.keys()
         }),
-        runtimes = ":" + name + "_runtimes",
-        bins = ":" + name + "_base_files",
+        runtimes = ":{}_runtimes".format(name),
+        bins = ":{}_base_files".format(name),
         tags = tags,
     )
 
     native.filegroup(
-        name = name + "_linker_files",
+        name = "{}_linker_files".format(name),
         srcs = [
-            ":" + name + "_base_files",
-            ":" + name + "_runtimes",
+            ":{}_base_files".format(name),
+            ":{}_runtimes".format(name),
         ],
         tags = tags,
     )
 
     native.filegroup(
-        name = name + "_all_files",
+        name = "{}_all_files".format(name),
         srcs = [
-            ":" + name + "_compile_files",
-            ":" + name + "_linker_files",
+            ":{}_compile_files".format(name),
+            ":{}_linker_files".format(name),
         ],
         tags = tags,
     )
 
     cc_toolchain(
-        name = name + "_cc_toolchain",
-        all_files = ":" + name + "_all_files",
+        name = "{}_cc_toolchain".format(name),
+        all_files = ":{}_all_files".format(name),
         ar_files = ":" + name + "_base_files",
         as_files = ":" + name + "_compile_files",
         compiler_files = ":" + name + "_compile_files",
@@ -445,7 +458,7 @@ def carbon_cc_toolchain_suite(
         strip_files = ":" + name + "_base_files",
         toolchain_config = ":" + name + "_toolchain_config",
         toolchain_identifier = select({
-            ":is_{}_{}".format(os, cpu): _platform_name(os, cpu)
+            ":is_{}_{}".format(os, cpu): "{}_{}_{}_toolchain".format(name, os, cpu)
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
@@ -454,7 +467,8 @@ def carbon_cc_toolchain_suite(
 
     native.toolchain(
         name = name + "_toolchain",
-        target_compatible_with = [build_stage] if build_stage else [],
+        target_settings = [":is_bootstrap_stage_{}".format(build_stage), ":not_runtimes_build"],
+        use_target_platform_constraints = True,
         toolchain = ":" + name + "_cc_toolchain",
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         tags = tags,

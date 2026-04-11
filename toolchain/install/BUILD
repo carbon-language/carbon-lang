@@ -38,14 +38,14 @@ load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
     "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
     "carbon_cc_toolchain_suite",
-    "set_platform_filegroup",
+    "set_stage_filegroup",
 )
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
 load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",
@@ -58,13 +58,29 @@ load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
 package(default_visibility = ["//visibility:public"])
 
-constraint_setting(
-    name = "runtimes_build",
+config_setting(
+    name = "is_runtimes_build",
+    flag_values = {"//:runtimes_build": "True"},
 )
 
-constraint_value(
-    name = "is_runtimes_build",
-    constraint_setting = ":runtimes_build",
+config_setting(
+    name = "not_runtimes_build",
+    flag_values = {"//:runtimes_build": "False"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_0",
+    flag_values = {"//:bootstrap_stage": "0"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_1",
+    flag_values = {"//:bootstrap_stage": "1"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_2",
+    flag_values = {"//:bootstrap_stage": "2"},
 )
 
 cc_library(
@@ -273,9 +289,19 @@ filegroup(
     ],
 )
 
+genrule(
+    name = "carbon_cc_toolchain_config_for_install",
+    srcs = ["//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl"],
+    outs = ["carbon_cc_toolchain_config.bzl"],
+    cmd = "sed 's|//toolchain/runtimes:carbon_runtimes.bzl|//bazel:carbon_runtimes.bzl|' $< > $@",
+)
+
 toolchain_files(
     name = "bazel_common_srcs",
-    srcs = ["//bazel/cc_toolchains:installed_cc_toolchain_starlark"],
+    srcs = [
+        ":carbon_cc_toolchain_config_for_install",
+        "//bazel/cc_toolchains:installed_cc_toolchain_starlark",
+    ],
     prefix = "bazel/",
 )
 
@@ -391,8 +417,10 @@ genrule(
         "install_digest_manifest.txt",
     ],
     outs = ["install_digest.txt"],
-    cmd = "$(location :make-installation-digest) " +
-          "$(location install_digest_manifest.txt) $@",
+    cmd = "{0} {1} $@".format(
+        "$(location :make-installation-digest)",
+        "$(location install_digest_manifest.txt)",
+    ),
     tools = [":make-installation-digest"],
 )
 
@@ -437,8 +465,7 @@ cc_library(
     ],
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [":builtins_internal"],
@@ -466,8 +493,7 @@ cc_library(
     includes = ["runtimes/libunwind/include"],
     linkstatic = 1,
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -482,8 +508,7 @@ cc_library(
     name = "libcxxabi_internal",
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     textual_hdrs = [":libcxxabi_textual_srcs"],
@@ -494,8 +519,7 @@ cc_library(
     hdrs = [":libc_internal_libcxx_hdrs"],
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -528,8 +552,7 @@ cc_library(
         "runtimes/libcxxabi/include",
     ],
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [
@@ -544,10 +567,9 @@ filegroup(
     output_group = "archive",
 )
 
-carbon_runtimes(
-    name = "runtimes",
+carbon_runtimes_config(
+    name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
-    clang_hdrs = [":clang_hdrs"],
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
     crt_copts = crt_copts + [
         # Disable all sanitizers for CRT objects.
@@ -570,11 +592,11 @@ carbon_runtimes(
     }),
     libcxx_archive = ":libcxx_archive",
     libunwind_archive = ":libunwind_archive",
-    target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
+    #target_compatible_with = select({
+    #    "//bazel/cc_toolchains:stage1": [],
+    #    "//bazel/cc_toolchains:stage2": [],
+    #    "//conditions:default": ["@platforms//:incompatible"],
+    #}),
     target_triple = select({
         # TODO: Add other triples (and if needed, constraints) so that we can
         # build the correct Clang resource-dir structure for each.
@@ -603,8 +625,8 @@ platforms = {
     config_setting(
         name = "is_{0}_{1}".format(os, cpu),
         constraint_values = [
-            "@platforms//os:" + os,
-            "@platforms//cpu:" + cpu,
+            "@platforms//os:{}".format(os),
+            "@platforms//cpu:{}".format(cpu),
         ],
     )
     for os, cpus in platforms.items()
@@ -624,10 +646,10 @@ carbon_cc_toolchain_suite(
         ":carbon-busybox",
         ":llvm_bins",
     ],
-    build_stage = "//bazel/cc_toolchains:stage1",
+    build_stage = 1,
     clang_hdrs = [":clang_hdrs"],
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_cfg = ":runtimes_cfg",
 )
 
 carbon_cc_toolchain_suite(
@@ -643,11 +665,11 @@ carbon_cc_toolchain_suite(
         ":carbon-busybox",
         ":llvm_bins",
     ],
-    base_stage = "//bazel/cc_toolchains:stage1",
-    build_stage = "//bazel/cc_toolchains:stage2",
+    base_stage = 1,
+    build_stage = 2,
     clang_hdrs = [":clang_hdrs"],
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_cfg = ":runtimes_cfg",
     tags = ["manual"],
 )
 
@@ -680,28 +702,20 @@ pkg_tar_and_test(
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
 )
 
-set_platform_filegroup(
+set_stage_filegroup(
     name = "stage2_pkg_files",
     srcs = [
         ":all_data_files",
         ":gen_digest",
     ],
-    platform = select({
-        ":is_{}_{}".format(os, cpu): ":carbon_stage2_base_{}_{}_platform".format(os, cpu)
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    }),
+    stage = 1,
     tags = ["manual"],
 )
 
-set_platform_filegroup(
+set_stage_filegroup(
     name = "stage2_busybox",
     srcs = [":carbon-busybox"],
-    platform = select({
-        ":is_{}_{}".format(os, cpu): ":carbon_stage2_base_{}_{}_platform".format(os, cpu)
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    }),
+    stage = 1,
     tags = ["manual"],
 )
 
