@@ -26,7 +26,7 @@ static auto GetClangDeclForScope(Context& context, SemIR::NameScopeId scope_id)
   if (!clang_decl_context_id.has_value()) {
     return nullptr;
   }
-  return dyn_cast<clang::NamedDecl>(
+  return cast<clang::NamedDecl>(
       context.clang_decls().Get(clang_decl_context_id).key.decl);
 }
 
@@ -72,11 +72,13 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     auto inst = context.insts().Get(name_scope.inst_id());
     if (inst.Is<SemIR::Namespace>()) {
+      // TODO: Provide a source location.
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
           clang::SourceLocation(), identifier_info, nullptr, false);
       decl_context = namespace_decl;
     } else if (inst.Is<SemIR::ClassDecl>()) {
+      // TODO: Provide a source location.
       auto* record_decl = clang::CXXRecordDecl::Create(
           context.ast_context(), clang::TagTypeKind::Class, decl_context,
           clang::SourceLocation(), clang::SourceLocation(), identifier_info);
@@ -135,6 +137,7 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
+  // TODO: Provide a source location.
   auto* record_decl = clang::CXXRecordDecl::Create(
       context.ast_context(), clang::TagTypeKind::Class, decl_context,
       clang::SourceLocation(), clang::SourceLocation(), identifier_info);

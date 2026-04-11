@@ -430,6 +430,7 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
 
   // Register this file's package scope as corresponding to the `Carbon`
   // namespace in C++.
+  // TODO: For mangling purposes, include the package as a sub-namespace.
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
   auto clang_decl_id = context_->clang_decls().Add(
       {.key = key, .inst_id = SemIR::Namespace::PackageInstId});
