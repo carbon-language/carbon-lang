@@ -934,7 +934,7 @@ auto CalleePatternMatch(Context& context,
 }
 
 auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
-                       SemIR::InstBlockId param_patterns_id,
+                       llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults {
   ThunkState state = {.outer_call_args = outer_call_args};
@@ -950,13 +950,11 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
          .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None}}));
   }
 
-  if (param_patterns_id.has_value()) {
-    for (SemIR::InstId inst_id : context.inst_blocks().Get(param_patterns_id)) {
-      inner_args.push_back(match.MatchWithResult(
-          &state, {.pattern_id = inst_id,
-                   .work = MatchContext::PreWork{.scrutinee_id =
-                                                     SemIR::InstId::None}}));
-    }
+  for (SemIR::InstId inst_id : param_pattern_ids) {
+    inner_args.push_back(match.MatchWithResult(
+        &state,
+        {.pattern_id = inst_id,
+         .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None}}));
   }
 
   return {.syntactic_args = std::move(inner_args),

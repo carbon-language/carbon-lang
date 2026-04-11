@@ -31,6 +31,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 // of call arguments for `function_id`, not a syntactic argument list.
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
+                      llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
                       SemIR::InstId callee_id) -> SemIR::InstId;
 

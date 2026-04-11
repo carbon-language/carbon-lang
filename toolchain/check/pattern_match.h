@@ -58,7 +58,7 @@ struct ThunkPatternMatchResults {
 // computes the corresponding syntactic argument list, suitable for passing to
 // the inner part of the thunked function call.
 auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
-                       SemIR::InstBlockId param_patterns_id,
+                       llvm::ArrayRef<SemIR::InstId> param_patterns,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults;
 

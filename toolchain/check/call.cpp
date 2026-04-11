@@ -280,11 +280,16 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
           BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
                        callee_function.enclosing_specific_id);
 
+      auto param_pattern_ids =
+          context.inst_blocks().Get(context.functions()
+                                        .Get(callee_function.function_id)
+                                        .param_patterns_id);
+
       // This recurses back into `PerformCall`. However, we never form a thunk
       // to a thunk, so we only recurse once.
-      return PerformThunkCall(context, loc_id, callee_function.function_id,
-                              context.inst_blocks().Get(converted_args_id),
-                              thunk_ref_id);
+      return PerformThunkCall(
+          context, loc_id, callee_function.function_id, param_pattern_ids,
+          context.inst_blocks().Get(converted_args_id), thunk_ref_id);
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
