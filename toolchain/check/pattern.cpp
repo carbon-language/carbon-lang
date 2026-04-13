@@ -5,6 +5,7 @@
 #include "toolchain/check/pattern.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
@@ -101,9 +102,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::FormBindingPattern::Kind:
-      bind_name_kind = SemIR::FormBinding::Kind;
-      break;
     case SemIR::RefBindingPattern::Kind:
       bind_name_kind = SemIR::RefBinding::Kind;
       break;
@@ -116,9 +114,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     case SemIR::WrapperBindingPattern::Kind: {
       auto subpattern = context.insts().Get(pattern.subpattern_id);
       CARBON_KIND_SWITCH(subpattern) {
-        case SemIR::FormParamPattern::Kind:
-          bind_name_kind = SemIR::FormBinding::Kind;
-          break;
         case SemIR::RefParamPattern::Kind:
         case SemIR::VarPattern::Kind:
           bind_name_kind = SemIR::RefBinding::Kind;
@@ -223,6 +218,74 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                             .entity_name_id = entity_name_id,
                             .subpattern_id = pattern_id})
       .pattern_id;
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::FormParamPatternAction action) -> SemIR::InstId {
+  auto form_inst = context.insts().Get(action.form_id);
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::InitForm::Kind: {
+      auto ref_param_pattern_id = AddInst(
+          context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::RefParamPattern{.type_id = action.type_id,
+                                     .pretty_name_id = action.pretty_name_id}));
+      return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                  context.sem_ir(), loc_id,
+                                  SemIR::VarPattern{
+                                      .type_id = action.type_id,
+                                      .subpattern_id = ref_param_pattern_id}));
+    }
+    case SemIR::RefForm::Kind: {
+      return AddInst(
+          context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::RefParamPattern{.type_id = action.type_id,
+                                     .pretty_name_id = action.pretty_name_id}));
+    }
+    case SemIR::ValueForm::Kind: {
+      return AddInst(context,
+                     SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), loc_id,
+                         SemIR::ValueParamPattern{
+                             .type_id = action.type_id,
+                             .pretty_name_id = action.pretty_name_id}));
+    }
+    case SemIR::ErrorInst::Kind: {
+      return SemIR::ErrorInst::InstId;
+    }
+    default:
+      CARBON_FATAL("Unexpected param pattern form: {0}", form_inst);
+  }
+}
+
+auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
+                   SemIR::OutFormParamPatternAction action) -> SemIR::InstId {
+  auto form_inst = context.insts().Get(
+      context.constant_values().GetConstantInstId(action.form_id));
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::ValueForm::Kind: {
+      return AddInst<SemIR::ValueReturnPattern>(
+          context, SemIR::LocId(action.form_id), {.type_id = action.type_id});
+    }
+    case SemIR::RefForm::Kind: {
+      return AddInst<SemIR::RefReturnPattern>(
+          context, SemIR::LocId(action.form_id), {.type_id = action.type_id});
+    }
+    case CARBON_KIND(SemIR::InitForm _): {
+      return AddInst<SemIR::OutParamPattern>(
+          context, SemIR::LocId(action.form_id),
+          {.type_id = action.type_id,
+           .pretty_name_id = SemIR::NameId::ReturnSlot});
+    }
+    case SemIR::ErrorInst::Kind: {
+      return SemIR::ErrorInst::InstId;
+    }
+    default:
+      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
+  }
 }
 
 }  // namespace Carbon::Check

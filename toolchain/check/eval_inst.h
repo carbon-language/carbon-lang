@@ -104,6 +104,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     -> bool {
   switch (kind) {
     case SemIR::InstConstantKind::Never:
+    case SemIR::InstConstantKind::ConstantInstAction:
     case SemIR::InstConstantKind::InstAction:
     case SemIR::InstConstantKind::WheneverPossible:
     case SemIR::InstConstantKind::Always:

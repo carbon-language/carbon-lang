@@ -120,11 +120,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::FormBinding inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BlockArg inst) -> void {
   context.SetLocal(
       inst_id,

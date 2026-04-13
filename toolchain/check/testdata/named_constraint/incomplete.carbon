@@ -113,9 +113,9 @@ constraint W {
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-5]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
   // CHECK:STDERR: constraint W {
   // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-15]]:41: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-15]]:38: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: eval fn ReturnFacet[T:! type](U:! T) -> T;
-  // CHECK:STDERR:                                         ^
+  // CHECK:STDERR:                                      ^~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE+7]]:31: error: use of undefined generic function [MissingGenericFunctionDefinition]
   // CHECK:STDERR:   require impls X where .XZ = ReturnFacet(Self);

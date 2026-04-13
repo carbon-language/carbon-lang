@@ -53,14 +53,14 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_8.1: %pattern_type.7ce = ref_return_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %.loc4_8.1, %i32 [concrete]
+// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.7ce = ref_return_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %.loc4_11.1, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.1: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.1da]
-// CHECK:STDOUT:     %.loc4_8.2: ref %i32 = ref_return
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_8.2
+// CHECK:STDOUT:     %.loc4_11.2: type = ref_tag %i32
+// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.1da]
+// CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }

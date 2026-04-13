@@ -46,7 +46,9 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   // Template-dependent instructions are handled separately by
   // `AddDependentActionInst`.
   CARBON_CHECK(
-      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      inst.kind().constant_kind() !=
+              SemIR::InstConstantKind::ConstantInstAction &&
+          inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
@@ -63,6 +65,7 @@ auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
       SemIR::ExprCategory::Pattern) {
     auto type_id = loc_id_and_inst.inst.type_id();
     CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
+                 context.types().Is<SemIR::TypeOfInst>(type_id) ||
                  context.types().Is<SemIR::PatternType>(type_id));
     context.pattern_block_stack().AddInstId(inst_id);
   } else {

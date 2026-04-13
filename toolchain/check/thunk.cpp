@@ -63,7 +63,6 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-  CARBON_CHECK(pattern.kind != SemIR::FormBindingPattern::Kind);
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -80,8 +79,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
         pattern.subpattern_id);
-    if (subpattern.kind == SemIR::FormParamPattern::Kind) {
-      context.TODO(pattern_id, "Support for cloning form bindings");
+    if (subpattern.kind == SemIR::FormParamPatternAction::Kind) {
+      context.TODO(pattern_id, "Support for cloning generic form bindings");
       return SemIR::ErrorInst::InstId;
     }
     pattern.subpattern_id = RebuildPatternInst<SemIR::AnyLeafParamPattern>(
@@ -297,7 +296,10 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                                             args.consume_front(), callee_id);
   }
 
-  return PerformCall(context, loc_id, callee_id, args);
+  // We treat this as an operator call because it's a call that's synthesized
+  // by the toolchain, not written by the user.
+  return PerformCall(context, loc_id, callee_id, args,
+                     /*is_operator_syntax=*/true);
 }
 
 // Build a call to a function that forwards the arguments of the enclosing

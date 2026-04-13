@@ -109,7 +109,6 @@ struct AnyAggregateValue {
 
 // clang-format off
 #define AnyBindingPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::FormBindingPattern) Sep()         \
   X(::Carbon::SemIR::RefBindingPattern) Sep()          \
   X(::Carbon::SemIR::SymbolicBindingPattern) Sep()     \
   X(::Carbon::SemIR::ValueBindingPattern) Sep()        \
@@ -142,7 +141,6 @@ struct AnyBindingPattern {
 // clang-format off
 #define AnyBinding_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::AliasBinding) Sep()        \
-  X(::Carbon::SemIR::FormBinding) Sep()         \
   X(::Carbon::SemIR::RefBinding) Sep()          \
   X(::Carbon::SemIR::SymbolicBinding) Sep()     \
   X(::Carbon::SemIR::ValueBinding)
@@ -203,6 +201,25 @@ struct AnyBranch {
   // Branches don't produce a value, so have no type.
   LabelId target_id;
   // Kind-specific data.
+  AnyRawId arg1;
+};
+
+// clang-format off
+#define FormParamAction_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::FormParamPatternAction) Sep() \
+  X(::Carbon::SemIR::OutFormParamPatternAction)
+// clang-format on
+
+#define FormParamAction_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(FormParamAction)
+
+// Common representation for various form-parameterized actions.
+struct FormParamAction {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(FormParamAction);
+
+  InstKind kind;
+  TypeId type_id;
+  MetaInstId form_id;
   AnyRawId arg1;
 };
 
@@ -274,7 +291,6 @@ struct AnyParam {
 
 // clang-format off
 #define AnyLeafParamPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::FormParamPattern) Sep()             \
   X(::Carbon::SemIR::OutParamPattern) Sep()              \
   X(::Carbon::SemIR::RefParamPattern) Sep()              \
   X(::Carbon::SemIR::ValueParamPattern)

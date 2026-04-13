@@ -171,7 +171,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %ptr.loc6_20.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.ef1)]
-// CHECK:STDOUT:   %require_complete.loc6_26: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_26 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_23: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_23 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2: <specific function> = specific_function constants.%F, @F(%T.loc6_7.1) [symbolic = %F.specific_fn.loc6_37.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_20.1 (%ptr.e8f)) -> out %return.param: @F.%T.loc6_7.1 (%T) {
@@ -204,7 +204,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.ef1
-// CHECK:STDOUT:   %require_complete.loc6_26 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%require_complete.944
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.643
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,7 +217,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.17a
-// CHECK:STDOUT:   %require_complete.loc6_26 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%complete_type.357
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.540
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,7 +330,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %ptr.loc6_26.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.0c1)]
-// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_32 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_29: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_29 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2: <specific function> = specific_function constants.%F, @F(%T.loc6_7.1) [symbolic = %F.specific_fn.loc6_43.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_26.1 (%ptr.a15)) -> out %return.param: @F.%T.loc6_7.1 (%T) {
@@ -364,7 +364,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.0c1
-// CHECK:STDOUT:   %require_complete.loc6_32 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_29 => constants.%require_complete.944
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn.643
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,7 +378,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.e6f
-// CHECK:STDOUT:   %require_complete.loc6_32 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_29 => constants.%complete_type.357
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn.540
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -489,7 +489,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %ptr.loc6_20.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.ef1)]
-// CHECK:STDOUT:   %require_complete.loc6_26: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_26 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_23: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_23 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2: <specific function> = specific_function constants.%F, @F(%T.loc6_7.1) [symbolic = %F.specific_fn.loc6_37.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_20.1 (%ptr.e8f)) -> out %return.param: @F.%T.loc6_7.1 (%T) {
@@ -522,7 +522,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.ef1
-// CHECK:STDOUT:   %require_complete.loc6_26 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%require_complete.944
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.643
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -535,7 +535,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.e6f
-// CHECK:STDOUT:   %require_complete.loc6_26 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%complete_type.357
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.98a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,7 +646,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %ptr.loc6_26.1 [symbolic = %require_complete.loc6_17 (constants.%require_complete.0c1)]
-// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_32 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_29: <witness> = require_complete_type %T.loc6_7.1 [symbolic = %require_complete.loc6_29 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2: <specific function> = specific_function constants.%F, @F(%T.loc6_7.1) [symbolic = %F.specific_fn.loc6_43.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_26.1 (%ptr.a15)) -> out %return.param: @F.%T.loc6_7.1 (%T) {
@@ -677,7 +677,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.0c1
-// CHECK:STDOUT:   %require_complete.loc6_32 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_29 => constants.%require_complete.944
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
