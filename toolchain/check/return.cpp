@@ -169,8 +169,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
   } else {
-    auto return_form_inst_id = function.GetDeclaredReturnForm(context.sem_ir());
-    auto return_form = context.insts().Get(return_form_inst_id);
+    auto return_form =
+        context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
     CARBON_KIND_SWITCH(return_form) {
       case CARBON_KIND(SemIR::InitForm _): {
         if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
