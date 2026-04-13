@@ -361,6 +361,51 @@ auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
   FinishFunctionDefinition(context, function_id);
 }
 
+auto BuildThunkDefinitionForExport(Context& context,
+                                   SemIR::FunctionId thunk_function_id,
+                                   SemIR::FunctionId callee_function_id,
+                                   SemIR::InstId thunk_id,
+                                   SemIR::InstId callee_id) -> void {
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  auto& callee_function = context.functions().Get(callee_function_id);
+
+  StartThunkFunctionDefinition(context, thunk_function_id, thunk_id, callee_id);
+
+  const bool thunk_has_return_param =
+      callee_function.return_type_inst_id != SemIR::TypeInstId::None;
+
+  llvm::ArrayRef<SemIR::InstId> param_pattern_ids;
+  if (thunk_function.param_patterns_id.has_value()) {
+    param_pattern_ids =
+        context.inst_blocks().Get(thunk_function.param_patterns_id);
+  }
+  auto call_param_ids =
+      context.inst_blocks().Get(thunk_function.call_params_id);
+
+  if (thunk_has_return_param) {
+    param_pattern_ids = param_pattern_ids.drop_back();
+    call_param_ids = call_param_ids.drop_back();
+  }
+
+  auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,
+                                param_pattern_ids, call_param_ids);
+  if (thunk_has_return_param) {
+    auto out_param_id =
+        context.inst_blocks().Get(thunk_function.call_params_id).back();
+    AddInst(context, SemIR::LocId(out_param_id),
+            SemIR::Assign{
+                .lhs_id = out_param_id,
+                .rhs_id = call_id,
+            });
+  } else {
+    DiscardExpr(context, call_id);
+  }
+
+  BuildReturnWithNoExpr(context, SemIR::LocId(callee_id));
+
+  FinishFunctionDefinition(context, thunk_function_id);
+}
+
 auto BuildThunkDefinition(Context& context,
                           DeferredDefinitionWorklist::DefineThunk&& task)
     -> void {

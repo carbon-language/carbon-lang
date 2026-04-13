@@ -17,6 +17,15 @@ auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
                           SemIR::FunctionId function_id, SemIR::InstId thunk_id,
                           SemIR::InstId callee_id) -> void;
 
+// Similar to `BuildThunkDefinition`, but modified for reverse
+// interop. If the callee has a return value, the thunk returns it
+// through an explicit output parameter at the end of the parameter list.
+auto BuildThunkDefinitionForExport(Context& context,
+                                   SemIR::FunctionId thunk_function_id,
+                                   SemIR::FunctionId callee_function_id,
+                                   SemIR::InstId thunk_id,
+                                   SemIR::InstId callee_id) -> void;
+
 // Given a function signature and a callee function, build a thunk that matches
 // the given signature and calls the specified callee. Returns the callee
 // unchanged if it can be used directly.
