@@ -258,7 +258,6 @@ toolchain_files(
     name = "libc_internal_libcxx_hdrs",
     srcs = ["@llvm-project//libc:libcxx_shared_headers_hdrs"],
     prefix = "runtimes/libc/internal/",
-    #remove_prefix = "src",
 )
 
 toolchain_files(
@@ -592,11 +591,6 @@ carbon_runtimes_config(
     }),
     libcxx_archive = ":libcxx_archive",
     libunwind_archive = ":libunwind_archive",
-    #target_compatible_with = select({
-    #    "//bazel/cc_toolchains:stage1": [],
-    #    "//bazel/cc_toolchains:stage2": [],
-    #    "//conditions:default": ["@platforms//:incompatible"],
-    #}),
     target_triple = select({
         # TODO: Add other triples (and if needed, constraints) so that we can
         # build the correct Clang resource-dir structure for each.
