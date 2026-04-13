@@ -15,9 +15,10 @@
 namespace Carbon::Check {
 
 // If the given name scope was produced by importing a C++ declaration or has
-// already been exported to C++, return the corresponding Clang declaration.
-static auto GetClangDeclForScope(Context& context, SemIR::NameScopeId scope_id)
-    -> clang::NamedDecl* {
+// already been exported to C++, return the corresponding Clang decl context.
+static auto GetClangDeclContextForScope(Context& context,
+                                        SemIR::NameScopeId scope_id)
+    -> clang::DeclContext* {
   if (!scope_id.has_value()) {
     return nullptr;
   }
@@ -26,8 +27,8 @@ static auto GetClangDeclForScope(Context& context, SemIR::NameScopeId scope_id)
   if (!clang_decl_context_id.has_value()) {
     return nullptr;
   }
-  return cast<clang::NamedDecl>(
-      context.clang_decls().Get(clang_decl_context_id).key.decl);
+  auto* decl = context.clang_decls().Get(clang_decl_context_id).key.decl;
+  return cast<clang::DeclContext>(decl);
 }
 
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
@@ -41,8 +42,9 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
   while (true) {
     // If this name scope was produced by importing a C++ declaration or has
     // already been exported to C++, return the corresponding Clang declaration.
-    if (auto* decl = GetClangDeclForScope(context, name_scope_id)) {
-      decl_context = cast<clang::DeclContext>(decl);
+    if (auto* existing_decl_context =
+            GetClangDeclContextForScope(context, name_scope_id)) {
+      decl_context = existing_decl_context;
       break;
     }
 
@@ -123,8 +125,9 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
   // That could either be a CXXRecordDecl or an EnumDecl.
-  if (auto* decl = GetClangDeclForScope(context, class_info.scope_id)) {
-    return cast<clang::TagDecl>(decl);
+  if (auto* decl_context =
+          GetClangDeclContextForScope(context, class_info.scope_id)) {
+    return cast<clang::TagDecl>(decl_context);
   }
 
   auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);

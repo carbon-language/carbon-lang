@@ -382,9 +382,18 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(LookupResult lookup)
   auto target_inst = context_->insts().Get(target_constant);
   CARBON_KIND_SWITCH(target_inst) {
     case CARBON_KIND(SemIR::Namespace namespace_info): {
-      return cast_or_null<clang::NamedDecl>(
+      auto* decl_context =
           ExportNameScopeToCpp(*context_, SemIR::LocId(target_inst_id),
-                               namespace_info.name_scope_id));
+                               namespace_info.name_scope_id);
+      if (!decl_context) {
+        return nullptr;
+      }
+      if (isa<clang::TranslationUnitDecl>(decl_context)) {
+        context_->TODO(GetCurrentCppLocId(),
+                       "interop with translation unit decl");
+        return nullptr;
+      }
+      return cast<clang::NamedDecl>(decl_context);
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
       return ExportClassToCpp(*context_, SemIR::LocId(target_inst_id),
