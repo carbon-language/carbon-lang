@@ -690,12 +690,12 @@ toolchain_pkg_filegroup(
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
 #
-# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
-# `carbon_toolchain_tar_gz_rule`.
+# For manual tests, the tar rules are `carbon_toolchain_tar` and
+# `carbon_toolchain_tar_gz`.
 pkg_tar_and_test(
+    name = "carbon_toolchain",
     srcs = [":stage1_pkg_data"],
     install_data_manifest = ":install_data_manifest.txt",
-    name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
@@ -727,9 +727,9 @@ toolchain_pkg_filegroup(
 )
 
 pkg_tar_and_test(
+    name = "carbon_bootstrapped_toolchain",
     srcs = [":stage2_pkg_data"],
     install_data_manifest = ":install_data_manifest.txt",
-    name_base = "carbon_bootstrapped_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_bootstrapped_toolchain-$(version)",
     package_variables = ":packaging_variables",
