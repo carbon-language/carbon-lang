@@ -362,56 +362,6 @@
         "recordedRepoMappingEntries": []
       }
     },
-    "@@hedron_compile_commands+//:workspace_setup.bzl%hedron_compile_commands_extension": {
-      "general": {
-        "bzlTransitiveDigest": "GTNjt7oW5GiUBfcBtXAq5etqAZ6ue6PRd5nPaxeMoYM=",
-        "usagesDigest": "CbJ2MjubH36j9xaONhhASfhodhpi5fzvuyg/IW2f7Ds=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {},
-        "recordedRepoMappingEntries": [
-          [
-            "hedron_compile_commands+",
-            "bazel_tools",
-            "bazel_tools"
-          ]
-        ]
-      }
-    },
-    "@@hedron_compile_commands+//:workspace_setup_transitive.bzl%hedron_compile_commands_extension": {
-      "general": {
-        "bzlTransitiveDigest": "IfDf0vEa2jjQ11RNpUM0u4xftPXIs+pyM8IMVkRqVMk=",
-        "usagesDigest": "yxZQbFglJyjpn7JZ9mhIc3EhLzZivlbs6wiHWOKJ/UA=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {},
-        "recordedRepoMappingEntries": []
-      }
-    },
-    "@@hedron_compile_commands+//:workspace_setup_transitive_transitive.bzl%hedron_compile_commands_extension": {
-      "general": {
-        "bzlTransitiveDigest": "1p58k3o2Jgjt/pBE7cb8WmmkplrSguIKma/h32x7X10=",
-        "usagesDigest": "GkOuy/k8wz0dbKMeEJFKEJB3CWkMZt3DYcPgj4lALkI=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {},
-        "recordedRepoMappingEntries": []
-      }
-    },
-    "@@hedron_compile_commands+//:workspace_setup_transitive_transitive_transitive.bzl%hedron_compile_commands_extension": {
-      "general": {
-        "bzlTransitiveDigest": "arNWX4EleUjJxqkM5nCRTj+ce05Zz1gSdGH1DCKOoLs=",
-        "usagesDigest": "WZExKK/BI4lqpUZfPpv4YARDE1Y7igQB+wYGKvNoCKs=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {},
-        "recordedRepoMappingEntries": []
-      }
-    },
     "@@protobuf+//python/dist:system_python.bzl%system_python_extension": {
       "general": {
         "bzlTransitiveDigest": "pmsA+awieucfllLc2n7k8xEoPp0i5LF9Hw6mGX0cqSQ=",

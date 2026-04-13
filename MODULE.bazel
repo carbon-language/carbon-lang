@@ -58,17 +58,6 @@ register_toolchains("@bazel_cc_toolchain//:all")
 
 register_toolchains("//toolchain/install:all")
 
-# TODO: Trying out `wolfd_bazel_compile_commands`, figure out if there are
-# issues. Once people have had a chance to try and check for problems, remove
-# one or the other.
-bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
-git_override(
-    module_name = "hedron_compile_commands",
-    # HEAD as of 2026-01-28.
-    commit = "abb61a688167623088f8768cc9264798df6a9d10",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-)
-
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
