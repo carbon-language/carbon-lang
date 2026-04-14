@@ -288,6 +288,12 @@ filegroup(
     ],
 )
 
+# The toolchain configuration starlark needs to switch from referencing the
+# `carbon_runtimes.bzl` starlark in the toolchain layout to the `bazel` tree
+# within the installation.
+#
+# TODO: Maybe we should move the `carbon_runtimes.bzl` to the same directory as
+# the other starlark so we can use relative load lines and avoid this?
 genrule(
     name = "carbon_cc_toolchain_config_for_install",
     srcs = ["//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl"],

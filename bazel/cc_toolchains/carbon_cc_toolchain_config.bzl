@@ -364,8 +364,8 @@ def carbon_cc_toolchain_suite(
 
     # Now that we have a toolchain for building runtimes, actually do the build
     # here using the runtimes config provided to us. This is important to do
-    # here because we need each runtimes build for a particular stage of
-    # toolchain to be distinct.
+    # here because we need each runtimes build for a particular bootstrapping
+    # stage of the toolchain to be distinct.
     carbon_runtimes_build(
         name = "{}_runtimes_build".format(name),
         config = runtimes_cfg,
@@ -376,6 +376,7 @@ def carbon_cc_toolchain_suite(
     # Wrap the built runtimes for this stage in a filegroup that ensures they
     # are built at this stage, but with the runtimes build enabled. This will
     # select the runtimes build toolchain above that doesn't yet provide any
+    # runtimes, avoiding a cycle when the main toolchain below depends on these
     # runtimes.
     filegroup_with_stage(
         name = "{}_runtimes".format(name),
