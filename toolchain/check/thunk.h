@@ -35,9 +35,11 @@ auto BuildThunkDefinition(Context& context,
                           DeferredDefinitionWorklist::DefineThunk&& task)
     -> void;
 
-// Similar to `BuildThunkDefinition`, but modified for reverse
-// interop. If the callee has a return value, the thunk returns it
-// through an explicit output parameter at the end of the parameter list.
+// Given a declaration of a thunk and the function that it should call,
+// build a thunk body for calling a Carbon function from a C++
+// function. If the callee has a return value, the thunk returns it
+// through an explicit output parameter at the end of the parameter
+// list.
 auto BuildThunkDefinitionForExport(Context& context,
                                    SemIR::FunctionId thunk_function_id,
                                    SemIR::FunctionId callee_function_id,
