@@ -97,24 +97,3 @@ inline Cpp '''
 // CHECK:STDERR:
 Carbon::T t;
 ''';
-
-// --- fail_todo_fields.carbon
-library "[[@TEST_NAME]]";
-
-import Cpp;
-
-class A {
-  var a: i32;
-  var b: i32;
-}
-
-inline Cpp '''
-// CHECK:STDERR: fail_todo_fields.carbon:[[@LINE+7]]:15: error: static assertion failed due to requirement 'sizeof(Carbon::A) == 2 * sizeof(int)' [CppInteropParseError]
-// CHECK:STDERR:    18 | static_assert(sizeof(Carbon::A) == 2 * sizeof(int));
-// CHECK:STDERR:       |               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_fields.carbon:[[@LINE+4]]:33: note: expression evaluates to '1 == 8' [CppInteropParseNote]
-// CHECK:STDERR:    18 | static_assert(sizeof(Carbon::A) == 2 * sizeof(int));
-// CHECK:STDERR:       |               ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-static_assert(sizeof(Carbon::A) == 2 * sizeof(int));
-''';

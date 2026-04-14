@@ -337,6 +337,14 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
 
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
+  auto layoutRecordType(
+      const clang::RecordDecl* record_decl, uint64_t& size, uint64_t& alignment,
+      llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets,
+      llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+          base_offsets,
+      llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+          vbase_offsets) -> bool override;
+
  private:
   // Builds the top-level C++ namespace `Carbon` and adds it to the translation
   // unit.
@@ -533,6 +541,54 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 }
 
+// If this declaration declares a class type that is "owned" by Carbon, and not
+// imported from C++, returns the corresponding type ID and `ClassType`.
+// Otherwise returns `nullopt`.
+static auto GetAsCarbonOwnedClass(Context& context,
+                                  const clang::TagDecl* tag_decl)
+    -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>> {
+  // Quickly check whether we could possibly own this class.
+  // TODO: Once we multiplex with the ASTReader, handle
+  // ASTReader::completeVisibleDeclsMap setting this to `false`.
+  if (!tag_decl->hasExternalVisibleStorage()) {
+    return std::nullopt;
+  }
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      const_cast<clang::TagDecl*>(tag_decl->getFirstDecl()));
+  auto clang_decl_id = context.clang_decls().Lookup(key);
+  if (!clang_decl_id.has_value()) {
+    return std::nullopt;
+  }
+
+  auto inst_id = context.clang_decls().Get(clang_decl_id).inst_id;
+  auto const_id = context.constant_values().Get(inst_id);
+  if (!const_id.has_value()) {
+    return std::nullopt;
+  }
+
+  auto class_type =
+      context.constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
+  if (!class_type) {
+    return std::nullopt;
+  }
+
+  // Determine whether this class was imported from C++.
+  // TODO: This currently can't happen, because only Carbon classes have
+  // external lexical storage, but will happen once we support importing C++
+  // classes from AST files. Add a test once that is supported.
+  // TODO: Consider setting `extern_library_id` on classes imported from C++ to
+  // indicate the current file does not own them.
+  const auto& class_info = context.classes().Get(class_type->class_id);
+  if (class_info.parent_scope_id.has_value() &&
+      context.name_scopes().Get(class_info.parent_scope_id).is_cpp_scope()) {
+    return std::nullopt;
+  }
+
+  auto class_type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+  return std::make_pair(class_type_id, *class_type);
+}
+
 auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
   if (!class_decl) {
@@ -541,39 +597,26 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(tag_decl->getFirstDecl());
-  auto clang_decl_id = context_->clang_decls().Lookup(key);
-  if (!clang_decl_id.has_value()) {
+  auto carbon_class_info = GetAsCarbonOwnedClass(*context_, tag_decl);
+  if (!carbon_class_info) {
     return;
   }
+  auto& [class_type_id, class_type] = *carbon_class_info;
 
-  auto inst_id = context_->clang_decls().Get(clang_decl_id).inst_id;
-  auto const_id = context_->constant_values().Get(inst_id);
-  if (!const_id.has_value()) {
-    return;
-  }
-
-  auto class_type =
-      context_->constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
-  if (!class_type) {
-    return;
-  }
-
-  auto class_type_id = context_->types().GetTypeIdForTypeConstantId(const_id);
   auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
   if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(),
                            context_fn)) {
     return;
   }
 
-  const auto& class_info = context_->classes().Get(class_type->class_id);
+  const auto& class_info = context_->classes().Get(class_type.class_id);
   class_decl->startDefinition();
   CARBON_CHECK(class_decl->hasDefinition());
 
   // If the Carbon class has a base class that we can map into C++, add that as
   // a C++ base class.
   auto base_type_id =
-      class_info.GetBaseType(context_->sem_ir(), class_type->specific_id);
+      class_info.GetBaseType(context_->sem_ir(), class_type.specific_id);
   if (base_type_id.has_value()) {
     auto base_loc = GetCppLocation(*context_, SemIR::LocId(class_info.base_id));
     if (auto base_type = MapToCppType(*context_, base_type_id);
@@ -596,6 +639,55 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   // TODO: Import fields, plus any special member functions that affect class
   // properties.
   class_decl->completeDefinition();
+}
+
+auto CarbonExternalASTSource::layoutRecordType(
+    const clang::RecordDecl* record_decl, uint64_t& size, uint64_t& alignment,
+    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>& base_offsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+        vbase_offsets) -> bool {
+  auto carbon_class_info = GetAsCarbonOwnedClass(*context_, record_decl);
+  if (!carbon_class_info) {
+    return false;
+  }
+  auto& [class_type_id, class_type] = *carbon_class_info;
+
+  // Clang should not have asked for the layout of an incomplete type, but check
+  // now to be sure, and to generate a specific definition if needed.
+  CompleteTypeOrCheckFail(*context_, class_type_id);
+
+  // Set the overall size and alignment. We round up the size to an integer
+  // number of bytes in order to avoid surprising Clang too much.
+  auto layout = context_->sem_ir()
+                    .types()
+                    .GetCompleteTypeInfo(class_type_id)
+                    .object_layout;
+  size = layout.size.bytes() * 8;
+  alignment = layout.alignment.bits();
+
+  // TODO: Add field offsets once we import fields.
+  static_cast<void>(field_offsets);
+
+  // Add offset for base class, if any.
+  if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);
+      class_decl && !class_decl->bases().empty()) {
+    CARBON_CHECK(class_decl->getNumBases() == 1,
+                 "Carbon class with multiple bases");
+    const auto& base = *class_decl->bases_begin();
+    // TODO: If this class introduced a vptr, the base will be at an offset of
+    // `sizeof(void*)`, not 0.
+    base_offsets.insert(
+        {base.getType()->getAsCXXRecordDecl()->getCanonicalDecl(),
+         clang::CharUnits::Zero()});
+
+    // TODO: Support deriving from a C++ class with virtual bases.
+    CARBON_CHECK(class_decl->getNumVBases() == 0,
+                 "Carbon class with multiple bases");
+    static_cast<void>(vbase_offsets);
+  }
+
+  return true;
 }
 
 // Parses a sequence of top-level declarations and forms a corresponding
