@@ -314,11 +314,12 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
 
   // Create return storage if the target function returns non-void.
   const bool has_return_value = !function_decl->getReturnType()->isVoidType();
+  clang::VarDecl* return_storage_var_decl = nullptr;
   clang::ExprResult return_storage_expr;
   if (has_return_value) {
     auto& return_storage_ident =
         sema.getASTContext().Idents.get("return_storage");
-    auto* return_storage_var_decl =
+    return_storage_var_decl =
         clang::VarDecl::Create(sema.getASTContext(), function_decl,
                                /*StartLoc=*/clang_loc,
                                /*IdLoc=*/clang_loc, &return_storage_ident,
@@ -360,8 +361,10 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
   stmts.push_back(call.get());
 
   if (has_return_value) {
-    stmts.push_back(
-        sema.BuildReturnStmt(clang_loc, return_storage_expr.get()).get());
+    auto* return_stmt = clang::ReturnStmt::Create(
+        sema.getASTContext(), clang_loc, return_storage_expr.get(),
+        return_storage_var_decl);
+    stmts.push_back(return_stmt);
   }
 
   return clang::CompoundStmt::Create(sema.getASTContext(), stmts,

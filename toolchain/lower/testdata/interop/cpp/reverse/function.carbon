@@ -186,7 +186,7 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   call void @_CIntReturn__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %retval)
-// CHECK:STDOUT:   %0 = load i32, ptr %retval, align 4, !tbaa !7
+// CHECK:STDOUT:   %0 = load i32, ptr %retval, align 4
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -42,9 +42,9 @@ library "[[@TEST_NAME]]";
 import Other;
 import Cpp inline '''
 void G() {
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <function.carbon:[[@LINE-1]]:1, line:31:1> line:6:6 G 'void ()'
-// CHECK:STDOUT:   `-CompoundStmt {{0x[a-f0-9]+}} <col:10, line:31:1>
-// CHECK:STDOUT:     `-CallExpr {{0x[a-f0-9]+}} <line:30:3, col:21> 'void'
+// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <function.carbon:[[@LINE-1]]:1, line:30:1> line:6:6 G 'void ()'
+// CHECK:STDOUT:   `-CompoundStmt {{0x[a-f0-9]+}} <col:10, line:30:1>
+// CHECK:STDOUT:     `-CallExpr {{0x[a-f0-9]+}} <line:29:3, col:21> 'void'
 // CHECK:STDOUT:       `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:3, col:18> 'void (*)()' <FunctionToPointerDecay>
 // CHECK:STDOUT:         `-DeclRefExpr {{0x[a-f0-9]+}} <col:3, col:18> 'void ()' lvalue Function {{0x[a-f0-9]+}} 'F1__cpp_thunk' 'void ()'
 // CHECK:STDOUT:           `-NestedNameSpecifier Namespace {{0x[a-f0-9]+}} 'Other'
@@ -60,9 +60,8 @@ void G() {
 // CHECK:STDOUT: |     | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:16> 'void (*)(int &)' <FunctionToPointerDecay>
 // CHECK:STDOUT: |     | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:16> 'void (int &)' Function {{0x[a-f0-9]+}} 'F2__carbon_thunk' 'void (int &)'
 // CHECK:STDOUT: |     | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:16> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
-// CHECK:STDOUT: |     | `-ReturnStmt {{0x[a-f0-9]+}} <col:16>
-// CHECK:STDOUT: |     |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:16> 'int' <LValueToRValue>
-// CHECK:STDOUT: |     |     `-DeclRefExpr {{0x[a-f0-9]+}} <col:16> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
+// CHECK:STDOUT: |     | `-ReturnStmt {{0x[a-f0-9]+}} <col:16> nrvo_candidate(Var {{0x[a-f0-9]+}} 'return_storage' 'int')
+// CHECK:STDOUT: |     |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:16> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
 // CHECK:STDOUT: |     |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
 // CHECK:STDOUT: |     `-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
   Carbon::Other::F1();
