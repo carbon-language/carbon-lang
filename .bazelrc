@@ -121,6 +121,11 @@ common:linux --define=pfm=1
 # Disables `actions.declare_symlink`. Done for cross-environment support.
 common --allow_unresolved_symlinks=false
 
+# Removes the leading `/proc/self/cwd/` from file paths in the debug info. Some
+# tools like VS Code don't understand `/proc/self/cwd` in places like terminal
+# stack dumps, but do understand paths relative to the workspace root.
+common --copt=-fdebug-prefix-map=/proc/self/cwd=
+
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
 try-import %workspace%/user.bazelrc
