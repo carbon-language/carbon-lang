@@ -200,7 +200,7 @@ static auto CanDestroyType(
     case CARBON_KIND(SemIR::ArrayType array_type): {
       // A zero element array is always trivially destructible.
       if (auto int_bound =
-              context.sem_ir().GetArrayBoundValue(array_type.bound_id);
+              context.sem_ir().GetZExtIntValue(array_type.bound_id);
           !int_bound || *int_bound == 0) {
         return DestroyFormat::Trivial;
       }

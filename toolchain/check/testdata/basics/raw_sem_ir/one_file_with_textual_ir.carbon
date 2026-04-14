@@ -47,20 +47,44 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(FormType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(FormType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(Error)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000010)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000010)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst5000001D)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst5000001D)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst5000001A)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst5000001D)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst5000002B)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000010)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}

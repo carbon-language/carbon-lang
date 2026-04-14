@@ -417,46 +417,109 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(FormType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(FormType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(Error)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst78000026)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst78000026)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst7800002D)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst7800002D)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst78000029)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst7800002D)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst7800003F)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst78000026)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(symbolic_constant78000003)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant78000003)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst(WitnessType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(symbolic_constant78000011)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant78000011)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(symbolic_constant78000009)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant78000011)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(symbolic_constant78000004)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant78000004)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(symbolic_constant7800000A)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant78000011)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst(InstType))':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst78000026)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst78000050)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst78000050)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(SpecificFunctionType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(SpecificFunctionType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(RequireSpecificDefinitionType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(RequireSpecificDefinitionType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(symbolic_constant78000145)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst78000026)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(symbolic_constant7800014A)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst78000026)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(BoundMethodType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(BoundMethodType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:
 // CHECK:STDOUT:     facet_type78000000: {}
 // CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}

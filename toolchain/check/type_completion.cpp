@@ -224,10 +224,11 @@ class TypeCompleter {
 
   // Makes an empty value representation, which is used for types that have no
   // state, such as empty structs and tuples.
-  auto MakeEmptyValueRepr() const -> SemIR::ValueRepr;
+  auto MakeEmptyTypeInfo() const -> SemIR::CompleteTypeInfo;
 
   // Makes a dependent value representation, which is used for symbolic types.
-  auto MakeDependentValueRepr(SemIR::TypeId type_id) const -> SemIR::ValueRepr;
+  auto MakeDependentTypeInfo(SemIR::TypeId type_id) const
+      -> SemIR::CompleteTypeInfo;
 
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
@@ -250,17 +251,27 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-             SemIR::CharLiteralType, SemIR::ErrorInst, SemIR::FacetType,
-             SemIR::FloatLiteralType, SemIR::FloatType, SemIR::FormType,
-             SemIR::IntType, SemIR::IntLiteralType, SemIR::NamespaceType,
-             SemIR::PatternType, SemIR::PointerType,
-             SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
-             SemIR::TypeType, SemIR::VtableType, SemIR::WitnessType>())
+             SemIR::AutoType, SemIR::BoundMethodType, SemIR::CharLiteralType,
+             SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
+             SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
+             SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
+             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    return {.value_repr = MakeCopyValueRepr(type_id)};
+    // These types are empty at runtime but have values to copy at compile time.
+    return {.value_repr = MakeCopyValueRepr(type_id),
+            .object_layout = SemIR::ObjectLayout::Empty()};
   }
+
+  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::BoolType inst) const
+      -> SemIR::CompleteTypeInfo;
+  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::PointerType inst) const
+      -> SemIR::CompleteTypeInfo;
+  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::IntType inst) const
+      -> SemIR::CompleteTypeInfo;
+  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::FloatType inst) const
+      -> SemIR::CompleteTypeInfo;
 
   auto BuildStructOrTupleValueRepr(size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
@@ -297,7 +308,7 @@ class TypeCompleter {
     // - For an interface, we could use a witness.
     // - For an associated entity, we could use an index into the witness.
     // - For an unbound element, we could use an index or offset.
-    return {.value_repr = MakeEmptyValueRepr()};
+    return MakeEmptyTypeInfo();
   }
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
@@ -330,7 +341,7 @@ class TypeCompleter {
     requires(InstT::Kind.is_symbolic_when_type())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    return {.value_repr = MakeDependentValueRepr(type_id)};
+    return MakeDependentTypeInfo(type_id);
   }
 
   // Builds and returns the `CompleteTypeInfo` for the given type. All nested
@@ -501,14 +512,17 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
   return true;
 }
 
-auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
-  return {.kind = SemIR::ValueRepr::None,
-          .type_id = GetTupleType(*context_, {})};
+auto TypeCompleter::MakeEmptyTypeInfo() const -> SemIR::CompleteTypeInfo {
+  return {.value_repr = {.kind = SemIR::ValueRepr::None,
+                         .type_id = GetTupleType(*context_, {})},
+          .object_layout = SemIR::ObjectLayout::Empty()};
 }
 
-auto TypeCompleter::MakeDependentValueRepr(SemIR::TypeId type_id) const
-    -> SemIR::ValueRepr {
-  return {.kind = SemIR::ValueRepr::Dependent, .type_id = type_id};
+auto TypeCompleter::MakeDependentTypeInfo(SemIR::TypeId type_id) const
+    -> SemIR::CompleteTypeInfo {
+  return {
+      .value_repr = {.kind = SemIR::ValueRepr::Dependent, .type_id = type_id},
+      .object_layout = SemIR::ObjectLayout()};
 }
 
 auto TypeCompleter::MakeCopyValueRepr(
@@ -565,7 +579,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
     -> SemIR::CompleteTypeInfo {
   auto fields = context_->struct_type_fields().Get(struct_type.fields_id);
   if (fields.empty()) {
-    return {.value_repr = MakeEmptyValueRepr()};
+    return MakeEmptyTypeInfo();
   }
 
   // Find the value representation for each field, and construct a struct
@@ -574,6 +588,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   value_rep_fields.reserve(fields.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
+  SemIR::ObjectLayout layout = SemIR::ObjectLayout::Empty();
   for (auto field : fields) {
     auto field_type_id =
         context_->types().GetTypeIdForTypeInstId(field.type_inst_id);
@@ -590,6 +605,12 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
         !abstract_class_id.has_value()) {
       abstract_class_id = field_info.abstract_class_id;
     }
+    // Accumulate layout.
+    if (layout.has_value() && field_info.object_layout.has_value()) {
+      layout += field_info.object_layout;
+    } else {
+      layout = SemIR::ObjectLayout();
+    }
   }
 
   auto value_rep =
@@ -600,6 +621,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                 context_->struct_type_fields().AddCanonical(value_rep_fields));
   return {.value_repr = BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                                     same_as_object_rep),
+          .object_layout = layout,
           .abstract_class_id = abstract_class_id};
 }
 
@@ -609,7 +631,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   // TODO: Share more code with structs.
   auto elements = context_->inst_blocks().Get(tuple_type.type_elements_id);
   if (elements.empty()) {
-    return {.value_repr = MakeEmptyValueRepr()};
+    return MakeEmptyTypeInfo();
   }
 
   // Find the value representation for each element, and construct a tuple
@@ -618,6 +640,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   value_rep_elements.reserve(elements.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
+  SemIR::ObjectLayout layout = SemIR::ObjectLayout::Empty();
   for (auto element_type_id : context_->types().GetBlockAsTypeIds(elements)) {
     auto element_info = GetNestedInfo(element_type_id);
     if (!element_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
@@ -631,6 +654,12 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
         !abstract_class_id.has_value()) {
       abstract_class_id = element_info.abstract_class_id;
     }
+    // Accumulate layout.
+    if (layout.has_value() && element_info.object_layout.has_value()) {
+      layout += element_info.object_layout;
+    } else {
+      layout = SemIR::ObjectLayout();
+    }
   }
 
   auto value_rep = same_as_object_rep
@@ -638,17 +667,75 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                        : GetTupleType(*context_, value_rep_elements);
   return {.value_repr = BuildStructOrTupleValueRepr(elements.size(), value_rep,
                                                     same_as_object_rep),
+          .object_layout = layout,
           .abstract_class_id = abstract_class_id};
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::ArrayType /*inst*/) const
+                                     SemIR::ArrayType array_type) const
     -> SemIR::CompleteTypeInfo {
   // For arrays, it's convenient to always use a pointer representation,
   // even when the array has zero or one element, in order to support
   // indexing.
+  auto element_type_id =
+      context_->types().GetTypeIdForTypeInstId(array_type.element_type_inst_id);
+  auto element_info = GetNestedInfo(element_type_id);
+
+  SemIR::ObjectLayout layout;
+  if (element_info.object_layout.has_value()) {
+    if (auto bound = context_->sem_ir().GetZExtIntValue(array_type.bound_id)) {
+      layout = element_info.object_layout * (*bound);
+    }
+  }
+
   return {.value_repr =
-              MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate)};
+              MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate),
+          .object_layout = layout};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::BoolType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  return {.value_repr = MakeCopyValueRepr(type_id),
+          .object_layout = {.size = SemIR::ObjectSize::Bytes(1),
+                            .alignment = SemIR::ObjectSize::Bytes(1)}};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::PointerType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  return {.value_repr = MakeCopyValueRepr(type_id),
+          .object_layout = context_->sem_ir().GetPointerLayout()};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::IntType inst) const
+    -> SemIR::CompleteTypeInfo {
+  SemIR::ObjectLayout layout;
+  if (auto bit_width = context_->sem_ir().GetZExtIntValue(inst.bit_width_id)) {
+    auto size = SemIR::ObjectSize::Bits(*bit_width);
+    // TODO: The upper bound for alignment here should be target-specific.
+    auto align_bits =
+        std::clamp<int64_t>(llvm::PowerOf2Ceil(*bit_width), 8, 256);
+    auto align = SemIR::ObjectSize::Bits(align_bits);
+    layout = {.size = size, .alignment = align};
+  }
+  return {.value_repr = MakeCopyValueRepr(type_id), .object_layout = layout};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::FloatType inst) const
+    -> SemIR::CompleteTypeInfo {
+  SemIR::ObjectLayout layout;
+  if (auto bit_width = context_->sem_ir().GetZExtIntValue(inst.bit_width_id)) {
+    auto size = SemIR::ObjectSize::Bits(*bit_width);
+    // TODO: Pick a suitable alignment here. For some targets, we may want to
+    // use 32-bit alignment for f64 (and f80). For now we round up to a power
+    // of 2.
+    auto align = SemIR::ObjectSize::Bits(llvm::PowerOf2Ceil(*bit_width));
+    layout = {.size = size, .alignment = align};
+  }
+  return {.value_repr = MakeCopyValueRepr(type_id), .object_layout = layout};
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
@@ -671,11 +758,13 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   }
   // Otherwise, the value representation for a class is a pointer to the
   // object representation.
+  auto object_repr_type_id =
+      class_info.GetObjectRepr(context_->sem_ir(), inst.specific_id);
   // TODO: Support customized value representations for classes.
   // TODO: Pick a better value representation when possible.
-  return {.value_repr = MakePointerValueRepr(
-              class_info.GetObjectRepr(context_->sem_ir(), inst.specific_id),
-              SemIR::ValueRepr::ObjectAggregate),
+  return {.value_repr = MakePointerValueRepr(object_repr_type_id,
+                                             SemIR::ValueRepr::ObjectAggregate),
+          .object_layout = GetNestedInfo(object_repr_type_id).object_layout,
           .abstract_class_id = abstract_class_id};
 }
 
@@ -688,11 +777,15 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::CustomLayoutType /*inst*/) const
+                                     SemIR::CustomLayoutType inst) const
     -> SemIR::CompleteTypeInfo {
   // TODO: Should we support other value representations for custom layout
   // types?
-  return {.value_repr = MakePointerValueRepr(type_id)};
+  const auto& layout = context_->custom_layouts().Get(inst.layout_id);
+  return {.value_repr = MakePointerValueRepr(type_id),
+          .object_layout = {
+              .size = layout[SemIR::CustomLayoutId::SizeIndex],
+              .alignment = layout[SemIR::CustomLayoutId::AlignIndex]}};
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
@@ -726,11 +819,10 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   // The value representation of `partial T` is the same as that of `T`.
   // Objects are not modifiable through their value representations. However,
   // `partial T` is never abstract.
-  return {
-      .value_repr =
-          GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id))
-              .value_repr,
-      .abstract_class_id = SemIR::ClassId::None};
+  auto inner_type_id = context_->types().GetTypeIdForTypeInstId(inst.inner_id);
+  auto info = GetNestedInfo(inner_type_id);
+  info.abstract_class_id = SemIR::ClassId::None;
+  return info;
 }
 
 auto TypeCompleter::BuildInfoForInst(

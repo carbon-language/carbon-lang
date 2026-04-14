@@ -96,38 +96,89 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(FormType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(FormType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(Error)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(InstType))':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000013)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst5000001E)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000020)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst50000020)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst(WitnessType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000027)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst50000027)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst50000024)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst50000027)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst50000015)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst50000027)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            8
+// CHECK:STDOUT:         alignment:       8
 // CHECK:STDOUT:     'type(inst50000029)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst5000002E)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000031)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst5000003C)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst50000044)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}

@@ -145,9 +145,15 @@ struct ObjectLayout {
   // an empty type.
   ObjectSize alignment = ObjectSize::Zero();
 
+  // Returns the object layout to use for an empty type.
+  static auto Empty() -> ObjectLayout {
+    return {.size = ObjectSize::Zero(), .alignment = ObjectSize::Bytes(1)};
+  }
+
   // Updates the layout by concatenating naturally-aligned space for the given
   // field.
   auto operator+=(ObjectLayout field) -> ObjectLayout& {
+    CARBON_CHECK(field.has_value());
     size = size.AlignedTo(field.alignment) + field.size;
     alignment = std::max(alignment, field.alignment);
     return *this;
@@ -159,23 +165,19 @@ struct ObjectLayout {
   }
 
   // Updates the layout to represent a contiguous array of `n` objects with this
-  // layout. For n >= 1, this is equivalent to adding `*this` to itself `n`
-  // times.
+  // layout. The result never has tail padding, so this is *not* the same as
+  // adding `*this` to itself `n` times in general.
   auto operator*=(int64_t n) -> ObjectLayout& {
+    CARBON_CHECK(has_value());
     CARBON_CHECK(n >= 0);
-    if (n == 0) {
-      size = ObjectSize::Zero();
-      // Preserve the alignment; an array of zero `T`s should still be suitably
-      // aligned for a `T`.
-    } else {
-      // Add tail padding between all pairs of elements, but not after the last
-      // one.
-      size = size.AlignedTo(alignment) * (n - 1) + size;
-    }
+    // We preserve the alignment even if n is 0; an array of 0 `T`s should still
+    // be suitably aligned for a `T` so that an array iterator has the expected
+    // alignment.
+    size = size.AlignedTo(alignment) * n;
     return *this;
   }
 
-  // Returns a layout suitable for storing `n` `a`s.
+  // Returns a layout suitable for storing a contiguous array of `n` `a`s.
   friend auto operator*(ObjectLayout a, int64_t n) -> ObjectLayout {
     return a *= n;
   }

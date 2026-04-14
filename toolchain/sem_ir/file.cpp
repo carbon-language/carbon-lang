@@ -70,15 +70,20 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
+  // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
+  // requiring these types to be complete from Check initialization instead.
   types_.SetComplete(
       TypeType::TypeId,
-      {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
   types_.SetComplete(
       FormType::TypeId,
-      {.value_repr = {.kind = ValueRepr::Copy, .type_id = FormType::TypeId}});
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = FormType::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
   types_.SetComplete(
       ErrorInst::TypeId,
-      {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {

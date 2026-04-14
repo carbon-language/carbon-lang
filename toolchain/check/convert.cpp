@@ -264,7 +264,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 
   // Check that the tuple is the right size.
   std::optional<uint64_t> array_bound =
-      sem_ir.GetArrayBoundValue(array_type.bound_id);
+      sem_ir.GetZExtIntValue(array_type.bound_id);
   if (!array_bound) {
     // TODO: Should this fall back to using `ImplicitAs`?
     if (target.diagnose) {

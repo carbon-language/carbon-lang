@@ -1215,7 +1215,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
   return {llvm::ArrayType::get(
               context.GetType(context.sem_ir().types().GetTypeIdForTypeInstId(
                   inst.element_type_inst_id)),
-              *context.sem_ir().GetArrayBoundValue(inst.bound_id)),
+              *context.sem_ir().GetZExtIntValue(inst.bound_id)),
           nullptr};
 }
 

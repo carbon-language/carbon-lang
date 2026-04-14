@@ -269,7 +269,7 @@ static auto StoreArrayAsStdInitializerList(FunctionContext& context,
       context.GetTypeIdOfInst(array_inst_id);
   auto array_type = array_type_file->types().GetAs<SemIR::ArrayType>(
       array_type_file->types().GetObjectRepr(array_type_id));
-  auto array_bound = array_type_file->GetArrayBoundValue(array_type.bound_id);
+  auto array_bound = array_type_file->GetZExtIntValue(array_type.bound_id);
   CARBON_CHECK(array_bound, "Array type with non-constant bound");
 
   // Store the array pointer in the first element of the initializer list.
