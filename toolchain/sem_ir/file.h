@@ -66,7 +66,7 @@ struct ExprRegion {
 using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
 using CustomLayoutStore =
-    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
+    BlockValueStore<CustomLayoutId, ObjectSize, Tag<CheckIRId>>;
 
 // The semantic IR for a single file.
 class File : public Printable<File> {

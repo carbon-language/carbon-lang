@@ -75,7 +75,7 @@ struct ValueRepr : public Printable<ValueRepr> {
 
 // A size within an object representation. This stores a bit count, but provides
 // convenience methods to access the size in bytes instead.
-class ObjectSize {
+class ObjectSize : public Printable<ObjectSize> {
  public:
   static constexpr auto Zero() -> ObjectSize { return ObjectSize(0); }
 
@@ -87,18 +87,30 @@ class ObjectSize {
     return ObjectSize(bytes * 8);
   }
 
+  // Returns the size in bits.
   auto bits() const -> int64_t { return bits_; }
-  auto bytes() const -> int64_t { return bits_ / 8; }
+
+  // Returns the minimum number of bytes that would contain this size. This is
+  // the size in bytes, rounded up.
+  auto bytes() const -> int64_t { return (bits_ + 7) / 8; }
 
   // Return this size rounded up to a multiple of `align`, which must be a power
   // of 2.
   [[nodiscard]] auto AlignedTo(ObjectSize align) const -> ObjectSize {
-    CARBON_CHECK(align.bits_ > 0 && llvm::isPowerOf2_64(align.bits_),
+    CARBON_CHECK(llvm::isPowerOf2_64(align.bits_),
                  "Non power-of-2 alignment {0}", align.bits_);
     return Bits((bits_ + align.bits_ - 1) & -align.bits_);
   }
 
-  friend constexpr auto operator<=>(ObjectSize a, ObjectSize b) = default;
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  friend constexpr auto operator<=>(ObjectSize a, ObjectSize b) {
+    return a.bits_ <=> b.bits_;
+  }
+
+  friend constexpr auto operator==(ObjectSize a, ObjectSize b) -> bool {
+    return a.bits_ == b.bits_;
+  }
 
   friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
     return Bits(a.bits_ + b.bits_);
@@ -112,7 +124,9 @@ class ObjectSize {
   }
 
  private:
-  explicit constexpr ObjectSize(int64_t bits) : bits_(bits) {}
+  explicit constexpr ObjectSize(int64_t bits) : bits_(bits) {
+    CARBON_DCHECK(bits >= 0, "sizes should not be negative");
+  }
 
   int64_t bits_;
 };

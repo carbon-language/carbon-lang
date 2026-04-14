@@ -40,6 +40,15 @@ auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{value_rep: " << value_repr << "}";
 }
 
+auto ObjectSize::Print(llvm::raw_ostream& out) const -> void {
+  int64_t bytes = bits_ / 8;
+  int64_t bits = bits_ % 8;
+  out << bytes;
+  if (bits != 0) {
+    out << ":" << bits;
+  }
+}
+
 auto ValueRepr::ForType(const File& file, TypeId type_id) -> ValueRepr {
   return file.types().GetValueRepr(type_id);
 }

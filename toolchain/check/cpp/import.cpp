@@ -64,6 +64,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -450,14 +451,16 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
   const auto& clang_layout =
       context.ast_context().getASTRecordLayout(clang_def);
 
-  llvm::SmallVector<uint64_t> layout;
+  llvm::SmallVector<SemIR::ObjectSize> layout;
   llvm::SmallVector<SemIR::StructTypeField> fields;
 
   static_assert(SemIR::CustomLayoutId::SizeIndex == 0);
-  layout.push_back(clang_layout.getSize().getQuantity());
+  layout.push_back(
+      SemIR::ObjectSize::Bytes(clang_layout.getSize().getQuantity()));
 
   static_assert(SemIR::CustomLayoutId::AlignIndex == 1);
-  layout.push_back(clang_layout.getAlignment().getQuantity());
+  layout.push_back(
+      SemIR::ObjectSize::Bytes(clang_layout.getAlignment().getQuantity()));
 
   static_assert(SemIR::CustomLayoutId::FirstFieldIndex == 2);
 
@@ -529,7 +532,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
                            : clang_layout.getBaseClassOffset(base_class);
-    layout.push_back(base_offset.getQuantity());
+    layout.push_back(SemIR::ObjectSize::Bytes(base_offset.getQuantity()));
     fields.push_back(
         {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
   }
@@ -602,8 +605,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       offset += inner_layout.getFieldOffset(inner_field->getFieldIndex());
     }
 
-    layout.push_back(
-        context.ast_context().toCharUnitsFromBits(offset).getQuantity());
+    layout.push_back(SemIR::ObjectSize::Bits(offset));
     fields.push_back(
         {.name_id = field_name_id, .type_inst_id = field_type_inst_id});
   }

@@ -2577,8 +2577,8 @@ fn F() {
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.type: type = fn_type @PassThreeFields__carbon_thunk [concrete]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk: %PassThreeFields__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ThreeFields.elem: type = unbound_element_type %ThreeFields.942, %i32 [concrete]
-// CHECK:STDOUT:   %.c77: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.702: <witness> = complete_type_witness %.c77 [concrete]
+// CHECK:STDOUT:   %.b0d: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.54f: <witness> = complete_type_witness %.b0d [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.b.c.a: type = struct_type {.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral} [concrete]
@@ -2669,8 +2669,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.3: %ThreeFields.elem = field_decl c, element2 [concrete]
-// CHECK:STDOUT:   %.4: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete = constants.%.c77]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.702]
+// CHECK:STDOUT:   %.4: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete = constants.%.b0d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.54f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -2880,8 +2880,8 @@ fn F() {
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.type: type = fn_type @PassThreeFields__carbon_thunk [concrete]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk: %PassThreeFields__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ThreeFields.elem: type = unbound_element_type %ThreeFields.942, %i32 [concrete]
-// CHECK:STDOUT:   %.c77: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.702: <witness> = complete_type_witness %.c77 [concrete]
+// CHECK:STDOUT:   %.b0d: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.54f: <witness> = complete_type_witness %.b0d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3020,8 +3020,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.3: %ThreeFields.elem = field_decl c, element2 [concrete]
-// CHECK:STDOUT:   %.4: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete = constants.%.c77]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.702]
+// CHECK:STDOUT:   %.4: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete = constants.%.b0d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.54f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -3344,11 +3344,11 @@ fn F() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B.elem.c76: type = unbound_element_type %B, %i32 [concrete]
-// CHECK:STDOUT:   %.e7f: type = custom_layout_type {size=12, align=4, .a@0: %A, .n@8: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.b39: <witness> = complete_type_witness %.e7f [concrete]
+// CHECK:STDOUT:   %.344: type = custom_layout_type {size=12, align=4, .a@0: %A, .n@8: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.e04: <witness> = complete_type_witness %.344 [concrete]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
-// CHECK:STDOUT:   %.7b6: type = custom_layout_type {size=8, align=4, .x@0: %i32, .y@4: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.1e0: <witness> = complete_type_witness %.7b6 [concrete]
+// CHECK:STDOUT:   %.171: type = custom_layout_type {size=8, align=4, .x@0: %i32, .y@4: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.2e6: <witness> = complete_type_witness %.171 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -3395,8 +3395,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.2: %B.elem.c76 = field_decl n, element1 [concrete]
-// CHECK:STDOUT:   %.3: type = custom_layout_type {size=12, align=4, .a@0: %A, .n@8: %i32} [concrete = constants.%.e7f]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.3 [concrete = constants.%complete_type.b39]
+// CHECK:STDOUT:   %.3: type = custom_layout_type {size=12, align=4, .a@0: %A, .n@8: %i32} [concrete = constants.%.344]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.3 [concrete = constants.%complete_type.e04]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -3412,8 +3412,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.2: %A.elem = field_decl y, element1 [concrete]
-// CHECK:STDOUT:   %.3: type = custom_layout_type {size=8, align=4, .x@0: %i32, .y@4: %i32} [concrete = constants.%.7b6]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.3 [concrete = constants.%complete_type.1e0]
+// CHECK:STDOUT:   %.3: type = custom_layout_type {size=8, align=4, .x@0: %i32, .y@4: %i32} [concrete = constants.%.171]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.3 [concrete = constants.%complete_type.2e6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

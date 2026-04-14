@@ -38,6 +38,7 @@
 #include "toolchain/sem_ir/mangler.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/stringify.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -1246,9 +1247,10 @@ static auto BuildTypeForInst(FileContext& context, InstT inst)
 static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
     -> FileContext::LoweredTypes {
   auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
-  return {llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
-                               layout[SemIR::CustomLayoutId::SizeIndex]),
-          nullptr};
+  return {
+      llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                           layout[SemIR::CustomLayoutId::SizeIndex].bytes()),
+      nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context,

@@ -7,6 +7,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -28,9 +29,12 @@ static auto GetElementIndex(FunctionContext::TypeInFile type,
     // For custom layout types, we form an array of i8 as the LLVM type, so the
     // offset in the type is the getelementptr index.
     // TODO: This offset might not fit into an `unsigned int`.
-    return type.file->custom_layouts().Get(
+    auto offset = type.file->custom_layouts().Get(
         custom_layout_type
             ->layout_id)[SemIR::CustomLayoutId::FirstFieldIndex + idx.index];
+    CARBON_CHECK(offset == offset.AlignedTo(SemIR::ObjectSize::Bytes(1)),
+                 "Element offset not byte-aligned: {0}", offset);
+    return offset.bytes();
   }
 
   // For now, struct and tuple types map directly into LLVM struct types with
