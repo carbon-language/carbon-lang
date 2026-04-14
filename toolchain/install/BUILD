@@ -38,7 +38,7 @@ load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
     "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
     "carbon_cc_toolchain_suite",
-    "set_stage_filegroup",
+    "filegroup_with_stage",
 )
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
@@ -696,7 +696,7 @@ pkg_tar_and_test(
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
 )
 
-set_stage_filegroup(
+filegroup_with_stage(
     name = "stage2_pkg_files",
     srcs = [
         ":all_data_files",
@@ -706,7 +706,7 @@ set_stage_filegroup(
     tags = ["manual"],
 )
 
-set_stage_filegroup(
+filegroup_with_stage(
     name = "stage2_busybox",
     srcs = [":carbon-busybox"],
     stage = 1,

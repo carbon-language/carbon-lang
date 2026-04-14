@@ -201,31 +201,35 @@ carbon_cc_toolchain_config = rule(
     provides = [CcToolchainConfigInfo],
 )
 
-def _set_runtimes_build_transition_impl(_, attr):
+def _transition_with_stage_impl(_, attr):
     return {
         "//:bootstrap_stage": attr.stage,
-        "//:runtimes_build": True,
+        "//:runtimes_build": attr.enable_runtimes_build,
     }
 
-set_runtimes_build_transition = transition(
+_transition_with_stage = transition(
     inputs = [],
     outputs = [
-        "//:runtimes_build",
         "//:bootstrap_stage",
+        "//:runtimes_build",
     ],
-    implementation = _set_runtimes_build_transition_impl,
+    implementation = _transition_with_stage_impl,
 )
 
-def _set_runtimes_build_filegroup_impl(ctx):
+def _filegroup_with_stage_impl(ctx):
     return [DefaultInfo(files = depset(ctx.files.srcs))]
 
-set_runtimes_build_filegroup = rule(
-    implementation = _set_runtimes_build_filegroup_impl,
+filegroup_with_stage = rule(
+    implementation = _filegroup_with_stage_impl,
     attrs = {
-        # Mark that our dependencies are built through a transition.
-        "srcs": attr.label_list(mandatory = True, cfg = set_runtimes_build_transition),
+        # Whether to enable runtimes building for the sources of this filegroup.
+        "enable_runtimes_build": attr.bool(default = False),
 
-        # The platform to use when building the runtimes.
+        # Mark that our dependencies are built through a transition.
+        "srcs": attr.label_list(mandatory = True, cfg = _transition_with_stage),
+
+        # The bootstrap stage that the sources of this filegroup should be built
+        # with.
         "stage": attr.int(mandatory = True),
 
         # Enable transitions in this rule.
@@ -233,40 +237,11 @@ set_runtimes_build_filegroup = rule(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
     },
-)
-
-def _set_stage_transition_impl(_, attr):
-    return {
-        "//:bootstrap_stage": attr.stage,
-        "//:runtimes_build": False,
-    }
-
-set_stage_transition = transition(
-    inputs = [],
-    outputs = [
-        "//:bootstrap_stage",
-        "//:runtimes_build",
-    ],
-    implementation = _set_stage_transition_impl,
-)
-
-def _set_stage_filegroup_impl(ctx):
-    return [DefaultInfo(files = depset(ctx.files.srcs))]
-
-set_stage_filegroup = rule(
-    implementation = _set_stage_filegroup_impl,
-    attrs = {
-        # Mark that our dependencies are built through a transition.
-        "srcs": attr.label_list(mandatory = True, cfg = set_stage_transition),
-
-        # The stage to use when building the toolchain.
-        "stage": attr.int(mandatory = True),
-
-        # Enable transitions in this rule.
-        "_allowlist_function_transition": attr.label(
-            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
-        ),
-    },
+    doc = """
+    A filegroup whose sources are built using a specific toolchain stage, and
+    which provides an interface to build those sources with or without enabling
+    runtimes building.
+    """,
 )
 
 def carbon_cc_toolchain_suite(
@@ -301,25 +276,25 @@ def carbon_cc_toolchain_suite(
         tags: Tags to apply to the toolchain.
     """
 
-    # First, declare file groups that explicitly built using the base stage, and
-    # not in the runtimes build. These allow us to form the inputs to both the
-    # runtimes toolchain and the main toolchain of this stage that are built
-    # entirely by the base toolchain.
-    set_stage_filegroup(
+    # First, declare file groups that are explicitly built using the base stage,
+    # and not in the runtimes build. These allow us to form the inputs to both
+    # the runtimes toolchain and the main toolchain of this stage that are built
+    # entirely by the base stage toolchain.
+    filegroup_with_stage(
         name = "{}_clang_hdrs".format(name),
         srcs = clang_hdrs,
         stage = base_stage,
         tags = tags,
     )
 
-    set_stage_filegroup(
+    filegroup_with_stage(
         name = "{}_base_files".format(name),
         srcs = base_files,
         stage = base_stage,
         tags = tags,
     )
 
-    set_stage_filegroup(
+    filegroup_with_stage(
         name = "{}_runtimes_compile_files".format(name),
         srcs = [
             ":{}_base_files".format(name),
@@ -329,7 +304,7 @@ def carbon_cc_toolchain_suite(
         tags = tags,
     )
 
-    set_stage_filegroup(
+    filegroup_with_stage(
         name = "{}_compile_files".format(name),
         srcs = [":{}_base_files".format(name)] + all_hdrs,
         stage = base_stage,
@@ -398,10 +373,13 @@ def carbon_cc_toolchain_suite(
         tags = tags,
     )
 
-    # Wrap the built runtimes for this stage in a filegroup that enforces that
-    # the runtimes toolchain for this stage.
-    set_runtimes_build_filegroup(
+    # Wrap the built runtimes for this stage in a filegroup that ensures they
+    # are built at this stage, but with the runtimes build enabled. This will
+    # select the runtimes build toolchain above that doesn't yet provide any
+    # runtimes.
+    filegroup_with_stage(
         name = "{}_runtimes".format(name),
+        enable_runtimes_build = True,
         srcs = ["{}_runtimes_build".format(name)],
         stage = build_stage,
         tags = tags,
