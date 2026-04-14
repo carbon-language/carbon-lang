@@ -137,10 +137,12 @@ auto ImportCpp(Context& context,
   name_scope.set_is_closed_import(true);
 
   if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
-    name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-        {.key = SemIR::ClangDeclKey(
-             context.ast_context().getTranslationUnitDecl()),
-         .inst_id = name_scope.inst_id()}));
+    name_scope.set_clang_decl_context_id(
+        context.clang_decls().Add(
+            {.key = SemIR::ClangDeclKey(
+                 context.ast_context().getTranslationUnitDecl()),
+             .inst_id = name_scope.inst_id()}),
+        /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
   }
@@ -302,7 +304,8 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(
-          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}));
+          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}),
+          /*is_cpp_scope=*/true);
   return result.inst_id;
 }
 
@@ -373,7 +376,7 @@ static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
       class_inst_id, SemIR::NameId::None, class_info.parent_scope_id);
   context.name_scopes()
       .Get(class_info.scope_id)
-      .set_clang_decl_context_id(clang_decl_id);
+      .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/true);
 
   return class_inst_id;
 }

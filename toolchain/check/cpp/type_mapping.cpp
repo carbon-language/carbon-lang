@@ -17,6 +17,7 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/literal.h"
@@ -137,20 +138,9 @@ static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
 
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
-static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
-    -> TryMapTypeResult {
+static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
+                            SemIR::ClassType class_type) -> TryMapTypeResult {
   clang::ASTContext& ast_context = context.ast_context();
-
-  // If the class was imported from C++, return the original C++ type.
-  auto clang_decl_id =
-      context.name_scopes()
-          .Get(context.classes().Get(class_type.class_id).scope_id)
-          .clang_decl_context_id();
-  if (clang_decl_id.has_value()) {
-    clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).key.decl;
-    auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-    return ast_context.getCanonicalTagType(tag_type_decl);
-  }
 
   // If the class represents a Carbon type literal, map it to the corresponding
   // C++ builtin type.
@@ -230,10 +220,18 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     }
   }
 
-  // Otherwise we don't have a mapping for this Carbon class type.
-  // TODO: If the class type wasn't imported from C++, create a corresponding
-  // C++ class type.
-  return clang::QualType();
+  // TODO: We cannot yet map specific classes.
+  if (class_type.specific_id.has_value()) {
+    return clang::QualType();
+  }
+
+  // Otherwise, find the existing C++ declaration or create a new one.
+  auto* tag_decl = ExportClassToCpp(context, SemIR::LocId(class_inst_id),
+                                    class_inst_id, class_type);
+  if (!tag_decl) {
+    return clang::QualType();
+  }
+  return ast_context.getCanonicalTagType(tag_decl);
 }
 
 // Maps a Carbon type to a C++ type. Either returns the mapped type, a null type
@@ -253,7 +251,8 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
       return context.ast_context().CharTy;
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
-      return TryMapClassType(context, class_type);
+      return TryMapClassType(context, context.types().GetTypeInstId(type_id),
+                             class_type);
     }
     case CARBON_KIND(SemIR::ConstType const_type): {
       return WrappedType{

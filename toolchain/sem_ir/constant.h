@@ -188,6 +188,11 @@ class ConstantValueStore {
     return insts_->Is<InstT>(GetInstId(const_id));
   }
 
+  // Returns the requested instruction from the underlying constant inst.
+  auto GetInst(ConstantId const_id) const -> Inst {
+    return insts_->Get(GetInstId(const_id));
+  }
+
   // Returns the requested instruction from the underlying constant inst, which
   // is known to have the specified type.
   template <typename InstT>

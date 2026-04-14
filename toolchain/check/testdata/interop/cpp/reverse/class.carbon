@@ -107,3 +107,17 @@ inline Cpp '''
 // CHECK:STDERR:
 static_assert(sizeof(Carbon::A) == 2 * sizeof(int));
 ''';
+
+// --- alias_identity.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+class A {}
+alias B = A;
+
+inline Cpp '''
+// OK, Carbon::A and Carbon::B are the same type.
+Carbon::A *pa;
+Carbon::B *pb = pa;
+''';
