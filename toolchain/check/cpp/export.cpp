@@ -78,6 +78,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
           clang::SourceLocation(), identifier_info, nullptr, false);
+      decl_context->addHiddenDecl(namespace_decl);
       decl_context = namespace_decl;
     } else if (inst.Is<SemIR::ClassDecl>()) {
       // TODO: Provide a source location.
@@ -90,6 +91,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
         record_decl->setAccess(clang::AS_public);
       }
 
+      decl_context->addHiddenDecl(record_decl);
       decl_context = record_decl;
       decl_context->setHasExternalLexicalStorage();
     } else {
