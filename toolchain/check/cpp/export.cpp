@@ -324,6 +324,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
                                /*IdLoc=*/clang_loc, &return_storage_ident,
                                function_decl->getReturnType(),
                                /*TInfo=*/nullptr, clang::SC_None);
+    return_storage_var_decl->setNRVOVariable(true);
     return_storage_expr = sema.BuildDeclRefExpr(
         return_storage_var_decl, return_storage_var_decl->getType(),
         clang::VK_LValue, clang_loc);

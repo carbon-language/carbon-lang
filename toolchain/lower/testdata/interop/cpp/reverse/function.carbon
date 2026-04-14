@@ -184,11 +184,9 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define internal noundef i32 @_ZN6Carbon5OtherL20IntReturn__cpp_thunkEv() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %return_storage = alloca i32, align 4
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %return_storage) #2
-// CHECK:STDOUT:   call void @_CIntReturn__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %return_storage)
-// CHECK:STDOUT:   %0 = load i32, ptr %return_storage, align 4, !tbaa !7
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %return_storage) #2
+// CHECK:STDOUT:   %retval = alloca i32, align 4
+// CHECK:STDOUT:   call void @_CIntReturn__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %retval)
+// CHECK:STDOUT:   %0 = load i32, ptr %retval, align 4, !tbaa !7
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,16 +240,9 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #3
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

@@ -55,7 +55,7 @@ void G() {
 // CHECK:STDOUT: |   `-FunctionDecl {{0x[a-f0-9]+}} <other.carbon:11:16> col:16 used F2__cpp_thunk 'int ()' inline
 // CHECK:STDOUT: |     |-CompoundStmt {{0x[a-f0-9]+}} <col:16>
 // CHECK:STDOUT: |     | |-DeclStmt {{0x[a-f0-9]+}} <col:16>
-// CHECK:STDOUT: |     | | `-VarDecl {{0x[a-f0-9]+}} <col:16> col:16 used return_storage 'int'
+// CHECK:STDOUT: |     | | `-VarDecl {{0x[a-f0-9]+}} <col:16> col:16 used return_storage 'int' nrvo
 // CHECK:STDOUT: |     | |-CallExpr {{0x[a-f0-9]+}} <col:16> 'void'
 // CHECK:STDOUT: |     | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:16> 'void (*)(int &)' <FunctionToPointerDecay>
 // CHECK:STDOUT: |     | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:16> 'void (int &)' Function {{0x[a-f0-9]+}} 'F2__carbon_thunk' 'void (int &)'
