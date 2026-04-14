@@ -73,6 +73,103 @@ struct ValueRepr : public Printable<ValueRepr> {
   TypeId type_id = TypeId::None;
 };
 
+// A size within an object representation. This stores a bit count, but provides
+// convenience methods to access the size in bytes instead.
+class ObjectSize {
+ public:
+  static constexpr auto Zero() -> ObjectSize { return ObjectSize(0); }
+
+  static constexpr auto Bits(int64_t bits) -> ObjectSize {
+    return ObjectSize(bits);
+  }
+
+  static constexpr auto Bytes(int64_t bytes) -> ObjectSize {
+    return ObjectSize(bytes * 8);
+  }
+
+  auto bits() const -> int64_t { return bits_; }
+  auto bytes() const -> int64_t { return bits_ / 8; }
+
+  // Return this size rounded up to a multiple of `align`, which must be a power
+  // of 2.
+  [[nodiscard]] auto AlignedTo(ObjectSize align) const -> ObjectSize {
+    CARBON_CHECK(align.bits_ > 0 && llvm::isPowerOf2_64(align.bits_),
+                 "Non power-of-2 alignment {0}", align.bits_);
+    return Bits((bits_ + align.bits_ - 1) & -align.bits_);
+  }
+
+  friend constexpr auto operator<=>(ObjectSize a, ObjectSize b) = default;
+
+  friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
+    return Bits(a.bits_ + b.bits_);
+  }
+
+  friend auto operator*(ObjectSize a, int64_t n) -> ObjectSize {
+    return Bits(a.bits_ * n);
+  }
+  friend auto operator*(int64_t n, ObjectSize a) -> ObjectSize {
+    return Bits(n * a.bits_);
+  }
+
+ private:
+  explicit constexpr ObjectSize(int64_t bits) : bits_(bits) {}
+
+  int64_t bits_;
+};
+
+// The layout of an object representation.
+struct ObjectLayout {
+  // The size of the object representation. This may be zero for empty types.
+  // This is not guaranteed to be a multiple of `alignment`, so explicit tail
+  // padding may be required if objects using this layout are stored in an
+  // array.
+  ObjectSize size = ObjectSize::Zero();
+
+  // The alignment of the object representation. This will be a power of 2 for a
+  // valid representation, or zero if the representation is unset (such as for
+  // the object layout of an incomplete type). This will typically be 1 byte for
+  // an empty type.
+  ObjectSize alignment = ObjectSize::Zero();
+
+  // Updates the layout by concatenating naturally-aligned space for the given
+  // field.
+  auto operator+=(ObjectLayout field) -> ObjectLayout& {
+    size = size.AlignedTo(field.alignment) + field.size;
+    alignment = std::max(alignment, field.alignment);
+    return *this;
+  }
+
+  // Returns a layout suitable for storing an `a` followed by a `b`.
+  friend auto operator+(ObjectLayout a, ObjectLayout b) -> ObjectLayout {
+    return a += b;
+  }
+
+  // Updates the layout to represent a contiguous array of `n` objects with this
+  // layout. For n >= 1, this is equivalent to adding `*this` to itself `n`
+  // times.
+  auto operator*=(int64_t n) -> ObjectLayout& {
+    CARBON_CHECK(n >= 0);
+    if (n == 0) {
+      size = ObjectSize::Zero();
+      // Preserve the alignment; an array of zero `T`s should still be suitably
+      // aligned for a `T`.
+    } else {
+      // Add tail padding between all pairs of elements, but not after the last
+      // one.
+      size = size.AlignedTo(alignment) * (n - 1) + size;
+    }
+    return *this;
+  }
+
+  // Returns a layout suitable for storing `n` `a`s.
+  friend auto operator*(ObjectLayout a, int64_t n) -> ObjectLayout {
+    return a *= n;
+  }
+
+  // Returns true if the layout has been set.
+  auto has_value() const -> bool { return alignment != ObjectSize::Zero(); }
+};
+
 // Information stored about a TypeId corresponding to a complete type.
 struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -80,6 +177,9 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepr value_repr = ValueRepr();
+
+  // The layout of the object representation of this type.
+  ObjectLayout object_layout = ObjectLayout();
 
   // If this type is abstract, this is id of an abstract class it uses.
   ClassId abstract_class_id = ClassId::None;
