@@ -396,10 +396,14 @@ auto BuildThunkDefinitionForExport(Context& context,
   if (thunk_has_return_param) {
     auto out_param_id =
         context.inst_blocks().Get(thunk_function.call_params_id).back();
-    AddInst(context, SemIR::LocId(out_param_id),
+
+    SemIR::LocId loc_id(out_param_id);
+    auto init_id =
+        Initialize(context, loc_id, out_param_id, call_id, /*for_return=*/true);
+    AddInst(context, loc_id,
             SemIR::Assign{
                 .lhs_id = out_param_id,
-                .rhs_id = call_id,
+                .rhs_id = init_id,
             });
   } else {
     DiscardExpr(context, call_id);
