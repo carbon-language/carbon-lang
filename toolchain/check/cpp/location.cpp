@@ -26,7 +26,7 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
   if (ir_id != context.sem_ir().check_ir_id()) {
     auto import_id = context.check_ir_map().Get(ir_id);
     CARBON_CHECK(import_id.has_value());
-    file_index = import_id.index + 1;
+    file_index = context.import_irs().GetRawIndex(import_id) + 1;
 
     sem_ir = context.import_irs().Get(import_id).sem_ir;
     CARBON_CHECK(sem_ir, "Node location in nonexistent IR");
