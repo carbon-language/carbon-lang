@@ -4,6 +4,7 @@
 
 """Starlark cc_toolchain configuration rules for using the Carbon toolchain"""
 
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
@@ -33,6 +34,10 @@ load(
 )
 load("cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load("cc_toolchain_features.bzl", "clang_cc_toolchain_features")
+load(
+    ":cc_toolchain_tools.bzl",
+    "llvm_tool_paths",
+)
 
 def _make_action_configs(tools, runtimes_path = None):
     runtimes_flag = "--no-build-runtimes"
@@ -100,12 +105,14 @@ def _compute_clang_system_include_dirs():
     return clang_include_dirs[system_include_dirs_start_index:]
 
 def _carbon_cc_toolchain_config_impl(ctx):
+    llvm_bindir = "llvm/bin"
+    clang_bindir = llvm_bindir
     tools = struct(
         carbon_busybox = tool(path = "carbon-busybox"),
-        clang = tool(path = "llvm/bin/clang"),
-        clangpp = tool(path = "llvm/bin/clang++"),
-        llvm_ar = tool(path = "llvm/bin/llvm-ar"),
-        llvm_strip = tool(path = "llvm/bin/llvm-strip"),
+        clang = tool(path = clang_bindir + "/clang"),
+        clangpp = tool(path = clang_bindir + "/clang++"),
+        llvm_ar = tool(path = llvm_bindir + "/llvm-ar"),
+        llvm_strip = tool(path = llvm_bindir + "/llvm-strip"),
     )
     if ctx.attr.bins:
         carbon_busybox = None
@@ -124,6 +131,10 @@ def _carbon_cc_toolchain_config_impl(ctx):
                 llvm_ar = f
             elif f.basename == "llvm-strip":
                 llvm_strip = f
+        if not all([carbon_busybox, clang, clangpp, llvm_ar, llvm_strip]):
+            fail("Missing required tool in bins: {0}".format(ctx.attr.bins))
+        llvm_bindir = llvm_ar.dirname
+        clang_bindir = clang.dirname
         tools = struct(
             carbon_busybox = tool(tool = carbon_busybox),
             clang = tool(tool = clang),
@@ -187,6 +198,10 @@ def _carbon_cc_toolchain_config_impl(ctx):
         # This is used to expose a "flag" that `config_setting` rules can use to
         # determine if the compiler is Clang.
         compiler = "clang",
+
+        # Pass in our tool paths to expose Make variables like $(NM) and
+        # $(OBJCOPY).
+        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir),
     )
 
 carbon_cc_toolchain_config = rule(
@@ -242,6 +257,43 @@ filegroup_with_stage = rule(
     which provides an interface to build those sources with or without enabling
     runtimes building.
     """,
+)
+
+def _gen_cc_toolchain_paths_impl(ctx):
+    cc_toolchain = find_cpp_toolchain(ctx)
+
+    expanded_vars = [
+        ctx.expand_make_variables("vars", v, {})
+        for v in ctx.attr.vars
+    ]
+
+    out = ctx.actions.declare_file(ctx.attr.name + ".txt")
+    ctx.actions.write(out, "\n".join(expanded_vars) + "\n")
+
+    # Include all toolchain files in runfiles.
+    runfiles = ctx.runfiles(files = [out]).merge(
+        ctx.runfiles(transitive_files = cc_toolchain.all_files),
+    )
+
+    return [DefaultInfo(files = depset([out]), runfiles = runfiles)]
+
+gen_cc_toolchain_paths_with_stage = rule(
+    implementation = _gen_cc_toolchain_paths_impl,
+    attrs = {
+        "enable_runtimes_build": attr.bool(default = False),
+        "stage": attr.int(mandatory = True),
+        "vars": attr.string_list(
+            default = ["$(CC)", "$(AR)", "$(NM)", "$(OBJCOPY)", "$(STRIP)"],
+        ),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
+    },
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
+    cfg = _transition_with_stage,
 )
 
 def carbon_cc_toolchain_suite(

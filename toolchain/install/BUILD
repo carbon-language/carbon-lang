@@ -39,6 +39,7 @@ load(
     "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
     "carbon_cc_toolchain_suite",
     "filegroup_with_stage",
+    "gen_cc_toolchain_paths_with_stage",
 )
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
@@ -752,4 +753,38 @@ py_test(
         ":install_data",
     ],
     deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+# Generate paths file for stage 1 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage1",
+    stage = 1,
+)
+
+# Test that stage 1 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage1_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage1)"],
+    data = [":gen_cc_tools_paths_stage1"],
+    main = "cc_tools_wrapper_test.py",
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
+)
+
+# Generate paths file for stage 2 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage2",
+    stage = 2,
+    tags = ["manual"],
+)
+
+# Test that stage 2 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage2_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage2)"],
+    data = [":gen_cc_tools_paths_stage2"],
+    main = "cc_tools_wrapper_test.py",
+    tags = ["manual"],
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
 )
