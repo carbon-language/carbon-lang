@@ -159,6 +159,15 @@ struct ObjectLayout {
     return {.size = ObjectSize::Zero(), .alignment = ObjectSize::Bytes(1)};
   }
 
+  // Returns the object layout to use for an array of `count` elements. The
+  // result never has tail padding, so this is *not* the same as adding the
+  // element to itself `count` times in general.
+  static auto ForArray(ObjectLayout element_layout, int64_t count)
+      -> ObjectLayout {
+    return {.size = element_layout.ArrayStride() * count,
+            .alignment = element_layout.alignment};
+  }
+
   // Updates the layout by concatenating naturally-aligned space for the given
   // field.
   auto operator+=(ObjectLayout field) -> ObjectLayout& {
@@ -176,24 +185,6 @@ struct ObjectLayout {
   // Returns the stride of an array with this element type.
   [[nodiscard]] auto ArrayStride() const -> ObjectSize {
     return size.AlignedTo(alignment);
-  }
-
-  // Updates the layout to represent a contiguous array of `n` objects with this
-  // layout. The result never has tail padding, so this is *not* the same as
-  // adding `*this` to itself `n` times in general.
-  auto operator*=(int64_t n) -> ObjectLayout& {
-    CARBON_CHECK(has_value());
-    CARBON_CHECK(n >= 0);
-    // We preserve the alignment even if n is 0; an array of 0 `T`s should still
-    // be suitably aligned for a `T` so that an array iterator has the expected
-    // alignment.
-    size = size.AlignedTo(alignment) * n;
-    return *this;
-  }
-
-  // Returns a layout suitable for storing a contiguous array of `n` `a`s.
-  friend auto operator*(ObjectLayout a, int64_t n) -> ObjectLayout {
-    return a *= n;
   }
 
   // Returns true if the layout has been set.

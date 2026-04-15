@@ -684,7 +684,8 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   SemIR::ObjectLayout layout;
   if (element_info.object_layout.has_value()) {
     if (auto bound = context_->sem_ir().GetZExtIntValue(array_type.bound_id)) {
-      layout = element_info.object_layout * (*bound);
+      layout =
+          SemIR::ObjectLayout::ForArray(element_info.object_layout, *bound);
     }
   }
 
