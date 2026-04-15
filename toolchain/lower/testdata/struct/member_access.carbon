@@ -20,20 +20,20 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.454.loc14_3 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT: @struct.454.loc14_3 = internal constant <{ double, i32 }> <{ double 0.000000e+00, i32 1 }>
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   %x.var = alloca <{ double, i32 }>, align 8, !dbg !8
 // CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
-// CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.454.loc14_3, i64 16, i1 false), !dbg !8
+// CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %x.var, ptr align 1 @struct.454.loc14_3, i64 12, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !9
-// CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !12
+// CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 1, !dbg !12
 // CHECK:STDOUT:   %.loc15_17.2 = load i32, ptr %.loc15_17.1.b, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc15_17.2, ptr %y.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !10

@@ -474,7 +474,7 @@ fn Make() {
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.MemberInit.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CFn.Base.MemberInit to i64), i64 ptrtoint (ptr @"_CBase.MemberInit.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Base.val.loc13_3 = internal constant { ptr, i32 } { ptr @"_CBase.MemberInit.$vtable", i32 3 }
+// CHECK:STDOUT: @Base.val.loc13_3 = internal constant <{ ptr, i32 }> <{ ptr @"_CBase.MemberInit.$vtable", i32 3 }>
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFn.Base.MemberInit(ptr %self) #0 !dbg !4 {
@@ -486,22 +486,22 @@ fn Make() {
 // CHECK:STDOUT: define void @_CFn.MemberInit() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !14
-// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !15
-// CHECK:STDOUT:   %_.var = alloca { ptr, i32 }, align 8, !dbg !16
+// CHECK:STDOUT:   %v.var = alloca <{ ptr, i32 }>, align 8, !dbg !15
+// CHECK:STDOUT:   %_.var = alloca <{ ptr, i32 }>, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !14
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !15
-// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 0, !dbg !17
 // CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !18
-// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !17
+// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 1, !dbg !17
 // CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.4.m, align 4, !dbg !17
 // CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !17
-// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !19
+// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 1, !dbg !19
 // CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !16
-// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %_.var, i32 0, i32 0, !dbg !20
-// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %_.var, i32 0, i32 1, !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !16
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 1, !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @Base.val.loc13_3, i64 12, i1 false), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.dbf7676be30a7aa8:core.Destroy.Core"(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.dbf7676be30a7aa8:core.Destroy.Core"(ptr %v.var), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %i.var), !dbg !14

@@ -1298,16 +1298,103 @@ static auto BuildTypeForInst(FileContext& /*context*/,
   CARBON_FATAL("Unexpected pattern type in lowering");
 }
 
+// Builds an LLVM packed struct type whose layout matches the Carbon layout for
+// an aggregate with the given field types and field layouts.
+static auto BuildPackedStructType(FileContext& context,
+                                  llvm::MutableArrayRef<llvm::Type*> subtypes,
+                                  llvm::ArrayRef<SemIR::ObjectLayout> layouts)
+    -> llvm::StructType* {
+  const auto& data_layout = context.llvm_module().getDataLayout();
+  auto struct_layout = SemIR::ObjectLayout::Empty();
+  auto size_so_far = SemIR::ObjectSize::Zero();
+
+  llvm::Type** previous_type = nullptr;
+  for (auto [type, layout] : llvm::zip(subtypes, layouts)) {
+    auto offset = struct_layout.size.AlignedTo(layout.alignment);
+    // If this field has padding before it, represent that padding explicitly as
+    // part of the previous field. This allows us to always use GEP indexes that
+    // match the field indexes.
+    if (offset != size_so_far) {
+      CARBON_CHECK(previous_type, "Padding before first field?");
+      CARBON_CHECK(offset > size_so_far, "Extraneous padding after field {0}",
+                   **previous_type);
+      int64_t padding_bytes = offset.bytes() - struct_layout.size.bytes();
+      llvm::Type* type_with_padding[2] = {
+          *previous_type,
+          llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                               padding_bytes)};
+      *previous_type =
+          llvm::StructType::get(context.llvm_context(), type_with_padding,
+                                /*isPacked=*/true);
+      size_so_far += SemIR::ObjectSize::Bytes(padding_bytes);
+      CARBON_CHECK(offset == size_so_far, "Field at non-byte offset");
+    }
+
+    size_so_far += SemIR::ObjectSize::Bytes(data_layout.getTypeAllocSize(type));
+    struct_layout += layout;
+    previous_type = &type;
+  }
+  return llvm::StructType::get(context.llvm_context(), subtypes,
+                               /*isPacked=*/true);
+}
+
+// Returns whether the given LLVM layout matches the expected Carbon layout for
+// an aggregate with the given field layouts.
+static auto StructLayoutMatches(llvm::ArrayRef<SemIR::ObjectLayout> layouts,
+                                const llvm::StructLayout& llvm_layout) -> bool {
+  auto struct_layout = SemIR::ObjectLayout::Empty();
+
+  // Check each field is at the right offset.
+  for (auto [i, layout] : llvm::enumerate(layouts)) {
+    if (static_cast<int64_t>(llvm_layout.getElementOffsetInBits(i)) !=
+        struct_layout.size.AlignedTo(layout.alignment).bits()) {
+      return false;
+    }
+    struct_layout += layout;
+  }
+
+  // Treat the LLVM layout as being acceptable if it's the right byte size and
+  // does not require more alignment than the Carbon type. We could ignore the
+  // alignment, but an overaligned LLVM type will prevent the type from being
+  // used in non-packed structs in more situations.
+  return static_cast<int64_t>(llvm_layout.getSizeInBytes()) ==
+             struct_layout.size.bytes() &&
+         llvm_layout.getAlignment() <=
+             llvm::Align(struct_layout.alignment.bytes());
+}
+
+// Builds an LLVM struct type whose layout matches the Carbon layout for an
+// aggregate with the given field types and field layouts.
+static auto BuildStructType(FileContext& context,
+                            llvm::MutableArrayRef<llvm::Type*> subtypes,
+                            llvm::ArrayRef<SemIR::ObjectLayout> layouts)
+    -> FileContext::LoweredTypes {
+  // Opportunistically try building an llvm StructType from the subtypes. If it
+  // has the right layout, we're done.
+  auto* struct_type = llvm::StructType::get(context.llvm_context(), subtypes);
+  if (!StructLayoutMatches(
+          layouts, *context.llvm_module().getDataLayout().getStructLayout(
+                       struct_type))) {
+    struct_type = BuildPackedStructType(context, subtypes, layouts);
+  }
+  return {struct_type, nullptr};
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> FileContext::LoweredTypes {
   auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
   llvm::SmallVector<llvm::Type*> subtypes;
+  llvm::SmallVector<SemIR::ObjectLayout> layouts;
   subtypes.reserve(fields.size());
+  layouts.reserve(fields.size());
   for (auto field : fields) {
-    subtypes.push_back(context.GetType(
-        context.sem_ir().types().GetTypeIdForTypeInstId(field.type_inst_id)));
+    auto type_id =
+        context.sem_ir().types().GetTypeIdForTypeInstId(field.type_inst_id);
+    subtypes.push_back(context.GetType(type_id));
+    layouts.push_back(
+        context.sem_ir().types().GetCompleteTypeInfo(type_id).object_layout);
   }
-  return {llvm::StructType::get(context.llvm_context(), subtypes), nullptr};
+  return BuildStructType(context, subtypes, layouts);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
@@ -1318,11 +1405,15 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   // type, so that may require significant special casing.
   auto elements = context.sem_ir().inst_blocks().Get(inst.type_elements_id);
   llvm::SmallVector<llvm::Type*> subtypes;
+  llvm::SmallVector<SemIR::ObjectLayout> layouts;
   subtypes.reserve(elements.size());
+  layouts.reserve(elements.size());
   for (auto type_id : context.sem_ir().types().GetBlockAsTypeIds(elements)) {
     subtypes.push_back(context.GetType(type_id));
+    layouts.push_back(
+        context.sem_ir().types().GetCompleteTypeInfo(type_id).object_layout);
   }
-  return {llvm::StructType::get(context.llvm_context(), subtypes), nullptr};
+  return BuildStructType(context, subtypes, layouts);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)

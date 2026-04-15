@@ -43,7 +43,7 @@ fn For() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %r.var = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   %var = alloca {}, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc29_33.1.temp = alloca { { i32, i32 }, i1 }, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc29_33.1.temp = alloca <{ { i32, i32 }, i1 }>, align 8, !dbg !8
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc29_33.8.temp = alloca { i32, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %r.var), !dbg !7
@@ -133,7 +133,7 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CNext.EmptyRange.1ccc388edee5a786.Main:Iterate.Core.8d745d19e7d6c4bd"(ptr sret({ { i32, i32 }, i1 }) %return, ptr %self, ptr %_) #0 !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @"_CNext.EmptyRange.1ccc388edee5a786.Main:Iterate.Core.8d745d19e7d6c4bd"(ptr sret(<{ { i32, i32 }, i1 }>) %return, ptr %self, ptr %_) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CNone.Optional.Core.6b64456bb8003a40(ptr %return), !dbg !57
 // CHECK:STDOUT:   ret void, !dbg !58
@@ -152,14 +152,14 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.6b64456bb8003a40(ptr sret({ { i32, i32 }, i1 }) %return) #0 !dbg !72 {
+// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.6b64456bb8003a40(ptr sret(<{ { i32, i32 }, i1 }>) %return) #0 !dbg !72 {
 // CHECK:STDOUT:   call void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.8d745d19e7d6c4bd"(ptr %return), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.3e8267224c5dc9c2:OptionalStorage.Core.8d745d19e7d6c4bd"(ptr %value) #0 !dbg !77 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { { i32, i32 }, i1 }, ptr %value, i32 0, i32 1, !dbg !80
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %value, i32 0, i32 1, !dbg !80
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !80
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !80
 // CHECK:STDOUT:   ret i1 %2, !dbg !81
@@ -167,14 +167,14 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CGet.3e8267224c5dc9c2:OptionalStorage.Core.8d745d19e7d6c4bd"(ptr sret({ i32, i32 }) %return, ptr %value) #0 !dbg !82 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw { { i32, i32 }, i1 }, ptr %value, i32 0, i32 0, !dbg !85
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %value, i32 0, i32 0, !dbg !85
 // CHECK:STDOUT:   call void @"_COp.e4daa70d026fdea2:Copy.Core.3e36085cb869f630"(ptr %return, ptr %value1), !dbg !85
 // CHECK:STDOUT:   ret void, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.8d745d19e7d6c4bd"(ptr sret({ { i32, i32 }, i1 }) %return) #0 !dbg !87 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { { i32, i32 }, i1 }, ptr %return, i32 0, i32 1, !dbg !88
+// CHECK:STDOUT: define linkonce_odr void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.8d745d19e7d6c4bd"(ptr sret(<{ { i32, i32 }, i1 }>) %return) #0 !dbg !87 {
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %return, i32 0, i32 1, !dbg !88
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !88
 // CHECK:STDOUT:   ret void, !dbg !89
 // CHECK:STDOUT: }

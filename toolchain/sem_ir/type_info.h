@@ -112,15 +112,24 @@ class ObjectSize : public Printable<ObjectSize> {
     return a.bits_ == b.bits_;
   }
 
-  friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
-    return Bits(a.bits_ + b.bits_);
+  auto operator+=(ObjectSize other) -> ObjectSize& {
+    bits_ += other.bits_;
+    return *this;
   }
 
+  friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
+    return a += b;
+  }
+
+  auto operator*=(int64_t n) -> ObjectSize& {
+    bits_ *= n;
+    return *this;
+  }
   friend auto operator*(ObjectSize a, int64_t n) -> ObjectSize {
-    return Bits(a.bits_ * n);
+    return a *= n;
   }
   friend auto operator*(int64_t n, ObjectSize a) -> ObjectSize {
-    return Bits(n * a.bits_);
+    return a *= n;
   }
 
  private:
