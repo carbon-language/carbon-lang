@@ -1192,6 +1192,22 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   return subprogram;
 }
 
+// Given an LLVM type, build a corresponding type with `padding_bytes` bytes of
+// explicit tail padding.
+static auto BuildTailPaddedType(llvm::Type* subtype, int64_t padding_bytes)
+    -> llvm::Type* {
+  if (padding_bytes == 0) {
+    return subtype;
+  }
+  // Build the type `<{subtype, [i8 x padding_bytes]}>`.
+  llvm::Type* type_with_padding[2] = {
+      subtype,
+      llvm::ArrayType::get(llvm::Type::getInt8Ty(subtype->getContext()),
+                           padding_bytes)};
+  return llvm::StructType::get(subtype->getContext(), type_with_padding,
+                               /*isPacked=*/true);
+}
+
 // BuildTypeForInst is used to construct types for FileContext::BuildType below.
 // Implementations return the LLVM type for the instruction. This first overload
 // is the fallback handler for non-type instructions.
@@ -1212,10 +1228,25 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> FileContext::LoweredTypes {
+  auto elem_type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
+      inst.element_type_inst_id);
+  auto stride = context.sem_ir()
+                    .types()
+                    .GetCompleteTypeInfo(elem_type_id)
+                    .object_layout.ArrayStride();
+
+  auto* elem_type = context.GetType(elem_type_id);
+  auto elem_size = SemIR::ObjectSize::Bytes(
+      context.llvm_module().getDataLayout().getTypeAllocSize(elem_type));
+
+  if (elem_size != stride) {
+    CARBON_CHECK(elem_size < stride, "Array element type too large");
+    elem_type = BuildTailPaddedType(context.GetType(elem_type_id),
+                                    stride.bytes() - elem_size.bytes());
+  }
+
   return {llvm::ArrayType::get(
-              context.GetType(context.sem_ir().types().GetTypeIdForTypeInstId(
-                  inst.element_type_inst_id)),
-              *context.sem_ir().GetZExtIntValue(inst.bound_id)),
+              elem_type, *context.sem_ir().GetZExtIntValue(inst.bound_id)),
           nullptr};
 }
 
@@ -1319,13 +1350,7 @@ static auto BuildPackedStructType(FileContext& context,
       CARBON_CHECK(offset > size_so_far, "Extraneous padding after field {0}",
                    **previous_type);
       int64_t padding_bytes = offset.bytes() - struct_layout.size.bytes();
-      llvm::Type* type_with_padding[2] = {
-          *previous_type,
-          llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
-                               padding_bytes)};
-      *previous_type =
-          llvm::StructType::get(context.llvm_context(), type_with_padding,
-                                /*isPacked=*/true);
+      *previous_type = BuildTailPaddedType(*previous_type, padding_bytes);
       size_so_far += SemIR::ObjectSize::Bytes(padding_bytes);
       CARBON_CHECK(offset == size_so_far, "Field at non-byte offset");
     }

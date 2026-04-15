@@ -173,6 +173,11 @@ struct ObjectLayout {
     return a += b;
   }
 
+  // Returns the stride of an array with this element type.
+  [[nodiscard]] auto ArrayStride() const -> ObjectSize {
+    return size.AlignedTo(alignment);
+  }
+
   // Updates the layout to represent a contiguous array of `n` objects with this
   // layout. The result never has tail padding, so this is *not* the same as
   // adding `*this` to itself `n` times in general.
