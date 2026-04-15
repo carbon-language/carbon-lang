@@ -17,4 +17,3 @@ fn F() -> ref i32 {
   // CHECK:STDERR:
   return 0;
 }
-
