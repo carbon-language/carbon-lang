@@ -50,8 +50,8 @@ project uses Bazelisk.
 > [!TIP] For specialized instructions on testing and developing the Carbon
 > toolchain, consult these skills:
 >
-> -   [Toolchain tests](/.agents/skills/toolchain_tests/SKILL.md):
->     For authoring, structuring, and running `file_test` tests.
+> -   [Toolchain tests](/.agents/skills/toolchain_tests/SKILL.md): For
+>     authoring, structuring, and running `file_test` tests.
 > -   [Toolchain development](/.agents/skills/toolchain_development/SKILL.md):
 >     For architecture, essential commands, and debugging the toolchain.
 
