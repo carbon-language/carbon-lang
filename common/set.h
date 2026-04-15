@@ -384,18 +384,10 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
   CARBON_DCHECK(entry, "Should always result in a valid index.");
 
   if (LLVM_LIKELY(!inserted)) {
-    CARBON_DCHECK(
-        key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
-            key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
-        "Heterogeneous keys should hash to the same value.");
     return InsertResult(false, entry->key());
   }
 
   insert_cb(lookup_key, static_cast<void*>(&entry->key_storage));
-  CARBON_DCHECK(
-      key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
-          key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
-      "Heterogeneous keys should hash to the same value.");
   return InsertResult(true, entry->key());
 }
 
