@@ -1456,12 +1456,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
   return {llvm::Type::getVoidTy(context.llvm_context()), nullptr};
 }
 
-static auto BuildTypeForInst(FileContext& context,
-                             SemIR::SpecificFunctionType /*inst*/)
-    -> FileContext::LoweredTypes {
-  return {llvm::PointerType::get(context.llvm_context(), 0), nullptr};
-}
-
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
@@ -1471,8 +1465,8 @@ template <typename InstT>
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
            SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
-           SemIR::RequireSpecificDefinitionType, SemIR::UnboundElementType,
-           SemIR::WhereExpr, SemIR::WitnessType>())
+           SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
+           SemIR::UnboundElementType, SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> FileContext::LoweredTypes {
   // Return an empty struct as a placeholder.
@@ -1484,13 +1478,42 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 auto FileContext::BuildType(SemIR::InstId inst_id) -> LoweredTypes {
   // Use overload resolution to select the implementation, producing compile
   // errors when BuildTypeForInst isn't defined for a given instruction.
+  LoweredTypes result;
   CARBON_KIND_SWITCH(sem_ir_->insts().Get(inst_id)) {
-#define CARBON_SEM_IR_INST_KIND(Name)     \
-  case CARBON_KIND(SemIR::Name inst): {   \
-    return BuildTypeForInst(*this, inst); \
+#define CARBON_SEM_IR_INST_KIND(Name)       \
+  case CARBON_KIND(SemIR::Name inst): {     \
+    result = BuildTypeForInst(*this, inst); \
+    break;                                  \
   }
 #include "toolchain/sem_ir/inst_kind.def"
   }
+
+  // In debug builds, check that the type we built has the expected size.
+  CARBON_DCHECK([&] {
+    if (!result.llvm_ir_type) {
+      return true;
+    }
+    const auto& layout = llvm_module().getDataLayout();
+    auto expected_layout =
+        sem_ir()
+            .types()
+            .GetCompleteTypeInfo(
+                sem_ir().types().GetTypeIdForTypeInstId(inst_id))
+            .object_layout;
+    CARBON_CHECK(expected_layout.has_value());
+    auto size =
+        SemIR::ObjectSize::Bits(layout.getTypeSizeInBits(result.llvm_ir_type));
+    // Round up to byte granularity for this check, since LLVM doesn't support
+    // non-byte-sized packed structs.
+    CARBON_CHECK(
+        size.bytes() == expected_layout.size.bytes(),
+        "Lowered type {0} for {1} has unexpected size {2}, expected {3}",
+        *result.llvm_ir_type, sem_ir().insts().Get(inst_id), size,
+        expected_layout.size);
+    return true;
+  }());
+
+  return result;
 }
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
