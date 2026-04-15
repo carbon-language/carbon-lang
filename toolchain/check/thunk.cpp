@@ -41,8 +41,9 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
   CARBON_CHECK(context.insts().Get(orig_inst_id).kind() == new_inst.kind(),
                "Rebuilt pattern with the wrong kind: {0} -> {1}",
                context.insts().Get(orig_inst_id), new_inst);
-  return AddPatternInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-                                     SemIR::LocId(orig_inst_id), new_inst));
+  return AddPatternInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
 }
 
 // Wrapper to allow the type to be specified as a template argument for API
@@ -62,12 +63,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-  CARBON_CHECK((pattern.kind == SemIR::FormBindingPattern::Kind) ==
-               entity_name.form_id.has_value());
-  if (pattern.kind == SemIR::FormBindingPattern::Kind) {
-    context.TODO(pattern_id, "Support for cloning form bindings");
-    return SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(pattern.kind != SemIR::FormBindingPattern::Kind);
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -81,6 +77,19 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   pattern.entity_name_id = AddBindingEntityName(
       context, entity_name.name_id, /*form_id=*/SemIR::ConstantId::None,
       entity_name.is_unused, phase);
+  if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
+    auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
+        pattern.subpattern_id);
+    if (subpattern.kind == SemIR::FormParamPattern::Kind) {
+      context.TODO(pattern_id, "Support for cloning form bindings");
+      return SemIR::ErrorInst::InstId;
+    }
+    pattern.subpattern_id = RebuildPatternInst<SemIR::AnyLeafParamPattern>(
+        context, pattern.subpattern_id,
+        {.kind = subpattern.kind,
+         .type_id = new_pattern_type_id,
+         .pretty_name_id = entity_name.name_id});
+  }
   // Rebuild the binding pattern.
   return AddBindingPattern(context, SemIR::LocId(pattern_id),
                            SemIR::ExprRegionId::None, pattern)
@@ -106,9 +115,9 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   // Decompose the pattern. The forms we allow for patterns in a function
   // parameter list are currently fairly restrictive.
 
-  // Optional parameter pattern.
-  auto [param, param_id] = context.insts().TryUnwrap(
-      pattern, pattern_id, &SemIR::AnyParamPattern::subpattern_id);
+  // Optional var parameter pattern.
+  auto [var_param, var_param_id] = context.insts().TryUnwrap(
+      pattern, pattern_id, &SemIR::VarParamPattern::subpattern_id);
 
   // Finally, either a binding pattern or a return slot pattern.
   auto new_pattern_id = SemIR::InstId::None;
@@ -116,9 +125,14 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
     new_pattern_id = CloneBindingPattern(context, pattern_id, *binding,
                                          get_type(pattern_id));
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
+    auto new_subpattern_id = RebuildPatternInst<SemIR::OutParamPattern>(
+        context, return_slot->subpattern_id,
+        {.type_id = get_type(return_slot->subpattern_id),
+         .pretty_name_id = SemIR::NameId::ReturnSlot});
     new_pattern_id = RebuildPatternInst<SemIR::ReturnSlotPattern>(
         context, pattern_id,
         {.type_id = get_type(pattern_id),
+         .subpattern_id = new_subpattern_id,
          .type_inst_id = SemIR::TypeInstId::None});
   } else {
     CARBON_CHECK(pattern.Is<SemIR::ErrorInst>(),
@@ -127,12 +141,10 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   }
 
   // Rebuild parameter.
-  if (param) {
-    new_pattern_id = RebuildPatternInst<SemIR::AnyParamPattern>(
-        context, param_id,
-        {.kind = param->kind,
-         .type_id = get_type(param_id),
-         .subpattern_id = new_pattern_id});
+  if (var_param && new_pattern_id != SemIR::ErrorInst::InstId) {
+    new_pattern_id = RebuildPatternInst<SemIR::VarParamPattern>(
+        context, var_param_id,
+        {.type_id = get_type(var_param_id), .subpattern_id = new_pattern_id});
   }
 
   return new_pattern_id;
@@ -253,68 +265,20 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
-  auto param_pattern_ids =
-      context.inst_blocks().Get(function.call_param_patterns_id);
+  auto [args_vec, ignored_call_args] =
+      ThunkPatternMatch(context, function.self_param_id,
+                        function.param_patterns_id, call_arg_ids);
+  llvm::ArrayRef<SemIR::InstId> args = args_vec;
 
-  // Maps each `Call` parameter pattern ID to its index.
-  // TODO: is it possible to arrange for the param patterns to be created in
-  // order, so that we could use `param_pattern_ids` for this directly?
-  struct InstWithIndex {
-    SemIR::InstId inst_id;
-    int index;
-
-    auto operator<(InstWithIndex other) const -> bool {
-      return inst_id.index < other.inst_id.index;
-    }
-  };
-  llvm::SmallVector<InstWithIndex> param_to_index;
-
-  param_to_index.reserve(param_pattern_ids.size());
-  for (auto [index, inst_id] : llvm::enumerate(param_pattern_ids)) {
-    param_to_index.push_back({inst_id, static_cast<int>(index)});
-  }
-  llvm::sort(param_to_index);
-
-  // Given that `call_arg_ids` is a list of the _`Call`_ arguments for a call to
-  // `function_id`, this returns the _syntactic_ argument that was passed for
-  // param_pattern_id in that call.
-  auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
-    // NOLINTNEXTLINE(readability-qualified-auto)
-    auto result =
-        llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
-    if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
-      return call_arg_ids[result->index];
-    } else {
-      if (param_pattern_id != SemIR::ErrorInst::InstId) {
-        context.TODO(param_pattern_id,
-                     "don't know how to reconstruct the syntactic argument for "
-                     "this pattern in thunk");
-      }
-      return SemIR::ErrorInst::InstId;
-    }
-  };
-
-  llvm::SmallVector<SemIR::InstId> args;
-
-  // If we have a self parameter, form `self.<callee_id>`.
-  if (function.self_param_id.has_value()) {
-    auto self_arg_id = build_syntactic_arg(function.self_param_id);
-    if (IsCppConstructorOrNonMethodOperator(context, callee_id)) {
-      // When calling a C++ constructor to implement `Copy`, or calling a C++
-      // non-method operator to implement a Carbon operator, the interface has a
-      // `self` parameter but C++ models that parameter as an explicit argument
-      // instead, so add the `self` to the argument list instead in that case.
-      args.push_back(self_arg_id);
-    } else {
-      callee_id =
-          PerformCompoundMemberAccess(context, loc_id, self_arg_id, callee_id);
-    }
-  }
-
-  // Form an argument list.
-  for (auto pattern_id :
-       context.inst_blocks().Get(function.param_patterns_id)) {
-    args.push_back(build_syntactic_arg(pattern_id));
+  // If we have a self parameter, form `self.<callee_id>` if needed.
+  // When calling a C++ constructor to implement `Copy`, or calling a C++
+  // non-method operator to implement a Carbon operator, the interface has a
+  // `self` parameter but C++ models that parameter as an explicit argument
+  // instead, so add the `self` to the argument list instead in that case.
+  if (function.self_param_id.has_value() &&
+      !IsCppConstructorOrNonMethodOperator(context, callee_id)) {
+    callee_id = PerformCompoundMemberAccess(context, loc_id,
+                                            args.consume_front(), callee_id);
   }
 
   return PerformCall(context, loc_id, callee_id, args);
@@ -333,30 +297,13 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
   callee_id = BuildNameRef(context, loc_id, function.name_id, callee_id,
                            callee_type.specific_id);
 
-  // Build a reference to each parameter for use as call arguments.
-  llvm::SmallVector<SemIR::InstId> call_args;
   auto call_params = context.inst_blocks().Get(function.call_params_id);
-  call_args.reserve(call_params.size());
-  for (auto call_param_id : call_params) {
-    // Use a pretty name for the `name_ref`. While it's suspicious to use a
-    // pretty name in the IR like this, the only reason we include a name at all
-    // here is to make the formatted SemIR more readable.
-    auto call_param = context.insts().GetAs<SemIR::AnyParam>(call_param_id);
-    call_args.push_back(BuildNameRef(context, SemIR::LocId(call_param_id),
-                                     call_param.pretty_name_id, call_param_id,
-                                     SemIR::SpecificId::None));
-  }
-
-  return PerformThunkCall(context, loc_id, function_id, call_args, callee_id);
+  return PerformThunkCall(context, loc_id, function_id, call_params, callee_id);
 }
 
-// Given a declaration of a thunk and the function that it should call, build
-// the thunk body.
-static auto BuildThunkDefinition(Context& context,
-                                 SemIR::FunctionId signature_id,
-                                 SemIR::FunctionId function_id,
-                                 SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id) {
+auto BuildThunkDefinition(Context& context, SemIR::FunctionId signature_id,
+                          SemIR::FunctionId function_id, SemIR::InstId thunk_id,
+                          SemIR::InstId callee_id) -> void {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining

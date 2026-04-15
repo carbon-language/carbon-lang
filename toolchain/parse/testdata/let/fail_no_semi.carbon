@@ -10,11 +10,11 @@
 
 let
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+17]]:21: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+15]]:21: error: expected pattern [ExpectedPattern]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+13]]:21: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+11]]:21: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
@@ -22,9 +22,7 @@ let
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: '', has_error: yes},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: '', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: 'let', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: 'let', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

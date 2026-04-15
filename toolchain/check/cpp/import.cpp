@@ -137,10 +137,12 @@ auto ImportCpp(Context& context,
   name_scope.set_is_closed_import(true);
 
   if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
-    name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-        {.key = SemIR::ClangDeclKey(
-             context.ast_context().getTranslationUnitDecl()),
-         .inst_id = name_scope.inst_id()}));
+    name_scope.set_clang_decl_context_id(
+        context.clang_decls().Add(
+            {.key = SemIR::ClangDeclKey(
+                 context.ast_context().getTranslationUnitDecl()),
+             .inst_id = name_scope.inst_id()}),
+        /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
   }
@@ -302,7 +304,8 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(
-          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}));
+          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}),
+          /*is_cpp_scope=*/true);
   return result.inst_id;
 }
 
@@ -318,8 +321,8 @@ static auto BuildClassDecl(Context& context,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
   auto class_decl_id = AddPlaceholderImportedInstInNoBlock(
-      context,
-      MakeImportedLocIdAndInst(context, import_ir_inst_id, class_decl));
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), import_ir_inst_id, class_decl));
 
   SemIR::Class class_info = {
       {.name_id = name_id,
@@ -373,7 +376,7 @@ static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
       class_inst_id, SemIR::NameId::None, class_info.parent_scope_id);
   context.name_scopes()
       .Get(class_info.scope_id)
-      .set_clang_decl_context_id(clang_decl_id);
+      .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/true);
 
   return class_inst_id;
 }
@@ -438,8 +441,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       clang_def->isAggregate()) {
     return context.types().GetAsTypeInstId(AddInst(
         context,
-        MakeImportedLocIdAndInst(
-            context, import_ir_inst_id,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), import_ir_inst_id,
             SemIR::StructType{.type_id = SemIR::TypeType::TypeId,
                               .fields_id = SemIR::StructTypeFieldsId::Empty})));
   }
@@ -491,8 +494,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     auto base_decl_id = AddInst(
         context,
-        MakeImportedLocIdAndInst(
-            context, import_ir_inst_id,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), import_ir_inst_id,
             SemIR::BaseDecl{.type_id = GetUnboundElementType(
                                 context, class_type_inst_id, base_type_inst_id),
                             .base_type_inst_id = base_type_inst_id,
@@ -574,8 +577,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
     auto field_decl_id = AddInst(
-        context, MakeImportedLocIdAndInst(
-                     context, import_ir_inst_id,
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), import_ir_inst_id,
                      SemIR::FieldDecl{
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
@@ -607,12 +610,13 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
-  return AddTypeInst(context,
-                     MakeImportedLocIdAndInst<SemIR::CustomLayoutType>(
-                         context, import_ir_inst_id,
-                         {.type_id = SemIR::TypeType::TypeId,
-                          .fields_id = context.struct_type_fields().Add(fields),
-                          .layout_id = context.custom_layouts().Add(layout)}));
+  return AddTypeInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), import_ir_inst_id,
+                   SemIR::CustomLayoutType{
+                       .type_id = SemIR::TypeType::TypeId,
+                       .fields_id = context.struct_type_fields().Add(fields),
+                       .layout_id = context.custom_layouts().Add(layout)}));
 }
 
 // Creates a Carbon class definition based on the information in the given Clang
@@ -633,12 +637,13 @@ static auto BuildClassDefinition(Context& context,
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
-  class_info.complete_type_witness_id = AddInst(
-      context,
-      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
-          context, import_ir_inst_id,
-          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-           .object_repr_type_inst_id = object_repr_id}));
+  class_info.complete_type_witness_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), import_ir_inst_id,
+                           SemIR::CompleteTypeWitness{
+                               .type_id = GetSingletonType(
+                                   context, SemIR::WitnessType::TypeInstId),
+                               .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -656,12 +661,13 @@ static auto ImportEnumObjectRepresentation(
   auto int_kind = int_type->isSignedIntegerType() ? SemIR::IntKind::Signed
                                                   : SemIR::IntKind::Unsigned;
   auto bit_width_id = GetOrAddInst(
-      context, MakeImportedLocIdAndInst<SemIR::IntValue>(
-                   context, import_ir_inst_id,
-                   {.type_id = GetSingletonType(
-                        context, SemIR::IntLiteralType::TypeInstId),
-                    .int_id = context.ints().AddUnsigned(llvm::APInt(
-                        64, context.ast_context().getIntWidth(int_type)))}));
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), import_ir_inst_id,
+                   SemIR::IntValue{
+                       .type_id = GetSingletonType(
+                           context, SemIR::IntLiteralType::TypeInstId),
+                       .int_id = context.ints().AddUnsigned(llvm::APInt(
+                           64, context.ast_context().getIntWidth(int_type)))}));
   return context.types().GetAsTypeInstId(
       GetOrAddInst(context, SemIR::LocIdAndInst::NoLoc(SemIR::IntType{
                                 .type_id = SemIR::TypeType::TypeId,
@@ -690,15 +696,16 @@ static auto BuildEnumDefinition(Context& context,
   auto object_repr_id =
       ImportEnumObjectRepresentation(context, import_ir_inst_id, enum_decl);
   class_info.adapt_id = AddInst(
-      context, MakeImportedLocIdAndInst(
-                   context, import_ir_inst_id,
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), import_ir_inst_id,
                    SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
-  class_info.complete_type_witness_id = AddInst(
-      context,
-      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
-          context, import_ir_inst_id,
-          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-           .object_repr_type_inst_id = object_repr_id}));
+  class_info.complete_type_witness_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), import_ir_inst_id,
+                           SemIR::CompleteTypeWitness{
+                               .type_id = GetSingletonType(
+                                   context, SemIR::WitnessType::TypeInstId),
+                               .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -721,9 +728,9 @@ static auto ImportEnumConstantDecl(Context& context,
   auto import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), enumerator_decl->getLocation());
   auto inst_id = AddInstInNoBlock(
-      context,
-      MakeImportedLocIdAndInst<SemIR::IntValue>(
-          context, import_ir_inst_id, {.type_id = type_id, .int_id = int_id}));
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), import_ir_inst_id,
+                   SemIR::IntValue{.type_id = type_id, .int_id = int_id}));
   context.imports().push_back(inst_id);
   context.clang_decls().Add({.key = key, .inst_id = inst_id});
   return inst_id;
@@ -1109,7 +1116,9 @@ static auto MakeImplicitParamPatternsBlockId(
   auto param_info = MapParameterType(context, loc_id, param_type);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
-      EndSubpatternAsExpr(context, type_inst_id);
+      ConsumeSubpatternExpr(context, type_inst_id);
+
+  EndEmptySubpattern(context);
 
   if (!type_id.has_value()) {
     context.TODO(loc_id,
@@ -1159,7 +1168,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
     // Mark the start of a region of insts, needed for the type expression
-    // created later with the call of `EndSubpatternAsExpr()`.
+    // created later with the call of `ConsumeSubpatternExpr()`.
     BeginSubpattern(context);
     auto param_info = MapParameterType(context, loc_id, param_type);
     auto [type_inst_id, type_id] = param_info.type;
@@ -1167,7 +1176,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        EndSubpatternAsExpr(context, type_inst_id);
+        ConsumeSubpatternExpr(context, type_inst_id);
+    EndEmptySubpattern(context);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
@@ -1207,10 +1217,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
       auto tuple_pattern_type_id =
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddPatternInst(
-          context,
-          SemIR::LocIdAndInst::UncheckedLoc(
-              loc_id, SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
-                                          .elements_id = param_block_id}));
+          context, SemIR::LocIdAndInst::RuntimeVerified(
+                       context.sem_ir(), loc_id,
+                       SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
+                                           .elements_id = param_block_id}));
       param_ids = {pattern_id};
       break;
     }
@@ -1319,18 +1329,20 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   auto return_patterns_id = SemIR::InstBlockId::Empty;
   if (auto init_form =
           context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
-    SemIR::InstId return_slot_pattern_id = AddPatternInst(
-        context, MakeImportedLocIdAndInst(
-                     context, return_type_import_ir_inst_id,
-                     SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
-                                               .type_inst_id = type_inst_id})));
     auto param_pattern_id = AddPatternInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), return_type_import_ir_inst_id,
+                     SemIR::OutParamPattern(
+                         {.type_id = pattern_type_id,
+                          .pretty_name_id = SemIR::NameId::ReturnSlot})));
+    SemIR::InstId return_slot_pattern_id = AddPatternInst(
         context,
-        MakeImportedLocIdAndInst(
-            context, return_type_import_ir_inst_id,
-            SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                    .subpattern_id = return_slot_pattern_id})));
-    return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), return_type_import_ir_inst_id,
+            SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
+                                      .subpattern_id = param_pattern_id,
+                                      .type_inst_id = type_inst_id})));
+    return_patterns_id = context.inst_blocks().Add({return_slot_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,
           .return_form_inst_id = form_inst_id,
@@ -1578,8 +1590,10 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
               context, loc_id, import_ir_inst_id, thunk_clang_decl,
               {.num_params =
                    static_cast<int32_t>(thunk_clang_decl->getNumParams())})) {
+        auto& thunk_function = context.functions().Get(*thunk_function_id);
+        thunk_function.SetCppThunk(function_info.first_owning_decl_id);
         SemIR::InstId thunk_function_decl_id =
-            context.functions().Get(*thunk_function_id).first_owning_decl_id;
+            thunk_function.first_owning_decl_id;
         function_info.SetHasCppThunk(thunk_function_decl_id);
       }
     }
@@ -1771,7 +1785,8 @@ static auto ImportTemplateDecl(Context& context,
   SemIR::StructValue value = {.type_id = SemIR::TypeId::None,
                               .elements_id = SemIR::InstBlockId::Empty};
   auto inst_id = AddPlaceholderImportedInstInNoBlock(
-      context, MakeImportedLocIdAndInst(context, import_loc_id, value));
+      context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
+                                                    import_loc_id, value));
 
   // Create a type for the constant value.
   auto name_id = context.entity_names().Add(

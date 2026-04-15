@@ -64,8 +64,10 @@ auto ResolveFacetTypeRewriteConstraints(
 // Introduce `.Self` as a symbolic binding into the current scope, and return
 // the `SymbolicBinding` instruction.
 //
-// The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
-// `TypeType`).
+// The type of `.Self` must be a `FacetType`, so that it gets wrapped in
+// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
+// This allows substitution with other facet values without requiring an
+// additional `FacetAccessType` to be inserted.
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
     -> SemIR::InstId;
 

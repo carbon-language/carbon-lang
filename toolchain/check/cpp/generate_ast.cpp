@@ -8,6 +8,7 @@
 #include <string>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -20,18 +21,27 @@
 #include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
+#include "common/map.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -45,31 +55,37 @@ static auto GenerateLineMarker(Context& context, llvm::raw_ostream& out,
       << FormatEscaped(context.tokens().source().filename()) << "\"\n";
 }
 
+// Appends a line marker and the specified `code` to `out`, adjusting the
+// `line` number if the `code_token` represents a block string literal.
+static auto AppendInlineCode(Context& context, llvm::raw_ostream& out,
+                             Lex::TokenIndex code_token, llvm::StringRef code)
+    -> void {
+  // Compute the line number on which the C++ code starts. Usually the code
+  // is specified as a block string literal and starts on the line after the
+  // start of the string token.
+  // TODO: Determine if this is a block string literal without calling
+  // `GetTokenText`, which re-lexes the string.
+  int line = context.tokens().GetLineNumber(code_token);
+  if (context.tokens().GetTokenText(code_token).contains('\n')) {
+    ++line;
+  }
+
+  GenerateLineMarker(context, out, line);
+  out << code << "\n";
+}
+
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
     Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> std::string {
-  std::string code;
-  llvm::raw_string_ostream code_stream(code);
+  RawStringOstream code_stream;
   for (const Parse::Tree::PackagingNames& import : imports) {
     if (import.inline_body_id.has_value()) {
       // Expand `import Cpp inline "code";` directly into the specified code.
       auto code_token = context.parse_tree().node_token(import.inline_body_id);
-
-      // Compute the line number on which the C++ code starts. Usually the code
-      // is specified as a block string literal and starts on the line after the
-      // start of the string token.
-      // TODO: Determine if this is a block string literal without calling
-      // `GetTokenText`, which re-lexes the string.
-      int line = context.tokens().GetLineNumber(code_token);
-      if (context.tokens().GetTokenText(code_token).contains('\n')) {
-        ++line;
-      }
-
-      GenerateLineMarker(context, code_stream, line);
-      code_stream << context.string_literal_values().Get(
-                         context.tokens().GetStringLiteralValue(code_token))
-                  << "\n";
+      AppendInlineCode(context, code_stream, code_token,
+                       context.string_literal_values().Get(
+                           context.tokens().GetStringLiteralValue(code_token)));
       // TODO: Inject a clang pragma here to produce an error if there are
       // unclosed scopes at the end of this inline C++ fragment.
     } else if (import.library_id.has_value()) {
@@ -86,35 +102,7 @@ static auto GenerateCppIncludesHeaderCode(
       }
     }
   }
-
-  // Inject a declaration of placement operator new, because the code we
-  // generate in thunks depends on it for placement new expressions. Clang has
-  // special-case logic for lowering a new-expression using this, so a
-  // definition is not required.
-  // TODO: This is a hack. We should be able to directly generate Clang AST to
-  // construct objects in-place without this.
-  // TODO: Once we can rely on libc++ being available, consider including
-  // `<__new/placement_new_delete.h>` instead.
-  code_stream << R"(# 1 "<carbon-internal>"
-#undef constexpr
-#if __cplusplus > 202302L
-constexpr
-#endif
-#undef void
-#undef operator
-#undef new
-void* operator new(__SIZE_TYPE__, void*)
-#if __cplusplus < 201103L
-#undef throw
-throw()
-#else
-#undef noexcept
-noexcept
-#endif
-;
-)";
-
-  return code;
+  return code_stream.TakeStr();
 }
 
 // Adds the given source location and an `ImportIRInst` referring to it in
@@ -334,83 +322,156 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
+// Provides clang AST nodes representing Carbon SemIR entities.
 class CarbonExternalASTSource : public clang::ExternalASTSource {
  public:
-  explicit CarbonExternalASTSource(Context* context,
-                                   clang::ASTContext* ast_context)
-      : context_(context), ast_context_(ast_context) {}
+  explicit CarbonExternalASTSource(Context* context) : context_(context) {}
 
+  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+
+  // Look up decls for `decl_name` inside `decl_context`, adding the decls to
+  // `decl_context`. Returns true if any decls were added.
   auto FindExternalVisibleDeclsByName(
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
-  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+  auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
  private:
+  // Builds the top-level C++ namespace `Carbon` and adds it to the translation
+  // unit.
+  auto BuildCarbonNamespace() -> void;
+
+  // Map a Carbon entity to a Clang NamedDecl. Returns null if the entity cannot
+  // currently be represented in C++.
+  auto MapInstIdToClangDeclOrType(LookupResult lookup)
+      -> std::variant<clang::NamedDecl*, clang::QualType>;
+
+  // Get a current best-effort location for the current position within C++
+  // processing.
+  auto GetCurrentCppLocId() -> SemIR::LocId {
+    auto* cpp_context = context_->cpp_context();
+    CARBON_CHECK(cpp_context);
+
+    // Use the current token location when parsing.
+    auto clang_source_loc = cpp_context->parser().getCurToken().getLocation();
+    if (auto& code_synthesis_contexts =
+            cpp_context->sema().CodeSynthesisContexts;
+        !code_synthesis_contexts.empty()) {
+      // Use the current point of instantiation during template instantiation.
+      clang_source_loc = code_synthesis_contexts.back().PointOfInstantiation;
+    }
+
+    // TODO: Refactor with AddImportIRInst in import.cpp.
+    SemIR::ClangSourceLocId clang_source_loc_id =
+        context_->sem_ir().clang_source_locs().Add(clang_source_loc);
+    return context_->import_ir_insts().Add(
+        SemIR::ImportIRInst(clang_source_loc_id));
+  }
+
   Check::Context* context_;
-  clang::ASTContext* ast_context_;
-  clang::NamespaceDecl* carbon_cpp_namespace_ = nullptr;
 };
+
+}  // namespace
 
 void CarbonExternalASTSource::StartTranslationUnit(
     clang::ASTConsumer* /*Consumer*/) {
-  auto& translation_unit = *ast_context_->getTranslationUnitDecl();
-  // Mark the translation unit as having external storage so we get a query for
-  // the `Carbon` namespace in the top level/translation unit scope.
-  translation_unit.setHasExternalVisibleStorage();
+  BuildCarbonNamespace();
 }
 
-// Map a Carbon entity to a Clang NamedDecl.
-static auto MapInstIdToClangDecl(Context& context,
-                                 clang::ASTContext& ast_context,
-                                 clang::DeclContext& decl_context,
-                                 LookupResult lookup) -> clang::NamedDecl* {
+auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
+    -> std::variant<clang::NamedDecl*, clang::QualType> {
   auto target_inst_id = lookup.scope_result.target_inst_id();
-  if (auto target_inst =
-          context.insts().TryGetAs<SemIR::Namespace>(target_inst_id)) {
-    auto& name_scope = context.name_scopes().Get(target_inst->name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, name_scope.name_id());
-    // TODO: Don't immediately use the decl_context - build any intermediate
-    // namespaces iteratively.
-    // Eventually add a mapping and use that/populate it/keep it up to date.
-    // decl_context could be prepopulated in that mapping and not passed
-    // explicitly to MapInstIdToClangDecl.
-    return clang::NamespaceDecl::Create(
-        ast_context, &decl_context, false, clang::SourceLocation(),
-        clang::SourceLocation(), identifier_info, nullptr, false);
+  auto target_const_id = context_->constant_values().Get(target_inst_id);
+  auto target_inst = context_->constant_values().GetInst(target_const_id);
+
+  if (target_inst.type_id() == SemIR::TypeType::TypeId) {
+    auto type_id =
+        context_->types().GetTypeIdForTypeConstantId(target_const_id);
+    auto type = MapToCppType(*context_, type_id);
+    if (type.isNull()) {
+      context_->TODO(GetCurrentCppLocId(), "interop with unsupported type");
+      return nullptr;
+    }
+    return type;
   }
-  return nullptr;
+
+  CARBON_KIND_SWITCH(target_inst) {
+    case CARBON_KIND(SemIR::Namespace namespace_info): {
+      auto* decl_context =
+          ExportNameScopeToCpp(*context_, SemIR::LocId(target_inst_id),
+                               namespace_info.name_scope_id);
+      if (!decl_context) {
+        return nullptr;
+      }
+      if (isa<clang::TranslationUnitDecl>(decl_context)) {
+        context_->TODO(GetCurrentCppLocId(),
+                       "interop with translation unit decl");
+        return nullptr;
+      }
+      return cast<clang::NamedDecl>(decl_context);
+    }
+    case SemIR::StructValue::Kind: {
+      auto callee = GetCallee(context_->sem_ir(), target_inst_id);
+      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
+      if (!callee_function) {
+        return nullptr;
+      }
+
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function->function_id);
+      if (function.clang_decl_id.has_value()) {
+        return cast<clang::NamedDecl>(
+            context_->clang_decls().Get(function.clang_decl_id).key.decl);
+      }
+
+      return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
+                                 callee_function->function_id);
+    }
+    default:
+      return nullptr;
+  }
+}
+
+auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
+  static const llvm::StringLiteral carbon_namespace_name = "Carbon";
+  auto& ast_context = context_->ast_context();
+  auto* identifier = &ast_context.Idents.get(carbon_namespace_name);
+
+  // Create the namespace and add it to the translation unit scope.
+  auto* decl_context = ast_context.getTranslationUnitDecl();
+  auto* carbon_cpp_namespace = clang::NamespaceDecl::Create(
+      ast_context, decl_context, /*Inline=*/false, clang::SourceLocation(),
+      clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
+      /*Nested=*/false);
+  decl_context->addDecl(carbon_cpp_namespace);
+
+  // We provide custom lookup results within this namespace.
+  carbon_cpp_namespace->setHasExternalVisibleStorage();
+
+  // Register this file's package scope as corresponding to the `Carbon`
+  // namespace in C++.
+  // TODO: For mangling purposes, include the package as a sub-namespace.
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
+  auto clang_decl_id = context_->clang_decls().Add(
+      {.key = key, .inst_id = SemIR::Namespace::PackageInstId});
+  context_->name_scopes()
+      .Get(SemIR::NameScopeId::Package)
+      .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  if (decl_context != carbon_cpp_namespace_) {
-    if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
-      return false;
-    }
-
-    static const llvm::StringLiteral carbon_namespace_name = "Carbon";
-    if (auto* identifier = decl_name.getAsIdentifierInfo();
-        !identifier || !identifier->isStr(carbon_namespace_name)) {
-      return false;
-    }
-
-    // Build the top level 'Carbon' namespace
-    auto& ast_context = decl_context->getParentASTContext();
-    auto& mutable_tu_decl_context = *ast_context.getTranslationUnitDecl();
-    carbon_cpp_namespace_ = clang::NamespaceDecl::Create(
-        ast_context, &mutable_tu_decl_context, false, clang::SourceLocation(),
-        clang::SourceLocation(), &ast_context.Idents.get(carbon_namespace_name),
-        nullptr, false);
-    carbon_cpp_namespace_->setHasExternalVisibleStorage();
-    SetExternalVisibleDeclsForName(decl_context, decl_name,
-                                   {carbon_cpp_namespace_});
-    return true;
-  }
-
-  // Lookup the name in Carbon package scope
+  // Find the Carbon declaration corresponding to this Clang declaration.
+  auto* decl = cast<clang::Decl>(
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
+  auto decl_id = context_->clang_decls().Lookup(key);
+  CARBON_CHECK(
+      decl_id.has_value(),
+      "The DeclContext should already be associated with a Carbon InstId.");
+  auto decl_context_inst_id = context_->clang_decls().Get(decl_id).inst_id;
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
 
@@ -418,7 +479,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(SemIR::Namespace::PackageInstId),
+          context_->constant_values().Get(decl_context_inst_id),
           SemIR::ConstantId::None, &lookup_scopes)) {
     return false;
   }
@@ -441,15 +502,102 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
-  auto* clang_decl = MapInstIdToClangDecl(*context_, *ast_context_,
-                                          *carbon_cpp_namespace_, result);
-  if (!clang_decl) {
-    return false;
+  CARBON_KIND_SWITCH(MapInstIdToClangDeclOrType(result)) {
+    case CARBON_KIND(clang::NamedDecl* clang_decl): {
+      if (clang_decl) {
+        SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
+        return true;
+      } else {
+        SetNoExternalVisibleDeclsForName(decl_context, decl_name);
+        return false;
+      }
+    }
+
+    case CARBON_KIND(clang::QualType type): {
+      // Create a typedef declaration to model the type result.
+      // TODO: If the type is a tag type that was declared with this name in
+      // this context, use the tag decl directly.
+      auto& ast_context = context_->ast_context();
+      auto loc = GetCppLocation(
+          *context_, SemIR::LocId(result.scope_result.target_inst_id()));
+      auto* typedef_decl = clang::TypedefDecl::Create(
+          ast_context, const_cast<clang::DeclContext*>(decl_context), loc, loc,
+          identifier, ast_context.getTrivialTypeSourceInfo(type, loc));
+      if (isa<clang::CXXRecordDecl>(decl_context)) {
+        typedef_decl->setAccess(
+            MapToCppAccess(result.scope_result.access_kind()));
+      }
+      SetExternalVisibleDeclsForName(decl_context, decl_name, {typedef_decl});
+      return true;
+    }
+  }
+}
+
+auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    // TODO: If we start producing clang EnumTypes, we may have to handle them
+    // here too.
+    return;
   }
 
-  SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
-  return true;
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(tag_decl->getFirstDecl());
+  auto clang_decl_id = context_->clang_decls().Lookup(key);
+  if (!clang_decl_id.has_value()) {
+    return;
+  }
+
+  auto inst_id = context_->clang_decls().Get(clang_decl_id).inst_id;
+  auto const_id = context_->constant_values().Get(inst_id);
+  if (!const_id.has_value()) {
+    return;
+  }
+
+  auto class_type =
+      context_->constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
+  if (!class_type) {
+    return;
+  }
+
+  auto class_type_id = context_->types().GetTypeIdForTypeConstantId(const_id);
+  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
+  if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(),
+                           context_fn)) {
+    return;
+  }
+
+  class_decl->startDefinition();
+  // TODO: Import base class and fields, plus any special member functions that
+  // affect class properties.
+  class_decl->completeDefinition();
 }
+
+// Parses a sequence of top-level declarations and forms a corresponding
+// representation in the Clang AST. Unlike clang::ParseAST, does not finish the
+// translation unit when EOF is reached.
+static auto ParseTopLevelDecls(clang::Parser& parser,
+                               clang::ASTConsumer& consumer) -> void {
+  // Don't allow C++20 module declarations in inline Cpp code fragments.
+  auto module_import_state = clang::Sema::ModuleImportState::NotACXX20Module;
+
+  // Parse top-level declarations until we see EOF. Do not parse EOF, as that
+  // will cause the parser to end the translation unit prematurely.
+  while (parser.getCurToken().isNot(clang::tok::eof)) {
+    clang::Parser::DeclGroupPtrTy decl_group;
+    bool eof = parser.ParseTopLevelDecl(decl_group, module_import_state);
+    CARBON_CHECK(!eof, "Should not parse decls at EOF");
+    if (decl_group && !consumer.HandleTopLevelDecl(decl_group.get())) {
+      // If the consumer rejects the declaration, bail out of parsing.
+      //
+      // TODO: In this case, we shouldn't parse any more declarations even in
+      // separate inline C++ fragments. But our current AST consumer only ever
+      // returns true.
+      break;
+    }
+  }
+}
+
+namespace {
 
 // An action and a set of registered Clang callbacks used to generate an AST
 // from a set of Cpp imports.
@@ -498,30 +646,18 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     auto& parser = *parser_ptr;
 
     clang_instance.getPreprocessor().EnterMainSourceFile();
-    if (auto* source = clang_instance.getASTContext().getExternalSource()) {
-      source->StartTranslationUnit(&clang_instance.getASTConsumer());
-    }
-
     parser.Initialize();
-    clang_instance.getSema().ActOnStartOfTranslationUnit();
 
     context_->set_cpp_context(
         std::make_unique<CppContext>(clang_instance, std::move(parser_ptr)));
 
-    // Don't allow C++20 module declarations in inline Cpp code fragments.
-    auto module_import_state = clang::Sema::ModuleImportState::NotACXX20Module;
-
-    // Parse top-level declarations until we see EOF. Do not parse EOF, as that
-    // will cause the parser to end the translation unit prematurely.
-    while (parser.getCurToken().isNot(clang::tok::eof)) {
-      clang::Parser::DeclGroupPtrTy decl_group;
-      bool eof = parser.ParseTopLevelDecl(decl_group, module_import_state);
-      CARBON_CHECK(!eof);
-      if (decl_group && !clang_instance.getASTConsumer().HandleTopLevelDecl(
-                            decl_group.get())) {
-        break;
-      }
+    if (auto* source = clang_instance.getASTContext().getExternalSource()) {
+      source->StartTranslationUnit(&clang_instance.getASTConsumer());
     }
+
+    clang_instance.getSema().ActOnStartOfTranslationUnit();
+
+    ParseTopLevelDecls(parser, clang_instance.getASTConsumer());
   }
 
  private:
@@ -595,7 +731,7 @@ auto GenerateAst(Context& context,
   // support. Implement multiplexing support (possibly in Clang) to restore
   // modules functionality.
   ast.setExternalSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context, &ast));
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
@@ -609,6 +745,40 @@ auto GenerateAst(Context& context,
   context.emitter().Flush();
 
   return true;
+}
+
+auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
+                             llvm::StringRef source_code) -> void {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  clang::Sema& sema = cpp_context->sema();
+  clang::Preprocessor& preprocessor = sema.getPreprocessor();
+  clang::Parser& parser = cpp_context->parser();
+
+  RawStringOstream code_stream;
+  AppendInlineCode(context, code_stream,
+                   context.parse_tree().node_token(loc_id.node_id()),
+                   source_code);
+
+  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(code_stream.TakeStr(),
+                                                     "<inline c++>");
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+
+  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
+    // Clang will have generated a suitable error. There's nothing more to do
+    // here.
+    return;
+  }
+
+  // The parser will typically have an EOF as its cached current token; consume
+  // that so we can reach the newly-injected tokens.
+  if (parser.getCurToken().is(clang::tok::eof)) {
+    parser.ConsumeToken();
+  }
+
+  ParseTopLevelDecls(parser, sema.getASTConsumer());
 }
 
 auto FinishAst(Context& context) -> void {

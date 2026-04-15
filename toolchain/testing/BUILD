@@ -62,7 +62,7 @@ file_test(
     srcs = ["file_test.cpp"],
     data = [
         ":min_prelude",
-        "//toolchain/install:clang_headers",
+        "//toolchain/install:clang_hdrs",
         "//toolchain/install:clang_headers_manifest.txt",
     ],
     tests = [":all_testdata"],

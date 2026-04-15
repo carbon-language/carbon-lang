@@ -130,6 +130,9 @@ CARBON_PARSE_NODE_KIND(LibrarySpecifier)
 CARBON_PARSE_NODE_KIND(InlineImportSpecifier)
 CARBON_PARSE_NODE_KIND(InlineImportBody)
 
+CARBON_PARSE_NODE_KIND(InlineIntroducer)
+CARBON_PARSE_NODE_KIND(InlineCppDecl)
+
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithoutParams)
 
@@ -162,6 +165,7 @@ CARBON_PARSE_NODE_KIND(Alias)
 
 CARBON_PARSE_NODE_KIND(TuplePatternStart)
 CARBON_PARSE_NODE_KIND(PatternListComma)
+CARBON_PARSE_NODE_KIND(ParenPattern)
 CARBON_PARSE_NODE_KIND(TuplePattern)
 
 CARBON_PARSE_NODE_KIND(ExplicitParamListStart)

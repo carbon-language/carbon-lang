@@ -84,16 +84,45 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTemplates: type = class_type @TwoTemplates [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %TwoTemplates [concrete]
+// CHECK:STDOUT:   %pattern_type.2b7: type = pattern_type %TwoTemplates [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
+// CHECK:STDOUT:   %T.50c: %Default.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op, @T.binding.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.185: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %TwoTemplates.Op.type: type = fn_type @TwoTemplates.Op [concrete]
+// CHECK:STDOUT:   %TwoTemplates.Op: %TwoTemplates.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.6e5: <witness> = custom_witness (%TwoTemplates.Op), @Default [concrete]
+// CHECK:STDOUT:   %Default.facet.90a: %Default.type = facet_value %TwoTemplates, (%custom_witness.6e5) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.18b: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.608, @T.binding.as_type.as.DefaultOrUnformed.impl(%Default.facet.90a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTemplates, (%DefaultOrUnformed.impl_witness.18b) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.9c6: @T.binding.as_type.as.DefaultOrUnformed.impl.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.185)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.608 = impl_witness_table (%Core.import_ref.9c6), @T.binding.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.2b7 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.2b7 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTemplates = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoTemplates = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTemplates, (constants.%DefaultOrUnformed.impl_witness.18b) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc7_38.1: %DefaultOrUnformed.type = converted constants.%TwoTemplates, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_38.1 [concrete = constants.%TwoTemplates]
+// CHECK:STDOUT:   %.loc7_38.2: type = converted %.loc7_38.1, %as_type [concrete = constants.%TwoTemplates]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc7_1: ref %TwoTemplates = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %TwoTemplates to %.loc7_1 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign file.%x.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_template_mismatch.carbon
@@ -105,5 +134,11 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -36,7 +36,7 @@ path to the `carbon` binary. This looks like:
 See Carbon's
 [collaboration systems](https://github.com/carbon-language/carbon-lang/blob/trunk/CONTRIBUTING.md#collaboration-systems).
 We're most active on [Discord](https://discord.gg/ZjVdShJDAs) and have a
-#editor-integrations channel. We'll also respond to questions on
+`#editor-integrations` channel. We'll also respond to questions on
 [GitHub Discussions](https://github.com/carbon-language/carbon-lang/discussions).
 
 ## Documentation

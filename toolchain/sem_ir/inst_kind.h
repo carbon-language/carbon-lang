@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 
+#include <concepts>
 #include <cstdint>
 #include <optional>
 
@@ -290,6 +291,13 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     bool is_lowered = true;
     bool deduce_through = false;
     bool has_cleanup = false;
+
+    // The inst's allowed node kinds, for `IsAllowedNodeKind`.
+    //
+    // Do not set these directly. They are set by the `TypedNodeId` template
+    // parameter of `Define`.
+    bool internal_allow_all_node_kinds = false;
+    llvm::ArrayRef<Parse::NodeKind::RawEnumType> internal_allowed_node_kinds;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -363,6 +371,21 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // destructor.
   constexpr auto has_cleanup() const -> bool {
     return definition_info(*this).has_cleanup;
+  }
+
+  // Returns true if the passed `NodeKind` is allowed.
+  auto IsAllowedNodeKind(Parse::NodeKind node_kind) const -> bool;
+
+  // Returns true if all `NodeKind`s are allowed.
+  auto allow_all_node_kinds() const -> bool {
+    return definition_info(*this).internal_allow_all_node_kinds;
+  }
+
+  // Returns true if no `NodeKind`s are allowed.
+  auto disallow_all_node_kinds() const -> bool {
+    const auto& def = definition_info(*this);
+    return !def.internal_allow_all_node_kinds &&
+           def.internal_allowed_node_kinds.empty();
   }
 
  private:
@@ -453,9 +476,44 @@ class InstKind::Definition : public InstKind {
   InstKind::DefinitionInfo info_;
 };
 
+namespace Internal {
+
+// Storage for `internal_allowed_node_kinds` where there's a list of kinds.
+template <Parse::NodeKind::RawEnumType... T>
+constexpr std::array<Parse::NodeKind::RawEnumType, sizeof...(T)> Kinds = {T...};
+
+// `NoneNodeId` uses should never have a node associated; it's mainly for
+// builtins.
+constexpr auto GetAllowedNodeKinds(Parse::NoneNodeId* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return {};
+}
+
+// For a regular `NodeId`, returns an array of just its kind.
+template <const Parse::NodeKind& Kind>
+constexpr auto GetAllowedNodeKinds(Parse::NodeIdForKind<Kind>* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return Kinds<static_cast<Parse::NodeKind::RawEnumType>(Kind)>;
+}
+
+// For `NodeIdOneOf`, returns an array of each kind.
+template <typename... T>
+constexpr auto GetAllowedNodeKinds(Parse::NodeIdOneOf<T...>* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return Kinds<T::Kind...>;
+}
+
+}  // namespace Internal
+
 template <typename TypedNodeId>
 constexpr auto InstKind::Define(DefinitionInfo info) const
     -> Definition<TypedNodeId> {
+  if constexpr (std::same_as<Parse::NodeId, TypedNodeId>) {
+    info.internal_allow_all_node_kinds = true;
+  } else {
+    info.internal_allowed_node_kinds =
+        Internal::GetAllowedNodeKinds(static_cast<TypedNodeId*>(nullptr));
+  }
   return Definition<TypedNodeId>(*this, info);
 }
 

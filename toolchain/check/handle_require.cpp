@@ -117,8 +117,8 @@ static auto TypeStructureReferencesSelf(
           // Don't generate more diagnostics.
           return true;
         }
-        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
-          if (context.entity_names().Get(bind.entity_name_id).name_id ==
+        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicType symbolic): {
+          if (context.entity_names().Get(symbolic.entity_name_id).name_id ==
               SemIR::NameId::SelfType) {
             return true;
           }
@@ -222,9 +222,13 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                    "facet type has constraints that we don't handle yet");
       return std::nullopt;
     }
+    auto named_constraints_from_type_impls = llvm::map_range(
+        constraint_facet_type_info.type_impls_named_constraints,
+        [](auto impls) { return impls.specific_named_constraint; });
     auto named_constraints = llvm::concat<const SemIR::SpecificNamedConstraint>(
         constraint_facet_type_info.extend_named_constraints,
-        constraint_facet_type_info.self_impls_named_constraints);
+        constraint_facet_type_info.self_impls_named_constraints,
+        named_constraints_from_type_impls);
     for (auto c : named_constraints) {
       if (c.named_constraint_id == named_constraint->named_constraint_id) {
         const auto& named_constraint =

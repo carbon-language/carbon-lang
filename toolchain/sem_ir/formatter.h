@@ -274,8 +274,10 @@ class Formatter {
   auto FormatArg(NameScopeId id) -> void;
   auto FormatArg(InstBlockId id) -> void;
   auto FormatArg(AbsoluteInstBlockId id) -> void;
+  auto FormatArg(ExprRegionId id) -> void;
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
+  auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
 
   // A `FormatArg` wrapper for `FormatInstArgAndKind`.
   using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;

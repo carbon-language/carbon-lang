@@ -47,8 +47,6 @@ cc_library(
         "context.cpp",
         "file_context.cpp",
         "function_context.cpp",
-        "mangler.cpp",
-        "mangler.h",
         "specific_coalescer.cpp",
     ] +
     # Glob handler files to avoid missing any.
@@ -80,6 +78,7 @@ cc_library(
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
+        "//toolchain/sem_ir:mangler",
         "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",

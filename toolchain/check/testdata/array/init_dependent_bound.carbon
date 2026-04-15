@@ -87,11 +87,11 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.23f: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.ed3, %Destroy.facet.00d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc4_6.2: type) {
+// CHECK:STDOUT: generic fn @G(%T.loc4_7.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc7_29.2: type = array_type constants.%int_0, %T.loc4_6.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
+// CHECK:STDOUT:   %array_type.loc7_29.2: type = array_type constants.%int_0, %T.loc4_7.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_29.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_29.2 [symbolic = %pattern_type (constants.%pattern_type.bd6)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc7_29.2 (%array_type.1b3) = tuple_value () [symbolic = %array (constants.%array.ca4)]
@@ -114,7 +114,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_29.2 (%array_type.1b3) = converted %.loc7_34.1, %.loc7_34.2 [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     assign %arr.var, %.loc7_3.1
 // CHECK:STDOUT:     %.loc7_29: type = splice_block %array_type.loc7_29.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)] {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_7.2 [symbolic = %T.loc4_7.1 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %array_type.loc7_29.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
 // CHECK:STDOUT:     }
@@ -131,11 +131,11 @@ fn H() { G(3); }
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type.70a) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
-// CHECK:STDOUT:   %T.loc4_6.1 => constants.%C
+// CHECK:STDOUT:   %T.loc4_7.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc7_29.2 => constants.%array_type.70a
@@ -193,7 +193,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.ea2 = impl_witness_table (%Core.import_ref.0bc), @Int.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%N.loc5_15.2: %i32) {
+// CHECK:STDOUT: generic fn @G(%N.loc5_16.2: %i32) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -218,11 +218,11 @@ fn H() { G(3); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N.5de) {
-// CHECK:STDOUT:   %N.loc5_15.1 => constants.%N.5de
+// CHECK:STDOUT:   %N.loc5_16.1 => constants.%N.5de
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%int_3.822) {
-// CHECK:STDOUT:   %N.loc5_15.1 => constants.%int_3.822
+// CHECK:STDOUT:   %N.loc5_16.1 => constants.%int_3.822
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc11_30.2 => constants.%inst.splice_block

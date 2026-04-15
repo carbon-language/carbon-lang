@@ -2,12 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/facet_type_info.h"
@@ -39,14 +41,20 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Any references to `.Self` in constraints for the current `WhereExpr` will
   // not see constraints in the `Self` facet type, but they will resolve to
   // values through the constraints explicitly when they are combined together.
-  auto self_without_constraints_type_id = self_with_constraints_type_id;
-  if (auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-          self_without_constraints_type_id)) {
+  auto period_self_type_id = self_with_constraints_type_id;
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(period_self_type_id)) {
     const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    auto stripped_info =
-        SemIR::FacetTypeInfo{.extend_constraints = info.extend_constraints};
+    auto stripped_info = SemIR::FacetTypeInfo::ExtendedOnly(info);
     stripped_info.Canonicalize();
-    self_without_constraints_type_id = GetFacetType(context, stripped_info);
+    period_self_type_id = GetFacetType(context, stripped_info);
+  } else if (period_self_type_id == SemIR::TypeType::TypeId) {
+    // The self may be `TypeType` in `type where X impls Y`, so we use an empty
+    // facet type.
+    period_self_type_id = GetEmptyFacetType(context);
+  } else {
+    CARBON_CHECK(period_self_type_id == SemIR::ErrorInst::TypeId,
+                 "unexpected .Self type {0}", period_self_type_id);
   }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
@@ -55,7 +63,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, self_without_constraints_type_id);
+      MakePeriodSelfFacetValue(context, period_self_type_id);
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.
@@ -185,6 +193,110 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
+// Returns whether a designator (`.Self` or `.MemberName`) is present in the
+// where clause.
+static auto FindDesignator(Context& context,
+                           SemIR::InstBlockId requirements_block_id) -> bool {
+  auto block = context.inst_blocks().GetOrEmpty(requirements_block_id);
+
+  llvm::SmallVector<SemIR::InstId> requirements;
+  requirements.reserve(block.size() * 2);
+
+  // These requirement instructions don't have a constant value, but they
+  // contain only canonical instructions.
+  for (auto inst_id : block) {
+    auto inst = context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
+        requirements.push_back(base.base_type_inst_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        requirements.push_back(rewrite.lhs_id);
+        requirements.push_back(rewrite.rhs_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+        requirements.push_back(equiv.lhs_id);
+        requirements.push_back(equiv.rhs_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        requirements.push_back(impls.lhs_id);
+        requirements.push_back(impls.rhs_id);
+        break;
+      }
+      default:
+        CARBON_CHECK(inst_id == SemIR::ErrorInst::InstId,
+                     "unexpected inst {0} in requirements", inst);
+    }
+  }
+
+  class SubstFindDesignator : public SubstInstCallbacks {
+   public:
+    explicit SubstFindDesignator(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (*found_) {
+        return FullySubstituted;
+      }
+
+      // An error was diagnosed for the where clause already.
+      if (inst_id == SemIR::ErrorInst::InstId) {
+        *found_ = true;
+        return FullySubstituted;
+      }
+
+      // TypeType has type TypeType, avoid recursing on its type.
+      if (context().insts().Is<SemIR::TypeType>(inst_id)) {
+        return FullySubstituted;
+      }
+
+      // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
+      // we only need to look for `.Self` here.
+      if (auto bind =
+              context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
+        auto entity_name = context().entity_names().Get(bind->entity_name_id);
+        if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+      // FacetAccessType of `.Self` is evaluated to SymbolicBindingType, so we
+      // need to look for this instruction too, since we won't find a `.Self`
+      // directly in that case.
+      if (auto bind =
+              context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
+        auto entity_name = context().entity_names().Get(bind->entity_name_id);
+        if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+
+      return SubstOperands;
+    }
+
+    auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild, no insts should change");
+    }
+
+    bool* found_;
+  };
+
+  for (auto inst_id : requirements) {
+    bool found = false;
+    SubstFindDesignator callbacks(&context, &found);
+    SubstInst(context, inst_id, callbacks);
+    if (found) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   context.rewrites_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
@@ -193,6 +305,15 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   SemIR::InstId period_self_id =
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
+
+  if (!FindDesignator(context, requirements_id)) {
+    CARBON_DIAGNOSTIC(WhereWithoutDesignator, Error,
+                      "`where` clause without a designator; expected `.Self` "
+                      "to appear in a requirement, or a member of `.Self`");
+    context.emitter().Emit(node_id, WhereWithoutDesignator);
+    period_self_id = SemIR::ErrorInst::InstId;
+  }
+
   AddInstAndPush<SemIR::WhereExpr>(context, node_id,
                                    {.type_id = SemIR::TypeType::TypeId,
                                     .period_self_id = period_self_id,

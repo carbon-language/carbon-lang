@@ -1066,6 +1066,19 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND_ANY(AnyLeafParamPattern, _): {
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
+    case CARBON_KIND(VarParamPattern param): {
+      FormatArgs(param.subpattern_id);
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
     case CARBON_KIND(AssociatedConstantDecl decl): {
       FormatArgs(decl.assoc_const_id);
       llvm::SaveAndRestore scope(scope_,
@@ -1229,11 +1242,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       FormatArgs(ret.storage_id);
       return;
     }
-
-    case ReturnSlotPattern::Kind:
-      // No-op because type_id is the only semantically significant field,
-      // and it's handled separately.
-      return;
 
     case CARBON_KIND(SpliceBlock splice): {
       FormatArgs(splice.result_id);
@@ -1444,6 +1452,13 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
   // used as the argument to a `facet_type` instruction.
   out() << "<";
 
+  auto format_specific = [&](SemIR::SpecificId specific_id) {
+    if (specific_id.has_value()) {
+      out() << ", ";
+      FormatName(specific_id);
+    }
+  };
+
   llvm::ListSeparator sep(" & ");
   if (info.extend_constraints.empty() &&
       info.extend_named_constraints.empty()) {
@@ -1452,45 +1467,56 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     for (auto extend : info.extend_constraints) {
       out() << sep;
       FormatName(extend.interface_id);
-      if (extend.specific_id.has_value()) {
-        out() << ", ";
-        FormatName(extend.specific_id);
-      }
+      format_specific(extend.specific_id);
     }
     for (auto extend : info.extend_named_constraints) {
       out() << sep;
       FormatName(extend.named_constraint_id);
-      if (extend.specific_id.has_value()) {
-        out() << ", ";
-        FormatName(extend.specific_id);
-      }
+      format_specific(extend.specific_id);
     }
   }
 
   if (info.other_requirements || !info.self_impls_constraints.empty() ||
+      !info.type_impls_interfaces.empty() ||
+      !info.type_impls_named_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out() << " where ";
     llvm::ListSeparator and_sep(" and ");
-    if (!info.self_impls_constraints.empty() ||
-        !info.self_impls_named_constraints.empty()) {
+    int num_self_impls = info.self_impls_constraints.size() +
+                         info.self_impls_named_constraints.size();
+    if (num_self_impls > 0) {
       out() << and_sep << ".Self impls ";
       llvm::ListSeparator amp_sep(" & ");
+      if (num_self_impls > 1) {
+        out() << "(";
+      }
       for (auto self_impls : info.self_impls_constraints) {
         out() << amp_sep;
         FormatName(self_impls.interface_id);
-        if (self_impls.specific_id.has_value()) {
-          out() << ", ";
-          FormatName(self_impls.specific_id);
-        }
+        format_specific(self_impls.specific_id);
       }
       for (auto self_impls : info.self_impls_named_constraints) {
         out() << amp_sep;
         FormatName(self_impls.named_constraint_id);
-        if (self_impls.specific_id.has_value()) {
-          out() << ", ";
-          FormatName(self_impls.specific_id);
-        }
+        format_specific(self_impls.specific_id);
       }
+      if (num_self_impls > 1) {
+        out() << ")";
+      }
+    }
+    for (const auto& type_impls : info.type_impls_interfaces) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_interface.interface_id);
+      format_specific(type_impls.specific_interface.specific_id);
+    }
+    for (const auto& type_impls : info.type_impls_named_constraints) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_named_constraint.named_constraint_id);
+      format_specific(type_impls.specific_named_constraint.specific_id);
     }
     for (auto rewrite : info.rewrite_constraints) {
       out() << and_sep;
@@ -1541,6 +1567,24 @@ auto Formatter::FormatArg(InstBlockId id) -> void {
 
 auto Formatter::FormatArg(AbsoluteInstBlockId id) -> void {
   FormatArg(static_cast<InstBlockId>(id));
+}
+
+auto Formatter::FormatArg(ExprRegionId id) -> void {
+  const auto& region = sem_ir_->expr_regions().Get(id);
+
+  FormatArg(region.result_id);
+  out() << " in ";
+  OpenBrace();
+  for (auto [i, block_id] : llvm::enumerate(region.block_ids)) {
+    if (i != 0) {
+      IndentLabel();
+      FormatLabel(block_id);
+      out() << ":\n";
+    }
+
+    FormatCodeBlock(block_id);
+  }
+  CloseBrace();
 }
 
 auto Formatter::FormatArg(RealId id) -> void {

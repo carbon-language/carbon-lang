@@ -80,10 +80,10 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Not.decl: %Not.type = fn_decl @Not [concrete = constants.%Not] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_20.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.2: Core.Form = init_form %.loc15_20.1 [concrete = constants.%.f34]
@@ -145,9 +145,9 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
 // CHECK:STDOUT:   %.loc23_17: type = block_arg !if.expr.result.loc23 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !.loc23_14
+// CHECK:STDOUT:   br !.loc23_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23_14:
+// CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete]
@@ -177,9 +177,9 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
 // CHECK:STDOUT:   %.loc24_17: type = block_arg !if.expr.result.loc24 [concrete = bool]
-// CHECK:STDOUT:   br !.loc24_14
+// CHECK:STDOUT:   br !.loc24_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc24_14:
+// CHECK:STDOUT: !.loc24_15:
 // CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%b.var)

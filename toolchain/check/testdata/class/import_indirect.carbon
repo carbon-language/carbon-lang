@@ -380,7 +380,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     .b_ptr = imports.%Main.b_ptr
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .value = %value
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -400,7 +400,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
+// CHECK:STDOUT:   %ptr.loc8_8: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -479,7 +479,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .value = %value
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -499,7 +499,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
+// CHECK:STDOUT:   %ptr.loc8_8: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -582,7 +582,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     .c_ptr = imports.%Main.c_ptr
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .value = %value
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -602,7 +602,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     %E.ref: type = name_ref E, imports.%Main.E [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
+// CHECK:STDOUT:   %ptr.loc8_8: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -685,7 +685,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     .b_ptr = imports.%Main.b_ptr
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .value = %value
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -705,7 +705,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:     %E.ref: type = name_ref E, imports.%Main.E [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
+// CHECK:STDOUT:   %ptr.loc8_8: ref %ptr.31e = ref_binding ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {

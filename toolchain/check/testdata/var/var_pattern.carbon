@@ -279,8 +279,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc5_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -314,13 +314,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_45.1: %tuple.type = tuple_literal (%.loc5_40.1, %.loc5_44.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %tuple.elem0.loc5_45: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc5_40.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_40.2: init %empty_tuple.type to %tuple.elem0.loc5_45 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_45.2: init %empty_tuple.type = converted %.loc5_40.1, %.loc5_40.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.3: init %empty_tuple.type to %tuple.elem0.loc5_45 = in_place_init %.loc5_45.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc5_45: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_45.3: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_45.4: init %tuple.type to %.var = tuple_init (%.loc5_45.2, %.loc5_45.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc5_3: init %tuple.type = converted %.loc5_45.1, %.loc5_45.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type to %tuple.elem1.loc5_45 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.4: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.5: init %empty_tuple.type to %tuple.elem1.loc5_45 = in_place_init %.loc5_45.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.6: init %tuple.type to %.var = tuple_init (%.loc5_45.3, %.loc5_45.5) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_3: init %tuple.type = converted %.loc5_45.1, %.loc5_45.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign %.var, %.loc5_3
 // CHECK:STDOUT:   %tuple.elem0.loc5_3: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc5_3: ref %empty_tuple.type = tuple_access %.var, element1
@@ -334,12 +336,17 @@ fn G() {
 // CHECK:STDOUT:     %.loc5_33.3: type = converted %.loc5_33.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = ref_binding y, %tuple.elem1.loc5_3
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %tuple.type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_in_let_var.carbon
 // CHECK:STDOUT:
@@ -353,8 +360,8 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc5_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -388,13 +395,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc5_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49.1: %tuple.type = tuple_literal (%.loc5_44.1, %.loc5_48.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %tuple.elem0.loc5_49: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type to %tuple.elem0.loc5_49 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49.2: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.3: init %empty_tuple.type to %tuple.elem0.loc5_49 = in_place_init %.loc5_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc5_49: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc5_48.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_49.3: init %empty_tuple.type = converted %.loc5_48.1, %.loc5_48.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_49.4: init %tuple.type to %.var = tuple_init (%.loc5_49.2, %.loc5_49.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc5_7: init %tuple.type = converted %.loc5_49.1, %.loc5_49.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_48.2: init %empty_tuple.type to %tuple.elem1.loc5_49 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.4: init %empty_tuple.type = converted %.loc5_48.1, %.loc5_48.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.5: init %empty_tuple.type to %tuple.elem1.loc5_49 = in_place_init %.loc5_49.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.6: init %tuple.type to %.var = tuple_init (%.loc5_49.3, %.loc5_49.5) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_7: init %tuple.type = converted %.loc5_49.1, %.loc5_49.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign %.var, %.loc5_7
 // CHECK:STDOUT:   %tuple.elem0.loc5_7: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc5_7: ref %empty_tuple.type = tuple_access %.var, element1
@@ -408,12 +417,17 @@ fn G() {
 // CHECK:STDOUT:     %.loc5_37.3: type = converted %.loc5_37.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = ref_binding y, %tuple.elem1.loc5_7
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc5_7.1(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc5_7.2(%self.param: ref %tuple.type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
@@ -425,6 +439,7 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.a4d: ref %empty_tuple.type = temporary invalid, %empty_tuple [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -447,11 +462,10 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = var_param_pattern %y.patt [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.cb1 = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
@@ -495,12 +509,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_13.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_9.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_13.2: init %empty_tuple.type = converted %.loc8_9.1, %.loc8_9.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_13.3: ref %empty_tuple.type = temporary %.loc4_13.1, %.loc4_13.2
+// CHECK:STDOUT:   %.loc4_13.3: ref %empty_tuple.type = temporary %.loc4_13.1, %.loc4_13.2 [concrete = constants.%.a4d]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_5, %.loc4_13.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc4: <bound method> = bound_method %.loc4_13.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc4: init %empty_tuple.type = call %Destroy.Op.bound.loc4(%.loc4_13.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %v.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%v.var)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -530,11 +542,10 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type = var_param_pattern %y.patt [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
@@ -579,11 +590,10 @@ fn G() {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type = var_param_pattern %y.patt [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
@@ -614,6 +624,7 @@ fn G() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.a4d: ref %empty_tuple.type = temporary invalid, %empty_tuple [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self: %Destroy.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.cb2: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Self) [symbolic]
@@ -626,6 +637,7 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.facet.5ae: %Destroy.type = facet_value %empty_tuple.type, (%custom_witness.8d7) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.89a: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.5ae) [concrete]
 // CHECK:STDOUT:   %.518: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.89a, %Destroy.facet.5ae [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.a4d, %Destroy.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -666,12 +678,12 @@ fn G() {
 // CHECK:STDOUT:   %.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc7_12.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.2: init %empty_tuple.type = converted %.loc7_12.1, %.loc7_12.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.3: ref %empty_tuple.type = temporary %.1, %.2
+// CHECK:STDOUT:   %.3: ref %empty_tuple.type = temporary %.1, %.2 [concrete = constants.%.a4d]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc7_8.2, %.3)
 // CHECK:STDOUT:   %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.06b [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.518 = impl_witness_access constants.%custom_witness.8d7, element0 [concrete = constants.%Destroy.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.3, %impl.elem0
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %bound_method(%.3)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.3, %impl.elem0 [concrete = constants.%Destroy.Op.bound]
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %bound_method(%.3) [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -694,9 +706,9 @@ fn G() {
 // CHECK:STDOUT:   %tuple.d8f: %tuple.type.bcd = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %tuple.c9e: %tuple.type.a21 = tuple_value (%empty_tuple, %tuple.d8f) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc9_22 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc9_22.1 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc9_41 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc9_22.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -744,13 +756,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_64.2: %empty_tuple.type = converted %.loc9_64.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_64.2
 // CHECK:STDOUT:   %tuple.elem0.loc9_74: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc9_69.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_69.2: init %empty_tuple.type to %tuple.elem0.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_74.2: init %empty_tuple.type = converted %.loc9_69.1, %.loc9_69.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.3: init %empty_tuple.type to %tuple.elem0.loc9_74 = in_place_init %.loc9_74.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc9_74: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc9_73.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.3: init %empty_tuple.type = converted %.loc9_73.1, %.loc9_73.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.4: init %tuple.type.bcd to %.var = tuple_init (%.loc9_74.2, %.loc9_74.3) [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:   %.loc9_22.1: init %tuple.type.bcd = converted %.loc9_74.1, %.loc9_74.4 [concrete = constants.%tuple.d8f]
+// CHECK:STDOUT:   %.loc9_73.2: init %empty_tuple.type to %tuple.elem1.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.4: init %empty_tuple.type = converted %.loc9_73.1, %.loc9_73.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.5: init %empty_tuple.type to %tuple.elem1.loc9_74 = in_place_init %.loc9_74.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.6: init %tuple.type.bcd to %.var = tuple_init (%.loc9_74.3, %.loc9_74.5) [concrete = constants.%tuple.d8f]
+// CHECK:STDOUT:   %.loc9_22.1: init %tuple.type.bcd = converted %.loc9_74.1, %.loc9_74.6 [concrete = constants.%tuple.d8f]
 // CHECK:STDOUT:   assign %.var, %.loc9_22.1
 // CHECK:STDOUT:   %tuple.elem0.loc9_22: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc9_22: ref %empty_tuple.type = tuple_access %.var, element1
@@ -767,16 +781,19 @@ fn G() {
 // CHECK:STDOUT:     %.loc9_56.3: type = converted %.loc9_56.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: ref %empty_tuple.type = ref_binding z, %z.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc9_22: <bound method> = bound_method %.var, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound.loc9_22: <bound method> = bound_method %.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc9_22: init %empty_tuple.type = call %Destroy.Op.bound.loc9_22(%.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc9_41: <bound method> = bound_method %z.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc9_41: <bound method> = bound_method %z.var, constants.%Destroy.Op.651ba6.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc9_41: init %empty_tuple.type = call %Destroy.Op.bound.loc9_41(%z.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_22(%self.param: ref %tuple.type.bcd) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc9_22.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_41(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc9_22.2(%self.param: ref %tuple.type.bcd) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compile_time.carbon
 // CHECK:STDOUT:
@@ -817,7 +834,6 @@ fn G() {
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type = ref_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = var_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:     %self.var_patt: %pattern_type = var_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -868,8 +884,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc4_12.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_12.2: type = converted %.loc4_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

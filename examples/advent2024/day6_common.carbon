@@ -15,6 +15,8 @@ fn Visited() -> i8 { return 1; }
 fn Wall() -> i8 { return 2; }
 
 class Maze {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Maze {
     returned var me: Maze;
 

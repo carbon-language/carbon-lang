@@ -66,6 +66,10 @@ class PrecedenceGroup {
   // after `where`, `require`, or `observe`.
   static auto ForRequirements() -> PrecedenceGroup;
 
+  // Get the precedence level for a pattern that is not nested within another
+  // (eg, tuple or struct) pattern.
+  static auto ForTopLevelPattern() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return std::nullopt if the given token is not a prefix operator.
   static auto ForLeading(Lex::TokenKind kind) -> std::optional<PrecedenceGroup>;
@@ -180,6 +184,10 @@ inline auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
 
 inline auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
   return PrecedenceGroup(Where);
+}
+
+inline auto PrecedenceGroup::ForTopLevelPattern() -> PrecedenceGroup {
+  return PrecedenceGroup(Relational);
 }
 
 }  // namespace Carbon::Parse

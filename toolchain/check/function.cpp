@@ -45,14 +45,15 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::InitForm _): {
       auto pattern_type_id =
           GetPatternType(context, form_expr.type_component_id);
-      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, loc_id,
-          {.type_id = pattern_type_id,
-           .type_inst_id = form_expr.type_component_inst_id});
-      return_patterns.push_back(AddPatternInst<SemIR::OutParamPattern>(
+      auto out_param_id = AddPatternInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
-           .subpattern_id = return_slot_pattern_id}));
+           .pretty_name_id = SemIR::NameId::ReturnSlot});
+      return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
+          context, SemIR::LocId(form_expr.form_inst_id),
+          {.type_id = pattern_type_id,
+           .subpattern_id = out_param_id,
+           .type_inst_id = form_expr.type_component_inst_id}));
       break;
     }
     case SemIR::ErrorInst::Kind: {
@@ -120,13 +121,14 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   StartFunctionSignature(context);
 
-  // Build and add a `[ref self: Self]` parameter if needed.
+  // Build and add a `self: Self` or `ref self: Self` parameter if needed.
   if (args.self_type_id.has_value()) {
     context.full_pattern_stack().StartImplicitParamList();
 
     BeginSubpattern(context);
-    auto self_type_region_id = EndSubpatternAsExpr(
+    auto self_type_region_id = ConsumeSubpatternExpr(
         context, context.types().GetTypeInstId(args.self_type_id));
+    EndEmptySubpattern(context);
 
     insts.self_param_id = AddParamPattern(
         context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
@@ -137,8 +139,8 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.full_pattern_stack().EndImplicitParamList();
   }
 
-  // Build and add any explicit parameters. We always use value parameters for
-  // now.
+  // Build and add any explicit parameters. Whether these are references
+  // or not is controlled by `args.params_are_refs`.
   context.full_pattern_stack().StartExplicitParamList();
   if (args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
@@ -146,12 +148,13 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.inst_block_stack().Push();
     for (auto param_type_id : args.param_type_ids) {
       BeginSubpattern(context);
-      auto param_type_region_id = EndSubpatternAsExpr(
+      auto param_type_region_id = ConsumeSubpatternExpr(
           context, context.types().GetTypeInstId(param_type_id));
+      EndEmptySubpattern(context);
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, /*is_ref=*/false));
+          param_type_id, /*is_ref=*/args.params_are_refs));
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }
@@ -453,7 +456,8 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None, decl_block_id};
   auto decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
+      context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(), loc_id,
+                                                    function_decl));
   function.first_owning_decl_id = decl_id;
   if (is_definition) {
     function.definition_id = decl_id;

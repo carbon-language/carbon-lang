@@ -93,8 +93,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_11.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_11.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.2: Core.Form = init_form %.loc15_11.1 [concrete = constants.%.f34]
@@ -102,8 +102,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc16_11.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_11.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.2: Core.Form = init_form %.loc16_11.1 [concrete = constants.%.f34]
@@ -111,8 +111,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Or.decl: %Or.type = fn_decl @Or [concrete = constants.%Or] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc18_12.1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_12.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc18_12.2: Core.Form = init_form %.loc18_12.1 [concrete = constants.%.f34]
@@ -121,8 +121,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc29: type = type_literal bool [concrete = bool]
@@ -212,9 +212,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
 // CHECK:STDOUT:   %.loc23_17: type = block_arg !if.expr.result.loc23 [concrete = bool]
-// CHECK:STDOUT:   br !.loc23_14
+// CHECK:STDOUT:   br !.loc23_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23_14:
+// CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref bool = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete]
@@ -253,9 +253,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
 // CHECK:STDOUT:   %.loc24_17: type = block_arg !if.expr.result.loc24 [concrete = bool]
-// CHECK:STDOUT:   br !.loc24_14
+// CHECK:STDOUT:   br !.loc24_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc24_14:
+// CHECK:STDOUT: !.loc24_15:
 // CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = ref_binding_pattern c [concrete]
@@ -294,9 +294,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc25:
 // CHECK:STDOUT:   %.loc25_17: type = block_arg !if.expr.result.loc25 [concrete = bool]
-// CHECK:STDOUT:   br !.loc25_14
+// CHECK:STDOUT:   br !.loc25_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc25_14:
+// CHECK:STDOUT: !.loc25_15:
 // CHECK:STDOUT:   %c: ref bool = ref_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = ref_binding_pattern d [concrete]
@@ -334,9 +334,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc26:
 // CHECK:STDOUT:   %.loc26_17: type = block_arg !if.expr.result.loc26 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !.loc26_14
+// CHECK:STDOUT:   br !.loc26_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc26_14:
+// CHECK:STDOUT: !.loc26_15:
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = ref_binding d, %d.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%d.var)
@@ -392,9 +392,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc30_17: type = block_arg !if.expr.result [concrete = bool]
-// CHECK:STDOUT:   br !.loc30_14
+// CHECK:STDOUT:   br !.loc30_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc30_14:
+// CHECK:STDOUT: !.loc30_15:
 // CHECK:STDOUT:   %a: ref bool = ref_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)

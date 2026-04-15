@@ -125,7 +125,7 @@ library "[[@TEST_NAME]]";
 fn F() {
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+12]]:7: error: semantics TODO: `Support local initializing forms` [SemanticsTodo]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+8]]:27: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
@@ -133,7 +133,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
   // CHECK:STDERR:   let x:? form(var i32) = 0;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let x:? form(var i32) = 0;
 }
@@ -214,18 +214,11 @@ fn F() ->? i32;
 // CHECK:STDERR:
 fn F() ->? ref i32;
 
-// -- fail_todo_form_generic_return.carbon
+// --- fail_todo_form_generic_return.carbon
 
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_form_generic_return.carbon:[[@LINE+4]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
 // CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDERR:                          ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE-23]]:1: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
-// CHECK:STDERR: fn F() ->? i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(Form:! Core.Form()) ->? Form;
 
@@ -243,8 +236,8 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = at_binding_pattern x, %.loc4_7 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.1da] {
@@ -278,6 +271,7 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
@@ -292,8 +286,10 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.eea: ref %i32 = temporary invalid, %int_0.6a9 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc4_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.eea, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -303,8 +299,8 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = at_binding_pattern x, %.loc4_7 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.ff5] {
@@ -328,14 +324,18 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %bound_method.loc4_7.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc4_7.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc4_7.2: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc4_7.3: ref %i32 = temporary %.loc4_7.1, %.loc4_7.2
+// CHECK:STDOUT:   %.loc4_7.3: ref %i32 = temporary %.loc4_7.1, %.loc4_7.2 [concrete = constants.%.eea]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc4_7.3)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc4_7.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc4_7.3)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.eea)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc4_7.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc4_7.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_form_param.carbon
 // CHECK:STDOUT:
@@ -371,8 +371,8 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = at_binding_pattern x, %.loc4_7 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.754] {
@@ -413,8 +413,8 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type = form_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type = form_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %.loc4_7 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.9f9] {
@@ -470,14 +470,15 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc9_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, constants.%i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4: Core.Form = init_form %i32 [concrete = constants.%.ff5]
@@ -500,12 +501,17 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   assign %_.var, %F.call
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %_: ref %i32 = ref_binding _, %_.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc9_7.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_7.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_return_form.carbon
 // CHECK:STDOUT:

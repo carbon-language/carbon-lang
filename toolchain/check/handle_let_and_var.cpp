@@ -4,14 +4,18 @@
 
 #include <optional>
 
+#include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/keyword_modifier_set.h"
+#include "toolchain/check/member_access.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -101,23 +105,25 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     return true;
   }
 
+  auto pattern_id = SemIR::InstId::None;
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ExplicitParamList:
     case FullPatternStack::Kind::ImplicitParamList:
-      subpattern_id = AddPatternInst<SemIR::VarParamPattern>(
+      pattern_id = AddPatternInst<SemIR::VarParamPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
+      pattern_id = AddPatternInst<SemIR::VarPattern>(
+          context, node_id,
+          {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
 
-  auto pattern_id = AddPatternInst<SemIR::VarPattern>(
-      context, node_id, {.type_id = type_id, .subpattern_id = subpattern_id});
   context.node_stack().Push(node_id, pattern_id);
   return true;
 }
@@ -125,6 +131,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // Handle the end of the full-pattern of a let/var declaration (before the
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
+  EndSubpattern(context, context.node_stack());
   auto scope_id = context.scope_stack().PeekNameScopeId();
   if (scope_id.has_value() &&
       context.name_scopes().Get(scope_id).is_interface_definition()) {
@@ -144,13 +151,25 @@ static auto EndFullPattern(Context& context) -> void {
   AddPatternVarStorage(context, pattern_block_id, returned);
 }
 
-static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
-  EndFullPattern(context);
+static auto StartPatternInitializer(Context& context) -> bool {
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
     context.global_init().Resume();
   }
-  context.node_stack().Push(node_id);
   context.full_pattern_stack().StartPatternInitializer();
+  return true;
+}
+
+static auto EndPatternInitializer(Context& context) -> void {
+  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+    context.global_init().Suspend();
+  }
+  context.full_pattern_stack().EndPatternInitializer();
+}
+
+static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
+  EndFullPattern(context);
+  context.node_stack().Push(node_id);
+  StartPatternInitializer(context);
   return true;
 }
 
@@ -161,10 +180,13 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
+  EndFullPattern(context);
   auto interface_decl =
       context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
   EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
-  return HandleInitializer(context, node_id);
+  context.node_stack().Push(node_id);
+  StartPatternInitializer(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
@@ -176,6 +198,35 @@ auto HandleParseNode(Context& context, Parse::FieldInitializerId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   return true;
+}
+
+// Make a default initialization expression for a `var` declaration.
+static auto MakeDefaultInit(Context& context, SemIR::LocId loc_id,
+                            SemIR::InstId pattern_id) -> SemIR::InstId {
+  loc_id = context.insts().GetLocIdForDesugaring(loc_id);
+
+  // Extract the matched type from the pattern.
+  //
+  // TODO: Diagnose if the pattern doesn't have a type, for example `var 123;`
+  // or `var a: auto;`.
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+  auto type_inst_id = context.types().GetTypeInstId(
+      SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id));
+  if (type_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Form `Type as Core.DefaultOrUnformed`.
+  auto interface_id =
+      LookupNameInCore(context, loc_id, CoreIdentifier::DefaultOrUnformed);
+  auto interface_type = ExprAsType(context, loc_id, interface_id);
+  auto facet_id = ConvertToValueOfType(context, loc_id, type_inst_id,
+                                       interface_type.type_id);
+
+  // Form a call to `facet.Op()`.
+  auto op_name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+  auto op_id = PerformMemberAccess(context, loc_id, facet_id, op_name_id);
+  return PerformCall(context, loc_id, op_id, {});
 }
 
 namespace {
@@ -196,28 +247,35 @@ struct DeclInfo {
 template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& IntroducerNodeKind,
           const Parse::NodeKind& InitializerNodeKind>
-static auto HandleDecl(Context& context) -> DeclInfo {
+static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
     decl_info.init_id = context.node_stack().PopExpr();
     context.node_stack().PopAndDiscardSoloNodeId<InitializerNodeKind>();
-    if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.global_init().Suspend();
-    }
-    context.full_pattern_stack().EndPatternInitializer();
+    EndPatternInitializer(context);
   } else {
+    EndFullPattern(context);
+
     // For an associated constant declaration, handle the completed declaration
     // now. We will have done this at the `=` if there was an initializer.
-    if (IntroducerNodeKind == Parse::NodeKind::AssociatedConstantIntroducer) {
+    if constexpr (IntroducerNodeKind ==
+                  Parse::NodeKind::AssociatedConstantIntroducer) {
       auto interface_decl =
           context.scope_stack()
               .GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
       EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
     }
 
-    EndFullPattern(context);
+    // A variable declaration without an explicit initializer is initialized by
+    // calling `(T as Core.DefaultOrUnformed).Op()`.
+    if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
+      StartPatternInitializer(context);
+      decl_info.init_id =
+          MakeDefaultInit(context, node_id, context.node_stack().PeekPattern());
+      EndPatternInitializer(context);
+    }
   }
   context.full_pattern_stack().PopFullPattern();
 
@@ -242,7 +300,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
-                 Parse::NodeKind::LetInitializer>(context);
+                 Parse::NodeKind::LetInitializer>(context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -268,10 +326,10 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
     -> bool {
-  auto decl_info =
-      HandleDecl<Lex::TokenKind::Let,
-                 Parse::NodeKind::AssociatedConstantIntroducer,
-                 Parse::NodeKind::AssociatedConstantInitializer>(context);
+  auto decl_info = HandleDecl<Lex::TokenKind::Let,
+                              Parse::NodeKind::AssociatedConstantIntroducer,
+                              Parse::NodeKind::AssociatedConstantInitializer>(
+      context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -319,11 +377,10 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::VariableDeclId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
-                 Parse::NodeKind::VariableInitializer>(context);
+                 Parse::NodeKind::VariableInitializer>(context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,

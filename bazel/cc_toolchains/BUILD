@@ -6,6 +6,8 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["carbon_cc_toolchain_config.bzl"])
+
 # For use by defs.bzl.
 # Matches when asan is enabled on a macOS platform.
 selects.config_setting_group(
@@ -61,5 +63,9 @@ filegroup(
         "cc_toolchain_optimization.bzl",
         "cc_toolchain_sanitizer_features.bzl",
         "cc_toolchain_tools.bzl",
+
+        # TODO: Remove this once we can remove the use of it from Carbon
+        # toolchain rules.
+        "cc_toolchain_carbon_project_features.bzl",
     ],
 )

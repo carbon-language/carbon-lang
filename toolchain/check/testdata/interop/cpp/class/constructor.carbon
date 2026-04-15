@@ -21,6 +21,10 @@ class C {
   C();
 };
 
+struct NoDefault {
+  NoDefault(int);
+};
+
 // --- import_default.carbon
 
 library "[[@TEST_NAME]]";
@@ -31,6 +35,59 @@ fn F() {
   //@dump-sem-ir-begin
   let unused c: Cpp.C = Cpp.C.C();
   //@dump-sem-ir-end
+}
+
+// --- implicit_default.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "default.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  var unused c: Cpp.C;
+  //@dump-sem-ir-end
+}
+
+fn G(T:! Core.Default & Core.Destroy) {
+  var unused x: T;
+}
+
+fn CallG() {
+  G(Cpp.C);
+}
+
+// --- todo_fail_no_default_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "default.h";
+
+fn F() {
+  // TODO: This should fail, but currently does not because the min_prelude
+  // version of UnformedInit is currently implemented by every type.
+  var unused x: Cpp.NoDefault;
+}
+
+// --- fail_no_default.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "default.h";
+
+fn G(T:! Core.Default & Core.Destroy) {
+  var unused x: T;
+}
+
+fn CallG() {
+  // CHECK:STDERR: fail_no_default.carbon:[[@LINE+7]]:3: error: cannot convert type `NoDefault` into type implementing `Core.Default & Core.Destroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   G(Cpp.NoDefault);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn G(T:! Core.Default & Core.Destroy) {
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  G(Cpp.NoDefault);
 }
 
 // ============================================================================
@@ -305,6 +362,62 @@ fn F() {
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc8_33.4
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_33.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_33.3)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit_default.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
+// CHECK:STDOUT:   %T.50c: %Default.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op, @T.binding.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.185: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.Op.type: type = fn_type @C.Op [concrete]
+// CHECK:STDOUT:   %C.Op: %C.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a0a: <witness> = custom_witness (%C.Op), @Default [concrete]
+// CHECK:STDOUT:   %Default.facet.fdc: %Default.type = facet_value %C, (%custom_witness.a0a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.2aa: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.608, @T.binding.as_type.as.DefaultOrUnformed.impl(%Default.facet.fdc) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.898: %DefaultOrUnformed.type = facet_value %C, (%DefaultOrUnformed.impl_witness.2aa) [concrete]
+// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
+// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %Core.import_ref.9c6: @T.binding.as_type.as.DefaultOrUnformed.impl.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8d1) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.185)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.608 = impl_witness_table (%Core.import_ref.9c6), @T.binding.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.217 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.217 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%C, (constants.%DefaultOrUnformed.impl_witness.2aa) [concrete = constants.%DefaultOrUnformed.facet.898]
+// CHECK:STDOUT:   %.loc8_22.1: %DefaultOrUnformed.type = converted constants.%C, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet.898]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc8_22.1 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc8_22.2: type = converted %.loc8_22.1, %as_type [concrete = constants.%C]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc8_3: ref %C = splice_block %c.var {}
+// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %C to %.loc8_3 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %c.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %.loc8_20: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %c.var, constants.%C.cpp_destructor
+// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%c.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -684,12 +797,12 @@ fn F() {
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound: <bound method> = bound_method %true, %bool.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %.e3b: ref bool = temporary invalid, %true [concrete]
+// CHECK:STDOUT:   %addr: %ptr.bb2 = addr_of %.e3b [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type.65f120.3: type = fn_type @C__carbon_thunk.3 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.d98342.3: %C__carbon_thunk.type.65f120.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -758,12 +871,12 @@ fn F() {
 // CHECK:STDOUT:   %C.ref.loc9_31: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
-// CHECK:STDOUT:   %.loc9_34.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc9: %.86d = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %true, %impl.elem0.loc9 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method.loc9(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc9_34.2: ref bool = temporary %.loc9_34.1, %bool.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr.loc9_38.1: %ptr.bb2 = addr_of %.loc9_34.2
+// CHECK:STDOUT:   %.loc9_34.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %.loc9_34.2: ref bool = temporary %.loc9_34.1, %bool.as.Copy.impl.Op.call [concrete = constants.%.e3b]
+// CHECK:STDOUT:   %addr.loc9_38.1: %ptr.bb2 = addr_of %.loc9_34.2 [concrete = constants.%addr]
 // CHECK:STDOUT:   %addr.loc9_38.2: %ptr.d9e = addr_of %.loc9_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.2(%addr.loc9_38.1, %addr.loc9_38.2)
 // CHECK:STDOUT:   %.loc9_38: init %C to %.loc9_3 = mark_in_place_init %C__carbon_thunk.call.loc9
@@ -795,8 +908,6 @@ fn F() {
 // CHECK:STDOUT:   %c3: ref %C = ref_binding c3, %c3.var
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %c3.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%c3.var)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_34.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_34.2)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%c2.var)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor

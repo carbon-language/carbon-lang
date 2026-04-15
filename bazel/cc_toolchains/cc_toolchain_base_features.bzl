@@ -4,6 +4,7 @@
 
 """Definitions used for the base features of a `cc_toolchain_config`."""
 
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -92,12 +93,41 @@ output_flags_feature = feature(
     ],
 )
 
+strip_feature = feature(
+    name = "strip_flags",
+    enabled = True,
+    flag_sets = [flag_set(
+        actions = [ACTION_NAMES.strip],
+        flag_groups = [
+            flag_group(
+                flags = ["-S"],
+            ),
+            flag_group(
+                flags = ["-p"],
+            ),
+            flag_group(
+                expand_if_available = "output_file",
+                flags = ["-o", "%{output_file}"],
+            ),
+            flag_group(
+                iterate_over = "stripopts",
+                flags = ["%{stripopts}"],
+            ),
+            flag_group(
+                expand_if_available = "input_file",
+                flags = ["%{input_file}"],
+            ),
+        ],
+    )],
+)
+
 base_features = [
     dbg_feature,
     fastbuild_feature,
     host_feature,
     no_legacy_features_feature,
     opt_feature,
+    strip_feature,
     supports_pic_feature,
     supports_dynamic_linker_feature,
     supports_start_end_lib_feature,

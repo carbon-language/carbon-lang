@@ -34,7 +34,7 @@ interface J {
   // CHECK:STDERR:                          ^~~~~~~~
   // CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let J1:! Z where .Z2 = C(.Self);
 }
@@ -48,7 +48,7 @@ class D;
 // CHECK:STDERR:                                      ^~~~~~~~
 // CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(T:! J where .J1 = D) {
@@ -75,7 +75,7 @@ interface J {
   // CHECK:STDERR:                          ^~~~~~
   // CHECK:STDERR: fail_todo_implied_constraint_on_associated_constant.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Tuple) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~
   // CHECK:STDERR:
   let J1:! Z where .Z2 = C(.Z1);
 }
@@ -106,7 +106,7 @@ interface J {
   // CHECK:STDERR:                                           ^~~~~~~~
   // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
@@ -120,7 +120,7 @@ class D;
 // CHECK:STDERR:                                      ^~~~~~~~
 // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(T:! J where .J1 = D) {
@@ -144,7 +144,7 @@ interface J {
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let J1:! (Z where .Z2 = C(.Self)) where .Z1 = ();
 }
@@ -158,7 +158,7 @@ class D;
 // CHECK:STDERR:                                      ^~~~~~~~
 // CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(T:! J where .J1 = D) {
@@ -182,7 +182,7 @@ interface J {
   // CHECK:STDERR:                                       ^~~~~~~~
   // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let J1:! Z where .Z1 = () and .Z2 = C(.Self);
 }
@@ -196,7 +196,7 @@ class D;
 // CHECK:STDERR:                                      ^~~~~~~~
 // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(T:! J where .J1 = D) {
@@ -220,7 +220,7 @@ interface J {
   // CHECK:STDERR:                          ^~~~~~~~
   // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let J1:! Z where .Z2 = C(.Self) and .Z1 = ();
 }
@@ -234,7 +234,7 @@ class D;
 // CHECK:STDERR:                                      ^~~~~~~~
 // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(T:! J where .J1 = D) {

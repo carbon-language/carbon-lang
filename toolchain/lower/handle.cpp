@@ -226,6 +226,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   auto inner_inst_id = inst.value_id;
 
+  // `GetValue` will fail on package-scope value bindings because they aren't
+  // constants, and they aren't global variables, so as a workaround we
+  // peek through bindings here to directly access the bound value.
+  // TODO: Find a way of dealing with this that still works if the bound
+  // value isn't a global variable or constant either.
   if (auto bind_name =
           context.sem_ir().insts().TryGetAs<SemIR::AnyBinding>(inner_inst_id)) {
     inner_inst_id = bind_name->value_id;

@@ -104,8 +104,10 @@ CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedLambdaBody)
 CARBON_DIAGNOSTIC_KIND(ExpectedLambdaBodyAfterReturnType)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpr)
+CARBON_DIAGNOSTIC_KIND(ExpectedPattern)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPeriodOrArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierOrSelfAfterPeriod)
+CARBON_DIAGNOSTIC_KIND(ExpectedBindingName)
 CARBON_DIAGNOSTIC_KIND(ExpectedBindingPattern)
 CARBON_DIAGNOSTIC_KIND(ExpectedGenericBindingPatternAfterTemplate)
 CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
@@ -128,6 +130,11 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
+
+// Inline declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedCppAfterInline)
+CARBON_DIAGNOSTIC_KIND(ExpectedStringAfterInlineCpp)
+CARBON_DIAGNOSTIC_KIND(InlineDeclNotAtFileScope)
 
 // Match diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)
@@ -270,7 +277,6 @@ CARBON_DIAGNOSTIC_KIND(RefTagNoRefParam)
 CARBON_DIAGNOSTIC_KIND(RefTagNotDurableRef)
 CARBON_DIAGNOSTIC_KIND(SelfParameterNotAllowed)
 CARBON_DIAGNOSTIC_KIND(ValueForRefParam)
-CARBON_DIAGNOSTIC_KIND(CppConstexprEval)
 
 // Function declaration checking.
 CARBON_DIAGNOSTIC_KIND(DefinedAbstractFunction)
@@ -373,7 +379,6 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessInContext)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
-CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetTypeOfQuerySelf)
 
 // Require checking.
 CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)
@@ -544,6 +549,7 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+CARBON_DIAGNOSTIC_KIND(WhereWithoutDesignator)
 
 // Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)

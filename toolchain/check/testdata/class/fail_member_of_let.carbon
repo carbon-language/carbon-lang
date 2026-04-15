@@ -24,6 +24,6 @@ let T: type = Class;
 // CHECK:STDERR:    ^
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: let T: type = Class;
-// CHECK:STDERR:     ^
+// CHECK:STDERR:     ^~~~~~~
 // CHECK:STDERR:
 fn T.F() {}

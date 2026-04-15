@@ -298,7 +298,7 @@
       "patterns": [
         {
           "name": "storage.modifier.carbon",
-          "match": "\\b(abstract|const|extend|extern|final|private|protected|virtual)\\b"
+          "match": "\\b(abstract|const|extend|extern|final|private|protected|static|virtual)\\b"
         },
         {
           "name": "storage.modifier.carbon",
