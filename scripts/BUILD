@@ -23,5 +23,6 @@ cc_library(
         # `@boost.unordered` uses `strip_prefix`, which results in
         # bazel-out/<mode>/bin/external/+_repo_rules+boost.unordered/_virtual_includes/boost.unordered
         "@boost.unordered",
+        "@llvm-project//clang:frontend",
     ],
 )
