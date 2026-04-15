@@ -43,6 +43,17 @@ void G() {
 }
 ''';
 
+// --- incomplete.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+class A;
+
+inline Cpp '''
+Carbon::A *p = nullptr;
+''';
+
 // --- fail_incomplete_concrete.carbon
 library "[[@TEST_NAME]]";
 

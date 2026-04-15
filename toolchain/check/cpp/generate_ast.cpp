@@ -580,8 +580,8 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
         !base_type.isNull() && base_type->isStructureOrClassType() &&
         !context_->clang_sema().RequireCompleteType(
             base_loc, base_type, clang::diag::err_incomplete_base_class)) {
-      const bool is_virtual = false;
-      const bool is_base_of_class = true;
+      bool is_virtual = false;
+      bool is_base_of_class = true;
       clang::CXXBaseSpecifier base(
           clang::SourceRange(base_loc, base_loc), is_virtual, is_base_of_class,
           clang::AS_public,

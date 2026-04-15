@@ -247,10 +247,10 @@ static auto BuildCppToCarbonThunkDecl(
   auto* tinfo =
       ast_context.getTrivialTypeSourceInfo(thunk_function_type, clang_loc);
 
-  const bool uses_fp_intrin = false;
-  const bool inline_specified = true;
-  const auto constexpr_kind = clang::ConstexprSpecKind::Unspecified;
-  const auto trailing_requires_clause = clang::AssociatedConstraint();
+  bool uses_fp_intrin = false;
+  bool inline_specified = true;
+  auto constexpr_kind = clang::ConstexprSpecKind::Unspecified;
+  auto trailing_requires_clause = clang::AssociatedConstraint();
 
   clang::FunctionDecl* thunk_function_decl = nullptr;
   if (auto* parent_class = dyn_cast<clang::CXXRecordDecl>(decl_context)) {
