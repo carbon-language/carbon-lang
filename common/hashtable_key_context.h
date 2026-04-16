@@ -161,8 +161,19 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
-template <typename LeftT, typename RightT>
-inline auto CarbonHashtableEq(const LeftT& lhs, const RightT& rhs) -> bool
+inline auto CarbonHashtableEq(const llvm::StringRef& lhs,
+                              const std::string& rhs) -> bool {
+  return lhs == rhs;
+}
+
+template <typename T>
+inline auto CarbonHashtableEq(const llvm::MutableArrayRef<T>& lhs,
+                              const llvm::ArrayRef<T>& rhs) -> bool {
+  return lhs == rhs;
+}
+
+template <typename T>
+inline auto CarbonHashtableEq(const T& lhs, const T& rhs) -> bool
   requires(requires {
     { lhs == rhs } -> std::convertible_to<bool>;
   })
