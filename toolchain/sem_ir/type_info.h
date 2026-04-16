@@ -112,15 +112,20 @@ class ObjectSize : public Printable<ObjectSize> {
     return a.bits_ == b.bits_;
   }
 
+  // Computes the sum of two object sizes. This is the size of the smallest
+  // object that could fit both objects consecutively, without any alignment
+  // constraints or other padding bits.
   auto operator+=(ObjectSize other) -> ObjectSize& {
     bits_ += other.bits_;
     return *this;
   }
-
   friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
     return a += b;
   }
 
+  // Scales a size by a dimensionless integer. This is the size of `n` objects
+  // of the given size, laid out contiguously with no padding between them.
+  // Equivalent to adding the size to itself `n` times.
   auto operator*=(int64_t n) -> ObjectSize& {
     CARBON_CHECK(n >= 0, "sizes should not be negative");
     bits_ *= n;
@@ -216,7 +221,8 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // not complete.
   ValueRepr value_repr = ValueRepr();
 
-  // The layout of the object representation of this type.
+  // The layout of the object representation of this type. This will be valid
+  // unless the type is incomplete or dependent.
   ObjectLayout object_layout = ObjectLayout();
 
   // If this type is abstract, this is id of an abstract class it uses.

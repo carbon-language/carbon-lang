@@ -689,6 +689,11 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::BoolType /*inst*/) const
     -> SemIR::CompleteTypeInfo {
+  // TODO: Decide whether to use a size of `1` here, like `Core.Int(1)`. One
+  // concern is that {.a: bool, .b: bool} would be laid out with the bools at
+  // offsets 0 and 8, which on big-endian systems would imply the MSB stores the
+  // value not the LSB. Consider right-aligning fields on big-endian systems
+  // instead (except when bit-packing, by whatever means we support that).
   return {.value_repr = MakeCopyValueRepr(type_id),
           .object_layout = {.size = SemIR::ObjectSize::Bytes(1),
                             .alignment = SemIR::ObjectSize::Bytes(1)}};
