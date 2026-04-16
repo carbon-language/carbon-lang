@@ -655,6 +655,8 @@ auto CarbonExternalASTSource::layoutRecordType(
 
   // Clang should not have asked for the layout of an incomplete type, but check
   // now to be sure, and to generate a specific definition if needed.
+  // TODO: Add a test for layout of a specific class once they're supported in
+  // general.
   CompleteTypeOrCheckFail(*context_, class_type_id);
 
   // Set the overall size and alignment. We round up the size to an integer
