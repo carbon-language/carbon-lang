@@ -18,17 +18,18 @@ namespace Carbon {
 //
 // This provides a hashtable-specific extension point to implement equality
 // comparison within a hashtable key context. By default, it will use
-// `operator==` on the LHS and RHS operands. However, types can provide a
-// dedicated customization point by implementing a free function that can be
-// found by ADL for your type called `CarbonHashtableEq` with the following
-// signature:
+// `operator==` on the LHS and RHS operands if they are of the identical type.
+// However, types can provide a dedicated customization point by implementing a
+// free function that can be found by ADL for your type called
+// `CarbonHashtableEq` with the following signature:
 //
 // ```cpp
 // auto CarbonHashtableEq(const YourType& lhs, const YourType& rhs) -> bool;
 // ```
 //
 // Any such overload will be able to override the default we provide for types
-// that can compare with `==`.
+// that can compare with `==`. This overload may only compare two objects equal
+// if the hash of those two objects are identical.
 //
 // This library also provides any customization points for LLVM or standard
 // library types either lacking `operator==` or where that operator is not
@@ -161,8 +162,8 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
-inline auto CarbonHashtableEq(llvm::StringRef lhs,
-                              const std::string& rhs) -> bool {
+inline auto CarbonHashtableEq(llvm::StringRef lhs, const std::string& rhs)
+    -> bool {
   return lhs == rhs;
 }
 
