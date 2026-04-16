@@ -161,7 +161,7 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
-inline auto CarbonHashtableEq(const llvm::StringRef& lhs,
+inline auto CarbonHashtableEq(llvm::StringRef lhs,
                               const std::string& rhs) -> bool {
   return lhs == rhs;
 }
