@@ -213,11 +213,10 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                                               .type_id = pattern_type_id,
                                               .pretty_name_id = name_id}));
 
-  auto entity_name_id =
-      AddBindingEntityName(context, name_id,
-                           /*form_id=*/SemIR::InstId::None,
-                           /*is_unused=*/false,
-                           /*phase=*/BindingPhase::Runtime);
+  auto entity_name_id = AddBindingEntityName(context, name_id,
+                                             /*form_id=*/SemIR::InstId::None,
+                                             /*is_unused=*/false,
+                                             /*phase=*/BindingPhase::Runtime);
   return AddBindingPattern(context, loc_id, type_expr_region_id,
                            {.kind = SemIR::WrapperBindingPattern::Kind,
                             .type_id = GetPatternType(context, type_id),

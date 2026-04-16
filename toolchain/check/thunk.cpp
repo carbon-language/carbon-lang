@@ -74,9 +74,9 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
     phase = entity_name.is_template ? BindingPhase::Template
                                     : BindingPhase::Symbolic;
   }
-  pattern.entity_name_id = AddBindingEntityName(
-      context, entity_name.name_id, /*form_id=*/SemIR::InstId::None,
-      entity_name.is_unused, phase);
+  pattern.entity_name_id = AddBindingEntityName(context, entity_name.name_id,
+                                                /*form_id=*/SemIR::InstId::None,
+                                                entity_name.is_unused, phase);
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
         pattern.subpattern_id);
