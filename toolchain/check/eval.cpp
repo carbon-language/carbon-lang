@@ -545,7 +545,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandDependence(eval_context.context(), inst_id) == SemIR::ConstantDependence::Template) {
+  if (OperandDependence(eval_context.context(), inst_id) ==
+      SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
   return inst_id;

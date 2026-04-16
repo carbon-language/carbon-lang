@@ -1972,8 +1972,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // TODO: Support this for targets other than `Value`.
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
       target.kind == ConversionTarget::Value &&
-      (OperandDependence(context, expr_id) == SemIR::ConstantDependence::Template ||
-       OperandDependence(context, target.type_id) == SemIR::ConstantDependence::Template)) {
+      (OperandDependence(context, expr_id) ==
+           SemIR::ConstantDependence::Template ||
+       OperandDependence(context, target.type_id) ==
+           SemIR::ConstantDependence::Template)) {
     auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
