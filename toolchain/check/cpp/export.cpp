@@ -559,13 +559,6 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  if (callee.call_param_ranges.implicit_size() != 0) {
-    context.TODO(loc_id,
-                 "unsupported: C++ calling a Carbon function with "
-                 "an implicit parameter");
-    return nullptr;
-  }
-
   // Map the parent scope into the C++ AST.
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, callee.parent_scope_id);
