@@ -277,7 +277,7 @@ auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
         // TODO: If the type is small, emit a store rather than a memcpy.
-        CopyObject(type, source_id, dest_id);
+        CopyValue(type, source_id, dest_id);
       }
       break;
     case SemIR::InitRepr::ByCopy:

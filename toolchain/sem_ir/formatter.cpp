@@ -26,7 +26,6 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/name_scope.h"
-#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 #include "toolchain/sem_ir/vtable.h"
 

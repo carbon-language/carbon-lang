@@ -222,11 +222,12 @@ class TypeCompleter {
   // `type_inst` to be complete to our work list.
   auto AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool;
 
-  // Makes an empty value representation, which is used for types that have no
-  // state, such as empty structs and tuples.
+  // Makes type info for a type with an empty value representation, which is
+  // used for types that have no state, such as empty structs and tuples.
   auto MakeEmptyTypeInfo() const -> SemIR::CompleteTypeInfo;
 
-  // Makes a dependent value representation, which is used for symbolic types.
+  // Makes type info for a type with a dependent value representation, which is
+  // used for symbolic types.
   auto MakeDependentTypeInfo(SemIR::TypeId type_id) const
       -> SemIR::CompleteTypeInfo;
 
@@ -244,8 +245,7 @@ class TypeCompleter {
                                 SemIR::ValueRepr::NotAggregate) const
       -> SemIR::ValueRepr;
 
-  // Gets the value representation of a nested type, which should already be
-  // complete.
+  // Gets the type info for a nested type, which should already be complete.
   auto GetNestedInfo(SemIR::TypeId nested_type_id) const
       -> SemIR::CompleteTypeInfo;
 
@@ -606,11 +606,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
       abstract_class_id = field_info.abstract_class_id;
     }
     // Accumulate layout.
-    if (layout.has_value() && field_info.object_layout.has_value()) {
-      layout += field_info.object_layout;
-    } else {
-      layout = SemIR::ObjectLayout();
-    }
+    layout.TryAppendField(field_info.object_layout);
   }
 
   auto value_rep =
@@ -655,11 +651,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
       abstract_class_id = element_info.abstract_class_id;
     }
     // Accumulate layout.
-    if (layout.has_value() && element_info.object_layout.has_value()) {
-      layout += element_info.object_layout;
-    } else {
-      layout = SemIR::ObjectLayout();
-    }
+    layout.TryAppendField(element_info.object_layout);
   }
 
   auto value_rep = same_as_object_rep
@@ -716,9 +708,8 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   if (auto bit_width = context_->sem_ir().GetZExtIntValue(inst.bit_width_id)) {
     auto size = SemIR::ObjectSize::Bits(*bit_width);
     // TODO: The upper bound for alignment here should be target-specific.
-    auto align_bits =
-        std::clamp<int64_t>(llvm::PowerOf2Ceil(*bit_width), 8, 256);
-    auto align = SemIR::ObjectSize::Bits(align_bits);
+    auto align = SemIR::ObjectSize::Bits(
+        std::clamp<int64_t>(llvm::PowerOf2Ceil(*bit_width), 8, 256));
     layout = {.size = size, .alignment = align};
   }
   return {.value_repr = MakeCopyValueRepr(type_id), .object_layout = layout};
@@ -748,8 +739,8 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
           ? inst.class_id
           : SemIR::ClassId::None;
 
-  // The value representation of an adapter is the value representation of
-  // its adapted type.
+  // The object and value representation of an adapter are the object and value
+  // representation of its adapted type.
   if (auto adapted_type_id =
           class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
       adapted_type_id.has_value()) {
@@ -758,7 +749,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
     return info;
   }
   // Otherwise, the value representation for a class is a pointer to the
-  // object representation.
+  // object representation, which was computed when the class was defined.
   auto object_repr_type_id =
       class_info.GetObjectRepr(context_->sem_ir(), inst.specific_id);
   // TODO: Support customized value representations for classes.
@@ -772,8 +763,8 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::ConstType inst) const
     -> SemIR::CompleteTypeInfo {
-  // The value representation of `const T` is the same as that of `T`.
-  // Objects are not modifiable through their value representations.
+  // The object and value representation of `const T` are the same as those of
+  // `T`. Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 

@@ -1340,8 +1340,8 @@ static auto BuildPackedStructType(FileContext& context,
   auto size_so_far = SemIR::ObjectSize::Zero();
 
   llvm::Type** previous_type = nullptr;
-  for (auto [type, layout] : llvm::zip(subtypes, layouts)) {
-    auto offset = struct_layout.size.AlignedTo(layout.alignment);
+  for (auto [type, layout] : llvm::zip_equal(subtypes, layouts)) {
+    auto offset = struct_layout.FieldOffset(layout);
     // If this field has padding before it, represent that padding explicitly as
     // part of the previous field. This allows us to always use GEP indexes that
     // match the field indexes.
@@ -1356,7 +1356,7 @@ static auto BuildPackedStructType(FileContext& context,
     }
 
     size_so_far += SemIR::ObjectSize::Bytes(data_layout.getTypeAllocSize(type));
-    struct_layout += layout;
+    struct_layout.AppendField(layout);
     previous_type = &type;
   }
   return llvm::StructType::get(context.llvm_context(), subtypes,
@@ -1372,10 +1372,10 @@ static auto StructLayoutMatches(llvm::ArrayRef<SemIR::ObjectLayout> layouts,
   // Check each field is at the right offset.
   for (auto [i, layout] : llvm::enumerate(layouts)) {
     if (static_cast<int64_t>(llvm_layout.getElementOffsetInBits(i)) !=
-        struct_layout.size.AlignedTo(layout.alignment).bits()) {
+        struct_layout.FieldOffset(layout).bits()) {
       return false;
     }
-    struct_layout += layout;
+    struct_layout.AppendField(layout);
   }
 
   // Treat the LLVM layout as being acceptable if it's the right byte size and
@@ -1395,7 +1395,9 @@ static auto BuildStructType(FileContext& context,
                             llvm::ArrayRef<SemIR::ObjectLayout> layouts)
     -> FileContext::LoweredTypes {
   // Opportunistically try building an llvm StructType from the subtypes. If it
-  // has the right layout, we're done.
+  // has the right layout, we're done. We prefer to use a non-packed struct type
+  // where possible to produce a smaller LLVM IR representation for the type and
+  // for constant values of the type, and to improve the readability of the IR.
   auto* struct_type = llvm::StructType::get(context.llvm_context(), subtypes);
   if (!StructLayoutMatches(
           layouts, *context.llvm_module().getDataLayout().getStructLayout(

@@ -122,6 +122,7 @@ class ObjectSize : public Printable<ObjectSize> {
   }
 
   auto operator*=(int64_t n) -> ObjectSize& {
+    CARBON_CHECK(n >= 0, "sizes should not be negative");
     bits_ *= n;
     return *this;
   }
@@ -134,7 +135,7 @@ class ObjectSize : public Printable<ObjectSize> {
 
  private:
   explicit constexpr ObjectSize(int64_t bits) : bits_(bits) {
-    CARBON_DCHECK(bits >= 0, "sizes should not be negative");
+    CARBON_CHECK(bits >= 0, "sizes should not be negative");
   }
 
   int64_t bits_;
@@ -155,7 +156,7 @@ struct ObjectLayout {
   ObjectSize alignment = ObjectSize::Zero();
 
   // Returns the object layout to use for an empty type.
-  static auto Empty() -> ObjectLayout {
+  [[nodiscard]] static auto Empty() -> ObjectLayout {
     return {.size = ObjectSize::Zero(), .alignment = ObjectSize::Bytes(1)};
   }
 
@@ -168,26 +169,42 @@ struct ObjectLayout {
             .alignment = element_layout.alignment};
   }
 
-  // Updates the layout by concatenating naturally-aligned space for the given
-  // field.
-  auto operator+=(ObjectLayout field) -> ObjectLayout& {
-    CARBON_CHECK(field.has_value());
-    size = size.AlignedTo(field.alignment) + field.size;
-    alignment = std::max(alignment, field.alignment);
-    return *this;
-  }
-
-  // Returns a layout suitable for storing an `a` followed by a `b`.
-  friend auto operator+(ObjectLayout a, ObjectLayout b) -> ObjectLayout {
-    return a += b;
-  }
-
   // Returns the stride of an array with this element type.
-  [[nodiscard]] auto ArrayStride() const -> ObjectSize {
-    return size.AlignedTo(alignment);
+  auto ArrayStride() const -> ObjectSize { return size.AlignedTo(alignment); }
+
+  // Returns the offset that a field with the given layout would have if
+  // appended to this struct.
+  auto FieldOffset(ObjectLayout field) -> ObjectSize {
+    CARBON_CHECK(field.has_value());
+    return size.AlignedTo(field.alignment);
   }
 
-  // Returns true if the layout has been set.
+  // Updates this aggregate layout by concatenating naturally-aligned space for
+  // the given field layout, which is required to be valid.
+  auto AppendField(ObjectLayout field) -> void {
+    size = FieldOffset(field) + field.size;
+    alignment = std::max(alignment, field.alignment);
+  }
+
+  // Updates this aggregate layout by concatenating naturally-aligned space for
+  // the given field layout, if the field has a valid layout. If any field with
+  // an invalid layout is appended, the layout of the aggregate becomes invalid.
+  //
+  // An invalid layout for a field with a complete type indicates that its
+  // layout is dependent on a generic parameter; this causes the layout of the
+  // enclosing aggregate to also be dependent on that parameter.
+  auto TryAppendField(ObjectLayout field) -> void {
+    if (has_value()) {
+      if (field.has_value()) {
+        AppendField(field);
+      } else {
+        *this = ObjectLayout();
+      }
+    }
+  }
+
+  // Returns true if the layout has been set. For a complete type, this will be
+  // true if the layout is non-dependent.
   auto has_value() const -> bool { return alignment != ObjectSize::Zero(); }
 };
 
