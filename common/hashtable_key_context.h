@@ -172,6 +172,15 @@ inline auto CarbonHashtableEq(llvm::MutableArrayRef<T> lhs,
   return lhs == rhs;
 }
 
+template <typename LHS, typename RHS>
+inline auto CarbonHashtableEq(const LHS& lhs, const RHS& rhs) -> bool
+  requires(requires {
+    { CarbonHashtableEq(rhs, lhs) } -> std::convertible_to<bool>;
+  })
+{
+  return CarbonHashtableEq(rhs, lhs);
+}
+
 template <typename T>
 inline auto CarbonHashtableEq(const T& lhs, const T& rhs) -> bool
   requires(requires {
