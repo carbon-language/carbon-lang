@@ -181,11 +181,11 @@ class MatchContext {
     return value_id;
   }
 
-  // Performs the core logic of matching a variable pattern, returning the
-  // scrutinee that its subpattern should be matched with, rather than pushing
-  // it onto the worklist. This is factored out so it can be reused when
-  // handling a `FormBindingPattern` or `FormParamPattern` with an initializing
-  // form.
+  // Performs the core logic of matching a variable pattern whose type is
+  // `pattern_type_id`, but returns the scrutinee that its subpattern should be
+  // matched with, rather than pushing it onto the worklist. This is factored
+  // out so it can be reused when handling a `FormBindingPattern` or
+  // `FormParamPattern` with an initializing form.
   auto DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
                         SemIR::InstId scrutinee_id, WorkItem entry) const
       -> SemIR::InstId;
