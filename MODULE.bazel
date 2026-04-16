@@ -40,6 +40,14 @@ bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
 bazel_dep(name = "tree-sitter-bazel", version = "0.26.5")
 
 bazel_dep(name = "wolfd_bazel_compile_commands", version = "0.5.2", dev_dependency = True)
+git_override(
+    module_name = "wolfd_bazel_compile_commands",
+    # This is https://github.com/wolfd/bazel-compile-commands/pull/3 which is
+    # needed to correctly select target configurations in our compile commands.
+    commit = "7c673ac868cd237f262bb37a7819b1a279566a66",
+    remote = "https://github.com/chandlerc/bazel-compile-commands.git",
+)
+
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
     module_name = "bazel_clang_tidy",
