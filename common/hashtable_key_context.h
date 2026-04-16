@@ -167,8 +167,8 @@ inline auto CarbonHashtableEq(const llvm::StringRef& lhs,
 }
 
 template <typename T>
-inline auto CarbonHashtableEq(const llvm::MutableArrayRef<T>& lhs,
-                              const llvm::ArrayRef<T>& rhs) -> bool {
+inline auto CarbonHashtableEq(llvm::MutableArrayRef<T> lhs,
+                              llvm::ArrayRef<T> rhs) -> bool {
   return lhs == rhs;
 }
 
