@@ -2805,7 +2805,8 @@ static auto ImportInterfaceDecl(ImportContext& context,
                                      : SemIR::NameScopeId::None,
         .scope_with_self_id = import_interface.is_complete()
                                   ? AddPlaceholderNameScope(context)
-                                  : SemIR::NameScopeId::None}});
+                                  : SemIR::NameScopeId::None},
+       import_interface.core_interface});
 
   if (import_interface.has_parameters()) {
     interface_decl.type_id = GetGenericInterfaceType(

@@ -25,22 +25,10 @@ auto BuildPrimitiveCopyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
 
-// Significant interfaces in `Core` which correspond to language features and
-// can have custom witnesses.
-enum class CoreInterface {
-  Copy,
-  CppUnsafeDeref,
-  Default,
-  Destroy,
-  IntFitsIn,
-
-  Unknown,
-};
-
 // Given an interface, returns the corresponding enum if it's covered by
 // `CoreInterface`, or `Unknown` if it's some other interface.
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
-    -> CoreInterface;
+    -> SemIR::CoreInterface;
 
 // Returns a witness for a `CoreInterface` `CustomWitness`. A return value of
 // `None` indicates a non-final witness should be produced, while `std::nullopt`
@@ -50,7 +38,7 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 // witness, whether it would be final or not. It is used to indicate the
 // presence of such a witness without adding instructions for it.
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
-                         CoreInterface core_interface,
+                         SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
                          bool build_witness) -> std::optional<SemIR::InstId>;

@@ -345,7 +345,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     function78000005: {name: name4, parent_scope: name_scope7800000D, call_param_patterns_id: inst_block7800006D, return_type_inst_id: inst78000131, return_form_inst_id: inst78000132, return_patterns_id: inst_block7800006F}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:
-// CHECK:STDOUT:     interface78000000: {name: name3, parent_scope: name_scope78000001, require_impls_block_id: require_block_empty}
+// CHECK:STDOUT:     interface78000000: {name: name3, parent_scope: name_scope78000001, require_impls_block_id: require_block_empty, core_interface: Copy}
 // CHECK:STDOUT:   associated_constants: {}
 // CHECK:STDOUT:   impls:
 // CHECK:STDOUT:     impl78000000:    {self: inst7800009B, constraint: inst7800009C, witness: inst7800006F}

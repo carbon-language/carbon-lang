@@ -133,6 +133,7 @@ cc_library(
     ],
     textual_hdrs = [
         "builtin_function_kind.def",
+        "core_interface_kind.def",
     ],
     deps = [
         ":clang_decl",

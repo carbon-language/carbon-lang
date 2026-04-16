@@ -63,8 +63,10 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::TypeType::TypeId, SemIR::InterfaceId::None, decl_block_id};
   auto decl_inst_id = AddPlaceholderInst(context, node_id, interface_decl);
 
-  SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
-      name, decl_inst_id, /*is_extern=*/false, SemIR::LibraryNameId::None)};
+  auto interface_info = SemIR::Interface(
+      name_context.MakeEntityWithParamsBase(
+          name, decl_inst_id, /*is_extern=*/false, SemIR::LibraryNameId::None),
+      std::nullopt);
 
   DiagnoseIfGenericMissingExplicitParameters(context, interface_info);
 
@@ -87,6 +89,17 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     // Create a new interface if this isn't a valid redeclaration.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
+    // TODO: Only execute if we are in Core
+    auto name = context.names().GetIRBaseName(interface_info.name_id);
+    interface_info.core_interface =
+        llvm::StringSwitch<std::optional<SemIR::CoreInterface>>(name)
+            .Case("Copy", SemIR::CoreInterface::Copy)
+            .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
+            .Case("Default", SemIR::CoreInterface::Default)
+            .Case("Destroy", SemIR::CoreInterface::Destroy)
+            .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
+            .Default(std::nullopt);
+    // End TODO
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id =

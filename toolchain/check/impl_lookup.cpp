@@ -1208,7 +1208,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   }
 
   if (query_is_concrete && candidates.consider_cpp_candidates &&
-      core_interface != CoreInterface::Unknown) {
+      core_interface != SemIR::CoreInterface::Unknown) {
     // Also check for a C++ candidate that is a better match than whatever
     // `impl` we may have found in Carbon.
     auto cpp_witness_id = LookupCppImpl(

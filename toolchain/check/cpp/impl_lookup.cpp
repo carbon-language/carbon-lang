@@ -220,7 +220,7 @@ static auto BuildDestroyWitness(
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   CoreInterface core_interface,
+                   SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
@@ -231,24 +231,24 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_loc_id);
 
   switch (core_interface) {
-    case CoreInterface::Copy:
+    case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id);
-    case CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::CppUnsafeDeref:
       return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
                                         query_specific_interface_id);
-    case CoreInterface::Default:
+    case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return SemIR::InstId::None;
 
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
 }

@@ -40,14 +40,48 @@ struct InterfaceFields {
   InstBlockId associated_entities_id = InstBlockId::None;
 };
 
+// Significant interfaces in `Core` which correspond to language features and
+// can have custom witnesses.
+enum class CoreInterface : std::uint8_t {
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) Name,
+#include "toolchain/sem_ir/core_interface_kind.def"
+};
+
+inline auto operator<<(llvm::raw_ostream& o, CoreInterface interface)
+    -> llvm::raw_ostream& {
+  switch (interface) {
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  case CoreInterface::Name:                     \
+    return o << "core_interface: " << #Name;
+#include "toolchain/sem_ir/core_interface_kind.def"
+  }
+}
+
 // An interface. See EntityWithParamsBase regarding the inheritance here.
 struct Interface : public EntityWithParamsBase,
                    public InterfaceFields,
                    public Printable<Interface> {
+  explicit Interface(EntityWithParamsBase entity_with_params_base,
+                     std::optional<CoreInterface> core_interface = std::nullopt)
+      : EntityWithParamsBase(entity_with_params_base),
+        core_interface(core_interface) {}
+
+  Interface(EntityWithParamsBase entity_with_params_base,
+            InterfaceFields fields,
+            std::optional<CoreInterface> core_interface = std::nullopt)
+      : EntityWithParamsBase(entity_with_params_base),
+        InterfaceFields(fields),
+        core_interface(core_interface) {}
+
+  std::optional<CoreInterface> core_interface;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
     out << ", require_impls_block_id: " << require_impls_block_id;
+    if (core_interface.has_value()) {
+      out << ", " << *core_interface;
+    }
     out << "}";
   }
 
@@ -56,8 +90,8 @@ struct Interface : public EntityWithParamsBase,
     return associated_entities_id.has_value();
   }
 
-  // Determines whether we're currently defining the interface. This is true
-  // between the braces of the interface.
+  // Determines whether we're currently defining the interface. This is
+  // true between the braces of the interface.
   auto is_being_defined() const -> bool {
     return has_definition_started() && !is_complete();
   }
