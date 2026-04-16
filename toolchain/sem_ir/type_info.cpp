@@ -37,7 +37,9 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{value_rep: " << value_repr << ", layout: {size: " << object_layout.size << ", align: " << object_layout.alignment << "}}";
+  out << "{value_rep: " << value_repr
+      << ", layout: {size: " << object_layout.size
+      << ", align: " << object_layout.alignment << "}}";
 }
 
 auto ObjectSize::Print(llvm::raw_ostream& out) const -> void {
