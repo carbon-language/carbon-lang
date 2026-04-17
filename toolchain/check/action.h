@@ -66,10 +66,7 @@ template <typename ActionT>
 auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
                   SemIR::TypeInstId result_type_inst_id =
                       SemIR::TypeInstId::None) -> SemIR::InstId {
-  if (!ActionIsPerformable(context, action_inst) ||
-      (result_type_inst_id.has_value() &&
-       OperandDependence(context, result_type_inst_id) ==
-           SemIR::ConstantDependence::Template)) {
+  if (!ActionIsPerformable(context, action_inst)) {
     return AddDependentActionSplice(
         context, SemIR::LocIdAndInst(loc_id, action_inst), result_type_inst_id);
   }

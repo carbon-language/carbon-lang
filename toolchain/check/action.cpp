@@ -86,8 +86,8 @@ static auto OperandDependence(Context& context, SemIR::Inst::ArgAndKind arg)
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
   if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
-    // `RefineTypeAction` can be performed whenever the type is non-dependent,
-    // even if we don't know the instruction yet.
+    // `RefineTypeAction` can be performed whenever the type is not template-
+    // dependent, even if we don't know the instruction yet.
     return OperandDependence(context, refine_action->inst_type_inst_id) <
            SemIR::ConstantDependence::Template;
   }
