@@ -368,6 +368,7 @@ static auto BuildCppToCarbonThunkDecl(
 // Create the body of a C++ thunk that calls a Carbon thunk. The
 // arguments are passed by reference to the callee.
 static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
+                                      clang::DeclContext* decl_context,
                                       clang::FunctionDecl* function_decl,
                                       clang::FunctionDecl* callee_function_decl)
     -> clang::StmtResult {
@@ -400,9 +401,26 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     stmts.push_back(decl_stmt.get());
   }
 
-  clang::ExprResult callee = sema.BuildDeclRefExpr(
-      callee_function_decl, callee_function_decl->getType(), clang::VK_PRValue,
-      clang_loc);
+  auto* parent_class = dyn_cast<clang::CXXRecordDecl>(decl_context);
+
+  clang::ExprResult callee;
+  if (parent_class) {
+    auto class_type = sema.getASTContext().getCanonicalTagType(parent_class);
+    auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_type,
+                                            /*IsImplicit=*/true);
+    callee = sema.BuildMemberExpr(
+        this_expr, /*IsArrow=*/false, /*OpLoc=*/clang_loc,
+        clang::NestedNameSpecifierLoc(),
+        /*TemplateKWLoc=*/clang_loc, callee_function_decl,
+        clang::DeclAccessPair::make(callee_function_decl, clang::AS_public),
+        /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),
+        sema.getASTContext().BoundMemberTy, clang::VK_PRValue,
+        clang::OK_Ordinary);
+  } else {
+    callee = sema.BuildDeclRefExpr(callee_function_decl,
+                                   callee_function_decl->getType(),
+                                   clang::VK_PRValue, clang_loc);
+  }
 
   llvm::SmallVector<clang::Expr*> call_args;
   for (auto* param : function_decl->parameters()) {
@@ -418,8 +436,15 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     call_args.push_back(return_storage_expr.get());
   }
 
-  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
-                                              call_args, clang_loc);
+  clang::ExprResult call;
+  if (parent_class) {
+    call = clang::CXXMemberCallExpr::Create(
+        sema.getASTContext(), callee.get(), call_args, callee.get()->getType(),
+        clang::VK_PRValue, clang_loc, clang::FPOptionsOverride());
+  } else {
+    call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc, call_args,
+                              clang_loc);
+  }
   CARBON_CHECK(call.isUsable());
   stmts.push_back(call.get());
 
@@ -466,8 +491,8 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
-  clang::StmtResult body = BuildCppToCarbonThunkBody(sema, thunk_function_decl,
-                                                     carbon_function_decl);
+  clang::StmtResult body = BuildCppToCarbonThunkBody(
+      sema, target.decl_context, thunk_function_decl, carbon_function_decl);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   CARBON_CHECK(!body.isInvalid());
 
