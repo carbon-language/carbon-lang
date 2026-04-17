@@ -220,15 +220,12 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   auto clang_loc = GetCppLocation(context, loc_id);
 
   const SemIR::Function& function = context.functions().Get(function_id);
+  FunctionInfo callee(context, function_id, function, nullptr);
 
   // Get parameters types.
-  auto carbon_function_params =
-      context.inst_blocks().Get(function.call_param_patterns_id);
   llvm::SmallVector<clang::QualType> cpp_param_types;
-  for (auto param_inst_id : carbon_function_params) {
-    auto scrutinee_type_id = ExtractScrutineeType(
-        context.sem_ir(), context.insts().Get(param_inst_id).type_id());
-    auto cpp_type = MapToCppType(context, scrutinee_type_id);
+  for (auto param_type_id : callee.param_type_ids) {
+    auto cpp_type = MapToCppType(context, param_type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
