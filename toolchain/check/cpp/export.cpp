@@ -199,6 +199,15 @@ struct FunctionInfo {
     }
   }
 
+  // Get the `StorageClass` to use for `CXXMethodDecl`s.
+  auto GetStorageClass() const -> clang::StorageClass {
+    if (self_type_id == SemIR::TypeId::None) {
+      return clang::SC_Static;
+    } else {
+      return clang::SC_None;
+    }
+  }
+
   SemIR::FunctionId function_id;
   const SemIR::Function& function;
   clang::DeclContext* decl_context;
@@ -308,10 +317,9 @@ static auto BuildCppToCarbonThunkDecl(
   clang::FunctionDecl* thunk_function_decl = nullptr;
   if (auto* parent_class =
           dyn_cast<clang::CXXRecordDecl>(target.decl_context)) {
-    // TODO: Support non-static methods.
     thunk_function_decl = clang::CXXMethodDecl::Create(
         ast_context, parent_class, clang_loc, name_info, thunk_function_type,
-        tinfo, clang::SC_Static, uses_fp_intrin, inline_specified,
+        tinfo, target.GetStorageClass(), uses_fp_intrin, inline_specified,
         constexpr_kind, clang_loc, trailing_requires_clause);
     // TODO: Map Carbon access to C++ access.
     thunk_function_decl->setAccess(clang::AS_public);
