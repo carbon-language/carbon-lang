@@ -59,14 +59,15 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
            .pretty_name_id = SemIR::NameId::ReturnSlot});
       break;
     }
-    case SemIR::ErrorInst::Kind: {
-      return SemIR::ErrorInst::InstId;
-    }
     case SemIR::SymbolicBinding::Kind:
       CARBON_CHECK(
           context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
       context.TODO(loc_id, "Support symbolic return forms");
-      return SemIR::ErrorInst::InstId;
+      [[fallthrough]];
+    case SemIR::ErrorInst::Kind:
+      result_type_id = SemIR::ErrorInst::TypeId;
+      result_id = SemIR::ErrorInst::InstId;
+      break;
     default:
       CARBON_FATAL("unexpected inst kind: {0}", form_inst);
   }

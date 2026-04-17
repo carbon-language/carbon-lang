@@ -137,6 +137,10 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
         new_subpattern_id =
             RebuildPatternInst(context, return_slot->subpattern_id, subpattern);
         break;
+      case SemIR::ErrorInst::Kind:
+        subpattern.SetType(SemIR::ErrorInst::TypeId);
+        new_subpattern_id = SemIR::ErrorInst::InstId;
+        break;
       default:
         CARBON_FATAL("Unexpected kind for return slot subpattern {0}",
                      subpattern);
