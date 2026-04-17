@@ -131,10 +131,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    auto target_scope = context.qualified_binding_target_scope();
-    if (context.qualified_binding_has_error()) {
-      target_scope = SemIR::NameScopeId::None;
-    }
+    auto target_scope = context.qualified_binding_has_error()
+                            ? SemIR::NameScopeId::None
+                            : context.qualified_binding_target_scope();
     auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
                                      type_expr_region_id, pattern_inst_kind,
                                      is_template, target_scope);

@@ -1322,7 +1322,7 @@ static auto PerformBuiltinConversion(
             context, loc_id,
             {.type_id = target.type_id,
              .type_inst_id = type_inst_id,
-             .witnesses_block_id = lookup_result.inst_block_id()});
+             .witnesses_block_id = lookup_result.id()});
       }
     } else {
       // If impl lookup fails, don't keep looking for another way to convert.

@@ -217,13 +217,13 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
 // interface is found through name lookup, and we don't have an arbitrary
 // `FacetType`.
 static auto GetWitnessFromSingleImplLookupResult(
-    Context& context, SemIR::InstBlockIdOrError lookup_result)
+    Context& context, SemIR::IdOrError<SemIR::InstBlockId> lookup_result)
     -> SemIR::InstId {
   auto witness_id = SemIR::InstId::None;
   if (lookup_result.has_error_value()) {
     witness_id = SemIR::ErrorInst::InstId;
   } else {
-    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
+    auto witnesses = context.inst_blocks().Get(lookup_result.id());
     CARBON_CHECK(witnesses.size() == 1);
     witness_id = witnesses[0];
   }

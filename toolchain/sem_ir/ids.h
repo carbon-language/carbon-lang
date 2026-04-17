@@ -734,47 +734,43 @@ inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
 
-// Contains either an `InstBlockId` value, an error value, or
-// `InstBlockId::None`.
+// Contains either an `IdType` value, an error value, or
+// `IdType::None`.
 //
 // Error values are treated as values, though they are not representable as an
-// `InstBlockId` (unlike for the singleton error `InstId`).
-class InstBlockIdOrError {
+// `IdType` (unlike for the singleton error `InstId`).
+template <typename IdType>
+class IdOrError {
  public:
-  explicit(false) InstBlockIdOrError(InstBlockId inst_block_id)
-      : InstBlockIdOrError(inst_block_id, false) {}
+  explicit(false) IdOrError(IdType id) : IdOrError(id, false) {}
 
-  static auto MakeError() -> InstBlockIdOrError {
-    return {InstBlockId::None, true};
-  }
+  static auto MakeError() -> IdOrError { return {IdType::None, true}; }
 
-  // Returns whether this class contains either an InstBlockId (other than
+  // Returns whether this class contains either an IdType (other than
   // `None`) or an error.
   //
   // An error is treated as a value (as same for the singleton error `InstId`),
   // but it can not actually be materialized as an error value outside of this
   // class.
   auto has_value() const -> bool {
-    return has_error_value() || inst_block_id_.has_value();
+    return has_error_value() || id_.has_value();
   }
 
   // Returns whether this class contains an error value.
   auto has_error_value() const -> bool { return error_; }
 
-  // Returns the id of a non-empty inst block, or `None` if `has_value()` is
-  // false.
+  // Returns the id, or `None` if `has_value()` is false.
   //
   // Only valid to call if `has_error_value()` is false.
-  auto inst_block_id() const -> InstBlockId {
+  auto id() const -> IdType {
     CARBON_CHECK(!has_error_value());
-    return inst_block_id_;
+    return id_;
   }
 
  private:
-  InstBlockIdOrError(InstBlockId inst_block_id, bool error)
-      : inst_block_id_(inst_block_id), error_(error) {}
+  IdOrError(IdType id, bool error) : id_(id), error_(error) {}
 
-  InstBlockId inst_block_id_;
+  IdType id_;
   bool error_;
 };
 

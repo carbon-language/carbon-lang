@@ -283,7 +283,7 @@ class Context {
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
   auto qualified_binding_target_scope() const -> SemIR::NameScopeId {
-    return qualified_binding_target_scope_;
+    return qualified_binding_target_scope_.id();
   }
   auto set_qualified_binding_target_scope(SemIR::NameScopeId scope_id) -> void {
     qualified_binding_target_scope_ = scope_id;
@@ -293,17 +293,18 @@ class Context {
   }
 
   auto qualified_binding_has_error() const -> bool {
-    return qualified_binding_target_scope_ == QualifiedBindingScopeError;
+    return qualified_binding_target_scope_.has_error_value();
   }
   auto set_qualified_binding_has_error(bool has_error) -> void {
     if (has_error) {
-      qualified_binding_target_scope_ = QualifiedBindingScopeError;
-    } else if (qualified_binding_target_scope_ == QualifiedBindingScopeError) {
+      qualified_binding_target_scope_ =
+          SemIR::IdOrError<SemIR::NameScopeId>::MakeError();
+    } else if (qualified_binding_target_scope_.has_error_value()) {
       qualified_binding_target_scope_ = SemIR::NameScopeId::None;
     }
   }
   auto clear_qualified_binding_has_error() -> void {
-    if (qualified_binding_target_scope_ == QualifiedBindingScopeError) {
+    if (qualified_binding_target_scope_.has_error_value()) {
       qualified_binding_target_scope_ = SemIR::NameScopeId::None;
     }
   }
@@ -552,10 +553,8 @@ class Context {
 
   // When parsing a binding pattern like `Foo.x`, stores the target namespace
   // scope where the name should be registered. Reset after use.
-  SemIR::NameScopeId qualified_binding_target_scope_ = SemIR::NameScopeId::None;
-
-  static constexpr SemIR::NameScopeId QualifiedBindingScopeError =
-      SemIR::NameScopeId(-2);
+  SemIR::IdOrError<SemIR::NameScopeId> qualified_binding_target_scope_ =
+      SemIR::NameScopeId::None;
 };
 
 }  // namespace Carbon::Check

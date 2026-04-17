@@ -566,10 +566,10 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
-    -> SemIR::InstBlockIdOrError {
+    -> SemIR::IdOrError<SemIR::InstBlockId> {
   if (query_self_const_id == SemIR::ErrorInst::ConstantId ||
       query_facet_type_const_id == SemIR::ErrorInst::ConstantId) {
-    return SemIR::InstBlockIdOrError::MakeError();
+    return SemIR::IdOrError<SemIR::InstBlockId>::MakeError();
   }
 
   {
@@ -588,7 +588,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   auto interfaces_from_constant_id =
       GetInterfacesFromConstantId(context, loc_id, query_facet_type_const_id);
   if (!interfaces_from_constant_id) {
-    return SemIR::InstBlockIdOrError::MakeError();
+    return SemIR::IdOrError<SemIR::InstBlockId>::MakeError();
   }
   auto [interfaces, other_requirements] = *interfaces_from_constant_id;
   if (other_requirements) {
@@ -602,7 +602,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
                                      loc_id, query_self_const_id,
                                      query_facet_type_const_id)) {
-    return SemIR::InstBlockIdOrError::MakeError();
+    return SemIR::IdOrError<SemIR::InstBlockId>::MakeError();
   }
 
   auto& stack = context.impl_lookup_stack();
