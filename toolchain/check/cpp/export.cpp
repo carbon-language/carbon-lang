@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/export.h"
 
+#include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
@@ -471,7 +472,11 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
     -> clang::FunctionDecl* {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name = base_name;
-  thunk_name += "__cpp_thunk";
+  // TODO: changing the thunk name for methods hits this clang assertion:
+  // https://github.com/llvm/llvm-project/blob/058398c4ceaf/clang/lib/AST/Expr.cpp#L1720
+  if (!llvm::isa<clang::CXXMethodDecl>(carbon_function_decl)) {
+    thunk_name += "__cpp_thunk";
+  }
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
 
   llvm::SmallVector<clang::QualType> param_types;
