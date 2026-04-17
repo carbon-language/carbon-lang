@@ -224,6 +224,7 @@ struct FunctionInfo {
 // a generated Carbon function.
 static auto BuildCppFunctionDeclForCarbonFn(Context& context,
                                             SemIR::LocId loc_id,
+                                            clang::DeclContext* decl_context,
                                             SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
   auto clang_loc = GetCppLocation(context, loc_id);
@@ -254,10 +255,23 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
                function.name_id);
 
-  auto* function_decl = clang::FunctionDecl::Create(
-      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
-      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-      cpp_function_type, /*TInfo=*/nullptr, clang::SC_Extern);
+  clang::FunctionDecl* function_decl = nullptr;
+  if (auto* parent_class = dyn_cast<clang::CXXRecordDecl>(decl_context)) {
+    clang::DeclarationNameInfo declaration_name_info(identifier_info,
+                                                     clang_loc);
+    function_decl = clang::CXXMethodDecl::Create(
+        context.ast_context(), parent_class, clang_loc, declaration_name_info,
+        cpp_function_type,
+        /*TInfo=*/nullptr, callee.GetStorageClass(), /*UsesFPIntrin=*/false,
+        /*isInline=*/false,
+        /*ConstexprKind=*/clang::ConstexprSpecKind::Unspecified, clang_loc);
+    function_decl->setAccess(clang::AS_public);
+  } else {
+    function_decl = clang::FunctionDecl::Create(
+        context.ast_context(), context.ast_context().getTranslationUnitDecl(),
+        /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
+        cpp_function_type, /*TInfo=*/nullptr, clang::SC_Extern);
+  }
 
   // Build parameter decls.
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
@@ -538,7 +552,7 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
   auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
-      context, loc_id, carbon_thunk_function_id);
+      context, loc_id, decl_context, carbon_thunk_function_id);
   if (!carbon_function_decl) {
     return nullptr;
   }
