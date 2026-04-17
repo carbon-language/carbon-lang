@@ -529,6 +529,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
           context, loc_id,
           {.parent_scope_id = target.function.parent_scope_id,
            .name_id = thunk_name_id,
+           .self_type_id = target.self_type_id,
            .param_type_ids = thunk_param_type_ids,
            .params_are_refs = true})
           .second;
