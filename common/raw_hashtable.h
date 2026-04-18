@@ -203,6 +203,8 @@ struct StorageEntry {
 
   auto CopyFrom(const StorageEntry& entry) -> void {
     if constexpr (IsTriviallyRelocatable) {
+      static_assert(sizeof(*this) >= sizeof(entry),
+                    "Destination buffer must be at least as large as source.");
       memcpy(this, &entry, sizeof(StorageEntry));
     } else {
       new (&key_storage) KeyT(entry.key());
@@ -214,6 +216,8 @@ struct StorageEntry {
   // Optimizes to directly use `memcpy` when correct.
   auto MoveFrom(StorageEntry&& entry) -> void {
     if constexpr (IsTriviallyRelocatable) {
+      static_assert(sizeof(*this) >= sizeof(entry),
+                    "Destination buffer must be at least as large as source.");
       memcpy(this, &entry, sizeof(StorageEntry));
     } else {
       new (&key_storage) KeyT(std::move(entry.key()));
