@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include <forward_list>
-#include <iostream>
 #include <type_traits>
 
 #include "toolchain/lex/lex.h"
