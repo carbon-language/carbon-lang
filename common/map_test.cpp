@@ -865,5 +865,33 @@ TEST(MapContextTest, Basic) {
       m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(1, 512)));
 }
 
+TEST(MapHeterogeneousKeyTest, Death) {
+  struct Base1 {
+    int i;
+  };
+  struct Base2 {
+    int i;
+  };
+
+  // `Base2` is not at the start of a `Derived` object, so pointer conversion
+  // from `Derived*` to `Base2*` will change the value of the pointer (applying
+  // an offset to get to the Base2 subobject) causing the hash of a `Derived*`
+  // to not match the hash of the `Base2*` it converts to, breaking hash table
+  // invariants.
+  struct Derived : Base1, Base2 {};
+
+  Derived derived;
+  Derived* derived_pointer = &derived;
+  Base2* base_pointer = derived_pointer;
+
+  EXPECT_NE(static_cast<void*>(derived_pointer),
+            static_cast<void*>(base_pointer));
+
+  Map<Base2*, int> m;
+  ASSERT_DEATH(
+      { m.Insert(derived_pointer, 0); },
+      "Heterogeneous keys should hash to the same value.");
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

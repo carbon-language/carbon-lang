@@ -182,6 +182,15 @@ inline auto CarbonHashtableEq(const LHS& lhs, const RHS& rhs) -> bool
   return CarbonHashtableEq(rhs, lhs);
 }
 
+// Provides symmetric equality so the `CarbonHashtableEq` operands aren't
+// ordered.
+//
+// If this template proves problematic in any way, we can revisit it - the
+// `CarbonHashtableEq` functions don't really need to be symmetric, since they
+// generally represent an implicit conversion which is often only one-way (eg:
+// MutableArrayRef converts to ArrayRef, but not the other way around) - but
+// documenting/describing that asymmetry felt a little awkward too - so maybe
+// this template is an OK solution for now.
 template <typename T>
 inline auto CarbonHashtableEq(const T& lhs, const T& rhs) -> bool
   requires(requires {
