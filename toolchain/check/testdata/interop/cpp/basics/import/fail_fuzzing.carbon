@@ -7,9 +7,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/fail_fuzzing.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/basics/import/fail_fuzzing.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/fail_fuzzing.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/fail_fuzzing.carbon
 
 // CHECK:STDERR: fail_fuzzing.carbon:[[@LINE+4]]:1: error: `Cpp` import found during fuzzing [CppInteropFuzzing]
 // CHECK:STDERR: import Cpp library "file.h";

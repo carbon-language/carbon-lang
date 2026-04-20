@@ -7,9 +7,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/bad_flags.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/basics/bad_flags.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/bad_flags.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/bad_flags.carbon
 // CHECK:STDERR: error: unable to read PCH file does_not_exist.pch: 'No such file or directory' [CppInteropParseError]
 // CHECK:STDERR:
 // CHECK:STDERR: error: PCH file 'does_not_exist.pch' not found: module file not found [CppInteropParseError]
