@@ -11,56 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/constexpr.carbon
 
-// --- bool.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-constexpr bool b = true;
-''';
-
-class C(B:! bool) {}
-fn F() -> C(Cpp.b);
-let x: C(true) = F();
-
-// --- int.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-constexpr int i = 123;
-''';
-
-class C(I:! i32) {}
-fn F() -> C(Cpp.i);
-let x: C(123) = F();
-
-// --- float.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-constexpr float flt = 123.5;
-''';
-
-class C(V:! f32) {}
-fn F() -> C(Cpp.flt);
-let x: C(123.5) = F();
-
-// --- pointer.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-int i = 123;
-constexpr int* _Nonnull ptr = &i;
-''';
-
-class C(V:! i32*) {}
-fn F() -> C(Cpp.ptr);
-let x: C(&Cpp.i) = F();
-
-// --- function.carbon
+// --- basic.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -70,7 +21,7 @@ constexpr int f(int a, int b) { return a + b; }
 
 let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
 
-// --- function_bool_param.carbon
+// --- bool_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -82,7 +33,7 @@ constexpr int f(bool b) {
 
 let a: array(i32, Cpp.f(true)) = (1, 2, 3);
 
-// --- function_float_param.carbon
+// --- float_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -94,7 +45,7 @@ constexpr int f(float b) {
 
 let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
 
-// --- function_return_bool.carbon
+// --- return_bool.carbon
 
 library "[[@TEST_NAME]]";
 
