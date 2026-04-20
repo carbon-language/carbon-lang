@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -64,6 +65,18 @@ struct ClassFields {
   // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
   InstId vtable_decl_id = InstId::None;
+
+  // Exported C++ field declarations. This map will be empty if
+  // `clang_field_decl_ids_initialized` is false, or if there are no
+  // fields. For any fields that could not be exported due to an error,
+  // map values will be `None`.
+  Map<SemIR::InstId, ClangDeclId> clang_field_decl_ids;
+
+  // Whether `clang_field_decl_ids` has been initialized yet.
+  //
+  // TODO: could replace with `clang_field_decl_ids.empty()` if `Map`
+  // had that method.
+  bool clang_field_decl_ids_initialized = false;
 
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
