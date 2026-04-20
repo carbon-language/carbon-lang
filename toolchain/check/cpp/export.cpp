@@ -228,7 +228,6 @@ struct FunctionInfo {
 // a generated Carbon function.
 static auto BuildCppFunctionDeclForCarbonFn(Context& context,
                                             SemIR::LocId loc_id,
-                                            clang::DeclContext* decl_context,
                                             SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
   auto clang_loc = GetCppLocation(context, loc_id);
@@ -238,6 +237,15 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
 
   // Get parameters types.
   llvm::SmallVector<clang::QualType> cpp_param_types;
+  if (callee.has_self()) {
+    auto cpp_type = MapToCppType(context, callee.self_type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon self type to C++");
+      return nullptr;
+    }
+    cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
+    cpp_param_types.push_back(cpp_type);
+  }
   for (auto param_type_id : callee.param_type_ids) {
     auto cpp_type = MapToCppType(context, param_type_id);
     if (cpp_type.isNull()) {
@@ -259,23 +267,10 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
                function.name_id);
 
-  clang::FunctionDecl* function_decl = nullptr;
-  if (auto* parent_class = dyn_cast<clang::CXXRecordDecl>(decl_context)) {
-    clang::DeclarationNameInfo declaration_name_info(identifier_info,
-                                                     clang_loc);
-    function_decl = clang::CXXMethodDecl::Create(
-        context.ast_context(), parent_class, clang_loc, declaration_name_info,
-        cpp_function_type,
-        /*TInfo=*/nullptr, callee.GetStorageClass(), /*UsesFPIntrin=*/false,
-        /*isInline=*/false,
-        /*ConstexprKind=*/clang::ConstexprSpecKind::Unspecified, clang_loc);
-    function_decl->setAccess(clang::AS_public);
-  } else {
-    function_decl = clang::FunctionDecl::Create(
-        context.ast_context(), context.ast_context().getTranslationUnitDecl(),
-        /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-        cpp_function_type, /*TInfo=*/nullptr, clang::SC_Extern);
-  }
+  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
+      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
+      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
+      cpp_function_type, /*TInfo=*/nullptr, clang::SC_Extern);
 
   // Build parameter decls.
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
@@ -405,28 +400,25 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     stmts.push_back(decl_stmt.get());
   }
 
-  auto* parent_class = dyn_cast<clang::CXXRecordDecl>(target.decl_context);
-
-  clang::ExprResult callee;
-  if (parent_class) {
-    auto class_type = sema.getASTContext().getCanonicalTagType(parent_class);
-    auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_type,
-                                            /*IsImplicit=*/true);
-    callee = sema.BuildMemberExpr(
-        this_expr, /*IsArrow=*/false, /*OpLoc=*/clang_loc,
-        clang::NestedNameSpecifierLoc(),
-        /*TemplateKWLoc=*/clang_loc, callee_function_decl,
-        clang::DeclAccessPair::make(callee_function_decl, clang::AS_public),
-        /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),
-        sema.getASTContext().BoundMemberTy, clang::VK_PRValue,
-        clang::OK_Ordinary);
-  } else {
-    callee = sema.BuildDeclRefExpr(callee_function_decl,
-                                   callee_function_decl->getType(),
-                                   clang::VK_PRValue, clang_loc);
-  }
+  clang::ExprResult callee = sema.BuildDeclRefExpr(
+      callee_function_decl, callee_function_decl->getType(), clang::VK_PRValue,
+      clang_loc);
 
   llvm::SmallVector<clang::Expr*> call_args;
+  // For methods, pass the `this` pointer as the first argument to the callee.
+  if (target.has_self()) {
+    auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
+    clang::QualType class_type =
+        sema.getASTContext().getCanonicalTagType(parent_class);
+    auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
+    auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
+                                            /*IsImplicit=*/true);
+    this_expr = clang::UnaryOperator::Create(
+        sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
+        clang::ExprValueKind::VK_LValue, clang::ExprObjectKind::OK_Ordinary,
+        clang_loc, /*CanOverflow=*/false, clang::FPOptionsOverride());
+    call_args.push_back(this_expr);
+  }
   for (auto* param : function_decl->parameters()) {
     clang::Expr* call_arg =
         sema.BuildDeclRefExpr(param, param->getType().getNonReferenceType(),
@@ -440,15 +432,8 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     call_args.push_back(return_storage_expr.get());
   }
 
-  clang::ExprResult call;
-  if (parent_class) {
-    call = clang::CXXMemberCallExpr::Create(
-        sema.getASTContext(), callee.get(), call_args, callee.get()->getType(),
-        clang::VK_PRValue, clang_loc, clang::FPOptionsOverride());
-  } else {
-    call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc, call_args,
-                              clang_loc);
-  }
+  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
+                                              call_args, clang_loc);
   CARBON_CHECK(call.isUsable());
   stmts.push_back(call.get());
 
@@ -579,7 +564,7 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
   auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
-      context, loc_id, decl_context, carbon_thunk_function_id);
+      context, loc_id, carbon_thunk_function_id);
   if (!carbon_function_decl) {
     return nullptr;
   }
