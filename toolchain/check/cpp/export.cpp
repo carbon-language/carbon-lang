@@ -345,7 +345,7 @@ static auto BuildCppToCarbonThunkDecl(
         inline_specified,
         /*hasWrittenPrototype=*/true, constexpr_kind, trailing_requires_clause);
   }
-  target.decl_context->addDecl(thunk_function_decl);
+  target.decl_context->addHiddenDecl(thunk_function_decl);
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
   for (auto [i, type] : llvm::enumerate(thunk_param_types)) {
