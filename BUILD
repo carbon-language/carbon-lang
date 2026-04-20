@@ -31,12 +31,14 @@ int_flag(
 # A setting that causes bootstrapping to occur using the `exec` config rather
 # than the target config.
 #
-# This is the more technically correct way of doing bootstrapping, and for
-# example it allows bootstrapping with a target that isn't compatible with the
-# current execution host. However, in development builds, it is likely to force
-# building the entire toolchain twice -- once in the target config for running
-# test, and a second time in the exec config for the bootstrap. As a
-# consequence, this is disabled by default.
+# The exec config is the more technically correct way of doing bootstrapping
+# than the target config. For example it allows bootstrapping with a target that
+# isn't compatible with the current execution host. However, in development
+# builds, it is likely to force building the entire toolchain twice -- once in
+# the target config for running test, and a second time in the exec config for
+# the bootstrap. As a consequence, this is disabled by default.
+#
+# TODO: Add documentation for using the bootstrap flags once stabilized.
 bool_flag(
     name = "bootstrap_exec_config",
     build_setting_default = False,
