@@ -35,7 +35,7 @@ auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
 auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
     -> TypeId {
   if (constant_id == SemIR::ErrorInst::ConstantId) {
-    return TypeId::None;
+    return SemIR::ErrorInst::TypeId;
   }
   auto type_id = file_->insts()
                      .Get(file_->constant_values().GetInstId(constant_id))
