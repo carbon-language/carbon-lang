@@ -66,6 +66,16 @@ config_setting(
     flag_values = {":bootstrap_stage": "1"},
 )
 
+bool_setting(
+    name = "bootstrap_exec_config",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "bootstrap_with_exec_config",
+    flag_values = {":bootstrap_exec_config": "True"},
+)
+
 filegroup(
     name = "llvm_bins",
     srcs = glob(["llvm/bin/*"]),
