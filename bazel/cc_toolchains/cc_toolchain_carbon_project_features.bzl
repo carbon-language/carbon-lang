@@ -4,7 +4,7 @@
 
 """Defines `cc_toolchain_config` features specific to the Carbon project."""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -15,7 +15,6 @@ load(
 )
 load(
     ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
     "preprocessor_compile_actions",
 )
 
@@ -39,7 +38,7 @@ def carbon_project_features(cache_key):
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = all_compile_actions,
+                actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
                 flag_groups = [flag_group(flags = [
                     # Don't warn on external code as we can't
                     # necessarily patch it easily. Note that these have

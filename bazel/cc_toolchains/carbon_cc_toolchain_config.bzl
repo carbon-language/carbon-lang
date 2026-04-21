@@ -5,7 +5,7 @@
 """Starlark cc_toolchain configuration rules for using the Carbon toolchain"""
 
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "action_config",
@@ -29,8 +29,6 @@ load(
 load(
     "cc_toolchain_actions.bzl",
     "all_c_compile_actions",
-    "all_cpp_compile_actions",
-    "all_link_actions",
 )
 load("cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load("cc_toolchain_features.bzl", "clang_cc_toolchain_features")
@@ -57,7 +55,7 @@ def _make_action_configs(tools, runtimes_path = None):
             enabled = True,
             tools = [tools.clangpp],
         )
-        for name in all_cpp_compile_actions
+        for name in ACTION_NAME_GROUPS.all_cpp_compile_actions
     ] + [
         action_config(
             action_name = name,
@@ -74,7 +72,7 @@ def _make_action_configs(tools, runtimes_path = None):
                 "--",
             ])])],
         )
-        for name in all_link_actions
+        for name in ACTION_NAME_GROUPS.all_cc_link_actions
     ] + [
         action_config(
             action_name = name,
