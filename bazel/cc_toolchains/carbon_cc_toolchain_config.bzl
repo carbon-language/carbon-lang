@@ -5,7 +5,7 @@
 """Starlark cc_toolchain configuration rules for using the Carbon toolchain"""
 
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "action_config",
@@ -29,8 +29,6 @@ load(
 load(
     "cc_toolchain_actions.bzl",
     "all_c_compile_actions",
-    "all_cpp_compile_actions",
-    "all_link_actions",
 )
 load("cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load("cc_toolchain_features.bzl", "clang_cc_toolchain_features")
@@ -57,7 +55,7 @@ def _make_action_configs(tools, runtimes_path = None):
             enabled = True,
             tools = [tools.clangpp],
         )
-        for name in all_cpp_compile_actions
+        for name in ACTION_NAME_GROUPS.all_cpp_compile_actions
     ] + [
         action_config(
             action_name = name,
@@ -74,7 +72,7 @@ def _make_action_configs(tools, runtimes_path = None):
                 "--",
             ])])],
         )
-        for name in all_link_actions
+        for name in ACTION_NAME_GROUPS.all_cc_link_actions
     ] + [
         action_config(
             action_name = name,
@@ -259,6 +257,47 @@ filegroup_with_stage = rule(
     """,
 )
 
+def _exec_filegroup_impl(ctx):
+    return [DefaultInfo(files = depset(ctx.files.srcs))]
+
+_exec_filegroup = rule(
+    implementation = _exec_filegroup_impl,
+    attrs = {
+        "srcs": attr.label_list(cfg = "exec"),
+    },
+)
+
+def filegroup_with_stage_and_exec(name, srcs, stage, tags = []):
+    """Wraps `filegroup_with_stage` with a conditional `exec` config transition.
+
+    When `//:bootstrap_exec_config` is disabled, this works exactly like
+    `filegroup_with_stage`. But when it is _enabled_, it also adds an `exec`
+    config transition. This allows bootstrapping for a target that is not exec
+    compatible with the host, and in general makes bootstrapping more robust at
+    the expense of a likely duplicate build of the entire toolchain.
+    """
+    filegroup_with_stage(
+        name = name + "_stage_only",
+        srcs = srcs,
+        stage = stage,
+        tags = tags,
+    )
+
+    _exec_filegroup(
+        name = name + "_with_exec",
+        srcs = [":" + name + "_stage_only"],
+        tags = tags,
+    )
+
+    native.alias(
+        name = name,
+        actual = select({
+            "//:bootstrap_with_exec_config": ":" + name + "_with_exec",
+            "//conditions:default": ":" + name + "_stage_only",
+        }),
+        tags = tags,
+    )
+
 def _gen_cc_toolchain_paths_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
 
@@ -332,21 +371,21 @@ def carbon_cc_toolchain_suite(
     # and not in the runtimes build. These allow us to form the inputs to both
     # the runtimes toolchain and the main toolchain of this stage that are built
     # entirely by the base stage toolchain.
-    filegroup_with_stage(
+    filegroup_with_stage_and_exec(
         name = "{}_clang_hdrs".format(name),
         srcs = clang_hdrs,
         stage = base_stage,
         tags = tags,
     )
 
-    filegroup_with_stage(
+    filegroup_with_stage_and_exec(
         name = "{}_base_files".format(name),
         srcs = base_files,
         stage = base_stage,
         tags = tags,
     )
 
-    filegroup_with_stage(
+    filegroup_with_stage_and_exec(
         name = "{}_runtimes_compile_files".format(name),
         srcs = [
             ":{}_base_files".format(name),
@@ -356,7 +395,7 @@ def carbon_cc_toolchain_suite(
         tags = tags,
     )
 
-    filegroup_with_stage(
+    filegroup_with_stage_and_exec(
         name = "{}_compile_files".format(name),
         srcs = [":{}_base_files".format(name)] + all_hdrs,
         stage = base_stage,
