@@ -68,7 +68,19 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
-  if (!scope_stack_.back().is_lexical_scope()) {
+  if (scope_stack_.back().is_lexical_scope()) {
+    // For lexical lookups, unqualified lookup doesn't know how to find the
+    // associated specific, so if we start adding lexical scopes associated with
+    // specifics, we'll need to somehow track them in lookup.
+    // Self specifics are an exception to this, as its generic will always
+    // lexically enclose the point of use of any looked up name.
+    CARBON_CHECK(!specific_id.has_value() ||
+                     sem_ir().generics().GetSelfSpecific(
+                         sem_ir().specifics().Get(specific_id).generic_id) ==
+                         specific_id,
+                 "Lexical scopes can only have an associated specific if it is "
+                 "a self specific.");
+  } else {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
                                         .specific_id = enclosing_specific_id});
