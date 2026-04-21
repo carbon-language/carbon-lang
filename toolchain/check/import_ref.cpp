@@ -1568,6 +1568,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
        .pretty_name_id = name_id});
 }
 
+template <typename ReturnPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyReturnPattern,
+                                            ReturnPatternT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                ReturnPatternT inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Unique<ReturnPatternT>(
+      resolver, import_inst_id,
+      {.type_id =
+           resolver.local_types().GetTypeIdForTypeConstantId(type_const_id)});
+}
+
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ArrayType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
@@ -3732,19 +3749,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::RefReturnPattern inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
-  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-  return ResolveResult::Unique<SemIR::RefReturnPattern>(
-      resolver, import_inst_id,
-      {.type_id =
-           resolver.local_types().GetTypeIdForTypeConstantId(type_const_id)});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RequireCompleteType inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
@@ -4044,19 +4048,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, VarPatternT inst,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
        .subpattern_id = subpattern_id});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ValueReturnPattern inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
-  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-  return ResolveResult::Unique<SemIR::ValueReturnPattern>(
-      resolver, import_inst_id,
-      {.type_id =
-           resolver.local_types().GetTypeIdForTypeConstantId(type_const_id)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

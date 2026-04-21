@@ -148,6 +148,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::AnyReturnPattern return_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ExprPattern expr_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
@@ -155,10 +157,6 @@ class MatchContext {
   auto DoPreWork(State state, SemIR::VarPattern var_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
-                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
-  auto DoPreWork(State state, SemIR::RefReturnPattern return_pattern,
-                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
-  auto DoPreWork(State state, SemIR::ValueReturnPattern return_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
 
   // Do the post-work for `entry`. `entry.work` must be a `PostWork`, and
@@ -791,28 +789,22 @@ auto MatchContext::DoPostWork(State /*state*/,
 }
 
 auto MatchContext::DoPreWork(State state,
-                             SemIR::RefReturnPattern return_pattern,
+                             SemIR::AnyReturnPattern return_pattern,
                              SemIR::InstId /*scrutinee_id*/, WorkItem entry)
     -> void {
   CARBON_CHECK(std::holds_alternative<CalleeState*>(state));
   if (need_subpattern_results()) {
     auto type_id =
         ExtractScrutineeType(context_.sem_ir(), return_pattern.type_id);
-    results_stack_.AppendToTop(AddInst<SemIR::RefReturn>(
-        context_, SemIR::LocId(entry.pattern_id), {.type_id = type_id}));
-  }
-}
-
-auto MatchContext::DoPreWork(State state,
-                             SemIR::ValueReturnPattern return_pattern,
-                             SemIR::InstId /*scrutinee_id*/, WorkItem entry)
-    -> void {
-  CARBON_CHECK(std::holds_alternative<CalleeState*>(state));
-  if (need_subpattern_results()) {
-    auto type_id =
-        ExtractScrutineeType(context_.sem_ir(), return_pattern.type_id);
-    results_stack_.AppendToTop(AddInst<SemIR::ValueReturn>(
-        context_, SemIR::LocId(entry.pattern_id), {.type_id = type_id}));
+    SemIR::InstKind result_kind =
+        return_pattern.kind == SemIR::RefReturnPattern::Kind
+            ? SemIR::RefReturn::Kind
+            : SemIR::ValueReturn::Kind;
+    results_stack_.AppendToTop(AddInst(
+        context_,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context_.sem_ir(), SemIR::LocId(entry.pattern_id),
+            SemIR::AnyReturnPattern{.kind = result_kind, .type_id = type_id})));
   }
 }
 
@@ -846,6 +838,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, any_param_pattern, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND_ANY(SemIR::AnyReturnPattern, return_pattern): {
+          DoPreWork(state, return_pattern, work.scrutinee_id, entry);
+          break;
+        }
         case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
           DoPreWork(state, expr_pattern, work.scrutinee_id, entry);
           break;
@@ -862,12 +858,6 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, tuple_pattern, work.scrutinee_id, entry);
           break;
         }
-        case CARBON_KIND(SemIR::RefReturnPattern return_pattern):
-          DoPreWork(state, return_pattern, work.scrutinee_id, entry);
-          break;
-        case CARBON_KIND(SemIR::ValueReturnPattern return_pattern):
-          DoPreWork(state, return_pattern, work.scrutinee_id, entry);
-          break;
         default: {
           CARBON_FATAL("Inst kind not handled: {0}", pattern.kind());
         }

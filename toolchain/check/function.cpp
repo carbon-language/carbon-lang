@@ -63,7 +63,9 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(
           context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
       context.TODO(loc_id, "Support symbolic return forms");
-      [[fallthrough]];
+      result_type_id = SemIR::ErrorInst::TypeId;
+      result_id = SemIR::ErrorInst::InstId;
+      break;
     case SemIR::ErrorInst::Kind:
       result_type_id = SemIR::ErrorInst::TypeId;
       result_id = SemIR::ErrorInst::InstId;
