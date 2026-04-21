@@ -36,8 +36,8 @@ load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
-    "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
-    "carbon_cc_toolchain_suite",
+    "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
+    "carbon_bootstrapped_cc_toolchain",
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
@@ -634,7 +634,7 @@ platforms = {
     for cpu in cpus
 ]
 
-carbon_cc_toolchain_suite(
+carbon_bootstrapped_cc_toolchain(
     name = "carbon_stage1",
     all_hdrs = [
         ":clang_hdrs",
@@ -653,7 +653,7 @@ carbon_cc_toolchain_suite(
     runtimes_cfg = ":runtimes_cfg",
 )
 
-carbon_cc_toolchain_suite(
+carbon_bootstrapped_cc_toolchain(
     name = "carbon_stage2",
     all_hdrs = [
         ":clang_hdrs",
