@@ -59,13 +59,6 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: ref_arg.carbon:[[@LINE+7]]:1: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
-// CHECK:STDERR: fn F(ref n: i32);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: ref_arg.carbon:[[@LINE+4]]:6: note: initializing function parameter [InCallToFunctionParam]
-// CHECK:STDERR: fn F(ref n: i32);
-// CHECK:STDERR:      ^~~~~~~~~~
-// CHECK:STDERR:
 fn F(ref n: i32);
 
 inline Cpp '''

@@ -487,6 +487,9 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
       context.TODO(loc_id, "failed to map C++ type to Carbon");
       return nullptr;
     }
+    if (param.is_ref) {
+      cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
+    }
     param_types.push_back(cpp_type);
   }
 
