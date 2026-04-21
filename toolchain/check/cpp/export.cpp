@@ -202,12 +202,15 @@ struct FunctionInfo {
 
   // Get the `StorageClass` to use for `CXXMethodDecl`s.
   auto GetStorageClass() const -> clang::StorageClass {
-    if (self_type_id == SemIR::TypeId::None) {
-      return clang::SC_Static;
-    } else {
+    if (has_self()) {
       return clang::SC_None;
+    } else {
+      return clang::SC_Static;
     }
   }
+
+  // Whether the function has a `self` parameter.
+  auto has_self() const -> bool { return self_type_id != SemIR::TypeId::None; }
 
   SemIR::FunctionId function_id;
   const SemIR::Function& function;
@@ -474,7 +477,7 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   llvm::SmallString<64> thunk_name = base_name;
   // TODO: changing the thunk name for methods hits this clang assertion:
   // https://github.com/llvm/llvm-project/blob/058398c4ceaf/clang/lib/AST/Expr.cpp#L1720
-  if (target.self_type_id == SemIR::TypeId::None) {
+  if (!target.has_self()) {
     thunk_name += "__cpp_thunk";
   }
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
