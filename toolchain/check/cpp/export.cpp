@@ -214,8 +214,18 @@ struct FunctionInfo {
 
   SemIR::FunctionId function_id;
   const SemIR::Function& function;
+
+  // Parent scope in the C++ AST where a C++ thunk for this function can
+  // be created. If the function is a method, this will be a
+  // `CXXRecordDecl`.
   clang::DeclContext* decl_context;
+
+  // Types of the function's explicit parameters (excludes implicit
+  // parameters and return parameters).
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
+
+  // Type of the function's `self` parameter, or `None` if the function
+  // is not a method.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
 };
 }  // namespace
