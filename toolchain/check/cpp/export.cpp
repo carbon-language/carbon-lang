@@ -369,7 +369,7 @@ static auto BuildCppToCarbonThunkDecl(
 // Create the body of a C++ thunk that calls a Carbon thunk. The
 // arguments are passed by reference to the callee.
 static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
-                                      clang::DeclContext* decl_context,
+                                      const FunctionInfo& target,
                                       clang::FunctionDecl* function_decl,
                                       clang::FunctionDecl* callee_function_decl)
     -> clang::StmtResult {
@@ -402,7 +402,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     stmts.push_back(decl_stmt.get());
   }
 
-  auto* parent_class = dyn_cast<clang::CXXRecordDecl>(decl_context);
+  auto* parent_class = dyn_cast<clang::CXXRecordDecl>(target.decl_context);
 
   clang::ExprResult callee;
   if (parent_class) {
@@ -497,7 +497,7 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body = BuildCppToCarbonThunkBody(
-      sema, target.decl_context, thunk_function_decl, carbon_function_decl);
+      sema, target, thunk_function_decl, carbon_function_decl);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   CARBON_CHECK(!body.isInvalid());
 
