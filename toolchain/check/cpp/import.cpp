@@ -40,6 +40,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
@@ -147,6 +148,98 @@ auto ImportCpp(Context& context,
   } else {
     name_scope.set_has_error();
   }
+}
+
+static auto FindCorrespondingDecl(clang::ASTContext& context,
+                                  const clang::Decl* decl) -> clang::Decl* {
+  if (const auto* named_decl = dyn_cast<clang::NamedDecl>(decl)) {
+    // TODO: Avoid recursion.
+    auto* parent = dyn_cast_or_null<clang::DeclContext>(FindCorrespondingDecl(
+        context, cast<clang::Decl>(named_decl->getDeclContext())));
+    if (!parent) {
+      return nullptr;
+    }
+    clang::DeclarationName name;
+    if (auto* identifier = named_decl->getDeclName().getAsIdentifierInfo()) {
+      name = &context.Idents.get(identifier->getName());
+    } else {
+      // TODO: Handle more name kinds.
+      return nullptr;
+    }
+    auto decls = parent->lookup(name);
+    if (!decls.isSingleResult() ||
+        decls.front()->getKind() != named_decl->getKind()) {
+      return nullptr;
+    }
+    return decls.front();
+  }
+
+  if (isa<clang::TranslationUnitDecl>(decl)) {
+    return context.getTranslationUnitDecl();
+  }
+
+  return nullptr;
+}
+
+static auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                                  const SemIR::File& file,
+                                  SemIR::ClangDeclId clang_decl_id)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(clang_decl_id.has_value());
+  auto key = file.clang_decls().Get(clang_decl_id).key;
+  const auto* decl = key.decl;
+  auto* corresponding = FindCorrespondingDecl(context.ast_context(), decl);
+  if (!corresponding) {
+    // TODO: This needs a proper diagnostic.
+    context.TODO(
+        loc_id,
+        "use of imported C++ declaration with no corresponding local import");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  key.decl = corresponding;
+  auto imported_inst_id = ImportCppDecl(context, loc_id, key);
+  auto imported_const_id = context.constant_values().Get(imported_inst_id);
+  if (!imported_const_id.is_constant()) {
+    context.TODO(loc_id, "imported C++ declant is not constant");
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return imported_const_id;
+}
+
+auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
+                               const SemIR::File& file, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  if (!context.cpp_context()) {
+    context.TODO(
+        loc_id, "indirect import of C++ declaration with no direct Cpp import");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
+  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      const auto& class_info = file.classes().Get(class_type.class_id);
+      CARBON_CHECK(class_info.scope_id.has_value());
+      return ImportCppDeclFromFile(
+          context, loc_id, file,
+          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
+    }
+
+    case CARBON_KIND(SemIR::Namespace namespace_decl): {
+      return ImportCppDeclFromFile(context, loc_id, file,
+                                   file.name_scopes()
+                                       .Get(namespace_decl.name_scope_id)
+                                       .clang_decl_context_id());
+    }
+
+    default: {
+      break;
+    }
+  }
+  CARBON_FATAL("{0}", file.insts().Get(const_inst_id));
+  context.TODO(loc_id, "indirect import of C++ declaration");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the

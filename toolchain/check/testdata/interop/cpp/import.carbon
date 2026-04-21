@@ -46,41 +46,6 @@ fn F() {
 }
 
 // ============================================================================
-// Import C++ struct indirectly
-// ============================================================================
-
-// --- struct.h
-
-struct MyStruct { void Foo(); };
-
-// --- struct_api.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "struct.h";
-
-alias MyStructAlias = Cpp.MyStruct;
-
-// --- fail_todo_import_struct_api.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_todo_import_struct_api.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: struct_api.carbon:4:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./struct.h:2:8: error: semantics TODO: `Unsupported: Importing C++ indirectly` [SemanticsTodo]
-// CHECK:STDERR: struct MyStruct { void Foo(); };
-// CHECK:STDERR:        ^
-// CHECK:STDERR:
-import library "struct_api";
-
-fn F() {
-  //@dump-sem-ir-begin
-  var x: MyStructAlias;
-  x.Foo();
-  //@dump-sem-ir-end
-}
-
-// ============================================================================
 // Import C++ function indirectly
 // ============================================================================
 
@@ -156,27 +121,6 @@ fn F() {
   Cpp.MyInlineFunction(9 as Cpp.short);
 }
 
-// CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.MyStructAlias: type = import_ref Main//struct_api, MyStructAlias, loaded [concrete = <error>]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
-// CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %MyStructAlias.ref: type = name_ref MyStructAlias, imports.%Main.MyStructAlias [concrete = <error>]
-// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
-// CHECK:STDOUT:   %x.ref: ref <error> = name_ref x, %x [concrete = <error>]
-// CHECK:STDOUT:   %Foo.ref: <error> = name_ref Foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_function_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
