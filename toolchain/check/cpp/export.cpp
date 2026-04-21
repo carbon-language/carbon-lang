@@ -474,7 +474,7 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   llvm::SmallString<64> thunk_name = base_name;
   // TODO: changing the thunk name for methods hits this clang assertion:
   // https://github.com/llvm/llvm-project/blob/058398c4ceaf/clang/lib/AST/Expr.cpp#L1720
-  if (!llvm::isa<clang::CXXMethodDecl>(carbon_function_decl)) {
+  if (target.self_type_id == SemIR::TypeId::None) {
     thunk_name += "__cpp_thunk";
   }
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
