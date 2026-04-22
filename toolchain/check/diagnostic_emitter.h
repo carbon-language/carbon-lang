@@ -25,8 +25,6 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
         sem_ir_(sem_ir),
         loc_converter_(tree_and_subtrees_getters, sem_ir) {}
 
-
-
   // If a byte offset is past the current last byte offset, advances forward.
   // Earlier offsets are ignored.
   auto AdvanceToken(Lex::TokenIndex token) -> void {

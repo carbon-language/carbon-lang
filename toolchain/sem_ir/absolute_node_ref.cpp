@@ -42,8 +42,8 @@ static auto FollowImportRef(
           implicit_import_ir_inst.inst_id());
       CARBON_CHECK(implicit_loc_id.kind() == LocId::Kind::NodeId,
                    "Should only be one layer of implicit imports");
-      absolute_node_refs.push_back(AbsoluteNodeRef(
-          implicit_ir.sem_ir, implicit_loc_id.node_id()));
+      absolute_node_refs.push_back(
+          AbsoluteNodeRef(implicit_ir.sem_ir, implicit_loc_id.node_id()));
       break;
     }
 
@@ -89,8 +89,8 @@ static auto HandleLocId(llvm::SmallVector<AbsoluteNodeRef>& absolute_node_refs,
 
 // Loops through imported instructions until the actual instruction is found.
 static auto GetAbsoluteNodeRefImpl(
-    llvm::SmallVector<AbsoluteNodeRef>& absolute_node_refs, const File* cursor_ir,
-    InstId cursor_inst_id) -> void {
+    llvm::SmallVector<AbsoluteNodeRef>& absolute_node_refs,
+    const File* cursor_ir, InstId cursor_inst_id) -> void {
   while (cursor_inst_id.has_value()) {
     auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
     if (auto bind_ref = cursor_inst.TryAs<ExportDecl>();
@@ -119,8 +119,7 @@ static auto GetAbsoluteNodeRefImpl(
   }
 
   // `None` parse node but not an import; just nothing to point at.
-  absolute_node_refs.push_back(
-      AbsoluteNodeRef(cursor_ir, Parse::NodeId::None));
+  absolute_node_refs.push_back(AbsoluteNodeRef(cursor_ir, Parse::NodeId::None));
 }
 
 auto GetAbsoluteNodeRef(const File* sem_ir, LocId loc_id)

@@ -66,7 +66,8 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
       SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
   const auto& final_node = absolute_node_refs.back();
   if (final_node.is_cpp()) {
-    return final_node.file()->clang_source_locs().Get(final_node.clang_source_loc_id());
+    return final_node.file()->clang_source_locs().Get(
+        final_node.clang_source_loc_id());
   }
 
   // This is a location in Carbon code; get or create a corresponding file in

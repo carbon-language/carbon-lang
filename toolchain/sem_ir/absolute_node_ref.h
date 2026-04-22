@@ -20,10 +20,9 @@ class AbsoluteNodeRef {
       : file_(file), is_cpp_(false), node_id_(node_id) {}
 
   // A Clang source location within imported C++ code.
-  explicit AbsoluteNodeRef(const File* file, ClangSourceLocId clang_source_loc_id)
-      : file_(file),
-        is_cpp_(true),
-        clang_source_loc_id_(clang_source_loc_id) {}
+  explicit AbsoluteNodeRef(const File* file,
+                           ClangSourceLocId clang_source_loc_id)
+      : file_(file), is_cpp_(true), clang_source_loc_id_(clang_source_loc_id) {}
 
   // The file containing the location.
   auto file() const -> const File* { return file_; }
@@ -62,9 +61,9 @@ class AbsoluteNodeRef {
   };
 };
 
-// Resolves the `LocId` to a series of `NodeRef`s, which may be in different
-// files. The vector will have one entry if there were no imports, and multiple
-// entries when imports are traversed. The final entry is the actual
+// Resolves the `LocId` to a series of `AbsoluteNodeRef`s, which may be in
+// different files. The vector will have one entry if there were no imports, and
+// multiple entries when imports are traversed. The final entry is the actual
 // declaration.
 //
 // Note that the `LocId` here is typically not canonical, and it uses that fact

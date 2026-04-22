@@ -125,21 +125,24 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
       // we don't have a location.
       continue;
     }
-    result.imports.push_back({.loc = ConvertImpl(absolute_node_ref, false).loc});
+    result.imports.push_back(
+        {.loc = ConvertImpl(absolute_node_ref, false).loc});
   }
 
   // Convert the C++ import locations.
   if (final_node.is_cpp()) {
     const File* file = final_node.file();
-    CARBON_CHECK(file->cpp_file(), "Converting C++ location before C++ file is set");
+    CARBON_CHECK(file->cpp_file(),
+                 "Converting C++ location before C++ file is set");
 
     // Collect the location backtrace that Clang would use for an error here.
     ClangImportCollector(file->cpp_file()->lang_options(),
-                         file->cpp_file()->diagnostic_options(), &result.imports)
+                         file->cpp_file()->diagnostic_options(),
+                         &result.imports)
         .emitDiagnostic(
-            clang::FullSourceLoc(file->clang_source_locs().Get(
-                                     final_node.clang_source_loc_id()),
-                                 file->cpp_file()->source_manager()),
+            clang::FullSourceLoc(
+                file->clang_source_locs().Get(final_node.clang_source_loc_id()),
+                file->cpp_file()->source_manager()),
             clang::DiagnosticsEngine::Error, "", {}, {});
   }
 
@@ -157,11 +160,12 @@ auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeRef absolute_node_ref,
                                          bool token_only) const
     -> Diagnostics::ConvertedLoc {
   if (absolute_node_ref.is_cpp()) {
-    return ConvertImpl(absolute_node_ref.file(), absolute_node_ref.clang_source_loc_id());
+    return ConvertImpl(absolute_node_ref.file(),
+                       absolute_node_ref.clang_source_loc_id());
   }
 
-  return ConvertImpl(absolute_node_ref.check_ir_id(), absolute_node_ref.node_id(),
-                     token_only);
+  return ConvertImpl(absolute_node_ref.check_ir_id(),
+                     absolute_node_ref.node_id(), token_only);
 }
 
 auto DiagnosticLocConverter::ConvertImpl(CheckIRId check_ir_id,
@@ -174,7 +178,8 @@ auto DiagnosticLocConverter::ConvertImpl(CheckIRId check_ir_id,
 }
 
 auto DiagnosticLocConverter::ConvertImpl(
-    const File* file, ClangSourceLocId clang_source_loc_id) const -> Diagnostics::ConvertedLoc {
+    const File* file, ClangSourceLocId clang_source_loc_id) const
+    -> Diagnostics::ConvertedLoc {
   clang::SourceLocation clang_loc =
       file->clang_source_locs().Get(clang_source_loc_id);
 
