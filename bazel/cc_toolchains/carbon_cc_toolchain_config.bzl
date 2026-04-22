@@ -263,6 +263,8 @@ def carbon_cc_toolchain(
         extra_toolchain_settings: Extra toolchain settings.
         tags: Tags to apply to the toolchain.
     """
+    impl_tags = tags if "manual" in tags else tags + ["manual"]
+
     carbon_cc_toolchain_config(
         name = "{}_runtimes_toolchain_config".format(name),
         identifier_prefix = "{}_runtimes".format(name),
@@ -276,7 +278,7 @@ def carbon_cc_toolchain(
             for os in platforms.keys()
         }),
         bins = base_files_target,
-        tags = tags,
+        tags = impl_tags,
     )
 
     cc_toolchain(
@@ -295,7 +297,7 @@ def carbon_cc_toolchain(
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
-        tags = tags,
+        tags = impl_tags,
     )
 
     native.toolchain(
@@ -321,7 +323,7 @@ def carbon_cc_toolchain(
         }),
         runtimes = runtimes_target,
         bins = base_files_target,
-        tags = tags,
+        tags = impl_tags,
     )
 
     native.filegroup(
@@ -330,7 +332,7 @@ def carbon_cc_toolchain(
             base_files_target,
             runtimes_target,
         ],
-        tags = tags,
+        tags = impl_tags,
     )
 
     native.filegroup(
@@ -339,7 +341,7 @@ def carbon_cc_toolchain(
             compile_files_target,
             ":{}_linker_files".format(name),
         ],
-        tags = tags,
+        tags = impl_tags,
     )
 
     cc_toolchain(
@@ -358,7 +360,7 @@ def carbon_cc_toolchain(
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
-        tags = tags,
+        tags = impl_tags,
     )
 
     native.toolchain(
