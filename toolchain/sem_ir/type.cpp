@@ -15,7 +15,8 @@ CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) {
 };
 
 // Verify that the constant value's type is `TypeType` (or an error).
-static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
+static auto CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id)
+    -> void {
   CARBON_CHECK(constant_id.is_constant(),
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
