@@ -181,9 +181,9 @@ static auto FindCorrespondingDecl(clang::ASTContext& context,
   return nullptr;
 }
 
-static auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
-                                  const SemIR::File& file,
-                                  SemIR::ClangDeclId clang_decl_id)
+auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                           const SemIR::File& file,
+                           SemIR::ClangDeclId clang_decl_id)
     -> SemIR::ConstantId {
   CARBON_CHECK(clang_decl_id.has_value());
   auto key = file.clang_decls().Get(clang_decl_id).key;

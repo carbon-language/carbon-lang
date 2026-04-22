@@ -18,6 +18,11 @@ namespace A {
     int g();
     int x;
   };
+
+  template<typename T>
+  struct Y {
+    T y;
+  };
 }
 
 // --- direct_import.carbon
@@ -27,6 +32,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "shared.h";
 
 fn F() -> Cpp.A.X { return 1; }
+
+fn G() -> Cpp.A.Y(i32);
 
 alias AX = Cpp.A.X;
 
@@ -98,6 +105,25 @@ fn Use() -> (i32, i32) {
   //@dump-sem-ir-begin
   var ax: AX = 1;
   return (ax.x, ax.g());
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_import_template.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: direct_import.carbon:4:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./shared.h:10:10: error: semantics TODO: `use of imported C++ declaration with no corresponding local import` [SemanticsTodo]
+// CHECK:STDERR:   struct Y {
+// CHECK:STDERR:          ^
+// CHECK:STDERR:
+import library "direct_import";
+
+fn Use() -> i32 {
+  //@dump-sem-ir-begin
+  return G().y;
   //@dump-sem-ir-end
 }
 
@@ -298,5 +324,26 @@ fn Use() -> (i32, i32) {
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %ax.var, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%ax.var)
 // CHECK:STDOUT:   return %.loc10_24 to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_template.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//direct_import, G, loaded [concrete = constants.%G]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Use() -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%Main.G [concrete = constants.%G]
+// CHECK:STDOUT:   %G.call: <error> = call %G.ref()
+// CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
