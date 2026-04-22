@@ -322,7 +322,7 @@ toolchain_files(
 )
 
 toolchain_files(
-    name = "carbon_runtimes_installed",
+    name = "carbon_runtimes_bzl_installed",
     srcs = ["//toolchain/runtimes:carbon_runtimes.bzl"],
     prefix = "bazel/",
 )
@@ -353,7 +353,7 @@ filegroup(
         ":bazel_build_and_module",
         ":bazel_common_srcs",
         ":bazel_install_srcs",
-        ":carbon_runtimes_installed",
+        ":carbon_runtimes_bzl_installed",
 
         # Note that we have to put this here and not in one of the
         # `toolchain_files` because it is a generated file.
