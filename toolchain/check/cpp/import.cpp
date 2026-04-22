@@ -150,6 +150,8 @@ auto ImportCpp(Context& context,
   }
 }
 
+// Given a declaration in some C++ AST which is *not* expected to be `context`,
+// find the corresponding declaration in `context`, if there is one.
 // TODO: Make this non-recursive, or remove it once we support importing C++
 // ASTs for cross file imports.
 // NOLINTNEXTLINE(misc-no-recursion)
