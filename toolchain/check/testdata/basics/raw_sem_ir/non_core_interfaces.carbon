@@ -29,7 +29,7 @@ interface Copy {
 }
 
 //@dump-sem-ir-begin
-fn UseNonCoreCopy[T:! NonCore.Destroy](_: T.T1, _: T.T2) {}
+fn UseNonCoreDestroy[T:! NonCore.Destroy](_: T.T1, _: T.T2) {}
 fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 //@dump-sem-ir-end
 
