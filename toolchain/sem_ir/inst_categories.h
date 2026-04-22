@@ -387,13 +387,12 @@ struct AnyStructType {
   AnyRawId arg1;
 };
 
-//clang-format off
+// clang-format off
 #define AnyReturnPattern_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::RefReturnPattern) Sep()          \
   X(::Carbon::SemIR::ValueReturnPattern)
-//clang-format on
+// clang-format on
 
-//clang-format off
 #define AnyReturnPattern_CARBON_KIND_ANY_EXPAND \
   CARBON_INST_CATEGORY_ANY_EXPAND(AnyReturnPattern)
 
