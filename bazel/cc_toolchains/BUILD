@@ -4,7 +4,7 @@
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load(":carbon_bootstrapping.bzl", "gen_cc_toolchain_paths_with_stage")
+load(":carbon_cc_toolchain_config.bzl", "gen_cc_toolchain_paths_with_stage")
 
 package(default_visibility = ["//visibility:public"])
 

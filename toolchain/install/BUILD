@@ -36,8 +36,8 @@ load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
-    "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
-    "carbon_bootstrapped_cc_toolchain",
+    "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
+    "carbon_cc_toolchain_suite",
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
@@ -322,7 +322,7 @@ toolchain_files(
 )
 
 toolchain_files(
-    name = "carbon_runtimes_bzl_installed",
+    name = "carbon_runtimes_installed",
     srcs = ["//toolchain/runtimes:carbon_runtimes.bzl"],
     prefix = "bazel/",
 )
@@ -353,7 +353,7 @@ filegroup(
         ":bazel_build_and_module",
         ":bazel_common_srcs",
         ":bazel_install_srcs",
-        ":carbon_runtimes_bzl_installed",
+        ":carbon_runtimes_installed",
 
         # Note that we have to put this here and not in one of the
         # `toolchain_files` because it is a generated file.
@@ -634,7 +634,7 @@ platforms = {
     for cpu in cpus
 ]
 
-carbon_bootstrapped_cc_toolchain(
+carbon_cc_toolchain_suite(
     name = "carbon_stage1",
     all_hdrs = [
         ":clang_hdrs",
@@ -653,7 +653,7 @@ carbon_bootstrapped_cc_toolchain(
     runtimes_cfg = ":runtimes_cfg",
 )
 
-carbon_bootstrapped_cc_toolchain(
+carbon_cc_toolchain_suite(
     name = "carbon_stage2",
     all_hdrs = [
         ":clang_hdrs",
