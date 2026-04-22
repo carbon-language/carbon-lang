@@ -201,28 +201,9 @@ auto DiagnosticLocConverter::GetFileForCheckIRId(CheckIRId check_ir_id) const
     return sem_ir_;
   }
 
-  llvm::SmallVector<const File*> worklist;
-  llvm::SmallPtrSet<const File*, 16> visited;
-
-  worklist.push_back(sem_ir_);
-  visited.insert(sem_ir_);
-
-  while (!worklist.empty()) {
-    const File* current = worklist.pop_back_val();
-    
-    for (const auto& import_ir : current->import_irs().values()) {
-      const File* imported_file = import_ir.sem_ir;
-      if (!imported_file) {
-        continue;
-      }
-      
-      if (imported_file->check_ir_id() == check_ir_id) {
-        return imported_file;
-      }
-      
-      if (visited.insert(imported_file).second) {
-        worklist.push_back(imported_file);
-      }
+  if (file_getter_) {
+    if (auto* file = file_getter_(check_ir_id)) {
+      return file;
     }
   }
 

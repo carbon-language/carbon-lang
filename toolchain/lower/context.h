@@ -48,7 +48,7 @@ class Context {
   explicit Context(
       llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
-      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
+      const ::Carbon::Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       clang::CodeGenerator* code_generator, llvm::StringRef module_name,
       int total_ir_count, Lower::OptimizationLevel opt_level,
       llvm::raw_ostream* vlog_stream);
@@ -125,6 +125,9 @@ class Context {
   }
   auto total_ir_count() -> int { return total_ir_count_; }
 
+  // Returns the File* for the given CheckIRId if available.
+  auto GetFileForCheckIRId(SemIR::CheckIRId id) const -> const SemIR::File*;
+
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
   }
@@ -163,7 +166,7 @@ class Context {
   llvm::DICompileUnit* di_compile_unit_;
 
   // Parse trees. Used for debug information and crash diagnostics.
-  const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;
+  const ::Carbon::Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

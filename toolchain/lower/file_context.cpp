@@ -999,7 +999,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // On crash, report the function we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        &context().tree_and_subtrees_getters(), &sem_ir());
+        &context().tree_and_subtrees_getters(), &sem_ir(),
+        [&](SemIR::CheckIRId id) { return context().GetFileForCheckIRId(id); });
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);

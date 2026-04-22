@@ -17,7 +17,7 @@ namespace Carbon::Lower {
 Context::Context(
     llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
-    const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
+    const ::Carbon::Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
     int total_ir_count, Lower::OptimizationLevel opt_level,
     llvm::raw_ostream* vlog_stream)
@@ -40,7 +40,7 @@ Context::Context(
       vlog_stream_(vlog_stream),
       total_ir_count_(total_ir_count),
       file_contexts_(
-          FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
+          Context::FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
 }
 
 auto Context::GetFileContext(const SemIR::File* file,
@@ -110,6 +110,13 @@ auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
             .line_number = 0,
             .column_number = 0};
   }
+}
+
+auto Context::GetFileForCheckIRId(SemIR::CheckIRId id) const -> const SemIR::File* {
+  if (auto* file_ctx = file_contexts_.Get(id).get()) {
+    return &file_ctx->sem_ir();
+  }
+  return nullptr;
 }
 
 }  // namespace Carbon::Lower

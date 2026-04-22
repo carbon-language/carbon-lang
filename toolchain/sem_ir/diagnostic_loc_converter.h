@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_DIAGNOSTIC_LOC_CONVERTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_DIAGNOSTIC_LOC_CONVERTER_H_
 
+#include <functional>
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -58,9 +60,16 @@ class DiagnosticLocConverter {
   // `tree_and_subtrees_getters` and `sem_ir` must not be null.
   explicit DiagnosticLocConverter(
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      const File* sem_ir)
+      const File* sem_ir,
+      std::function<const File*(CheckIRId)> file_getter = nullptr)
       : tree_and_subtrees_getters_(tree_and_subtrees_getters),
-        sem_ir_(sem_ir) {}
+        sem_ir_(sem_ir),
+        file_getter_(std::move(file_getter)) {}
+
+  // Sets the file getter for O(1) lookups.
+  auto set_file_getter(std::function<const File*(CheckIRId)> file_getter) -> void {
+    file_getter_ = std::move(file_getter);
+  }
 
   // Converts the given location into a sequence of import locations and a final
   // diagnostic location.
@@ -93,6 +102,9 @@ class DiagnosticLocConverter {
 
   // The current SemIR being processed.
   const File* sem_ir_;
+
+  // Optional getter for File* by CheckIRId.
+  std::function<const File*(CheckIRId)> file_getter_;
 };
 
 }  // namespace Carbon::SemIR
