@@ -389,8 +389,8 @@ struct AnyStructType {
 
 //clang-format off
 #define AnyReturnPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::RefReturnPattern)                \
-  Sep() X(::Carbon::SemIR::ValueReturnPattern)
+  X(::Carbon::SemIR::RefReturnPattern) Sep()          \
+  X(::Carbon::SemIR::ValueReturnPattern)
 //clang-format on
 
 //clang-format off
