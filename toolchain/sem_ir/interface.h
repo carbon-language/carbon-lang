@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INTERFACE_H_
 
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -39,23 +40,6 @@ struct InterfaceFields {
   RequireImplsBlockId require_impls_block_id = RequireImplsBlockId::None;
   InstBlockId associated_entities_id = InstBlockId::None;
 };
-
-// Significant interfaces in `Core` which correspond to language features and
-// can have custom witnesses.
-enum class CoreInterface : std::uint8_t {
-#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) Name,
-#include "toolchain/sem_ir/core_interface_kind.def"
-};
-
-inline auto operator<<(llvm::raw_ostream& o, CoreInterface interface)
-    -> llvm::raw_ostream& {
-  switch (interface) {
-#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
-  case CoreInterface::Name:                     \
-    return o << "core_interface: " << #Name;
-#include "toolchain/sem_ir/core_interface_kind.def"
-  }
-}
 
 // An interface. See EntityWithParamsBase regarding the inheritance here.
 struct Interface : public EntityWithParamsBase,
