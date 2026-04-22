@@ -63,10 +63,8 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::TypeType::TypeId, SemIR::InterfaceId::None, decl_block_id};
   auto decl_inst_id = AddPlaceholderInst(context, node_id, interface_decl);
 
-  auto interface_info = SemIR::Interface(
-      name_context.MakeEntityWithParamsBase(
-          name, decl_inst_id, /*is_extern=*/false, SemIR::LibraryNameId::None),
-      std::nullopt);
+  auto interface_info = SemIR::Interface(name_context.MakeEntityWithParamsBase(
+      name, decl_inst_id, /*is_extern=*/false, SemIR::LibraryNameId::None));
 
   DiagnoseIfGenericMissingExplicitParameters(context, interface_info);
 

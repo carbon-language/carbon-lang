@@ -34,6 +34,8 @@ struct InterfaceFields {
   InstBlockId body_block_with_self_id = InstBlockId::None;
   // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
+  // Identifies whether the interface is a core interface.
+  std::optional<CoreInterface> core_interface;
 
   // The following members are set at the `}` of the interface definition.
 
@@ -45,20 +47,6 @@ struct InterfaceFields {
 struct Interface : public EntityWithParamsBase,
                    public InterfaceFields,
                    public Printable<Interface> {
-  explicit Interface(EntityWithParamsBase entity_with_params_base,
-                     std::optional<CoreInterface> core_interface = std::nullopt)
-      : EntityWithParamsBase(entity_with_params_base),
-        core_interface(core_interface) {}
-
-  Interface(EntityWithParamsBase entity_with_params_base,
-            InterfaceFields fields,
-            std::optional<CoreInterface> core_interface = std::nullopt)
-      : EntityWithParamsBase(entity_with_params_base),
-        InterfaceFields(fields),
-        core_interface(core_interface) {}
-
-  std::optional<CoreInterface> core_interface;
-
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
@@ -74,8 +62,8 @@ struct Interface : public EntityWithParamsBase,
     return associated_entities_id.has_value();
   }
 
-  // Determines whether we're currently defining the interface. This is
-  // true between the braces of the interface.
+  // Determines whether we're currently defining the interface. This is true
+  // between the braces of the interface.
   auto is_being_defined() const -> bool {
     return has_definition_started() && !is_complete();
   }
