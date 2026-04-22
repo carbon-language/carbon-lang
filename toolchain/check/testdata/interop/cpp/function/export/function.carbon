@@ -57,6 +57,23 @@ void G() {
 }
 ''';
 
+// --- using.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn F();
+
+inline Cpp '''
+using Carbon::F;
+// CHECK:STDERR: using.carbon:[[@LINE+4]]:12: error: use of undeclared identifier 'F' [CppInteropParseError]
+// CHECK:STDERR:    10 | void G() { F(); }
+// CHECK:STDERR:       |            ^
+// CHECK:STDERR:
+void G() { F(); }
+''';
+
 // --- fail_todo_generic.carbon
 
 library "[[@TEST_NAME]]";
