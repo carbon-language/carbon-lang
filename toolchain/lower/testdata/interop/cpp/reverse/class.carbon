@@ -138,7 +138,7 @@ void h() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::A", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL16CallA__cpp_thunkEPNS_1AE(ptr noundef %a)
+// CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %a)
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #3
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -147,7 +147,7 @@ void h() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL16CallA__cpp_thunkEPNS_1AE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
@@ -163,13 +163,13 @@ void h() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b = alloca %"class.Carbon::B", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL16CallB__cpp_thunkEPNS_1BE(ptr noundef %b)
+// CHECK:STDOUT:   call void @_ZN6CarbonL5CallBEPNS_1BE(ptr noundef %b)
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #3
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL16CallB__cpp_thunkEPNS_1BE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6CarbonL5CallBEPNS_1BE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !14
@@ -182,14 +182,14 @@ void h() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c = alloca %"class.Carbon::C", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL16CallC__cpp_thunkEPNS_1CE(ptr noundef %c)
-// CHECK:STDOUT:   call void @_ZN6CarbonL16CallA__cpp_thunkEPNS_1AE(ptr noundef %c)
+// CHECK:STDOUT:   call void @_ZN6CarbonL5CallCEPNS_1CE(ptr noundef %c)
+// CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %c)
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #3
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL16CallC__cpp_thunkEPNS_1CE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6CarbonL5CallCEPNS_1CE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !16

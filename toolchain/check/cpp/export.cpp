@@ -465,16 +465,9 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
 // callee of the Carbon thunk.)
 static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                   const FunctionInfo& target,
-                                  llvm::StringRef base_name,
+                                  llvm::StringRef thunk_name,
                                   clang::FunctionDecl* carbon_function_decl)
     -> clang::FunctionDecl* {
-  // Create the thunk's name.
-  llvm::SmallString<64> thunk_name = base_name;
-  // TODO: changing the thunk name for methods hits this clang assertion:
-  // https://github.com/llvm/llvm-project/blob/058398c4ceaf/clang/lib/AST/Expr.cpp#L1720
-  if (!target.has_self()) {
-    thunk_name += "__cpp_thunk";
-  }
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
 
   llvm::SmallVector<clang::QualType> param_types;
