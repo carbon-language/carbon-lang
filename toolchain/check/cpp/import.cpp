@@ -210,6 +210,10 @@ auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
 auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
                                const SemIR::File& file, SemIR::InstId inst_id)
     -> SemIR::ConstantId {
+  // TODO: We should perform cross-file imports by importing the C++ AST. For
+  // now we require the C++ declaration to already be imported into the
+  // destination file, and find the corresponding declaration there and import
+  // that.
   if (!context.cpp_context()) {
     context.TODO(
         loc_id, "indirect import of C++ declaration with no direct Cpp import");
@@ -237,8 +241,8 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
       break;
     }
   }
-  CARBON_FATAL("{0}", file.insts().Get(const_inst_id));
-  context.TODO(loc_id, "indirect import of C++ declaration");
+
+  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
   return SemIR::ErrorInst::ConstantId;
 }
 
