@@ -62,11 +62,15 @@ import Cpp library "struct.h";
 alias MyStructAlias = Cpp.MyStruct;
 
 // --- fail_todo_import_struct_api.carbon
-// CHECK:STDERR: fail_todo_import_struct_api.carbon: error: semantics TODO: `Unsupported: Importing C++ indirectly` [SemanticsTodo]
-// CHECK:STDERR:
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_struct_api.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: struct_api.carbon:4:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./struct.h:2:8: error: semantics TODO: `Unsupported: Importing C++ indirectly` [SemanticsTodo]
+// CHECK:STDERR: struct MyStruct { void Foo(); };
+// CHECK:STDERR:        ^
+// CHECK:STDERR:
 import library "struct_api";
 
 fn F() {

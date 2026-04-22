@@ -17,7 +17,7 @@ static auto FollowImportRef(
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
   if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
     absolute_node_ids.push_back(
-        AbsoluteNodeId(import_ir_inst.clang_source_loc_id()));
+        AbsoluteNodeId(cursor_ir->check_ir_id(), import_ir_inst.clang_source_loc_id()));
     return true;
   }
 

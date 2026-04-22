@@ -17,36 +17,39 @@ class AbsoluteNodeId {
  public:
   // A specific node location in a file.
   explicit AbsoluteNodeId(CheckIRId check_ir_id, Parse::NodeId node_id)
-      : check_ir_id_(check_ir_id), node_id_(node_id) {
-    CARBON_CHECK(check_ir_id != CheckIRId::Cpp);
-  }
+      : check_ir_id_(check_ir_id), is_cpp_(false), node_id_(node_id) {}
 
   // A Clang source location within imported C++ code.
-  explicit AbsoluteNodeId(ClangSourceLocId clang_source_loc_id)
-      : check_ir_id_(CheckIRId::Cpp),
+  explicit AbsoluteNodeId(CheckIRId check_ir_id, ClangSourceLocId clang_source_loc_id)
+      : check_ir_id_(check_ir_id),
+        is_cpp_(true),
         clang_source_loc_id_(clang_source_loc_id) {}
 
-  // For a specific node location in a file, the ID of the IR.
-  // For Clang source location, this returns `Cpp`.
+  // The ID of the IR.
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
 
+  // Returns true if this is a C++ location.
+  auto is_cpp() const -> bool { return is_cpp_; }
+
   // The specific node location in a file. Must be called only if
-  // `check_ir_id()` doesn't return `Cpp`.
+  // `is_cpp()` is false.
   auto node_id() const -> Parse::NodeId {
-    CARBON_CHECK(check_ir_id() != CheckIRId::Cpp);
+    CARBON_CHECK(!is_cpp());
     return node_id_;
   }
 
-  // The Clang source location. Must be called only if `check_ir_id()` returns
-  // `Cpp`.
+  // The Clang source location. Must be called only if `is_cpp()` is true.
   auto clang_source_loc_id() const -> ClangSourceLocId {
-    CARBON_CHECK(check_ir_id() == CheckIRId::Cpp);
+    CARBON_CHECK(is_cpp());
     return clang_source_loc_id_;
   }
 
  private:
   // See `check_ir_id()`.
   CheckIRId check_ir_id_;
+
+  // True if this is a C++ location.
+  bool is_cpp_;
 
   union {
     // See `node_id()`.

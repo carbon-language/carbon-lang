@@ -4557,8 +4557,8 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
     }
     auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
-      local_context().TODO(SemIR::LocId::None,
-                           "Unsupported: Importing C++ indirectly");
+      auto loc_id = SemIR::LocId(AddImportIRInst(*this, inst_id));
+      local_context().TODO(loc_id, "Unsupported: Importing C++ indirectly");
       SetResolvedConstId(inst_id, result.indirect_insts,
                          SemIR::ErrorInst::ConstantId);
       result.const_id = SemIR::ErrorInst::ConstantId;

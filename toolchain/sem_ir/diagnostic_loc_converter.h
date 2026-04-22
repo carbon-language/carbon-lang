@@ -82,8 +82,11 @@ class DiagnosticLocConverter {
                    bool token_only) const -> Diagnostics::ConvertedLoc;
 
   // Converts a location pointing into C++ code to a diagnostic location.
-  auto ConvertImpl(ClangSourceLocId clang_source_loc_id) const
+  auto ConvertImpl(const File* file, ClangSourceLocId clang_source_loc_id) const
       -> Diagnostics::ConvertedLoc;
+
+  // Returns the File* for the given CheckIRId by searching imports.
+  auto GetFileForCheckIRId(CheckIRId check_ir_id) const -> const File*;
 
   // Converters for each SemIR.
   const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;

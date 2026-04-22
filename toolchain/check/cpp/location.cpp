@@ -64,9 +64,10 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   // we can just return that directly.
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       SemIR::GetAbsoluteNodeId(&context.sem_ir(), loc_id);
-  if (absolute_node_ids.back().check_ir_id() == SemIR::CheckIRId::Cpp) {
-    return context.sem_ir().clang_source_locs().Get(
-        absolute_node_ids.back().clang_source_loc_id());
+  const auto& final_node = absolute_node_ids.back();
+  if (final_node.is_cpp()) {
+    auto [ir, _] = GetFileInfo(context, final_node.check_ir_id());
+    return ir->clang_source_locs().Get(final_node.clang_source_loc_id());
   }
 
   // This is a location in Carbon code; get or create a corresponding file in

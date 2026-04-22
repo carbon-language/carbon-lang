@@ -1562,13 +1562,25 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
   auto abs_node_id = GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
 
-  if (abs_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
+  if (abs_node_id.is_cpp()) {
+    auto check_ir_id = abs_node_id.check_ir_id();
+    const SemIR::File* file = nullptr;
+    if (check_ir_id == sem_ir().check_ir_id()) {
+      file = &sem_ir();
+    } else {
+      for (const auto& import_ir : sem_ir().import_irs().values()) {
+        if (import_ir.sem_ir->check_ir_id() == check_ir_id) {
+          file = import_ir.sem_ir;
+          break;
+        }
+      }
+      CARBON_CHECK(file, "Could not find imported file for {0}", check_ir_id);
+    }
+
     // TODO: Consider asking our cpp_code_generator to map the location to a
     // debug location, in order to use Clang's rules for (eg) macro handling.
-    auto loc =
-        sem_ir().clang_source_locs().Get(abs_node_id.clang_source_loc_id());
-    auto presumed_loc =
-        sem_ir().cpp_file()->source_manager().getPresumedLoc(loc);
+    auto loc = file->clang_source_locs().Get(abs_node_id.clang_source_loc_id());
+    auto presumed_loc = file->cpp_file()->source_manager().getPresumedLoc(loc);
     return {.filename = presumed_loc.getFilename(),
             .line_number = static_cast<int32_t>(presumed_loc.getLine()),
             .column_number = static_cast<int32_t>(presumed_loc.getColumn())};
