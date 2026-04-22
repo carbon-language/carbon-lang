@@ -5,13 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_DIAGNOSTIC_LOC_CONVERTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_DIAGNOSTIC_LOC_CONVERTER_H_
 
-#include <functional>
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -60,16 +58,9 @@ class DiagnosticLocConverter {
   // `tree_and_subtrees_getters` and `sem_ir` must not be null.
   explicit DiagnosticLocConverter(
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      const File* sem_ir,
-      std::function<const File*(CheckIRId)> file_getter = nullptr)
+      const File* sem_ir)
       : tree_and_subtrees_getters_(tree_and_subtrees_getters),
-        sem_ir_(sem_ir),
-        file_getter_(std::move(file_getter)) {}
-
-  // Sets the file getter for O(1) lookups.
-  auto set_file_getter(std::function<const File*(CheckIRId)> file_getter) -> void {
-    file_getter_ = std::move(file_getter);
-  }
+        sem_ir_(sem_ir) {}
 
   // Converts the given location into a sequence of import locations and a final
   // diagnostic location.
@@ -80,9 +71,9 @@ class DiagnosticLocConverter {
       -> Diagnostics::ConvertedLoc;
 
  private:
-  // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
+  // Converts an `absolute_node_ref` in either a Carbon file or C++ import to a
   // diagnostic location.
-  auto ConvertImpl(AbsoluteNodeId absolute_node_id, bool token_only) const
+  auto ConvertImpl(AbsoluteNodeRef absolute_node_ref, bool token_only) const
       -> Diagnostics::ConvertedLoc;
 
   // Converts a `node_id` corresponding to a specific check IR to a diagnostic
@@ -94,17 +85,11 @@ class DiagnosticLocConverter {
   auto ConvertImpl(const File* file, ClangSourceLocId clang_source_loc_id) const
       -> Diagnostics::ConvertedLoc;
 
-  // Returns the File* for the given CheckIRId by searching imports.
-  auto GetFileForCheckIRId(CheckIRId check_ir_id) const -> const File*;
-
   // Converters for each SemIR.
   const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;
 
   // The current SemIR being processed.
   const File* sem_ir_;
-
-  // Optional getter for File* by CheckIRId.
-  std::function<const File*(CheckIRId)> file_getter_;
 };
 
 }  // namespace Carbon::SemIR

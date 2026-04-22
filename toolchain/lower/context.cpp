@@ -94,7 +94,7 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
                                       /*RV=*/0);
 }
 
-auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
+auto Context::GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI {
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters().Get(abs_node_id.check_ir_id())();
   const auto& tokens = tree_and_subtrees.tree().tokens();
@@ -112,11 +112,6 @@ auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
   }
 }
 
-auto Context::GetFileForCheckIRId(SemIR::CheckIRId id) const -> const SemIR::File* {
-  if (auto* file_ctx = file_contexts_.Get(id).get()) {
-    return &file_ctx->sem_ir();
-  }
-  return nullptr;
-}
+
 
 }  // namespace Carbon::Lower

@@ -71,7 +71,7 @@ cc_library(
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:absolute_node_id",
+        "//toolchain/sem_ir:absolute_node_ref",
         "//toolchain/sem_ir:clang_decl",
         "//toolchain/sem_ir:diagnostic_loc_converter",
         "//toolchain/sem_ir:entry_point",

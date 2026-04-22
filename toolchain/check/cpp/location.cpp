@@ -4,7 +4,7 @@
 
 #include "toolchain/check/cpp/location.h"
 
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -62,21 +62,19 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
 
   // Break down the `LocId` into an import path. If that ends in a C++ location,
   // we can just return that directly.
-  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      SemIR::GetAbsoluteNodeId(&context.sem_ir(), loc_id);
-  const auto& final_node = absolute_node_ids.back();
+  llvm::SmallVector<SemIR::AbsoluteNodeRef> absolute_node_refs =
+      SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
+  const auto& final_node = absolute_node_refs.back();
   if (final_node.is_cpp()) {
-    auto [ir, _] = GetFileInfo(context, final_node.check_ir_id());
-    return ir->clang_source_locs().Get(final_node.clang_source_loc_id());
+    return final_node.file()->clang_source_locs().Get(final_node.clang_source_loc_id());
   }
 
   // This is a location in Carbon code; get or create a corresponding file in
   // Clang and build a corresponding location.
-  auto absolute_node_id = absolute_node_ids.back();
-  auto [ir, start_loc] = GetFileInfo(context, absolute_node_id.check_ir_id());
+  auto [ir, start_loc] = GetFileInfo(context, final_node.check_ir_id());
   const auto& tree = ir->parse_tree();
   auto offset =
-      tree.tokens().GetByteOffset(tree.node_token(absolute_node_id.node_id()));
+      tree.tokens().GetByteOffset(tree.node_token(final_node.node_id()));
   return start_loc.getLocWithOffset(offset);
 }
 

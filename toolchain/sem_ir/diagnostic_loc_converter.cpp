@@ -5,7 +5,6 @@
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 
 #include "clang/Frontend/DiagnosticRenderer.h"
-#include "llvm/ADT/SmallPtrSet.h"
 
 namespace Carbon::SemIR {
 
@@ -112,36 +111,35 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
 auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
                                                 bool token_only) const
     -> LocAndImports {
-  llvm::SmallVector<AbsoluteNodeId> absolute_node_ids =
-      GetAbsoluteNodeId(sem_ir_, loc_id);
-  auto final_node_id = absolute_node_ids.pop_back_val();
+  llvm::SmallVector<AbsoluteNodeRef> absolute_node_refs =
+      GetAbsoluteNodeRef(sem_ir_, loc_id);
+  auto final_node = absolute_node_refs.pop_back_val();
 
   // Convert the final location.
-  LocAndImports result = {.loc = ConvertImpl(final_node_id, token_only)};
+  LocAndImports result = {.loc = ConvertImpl(final_node, token_only)};
 
   // Convert the import locations.
-  for (const auto& absolute_node_id : absolute_node_ids) {
-    if (!absolute_node_id.node_id().has_value()) {
+  for (const auto& absolute_node_ref : absolute_node_refs) {
+    if (!absolute_node_ref.node_id().has_value()) {
       // TODO: Add an `ImportLoc` pointing at the prelude for the case where
       // we don't have a location.
       continue;
     }
-    result.imports.push_back({.loc = ConvertImpl(absolute_node_id, false).loc});
+    result.imports.push_back({.loc = ConvertImpl(absolute_node_ref, false).loc});
   }
 
   // Convert the C++ import locations.
-  if (final_node_id.is_cpp()) {
-    const File* file = GetFileForCheckIRId(final_node_id.check_ir_id());
-    const SemIR::CppFile* cpp_file = file->cpp_file();
-    CARBON_CHECK(cpp_file, "Converting C++ location before C++ file is set");
+  if (final_node.is_cpp()) {
+    const File* file = final_node.file();
+    CARBON_CHECK(file->cpp_file(), "Converting C++ location before C++ file is set");
 
     // Collect the location backtrace that Clang would use for an error here.
-    ClangImportCollector(cpp_file->lang_options(),
-                         cpp_file->diagnostic_options(), &result.imports)
+    ClangImportCollector(file->cpp_file()->lang_options(),
+                         file->cpp_file()->diagnostic_options(), &result.imports)
         .emitDiagnostic(
             clang::FullSourceLoc(file->clang_source_locs().Get(
-                                     final_node_id.clang_source_loc_id()),
-                                 cpp_file->source_manager()),
+                                     final_node.clang_source_loc_id()),
+                                 file->cpp_file()->source_manager()),
             clang::DiagnosticsEngine::Error, "", {}, {});
   }
 
@@ -150,20 +148,19 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
 
 auto DiagnosticLocConverter::Convert(LocId loc_id, bool token_only) const
     -> Diagnostics::ConvertedLoc {
-  llvm::SmallVector<AbsoluteNodeId> absolute_node_ids =
-      GetAbsoluteNodeId(sem_ir_, loc_id);
-  return ConvertImpl(absolute_node_ids.back(), token_only);
+  llvm::SmallVector<AbsoluteNodeRef> absolute_node_refs =
+      GetAbsoluteNodeRef(sem_ir_, loc_id);
+  return ConvertImpl(absolute_node_refs.back(), token_only);
 }
 
-auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeId absolute_node_id,
+auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeRef absolute_node_ref,
                                          bool token_only) const
     -> Diagnostics::ConvertedLoc {
-  if (absolute_node_id.is_cpp()) {
-    const File* file = GetFileForCheckIRId(absolute_node_id.check_ir_id());
-    return ConvertImpl(file, absolute_node_id.clang_source_loc_id());
+  if (absolute_node_ref.is_cpp()) {
+    return ConvertImpl(absolute_node_ref.file(), absolute_node_ref.clang_source_loc_id());
   }
 
-  return ConvertImpl(absolute_node_id.check_ir_id(), absolute_node_id.node_id(),
+  return ConvertImpl(absolute_node_ref.check_ir_id(), absolute_node_ref.node_id(),
                      token_only);
 }
 
@@ -193,21 +190,6 @@ auto DiagnosticLocConverter::ConvertImpl(
       .loc = ConvertPresumedLocToDiagnosticsLoc(
           clang::FullSourceLoc(clang_loc, src_mgr), presumed_loc),
       .last_byte_offset = static_cast<int32_t>(offset)};
-}
-
-auto DiagnosticLocConverter::GetFileForCheckIRId(CheckIRId check_ir_id) const
-    -> const File* {
-  if (check_ir_id == sem_ir_->check_ir_id()) {
-    return sem_ir_;
-  }
-
-  if (file_getter_) {
-    if (auto* file = file_getter_(check_ir_id)) {
-      return file;
-    }
-  }
-
-  CARBON_FATAL("Could not find imported file for {0}", check_ir_id);
 }
 
 }  // namespace Carbon::SemIR

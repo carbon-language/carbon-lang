@@ -253,9 +253,9 @@ cc_library(
 )
 
 cc_library(
-    name = "absolute_node_id",
-    srcs = ["absolute_node_id.cpp"],
-    hdrs = ["absolute_node_id.h"],
+    name = "absolute_node_ref",
+    srcs = ["absolute_node_ref.cpp"],
+    hdrs = ["absolute_node_ref.h"],
     deps = [
         ":file",
         ":typed_insts",
@@ -281,7 +281,7 @@ cc_library(
     srcs = ["diagnostic_loc_converter.cpp"],
     hdrs = ["diagnostic_loc_converter.h"],
     deps = [
-        ":absolute_node_id",
+        ":absolute_node_ref",
         ":file",
         ":typed_insts",
         "//toolchain/diagnostics:emitter",

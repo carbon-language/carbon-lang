@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_ID_H_
-#define CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_ID_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_REF_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_REF_H_
 
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -13,20 +13,23 @@ namespace Carbon::SemIR {
 
 // A specific node location in a file. Can refer to a Clang source location
 // within imported C++ code.
-class AbsoluteNodeId {
+class AbsoluteNodeRef {
  public:
   // A specific node location in a file.
-  explicit AbsoluteNodeId(CheckIRId check_ir_id, Parse::NodeId node_id)
-      : check_ir_id_(check_ir_id), is_cpp_(false), node_id_(node_id) {}
+  explicit AbsoluteNodeRef(const File* file, Parse::NodeId node_id)
+      : file_(file), is_cpp_(false), node_id_(node_id) {}
 
   // A Clang source location within imported C++ code.
-  explicit AbsoluteNodeId(CheckIRId check_ir_id, ClangSourceLocId clang_source_loc_id)
-      : check_ir_id_(check_ir_id),
+  explicit AbsoluteNodeRef(const File* file, ClangSourceLocId clang_source_loc_id)
+      : file_(file),
         is_cpp_(true),
         clang_source_loc_id_(clang_source_loc_id) {}
 
+  // The file containing the location.
+  auto file() const -> const File* { return file_; }
+
   // The ID of the IR.
-  auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
+  auto check_ir_id() const -> CheckIRId { return file_->check_ir_id(); }
 
   // Returns true if this is a C++ location.
   auto is_cpp() const -> bool { return is_cpp_; }
@@ -45,8 +48,8 @@ class AbsoluteNodeId {
   }
 
  private:
-  // See `check_ir_id()`.
-  CheckIRId check_ir_id_;
+  // The file containing the location.
+  const File* file_;
 
   // True if this is a C++ location.
   bool is_cpp_;
@@ -59,16 +62,16 @@ class AbsoluteNodeId {
   };
 };
 
-// Resolves the `LocId` to a series of `NodeId`s, which may be in different
+// Resolves the `LocId` to a series of `NodeRef`s, which may be in different
 // files. The vector will have one entry if there were no imports, and multiple
 // entries when imports are traversed. The final entry is the actual
 // declaration.
 //
 // Note that the `LocId` here is typically not canonical, and it uses that fact
 // for non-canonical locations built from an `ExportDecl` instruction.
-auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
-    -> llvm::SmallVector<AbsoluteNodeId>;
+auto GetAbsoluteNodeRef(const File* sem_ir, LocId loc_id)
+    -> llvm::SmallVector<AbsoluteNodeRef>;
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_ID_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ABSOLUTE_NODE_REF_H_

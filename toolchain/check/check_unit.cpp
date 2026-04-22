@@ -75,18 +75,7 @@ CheckUnit::CheckUnit(
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               unit_and_imports_->unit->total_ir_count, vlog_stream) {
-  emitter_.set_file_getter([this](SemIR::CheckIRId id) -> const SemIR::File* {
-    if (id == context_.sem_ir().check_ir_id()) {
-      return &context_.sem_ir();
-    }
-    auto import_id = context_.check_ir_map().Get(id);
-    if (import_id.has_value()) {
-      return context_.import_irs().Get(import_id).sem_ir;
-    }
-    return nullptr;
-  });
-}
+               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");

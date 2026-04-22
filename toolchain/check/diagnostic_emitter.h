@@ -25,10 +25,7 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
         sem_ir_(sem_ir),
         loc_converter_(tree_and_subtrees_getters, sem_ir) {}
 
-  // Sets the file getter for O(1) lookups in diagnostics.
-  auto set_file_getter(std::function<const SemIR::File*(SemIR::CheckIRId)> getter) -> void {
-    loc_converter_.set_file_getter(std::move(getter));
-  }
+
 
   // If a byte offset is past the current last byte offset, advances forward.
   // Earlier offsets are ignored.

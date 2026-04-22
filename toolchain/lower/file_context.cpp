@@ -24,7 +24,7 @@
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/options.h"
 #include "toolchain/lower/specific_coalescer.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -999,8 +999,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // On crash, report the function we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        &context().tree_and_subtrees_getters(), &sem_ir(),
-        [&](SemIR::CheckIRId id) { return context().GetFileForCheckIRId(id); });
+        &context().tree_and_subtrees_getters(), &sem_ir());
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);
@@ -1561,33 +1560,20 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
-  auto abs_node_id = GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
+  auto abs_node_ref = GetAbsoluteNodeRef(sem_ir_, SemIR::LocId(inst_id)).back();
 
-  if (abs_node_id.is_cpp()) {
-    auto check_ir_id = abs_node_id.check_ir_id();
-    const SemIR::File* file = nullptr;
-    if (check_ir_id == sem_ir().check_ir_id()) {
-      file = &sem_ir();
-    } else {
-      for (const auto& import_ir : sem_ir().import_irs().values()) {
-        if (import_ir.sem_ir->check_ir_id() == check_ir_id) {
-          file = import_ir.sem_ir;
-          break;
-        }
-      }
-      CARBON_CHECK(file, "Could not find imported file for {0}", check_ir_id);
-    }
-
+  if (abs_node_ref.is_cpp()) {
+    const SemIR::File* file = abs_node_ref.file();
     // TODO: Consider asking our cpp_code_generator to map the location to a
     // debug location, in order to use Clang's rules for (eg) macro handling.
-    auto loc = file->clang_source_locs().Get(abs_node_id.clang_source_loc_id());
+    auto loc = file->clang_source_locs().Get(abs_node_ref.clang_source_loc_id());
     auto presumed_loc = file->cpp_file()->source_manager().getPresumedLoc(loc);
     return {.filename = presumed_loc.getFilename(),
             .line_number = static_cast<int32_t>(presumed_loc.getLine()),
             .column_number = static_cast<int32_t>(presumed_loc.getColumn())};
   }
 
-  return context().GetLocForDI(abs_node_id);
+  return context().GetLocForDI(abs_node_ref);
 }
 
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
