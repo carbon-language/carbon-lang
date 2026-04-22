@@ -257,6 +257,7 @@ repos:
 exclude: |
   (?x)^(
       MODULE.bazel.lock|
+      .*package-lock\.json|
       bazel/bazel_clang_tidy/.*\.patch|
       bazel/google_benchmark/.*\.patch|
       bazel/libpfm/.*\.patch|
