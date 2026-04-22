@@ -87,17 +87,18 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     // Create a new interface if this isn't a valid redeclaration.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
-    // TODO: Only execute if we are in Core
-    auto name = context.names().GetIRBaseName(interface_info.name_id);
-    interface_info.core_interface =
-        llvm::StringSwitch<std::optional<SemIR::CoreInterface>>(name)
-            .Case("Copy", SemIR::CoreInterface::Copy)
-            .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
-            .Case("Default", SemIR::CoreInterface::Default)
-            .Case("Destroy", SemIR::CoreInterface::Destroy)
-            .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
-            .Default(std::nullopt);
-    // End TODO
+
+    if (context.sem_ir().package_id() == PackageNameId::Core) {
+      auto name = context.names().GetIRBaseName(interface_info.name_id);
+      interface_info.core_interface =
+          llvm::StringSwitch<std::optional<SemIR::CoreInterface>>(name)
+              .Case("Copy", SemIR::CoreInterface::Copy)
+              .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
+              .Case("Default", SemIR::CoreInterface::Default)
+              .Case("Destroy", SemIR::CoreInterface::Destroy)
+              .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
+              .Default(std::nullopt);
+    }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id =
