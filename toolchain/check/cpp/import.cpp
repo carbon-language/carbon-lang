@@ -238,10 +238,11 @@ static auto FindCorrespondingType(Context& context, clang::QualType type)
 
   if (const auto* builtin = type->getAs<clang::BuiltinType>()) {
     switch (builtin->getKind()) {
-      case clang::BuiltinType::Int:
-        return context.ast_context().IntTy;
-      case clang::BuiltinType::Bool:
-        return context.ast_context().BoolTy;
+#define BUILTIN_TYPE(Id, SingletonId) \
+  case clang::BuiltinType::Id:        \
+    return context.ast_context().SingletonId;
+#include "clang/AST/BuiltinTypes.def"
+#undef BUILTIN_TYPE
       default:
         return clang::QualType();
     }
