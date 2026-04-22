@@ -1314,6 +1314,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
                                         : llvm::dwarf::DW_ATE_unsigned)};
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::ImplWitnessAccess /*inst*/)
+    -> FileContext::LoweredTypes {
+  CARBON_FATAL("Unexpected ImplWitnessAccess in lowering");
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
     -> FileContext::LoweredTypes {
   return {llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0),

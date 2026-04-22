@@ -944,7 +944,7 @@ struct ImplWitnessAccess {
       InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_access",
            .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly,
+           .constant_kind = InstConstantKind::Conditional,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
