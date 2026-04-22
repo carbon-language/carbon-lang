@@ -150,10 +150,12 @@ auto ImportCpp(Context& context,
   }
 }
 
+// TODO: Make this non-recursive, or remove it once we support importing C++
+// ASTs for cross file imports.
+// NOLINTNEXTLINE(misc-no-recursion)
 static auto FindCorrespondingDecl(clang::ASTContext& context,
                                   const clang::Decl* decl) -> clang::Decl* {
   if (const auto* named_decl = dyn_cast<clang::NamedDecl>(decl)) {
-    // TODO: Avoid recursion.
     auto* parent = dyn_cast_or_null<clang::DeclContext>(FindCorrespondingDecl(
         context, cast<clang::Decl>(named_decl->getDeclContext())));
     if (!parent) {
@@ -167,8 +169,11 @@ static auto FindCorrespondingDecl(clang::ASTContext& context,
       return nullptr;
     }
     auto decls = parent->lookup(name);
+    // TODO: If there are multiple results, try to pick the right one.
     if (!decls.isSingleResult() ||
         decls.front()->getKind() != named_decl->getKind()) {
+      // TODO: If we were looking for a non-template and found a template, try
+      // to form a matching template specialization.
       return nullptr;
     }
     return decls.front();
