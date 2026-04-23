@@ -873,8 +873,8 @@ tl = {.x = 5, .y = 6};
 ### Member functions
 
 We consider all functions declared within a class, interface, or `impl` to be
-_member functions_. Member functions can either be instance methods or
-non-instance functions.
+_member functions_. Member functions can either be instance _methods_ or
+_non-instance member functions_.
 
 #### Non-instance member functions
 
@@ -2339,11 +2339,14 @@ the type of `U.x`."
 
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
 
-    -   [`class` modifier for non-instance members](/proposals/p7016.md#class-modifier-for-non-instance-members)
-    -   [`shared` or `global` keywords for non-instance fields](/proposals/p7016.md#shared-or-global-keywords-for-non-instance-fields)
-    -   [`static` for non-instance class functions as well as non-instance fields](/proposals/p7016.md#static-for-non-instance-class-functions-as-well-as-non-instance-fields)
+    -   [Treat `self` differently from _all_ parameters](/proposals/p7016.md#treat-self-differently-from-all-parameters)
+    -   [`self` syntax in the deduced parameter list `[]`](/proposals/p7016.md#self-syntax-in-the-deduced-parameter-list-)
+    -   [`class` modifier for non-instance member variables and functions](/proposals/p7016.md#class-modifier-for-non-instance-member-variables-and-functions)
+    -   [Alternative keywords for non-instance member variables](/proposals/p7016.md#alternative-keywords-for-non-instance-member-variables)
+        -   [`shared`](/proposals/p7016.md#shared)
+        -   [`global`](/proposals/p7016.md#global)
+    -   [`static` for non-instance member functions](/proposals/p7016.md#static-for-non-instance-member-functions)
     -   [Distinct `method` introducer](/proposals/p7016.md#distinct-method-introducer)
-    -   [Special `self` syntax in square brackets `[]`](/proposals/p7016.md#special-self-syntax-in-square-brackets-)
 
 ## References
 
