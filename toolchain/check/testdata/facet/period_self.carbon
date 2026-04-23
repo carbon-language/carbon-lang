@@ -442,6 +442,36 @@ fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                  ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 
+// --- impl_as_rewrite_with_period_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+
+class C;
+impl C as Z where .Z1 = .Self {}
+
+fn F() {
+  C as (Z where .Z1 = C);
+}
+
+// --- impl_as_impls_with_period_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {}
+
+class C;
+impl C as Z where .Z1 = .Self {}
+impl C as Y {}
+
+fn F() {
+  C as (Z where .Z1 impls Y);
+}
+
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
