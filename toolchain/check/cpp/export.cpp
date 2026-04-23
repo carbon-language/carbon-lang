@@ -168,6 +168,14 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
 namespace {
 struct FunctionInfo {
+  struct Param {
+    // Type of the parameter's scrutinee.
+    SemIR::TypeId type_id;
+
+    // Whether this is a `ref` param.
+    bool is_ref;
+  };
+
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
                         const SemIR::Function& function,
                         clang::DeclContext* decl_context)
@@ -188,12 +196,18 @@ struct FunctionInfo {
       self_type_id = scrutinee_type_id;
     }
 
-    // Get the function's explicit parameter types.
+    // Get the function's explicit parameters.
     function_params =
         function_params.drop_front(function.call_param_ranges.implicit_size());
     function_params =
         function_params.drop_back(function.call_param_ranges.return_size());
     for (auto param_inst_id : function_params) {
+      explicit_params.push_back(
+          {.type_id = ExtractScrutineeType(
+               context.sem_ir(), context.insts().Get(param_inst_id).type_id()),
+           .is_ref =
+               context.insts().Is<SemIR::RefParamPattern>(param_inst_id)});
+
       auto scrutinee_type_id = ExtractScrutineeType(
           context.sem_ir(), context.insts().Get(param_inst_id).type_id());
       param_type_ids.push_back(scrutinee_type_id);
@@ -219,6 +233,10 @@ struct FunctionInfo {
   // be created. If the function is a method, this will be a
   // `CXXRecordDecl`.
   clang::DeclContext* decl_context;
+
+  // For each of the function's explicit parameters, the scrutinee type
+  // and whether the parameter is a reference.
+  llvm::SmallVector<Param> explicit_params;
 
   // Types of the function's explicit parameters (excludes implicit
   // parameters and return parameters).
