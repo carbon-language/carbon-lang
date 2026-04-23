@@ -77,8 +77,8 @@ any other expression.
 All the pattern instructions for a given full-pattern are grouped together in a
 distinct block that contains only pattern instructions. Consequently,
 `Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
-for pattern blocks, and provides separate methods like `AddPatternInst` for
-adding instructions to it.
+for pattern blocks, and operations like `AddInst` automatically put
+newly-created pattern insts on that stack.
 
 ## Instruction ordering
 

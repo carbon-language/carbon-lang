@@ -214,18 +214,11 @@ fn F() ->? i32;
 // CHECK:STDERR:
 fn F() ->? ref i32;
 
-// -- fail_todo_form_generic_return.carbon
+// --- fail_todo_form_generic_return.carbon
 
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_form_generic_return.carbon:[[@LINE+4]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
 // CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDERR:                          ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE-23]]:1: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
-// CHECK:STDERR: fn F() ->? i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(Form:! Core.Form()) ->? Form;
 
@@ -441,15 +434,20 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.1da: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc4_8.1: %pattern_type.7ce = ref_return_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %.loc4_8.1, constants.%i32 [concrete]
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4: Core.Form = ref_form %i32 [concrete = constants.%.1da]
+// CHECK:STDOUT:     %.loc4_17: Core.Form = ref_form %i32 [concrete = constants.%.1da]
+// CHECK:STDOUT:     %.loc4_8.2: ref %i32 = ref_return
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_8.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -526,15 +524,20 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.754: Core.Form = value_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc4_8.1: %pattern_type.7ce = value_return_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %.loc4_8.1, constants.%i32 [concrete]
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4: Core.Form = value_form %i32 [concrete = constants.%.754]
+// CHECK:STDOUT:     %.loc4_17: Core.Form = value_form %i32 [concrete = constants.%.754]
+// CHECK:STDOUT:     %.loc4_8.2: %i32 = value_return
+// CHECK:STDOUT:     %return: %i32 = return_slot %.loc4_8.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

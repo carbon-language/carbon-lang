@@ -96,37 +96,15 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %class.Class = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z8identityI5ClassET_S1_ = comdat any
-// CHECK:STDOUT:
 // CHECK:STDOUT: $_Z8identityIiET_S0_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr noundef %x, ptr noundef %return) #0 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %class.Class, align 1
-// CHECK:STDOUT:   %undef.agg.tmp = alloca %class.Class, align 1
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_()
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #1 comdat {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %class.Class, align 1
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
+// CHECK:STDOUT: $_Z8identityI5ClassET_S1_ = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #2 !dbg !14 {
+// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !20
-// CHECK:STDOUT:   ret i32 %identity.call, !dbg !21
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !17
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
@@ -139,22 +117,44 @@ fn Call3() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CPassI32Explicitly.Main(i32 %a) #2 !dbg !22 {
+// CHECK:STDOUT: define i32 @_CPassI32Explicitly.Main(i32 %a) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !25
-// CHECK:STDOUT:   ret i32 %identity.call, !dbg !26
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !22
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #2 !dbg !27 {
+// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !33
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !30
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr noundef %x, ptr noundef %return) #2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %class.Class, align 1
+// CHECK:STDOUT:   %undef.agg.tmp = alloca %class.Class, align 1
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !32
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !32
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !32
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !32
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #1 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x = alloca %class.Class, align 1
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -171,30 +171,30 @@ fn Call3() {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
-// CHECK:STDOUT: !12 = !{!"p1 _ZTS5Class", !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !6, line: 6, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !18)
-// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
-// CHECK:STDOUT: !16 = !{!17, !17}
-// CHECK:STDOUT: !17 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !18 = !{!19}
-// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 10, scope: !14)
-// CHECK:STDOUT: !21 = !DILocation(line: 7, column: 3, scope: !14)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !6, line: 10, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
-// CHECK:STDOUT: !23 = !{!24}
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !17)
-// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 10, scope: !22)
-// CHECK:STDOUT: !26 = !DILocation(line: 11, column: 3, scope: !22)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !6, line: 14, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
-// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
-// CHECK:STDOUT: !29 = !{!30, !30}
-// CHECK:STDOUT: !30 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !31 = !{!32}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
-// CHECK:STDOUT: !33 = !DILocation(line: 15, column: 10, scope: !27)
-// CHECK:STDOUT: !34 = !DILocation(line: 15, column: 3, scope: !27)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{!14, !14}
+// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !15 = !{!16}
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
+// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 10, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !20)
+// CHECK:STDOUT: !20 = !{!21}
+// CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !14)
+// CHECK:STDOUT: !22 = !DILocation(line: 11, column: 10, scope: !19)
+// CHECK:STDOUT: !23 = !DILocation(line: 11, column: 3, scope: !19)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !6, line: 14, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !26 = !{!27, !27}
+// CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !28 = !{!29}
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !27)
+// CHECK:STDOUT: !30 = !DILocation(line: 15, column: 10, scope: !24)
+// CHECK:STDOUT: !31 = !DILocation(line: 15, column: 3, scope: !24)
+// CHECK:STDOUT: !32 = !{!33, !33, i64 0}
+// CHECK:STDOUT: !33 = !{!"p1 _ZTS5Class", !34, i64 0}
+// CHECK:STDOUT: !34 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: ; ModuleID = 'variadic.carbon'
 // CHECK:STDOUT: source_filename = "variadic.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -266,65 +266,28 @@ fn Call3() {
 // CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
 // CHECK:STDOUT: @X.val.loc12_14.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !11 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !14
+// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #0 {
+// CHECK:STDOUT: define internal void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !17
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1) #0 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %3 = load i32, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_(i32 noundef %3)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1, i32 noundef %2) #0 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
-// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !7
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   %5 = load i32, ptr %.addr2, align 4, !tbaa !7
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_(i32 noundef %4, i32 noundef %5)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJiiEEv1XDpT_(i32 noundef, i32 noundef) #1
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall1.Main() #2 !dbg !14 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !17
-// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall2.Main() #2 !dbg !20 {
+// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
@@ -332,8 +295,22 @@ fn Call3() {
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
+// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   %3 = load i32, ptr %.addr1, align 4, !tbaa !7
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_(i32 noundef %3)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall3.Main() #2 !dbg !24 {
+// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
@@ -341,16 +318,39 @@ fn Call3() {
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1, i32 noundef %2) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !7
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !7
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr2, align 4, !tbaa !7
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_(i32 noundef %4, i32 noundef %5)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z3fooIJiiEEv1XDpT_(i32 noundef, i32 noundef) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -367,20 +367,20 @@ fn Call3() {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
-// CHECK:STDOUT: !12 = !{!"p1 _ZTS1X", !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 10, type: !15, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
-// CHECK:STDOUT: !16 = !{null}
-// CHECK:STDOUT: !17 = !DILocation(line: 12, column: 11, scope: !14)
-// CHECK:STDOUT: !18 = !DILocation(line: 12, column: 3, scope: !14)
-// CHECK:STDOUT: !19 = !DILocation(line: 10, column: 1, scope: !14)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 16, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 11, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 10, column: 1, scope: !11)
+// CHECK:STDOUT: !17 = !{!18, !18, i64 0}
+// CHECK:STDOUT: !18 = !{!"p1 _ZTS1X", !19, i64 0}
+// CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !21 = !DILocation(line: 18, column: 11, scope: !20)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 16, column: 1, scope: !20)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !25 = !DILocation(line: 24, column: 11, scope: !24)
 // CHECK:STDOUT: !26 = !DILocation(line: 24, column: 3, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 22, column: 1, scope: !24)

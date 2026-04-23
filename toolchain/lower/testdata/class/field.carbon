@@ -250,12 +250,12 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %o.var = alloca { i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %_.var = alloca { ptr, { i32 } }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca <{ ptr, { i32 } }>, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !8
-// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %_.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw <{ ptr, { i32 } }>, ptr %_.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %_.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw <{ ptr, { i32 } }>, ptr %_.var, i32 0, i32 1, !dbg !9
 // CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.6354d5454c7bf77d:core.Destroy.Core"(ptr %_.var), !dbg !8

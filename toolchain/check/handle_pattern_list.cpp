@@ -102,7 +102,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   auto type_id = GetPatternType(context, GetTupleType(context, type_inst_ids));
   context.node_stack().Push(
       node_id,
-      AddPatternInst<SemIR::TuplePattern>(
+      AddInst<SemIR::TuplePattern>(
           context, node_id, {.type_id = type_id, .elements_id = refs_id}));
   return true;
 }

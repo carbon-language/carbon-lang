@@ -3,28 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load(":carbon_bootstrapping.bzl", "gen_cc_toolchain_paths_with_stage")
 
 package(default_visibility = ["//visibility:public"])
 
-constraint_setting(
-    name = "bootstrap_stage",
-    default_constraint_value = ":stage0",
-)
-
-constraint_value(
-    name = "stage0",
-    constraint_setting = ":bootstrap_stage",
-)
-
-constraint_value(
-    name = "stage1",
-    constraint_setting = ":bootstrap_stage",
-)
-
-constraint_value(
-    name = "stage2",
-    constraint_setting = ":bootstrap_stage",
-)
+exports_files(["carbon_cc_toolchain_config.bzl"])
 
 # For use by defs.bzl.
 # Matches when asan is enabled on a macOS platform.
@@ -70,7 +54,6 @@ config_setting(
 filegroup(
     name = "installed_cc_toolchain_starlark",
     srcs = [
-        "carbon_cc_toolchain_config.bzl",
         "cc_toolchain_actions.bzl",
         "cc_toolchain_base_features.bzl",
         "cc_toolchain_config_features.bzl",
@@ -87,4 +70,26 @@ filegroup(
         # toolchain rules.
         "cc_toolchain_carbon_project_features.bzl",
     ],
+)
+
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths",
+    stage = 0,
+)
+
+# Test that the default toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_test",
+    srcs = ["cc_tools_test.py"],
+    args = ["$(location :gen_cc_tools_paths)"],
+    data = [":gen_cc_tools_paths"],
+    deps = [":cc_tools_test_lib"],
+)
+
+# Library containing the test logic, used by tests in other packages.
+py_library(
+    name = "cc_tools_test_lib",
+    srcs = ["cc_tools_test.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_tools//tools/python/runfiles"],
 )

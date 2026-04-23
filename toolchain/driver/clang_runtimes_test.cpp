@@ -311,20 +311,20 @@ TEST_F(ClangRuntimesTest, DISABLED_Libcxx) {
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltResourceDir) {
-  std::filesystem::path prebuilt_runtimes_path =
-      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
+  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
+      "carbon/toolchain/install/carbon_stage1_runtimes_build");
   TestResourceDir(prebuilt_runtimes_path / "clang_resource_dir");
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltLibunwind) {
-  std::filesystem::path prebuilt_runtimes_path =
-      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
+  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
+      "carbon/toolchain/install/carbon_stage1_runtimes_build");
   TestLibunwind(prebuilt_runtimes_path / "libunwind/lib/libunwind.a");
 }
 
 TEST_F(ClangRuntimesTest, PrebuiltLibcxx) {
-  std::filesystem::path prebuilt_runtimes_path =
-      test_runfiles_->Rlocation("carbon/toolchain/install/runtimes");
+  std::filesystem::path prebuilt_runtimes_path = test_runfiles_->Rlocation(
+      "carbon/toolchain/install/carbon_stage1_runtimes_build");
   TestLibcxx(prebuilt_runtimes_path / "libcxx/lib/libc++.a");
 }
 

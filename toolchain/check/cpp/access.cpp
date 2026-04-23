@@ -44,4 +44,15 @@ auto MapCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind {
   }
 }
 
+auto MapToCppAccess(SemIR::AccessKind access) -> clang::AccessSpecifier {
+  switch (access) {
+    case SemIR::AccessKind::Public:
+      return clang::AS_public;
+    case SemIR::AccessKind::Protected:
+      return clang::AS_protected;
+    case SemIR::AccessKind::Private:
+      return clang::AS_private;
+  }
+}
+
 }  // namespace Carbon::Check

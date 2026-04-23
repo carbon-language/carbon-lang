@@ -14,6 +14,7 @@ assistant, **read this first** to avoid common pitfalls.
 
 -   [General instructions](#general-instructions)
 -   [Project structure](#project-structure)
+-   [Bazel usage](#bazel-usage)
 -   [Toolchain development](#toolchain-development)
 
 ## General instructions
@@ -39,6 +40,12 @@ assistant, **read this first** to avoid common pitfalls.
 
 See the "Tool usage" skill for instructions on what tools to use in the
 carbon-lang project.
+
+## Bazel usage
+
+> [!IMPORTANT] Always use `bazelisk` instead of `bazel` for all commands in the
+> Carbon project. Refer to the
+> [Bazel usage skill](/.agents/skills/bazel/SKILL.md) for detailed instructions.
 
 ## Code style
 

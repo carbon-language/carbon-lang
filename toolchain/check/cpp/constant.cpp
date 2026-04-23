@@ -267,9 +267,12 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   clang::Expr::EvalResult eval_result;
   eval_result.Diag = &notes;
   if (!call_expr->EvaluateAsConstantExpr(eval_result, context.ast_context())) {
+    if (!function_decl->isConsteval()) {
+      return SemIR::ConstantId::NotConstant;
+    }
     context.clang_sema().Diag(call_expr->getBeginLoc(),
                               clang::diag::err_invalid_consteval_call)
-        << function_decl << function_decl->isConsteval();
+        << function_decl << /*is consteval*/ true;
     for (const auto& note : notes) {
       context.clang_sema().Diag(note.first, note.second);
     }

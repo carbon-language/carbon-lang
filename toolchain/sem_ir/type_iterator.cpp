@@ -44,7 +44,8 @@ auto TypeIterator::Next() -> Step {
         return Step::SymbolicValue{.inst_id = value.inst_id};
       }
       case CARBON_KIND(SymbolicType symbolic): {
-        return Step::SymbolicType{.facet_type_id = symbolic.facet_type_id};
+        return Step::SymbolicType{.entity_name_id = symbolic.entity_name_id,
+                                  .facet_type_id = symbolic.facet_type_id};
       }
       case CARBON_KIND(TypeId type_id): {
         if (auto step = ProcessTypeId(type_id)) {
@@ -65,9 +66,19 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
   CARBON_KIND_SWITCH(inst) {
       // ==== Symbolic types ====
 
-    case SymbolicBinding::Kind:
-    case SymbolicBindingPattern::Kind: {
-      return Step::SymbolicType{.facet_type_id = type_id};
+    case CARBON_KIND(SymbolicBinding bind): {
+      return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
+                                .facet_type_id = type_id};
+    }
+    case CARBON_KIND(SymbolicBindingPattern bind): {
+      return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
+                                .facet_type_id = type_id};
+    }
+    case CARBON_KIND(SemIR::SymbolicBindingType bind): {
+      auto facet_type_id =
+          sem_ir_->insts().Get(bind.facet_value_inst_id).type_id();
+      return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
+                                .facet_type_id = facet_type_id};
     }
 
     case Call::Kind:
@@ -78,14 +89,28 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case CARBON_KIND(FacetAccessType access): {
       auto facet_type_id =
           sem_ir_->insts().Get(access.facet_value_inst_id).type_id();
-      return Step::SymbolicType{.facet_type_id = facet_type_id};
+
+      auto entity_name_id = SemIR::EntityNameId::None;
+      if (auto facet_value = sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(
+              access.facet_value_inst_id)) {
+        entity_name_id = facet_value->entity_name_id;
+      }
+
+      return Step::SymbolicType{.entity_name_id = entity_name_id,
+                                .facet_type_id = facet_type_id};
     }
-    case CARBON_KIND(SemIR::SymbolicBindingType bind): {
-      return Step::SymbolicBinding{.entity_name_id = bind.entity_name_id};
-    }
+
     case CARBON_KIND(TupleAccess access): {
       auto facet_type_id = sem_ir_->insts().Get(access.tuple_id).type_id();
-      return Step::SymbolicType{.facet_type_id = facet_type_id};
+
+      auto entity_name_id = SemIR::EntityNameId::None;
+      if (auto facet_value = sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(
+              access.tuple_id)) {
+        entity_name_id = facet_value->entity_name_id;
+      }
+
+      return Step::SymbolicType{.entity_name_id = entity_name_id,
+                                .facet_type_id = facet_type_id};
     }
 
       // ==== Concrete types ====
@@ -224,7 +249,13 @@ auto TypeIterator::TryGetInstIdAsTypeId(InstId inst_id) const
   // and thus does not match here.
   if (auto facet_type =
           sem_ir_->types().TryGetAs<FacetType>(type_id_of_inst_id)) {
-    return SymbolicType{.facet_type_id = type_id_of_inst_id};
+    auto entity_name_id = SemIR::EntityNameId::None;
+    if (auto bind =
+            sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
+      entity_name_id = bind->entity_name_id;
+    }
+    return SymbolicType{.entity_name_id = entity_name_id,
+                        .facet_type_id = type_id_of_inst_id};
   }
   // Non-type values are concrete, only types are symbolic.
   if (type_id_of_inst_id != TypeType::TypeId) {

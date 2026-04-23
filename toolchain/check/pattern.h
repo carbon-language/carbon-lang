@@ -48,7 +48,7 @@ enum class BindingPhase { Template, Symbolic, Runtime };
 
 // Creates an entity name for a binding pattern with the given properties.
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::ConstantId form_id, bool is_unused,
+                          SemIR::InstId form_id, bool is_unused,
                           BindingPhase phase) -> SemIR::EntityNameId;
 
 // Creates a binding pattern and the associated binding inst, and returns their

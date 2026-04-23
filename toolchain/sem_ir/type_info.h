@@ -73,6 +73,146 @@ struct ValueRepr : public Printable<ValueRepr> {
   TypeId type_id = TypeId::None;
 };
 
+// A size within an object representation. This stores a bit count, but provides
+// convenience methods to access the size in bytes instead.
+class ObjectSize : public Printable<ObjectSize> {
+ public:
+  static constexpr auto Zero() -> ObjectSize { return ObjectSize(0); }
+
+  static constexpr auto Bits(int64_t bits) -> ObjectSize {
+    return ObjectSize(bits);
+  }
+
+  static constexpr auto Bytes(int64_t bytes) -> ObjectSize {
+    return ObjectSize(bytes * 8);
+  }
+
+  // Returns the size in bits.
+  auto bits() const -> int64_t { return bits_; }
+
+  // Returns the minimum number of bytes that would contain this size. This is
+  // the size in bytes, rounded up.
+  auto bytes() const -> int64_t { return (bits_ + 7) / 8; }
+
+  // Return this size rounded up to a multiple of `align`, which must be a power
+  // of 2.
+  [[nodiscard]] auto AlignedTo(ObjectSize align) const -> ObjectSize {
+    CARBON_CHECK(llvm::isPowerOf2_64(align.bits_),
+                 "Non power-of-2 alignment {0}", align.bits_);
+    return Bits((bits_ + align.bits_ - 1) & -align.bits_);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  friend constexpr auto operator<=>(ObjectSize a, ObjectSize b) {
+    return a.bits_ <=> b.bits_;
+  }
+
+  friend constexpr auto operator==(ObjectSize a, ObjectSize b) -> bool {
+    return a.bits_ == b.bits_;
+  }
+
+  // Computes the sum of two object sizes. This is the size of the smallest
+  // object that could fit both objects consecutively, without any alignment
+  // constraints or other padding bits.
+  auto operator+=(ObjectSize other) -> ObjectSize& {
+    bits_ += other.bits_;
+    return *this;
+  }
+  friend auto operator+(ObjectSize a, ObjectSize b) -> ObjectSize {
+    return a += b;
+  }
+
+  // Scales a size by a dimensionless integer. This is the size of `n` objects
+  // of the given size, laid out contiguously with no padding between them.
+  // Equivalent to adding the size to itself `n` times.
+  auto operator*=(int64_t n) -> ObjectSize& {
+    CARBON_CHECK(n >= 0, "sizes should not be negative");
+    bits_ *= n;
+    return *this;
+  }
+  friend auto operator*(ObjectSize a, int64_t n) -> ObjectSize {
+    return a *= n;
+  }
+  friend auto operator*(int64_t n, ObjectSize a) -> ObjectSize {
+    return a *= n;
+  }
+
+ private:
+  explicit constexpr ObjectSize(int64_t bits) : bits_(bits) {
+    CARBON_CHECK(bits >= 0, "sizes should not be negative");
+  }
+
+  int64_t bits_;
+};
+
+// The layout of an object representation.
+struct ObjectLayout {
+  // The size of the object representation. This may be zero for empty types.
+  // This is not guaranteed to be a multiple of `alignment`, so explicit tail
+  // padding may be required if objects using this layout are stored in an
+  // array.
+  ObjectSize size = ObjectSize::Zero();
+
+  // The alignment of the object representation. This will be a power of 2 for a
+  // valid representation, or zero if the representation is unset (such as for
+  // the object layout of an incomplete type). This will typically be 1 byte for
+  // an empty type.
+  ObjectSize alignment = ObjectSize::Zero();
+
+  // Returns the object layout to use for an empty type.
+  [[nodiscard]] static auto Empty() -> ObjectLayout {
+    return {.size = ObjectSize::Zero(), .alignment = ObjectSize::Bytes(1)};
+  }
+
+  // Returns the object layout to use for an array of `count` elements. The
+  // result never has tail padding, so this is *not* the same as adding the
+  // element to itself `count` times in general.
+  static auto ForArray(ObjectLayout element_layout, int64_t count)
+      -> ObjectLayout {
+    return {.size = element_layout.ArrayStride() * count,
+            .alignment = element_layout.alignment};
+  }
+
+  // Returns the stride of an array with this element type.
+  auto ArrayStride() const -> ObjectSize { return size.AlignedTo(alignment); }
+
+  // Returns the offset that a field with the given layout would have if
+  // appended to this struct.
+  auto FieldOffset(ObjectLayout field) -> ObjectSize {
+    CARBON_CHECK(field.has_value());
+    return size.AlignedTo(field.alignment);
+  }
+
+  // Updates this aggregate layout by concatenating naturally-aligned space for
+  // the given field layout, which is required to be valid.
+  auto AppendField(ObjectLayout field) -> void {
+    size = FieldOffset(field) + field.size;
+    alignment = std::max(alignment, field.alignment);
+  }
+
+  // Updates this aggregate layout by concatenating naturally-aligned space for
+  // the given field layout, if the field has a valid layout. If any field with
+  // an invalid layout is appended, the layout of the aggregate becomes invalid.
+  //
+  // An invalid layout for a field with a complete type indicates that its
+  // layout is dependent on a generic parameter; this causes the layout of the
+  // enclosing aggregate to also be dependent on that parameter.
+  auto TryAppendField(ObjectLayout field) -> void {
+    if (has_value()) {
+      if (field.has_value()) {
+        AppendField(field);
+      } else {
+        *this = ObjectLayout();
+      }
+    }
+  }
+
+  // Returns true if the layout has been set. For a complete type, this will be
+  // true if the layout is non-dependent.
+  auto has_value() const -> bool { return alignment != ObjectSize::Zero(); }
+};
+
 // Information stored about a TypeId corresponding to a complete type.
 struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -81,8 +221,20 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // not complete.
   ValueRepr value_repr = ValueRepr();
 
+  // The layout of the object representation of this type. This will be valid
+  // unless the type is incomplete or dependent.
+  ObjectLayout object_layout = ObjectLayout();
+
   // If this type is abstract, this is id of an abstract class it uses.
   ClassId abstract_class_id = ClassId::None;
+
+  // Returns whether the type is abstract.
+  //
+  // The type must be completed before we can determine if it's abstract.
+  auto IsAbstract() const -> bool {
+    CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
+    return abstract_class_id.has_value();
+  }
 };
 
 // The representation to use for an initializing expression of some type.

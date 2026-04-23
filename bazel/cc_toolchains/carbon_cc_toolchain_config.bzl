@@ -4,7 +4,7 @@
 
 """Starlark cc_toolchain configuration rules for using the Carbon toolchain"""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "action_config",
@@ -27,11 +27,13 @@ load(
 load(
     "cc_toolchain_actions.bzl",
     "all_c_compile_actions",
-    "all_cpp_compile_actions",
-    "all_link_actions",
 )
 load("cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load("cc_toolchain_features.bzl", "clang_cc_toolchain_features")
+load(
+    ":cc_toolchain_tools.bzl",
+    "llvm_tool_paths",
+)
 
 def _make_action_configs(tools, runtimes_path = None):
     runtimes_flag = "--no-build-runtimes"
@@ -51,7 +53,7 @@ def _make_action_configs(tools, runtimes_path = None):
             enabled = True,
             tools = [tools.clangpp],
         )
-        for name in all_cpp_compile_actions
+        for name in ACTION_NAME_GROUPS.all_cpp_compile_actions
     ] + [
         action_config(
             action_name = name,
@@ -68,7 +70,7 @@ def _make_action_configs(tools, runtimes_path = None):
                 "--",
             ])])],
         )
-        for name in all_link_actions
+        for name in ACTION_NAME_GROUPS.all_cc_link_actions
     ] + [
         action_config(
             action_name = name,
@@ -99,12 +101,14 @@ def _compute_clang_system_include_dirs():
     return clang_include_dirs[system_include_dirs_start_index:]
 
 def _carbon_cc_toolchain_config_impl(ctx):
+    llvm_bindir = "llvm/bin"
+    clang_bindir = llvm_bindir
     tools = struct(
         carbon_busybox = tool(path = "carbon-busybox"),
-        clang = tool(path = "llvm/bin/clang"),
-        clangpp = tool(path = "llvm/bin/clang++"),
-        llvm_ar = tool(path = "llvm/bin/llvm-ar"),
-        llvm_strip = tool(path = "llvm/bin/llvm-strip"),
+        clang = tool(path = clang_bindir + "/clang"),
+        clangpp = tool(path = clang_bindir + "/clang++"),
+        llvm_ar = tool(path = llvm_bindir + "/llvm-ar"),
+        llvm_strip = tool(path = llvm_bindir + "/llvm-strip"),
     )
     if ctx.attr.bins:
         carbon_busybox = None
@@ -123,6 +127,10 @@ def _carbon_cc_toolchain_config_impl(ctx):
                 llvm_ar = f
             elif f.basename == "llvm-strip":
                 llvm_strip = f
+        if not all([carbon_busybox, clang, clangpp, llvm_ar, llvm_strip]):
+            fail("Missing required tool in bins: {0}".format(ctx.attr.bins))
+        llvm_bindir = llvm_ar.dirname
+        clang_bindir = clang.dirname
         tools = struct(
             carbon_busybox = tool(tool = carbon_busybox),
             clang = tool(tool = clang),
@@ -174,7 +182,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
             "runtimes/libunwind/include",
             "runtimes/libcxx/include",
             "runtimes/libcxxabi/include",
-            clang_resource_dir + "/include",
+            "{}/include".format(clang_resource_dir),
             "runtimes/clang_resource_dir/include",
         ] + _compute_clang_system_include_dirs() + sysroot_include_search,
         builtin_sysroot = builtin_sysroot,
@@ -186,6 +194,10 @@ def _carbon_cc_toolchain_config_impl(ctx):
         # This is used to expose a "flag" that `config_setting` rules can use to
         # determine if the compiler is Clang.
         compiler = "clang",
+
+        # Pass in our tool paths to expose Make variables like $(NM) and
+        # $(OBJCOPY).
+        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir),
     )
 
 carbon_cc_toolchain_config = rule(
@@ -200,181 +212,86 @@ carbon_cc_toolchain_config = rule(
     provides = [CcToolchainConfigInfo],
 )
 
-def _set_platform_transition_impl(settings, attr):
-    original_platforms = settings["//:original_platforms"]
-
-    # If the requested platform is the special value of the setting where we
-    # store the original platforms on an initial transition, set the platform to
-    # the saved list and clear it. Otherwise, we will set the platform to the
-    # requested one.
-    if not attr.platform:
-        return {
-            "//:original_platforms": [],
-            "//command_line_option:platforms": original_platforms,
-        }
-
-    if original_platforms:
-        # If there is already a saved original platforms list, preserve it.
-        original_platforms = [str(label) for label in original_platforms]
-    else:
-        # If there is no saved original platforms list, save the current one.
-        current_platforms = settings["//command_line_option:platforms"]
-        original_platforms = [str(label) for label in current_platforms]
-
+def _runtimes_transition_impl(_, attr):
     return {
-        "//:original_platforms": original_platforms,
-        "//command_line_option:platforms": [str(attr.platform)],
+        "//:runtimes_build": True,
     }
 
-set_platform_transition = transition(
-    inputs = [
-        "//command_line_option:platforms",
-        "//:original_platforms",
-    ],
+_runtimes_transition = transition(
+    inputs = [],
     outputs = [
-        "//command_line_option:platforms",
-        "//:original_platforms",
+        "//:runtimes_build",
     ],
-    implementation = _set_platform_transition_impl,
+    implementation = _runtimes_transition_impl,
 )
 
-def _set_platform_filegroup_impl(ctx):
+def _filegroup_with_runtimes_build_impl(ctx):
     return [DefaultInfo(files = depset(ctx.files.srcs))]
 
-set_platform_filegroup = rule(
-    implementation = _set_platform_filegroup_impl,
+filegroup_with_runtimes_build = rule(
+    implementation = _filegroup_with_runtimes_build_impl,
     attrs = {
-        # The platform to use when building the runtimes.
-        "platform": attr.label(mandatory = False),
-
-        # Mark that our dependencies are built through a transition.
-        "srcs": attr.label_list(mandatory = True, cfg = set_platform_transition),
-
-        # Enable transitions in this rule.
+        "srcs": attr.label_list(mandatory = True, cfg = _runtimes_transition),
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
     },
+    doc = "A filegroup whose sources are built with or without runtimes building enabled.",
 )
 
-def carbon_cc_toolchain_suite(
+def carbon_cc_toolchain(
         name,
-        all_hdrs,
-        base_files,
-        clang_hdrs,
         platforms,
-        runtimes,
-        build_stage = None,
-        base_stage = None,
+        base_files_target,
+        runtimes_compile_files_target,
+        compile_files_target,
+        runtimes_target,
+        extra_toolchain_settings = [],
         tags = []):
-    """Create a toolchain suite that uses the local Clang/LLVM install.
+    """Create a Carbon `cc_toolchain` for the current target.
+
+    This macro constructs the configuration and toolchain rules for a baseline
+    Carbon toolchain, including building its own runtimes on demand.
 
     Args:
-        name:
-            The name of the toolchain suite to produce, used as the base of the
-            names of each component of the toolchain suite.
-        all_hdrs: A list of header files to include in the toolchain.
-        base_files: A list of files to include in the toolchain.
-        build_stage: The stage to use for the build files.
-        base_stage: The stage to use for the base files.
-        clang_hdrs: A list of header files to include in the toolchain.
-        platforms: An array of (os, cpu) pairs to support in the toolchain.
-        runtimes: A list of runtimes to include in the toolchain.
+        name: The base name for the toolchain targets.
+        platforms: Supported platforms.
+        base_files_target: Target for base files.
+        runtimes_compile_files_target: Target for runtimes compile files.
+        compile_files_target: Target for compile files.
+        runtimes_target: Target for runtimes.
+        extra_toolchain_settings: Extra toolchain settings.
         tags: Tags to apply to the toolchain.
     """
-
-    def _platform_name(os, cpu, name_suffix = ""):
-        return "{}{}_{}_{}_platform".format(name, name_suffix, os, cpu)
-
-    # Define platforms for each supported OS/CPU pair.
-    for os, cpus in platforms.items():
-        for cpu in cpus:
-            constraint_values = [
-                "@platforms//os:" + os,
-                "@platforms//cpu:" + cpu,
-            ]
-            if base_stage:
-                native.platform(
-                    name = _platform_name(os, cpu, "_base"),
-                    constraint_values = constraint_values + [base_stage],
-                )
-            if build_stage:
-                constraint_values.append(build_stage)
-            native.platform(
-                name = _platform_name(os, cpu),
-                constraint_values = constraint_values,
-            )
-            native.platform(
-                name = _platform_name(os, cpu, "_runtimes"),
-                constraint_values = constraint_values + [":is_runtimes_build"],
-            )
-
-    base_platform_select = None
-    if base_stage:
-        base_platform_select = select({
-            ":is_{}_{}".format(os, cpu): ":" + _platform_name(os, cpu, "_base")
-            for os, cpus in platforms.items()
-            for cpu in cpus
-        })
-
-    runtimes_platform_select = select({
-        ":is_{}_{}".format(os, cpu): ":" + _platform_name(os, cpu, "_runtimes")
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    })
-
-    set_platform_filegroup(
-        name = name + "_base_files",
-        srcs = base_files,
-        platform = base_platform_select,
-        tags = tags,
-    )
-
-    set_platform_filegroup(
-        name = name + "_runtimes_compile_files",
-        srcs = [":" + name + "_base_files"] + clang_hdrs,
-        platform = base_platform_select,
-        tags = tags,
-    )
-
-    set_platform_filegroup(
-        name = name + "_compile_files",
-        srcs = [":" + name + "_base_files"] + all_hdrs,
-        platform = base_platform_select,
-        tags = tags,
-    )
-
     carbon_cc_toolchain_config(
-        name = name + "_runtimes_toolchain_config",
-        identifier_prefix = name + "_runtimes",
+        name = "{}_runtimes_toolchain_config".format(name),
+        identifier_prefix = "{}_runtimes".format(name),
         target_cpu = select({
-            # Note that we need to select on both OS and CPU so that we end up
-            # spelling the CPU in the correct OS-specific ways.
             ":is_{}_{}".format(os, cpu): cpu
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
         target_os = select({
-            "@platforms//os:" + os: os
+            "@platforms//os:{}".format(os): os
             for os in platforms.keys()
         }),
-        bins = ":" + name + "_base_files",
+        bins = base_files_target,
         tags = tags,
     )
 
     cc_toolchain(
-        name = name + "_runtimes_cc_toolchain",
-        all_files = ":" + name + "_runtimes_compile_files",
-        ar_files = ":" + name + "_base_files",
-        as_files = ":" + name + "_runtimes_compile_files",
-        compiler_files = ":" + name + "_runtimes_compile_files",
-        dwp_files = ":" + name + "_base_files",
-        linker_files = ":" + name + "_base_files",
-        objcopy_files = ":" + name + "_base_files",
-        strip_files = ":" + name + "_base_files",
-        toolchain_config = ":" + name + "_runtimes_toolchain_config",
+        name = "{}_runtimes_cc_toolchain".format(name),
+        all_files = runtimes_compile_files_target,
+        ar_files = base_files_target,
+        as_files = runtimes_compile_files_target,
+        compiler_files = runtimes_compile_files_target,
+        dwp_files = base_files_target,
+        linker_files = base_files_target,
+        objcopy_files = base_files_target,
+        strip_files = base_files_target,
+        toolchain_config = ":{}_runtimes_toolchain_config".format(name),
         toolchain_identifier = select({
-            ":is_{}_{}".format(os, cpu): _platform_name(os, cpu, "_runtimes")
+            ":is_{}_{}".format(os, cpu): "{}_{}_{}_runtimes_toolchain".format(name, os, cpu)
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
@@ -382,70 +299,62 @@ def carbon_cc_toolchain_suite(
     )
 
     native.toolchain(
-        name = name + "_runtimes_toolchain",
-        target_compatible_with = [":is_runtimes_build"],
-        toolchain = ":" + name + "_runtimes_cc_toolchain",
+        name = "{}_runtimes_toolchain".format(name),
+        target_settings = [":is_runtimes_build"] + extra_toolchain_settings,
+        use_target_platform_constraints = True,
+        toolchain = ":{}_runtimes_cc_toolchain".format(name),
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         tags = tags,
     )
 
-    set_platform_filegroup(
-        name = name + "_runtimes",
-        srcs = [runtimes],
-        platform = runtimes_platform_select,
-        tags = tags,
-    )
-
     carbon_cc_toolchain_config(
-        name = name + "_toolchain_config",
+        name = "{}_toolchain_config".format(name),
         identifier_prefix = name,
         target_cpu = select({
-            # Note that we need to select on both OS and CPU so that we end up
-            # spelling the CPU in the correct OS-specific ways.
             ":is_{}_{}".format(os, cpu): cpu
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
         target_os = select({
-            "@platforms//os:" + os: os
+            "@platforms//os:{}".format(os): os
             for os in platforms.keys()
         }),
-        runtimes = ":" + name + "_runtimes",
-        bins = ":" + name + "_base_files",
+        runtimes = runtimes_target,
+        bins = base_files_target,
         tags = tags,
     )
 
     native.filegroup(
-        name = name + "_linker_files",
+        name = "{}_linker_files".format(name),
         srcs = [
-            ":" + name + "_base_files",
-            ":" + name + "_runtimes",
+            base_files_target,
+            runtimes_target,
         ],
         tags = tags,
     )
 
     native.filegroup(
-        name = name + "_all_files",
+        name = "{}_all_files".format(name),
         srcs = [
-            ":" + name + "_compile_files",
-            ":" + name + "_linker_files",
+            compile_files_target,
+            ":{}_linker_files".format(name),
         ],
         tags = tags,
     )
 
     cc_toolchain(
-        name = name + "_cc_toolchain",
-        all_files = ":" + name + "_all_files",
-        ar_files = ":" + name + "_base_files",
-        as_files = ":" + name + "_compile_files",
-        compiler_files = ":" + name + "_compile_files",
-        dwp_files = ":" + name + "_linker_files",
-        linker_files = ":" + name + "_linker_files",
-        objcopy_files = ":" + name + "_base_files",
-        strip_files = ":" + name + "_base_files",
+        name = "{}_cc_toolchain".format(name),
+        all_files = ":{}_all_files".format(name),
+        ar_files = base_files_target,
+        as_files = compile_files_target,
+        compiler_files = compile_files_target,
+        dwp_files = ":{}_linker_files".format(name),
+        linker_files = ":{}_linker_files".format(name),
+        objcopy_files = base_files_target,
+        strip_files = base_files_target,
         toolchain_config = ":" + name + "_toolchain_config",
         toolchain_identifier = select({
-            ":is_{}_{}".format(os, cpu): _platform_name(os, cpu)
+            ":is_{}_{}".format(os, cpu): "{}_{}_{}_toolchain".format(name, os, cpu)
             for os, cpus in platforms.items()
             for cpu in cpus
         }),
@@ -454,7 +363,8 @@ def carbon_cc_toolchain_suite(
 
     native.toolchain(
         name = name + "_toolchain",
-        target_compatible_with = [build_stage] if build_stage else [],
+        target_settings = [":not_runtimes_build"] + extra_toolchain_settings,
+        use_target_platform_constraints = True,
         toolchain = ":" + name + "_cc_toolchain",
         toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         tags = tags,

@@ -93,7 +93,7 @@ jobs:
             test -c opt --stamp --remote_download_toplevel \
             --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
             //toolchain \
-            //toolchain/install:carbon_toolchain_tar_gz_rule \
+            //toolchain/install:carbon_toolchain_tar_gz \
             //toolchain/install:carbon_toolchain_tar_gz_test
 
       - name: Extract the release version
