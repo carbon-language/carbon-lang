@@ -151,19 +151,55 @@ auto ImportCpp(Context& context,
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static auto FindCorrespondingType(Context& context, clang::QualType type)
-    -> clang::QualType;
+static auto FindCorrespondingType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType type) -> clang::QualType;
+
+// Given a class template specialization in some C++ AST which is *not* expected
+// to be `context`, find the corresponding declaration in `context`, if there is
+// one.
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingTemplateSpecialization(
+    Context& context, SemIR::LocId loc_id,
+    const clang::ClassTemplateSpecializationDecl* source_spec,
+    clang::ClassTemplateDecl* target_template) -> clang::Decl* {
+  const auto& args = source_spec->getTemplateArgs();
+  auto loc = GetCppLocation(context, loc_id);
+  clang::TemplateArgumentListInfo arg_list(loc, loc);
+  for (unsigned i = 0; i < args.size(); ++i) {
+    const auto& arg = args[i];
+    if (arg.getKind() == clang::TemplateArgument::Type) {
+      auto type = FindCorrespondingType(context, loc_id, arg.getAsType());
+      if (type.isNull()) {
+        return nullptr;
+      }
+      arg_list.addArgument(clang::TemplateArgumentLoc(
+          clang::TemplateArgument(type),
+          context.ast_context().getTrivialTypeSourceInfo(type, loc)));
+    } else {
+      return nullptr;
+    }
+  }
+
+  clang::TemplateName template_name(target_template);
+  auto clang_type = context.clang_sema().CheckTemplateIdType(
+      clang::ElaboratedTypeKeyword::None, template_name, loc, arg_list,
+      /*Scope=*/nullptr, /*ForNestedNameSpecifier=*/false);
+  if (!clang_type.isNull()) {
+    return clang_type->getAsCXXRecordDecl();
+  }
+  return nullptr;
+}
 
 // Given a declaration in some C++ AST which is *not* expected to be `context`,
 // find the corresponding declaration in `context`, if there is one.
 // TODO: Make this non-recursive, or remove it once we support importing C++
 // ASTs for cross file imports.
 // NOLINTNEXTLINE(misc-no-recursion)
-static auto FindCorrespondingDecl(Context& context, const clang::Decl* decl)
-    -> clang::Decl* {
+static auto FindCorrespondingDecl(Context& context, SemIR::LocId loc_id,
+                                  const clang::Decl* decl) -> clang::Decl* {
   if (const auto* named_decl = dyn_cast<clang::NamedDecl>(decl)) {
     auto* parent = dyn_cast_or_null<clang::DeclContext>(FindCorrespondingDecl(
-        context, cast<clang::Decl>(named_decl->getDeclContext())));
+        context, loc_id, cast<clang::Decl>(named_decl->getDeclContext())));
     if (!parent) {
       return nullptr;
     }
@@ -182,36 +218,9 @@ static auto FindCorrespondingDecl(Context& context, const clang::Decl* decl)
               dyn_cast<clang::ClassTemplateSpecializationDecl>(named_decl)) {
         if (auto* target_template =
                 dyn_cast<clang::ClassTemplateDecl>(decls.front())) {
-          const auto& args = source_spec->getTemplateArgs();
-          clang::TemplateArgumentListInfo arg_list(named_decl->getLocation(),
-                                                   named_decl->getLocation());
-          bool ok = true;
-          for (unsigned i = 0; i < args.size(); ++i) {
-            const auto& arg = args[i];
-            if (arg.getKind() == clang::TemplateArgument::Type) {
-              auto type = FindCorrespondingType(context, arg.getAsType());
-              if (type.isNull()) {
-                ok = false;
-                break;
-              }
-              arg_list.addArgument(clang::TemplateArgumentLoc(
-                  clang::TemplateArgument(type),
-                  context.ast_context().getTrivialTypeSourceInfo(
-                      type, named_decl->getLocation())));
-            } else {
-              ok = false;
-              break;
-            }
-          }
-          if (ok) {
-            clang::TemplateName template_name(target_template);
-            auto clang_type = context.clang_sema().CheckTemplateIdType(
-                clang::ElaboratedTypeKeyword::None, template_name,
-                named_decl->getLocation(), arg_list,
-                /*Scope=*/nullptr, /*ForNestedNameSpecifier=*/false);
-            if (!clang_type.isNull()) {
-              return clang_type->getAsCXXRecordDecl();
-            }
+          if (auto* result = FindCorrespondingTemplateSpecialization(
+                  context, loc_id, source_spec, target_template)) {
+            return result;
           }
         }
       }
@@ -230,8 +239,8 @@ static auto FindCorrespondingDecl(Context& context, const clang::Decl* decl)
 // Given a type in some C++ AST which is *not* expected to be `context`,
 // find the corresponding type in `context`, if there is one.
 // NOLINTNEXTLINE(misc-no-recursion)
-static auto FindCorrespondingType(Context& context, clang::QualType type)
-    -> clang::QualType {
+static auto FindCorrespondingType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType type) -> clang::QualType {
   if (type.isNull()) {
     return clang::QualType();
   }
@@ -250,7 +259,7 @@ static auto FindCorrespondingType(Context& context, clang::QualType type)
 
   if (const auto* record = type->getAs<clang::RecordType>()) {
     const auto* decl = record->getDecl();
-    auto* corresponding_decl = FindCorrespondingDecl(context, decl);
+    auto* corresponding_decl = FindCorrespondingDecl(context, loc_id, decl);
     if (!corresponding_decl) {
       return clang::QualType();
     }
@@ -271,7 +280,7 @@ auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(clang_decl_id.has_value());
   auto key = file.clang_decls().Get(clang_decl_id).key;
   const auto* decl = key.decl;
-  auto* corresponding = FindCorrespondingDecl(context, decl);
+  auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
   if (!corresponding) {
     // TODO: This needs a proper diagnostic.
     context.TODO(
