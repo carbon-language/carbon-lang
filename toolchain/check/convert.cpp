@@ -1974,7 +1974,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       target.kind == ConversionTarget::Value) {
     auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
     SemIR::ConvertToValueAction convert_action = {
-        .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        .type_id = SemIR::InstType::TypeId,
         .inst_id = expr_id,
         .target_type_inst_id = target_type_inst_id};
     // We don't use `HandleAction` here because it would call `PerformAction`
@@ -2202,9 +2202,8 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
   }
 
   form_inst_id = HandleAction<SemIR::RefineFormAction>(
-      context, loc_id,
-      {.type_id = SemIR::FormType::TypeId, .form_id = form_inst_id},
-      SemIR::FormType::TypeInstId);
+      context, loc_id, SemIR::FormType::TypeInstId,
+      {.type_id = SemIR::InstType::TypeId, .form_id = form_inst_id});
 
   auto form_const_id = context.constant_values().Get(form_inst_id);
   if (!form_const_id.is_constant()) {

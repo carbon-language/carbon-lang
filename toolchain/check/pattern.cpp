@@ -222,19 +222,22 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::FormParamPatternAction action) -> SemIR::InstId {
-  auto form_inst = context.insts().Get(action.form_id);
+  auto form_inst = context.insts().Get(
+      context.constant_values().GetConstantInstId(action.form_id));
+  auto type_id =
+      GetPatternType(context, GetTypeComponent(context, action.form_id));
   CARBON_KIND_SWITCH(form_inst) {
     case SemIR::InitForm::Kind: {
       auto ref_param_pattern_id = AddInst(
           context,
           SemIR::LocIdAndInst::RuntimeVerified(
               context.sem_ir(), loc_id,
-              SemIR::RefParamPattern{.type_id = action.type_id,
+              SemIR::RefParamPattern{.type_id = type_id,
                                      .pretty_name_id = action.pretty_name_id}));
       return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
                                   context.sem_ir(), loc_id,
                                   SemIR::VarPattern{
-                                      .type_id = action.type_id,
+                                      .type_id = type_id,
                                       .subpattern_id = ref_param_pattern_id}));
     }
     case SemIR::RefForm::Kind: {
@@ -242,7 +245,7 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
           context,
           SemIR::LocIdAndInst::RuntimeVerified(
               context.sem_ir(), loc_id,
-              SemIR::RefParamPattern{.type_id = action.type_id,
+              SemIR::RefParamPattern{.type_id = type_id,
                                      .pretty_name_id = action.pretty_name_id}));
     }
     case SemIR::ValueForm::Kind: {
@@ -250,7 +253,7 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                      SemIR::LocIdAndInst::RuntimeVerified(
                          context.sem_ir(), loc_id,
                          SemIR::ValueParamPattern{
-                             .type_id = action.type_id,
+                             .type_id = type_id,
                              .pretty_name_id = action.pretty_name_id}));
     }
     case SemIR::ErrorInst::Kind: {
@@ -261,24 +264,26 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// TODO: can we share code with FormParamPatternAction?
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::OutFormParamPatternAction action) -> SemIR::InstId {
   auto form_inst = context.insts().Get(
       context.constant_values().GetConstantInstId(action.form_id));
+  auto type_id =
+      GetPatternType(context, GetTypeComponent(context, action.form_id));
   CARBON_KIND_SWITCH(form_inst) {
     case SemIR::ValueForm::Kind: {
       return AddInst<SemIR::ValueReturnPattern>(
-          context, SemIR::LocId(action.form_id), {.type_id = action.type_id});
+          context, SemIR::LocId(action.form_id), {.type_id = type_id});
     }
     case SemIR::RefForm::Kind: {
       return AddInst<SemIR::RefReturnPattern>(
-          context, SemIR::LocId(action.form_id), {.type_id = action.type_id});
+          context, SemIR::LocId(action.form_id), {.type_id = type_id});
     }
     case CARBON_KIND(SemIR::InitForm _): {
       return AddInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(action.form_id),
-          {.type_id = action.type_id,
-           .pretty_name_id = SemIR::NameId::ReturnSlot});
+          {.type_id = type_id, .pretty_name_id = SemIR::NameId::ReturnSlot});
     }
     case SemIR::ErrorInst::Kind: {
       return SemIR::ErrorInst::InstId;

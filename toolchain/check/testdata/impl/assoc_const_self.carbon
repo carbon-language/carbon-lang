@@ -577,12 +577,12 @@ fn CallF() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.609: type = generic_interface_type @I [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.609 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.68b: type = facet_type <@I, @I(%N)> [symbolic]
 // CHECK:STDOUT:   %Self.cad: %I.type.68b = symbolic_binding Self, 1 [symbolic]

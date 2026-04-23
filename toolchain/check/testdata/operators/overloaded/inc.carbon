@@ -33,10 +33,10 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness @C.as.Inc.impl.%Inc.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
 // CHECK:STDOUT:   %Inc.WithSelf.Op.type.700: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%Inc.facet) [concrete]

@@ -772,7 +772,7 @@ struct FloatValue {
 };
 
 // An action that creates an input parameter pattern with the form specified by
-// `form_id`.
+// `form_id`. See `AnyFormParamAction` for member documentation.
 struct FormParamPatternAction {
   static constexpr auto Kind =
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
@@ -781,10 +781,7 @@ struct FormParamPatternAction {
            .constant_kind = InstConstantKind::ConstantInstAction,
            .is_lowered = false});
 
-  // Always InstType
   TypeId type_id;
-
-  // The form of the parameter pattern.
   MetaInstId form_id;
 
   // A name to associate with this Param in pretty-printed IR. This is not
@@ -1118,7 +1115,12 @@ struct InPlaceInit {
 };
 
 // Used as the type of template actions that produce instructions.
-using InstType = SingletonTypeInst<InstKind::InstType, "<instruction>">;
+struct InstType
+    : public SingletonTypeInst<InstKind::InstType, "<instruction>"> {
+  // `InstType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // A value of type `InstType` that refers to an instruction. This is used to
 // represent an instruction as a value for use as a result of a template action.
@@ -1332,7 +1334,7 @@ struct Namespace {
 using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 
 // An action that creates an output parameter pattern with the form specified by
-// `form_id`.
+// `form_id`. See `AnyFormParamAction` for member documentation.
 struct OutFormParamPatternAction {
   static constexpr auto Kind =
       // TODO: Use Parse::AnyReturnDeclId once we support passing node
@@ -1344,7 +1346,6 @@ struct OutFormParamPatternAction {
                .constant_kind = InstConstantKind::ConstantInstAction,
                .is_lowered = false});
 
-  // Always InstType
   TypeId type_id;
   MetaInstId form_id;
 };

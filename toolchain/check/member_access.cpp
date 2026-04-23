@@ -464,14 +464,14 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   // things.
   if (required) {
     return HandleAction<SemIR::AccessMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   } else {
     return HandleAction<SemIR::AccessOptionalMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   }

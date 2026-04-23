@@ -762,7 +762,8 @@ auto MatchContext::DoPreWork(State state, SemIR::SpliceInst splice,
       CARBON_CHECK(!scrutinee_id.has_value());
       auto result_id = HandleAction<SemIR::CalleePatternMatchAction>(
           context_, SemIR::LocId(entry.pattern_id),
-          {.type_id = splice.type_id,
+          context_.types().GetTypeInstId(splice.type_id),
+          {.type_id = SemIR::InstType::TypeId,
            .pattern_id = entry.pattern_id,
            .parent_index = callee_state->index.Allocate()});
       callee_state->call_param_patterns.push_back(entry.pattern_id);

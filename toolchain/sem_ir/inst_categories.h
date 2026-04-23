@@ -205,21 +205,27 @@ struct AnyBranch {
 };
 
 // clang-format off
-#define FormParamAction_CARBON_INST_CATEGORY(X, Sep) \
+#define AnyFormParamAction_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::FormParamPatternAction) Sep() \
   X(::Carbon::SemIR::OutFormParamPatternAction)
 // clang-format on
 
-#define FormParamAction_CARBON_KIND_ANY_EXPAND \
-  CARBON_INST_CATEGORY_ANY_EXPAND(FormParamAction)
+#define AnyFormParamAction_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyFormParamAction)
 
 // Common representation for various form-parameterized actions.
-struct FormParamAction {
-  using CategoryInfo = CARBON_INST_CATEGORY_INFO(FormParamAction);
+struct AnyFormParamAction {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyFormParamAction);
 
   InstKind kind;
+
+  // Always InstType.
   TypeId type_id;
+
+  // The form of the parameter. Note that this is not the form of the pattern;
+  // in particular, its type component is not a pattern type.
   MetaInstId form_id;
+
   AnyRawId arg1;
 };
 

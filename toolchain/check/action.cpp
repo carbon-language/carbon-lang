@@ -47,8 +47,8 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
       for (auto [i, element_id] : llvm::enumerate(
                context.inst_blocks().Get(tuple_value.elements_id))) {
         new_inst_block.Set(i, HandleAction<SemIR::RefineFormAction>(
-                                  context, loc_id,
-                                  {.type_id = SemIR::FormType::TypeId,
+                                  context, loc_id, SemIR::FormType::TypeInstId,
+                                  {.type_id = SemIR::InstType::TypeId,
                                    .form_id = element_id}));
       }
       auto new_inst_block_id = new_inst_block.GetCanonical();
@@ -164,7 +164,7 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
   // A form-parameterized action is performable if we can see at least the top
   // level of its form's structure (i.e. it is not an action or a splice).
   if (auto form_parameterized_action =
-          action_inst.TryAs<SemIR::FormParamAction>()) {
+          action_inst.TryAs<SemIR::AnyFormParamAction>()) {
     auto form_const_id =
         context.constant_values().Get(form_parameterized_action->form_id);
     auto form_id = context.constant_values().GetInstIdIfValid(form_const_id);

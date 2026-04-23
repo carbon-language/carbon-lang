@@ -300,12 +300,15 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
+            auto pattern_type_inst_id =
+                context.types().GetTypeInstId(pattern_type_id);
             param_pattern_id = HandleAction<SemIR::FormParamPatternAction>(
                 context,
                 context.parse_tree()
                     .As<Parse::NodeIdForKind<
                         Parse::NodeKind::FormBindingPattern>>(node_id),
-                {.type_id = pattern_type_id,
+                pattern_type_inst_id,
+                {.type_id = SemIR::InstType::TypeId,
                  .form_id = form_id,
                  .pretty_name_id = name_id});
           } else {
