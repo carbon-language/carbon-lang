@@ -210,7 +210,7 @@ fn G() {
 //   F(C);
 }
 
-// --- fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon
+// --- todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T:! type) {
@@ -222,13 +222,6 @@ constraint N {
 }
 
 class C;
-// CHECK:STDERR: fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl C as N where .I1 = C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let I1:! type;
-// CHECK:STDERR:       ^~~~~~~~~
-// CHECK:STDERR:
 impl C as N where .I1 = C {}
 
 fn F(_:! I(.Self) where .I1 = .Self) {}
