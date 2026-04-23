@@ -156,14 +156,59 @@ fn G() {
 // CHECK:STDOUT: %"class.Carbon::B" = type { %"class.Carbon::A", i32 }
 // CHECK:STDOUT: %"class.Carbon::C" = type { %"class.Carbon::A", i32 }
 // CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN6Carbon1AD2Ev = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $__clang_call_terminate = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN6Carbon1BD2Ev = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN6Carbon1CD2Ev = comdat any
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z1fv() #0 personality ptr @__gxx_personality_v0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::A", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %a)
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #3
+// CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
+// CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #5
+// CHECK:STDOUT:   invoke void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %a)
+// CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: lpad:                                             ; preds = %entry
+// CHECK:STDOUT:   %0 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           cleanup
+// CHECK:STDOUT:   %1 = extractvalue { ptr, i32 } %0, 0
+// CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
+// CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   invoke void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a)
+// CHECK:STDOUT:           to label %invoke.cont1 unwind label %terminate.lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont1:                                     ; preds = %lpad
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
+// CHECK:STDOUT:   br label %eh.resume
+// CHECK:STDOUT:
+// CHECK:STDOUT: eh.resume:                                        ; preds = %invoke.cont1
+// CHECK:STDOUT:   %exn = load ptr, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %sel = load i32, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %lpad.val = insertvalue { ptr, i32 } poison, ptr %exn, 0
+// CHECK:STDOUT:   %lpad.val2 = insertvalue { ptr, i32 } %lpad.val, i32 %sel, 1
+// CHECK:STDOUT:   resume { ptr, i32 } %lpad.val2
+// CHECK:STDOUT:
+// CHECK:STDOUT: terminate.lpad:                                   ; preds = %lpad
+// CHECK:STDOUT:   %3 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           catch ptr null
+// CHECK:STDOUT:   %4 = extractvalue { ptr, i32 } %3, 0
+// CHECK:STDOUT:   call void @__clang_call_terminate(ptr %4) #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT:   uselistorder ptr %a, { 0, 2, 1, 3, 4, 5 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -178,17 +223,77 @@ fn G() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare i32 @__gxx_personality_v0(...)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   call void @_Cdestroy_thunk.A.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: noinline noreturn nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr hidden void @__clang_call_terminate(ptr noundef %0) #4 comdat {
+// CHECK:STDOUT:   %2 = call ptr @__cxa_begin_catch(ptr %0) #5
+// CHECK:STDOUT:   call void @_ZSt9terminatev() #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare ptr @__cxa_begin_catch(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZSt9terminatev()
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z1gv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z1gv() #0 personality ptr @__gxx_personality_v0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b = alloca %"class.Carbon::B", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL5CallBEPNS_1BE(ptr noundef %b)
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #3
+// CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
+// CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #5
+// CHECK:STDOUT:   invoke void @_ZN6CarbonL5CallBEPNS_1BE(ptr noundef %b)
+// CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
+// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #5
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: lpad:                                             ; preds = %entry
+// CHECK:STDOUT:   %0 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           cleanup
+// CHECK:STDOUT:   %1 = extractvalue { ptr, i32 } %0, 0
+// CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
+// CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   invoke void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b)
+// CHECK:STDOUT:           to label %invoke.cont1 unwind label %terminate.lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont1:                                     ; preds = %lpad
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #5
+// CHECK:STDOUT:   br label %eh.resume
+// CHECK:STDOUT:
+// CHECK:STDOUT: eh.resume:                                        ; preds = %invoke.cont1
+// CHECK:STDOUT:   %exn = load ptr, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %sel = load i32, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %lpad.val = insertvalue { ptr, i32 } poison, ptr %exn, 0
+// CHECK:STDOUT:   %lpad.val2 = insertvalue { ptr, i32 } %lpad.val, i32 %sel, 1
+// CHECK:STDOUT:   resume { ptr, i32 } %lpad.val2
+// CHECK:STDOUT:
+// CHECK:STDOUT: terminate.lpad:                                   ; preds = %lpad
+// CHECK:STDOUT:   %3 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           catch ptr null
+// CHECK:STDOUT:   %4 = extractvalue { ptr, i32 } %3, 0
+// CHECK:STDOUT:   call void @__clang_call_terminate(ptr %4) #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT:   uselistorder ptr %b, { 0, 2, 1, 3, 4, 5 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
@@ -200,15 +305,100 @@ fn G() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 personality ptr @__gxx_personality_v0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
+// CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !14
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   invoke void @_Cdestroy_thunk.B.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
+// CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::B", ptr %this1, i32 0, i32 0
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: lpad:                                             ; preds = %entry
+// CHECK:STDOUT:   %0 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           cleanup
+// CHECK:STDOUT:   %1 = extractvalue { ptr, i32 } %0, 0
+// CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
+// CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %a2 = getelementptr inbounds nuw %"class.Carbon::B", ptr %this1, i32 0, i32 0
+// CHECK:STDOUT:   invoke void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a2)
+// CHECK:STDOUT:           to label %invoke.cont3 unwind label %terminate.lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont3:                                     ; preds = %lpad
+// CHECK:STDOUT:   br label %eh.resume
+// CHECK:STDOUT:
+// CHECK:STDOUT: eh.resume:                                        ; preds = %invoke.cont3
+// CHECK:STDOUT:   %exn = load ptr, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %sel = load i32, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %lpad.val = insertvalue { ptr, i32 } poison, ptr %exn, 0
+// CHECK:STDOUT:   %lpad.val4 = insertvalue { ptr, i32 } %lpad.val, i32 %sel, 1
+// CHECK:STDOUT:   resume { ptr, i32 } %lpad.val4
+// CHECK:STDOUT:
+// CHECK:STDOUT: terminate.lpad:                                   ; preds = %lpad
+// CHECK:STDOUT:   %3 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           catch ptr null
+// CHECK:STDOUT:   %4 = extractvalue { ptr, i32 } %3, 0
+// CHECK:STDOUT:   call void @__clang_call_terminate(ptr %4) #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z1hv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z1hv() #0 personality ptr @__gxx_personality_v0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c = alloca %"class.Carbon::C", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #3
-// CHECK:STDOUT:   call void @_ZN6CarbonL5CallCEPNS_1CE(ptr noundef %c)
-// CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %c)
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #3
+// CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
+// CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #5
+// CHECK:STDOUT:   invoke void @_ZN6CarbonL5CallCEPNS_1CE(ptr noundef %c)
+// CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
+// CHECK:STDOUT:   invoke void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %c)
+// CHECK:STDOUT:           to label %invoke.cont1 unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont1:                                     ; preds = %invoke.cont
+// CHECK:STDOUT:   call void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #5
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: lpad:                                             ; preds = %invoke.cont, %entry
+// CHECK:STDOUT:   %0 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           cleanup
+// CHECK:STDOUT:   %1 = extractvalue { ptr, i32 } %0, 0
+// CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
+// CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   invoke void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c)
+// CHECK:STDOUT:           to label %invoke.cont2 unwind label %terminate.lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont2:                                     ; preds = %lpad
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #5
+// CHECK:STDOUT:   br label %eh.resume
+// CHECK:STDOUT:
+// CHECK:STDOUT: eh.resume:                                        ; preds = %invoke.cont2
+// CHECK:STDOUT:   %exn = load ptr, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %sel = load i32, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %lpad.val = insertvalue { ptr, i32 } poison, ptr %exn, 0
+// CHECK:STDOUT:   %lpad.val3 = insertvalue { ptr, i32 } %lpad.val, i32 %sel, 1
+// CHECK:STDOUT:   resume { ptr, i32 } %lpad.val3
+// CHECK:STDOUT:
+// CHECK:STDOUT: terminate.lpad:                                   ; preds = %lpad
+// CHECK:STDOUT:   %3 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           catch ptr null
+// CHECK:STDOUT:   %4 = extractvalue { ptr, i32 } %3, 0
+// CHECK:STDOUT:   call void @__clang_call_terminate(ptr %4) #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT:   uselistorder ptr %c, { 0, 2, 1, 3, 4, 5, 6 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
@@ -220,40 +410,140 @@ fn G() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 personality ptr @__gxx_personality_v0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
+// CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   invoke void @_Cdestroy_thunk.C.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
+// CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: lpad:                                             ; preds = %entry
+// CHECK:STDOUT:   %0 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           cleanup
+// CHECK:STDOUT:   %1 = extractvalue { ptr, i32 } %0, 0
+// CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
+// CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   invoke void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1)
+// CHECK:STDOUT:           to label %invoke.cont2 unwind label %terminate.lpad
+// CHECK:STDOUT:
+// CHECK:STDOUT: invoke.cont2:                                     ; preds = %lpad
+// CHECK:STDOUT:   br label %eh.resume
+// CHECK:STDOUT:
+// CHECK:STDOUT: eh.resume:                                        ; preds = %invoke.cont2
+// CHECK:STDOUT:   %exn = load ptr, ptr %exn.slot, align 8
+// CHECK:STDOUT:   %sel = load i32, ptr %ehselector.slot, align 4
+// CHECK:STDOUT:   %lpad.val = insertvalue { ptr, i32 } poison, ptr %exn, 0
+// CHECK:STDOUT:   %lpad.val3 = insertvalue { ptr, i32 } %lpad.val, i32 %sel, 1
+// CHECK:STDOUT:   resume { ptr, i32 } %lpad.val3
+// CHECK:STDOUT:
+// CHECK:STDOUT: terminate.lpad:                                   ; preds = %lpad
+// CHECK:STDOUT:   %3 = landingpad { ptr, i32 }
+// CHECK:STDOUT:           catch ptr null
+// CHECK:STDOUT:   %4 = extractvalue { ptr, i32 } %3, 0
+// CHECK:STDOUT:   call void @__clang_call_terminate(ptr %4) #6
+// CHECK:STDOUT:   unreachable
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CCallA.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CCallB.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CCallC.Main(ptr)
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Cdestroy_thunk.A.Main(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallA__carbon_thunk.Main(ptr %_) #3 !dbg !18 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #5 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21 = load ptr, ptr %_, align 8, !dbg !24
-// CHECK:STDOUT:   call void @_CCallA.Main(ptr %.loc21), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallB__carbon_thunk.Main(ptr %_) #3 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ce21b459230035a4:core.Destroy.Core"(ptr %self) #5 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22 = load ptr, ptr %_, align 8, !dbg !28
-// CHECK:STDOUT:   call void @_CCallB.Main(ptr %.loc22), !dbg !28
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallC__carbon_thunk.Main(ptr %_) #3 !dbg !29 {
+// CHECK:STDOUT: define weak_odr void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self) #5 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23 = load ptr, ptr %_, align 8, !dbg !32
-// CHECK:STDOUT:   call void @_CCallC.Main(ptr %.loc23), !dbg !32
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallA__carbon_thunk.Main(ptr %_) #5 !dbg !36 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc21 = load ptr, ptr %_, align 8, !dbg !39
+// CHECK:STDOUT:   call void @_CCallA.Main(ptr %.loc21), !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Cdestroy_thunk.B.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.1a8ac7d7e1ca560e:core.Destroy.Core"(ptr %self) #5 !dbg !40 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.301c2cde953858ec:core.Destroy.Core"(ptr %self) #5 !dbg !44 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallB__carbon_thunk.Main(ptr %_) #5 !dbg !48 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22 = load ptr, ptr %_, align 8, !dbg !51
+// CHECK:STDOUT:   call void @_CCallB.Main(ptr %.loc22), !dbg !51
+// CHECK:STDOUT:   ret void, !dbg !51
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Cdestroy_thunk.C.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.e9c7e36fd2e174ea:core.Destroy.Core"(ptr %self) #5 !dbg !52 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !55
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #5 !dbg !56 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !59
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallC__carbon_thunk.Main(ptr %_) #5 !dbg !60 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc23 = load ptr, ptr %_, align 8, !dbg !63
+// CHECK:STDOUT:   call void @_CCallC.Main(ptr %.loc23), !dbg !63
+// CHECK:STDOUT:   ret void, !dbg !63
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @__gxx_personality_v0, { 0, 2, 1, 3, 4 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon1AD2Ev, { 4, 5, 3, 2, 0, 1 }
+// CHECK:STDOUT: uselistorder ptr @__clang_call_terminate, { 0, 2, 1, 3, 4 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.end.p0, { 0, 1, 2, 3, 5, 4 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { nounwind }
+// CHECK:STDOUT: attributes #3 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #4 = { noinline noreturn nounwind uwtable "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #5 = { nounwind }
+// CHECK:STDOUT: attributes #6 = { noreturn nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -277,21 +567,52 @@ fn G() {
 // CHECK:STDOUT: !15 = !{!"p1 _ZTSN6Carbon1BE", !13, i64 0}
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTSN6Carbon1CE", !13, i64 0}
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "CallA__carbon_thunk", linkageName: "_CCallA__carbon_thunk.Main", scope: null, file: !6, line: 21, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 27, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{null, !21}
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !21 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !18, type: !21)
-// CHECK:STDOUT: !24 = !DILocation(line: 21, column: 1, scope: !18)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "CallB__carbon_thunk", linkageName: "_CCallB__carbon_thunk.Main", scope: null, file: !6, line: 22, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
-// CHECK:STDOUT: !26 = !{!27}
-// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !21)
-// CHECK:STDOUT: !28 = !DILocation(line: 22, column: 1, scope: !25)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "CallC__carbon_thunk", linkageName: "_CCallC__carbon_thunk.Main", scope: null, file: !6, line: 23, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
-// CHECK:STDOUT: !30 = !{!31}
-// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !21)
-// CHECK:STDOUT: !32 = !DILocation(line: 23, column: 1, scope: !29)
+// CHECK:STDOUT: !24 = !DILocation(line: 27, column: 14, scope: !18)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ce21b459230035a4:core.Destroy.Core", scope: null, file: !6, line: 27, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !27 = !{null, !28}
+// CHECK:STDOUT: !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !29 = !{!30}
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !28)
+// CHECK:STDOUT: !31 = !DILocation(line: 27, column: 14, scope: !25)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1afa5e4ee26f3f8f:core.Destroy.Core", scope: null, file: !6, line: 27, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !28)
+// CHECK:STDOUT: !35 = !DILocation(line: 27, column: 14, scope: !32)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "CallA__carbon_thunk", linkageName: "_CCallA__carbon_thunk.Main", scope: null, file: !6, line: 21, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !28)
+// CHECK:STDOUT: !39 = !DILocation(line: 21, column: 1, scope: !36)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1a8ac7d7e1ca560e:core.Destroy.Core", scope: null, file: !6, line: 32, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
+// CHECK:STDOUT: !41 = !{!42}
+// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !28)
+// CHECK:STDOUT: !43 = !DILocation(line: 32, column: 14, scope: !40)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Op", linkageName: "_COp.301c2cde953858ec:core.Destroy.Core", scope: null, file: !6, line: 32, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !45)
+// CHECK:STDOUT: !45 = !{!46}
+// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !28)
+// CHECK:STDOUT: !47 = !DILocation(line: 32, column: 14, scope: !44)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "CallB__carbon_thunk", linkageName: "_CCallB__carbon_thunk.Main", scope: null, file: !6, line: 22, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
+// CHECK:STDOUT: !49 = !{!50}
+// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !48, type: !28)
+// CHECK:STDOUT: !51 = !DILocation(line: 22, column: 1, scope: !48)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e9c7e36fd2e174ea:core.Destroy.Core", scope: null, file: !6, line: 37, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !53)
+// CHECK:STDOUT: !53 = !{!54}
+// CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !52, type: !28)
+// CHECK:STDOUT: !55 = !DILocation(line: 37, column: 14, scope: !52)
+// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !6, line: 37, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !57)
+// CHECK:STDOUT: !57 = !{!58}
+// CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !56, type: !28)
+// CHECK:STDOUT: !59 = !DILocation(line: 37, column: 14, scope: !56)
+// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "CallC__carbon_thunk", linkageName: "_CCallC__carbon_thunk.Main", scope: null, file: !6, line: 23, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !61)
+// CHECK:STDOUT: !61 = !{!62}
+// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !60, type: !28)
+// CHECK:STDOUT: !63 = !DILocation(line: 23, column: 1, scope: !60)
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -315,34 +636,36 @@ fn G() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Cdestroy_thunk.C.Main(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #1 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #1 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i32, i32 }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !22
-// CHECK:STDOUT:   %.loc19_29.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   %.loc19_29.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !23
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.loc19_3, i64 8, i1 false), !dbg !22
-// CHECK:STDOUT:   call void @_Z1FRN6Carbon1CE(ptr %c.var), !dbg !24
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #1 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_COp.fb32c4dfca65e378:core.Destroy.Core"(ptr %self) #1 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.fb32c4dfca65e378:core.Destroy.Core"(ptr %self) #1 !dbg !33 {
+// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #1 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #1 !dbg !40 {
+// CHECK:STDOUT: define void @_CG.Main() #1 !dbg !37 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %c.var = alloca { i32, i32 }, align 8, !dbg !40
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !40
+// CHECK:STDOUT:   %.loc19_29.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc19_29.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.loc19_3, i64 8, i1 false), !dbg !40
+// CHECK:STDOUT:   call void @_Z1FRN6Carbon1CE(ptr %c.var), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -380,28 +703,28 @@ fn G() {
 // CHECK:STDOUT: !16 = !{!17, !8, i64 0}
 // CHECK:STDOUT: !17 = !{!"_ZTSN6Carbon1CE", !8, i64 0, !8, i64 4}
 // CHECK:STDOUT: !18 = !{!17, !8, i64 4}
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !6, line: 18, type: !20, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 13, type: !20, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !21 = !{null}
-// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 3, scope: !19)
-// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 14, scope: !19)
-// CHECK:STDOUT: !24 = !DILocation(line: 20, column: 3, scope: !19)
-// CHECK:STDOUT: !25 = !DILocation(line: 18, column: 1, scope: !19)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 19, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !21 = !{null, !22}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{!24}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 13, column: 5, scope: !19)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.fb32c4dfca65e378:core.Destroy.Core", scope: null, file: !6, line: 13, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{null, !29}
-// CHECK:STDOUT: !29 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !29 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !26, type: !29)
-// CHECK:STDOUT: !32 = !DILocation(line: 19, column: 3, scope: !26)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.fb32c4dfca65e378:core.Destroy.Core", scope: null, file: !6, line: 19, type: !34, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
-// CHECK:STDOUT: !34 = !DISubroutineType(types: !35)
-// CHECK:STDOUT: !35 = !{null, !36}
-// CHECK:STDOUT: !36 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !37 = !{!38}
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !33, type: !36)
-// CHECK:STDOUT: !39 = !DILocation(line: 19, column: 3, scope: !33)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !6, line: 19, type: !34, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
-// CHECK:STDOUT: !41 = !{!42}
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !36)
-// CHECK:STDOUT: !43 = !DILocation(line: 19, column: 3, scope: !40)
+// CHECK:STDOUT: !32 = !DILocation(line: 13, column: 5, scope: !26)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !6, line: 13, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
+// CHECK:STDOUT: !34 = !{!35}
+// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !29)
+// CHECK:STDOUT: !36 = !DILocation(line: 13, column: 5, scope: !33)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !6, line: 18, type: !38, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !39)
+// CHECK:STDOUT: !39 = !{null}
+// CHECK:STDOUT: !40 = !DILocation(line: 19, column: 3, scope: !37)
+// CHECK:STDOUT: !41 = !DILocation(line: 19, column: 14, scope: !37)
+// CHECK:STDOUT: !42 = !DILocation(line: 20, column: 3, scope: !37)
+// CHECK:STDOUT: !43 = !DILocation(line: 18, column: 1, scope: !37)
