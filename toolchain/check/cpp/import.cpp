@@ -245,12 +245,10 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
     }
 
     default: {
-      break;
+      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+      return SemIR::ErrorInst::ConstantId;
     }
   }
-
-  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
-  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
