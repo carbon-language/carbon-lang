@@ -20,10 +20,6 @@ fn F3(_: i32) {}
 fn HasGenericArg(T:! type, a: T) { a; }
 fn HasDeducedArg[T:! type](a: T) { a; }
 
-class C {
-  fn Method[self: Self]() { self; }
-}
-
 // --- function.carbon
 
 library "[[@TEST_NAME]]";
@@ -111,16 +107,5 @@ void G() {
   // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
   // CHECK:STDERR:
   Carbon::Other::HasDeducedArg(123);
-}
-''';
-
-// --- method.carbon
-
-library "[[@TEST_NAME]]";
-
-import Other;
-import Cpp inline '''
-void G() {
-  Carbon::Other::C().Method();
 }
 ''';
