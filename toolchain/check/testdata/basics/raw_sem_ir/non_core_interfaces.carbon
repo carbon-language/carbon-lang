@@ -56,7 +56,7 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:
-// CHECK:STDOUT:     interface60000000: {name: name1, parent_scope: name_scope0, require_impls_block_id: require_block_empty, core_interface: Unknown}
+// CHECK:STDOUT:     interface60000000: {name: name1, parent_scope: name_scope0, require_impls_block_id: require_block_empty}
 // CHECK:STDOUT:   associated_constants:
 // CHECK:STDOUT:     assoc_const60000000: {name: name2, parent_scope: name_scope60000002, decl_id: inst60000017, default_value_id: inst<none>}
 // CHECK:STDOUT:     assoc_const60000001: {name: name3, parent_scope: name_scope60000002, decl_id: inst6000001C, default_value_id: inst<none>}
@@ -231,8 +231,8 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     function50000001: {name: name7, parent_scope: name_scope0, call_param_patterns_id: inst_block50000028, call_params_id: inst_block50000029, body: [inst_block5000002F]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:
-// CHECK:STDOUT:     interface50000000: {name: name1, parent_scope: name_scope0, require_impls_block_id: require_block_empty, core_interface: Unknown}
-// CHECK:STDOUT:     interface50000001: {name: name6, parent_scope: name_scope50000001, require_impls_block_id: require_block_empty, core_interface: Unknown}
+// CHECK:STDOUT:     interface50000000: {name: name1, parent_scope: name_scope0, require_impls_block_id: require_block_empty}
+// CHECK:STDOUT:     interface50000001: {name: name6, parent_scope: name_scope50000001, require_impls_block_id: require_block_empty}
 // CHECK:STDOUT:   associated_constants:
 // CHECK:STDOUT:     assoc_const50000000: {name: name2, parent_scope: name_scope50000003, decl_id: inst50000019, default_value_id: inst<none>}
 // CHECK:STDOUT:     assoc_const50000001: {name: name3, parent_scope: name_scope50000003, decl_id: inst5000001E, default_value_id: inst<none>}
