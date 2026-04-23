@@ -2,9 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "int_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain_suite")
+load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain", "filegroup_with_runtimes_build")
 load("//bazel:carbon_runtimes.bzl", "carbon_runtimes_build", "carbon_runtimes_config")
 load("//bazel:make_include_copts.bzl", "make_include_copts")
 load(
@@ -54,21 +54,6 @@ config_setting(
 config_setting(
     name = "not_runtimes_build",
     flag_values = {":runtimes_build": "False"},
-)
-
-int_setting(
-    name = "bootstrap_stage",
-    build_setting_default = 1,
-)
-
-config_setting(
-    name = "is_bootstrap_stage_1",
-    flag_values = {":bootstrap_stage": "1"},
-)
-
-bool_setting(
-    name = "bootstrap_exec_config",
-    build_setting_default = False,
 )
 
 config_setting(
@@ -213,50 +198,6 @@ filegroup(
     output_group = "archive",
 )
 
-carbon_runtimes_config(
-    name = "runtimes_cfg",
-    builtins_archive = ":builtins_archive",
-    clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(llvm_version_major),
-    crt_copts = crt_copts,
-    crtbegin_src = select({
-        "@platforms//os:linux": crtbegin_src,
-        "//conditions:default": None,
-    }),
-    crtend_src = select({
-        "@platforms//os:linux": crtend_src,
-        "//conditions:default": None,
-    }),
-    darwin_os_suffix = select({
-        # TODO: Add support for tvOS, watchOS, and iOS variants with the
-        # relevant Bazel constraints.
-        ":is_macos_arm64": "osx",
-        ":is_macos_x86_64": "osx",
-        "//conditions:default": None,
-    }),
-    libcxx_archive = ":libcxx_archive",
-    libunwind_archive = ":libunwind_archive",
-    target_compatible_with = select({
-        ":is_runtimes_build": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
-    target_triple = select({
-        # TODO: Add other triples (and if needed, constraints) so that we can
-        # build the correct Clang resource-dir structure for each.
-        ":is_freebsd_x86_64": "x86_64-unknown-freebsd",
-        ":is_linux_aarch64": "aarch64-unknown-linux-gnu",
-        ":is_linux_x86_64": "x86_64-unknown-linux-gnu",
-
-        # Note that Darwin OSes are handled by the `darwin_os_suffix` attribute.
-        "//conditions:default": None,
-    }),
-)
-
-carbon_runtimes_build(
-    name = "runtimes",
-    clang_hdrs = [":clang_hdrs"],
-    config = ":runtimes_cfg",
-)
-
 filegroup(
     name = "carbon_install_digest_file",
     srcs = ["install_digest.txt"],
@@ -296,20 +237,93 @@ platforms = {
     for cpu in cpus
 ]
 
-carbon_cc_toolchain_suite(
-    name = "carbon",
-    all_hdrs = [
-        ":clang_hdrs",
-        ":libunwind_hdrs",
-        ":libcxx_hdrs",
-    ],
-    base_files = [
+filegroup(
+    name = "base_files",
+    srcs = [
+        ":carbon_busybox_file",
         ":carbon_install_digest_file",
         ":carbon_install_marker_file",
-        ":carbon_busybox_file",
         ":llvm_bins",
     ],
+)
+
+filegroup(
+    name = "runtimes_compile_files",
+    srcs = [
+        ":base_files",
+        ":clang_hdrs",
+    ],
+)
+
+filegroup(
+    name = "compile_files",
+    srcs = [
+        ":base_files",
+        ":clang_hdrs",
+        ":libcxx_hdrs",
+        ":libunwind_hdrs",
+    ],
+)
+
+carbon_runtimes_config(
+    name = "runtimes_cfg",
+    builtins_archive = ":builtins_archive",
+    clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(llvm_version_major),
+    crt_copts = crt_copts,
+    crtbegin_src = select({
+        "@platforms//os:linux": crtbegin_src,
+        "//conditions:default": None,
+    }),
+    crtend_src = select({
+        "@platforms//os:linux": crtend_src,
+        "//conditions:default": None,
+    }),
+    darwin_os_suffix = select({
+        # TODO: Add support for tvOS, watchOS, and iOS variants with the
+        # relevant Bazel constraints.
+        ":is_macos_arm64": "osx",
+        ":is_macos_x86_64": "osx",
+        "//conditions:default": None,
+    }),
+    libcxx_archive = ":libcxx_archive",
+    libunwind_archive = ":libunwind_archive",
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    target_triple = select({
+        # TODO: Add other triples (and if needed, constraints) so that we can
+        # build the correct Clang resource-dir structure for each.
+        ":is_freebsd_x86_64": "x86_64-unknown-freebsd",
+        ":is_linux_aarch64": "aarch64-unknown-linux-gnu",
+        ":is_linux_x86_64": "x86_64-unknown-linux-gnu",
+
+        # Note that Darwin OSes are handled by the `darwin_os_suffix` attribute.
+        "//conditions:default": None,
+    }),
+)
+
+carbon_runtimes_build(
+    name = "carbon_runtimes_build",
     clang_hdrs = [":clang_hdrs"],
+    config = ":runtimes_cfg",
+    tags = ["manual"],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+filegroup_with_runtimes_build(
+    name = "runtimes",
+    srcs = [":carbon_runtimes_build"],
+)
+
+carbon_cc_toolchain(
+    name = "carbon",
+    base_files_target = ":base_files",
+    compile_files_target = ":compile_files",
     platforms = platforms,
-    runtimes_cfg = ":runtimes_cfg",
+    runtimes_compile_files_target = ":runtimes_compile_files",
+    runtimes_target = ":runtimes",
 )

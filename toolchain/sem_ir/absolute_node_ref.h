@@ -11,8 +11,9 @@
 
 namespace Carbon::SemIR {
 
-// A specific node location in a file. Can refer to a Clang source location
-// within imported C++ code.
+// A specific node location in a file. Usually refers to a NodeId in a Carbon
+// source file, but can also refer to a Clang source location within imported
+// C++ code.
 class AbsoluteNodeRef {
  public:
   // A specific node location in a file.

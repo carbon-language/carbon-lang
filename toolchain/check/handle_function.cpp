@@ -61,8 +61,8 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     }
   }();
   context.PushReturnForm(form_expr);
-  auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
-  context.node_stack().Push(node_id, return_patterns_id);
+  context.node_stack().Push(node_id,
+                            AddReturnPattern(context, node_id, form_expr));
   return true;
 }
 
@@ -173,7 +173,7 @@ static auto MergeFunctionRedecl(Context& context,
     prev_function.call_params_id = new_function.call_params_id;
     prev_function.return_type_inst_id = new_function.return_type_inst_id;
     prev_function.return_form_inst_id = new_function.return_form_inst_id;
-    prev_function.return_patterns_id = new_function.return_patterns_id;
+    prev_function.return_pattern_id = new_function.return_pattern_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
@@ -500,20 +500,20 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_patterns_id = SemIR::InstBlockId::None;
+  auto return_pattern_id = SemIR::InstId::None;
   auto return_type_inst_id = SemIR::TypeInstId::None;
   auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_patterns_id] =
+  if (auto [return_node, maybe_return_pattern_id] =
           context.node_stack()
               .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_patterns_id) {
-    return_patterns_id = *maybe_return_patterns_id;
+      maybe_return_pattern_id) {
+    return_pattern_id = *maybe_return_pattern_id;
     auto return_form = context.PopReturnForm();
     return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
   }
 
-  auto name = PopNameComponent(context, return_patterns_id);
+  auto name = PopNameComponent(context, return_pattern_id);
   auto name_context = context.decl_name_stack().FinishName(name);
 
   context.node_stack()
@@ -550,7 +550,7 @@ static auto BuildFunctionDecl(Context& context,
                        .call_param_ranges = name.param_ranges,
                        .return_type_inst_id = return_type_inst_id,
                        .return_form_inst_id = return_form_inst_id,
-                       .return_patterns_id = return_patterns_id,
+                       .return_pattern_id = return_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .evaluation_mode = evaluation_mode,
                        .self_param_id = self_param_id}};

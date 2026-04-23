@@ -12,6 +12,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -328,6 +329,10 @@ class TypeCompleter {
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::ImplWitnessAssociatedConstant inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::ImplWitnessAccess inst) const
       -> SemIR::CompleteTypeInfo;
 
   template <typename InstT>
@@ -826,6 +831,16 @@ auto TypeCompleter::BuildInfoForInst(
     SemIR::TypeId /*type_id*/, SemIR::ImplWitnessAssociatedConstant inst) const
     -> SemIR::CompleteTypeInfo {
   return GetNestedInfo(inst.type_id);
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::ImplWitnessAccess /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // An ImplWitnessAccess is typically symbolic. But even if the witness is
+  // replaced by a concrete one, which does not provide a value for the
+  // ImplWitnessAcess to use, then it is still a dependent value, as the actual
+  // value remains unknown.
+  return MakeDependentTypeInfo(type_id);
 }
 
 // Builds and returns the value representation for the given type. All nested
