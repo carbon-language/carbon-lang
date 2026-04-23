@@ -48,6 +48,7 @@ cc_library(
         "file_context.cpp",
         "function_context.cpp",
         "specific_coalescer.cpp",
+        "type.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -59,6 +60,7 @@ cc_library(
         "file_context.h",
         "function_context.h",
         "specific_coalescer.h",
+        "type.h",
     ],
     deps = [
         ":options",
