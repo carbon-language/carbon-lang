@@ -1294,7 +1294,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 struct ReturnInfo {
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
-  SemIR::InstBlockId return_patterns_id;
+  SemIR::InstId return_pattern_id;
 };
 
 // Returns information about the declared return type of the given function
@@ -1309,12 +1309,12 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
     // void.
     return {.return_type_inst_id = SemIR::TypeInstId::None,
             .return_form_inst_id = SemIR::InstId::None,
-            .return_patterns_id = SemIR::InstBlockId::None};
+            .return_pattern_id = SemIR::InstId::None};
   }
   if (form_inst_id == SemIR::ErrorInst::InstId) {
     return {.return_type_inst_id = SemIR::ErrorInst::TypeInstId,
             .return_form_inst_id = SemIR::ErrorInst::InstId,
-            .return_patterns_id = SemIR::InstBlockId::None};
+            .return_pattern_id = SemIR::InstId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   clang::SourceLocation return_type_loc =
@@ -1328,7 +1328,7 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   }
   SemIR::ImportIRInstId return_type_import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), return_type_loc);
-  auto return_patterns_id = SemIR::InstBlockId::Empty;
+  auto return_pattern_id = SemIR::InstId::None;
   if (auto init_form =
           context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
     auto param_pattern_id = AddInst(
@@ -1337,18 +1337,17 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
                      SemIR::OutParamPattern(
                          {.type_id = pattern_type_id,
                           .pretty_name_id = SemIR::NameId::ReturnSlot})));
-    SemIR::InstId return_slot_pattern_id =
+    return_pattern_id =
         AddInst(context,
                 SemIR::LocIdAndInst::RuntimeVerified(
                     context.sem_ir(), return_type_import_ir_inst_id,
                     SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
                                               .subpattern_id = param_pattern_id,
                                               .type_inst_id = type_inst_id})));
-    return_patterns_id = context.inst_blocks().Add({return_slot_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,
           .return_form_inst_id = form_inst_id,
-          .return_patterns_id = return_patterns_id};
+          .return_pattern_id = return_pattern_id};
 }
 
 namespace {
@@ -1360,7 +1359,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id;
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
-  SemIR::InstBlockId return_patterns_id;
+  SemIR::InstId return_pattern_id;
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
   SemIR::Function::CallParamIndexRanges param_ranges;
@@ -1392,21 +1391,20 @@ static auto CreateFunctionSignatureInsts(
     return std::nullopt;
   }
   context.full_pattern_stack().EndExplicitParamList();
-  auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
+  auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
 
-  auto match_results =
-      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_patterns_id);
+  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
+                                          param_patterns_id, return_pattern_id);
 
   return {{.implicit_param_patterns_id = implicit_param_patterns_id,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
-           .return_patterns_id = return_patterns_id,
+           .return_pattern_id = return_pattern_id,
            .call_param_patterns_id = match_results.call_param_patterns_id,
            .call_params_id = match_results.call_params_id,
            .param_ranges = match_results.param_ranges}};
@@ -1518,7 +1516,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,
-              .return_patterns_id = function_params_insts->return_patterns_id,
+              .return_pattern_id = function_params_insts->return_pattern_id,
               .virtual_modifier = virtual_modifier,
               .virtual_index = virtual_index,
               .evaluation_mode = evaluation_mode,

@@ -32,42 +32,52 @@ auto FindSelfPattern(Context& context,
   });
 }
 
-auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
-                       Context::FormExpr form_expr) -> SemIR::InstBlockId {
-  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
+auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
+                      Context::FormExpr form_expr) -> SemIR::InstId {
+  auto result_id = SemIR::InstId::None;
+  auto result_type_id = SemIR::TypeId::None;
   auto form_inst = context.insts().Get(
       context.constant_values().GetConstantInstId(form_expr.form_inst_id));
   CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind:
+    case SemIR::RefForm::Kind: {
+      result_type_id = GetPatternType(context, form_expr.type_component_id);
+      result_id = AddInst<SemIR::RefReturnPattern>(context, loc_id,
+                                                   {.type_id = result_type_id});
+      break;
+    }
     case SemIR::ValueForm::Kind: {
+      result_type_id = GetPatternType(context, form_expr.type_component_id);
+      result_id = AddInst<SemIR::ValueReturnPattern>(
+          context, loc_id, {.type_id = result_type_id});
       break;
     }
     case CARBON_KIND(SemIR::InitForm _): {
-      auto pattern_type_id =
-          GetPatternType(context, form_expr.type_component_id);
-      auto out_param_id = AddInst<SemIR::OutParamPattern>(
+      result_type_id = GetPatternType(context, form_expr.type_component_id);
+      result_id = AddInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
+          {.type_id = result_type_id,
            .pretty_name_id = SemIR::NameId::ReturnSlot});
-      return_patterns.push_back(AddInst<SemIR::ReturnSlotPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
-           .subpattern_id = out_param_id,
-           .type_inst_id = form_expr.type_component_inst_id}));
-      break;
-    }
-    case SemIR::ErrorInst::Kind: {
       break;
     }
     case SemIR::SymbolicBinding::Kind:
       CARBON_CHECK(
           context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
       context.TODO(loc_id, "Support symbolic return forms");
+      result_type_id = SemIR::ErrorInst::TypeId;
+      result_id = SemIR::ErrorInst::InstId;
+      break;
+    case SemIR::ErrorInst::Kind:
+      result_type_id = SemIR::ErrorInst::TypeId;
+      result_id = SemIR::ErrorInst::InstId;
       break;
     default:
       CARBON_FATAL("unexpected inst kind: {0}", form_inst);
   }
-  return context.inst_blocks().AddCanonical(return_patterns);
+  return AddInst<SemIR::ReturnSlotPattern>(
+      context, SemIR::LocId(form_expr.form_inst_id),
+      {.type_id = result_type_id,
+       .subpattern_id = result_id,
+       .type_inst_id = form_expr.type_component_inst_id});
 }
 
 auto IsValidBuiltinDeclaration(Context& context,
@@ -108,7 +118,7 @@ struct FunctionSignatureInsts {
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
   SemIR::InstId return_form_inst_id = SemIR::InstId::None;
-  SemIR::InstBlockId return_patterns_id = SemIR::InstBlockId::None;
+  SemIR::InstId return_pattern_id = SemIR::InstId::None;
   SemIR::InstId self_param_id = SemIR::InstId::None;
 };
 }  // namespace
@@ -166,12 +176,12 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
         context, loc_id, context.types().GetTypeInstId(args.return_type_id));
     insts.return_type_inst_id = return_form.type_component_inst_id;
     insts.return_form_inst_id = return_form.form_inst_id;
-    insts.return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
+    insts.return_pattern_id = AddReturnPattern(context, loc_id, return_form);
   }
 
   auto match_results =
       CalleePatternMatch(context, insts.implicit_param_patterns_id,
-                         insts.param_patterns_id, insts.return_patterns_id);
+                         insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
   insts.call_param_ranges = match_results.param_ranges;
@@ -215,7 +225,7 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
               .call_param_ranges = insts.call_param_ranges,
               .return_type_inst_id = insts.return_type_inst_id,
               .return_form_inst_id = insts.return_form_inst_id,
-              .return_patterns_id = insts.return_patterns_id,
+              .return_pattern_id = insts.return_pattern_id,
               .self_param_id = insts.self_param_id,
           }});
   context.generated().push_back(decl_id);
@@ -386,7 +396,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
   // The return parameter will be diagnosed after and differently from other
   // parameters.
   auto return_call_param = SemIR::InstId::None;
-  if (!params_to_complete.empty() && function.return_patterns_id.has_value()) {
+  if (!params_to_complete.empty() && function.return_pattern_id.has_value()) {
     return_call_param = params_to_complete.consume_back();
   }
 
@@ -410,13 +420,10 @@ auto CheckFunctionDefinitionSignature(Context& context,
   }
 
   // Check the return type is complete.
-  if (function.return_patterns_id.has_value()) {
-    for (auto return_pattern_id :
-         context.inst_blocks().Get(function.return_patterns_id)) {
-      CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
-                                     return_pattern_id,
-                                     SemIR::SpecificId::None);
-    }
+  if (function.return_pattern_id.has_value()) {
+    CheckFunctionReturnPatternType(
+        context, SemIR::LocId(function.return_pattern_id),
+        function.return_pattern_id, SemIR::SpecificId::None);
 
     // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
     // so don't `RequireCompleteType` on the return type.

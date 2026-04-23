@@ -10,6 +10,33 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/namespace/export.carbon
 
+// --- other.carbon
+package Other;
+namespace Nested;
+namespace Nested.Again;
+
+class Class1;
+// --- namespace.carbon
+
+library "[[@TEST_NAME]]";
+
+import Other;
+import Cpp inline '''
+namespace X = Carbon::Other;
+namespace Y = Carbon::Other::Nested;
+namespace Z = Carbon::Other::Nested::Again;
+Carbon::Other::Class1 *glbl;
+
+template<typename T> void f1() {
+  T* v;
+}
+
+void f2() {
+  f1<Carbon::Other::Class1>();
+}
+
+''';
+
 // --- alias_identity.carbon
 
 import Cpp;

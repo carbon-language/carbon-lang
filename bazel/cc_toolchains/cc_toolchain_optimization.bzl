@@ -4,6 +4,7 @@
 
 """Definitions of optimization `cc_toolchain_config` features."""
 
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -12,12 +13,6 @@ load(
     "flag_set",
     "with_feature_set",
 )
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
-    "all_link_actions",
-    "codegen_compile_actions",
-)
 
 # Handle different levels of optimization with individual features so that
 # they can be ordered and the defaults can override the minimal settings if
@@ -25,7 +20,7 @@ load(
 minimal_optimization_flags = feature(
     name = "minimal_optimization_flags",
     flag_sets = [flag_set(
-        actions = codegen_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [flag_group(flags = ["-Og"])],
     )],
 )
@@ -35,11 +30,11 @@ default_optimization_flags = feature(
     requires = [feature_set(["opt"])],
     flag_sets = [
         flag_set(
-            actions = all_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(flags = ["-DNDEBUG"])],
         ),
         flag_set(
-            actions = codegen_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(flags = ["-O3"])],
         ),
     ],
@@ -50,12 +45,12 @@ cpu_flags = feature(
     enabled = True,
     flag_sets = [
         flag_set(
-            actions = all_compile_actions + all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [flag_group(flags = ["-march=armv8.2-a"])],
             with_features = [with_feature_set(["aarch64_target"])],
         ),
         flag_set(
-            actions = all_compile_actions + all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [flag_group(flags = ["-march=x86-64-v2"])],
             with_features = [with_feature_set(["x86_64_target"])],
         ),

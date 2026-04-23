@@ -4,18 +4,13 @@
 
 """Definitions used for the base features of a `cc_toolchain_config`."""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
     "feature_set",
     "flag_group",
     "flag_set",
-)
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
-    "all_link_actions",
 )
 
 # Declare features that are used by Bazel to model specific build modes.
@@ -44,7 +39,7 @@ user_flags_feature = feature(
     enabled = True,
     flag_sets = [
         flag_set(
-            actions = all_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(
                 expand_if_available = "user_compile_flags",
                 flags = ["%{user_compile_flags}"],
@@ -52,7 +47,7 @@ user_flags_feature = feature(
             )],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [flag_group(
                 expand_if_available = "user_link_flags",
                 flags = ["%{user_link_flags}"],
@@ -69,7 +64,7 @@ output_flags_feature = feature(
     enabled = True,
     flag_sets = [
         flag_set(
-            actions = all_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [
                 # For compile actions we have a single source and so put it at
                 # the end next to the output.
@@ -84,7 +79,7 @@ output_flags_feature = feature(
             ],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [flag_group(
                 expand_if_available = "output_execpath",
                 flags = ["-o", "%{output_execpath}"],

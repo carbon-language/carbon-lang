@@ -667,23 +667,22 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto& callee_function = context.functions().Get(callee_function_id);
   auto callee_function_params =
       context.inst_blocks().Get(callee_function.call_params_id);
-  auto callee_return_patterns =
-      context.inst_blocks().GetOrEmpty(callee_function.return_patterns_id);
+  auto num_callee_return_params =
+      callee_function.call_param_ranges.return_size();
 
   auto thunk_callee = GetCalleeAsFunction(context.sem_ir(), thunk_callee_id);
   auto& thunk_function = context.functions().Get(thunk_callee.function_id);
   auto thunk_function_params =
       context.inst_blocks().Get(thunk_function.call_params_id);
-  auto thunk_return_patterns =
-      context.inst_blocks().GetOrEmpty(thunk_function.return_patterns_id);
+  auto num_thunk_return_params = thunk_function.call_param_ranges.return_size();
 
   CARBON_CHECK(
-      callee_return_patterns.size() <= 1 && thunk_return_patterns.size() <= 1,
+      num_callee_return_params <= 1 && num_thunk_return_params <= 1,
       "TODO: generalize this logic to support multiple return patterns.");
 
   // Whether we need to pass a return address to the thunk as a final argument.
   bool thunk_takes_return_address =
-      !callee_return_patterns.empty() && thunk_return_patterns.empty();
+      num_callee_return_params > 0 && num_thunk_return_params == 0;
 
   // The number of arguments we should be acquiring in order to call the thunk.
   // This includes the return address parameters, if any.
@@ -704,9 +703,9 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   // TODO: The parameter should probably only be created if the return pattern
   // actually needs a return address to be passed in.
   thunk_function_params =
-      thunk_function_params.drop_back(thunk_return_patterns.size());
+      thunk_function_params.drop_back(num_thunk_return_params);
   callee_function_params =
-      callee_function_params.drop_back(callee_return_patterns.size());
+      callee_function_params.drop_back(num_callee_return_params);
 
   // We assume that the call parameters exactly match the parameter patterns for
   // both the thunk and the callee. This is guaranteed even when we generate a

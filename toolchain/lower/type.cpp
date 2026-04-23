@@ -665,6 +665,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::FloatType inst)
           nullptr};
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::ImplWitnessAccess /*inst*/)
+    -> LoweredTypes {
+  CARBON_FATAL("Unexpected ImplWitnessAccess in lowering");
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
     -> LoweredTypes {
   auto width_inst =
@@ -842,10 +848,10 @@ auto BuildType(FileContext& context, SemIR::InstId inst_id) -> LoweredTypes {
   // errors when BuildTypeForInst isn't defined for a given instruction.
   LoweredTypes result;
   CARBON_KIND_SWITCH(context.sem_ir().insts().Get(inst_id)) {
-#define CARBON_SEM_IR_INST_KIND(Name)       \
-  case CARBON_KIND(SemIR::Name inst): {     \
-    result = BuildTypeForInst(*this, inst); \
-    break;                                  \
+#define CARBON_SEM_IR_INST_KIND(Name)         \
+  case CARBON_KIND(SemIR::Name inst): {       \
+    result = BuildTypeForInst(context, inst); \
+    break;                                    \
   }
 #include "toolchain/sem_ir/inst_kind.def"
   }

@@ -125,10 +125,27 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
     new_pattern_id = CloneBindingPattern(context, pattern_id, *binding,
                                          get_type(pattern_id));
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
-    auto new_subpattern_id = RebuildPatternInst<SemIR::OutParamPattern>(
-        context, return_slot->subpattern_id,
-        {.type_id = get_type(return_slot->subpattern_id),
-         .pretty_name_id = SemIR::NameId::ReturnSlot});
+    auto new_subpattern_id = SemIR::InstId::None;
+    auto subpattern = context.insts().Get(return_slot->subpattern_id);
+    CARBON_KIND_SWITCH(subpattern) {
+      case SemIR::OutParamPattern::Kind:
+      case SemIR::RefReturnPattern::Kind:
+      case SemIR::ValueReturnPattern::Kind:
+        // These are leaf insts, so we can reuse their contents after updating
+        // the type.
+        subpattern.SetType(get_type(return_slot->subpattern_id));
+        new_subpattern_id =
+            RebuildPatternInst(context, return_slot->subpattern_id, subpattern);
+        break;
+      case SemIR::ErrorInst::Kind:
+        subpattern.SetType(SemIR::ErrorInst::TypeId);
+        new_subpattern_id = SemIR::ErrorInst::InstId;
+        break;
+      default:
+        CARBON_FATAL("Unexpected kind for return slot subpattern {0}",
+                     subpattern);
+    }
+
     new_pattern_id = RebuildPatternInst<SemIR::ReturnSlotPattern>(
         context, pattern_id,
         {.type_id = get_type(pattern_id),
@@ -200,8 +217,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, signature_specific_id, signature.implicit_param_patterns_id);
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
                                              signature.param_patterns_id);
-  auto return_patterns_id = ClonePatternBlock(context, signature_specific_id,
-                                              signature.return_patterns_id);
+  auto return_pattern_id =
+      ClonePattern(context, signature_specific_id, signature.return_pattern_id);
   auto return_type_inst_id = CloneTypeInstId(context, signature_specific_id,
                                              signature.return_type_inst_id);
   auto return_form_inst_id = CloneInstId(context, signature_specific_id,
@@ -211,9 +228,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
-  auto match_results =
-      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_patterns_id);
+  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
+                                          param_patterns_id, return_pattern_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Create the `FunctionDecl` instruction.
@@ -244,7 +260,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
               .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_type_inst_id,
               .return_form_inst_id = return_form_inst_id,
-              .return_patterns_id = return_patterns_id,
+              .return_pattern_id = return_pattern_id,
               .virtual_modifier = callee.virtual_modifier,
               .virtual_index = callee.virtual_index,
               .evaluation_mode = signature.evaluation_mode,
