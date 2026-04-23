@@ -51,7 +51,9 @@ struct Interface : public EntityWithParamsBase,
     out << "{";
     PrintBaseFields(out);
     out << ", require_impls_block_id: " << require_impls_block_id;
-    out << ", core_interface: " << core_interface;
+    if (core_interface != CoreInterface::Unknown) {
+      out << ", core_interface: " << core_interface;
+    }
     out << "}";
   }
 
