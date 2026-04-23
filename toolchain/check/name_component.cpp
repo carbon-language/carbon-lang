@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
+auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
     -> NameComponent {
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
@@ -50,9 +50,9 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
   auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
-      (!context.inst_blocks().GetOrEmpty(return_patterns_id).empty())) {
+      return_pattern_id.has_value()) {
     auto results = CalleePatternMatch(context, *implicit_param_patterns_id,
-                                      *param_patterns_id, return_patterns_id);
+                                      *param_patterns_id, return_pattern_id);
     call_param_patterns_id = results.call_param_patterns_id;
     call_params_id = results.call_params_id;
     param_ranges = results.param_ranges;

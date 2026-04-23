@@ -388,6 +388,22 @@ struct AnyStructType {
 };
 
 // clang-format off
+#define AnyReturnPattern_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::RefReturnPattern) Sep()          \
+  X(::Carbon::SemIR::ValueReturnPattern)
+// clang-format on
+
+#define AnyReturnPattern_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyReturnPattern)
+
+struct AnyReturnPattern {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyReturnPattern);
+
+  InstKind kind;
+  TypeId type_id;
+};
+
+// clang-format off
 #define AnyVarPattern_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::VarParamPattern) Sep()        \
   X(::Carbon::SemIR::VarPattern)

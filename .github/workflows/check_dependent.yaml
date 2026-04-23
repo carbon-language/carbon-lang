@@ -1,0 +1,29 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Check Dependent Label
+on:
+  pull_request_target:
+    types: [opened, synchronize, labeled, unlabeled]
+
+jobs:
+  check_label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+
+      - name: Check for 'dependent' label
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'dependent') }}" == "true" ]]; then
+            echo "PR has 'dependent' label. Blocking merge."
+            exit 1
+          fi
+          echo "PR does not have 'dependent' label."

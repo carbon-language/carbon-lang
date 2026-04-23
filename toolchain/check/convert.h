@@ -157,8 +157,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     llvm::ArrayRef<SemIR::InstId> return_arg_ids,
-                     const SemIR::Function& callee,
+                     SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id,
                      bool is_operator_syntax) -> SemIR::InstBlockId;
 

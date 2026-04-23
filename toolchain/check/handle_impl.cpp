@@ -158,7 +158,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     // because `impl`s are never actually called at runtime.
     auto match_results =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::None, SemIR::InstBlockId::None);
+                           SemIR::InstBlockId::None, SemIR::InstId::None);
     CARBON_CHECK(match_results.call_params_id == SemIR::InstBlockId::Empty);
     CARBON_CHECK(match_results.call_param_patterns_id ==
                  SemIR::InstBlockId::Empty);
