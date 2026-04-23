@@ -22,8 +22,8 @@ auto FindSelfPattern(Context& context,
 
 // Creates suitable return patterns for the given return form, and adds them to
 // the current pattern block.
-auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
-                       Context::FormExpr form_expr) -> SemIR::InstBlockId;
+auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
+                      Context::FormExpr form_expr) -> SemIR::InstId;
 
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,

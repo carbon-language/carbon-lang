@@ -2130,13 +2130,12 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     llvm::ArrayRef<SemIR::InstId> return_arg_ids,
-                     const SemIR::Function& callee,
+                     SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id,
                      bool is_operator_syntax) -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
-  auto return_patterns_id = callee.return_patterns_id;
+  auto return_pattern_id = callee.return_pattern_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -2153,8 +2152,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, return_patterns_id,
-                            self_id, arg_refs, return_arg_ids,
+                            callee.param_patterns_id, return_pattern_id,
+                            self_id, arg_refs, return_arg_id,
                             is_operator_syntax);
 }
 
