@@ -77,6 +77,7 @@ _QUERY_PR_DETAILS = """
   repository(owner: "carbon-language", name: "carbon-lang") {
     pullRequest(number: %d) {
       id
+      headRefOid
       labels(first: 100) {
         nodes {
           name
@@ -121,7 +122,7 @@ def _print_err(*args: Any, **kwargs: Any) -> None:
 def _process_pr(
     client: github_helpers.Client,
     pr_number: int,
-    commit_to_prs: dict[str, set[int]],
+    pr_to_commits: dict[int, list[str]],
     open_pr_numbers: set[int],
     label_id: str,
     dry_run: bool,
@@ -148,12 +149,36 @@ def _process_pr(
         current_oids = [c["commit"]["oid"] for c in commits]
     else:
         current_oids = [c["commit"]["oid"] for c in commits]
-        commits_to_check = current_oids[:-1]
 
-        for oid in commits_to_check:
-            for other_pr in commit_to_prs.get(oid, ()):
-                if other_pr not in open_deps and other_pr != pr_number:
-                    open_deps.append(other_pr)
+        # Dependency Logic: Set Inclusion
+        #
+        # We consider PR B dependent on PR A if the set of commits in PR A is a
+        # strict subset of the commits in PR B (excluding PR B's head commit).
+        #
+        # Why this works:
+        # - Handles arbitrary merge commits inside PR branches
+        #   (order-insensitive).
+        # - Prevents false positives from unrelated PRs that happen to share a
+        #   single base commit (the shared commits must cover *all* of PR A).
+        # - Excluding the head commit of PR B prevents flagging a PR that has
+        #   already incorporated the tip of PR B.
+        #
+        # Limitations:
+        # - Relies on identical Commit OIDs. Rebasing either PR will break the
+        #   relationship.
+        # - The base PR must be a subset of the dependent PR when the
+        #   relationship is checked. If both PRs have unrelated commits
+        #   initially, we won't detect the dependency (PR A must be a subset
+        #   of PR B).
+        tip_oid = pr_node["headRefOid"]
+
+        current_oids_set = set(current_oids) - {tip_oid}
+        for other_pr_num, other_oids in pr_to_commits.items():
+            if other_pr_num == pr_number:
+                continue
+            other_oids_set = set(other_oids)
+            if other_oids_set.issubset(current_oids_set):
+                open_deps.append(other_pr_num)
 
     # Parse existing comment
     marker_prefix = "<!-- check_dependent_pr "
@@ -179,6 +204,12 @@ def _process_pr(
     if not open_deps and not existing_comment_id:
         return
 
+    # Keep tracking previously identified dependencies if they are still open,
+    # even if they no longer pass the subset check (e.g. they got new commits).
+    for pr in state.get("open", []):
+        if pr in open_pr_numbers and pr not in open_deps:
+            open_deps.append(pr)
+
     # Identify newly merged PRs
     newly_merged_deps = []
     for pr in state.get("open", []):
@@ -190,32 +221,55 @@ def _process_pr(
     if open_deps == state.get("open") and merged_deps == state.get("merged"):
         return
 
+    first_independent_commit_oid = None
+    if open_deps:
+        dependent_oids = set()
+        for d in open_deps:
+            dependent_oids.update(pr_to_commits[d])
+
+        previous_first_commit = state.get("first_commit")
+        if previous_first_commit and previous_first_commit in current_oids:
+            start_idx = current_oids.index(previous_first_commit)
+        else:
+            start_idx = 0
+
+        # Assumes `current_oids` is in chronological order (oldest first).
+        # This guarantees we find the first independent commit to start the
+        # review.
+        for oid in current_oids[start_idx:]:
+            if oid not in dependent_oids:
+                first_independent_commit_oid = oid
+                break
+
     # Construct new comment
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
         "%Y-%m-%d %H:%M:%S UTC"
     )
-    new_state = {"open": open_deps, "merged": merged_deps}
+    new_state: dict[str, Any] = {
+        "open": open_deps,
+        "merged": merged_deps,
+        "first_commit": first_independent_commit_oid,
+    }
     state_json = json.dumps(new_state)
 
     comment_body = f"{marker_prefix}{state_json} -->\n"
 
     if open_deps:
-        first_independent_commit_oid = None
-        for oid in current_oids:
-            if oid not in commit_to_prs:
-                first_independent_commit_oid = oid
-                break
-        if not first_independent_commit_oid:
-            first_independent_commit_oid = current_oids[-1]
-
-        short_hash = first_independent_commit_oid[:8]
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
-        first_commit_linked = (
-            f"[{short_hash}]({pr_number}/commits/{short_hash})"
-        )
-        comment_body += (
-            f"Depends on {pr_list_str}, start review at {first_commit_linked}"
-        )
+        if first_independent_commit_oid:
+            short_hash = first_independent_commit_oid[:8]
+            first_commit_linked = (
+                f"[{short_hash}]({pr_number}/commits/{short_hash})"
+            )
+            comment_body += (
+                f"Depends on {pr_list_str}, start review at "
+                f"{first_commit_linked}"
+            )
+        else:
+            comment_body += (
+                f"Depends on {pr_list_str}, unable to identify starting review "
+                f"commit from simple analysis"
+            )
     else:
         comment_body += "All dependent PRs are merged."
 
@@ -336,7 +390,7 @@ def main() -> None:
     client = github_helpers.Client(parsed_args)
 
     _print_err("Loading open PRs ...", end="", flush=True)
-    commit_to_prs: dict[str, set[int]] = {}
+    pr_to_commits: dict[int, list[str]] = {}
     open_pr_numbers: set[int] = set()
     for node in client.execute_and_paginate(
         _QUERY_OPEN_PRS, ("repository", "pullRequests")
@@ -344,11 +398,9 @@ def main() -> None:
         _print_err(".", end="", flush=True)
         other_pr_num = node["number"]
         open_pr_numbers.add(other_pr_num)
-        for c in node["commits"]["nodes"]:
-            oid = c["commit"]["oid"]
-            if oid not in commit_to_prs:
-                commit_to_prs[oid] = set()
-            commit_to_prs[oid].add(other_pr_num)
+        pr_to_commits[other_pr_num] = [
+            c["commit"]["oid"] for c in node["commits"]["nodes"]
+        ]
     _print_err()
 
     label_res = client.execute(_QUERY_LABEL)
@@ -358,7 +410,7 @@ def main() -> None:
         _process_pr(
             client,
             parsed_args.pr_number,
-            commit_to_prs,
+            pr_to_commits,
             open_pr_numbers,
             label_id,
             parsed_args.dry_run,
@@ -370,7 +422,7 @@ def main() -> None:
             _process_pr(
                 client,
                 node["number"],
-                commit_to_prs,
+                pr_to_commits,
                 open_pr_numbers,
                 label_id,
                 parsed_args.dry_run,

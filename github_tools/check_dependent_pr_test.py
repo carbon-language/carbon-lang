@@ -6,226 +6,302 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import json
 import unittest
 from unittest import mock
+from typing import Any
 
 import check_dependent_pr
 import github_helpers
 
 _OID1 = "1" * 40
 _OID2 = "2" * 40
+_OID3 = "3" * 40
+_OID4 = "4" * 40
+_OID9 = "9" * 40
 
 
 class TestCheckDependentPR(unittest.TestCase):
     def setUp(self) -> None:
         self.mock_client = mock.MagicMock(spec=github_helpers.Client)
 
-    def test_process_pr_no_overlap(self) -> None:
-        # 1 commit, no overlap, no existing comment
-        self.mock_client.execute.return_value = {
+    def _make_comment(
+        self,
+        open_deps: list[int],
+        merged_deps: list[int] = None,
+        first_commit: str = None,
+        comment_id: str = "comment_id",
+    ) -> dict[str, str]:
+        """Builds a boilerplate PR comment."""
+        state: dict[str, Any] = {
+            "open": open_deps,
+            "merged": merged_deps if merged_deps else [],
+        }
+        if first_commit:
+            state["first_commit"] = first_commit
+        return {
+            "id": comment_id,
+            "body": f"<!-- check_dependent_pr {json.dumps(state)} -->",
+        }
+
+    def _make_pr_response(
+        self,
+        pr_id: str,
+        head_ref_oid: str,
+        commits: list[str],
+        comments: list[dict[str, str]] = None,
+        has_dependent_label: bool = False,
+    ) -> dict[str, Any]:
+        """Builds a boilerplate GitHub response for a PR."""
+        labels = (
+            [{"name": "dependent", "id": "label_dependent"}]
+            if has_dependent_label
+            else []
+        )
+        return {
             "repository": {
                 "pullRequest": {
-                    "id": "pr_1",
-                    "labels": {"nodes": []},
-                    "commits": {"nodes": [{"commit": {"oid": _OID1}}]},
-                    "comments": {"nodes": []},
+                    "id": pr_id,
+                    "headRefOid": head_ref_oid,
+                    "labels": {"nodes": labels},
+                    "commits": {
+                        "nodes": [{"commit": {"oid": oid}} for oid in commits]
+                    },
+                    "comments": {"nodes": comments if comments else []},
                 }
             }
         }
+
+    def test_process_pr_no_overlap(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_1",
+            head_ref_oid=_OID1,
+            commits=[_OID1],
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=1,
-            commit_to_prs={_OID1: {1}},
+            pr_to_commits={1: [_OID1]},
             open_pr_numbers={1},
             label_id="label_id",
             dry_run=False,
         )
-        # Should not call execute again (no mutations)
         self.assertEqual(self.mock_client.execute.call_count, 1)
 
     def test_process_pr_with_overlap(self) -> None:
-        # 2 commits, overlap with PR 7087
-        self.mock_client.execute.return_value = {
-            "repository": {
-                "pullRequest": {
-                    "id": "pr_2",
-                    "labels": {"nodes": []},
-                    "commits": {
-                        "nodes": [
-                            {"commit": {"oid": _OID1}},
-                            {"commit": {"oid": _OID2}},
-                        ]
-                    },
-                    "comments": {"nodes": []},
-                }
-            }
-        }
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            commit_to_prs={_OID1: {1, 2}, _OID2: {2}},
+            pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             dry_run=False,
         )
-        # Should call execute 3 times: 1 for details, 1 for label, 1 for comment
         self.assertEqual(self.mock_client.execute.call_count, 3)
-
         calls = self.mock_client.execute.call_args_list
         self.assertIn("addLabelsToLabelable", calls[1][0][0])
         self.assertIn("addComment", calls[2][0][0])
 
     def test_process_pr_dependencies_merged(self) -> None:
-        # Existing comment says it depends on 7087, but 7087 is closed
-        # (not in open_pr_numbers)
-        self.mock_client.execute.return_value = {
-            "repository": {
-                "pullRequest": {
-                    "id": "pr_3",
-                    "labels": {
-                        "nodes": [
-                            {"name": "dependent", "id": "label_dependent"}
-                        ]
-                    },
-                    "commits": {
-                        "nodes": [
-                            {"commit": {"oid": _OID1}},
-                            {"commit": {"oid": _OID2}},
-                        ]
-                    },
-                    "comments": {
-                        "nodes": [
-                            {
-                                "id": "comment_id",
-                                "body": (
-                                    '<!-- check_dependent_pr {"open": [7087], '
-                                    '"merged": []} -->\nDepends on #7087'
-                                ),
-                            }
-                        ]
-                    },
-                }
-            }
-        }
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[self._make_comment(open_deps=[7087])],
+            has_dependent_label=True,
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=3,
-            commit_to_prs={_OID1: {3}, _OID2: {3}},
+            pr_to_commits={3: [_OID1, _OID2]},
             open_pr_numbers={3},
             label_id="label_dependent",
             dry_run=False,
         )
-
         calls = self.mock_client.execute.call_args_list
-        # Should remove label
         self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
-        # Should update comment
         self.assertIn("updateIssueComment", calls[2][0][0])
 
+    def test_process_pr_dependency_got_new_commits(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[self._make_comment(open_deps=[1, 2])],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={1: [_OID1, _OID4], 3: [_OID1, _OID2]},
+            open_pr_numbers={1, 3},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        calls = self.mock_client.execute.call_args_list
+        update_mutation = calls[1][0][0]
+        self.assertIn("updateIssueComment", update_mutation)
+        self.assertIn('\\"open\\": [1]', update_mutation)
+        self.assertIn('\\"merged\\": [2]', update_mutation)
+
+    def test_process_pr_non_coherent_prefix(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_10",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=10,
+            pr_to_commits={10: [_OID1, _OID2], 11: [_OID1, _OID3]},
+            open_pr_numbers={10, 11},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_overlap_only_on_head_ref(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_9",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=9,
+            pr_to_commits={1: [_OID2], 9: [_OID1, _OID2]},
+            open_pr_numbers={1, 9},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 1)
+
     def test_process_pr_scanning_no_add(self) -> None:
-        # Overlap found, but scanning=True, so no comment or label should be
-        # added.
-        self.mock_client.execute.return_value = {
-            "repository": {
-                "pullRequest": {
-                    "id": "pr_7",
-                    "labels": {"nodes": []},
-                    "commits": {
-                        "nodes": [
-                            {"commit": {"oid": _OID1}},
-                            {"commit": {"oid": _OID2}},
-                        ]
-                    },
-                    "comments": {"nodes": []},
-                }
-            }
-        }
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_7",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=7,
-            commit_to_prs={_OID1: {1, 7}, _OID2: {7}},
+            pr_to_commits={1: [_OID1], 7: [_OID1, _OID2]},
             open_pr_numbers={1, 7},
             label_id="label_dependent",
             dry_run=False,
             scanning=True,
         )
-        # Should not call execute again (no mutations)
         self.assertEqual(self.mock_client.execute.call_count, 1)
 
     def test_process_pr_no_changes_needed(self) -> None:
-        # Overlap with PR 1, existing comment already lists it, label
-        # present.
-        self.mock_client.execute.return_value = {
-            "repository": {
-                "pullRequest": {
-                    "id": "pr_6",
-                    "labels": {
-                        "nodes": [
-                            {"name": "dependent", "id": "label_dependent"}
-                        ]
-                    },
-                    "commits": {
-                        "nodes": [
-                            {"commit": {"oid": _OID1}},
-                            {"commit": {"oid": _OID2}},
-                        ]
-                    },
-                    "comments": {
-                        "nodes": [
-                            {
-                                "id": "comment_id",
-                                "body": (
-                                    '<!-- check_dependent_pr {"open": [1], '
-                                    '"merged": []} -->\nDepends on #1'
-                                ),
-                            }
-                        ]
-                    },
-                }
-            }
-        }
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_6",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[self._make_comment(open_deps=[1])],
+            has_dependent_label=True,
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=6,
-            commit_to_prs={_OID1: {1, 6}, _OID2: {6}},
+            pr_to_commits={1: [_OID1], 6: [_OID1, _OID2]},
             open_pr_numbers={1, 6},
             label_id="label_dependent",
             dry_run=False,
         )
-        # Should not call execute again (no mutations)
         self.assertEqual(self.mock_client.execute.call_count, 1)
 
     def test_process_pr_invalid_marker(self) -> None:
-        self.mock_client.execute.return_value = {
-            "repository": {
-                "pullRequest": {
-                    "id": "pr_5",
-                    "labels": {"nodes": []},
-                    "commits": {"nodes": [{"commit": {"oid": _OID1}}]},
-                    "comments": {
-                        "nodes": [
-                            {
-                                "id": "comment_id",
-                                "body": (
-                                    "<!-- check_dependent_pr {invalid_json} "
-                                    "-->"
-                                ),
-                            }
-                        ]
-                    },
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_5",
+            head_ref_oid=_OID1,
+            commits=[_OID1],
+            comments=[
+                {
+                    "id": "comment_id",
+                    "body": "<!-- check_dependent_pr {invalid_json} -->",
                 }
-            }
-        }
+            ],
+        )
         check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=5,
-            commit_to_prs={_OID1: {5}},
+            pr_to_commits={5: [_OID1]},
             open_pr_numbers={5},
             label_id="label_dependent",
             dry_run=False,
         )
-        # Should not call execute again (no mutations)
         self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_sticky_first_commit(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_11",
+            head_ref_oid=_OID3,
+            commits=[_OID1, _OID2, _OID3],
+            comments=[self._make_comment(open_deps=[1, 2], first_commit=_OID2)],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=11,
+            pr_to_commits={1: [_OID1], 11: [_OID1, _OID2, _OID3]},
+            open_pr_numbers={1, 11},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        calls = self.mock_client.execute.call_args_list
+        update_mutation = calls[1][0][0]
+        self.assertIn(_OID2[:8], update_mutation)
+        self.assertNotIn(_OID1[:8], update_mutation)
+
+    def test_process_pr_rebase_first_commit(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_12",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[
+                self._make_comment(open_deps=[1, 2], first_commit="MISSING")
+            ],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=12,
+            pr_to_commits={1: [_OID9], 12: [_OID1, _OID2]},
+            open_pr_numbers={1, 12},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        calls = self.mock_client.execute.call_args_list
+        update_mutation = calls[1][0][0]
+        self.assertIn(_OID1[:8], update_mutation)
+
+    def test_process_pr_fallback_no_independent_commit(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_13",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[self._make_comment(open_deps=[1, 2])],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=13,
+            pr_to_commits={1: [_OID1, _OID2], 13: [_OID1, _OID2]},
+            open_pr_numbers={1, 13},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        calls = self.mock_client.execute.call_args_list
+        update_mutation = calls[1][0][0]
+        self.assertIn(
+            "unable to identify starting review commit", update_mutation
+        )
 
 
 if __name__ == "__main__":
