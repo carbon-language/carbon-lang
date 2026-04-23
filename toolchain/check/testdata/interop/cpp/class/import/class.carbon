@@ -224,6 +224,34 @@ import Cpp library "template.h";
 fn MyF(bar: Cpp.Bar(Cpp.X)*);
 //@dump-sem-ir-end
 
+// --- fail_copy_witness_of_incomplete_class.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class Class1;
+''';
+
+class Generic(x:! Core.Copy) {
+}
+
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+14]]:19: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]
+// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:7: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class Class1;
+// CHECK:STDERR:       ^
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:15: note: initializing generic parameter `x` declared here [InitializingGenericParam]
+// CHECK:STDERR: class Generic(x:! Core.Copy) {
+// CHECK:STDERR:               ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+4]]:15: warning: binding `p2` unused [UnusedBinding]
+// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
+// CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn GenericUse(p2: Generic(Cpp.Class1)) {
+}
+
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
