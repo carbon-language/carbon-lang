@@ -10,20 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/export/method.carbon
 
-// --- method.carbon
-library "[[@TEST_NAME]]";
-import Cpp;
-
-class C {
-  fn M[self: Self]();
-}
-
-inline Cpp '''
-void F() {
-  Carbon::C().M();
-}
-''';
-
 // --- static_method.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
@@ -38,7 +24,36 @@ void F() {
 }
 ''';
 
-// --- ref_method.carbon
+// --- method_lvalue.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn M[self: Self]();
+}
+
+inline Cpp '''
+void F() {
+  Carbon::C c;
+  c.M();
+}
+''';
+
+// --- method_rvalue.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn M[self: Self]();
+}
+
+inline Cpp '''
+void F() {
+  Carbon::C().M();
+}
+''';
+
+// --- ref_method_lvalue.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
@@ -48,6 +63,22 @@ class C {
 
 inline Cpp '''
 void F() {
+  Carbon::C c;
+  c.M();
+}
+''';
+
+// --- todo_ref_method_rvalue.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn M[ref self: Self]();
+}
+
+inline Cpp '''
+void F() {
+  // TODO: this should be disallowed.
   Carbon::C().M();
 }
 ''';
