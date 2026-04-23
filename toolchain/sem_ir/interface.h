@@ -35,7 +35,7 @@ struct InterfaceFields {
   // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
   // Identifies whether the interface is a core interface.
-  std::optional<CoreInterface> core_interface;
+  CoreInterface core_interface = CoreInterface::Unknown;
 
   // The following members are set at the `}` of the interface definition.
 
@@ -51,9 +51,7 @@ struct Interface : public EntityWithParamsBase,
     out << "{";
     PrintBaseFields(out);
     out << ", require_impls_block_id: " << require_impls_block_id;
-    if (core_interface.has_value()) {
-      out << ", " << *core_interface;
-    }
+    out << ", core_interface: " << core_interface;
     out << "}";
   }
 

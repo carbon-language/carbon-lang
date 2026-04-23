@@ -9,7 +9,7 @@
 namespace Carbon::SemIR {
 CARBON_DEFINE_ENUM_CLASS_NAMES(CoreInterface) {
 #define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
-  "core_interface: " CARBON_ENUM_CLASS_NAME_STRING(Name)
+  CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/sem_ir/core_interface_kind.def"
 };
 }  // namespace Carbon::SemIR

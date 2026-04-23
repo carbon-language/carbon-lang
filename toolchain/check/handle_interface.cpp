@@ -91,13 +91,13 @@ static auto BuildInterfaceDecl(Context& context,
     if (context.sem_ir().package_id() == PackageNameId::Core) {
       auto name = context.names().GetIRBaseName(interface_info.name_id);
       interface_info.core_interface =
-          llvm::StringSwitch<std::optional<SemIR::CoreInterface>>(name)
+          llvm::StringSwitch<SemIR::CoreInterface>(name)
               .Case("Copy", SemIR::CoreInterface::Copy)
               .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
               .Case("Default", SemIR::CoreInterface::Default)
               .Case("Destroy", SemIR::CoreInterface::Destroy)
               .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
-              .Default(std::nullopt);
+              .Default(SemIR::CoreInterface::Unknown);
     }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {

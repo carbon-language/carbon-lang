@@ -535,11 +535,7 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     return SemIR::CoreInterface::Unknown;
   }
 
-  if (interface.core_interface.has_value()) {
-    return *interface.core_interface;
-  }
-
-  return SemIR::CoreInterface::Unknown;
+  return interface.core_interface;
 }
 
 auto BuildPrimitiveCopyWitness(
