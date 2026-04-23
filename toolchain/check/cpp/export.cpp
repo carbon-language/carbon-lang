@@ -207,10 +207,6 @@ struct FunctionInfo {
                context.sem_ir(), context.insts().Get(param_inst_id).type_id()),
            .is_ref =
                context.insts().Is<SemIR::RefParamPattern>(param_inst_id)});
-
-      auto scrutinee_type_id = ExtractScrutineeType(
-          context.sem_ir(), context.insts().Get(param_inst_id).type_id());
-      param_type_ids.push_back(scrutinee_type_id);
     }
   }
 
@@ -237,10 +233,6 @@ struct FunctionInfo {
   // For each of the function's explicit parameters, the scrutinee type
   // and whether the parameter is a reference.
   llvm::SmallVector<Param> explicit_params;
-
-  // Types of the function's explicit parameters (excludes implicit
-  // parameters and return parameters).
-  llvm::SmallVector<SemIR::TypeId> param_type_ids;
 
   // Type of the function's `self` parameter, or `None` if the function
   // is not a method.
@@ -274,8 +266,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
     cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
     cpp_param_types.push_back(cpp_type);
   }
-  for (auto param_type_id : callee.param_type_ids) {
-    auto cpp_type = MapToCppType(context, param_type_id);
+  for (auto param : callee.explicit_params) {
+    auto cpp_type = MapToCppType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
@@ -489,8 +481,8 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
 
   llvm::SmallVector<clang::QualType> param_types;
-  for (auto type_id : target.param_type_ids) {
-    auto cpp_type = MapToCppType(context, type_id);
+  for (auto param : target.explicit_params) {
+    auto cpp_type = MapToCppType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map C++ type to Carbon");
       return nullptr;
@@ -531,7 +523,10 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // Get the thunk's parameters. These match the callee parameters, with
   // the addition of an output parameter for the callee's return value
   // (if it has one).
-  llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids(target.param_type_ids);
+  llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids;
+  for (const auto& param : target.explicit_params) {
+    thunk_param_type_ids.push_back(param.type_id);
+  }
   auto callee_return_type_id =
       target.function.GetDeclaredReturnType(context.sem_ir());
   if (callee_return_type_id != SemIR::TypeId::None) {
