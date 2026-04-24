@@ -44,29 +44,29 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CDoubleLong32.Main(i32 %l32) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call = mul i32 2, %l32, !dbg !10
-// CHECK:STDOUT:   ret i32 %T.binding.as_type.as.MulWith.impl.Op.call, !dbg !11
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i32 2, %l32, !dbg !10
+// CHECK:STDOUT:   ret i32 %T.as_type.as.MulWith.impl.Op.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CDoubleULong32.Main(i32 %ul32) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call = mul i32 2, %ul32, !dbg !18
-// CHECK:STDOUT:   ret i32 %T.binding.as_type.as.MulWith.impl.Op.call, !dbg !19
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i32 2, %ul32, !dbg !18
+// CHECK:STDOUT:   ret i32 %T.as_type.as.MulWith.impl.Op.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i64 @_CDoubleLongLong64.Main(i64 %ll64) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call = mul i64 2, %ll64, !dbg !26
-// CHECK:STDOUT:   ret i64 %T.binding.as_type.as.MulWith.impl.Op.call, !dbg !27
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ll64, !dbg !26
+// CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i64 @_CDoubleULong64.Main(i64 %ul64) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call = mul i64 2, %ul64, !dbg !34
-// CHECK:STDOUT:   ret i64 %T.binding.as_type.as.MulWith.impl.Op.call, !dbg !35
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ul64, !dbg !34
+// CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

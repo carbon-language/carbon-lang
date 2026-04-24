@@ -380,8 +380,8 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst50000036:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000032)}
 // CHECK:STDOUT:     inst50000037:    {kind: NameRef, arg0: name5, arg1: inst50000033, type: type(inst50000028)}
 // CHECK:STDOUT:     inst50000038:    {kind: FacetAccessType, arg0: inst50000037, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000039:    {kind: SymbolicBindingType, arg0: entity_name50000007, arg1: inst50000034, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003A:    {kind: SymbolicBindingType, arg0: entity_name50000007, arg1: inst50000035, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000039:    {kind: FacetAccessType, arg0: inst50000034, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003A:    {kind: FacetAccessType, arg0: inst50000035, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003B:    {kind: Converted, arg0: inst50000037, arg1: inst50000038, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003C:    {kind: AssociatedEntityType, arg0: interface50000001, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003D:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(TypeType)}
@@ -439,8 +439,8 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst50000071:    {kind: SymbolicBindingPattern, arg0: entity_name5000000A, type: type(inst5000006D)}
 // CHECK:STDOUT:     inst50000072:    {kind: NameRef, arg0: name5, arg1: inst5000006E, type: type(inst50000013)}
 // CHECK:STDOUT:     inst50000073:    {kind: FacetAccessType, arg0: inst50000072, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000074:    {kind: SymbolicBindingType, arg0: entity_name50000007, arg1: inst5000006F, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000075:    {kind: SymbolicBindingType, arg0: entity_name50000007, arg1: inst50000070, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000074:    {kind: FacetAccessType, arg0: inst5000006F, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000075:    {kind: FacetAccessType, arg0: inst50000070, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000076:    {kind: Converted, arg0: inst50000072, arg1: inst50000073, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000077:    {kind: NameRef, arg0: name2, arg1: inst5000001B, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000078:    {kind: LookupImplWitness, arg0: inst5000006F, arg1: specific_interface50000001, type: type(inst(WitnessType))}

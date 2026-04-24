@@ -88,16 +88,16 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
 // CHECK:STDOUT:   %T.c4d: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op.2, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%T.c4d) [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op.2, @T.as_type.as.DefaultOrUnformed.impl.8bc(%T.c4d) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.74b: %T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %UnformedInit.impl_witness.340: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.c5f, @Int.as.UnformedInit.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %UnformedInit.facet.b6d: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.340) [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness.90e: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.60d, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
-// CHECK:STDOUT:   %UnformedInit.facet.40a: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.90e) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.eb0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.626, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%UnformedInit.facet.40a) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.eb0) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.c07: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.0c7, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.588: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.c07) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.609: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.020, @T.as_type.as.DefaultOrUnformed.impl.8bc(%UnformedInit.facet.588) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.609) [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.type: type = cpp_overload_set_type @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -139,20 +139,20 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.type.121: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.75d)> [concrete]
 // CHECK:STDOUT:   %OptionalAs.type.ea5: type = facet_type <@OptionalAs, @OptionalAs(%T.542)> [symbolic]
 // CHECK:STDOUT:   %U.2d2: %OptionalAs.type.ea5 = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.type.4c5: type = fn_type @U.binding.as_type.as.ImplicitAs.impl.Convert.2, @U.binding.as_type.as.ImplicitAs.impl.71c(%T.542, %U.2d2) [symbolic]
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.cb0: %U.binding.as_type.as.ImplicitAs.impl.Convert.type.4c5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.79d: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.1a8(%T.542, %U.2d2) [symbolic]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.dd8: %U.as_type.as.ImplicitAs.impl.Convert.type.79d = struct_value () [symbolic]
 // CHECK:STDOUT:   %OptionalAs.type.432: type = facet_type <@OptionalAs, @OptionalAs(%OptionalStorage.facet.6bd)> [concrete]
-// CHECK:STDOUT:   %T.binding.as_type.as.OptionalAs.impl.Convert.type.d22: type = fn_type @T.binding.as_type.as.OptionalAs.impl.Convert, @T.binding.as_type.as.OptionalAs.impl(%T.542) [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.as.OptionalAs.impl.Convert.d8f: %T.binding.as_type.as.OptionalAs.impl.Convert.type.d22 = struct_value () [symbolic]
-// CHECK:STDOUT:   %OptionalAs.impl_witness.2cb: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.cea, @T.binding.as_type.as.OptionalAs.impl(%OptionalStorage.facet.6bd) [concrete]
-// CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.432 = facet_value %ptr.235, (%OptionalAs.impl_witness.2cb) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.2c0: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.840, @U.binding.as_type.as.ImplicitAs.impl.71c(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.type.cc7: type = fn_type @U.binding.as_type.as.ImplicitAs.impl.Convert.2, @U.binding.as_type.as.ImplicitAs.impl.71c(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.37e: %U.binding.as_type.as.ImplicitAs.impl.Convert.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.8cd: %ImplicitAs.type.121 = facet_value %ptr.235, (%ImplicitAs.impl_witness.2c0) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.944: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.75d, %ImplicitAs.facet.8cd) [concrete]
-// CHECK:STDOUT:   %.c75: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.944, %ImplicitAs.facet.8cd [concrete]
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.binding.as_type.as.ImplicitAs.impl.Convert.37e, @U.binding.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.OptionalAs.impl.Convert.type.072: type = fn_type @T.as_type.as.OptionalAs.impl.Convert, @T.as_type.as.OptionalAs.impl(%T.542) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.OptionalAs.impl.Convert.6f5: %T.as_type.as.OptionalAs.impl.Convert.type.072 = struct_value () [symbolic]
+// CHECK:STDOUT:   %OptionalAs.impl_witness.efe: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.45f, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.6bd) [concrete]
+// CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.432 = facet_value %ptr.235, (%OptionalAs.impl_witness.efe) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.365: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.67f, @U.as_type.as.ImplicitAs.impl.1a8(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.92b: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.1a8(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.254: %U.as_type.as.ImplicitAs.impl.Convert.type.92b = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.887: %ImplicitAs.type.121 = facet_value %ptr.235, (%ImplicitAs.impl_witness.365) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.262: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.75d, %ImplicitAs.facet.887) [concrete]
+// CHECK:STDOUT:   %.a54: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.262, %ImplicitAs.facet.887 [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.254, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.6bd, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t: type = class_type @NullptrT [concrete]
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.2ba: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%T.67d) [symbolic]
@@ -178,9 +178,9 @@ fn F() {
 // CHECK:STDOUT:     .nullptr = @F.%uninit
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.e09: @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.626 = impl_witness_table (%Core.import_ref.e09), @T.binding.as_type.as.DefaultOrUnformed.impl.90a [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness_table.60d = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.1b5: @T.as_type.as.DefaultOrUnformed.impl.8bc.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.8bc.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.74b)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.020 = impl_witness_table (%Core.import_ref.1b5), @T.as_type.as.DefaultOrUnformed.impl.8bc [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.0c7 = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %UnformedInit.impl_witness_table.c5f = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete = constants.%TakesArray.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
@@ -203,10 +203,10 @@ fn F() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.059: @U.binding.as_type.as.ImplicitAs.impl.71c.%U.binding.as_type.as.ImplicitAs.impl.Convert.type (%U.binding.as_type.as.ImplicitAs.impl.Convert.type.4c5) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @U.binding.as_type.as.ImplicitAs.impl.71c.%U.binding.as_type.as.ImplicitAs.impl.Convert (constants.%U.binding.as_type.as.ImplicitAs.impl.Convert.cb0)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.840 = impl_witness_table (%Core.import_ref.059), @U.binding.as_type.as.ImplicitAs.impl.71c [concrete]
-// CHECK:STDOUT:   %Core.import_ref.6fb: @T.binding.as_type.as.OptionalAs.impl.%T.binding.as_type.as.OptionalAs.impl.Convert.type (%T.binding.as_type.as.OptionalAs.impl.Convert.type.d22) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.OptionalAs.impl.%T.binding.as_type.as.OptionalAs.impl.Convert (constants.%T.binding.as_type.as.OptionalAs.impl.Convert.d8f)]
-// CHECK:STDOUT:   %OptionalAs.impl_witness_table.cea = impl_witness_table (%Core.import_ref.6fb), @T.binding.as_type.as.OptionalAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.92e: @U.as_type.as.ImplicitAs.impl.1a8.%U.as_type.as.ImplicitAs.impl.Convert.type (%U.as_type.as.ImplicitAs.impl.Convert.type.79d) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @U.as_type.as.ImplicitAs.impl.1a8.%U.as_type.as.ImplicitAs.impl.Convert (constants.%U.as_type.as.ImplicitAs.impl.Convert.dd8)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.67f = impl_witness_table (%Core.import_ref.92e), @U.as_type.as.ImplicitAs.impl.1a8 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.33c: @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert.type (%T.as_type.as.OptionalAs.impl.Convert.type.072) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert (constants.%T.as_type.as.OptionalAs.impl.Convert.6f5)]
+// CHECK:STDOUT:   %OptionalAs.impl_witness_table.45f = impl_witness_table (%Core.import_ref.33c), @T.as_type.as.OptionalAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.c58: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.2ba) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.0ff)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.692 = impl_witness_table (%Core.import_ref.c58), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
@@ -218,14 +218,14 @@ fn F() {
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.b6e = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %array_type.643 = var %n.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.eb0) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.609) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc10_24.1: %DefaultOrUnformed.type = converted constants.%array_type.643, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_24.1 [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, %as_type [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_3: ref %array_type.643 = splice_block %n.var {}
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc10_3 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
-// CHECK:STDOUT:   assign %n.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc10_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %n.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %.loc10_23: type = splice_block %array_type [concrete = constants.%array_type.643] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
@@ -245,12 +245,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_21.2: %i32 = converted %int_0, %.loc11_21.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc11_22: ref %i32 = array_index %n.ref, %.loc11_21.2
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %.loc11_22
-// CHECK:STDOUT:   %impl.elem0.loc11_18: %.c75 = impl_witness_access constants.%ImplicitAs.impl_witness.2c0, element0 [concrete = constants.%U.binding.as_type.as.ImplicitAs.impl.Convert.37e]
+// CHECK:STDOUT:   %impl.elem0.loc11_18: %.a54 = impl_witness_access constants.%ImplicitAs.impl_witness.365, element0 [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.254]
 // CHECK:STDOUT:   %bound_method.loc11_18.1: <bound method> = bound_method %addr, %impl.elem0.loc11_18
-// CHECK:STDOUT:   %specific_fn.loc11_18: <specific function> = specific_function %impl.elem0.loc11_18, @U.binding.as_type.as.ImplicitAs.impl.Convert.2(constants.%OptionalStorage.facet.6bd, constants.%OptionalAs.facet) [concrete = constants.%U.binding.as_type.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc11_18: <specific function> = specific_function %impl.elem0.loc11_18, @U.as_type.as.ImplicitAs.impl.Convert.2(constants.%OptionalStorage.facet.6bd, constants.%OptionalAs.facet) [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_18.2: <bound method> = bound_method %addr, %specific_fn.loc11_18
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.75d = call %bound_method.loc11_18.2(%addr)
-// CHECK:STDOUT:   %.loc11_18.1: init %Optional.75d = converted %addr, %U.binding.as_type.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.75d = call %bound_method.loc11_18.2(%addr)
+// CHECK:STDOUT:   %.loc11_18.1: init %Optional.75d = converted %addr, %U.as_type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc11_18.2: ref %Optional.75d = temporary_storage
 // CHECK:STDOUT:   %.loc11_18.3: ref %Optional.75d = temporary %.loc11_18.2, %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.4: %Optional.75d = acquire_value %.loc11_18.3
@@ -320,14 +320,14 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
 // CHECK:STDOUT:   %T.c4d: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3: type = fn_type @T.binding.as_type.as.DefaultOrUnformed.impl.Op.2, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%T.c4d) [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df: %T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op.2, @T.as_type.as.DefaultOrUnformed.impl.8bc(%T.c4d) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.74b: %T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %UnformedInit.impl_witness.340: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.c5f, @Int.as.UnformedInit.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %UnformedInit.facet.b6d: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.340) [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness.90e: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.60d, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
-// CHECK:STDOUT:   %UnformedInit.facet.40a: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.90e) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.eb0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.626, @T.binding.as_type.as.DefaultOrUnformed.impl.90a(%UnformedInit.facet.40a) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.eb0) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.c07: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.0c7, @array_type.as.UnformedInit.impl(%UnformedInit.facet.b6d, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.588: %UnformedInit.type = facet_value %array_type.643, (%UnformedInit.impl_witness.c07) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.609: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.020, @T.as_type.as.DefaultOrUnformed.impl.8bc(%UnformedInit.facet.588) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.643, (%DefaultOrUnformed.impl_witness.609) [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -359,9 +359,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete = constants.%TakesFunction.cpp_overload_set.value]
 // CHECK:STDOUT:   %Function.cpp_overload_set.value: %Function.cpp_overload_set.type = cpp_overload_set_value @Function.cpp_overload_set [concrete = constants.%Function.cpp_overload_set.value]
-// CHECK:STDOUT:   %Core.import_ref.e09: @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type (%T.binding.as_type.as.DefaultOrUnformed.impl.Op.type.8c3) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DefaultOrUnformed.impl.90a.%T.binding.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.binding.as_type.as.DefaultOrUnformed.impl.Op.2df)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.626 = impl_witness_table (%Core.import_ref.e09), @T.binding.as_type.as.DefaultOrUnformed.impl.90a [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness_table.60d = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.1b5: @T.as_type.as.DefaultOrUnformed.impl.8bc.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.fc4) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.8bc.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.74b)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.020 = impl_witness_table (%Core.import_ref.1b5), @T.as_type.as.DefaultOrUnformed.impl.8bc [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.0c7 = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %UnformedInit.impl_witness_table.c5f = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -381,14 +381,14 @@ fn F() {
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.b6e = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %array_type.643 = var %n.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.eb0) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.643, (constants.%DefaultOrUnformed.impl_witness.609) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc22_24.1: %DefaultOrUnformed.type = converted constants.%array_type.643, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc22_24.1 [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   %.loc22_24.2: type = converted %.loc22_24.1, %as_type [concrete = constants.%array_type.643]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc22_3: ref %array_type.643 = splice_block %n.var {}
-// CHECK:STDOUT:   %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc22_3 = call %T.binding.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
-// CHECK:STDOUT:   assign %n.var, %T.binding.as_type.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.643 to %.loc22_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %n.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %.loc22_23: type = splice_block %array_type [concrete = constants.%array_type.643] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]

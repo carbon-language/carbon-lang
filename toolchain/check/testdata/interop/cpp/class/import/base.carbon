@@ -472,7 +472,7 @@ class V {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %ptr.ddb: type = ptr_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.5c86: type = pattern_type %ptr.ddb [concrete]
+// CHECK:STDOUT:   %pattern_type.5c8: type = pattern_type %ptr.ddb [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %.c2a: Core.Form = init_form %ptr.fb2 [concrete]
@@ -511,8 +511,8 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertPtr.decl: %ConvertPtr.type = fn_decl @ConvertPtr [concrete = constants.%ConvertPtr] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.5c86 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.5c86 = at_binding_pattern d, %d.param_patt [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.5c8 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.5c8 = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.72a = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.72a = return_slot_pattern %return.param_patt, %ptr.loc7_43 [concrete]
 // CHECK:STDOUT:   } {

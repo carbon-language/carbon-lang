@@ -528,24 +528,6 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
     }
   }
 
-  if (auto bind_type =
-          context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
-    auto bind = context().insts().GetAs<SemIR::SymbolicBinding>(
-        bind_type->facet_value_inst_id);
-    const auto& entity_name = context().entity_names().Get(bind.entity_name_id);
-    if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-      // We need to re-construct SymbolicBindingType, not just replace its
-      // facet instruction. If the new operand is a SymbolicBinding, we need
-      // to use its entity name.
-      inst_id = Rebuild(
-          inst_id,
-          SemIR::FacetAccessType{.type_id = SemIR::TypeType::TypeId,
-                                 .facet_value_inst_id = GetReplacement(
-                                     bind_type->facet_value_inst_id, false)});
-      return FullySubstituted;
-    }
-  }
-
   if (auto bind = context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
     const auto& entity_name =
         context().entity_names().Get(bind->entity_name_id);

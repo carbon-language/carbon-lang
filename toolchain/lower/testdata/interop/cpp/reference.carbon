@@ -146,7 +146,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.loc24_22.3.temp = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc25_23.2.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
-// CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C(ptr %c.var), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !15
 // CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk(ptr @C.val.loc19_20.3), !dbg !20
@@ -236,7 +236,7 @@ fn GetRefs() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !43 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !43 {
 // CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
@@ -307,7 +307,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !39)
 // CHECK:STDOUT: !42 = !DILocation(line: 25, column: 23, scope: !36)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !44, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !44, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !44 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !45 = !DILocation(line: 9, column: 28, scope: !43)
 // CHECK:STDOUT: !46 = !DILocation(line: 9, column: 21, scope: !43)
@@ -331,7 +331,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.loc25_22.3.temp = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
-// CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk1(ptr %c.var), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.2.temp), !dbg !15
 // CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk1(ptr @C.val.loc20_20.3), !dbg !20
@@ -443,7 +443,7 @@ fn GetRefs() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !45 {
 // CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
@@ -520,7 +520,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !38, type: !41)
 // CHECK:STDOUT: !44 = !DILocation(line: 26, column: 23, scope: !38)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !46 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !45)
 // CHECK:STDOUT: !48 = !DILocation(line: 9, column: 21, scope: !45)

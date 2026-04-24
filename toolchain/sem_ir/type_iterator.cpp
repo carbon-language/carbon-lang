@@ -74,12 +74,6 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
       return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
                                 .facet_type_id = type_id};
     }
-    case CARBON_KIND(SemIR::SymbolicBindingType bind): {
-      auto facet_type_id =
-          sem_ir_->insts().Get(bind.facet_value_inst_id).type_id();
-      return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
-                                .facet_type_id = facet_type_id};
-    }
 
     case Call::Kind:
     case TypeOfInst::Kind: {

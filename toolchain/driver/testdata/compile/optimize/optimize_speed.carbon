@@ -135,7 +135,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 9, scope: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 299, column: 3, scope: !24, inlinedAt: !31)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.57ee91777b6354a8", scope: null, file: !25, line: 299, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.c820bd8c65a452f9.Core.f175e619b3f4dd93", scope: null, file: !25, line: 299, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{null, !7, !7}

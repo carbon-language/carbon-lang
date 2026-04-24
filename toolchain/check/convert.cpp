@@ -1491,8 +1491,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     } else {
       type_inst_id = context.types().GetAsTypeInstId(value_id);
 
-      // Shortcut for lossless round trips through a FacetAccessType (which
-      // evaluates to SymbolicBindingType when wrapping a symbolic binding) when
+      // Shortcut for lossless round trips through a FacetAccessType when
       // converting back to the type of the original symbolic binding facet
       // value.
       //
@@ -1501,9 +1500,6 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
-      //
-      // TODO: This instruction is going to become a `SymbolicBindingType`, so
-      // we'll need to handle that instead.
       auto facet_value_inst_id =
           GetCanonicalFacetOrTypeValue(context, type_inst_id);
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
