@@ -20,10 +20,6 @@ fn F3(_: i32) {}
 fn HasGenericArg(T:! type, a: T) { a; }
 fn HasDeducedArg[T:! type](a: T) { a; }
 
-class C {
-  fn Method[self: Self]() { self; }
-}
-
 // --- function.carbon
 
 library "[[@TEST_NAME]]";
@@ -55,6 +51,34 @@ import Cpp inline '''
 void G() {
   Carbon::Other::F3(123);
 }
+''';
+
+// --- ref_arg.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn F(ref n: i32);
+
+inline Cpp '''
+void G() {
+  int n = 0;
+  Carbon::F(n);
+}
+''';
+
+// --- using.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn F();
+
+inline Cpp '''
+using Carbon::F;
+void G() { F(); }
 ''';
 
 // --- fail_todo_generic.carbon
@@ -98,16 +122,5 @@ void G() {
   // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
   // CHECK:STDERR:
   Carbon::Other::HasDeducedArg(123);
-}
-''';
-
-// --- method.carbon
-
-library "[[@TEST_NAME]]";
-
-import Other;
-import Cpp inline '''
-void G() {
-  Carbon::Other::C().Method();
 }
 ''';

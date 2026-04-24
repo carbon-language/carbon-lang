@@ -1490,6 +1490,32 @@ struct RefParamPattern {
   NameId pretty_name_id;
 };
 
+// Represents a reference return form within the function body, in the same
+// way that `OutParam` represents an initializing return form. It is used where
+// output storage would otherwise be expected, and signifies that the output
+// in question is not written to memory, but is instead returned directly,
+// as the result (or part of the result) of the `Call` inst.
+struct RefReturn {
+  static constexpr auto Kind = InstKind::RefReturn.Define<Parse::NodeId>(
+      {.ir_name = "ref_return",
+       .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+};
+
+// A pattern that represents a reference return form, in the same way that an
+// OutParamPattern represents an initializing return form.
+struct RefReturnPattern {
+  static constexpr auto Kind = InstKind::RefReturnPattern.Define<Parse::NodeId>(
+      {.ir_name = "ref_return_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
+};
+
 // A `ref x` expression. The semantics of this instruction depend on the usage
 // context:
 // - As an argument to a `ref` parameter, it evaluates to `x`, but requires
@@ -1656,7 +1682,7 @@ struct ReturnExpr {
 struct ReturnSlot {
   static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
       {.ir_name = "return_slot",
-       .expr_category = ExprCategory::DurableRef,
+       .expr_category = ComputedExprCategory::SameAsSecondOperand,
        .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
@@ -2210,6 +2236,33 @@ struct ValueParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
+};
+
+// Represents a value return form within the function body, in the same way
+// that `OutParam` represents an initializing return form. It is used where
+// output storage would otherwise be expected, and signifies that the output
+// in question is not written to memory, but is instead returned directly,
+// as the result (or part of the result) of the `Call` inst.
+struct ValueReturn {
+  static constexpr auto Kind = InstKind::ValueReturn.Define<Parse::NodeId>(
+      {.ir_name = "value_return",
+       .expr_category = ExprCategory::Value,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+};
+
+// A pattern that represents a value return form, in the same way that an
+// OutParamPattern represents an initializing return form.
+struct ValueReturnPattern {
+  static constexpr auto Kind =
+      InstKind::ValueReturnPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_return_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
 };
 
 // A `var` pattern that is a `Call` parameter. See `AnyVarPattern` for member

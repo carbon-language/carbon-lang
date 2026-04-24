@@ -21,7 +21,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F(i: i32) -> i32 {
-// CHECK:STDOUT: | `-FunctionDecl {{0x[a-f0-9]+}} <thunk_with_args_and_return.carbon:[[@LINE-1]]:21> col:21 used F__cpp_thunk 'int (int)' inline
+// CHECK:STDOUT: | `-FunctionDecl {{0x[a-f0-9]+}} <thunk_with_args_and_return.carbon:[[@LINE-1]]:21> col:21 used F 'int (int)' inline
 // CHECK:STDOUT: |   |-ParmVarDecl {{0x[a-f0-9]+}} <col:21> col:21 used 'int'
 // CHECK:STDOUT: |   |-CompoundStmt {{0x[a-f0-9]+}} <col:21>
 // CHECK:STDOUT: |   | |-DeclStmt {{0x[a-f0-9]+}} <col:21>
@@ -41,7 +41,7 @@ fn F(i: i32) -> i32 {
 // CHECK:STDOUT:     `-ReturnStmt {{0x[a-f0-9]+}} <line:36:3, col:21>
 // CHECK:STDOUT:       `-CallExpr {{0x[a-f0-9]+}} <col:10, col:21> 'int'
 // CHECK:STDOUT:         |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (*)(int)' <FunctionToPointerDecay>
-// CHECK:STDOUT:         | `-DeclRefExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (int)' lvalue Function {{0x[a-f0-9]+}} 'F__cpp_thunk' 'int (int)'
+// CHECK:STDOUT:         | `-DeclRefExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (int)' lvalue Function {{0x[a-f0-9]+}} 'F' 'int (int)'
 // CHECK:STDOUT:         |   `-NestedNameSpecifier Namespace {{0x[a-f0-9]+}} 'Carbon'
 // CHECK:STDOUT:         `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:20> 'int' <LValueToRValue>
 // CHECK:STDOUT:           `-DeclRefExpr {{0x[a-f0-9]+}} <col:20> 'int' lvalue ParmVar {{0x[a-f0-9]+}} 'i' 'int'

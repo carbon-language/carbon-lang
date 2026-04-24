@@ -40,6 +40,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
@@ -146,6 +147,107 @@ auto ImportCpp(Context& context,
         /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
+  }
+}
+
+// Given a declaration in some C++ AST which is *not* expected to be `context`,
+// find the corresponding declaration in `context`, if there is one.
+// TODO: Make this non-recursive, or remove it once we support importing C++
+// ASTs for cross file imports.
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingDecl(clang::ASTContext& context,
+                                  const clang::Decl* decl) -> clang::Decl* {
+  if (const auto* named_decl = dyn_cast<clang::NamedDecl>(decl)) {
+    auto* parent = dyn_cast_or_null<clang::DeclContext>(FindCorrespondingDecl(
+        context, cast<clang::Decl>(named_decl->getDeclContext())));
+    if (!parent) {
+      return nullptr;
+    }
+    clang::DeclarationName name;
+    if (auto* identifier = named_decl->getDeclName().getAsIdentifierInfo()) {
+      name = &context.Idents.get(identifier->getName());
+    } else {
+      // TODO: Handle more name kinds.
+      return nullptr;
+    }
+    auto decls = parent->lookup(name);
+    // TODO: If there are multiple results, try to pick the right one.
+    if (!decls.isSingleResult() ||
+        decls.front()->getKind() != named_decl->getKind()) {
+      // TODO: If we were looking for a non-template and found a template, try
+      // to form a matching template specialization.
+      return nullptr;
+    }
+    return decls.front();
+  }
+
+  if (isa<clang::TranslationUnitDecl>(decl)) {
+    return context.getTranslationUnitDecl();
+  }
+
+  return nullptr;
+}
+
+auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                           const SemIR::File& file,
+                           SemIR::ClangDeclId clang_decl_id)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(clang_decl_id.has_value());
+  auto key = file.clang_decls().Get(clang_decl_id).key;
+  const auto* decl = key.decl;
+  auto* corresponding = FindCorrespondingDecl(context.ast_context(), decl);
+  if (!corresponding) {
+    // TODO: This needs a proper diagnostic.
+    context.TODO(
+        loc_id,
+        "use of imported C++ declaration with no corresponding local import");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  key.decl = corresponding;
+  auto imported_inst_id = ImportCppDecl(context, loc_id, key);
+  auto imported_const_id = context.constant_values().Get(imported_inst_id);
+  if (!imported_const_id.is_constant()) {
+    context.TODO(loc_id, "imported C++ declant is not constant");
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return imported_const_id;
+}
+
+auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
+                               const SemIR::File& file, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  // TODO: We should perform cross-file imports by importing the C++ AST. For
+  // now we require the C++ declaration to already be imported into the
+  // destination file, and find the corresponding declaration there and import
+  // that.
+  if (!context.cpp_context()) {
+    context.TODO(
+        loc_id, "indirect import of C++ declaration with no direct Cpp import");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
+  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      const auto& class_info = file.classes().Get(class_type.class_id);
+      CARBON_CHECK(class_info.scope_id.has_value());
+      return ImportCppDeclFromFile(
+          context, loc_id, file,
+          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
+    }
+
+    case CARBON_KIND(SemIR::Namespace namespace_decl): {
+      return ImportCppDeclFromFile(context, loc_id, file,
+                                   file.name_scopes()
+                                       .Get(namespace_decl.name_scope_id)
+                                       .clang_decl_context_id());
+    }
+
+    default: {
+      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+      return SemIR::ErrorInst::ConstantId;
+    }
   }
 }
 
@@ -1294,7 +1396,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 struct ReturnInfo {
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
-  SemIR::InstBlockId return_patterns_id;
+  SemIR::InstId return_pattern_id;
 };
 
 // Returns information about the declared return type of the given function
@@ -1309,12 +1411,12 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
     // void.
     return {.return_type_inst_id = SemIR::TypeInstId::None,
             .return_form_inst_id = SemIR::InstId::None,
-            .return_patterns_id = SemIR::InstBlockId::None};
+            .return_pattern_id = SemIR::InstId::None};
   }
   if (form_inst_id == SemIR::ErrorInst::InstId) {
     return {.return_type_inst_id = SemIR::ErrorInst::TypeInstId,
             .return_form_inst_id = SemIR::ErrorInst::InstId,
-            .return_patterns_id = SemIR::InstBlockId::None};
+            .return_pattern_id = SemIR::InstId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   clang::SourceLocation return_type_loc =
@@ -1328,7 +1430,7 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   }
   SemIR::ImportIRInstId return_type_import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), return_type_loc);
-  auto return_patterns_id = SemIR::InstBlockId::Empty;
+  auto return_pattern_id = SemIR::InstId::None;
   if (auto init_form =
           context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
     auto param_pattern_id = AddInst(
@@ -1337,18 +1439,17 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
                      SemIR::OutParamPattern(
                          {.type_id = pattern_type_id,
                           .pretty_name_id = SemIR::NameId::ReturnSlot})));
-    SemIR::InstId return_slot_pattern_id =
+    return_pattern_id =
         AddInst(context,
                 SemIR::LocIdAndInst::RuntimeVerified(
                     context.sem_ir(), return_type_import_ir_inst_id,
                     SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
                                               .subpattern_id = param_pattern_id,
                                               .type_inst_id = type_inst_id})));
-    return_patterns_id = context.inst_blocks().Add({return_slot_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,
           .return_form_inst_id = form_inst_id,
-          .return_patterns_id = return_patterns_id};
+          .return_pattern_id = return_pattern_id};
 }
 
 namespace {
@@ -1360,7 +1461,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id;
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
-  SemIR::InstBlockId return_patterns_id;
+  SemIR::InstId return_pattern_id;
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
   SemIR::Function::CallParamIndexRanges param_ranges;
@@ -1392,21 +1493,20 @@ static auto CreateFunctionSignatureInsts(
     return std::nullopt;
   }
   context.full_pattern_stack().EndExplicitParamList();
-  auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
+  auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
 
-  auto match_results =
-      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_patterns_id);
+  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
+                                          param_patterns_id, return_pattern_id);
 
   return {{.implicit_param_patterns_id = implicit_param_patterns_id,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
-           .return_patterns_id = return_patterns_id,
+           .return_pattern_id = return_pattern_id,
            .call_param_patterns_id = match_results.call_param_patterns_id,
            .call_params_id = match_results.call_params_id,
            .param_ranges = match_results.param_ranges}};
@@ -1518,7 +1618,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,
-              .return_patterns_id = function_params_insts->return_patterns_id,
+              .return_pattern_id = function_params_insts->return_pattern_id,
               .virtual_modifier = virtual_modifier,
               .virtual_index = virtual_index,
               .evaluation_mode = evaluation_mode,

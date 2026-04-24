@@ -254,12 +254,12 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z5CallFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6Carbon1A12F__cpp_thunkEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon1A1FEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon1A12F__cpp_thunkEv() #1 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon1A1FEv() #1 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.A.Main()
 // CHECK:STDOUT:   ret void
