@@ -274,10 +274,8 @@ auto Internal::EndPerformDelayedAction(Context& context,
   auto contents = context.inst_block_stack().PeekCurrentBlockContents();
   auto pattern_contents =
       context.pattern_block_stack().PeekCurrentBlockContents();
-  if ((pattern_contents.empty() && contents.size() == 1 &&
-       contents[0] == result_id) ||
-      (contents.empty() && pattern_contents.size() == 1 &&
-       pattern_contents[0] == result_id)) {
+  if ((contents == llvm::ArrayRef(result_id) && pattern_contents.empty()) ||
+      (pattern_contents == llvm::ArrayRef(result_id) && contents.empty())) {
     context.inst_block_stack().PopAndDiscard();
     context.pattern_block_stack().PopAndDiscard();
     return result_id;

@@ -392,7 +392,7 @@ struct CalleePatternMatchAction {
   static constexpr auto Kind =
       InstKind::CalleePatternMatchAction.Define<Parse::NodeId>(
           {.ir_name = "callee_pattern_match_action",
-           .expr_category = ExprCategory::Dependent,
+           .expr_category = ExprCategory::Value,
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -777,7 +777,7 @@ struct FormParamPatternAction {
   static constexpr auto Kind =
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_param_pattern_action",
-           .expr_category = ExprCategory::Pattern,
+           .expr_category = ExprCategory::Value,
            .constant_kind = InstConstantKind::ConstantInstAction,
            .is_lowered = false});
 
@@ -1342,7 +1342,7 @@ struct OutFormParamPatternAction {
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
               {.ir_name = "out_form_param_pattern_action",
-               .expr_category = ExprCategory::Pattern,
+               .expr_category = ExprCategory::Value,
                .constant_kind = InstConstantKind::ConstantInstAction,
                .is_lowered = false});
 
