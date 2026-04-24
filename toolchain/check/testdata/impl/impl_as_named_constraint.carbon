@@ -169,6 +169,128 @@ constraint B(X:! Undefined) {
 
 impl () as B(1) {}
 
+// --- impl_as_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I;
+}
+
+class C;
+impl C as N where .I1 = C {}
+
+fn F(_:! I where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- impl_as_concrete_generic_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+class C;
+
+constraint N {
+  extend require impls I(C);
+}
+
+impl C as N where .I1 = C {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I(Self);
+}
+
+class C;
+// CHECK:STDERR: fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N where .I1 = C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1:! type;
+// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:
+impl C as N where .I1 = C {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I where .I1 = Self;
+}
+
+class C;
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1:! type;
+// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:
+impl C as N {}
+
+fn F(_:! I where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I(Self) where .I1 = Self;
+}
+
+class C;
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1:! type;
+// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:
+impl C as N {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
