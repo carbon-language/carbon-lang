@@ -50,7 +50,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 35ea67920b7f6ac8e09be1c47278752b1e827f76 # frozen: 26.3.0
+    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9 # frozen: 26.3.1
     hooks:
       - id: black
   - repo: local
@@ -139,7 +139,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'a66e98df7b4aeeb3724184b332785976d062b92e' # frozen: v1.19.1
+    rev: 'fc0f09a29bb495f4a91f00266155d6282d52485d' # frozen: v1.20.2
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
