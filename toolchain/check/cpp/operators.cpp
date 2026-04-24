@@ -283,7 +283,7 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
 static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
-    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::Signature {
+    clang::FunctionDecl* function_decl) -> SemIR::Signature {
   // If we're performing a constructor initialization from a list, form a
   // function signature that takes a single tuple or struct pattern
   // instead of a function signature with one parameter per C++ parameter.
@@ -300,7 +300,7 @@ static auto GetConversionSignatureToImport(
     //
     //   fn Class.Class((a: A, b: B, c: C)) -> Class;
     return {
-        .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
+        .kind = SemIR::Signature::TuplePattern,
         .num_params = static_cast<int32_t>(
             context.inst_blocks().Get(tuple_type->type_elements_id).size())};
   }
@@ -310,8 +310,7 @@ static auto GetConversionSignatureToImport(
   //
   //   fn Class.Class(a: A) -> Class;
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
-    return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
-            .num_params = 1};
+    return {.kind = SemIR::Signature::Normal, .num_params = 1};
   }
 
   // Otherwise, the initialization is calling a conversion function
@@ -319,8 +318,7 @@ static auto GetConversionSignatureToImport(
   //
   //   fn Source.<conversion function>[self: Source]() -> Dest;
   CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
-  return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
-          .num_params = 0};
+  return {.kind = SemIR::Signature::Normal, .num_params = 0};
 }
 
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
@@ -402,8 +400,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         auto signature = GetConversionSignatureToImport(
             context, source_id, step.Kind, step.Function.Function);
+        SemIR::SignatureId signature_id = context.signatures().Add(std::move(signature));
         auto result_id = ImportCppFunctionDecl(
-            context, loc_id, step.Function.Function, signature);
+            context, loc_id, step.Function.Function, signature_id);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
                 result_id)) {
           CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
@@ -545,9 +544,18 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
         --num_params;
       }
 
-      auto result_id =
-          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function,
-                                {.num_params = num_params});
+      SemIR::Signature signature;
+      signature.kind = SemIR::Signature::Normal;
+      signature.num_params = num_params;
+      for (int i = 0; i < num_params; ++i) {
+        signature.passing_modes.push_back(
+            SemIR::Signature::PassingMode::Copy);
+      }
+      SemIR::SignatureId signature_id =
+          context.signatures().Add(std::move(signature));
+
+      auto result_id = ImportCppFunctionDecl(
+          context, loc_id, best_viable_fn->Function, signature_id);
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,

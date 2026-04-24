@@ -11,6 +11,26 @@
 
 namespace Carbon::SemIR {
 
+auto Signature::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: ";
+  switch (kind) {
+    case Normal:
+      out << "normal";
+      break;
+    case TuplePattern:
+      out << "tuple";
+      break;
+  }
+  out << ", num_params: " << num_params;
+  if (!passing_modes.empty()) {
+    out << ", modes: ";
+    for (auto mode : passing_modes) {
+      out << (mode == PassingMode::Move ? "M" : "C");
+    }
+  }
+  out << "}";
+}
+
 auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
   RawStringOstream decl_stream;
   auto policy = decl->getASTContext().getPrintingPolicy();
@@ -21,20 +41,11 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
     decl->print(decl_stream, policy);
   }
 
-  if (signature.num_params != -1) {
-    out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\", kind: ";
-    switch (signature.kind) {
-      case ClangDeclKey::Signature::Normal:
-        out << "normal";
-        break;
-      case ClangDeclKey::Signature::TuplePattern:
-        out << "tuple";
-        break;
-    }
-    out << ", num_params: " << signature.num_params << "}";
-  } else {
-    out << "\"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
+  out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
+  if (signature_id != SignatureId::None) {
+    out << ", signature_id: " << signature_id;
   }
+  out << "}";
 }
 
 auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {

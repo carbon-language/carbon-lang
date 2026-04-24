@@ -394,6 +394,7 @@ static auto ImportNamespaceDecl(Context& context,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
   auto key = SemIR::ClangDeclKey(clang_decl);
+ 
   // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
       existing_inst_id.has_value()) {
@@ -1248,8 +1249,9 @@ static auto MakeImplicitParamPatternsBlockId(
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
-                                     SemIR::ClangDeclKey::Signature signature)
+                                     SemIR::SignatureId signature_id)
     -> SemIR::InstBlockId {
+  const auto& signature = context.signatures().Get(signature_id);
   llvm::SmallVector<SemIR::InstId> param_ids;
   llvm::SmallVector<SemIR::InstId> param_type_ids;
   param_ids.reserve(signature.num_params);
@@ -1309,12 +1311,12 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   }
 
   switch (signature.kind) {
-    case SemIR::ClangDeclKey::Signature::Normal: {
+    case SemIR::Signature::Normal: {
       // Use the converted parameter list as-is.
       break;
     }
 
-    case SemIR::ClangDeclKey::Signature::TuplePattern: {
+    case SemIR::Signature::TuplePattern: {
       // Replace the parameters with a single tuple pattern containing the
       // converted parameter list.
       auto param_block_id = context.inst_blocks().Add(param_ids);
@@ -1477,7 +1479,7 @@ struct FunctionSignatureInsts {
 // signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
     Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
-    SemIR::ClangDeclKey::Signature signature)
+    SemIR::SignatureId signature_id)
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartImplicitParamList();
   auto implicit_param_patterns_id =
@@ -1488,7 +1490,7 @@ static auto CreateFunctionSignatureInsts(
   context.full_pattern_stack().EndImplicitParamList();
   context.full_pattern_stack().StartExplicitParamList();
   auto param_patterns_id =
-      MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature);
+      MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature_id);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
@@ -1553,12 +1555,12 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
 static auto ImportFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::ImportIRInstId import_ir_inst_id,
                            clang::FunctionDecl* clang_decl,
-                           SemIR::ClangDeclKey::Signature signature)
+                           SemIR::SignatureId signature_id)
     -> std::optional<SemIR::FunctionId> {
   StartFunctionSignature(context);
 
   auto function_params_insts =
-      CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
+      CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature_id);
 
   auto [pattern_block_id, decl_block_id] =
       FinishFunctionSignature(context, /*check_unused=*/false);
@@ -1629,7 +1631,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   context.functions().Get(function_id).clang_decl_id =
       context.clang_decls().Add(
-          {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature),
+          {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id),
            .inst_id = decl_id});
 
   return function_id;
@@ -1642,9 +1644,9 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 // the trailing parameters.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                clang::FunctionDecl* clang_decl,
-                               SemIR::ClangDeclKey::Signature signature)
+                               SemIR::SignatureId signature_id)
     -> SemIR::InstId {
-  auto key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature);
+  auto key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id);
 
   // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
@@ -1671,7 +1673,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
   auto function_id =
-      ImportFunction(context, loc_id, import_ir_inst_id, clang_decl, signature);
+      ImportFunction(context, loc_id, import_ir_inst_id, clang_decl, signature_id);
   if (!function_id) {
     MarkFailedDecl(context, key);
     return SemIR::ErrorInst::InstId;
@@ -1688,10 +1690,15 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
     if (clang::FunctionDecl* thunk_clang_decl =
             BuildCppThunk(context, function_info)) {
+      SemIR::Signature thunk_signature;
+      thunk_signature.kind = SemIR::Signature::Normal;
+      thunk_signature.num_params = static_cast<int32_t>(thunk_clang_decl->getNumParams());
+      // All thunk parameters are passed by copy (as they are pointers or simple types).
+      thunk_signature.passing_modes.assign(thunk_signature.num_params, SemIR::Signature::PassingMode::Copy);
+      SemIR::SignatureId thunk_signature_id = context.signatures().Add(std::move(thunk_signature));
+
       if (auto thunk_function_id = ImportFunction(
-              context, loc_id, import_ir_inst_id, thunk_clang_decl,
-              {.num_params =
-                   static_cast<int32_t>(thunk_clang_decl->getNumParams())})) {
+              context, loc_id, import_ir_inst_id, thunk_clang_decl, thunk_signature_id)) {
         auto& thunk_function = context.functions().Get(*thunk_function_id);
         thunk_function.SetCppThunk(function_info.first_owning_decl_id);
         SemIR::InstId thunk_function_decl_id =
@@ -1770,8 +1777,9 @@ static auto AddDependentUnimportedTypeDecls(Context& context,
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
     Context& context, const clang::FunctionDecl& clang_decl,
-    SemIR::ClangDeclKey::Signature signature, ImportWorklist& worklist)
+    SemIR::SignatureId signature_id, ImportWorklist& worklist)
     -> void {
+  const auto& signature = context.signatures().Get(signature_id);
   const auto* function_type =
       clang_decl.getType()->castAs<clang::FunctionProtoType>();
   for (int i : llvm::seq(clang_decl.hasCXXExplicitFunctionObjectParameter() +
@@ -1791,7 +1799,7 @@ static auto AddDependentUnimportedDecls(Context& context,
   clang::Decl* clang_decl = key.decl;
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl,
-                                        key.signature, worklist);
+                                        key.signature_id, worklist);
   } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     if (!isa<clang::TagDecl>(clang_decl)) {
       AddDependentUnimportedTypeDecls(
@@ -1911,7 +1919,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   clang::Decl* clang_decl = key.decl;
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     return ImportFunctionDecl(context, loc_id, clang_function_decl,
-                              key.signature);
+                              key.signature_id);
   }
   if (auto* clang_namespace_decl = dyn_cast<clang::NamespaceDecl>(clang_decl)) {
     return ImportNamespaceDecl(context, clang_namespace_decl);

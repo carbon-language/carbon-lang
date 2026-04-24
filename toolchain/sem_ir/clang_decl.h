@@ -45,15 +45,17 @@ struct Signature : public Printable<Signature> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  friend auto operator==(const Signature& lhs, const Signature& rhs)
-      -> bool = default;
+  auto operator==(const Signature& rhs) const -> bool {
+    return kind == rhs.kind && num_params == rhs.num_params &&
+           passing_modes == rhs.passing_modes;
+  }
 
   // Hashing for Signature.
   friend auto CarbonHashValue(const Signature& value, uint64_t seed)
       -> HashCode {
     HashCode code = HashValue(std::tuple{value.kind, value.num_params}, seed);
     for (auto mode : value.passing_modes) {
-      code = HashValue(static_cast<int8_t>(mode), code);
+      code = HashValue(static_cast<int8_t>(mode), static_cast<uint64_t>(code));
     }
     return code;
   }

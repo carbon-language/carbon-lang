@@ -130,6 +130,50 @@ auto CheckCppOverloadAccess(
                .highest_allowed_access = allowed_access_kind});
 }
 
+// Computes the signature for a C++ function candidate based on the conversions
+// performed on the arguments.
+static auto ComputeSignature(Context& context,
+                             clang::OverloadCandidateSet::iterator candidate,
+                             llvm::ArrayRef<clang::Expr*> arg_exprs)
+    -> SemIR::SignatureId {
+  SemIR::Signature signature;
+  signature.kind = SemIR::Signature::Normal;
+  signature.num_params = static_cast<int32_t>(arg_exprs.size());
+  signature.passing_modes.reserve(signature.num_params);
+
+  for (unsigned i = 0; i < arg_exprs.size(); ++i) {
+    const auto& ics = candidate->Conversions[i];
+    SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::Copy;
+
+    if (ics.isStandard()) {
+      const auto& scs = ics.Standard;
+      if (scs.ReferenceBinding && !scs.IsLvalueReference) {
+        mode = SemIR::Signature::PassingMode::Move;
+      }
+
+      // Tweak: treat it as a copy if it's a trivial move and the copy ctor is
+      // also non-deleted and trivial.
+      if (mode == SemIR::Signature::PassingMode::Move) {
+        clang::QualType param_type =
+            candidate->Function->getParamDecl(i)->getType();
+        if (const auto* record_type = param_type->getAs<clang::RecordType>()) {
+          if (const auto* record_decl =
+                  dyn_cast<clang::CXXRecordDecl>(record_type->getDecl())) {
+            if (record_decl->hasTrivialMoveConstructor() &&
+                record_decl->hasTrivialCopyConstructor() &&
+                !record_decl->defaultedCopyConstructorIsDeleted()) {
+              mode = SemIR::Signature::PassingMode::Copy;
+            }
+          }
+        }
+      }
+    }
+    signature.passing_modes.push_back(mode);
+  }
+
+  return context.signatures().Add(std::move(signature));
+}
+
 auto PerformCppOverloadResolution(
     Context& context, SemIR::LocId loc_id,
     const SemIR::CppOverloadSet& overload_set,
@@ -179,9 +223,11 @@ auto PerformCppOverloadResolution(
     case clang::OverloadingResult::OR_Success: {
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
+      SemIR::SignatureId signature_id =
+          ComputeSignature(context, best_viable_fn, arg_exprs);
+
       SemIR::InstId result_id = ImportCppFunctionDecl(
-          context, loc_id, best_viable_fn->Function,
-          {.num_params = static_cast<int32_t>(arg_exprs.size())});
+          context, loc_id, best_viable_fn->Function, signature_id);
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,

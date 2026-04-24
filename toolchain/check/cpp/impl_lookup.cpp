@@ -69,7 +69,7 @@ namespace {
 struct DeclInfo {
   // If null, no C++ decl was found and no witness can be created.
   clang::NamedDecl* decl = nullptr;
-  SemIR::ClangDeclKey::Signature signature;
+  SemIR::SignatureId signature_id;
 };
 }  // namespace
 
@@ -91,7 +91,7 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
   }
 
   auto fn_id =
-      ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.signature);
+      ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.signature_id);
   if (fn_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
@@ -100,6 +100,19 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
   return fn_id;
+}
+
+// Creates a signature with `Normal` kind and the given parameter passing
+// modes, and adds it to the value store.
+static auto MakeSignature(
+    Context& context,
+    std::initializer_list<SemIR::Signature::PassingMode> modes)
+    -> SemIR::SignatureId {
+  SemIR::Signature signature;
+  signature.kind = SemIR::Signature::Normal;
+  signature.num_params = static_cast<int32_t>(modes.size());
+  signature.passing_modes.assign(modes.begin(), modes.end());
+  return context.signatures().Add(std::move(signature));
 }
 
 static auto BuildCopyWitness(
@@ -113,9 +126,12 @@ static auto BuildCopyWitness(
     return SemIR::InstId::None;
   }
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    SemIR::SignatureId signature_id =
+        MakeSignature(context, {SemIR::Signature::PassingMode::Copy});
+
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
-                              .signature = {.num_params = 1}};
+                              .signature_id = signature_id};
     auto fn_id = GetFunctionId(context, loc_id, decl_info);
     if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
       return fn_id;
@@ -150,8 +166,10 @@ static auto BuildCppUnsafeDerefWitness(
     context.TODO(loc_id, "operator* overload sets not implemented yet");
     return SemIR::ErrorInst::InstId;
   }
+  SemIR::SignatureId signature_id = MakeSignature(context, {});
+
   auto decl_info =
-      DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
+      DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
@@ -186,9 +204,11 @@ static auto BuildDefaultWitness(
   // That happens if class_decl->hasUninitializedExplicitInitFields() is true.
   //
   // TODO: Consider treating such types as not implementing `Default`.
+  SemIR::SignatureId signature_id = MakeSignature(context, {});
+
   auto decl_info =
       DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
-               .signature = {.num_params = 0}};
+               .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
@@ -209,8 +229,10 @@ static auto BuildDestroyWitness(
   if (!class_decl) {
     return SemIR::InstId::None;
   }
+  SemIR::SignatureId signature_id = MakeSignature(context, {});
+
   auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
-                            .signature = {.num_params = 0}};
+                            .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;

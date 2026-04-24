@@ -160,9 +160,25 @@ auto move(C&) -> C&&;
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F() {
+  // CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(Cpp.make());
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.foo(Cpp.make());
 }
 
@@ -170,9 +186,25 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F(c: Cpp.C) {
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(c);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.foo(c);
 }
 
@@ -180,9 +212,25 @@ fn F(c: Cpp.C) {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.C) {
+  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(c);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.foo(c);
 }
 
@@ -190,9 +238,25 @@ fn F(ref c: Cpp.C) {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: pass_move_only_param_ref_by_move.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: pass_move_only_param_ref_by_move.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.C) {
+  // CHECK:STDERR: pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(Cpp.move(ref c));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.foo(Cpp.move(ref c));
 }
 
