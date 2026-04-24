@@ -989,7 +989,7 @@ auto GetCanonicalQuerySelfForLookupImplWitness(Context& context,
 
   // The self value is canonicalized in order to produce a canonical
   // LookupImplWitness instruction, avoiding multiple constant values for
-  // `<facet value>` and `<facet value>` as type, which always have the same
+  // `<facet value>` and `<facet value> as type`, which always have the same
   // lookup result.
   return GetCanonicalFacetOrTypeValue(
       context, context.constant_values().Get(self_inst_id));
