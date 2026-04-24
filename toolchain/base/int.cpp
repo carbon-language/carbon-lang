@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <string>
 
+#include "toolchain/base/canonical_value_store_impl.h"
+#include "toolchain/base/value_store_impl.h"
+
 namespace Carbon {
 
 auto IntStore::CanonicalBitWidth(int significant_bits) -> int {
@@ -65,5 +68,8 @@ auto IntStore::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(std::string(label), values_);
 }
+
+template class CanonicalValueStore<IntStore::APIntId, llvm::APInt>;
+template class ValueStore<IntStore::APIntId, llvm::APInt>;
 
 }  // namespace Carbon

@@ -368,4 +368,12 @@ class ConstantStore {
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::InstId, SemIR::ConstantId,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ConstantId::SymbolicId,
+                                 SemIR::SymbolicConstant,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_

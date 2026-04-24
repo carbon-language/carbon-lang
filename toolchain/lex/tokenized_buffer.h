@@ -383,4 +383,10 @@ inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
 
 }  // namespace Carbon::Lex
 
+namespace Carbon {
+extern template class ValueStore<Lex::TokenIndex, Lex::TokenInfo>;
+extern template class ValueStore<Lex::LineIndex, Lex::LineInfo>;
+extern template class ValueStore<Lex::CommentIndex, Lex::CommentData>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_

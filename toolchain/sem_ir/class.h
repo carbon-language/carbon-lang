@@ -120,4 +120,9 @@ using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::ClassId, SemIR::Class,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CLASS_H_

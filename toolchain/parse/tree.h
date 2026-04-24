@@ -349,4 +349,9 @@ struct Tree::ConvertTo<NodeIdOneOf<T...>> {
 
 }  // namespace Carbon::Parse
 
+namespace Carbon {
+extern template class ValueStore<Parse::DeferredDefinitionIndex,
+                                 Parse::DeferredDefinition>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_PARSE_TREE_H_

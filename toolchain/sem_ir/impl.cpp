@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/impl.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -40,3 +41,7 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ImplId, SemIR::Impl, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

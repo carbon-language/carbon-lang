@@ -49,6 +49,17 @@ using RequireImplsStore =
 using RequireImplsBlockStore =
     BlockValueStore<RequireImplsBlockId, RequireImplsId, Tag<CheckIRId>>;
 
+extern template class BlockValueStore<RequireImplsBlockId, RequireImplsId,
+                                      Tag<CheckIRId>>;
+
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::RequireImplsId, SemIR::RequireImpls,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::RequireImplsBlockId,
+                                 llvm::MutableArrayRef<SemIR::RequireImplsId>,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_REQUIRE_IMPLS_H_

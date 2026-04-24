@@ -8,6 +8,8 @@
 #include "clang/AST/TextNodeDumper.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
+#include "toolchain/base/canonical_value_store_impl.h"
+#include "toolchain/base/value_store_impl.h"
 
 namespace Carbon::SemIR {
 
@@ -42,3 +44,10 @@ auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class CanonicalValueStore<SemIR::ClangDeclId, SemIR::ClangDeclKey,
+                                   Tag<SemIR::CheckIRId>, SemIR::ClangDecl>;
+template class ValueStore<SemIR::ClangDeclId, SemIR::ClangDecl,
+                          Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

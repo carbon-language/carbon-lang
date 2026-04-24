@@ -11,8 +11,10 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/block_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -205,4 +207,16 @@ auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
 }
 
+template class BlockValueStore<CustomLayoutId, ObjectSize, Tag<CheckIRId>>;
+
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::CustomLayoutId,
+                          llvm::MutableArrayRef<SemIR::ObjectSize>,
+                          Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

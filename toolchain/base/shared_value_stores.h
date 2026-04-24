@@ -87,6 +87,15 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   StringLiteralStore string_literals_;
 };
 
+extern template class CanonicalValueStore<FloatId, llvm::APFloat>;
+extern template class CanonicalValueStore<IdentifierId, llvm::StringRef>;
+extern template class CanonicalValueStore<StringLiteralValueId,
+                                          llvm::StringRef>;
+extern template class ValueStore<FloatId, llvm::APFloat>;
+extern template class ValueStore<IdentifierId, llvm::StringRef>;
+extern template class ValueStore<RealId, Real>;
+extern template class ValueStore<StringLiteralValueId, llvm::StringRef>;
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_

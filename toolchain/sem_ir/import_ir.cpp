@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -56,3 +57,9 @@ auto GetCanonicalFileAndInstId(const File* sem_ir, InstId inst_id)
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ImportIRId, SemIR::ImportIR,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::ImportIRInstId, SemIR::ImportIRInst>;
+}  // namespace Carbon

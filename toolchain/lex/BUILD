@@ -257,6 +257,7 @@ cc_library(
         "//toolchain/base:index_base",
         "//toolchain/base:mem_usage",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",

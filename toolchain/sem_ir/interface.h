@@ -73,4 +73,9 @@ using InterfaceStore = ValueStore<InterfaceId, Interface, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::InterfaceId, SemIR::Interface,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INTERFACE_H_

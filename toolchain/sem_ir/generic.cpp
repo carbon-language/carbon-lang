@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/generic.h"
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -137,3 +138,10 @@ auto GetTypeOfInstInSpecific(const File& specific_ir, SpecificId specific_id,
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::GenericId, SemIR::Generic,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::SpecificId, SemIR::Specific,
+                          Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

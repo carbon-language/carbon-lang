@@ -50,4 +50,10 @@ using AssociatedConstantStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::AssociatedConstantId,
+                                 SemIR::AssociatedConstant,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_ASSOCIATED_CONSTANT_H_

@@ -285,4 +285,17 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class CanonicalValueStore<
+    SemIR::FacetTypeId, SemIR::FacetTypeInfo, Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
+extern template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
+                                 SemIR::IdentifiedFacetType,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_

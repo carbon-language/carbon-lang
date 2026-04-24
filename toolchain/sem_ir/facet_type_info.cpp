@@ -6,7 +6,9 @@
 
 #include <tuple>
 
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -361,3 +363,15 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class CanonicalValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+                                   Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<
+    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
+template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::IdentifiedFacetTypeId,
+                          SemIR::IdentifiedFacetType, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
