@@ -2568,7 +2568,10 @@ static auto AddRequirementBase(Context& context,
     const auto& base_info =
         context.facet_types().Get(base_facet_type->facet_type_id);
     info->extend_constraints.append(base_info.extend_constraints);
+    info->extend_named_constraints.append(base_info.extend_named_constraints);
     info->self_impls_constraints.append(base_info.self_impls_constraints);
+    info->self_impls_named_constraints.append(
+        base_info.self_impls_named_constraints);
     info->type_impls_interfaces.append(base_info.type_impls_interfaces);
     info->type_impls_named_constraints.append(
         base_info.type_impls_named_constraints);

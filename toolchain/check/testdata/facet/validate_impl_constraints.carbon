@@ -150,7 +150,7 @@ fn G() {
   impl C as Z {}
   impl C as Y {}
   impl C as X(C) {}
-  // CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z where .Self impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z & N where .Self impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_where_period_self_rhs_sees_lhs.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -181,7 +181,7 @@ fn G() {
   impl C as Z {}
   impl C as Y {}
   impl R(C) as X(C) {}
-  // CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z where R(.Self as Z & Y) impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z & N where R(.Self as Z & Y) impls X(.Self as Z & Y)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_where_type_rhs_sees_lhs.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

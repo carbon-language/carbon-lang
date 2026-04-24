@@ -236,17 +236,16 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     return_type_id = GetTupleType(context, {});
   }
 
-  llvm::SmallVector<SemIR::InstId, 1> return_arg_ids;
-  for (auto return_pattern_id :
-       context.inst_blocks().GetOrEmpty(callee.return_patterns_id)) {
+  auto return_arg_id = SemIR::InstId::None;
+  if (callee.return_pattern_id.has_value()) {
     Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");
-          builder.Note(return_pattern_id, IncompleteReturnTypeHere);
+          builder.Note(callee.return_pattern_id, IncompleteReturnTypeHere);
         });
     auto arg_type_id = CheckFunctionReturnPatternType(
-        context, loc_id, return_pattern_id, *callee_specific_id);
+        context, loc_id, callee.return_pattern_id, *callee_specific_id);
     if (arg_type_id == SemIR::ErrorInst::TypeId) {
       return_type_id = SemIR::ErrorInst::TypeId;
     }
@@ -255,20 +254,20 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       case SemIR::InitRepr::Dependent:
         // Tentatively use storage for a temporary as the return argument.
         // This will be replaced if necessary when we perform initialization.
-        return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
-            context, loc_id, {.type_id = arg_type_id}));
+        return_arg_id = AddInst<SemIR::TemporaryStorage>(
+            context, loc_id, {.type_id = arg_type_id});
         break;
       case SemIR::InitRepr::None:
       case SemIR::InitRepr::ByCopy:
       case SemIR::InitRepr::Incomplete:
       case SemIR::InitRepr::Abstract:
-        return_arg_ids.push_back(SemIR::InstId::None);
+        return_arg_id = SemIR::InstId::None;
         break;
     }
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_arg_ids, callee,
+      context, loc_id, callee_function.self_id, arg_ids, return_arg_id, callee,
       *callee_specific_id, is_operator_syntax);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {

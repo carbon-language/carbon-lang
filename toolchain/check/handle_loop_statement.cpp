@@ -15,7 +15,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
