@@ -112,7 +112,7 @@ class TestCheckDependentPR(unittest.TestCase):
             pr_id="pr_3",
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
-            comments=[self._make_comment(open_deps=[7087])],
+            comments=[self._make_comment(open_deps=[1])],
             has_dependent_label=True,
         )
         check_dependent_pr._process_pr(
@@ -146,8 +146,9 @@ class TestCheckDependentPR(unittest.TestCase):
         calls = self.mock_client.execute.call_args_list
         update_mutation = calls[1][0][0]
         self.assertIn("updateIssueComment", update_mutation)
-        self.assertIn('\\"open\\": [1]', update_mutation)
-        self.assertIn('\\"merged\\": [2]', update_mutation)
+        variable_values = calls[1][1]["variable_values"]
+        self.assertIn('"open": [1]', variable_values["body"])
+        self.assertIn('"merged": [2]', variable_values["body"])
 
     def test_process_pr_non_coherent_prefix(self) -> None:
         self.mock_client.execute.return_value = self._make_pr_response(
@@ -179,7 +180,10 @@ class TestCheckDependentPR(unittest.TestCase):
             label_id="label_dependent",
             dry_run=False,
         )
-        self.assertEqual(self.mock_client.execute.call_count, 1)
+        self.assertEqual(self.mock_client.execute.call_count, 3)
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("addLabelsToLabelable", calls[1][0][0])
+        self.assertIn("addComment", calls[2][0][0])
 
     def test_process_pr_scanning_no_add(self) -> None:
         self.mock_client.execute.return_value = self._make_pr_response(
@@ -203,7 +207,7 @@ class TestCheckDependentPR(unittest.TestCase):
             pr_id="pr_6",
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
-            comments=[self._make_comment(open_deps=[1])],
+            comments=[self._make_comment(open_deps=[1], first_commit=_OID2)],
             has_dependent_label=True,
         )
         check_dependent_pr._process_pr(
@@ -228,7 +232,11 @@ class TestCheckDependentPR(unittest.TestCase):
                 }
             ],
         )
-        check_dependent_pr._process_pr(
+        import json
+
+        self.assertRaises(
+            json.decoder.JSONDecodeError,
+            check_dependent_pr._process_pr,
             self.mock_client,
             pr_number=5,
             pr_to_commits={5: [_OID1]},
@@ -236,7 +244,32 @@ class TestCheckDependentPR(unittest.TestCase):
             label_id="label_dependent",
             dry_run=False,
         )
-        self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_hidden_comment(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_14",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[
+                {
+                    "id": "hidden_comment_id",
+                    "body": '<!-- check_dependent_pr {"open": [1]} -->',
+                    "isMinimized": True,
+                }
+            ],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=14,
+            pr_to_commits={1: [_OID1], 14: [_OID1, _OID2]},
+            open_pr_numbers={1, 14},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertEqual(self.mock_client.execute.call_count, 2)
+        self.assertIn("addComment", calls[1][0][0])
 
     def test_process_pr_sticky_first_commit(self) -> None:
         self.mock_client.execute.return_value = self._make_pr_response(
@@ -255,18 +288,16 @@ class TestCheckDependentPR(unittest.TestCase):
             dry_run=False,
         )
         calls = self.mock_client.execute.call_args_list
-        update_mutation = calls[1][0][0]
-        self.assertIn(_OID2[:8], update_mutation)
-        self.assertNotIn(_OID1[:8], update_mutation)
+        variable_values = calls[1][1]["variable_values"]
+        self.assertIn(_OID2[:8], variable_values["body"])
+        self.assertNotIn(_OID1[:8], variable_values["body"])
 
     def test_process_pr_rebase_first_commit(self) -> None:
         self.mock_client.execute.return_value = self._make_pr_response(
             pr_id="pr_12",
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
-            comments=[
-                self._make_comment(open_deps=[1, 2], first_commit="MISSING")
-            ],
+            comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
         check_dependent_pr._process_pr(
@@ -278,8 +309,8 @@ class TestCheckDependentPR(unittest.TestCase):
             dry_run=False,
         )
         calls = self.mock_client.execute.call_args_list
-        update_mutation = calls[1][0][0]
-        self.assertIn(_OID1[:8], update_mutation)
+        variable_values = calls[1][1]["variable_values"]
+        self.assertIn(_OID1[:8], variable_values["body"])
 
     def test_process_pr_fallback_no_independent_commit(self) -> None:
         self.mock_client.execute.return_value = self._make_pr_response(
@@ -298,10 +329,76 @@ class TestCheckDependentPR(unittest.TestCase):
             dry_run=False,
         )
         calls = self.mock_client.execute.call_args_list
-        update_mutation = calls[1][0][0]
+        variable_values = calls[1][1]["variable_values"]
         self.assertIn(
-            "unable to identify starting review commit", update_mutation
+            "unable to identify starting review commit", variable_values["body"]
         )
+
+    def test_process_pr_sequence_failure(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_1",
+            head_ref_oid=_OID1,
+            commits=[_OID1],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=1,
+            pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_no_overlap_different_commits(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID2],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: [_OID1], 2: [_OID2]},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_no_unique_commit(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: [_OID1, _OID2, _OID3], 2: [_OID1, _OID2]},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 1)
+
+    def test_process_pr_multiple_non_overlapping_commits(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID4,
+            commits=[_OID1, _OID3, _OID4],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: [_OID1, _OID2], 2: [_OID1, _OID3, _OID4]},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            dry_run=False,
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 3)
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("addLabelsToLabelable", calls[1][0][0])
 
 
 if __name__ == "__main__":

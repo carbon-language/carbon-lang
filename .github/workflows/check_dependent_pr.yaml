@@ -25,10 +25,13 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
-            api.github.com:443 github.com:443
+            api.github.com:443 github.com:443 pypi.org:443
+            files.pythonhosted.org:443
 
+      # Note: pull_request_target checks out the base branch by default.
+      # This is safe as it avoids running untrusted code from the PR branch.
       - name: Checkout code
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install dependencies
         run: |
@@ -36,7 +39,7 @@ jobs:
 
       - name: Check Dependent PR
         run: |
-          if [ "${{ github.event.action }}" = "closed" ]; then
+          if [ "$EVENT_ACTION" = "closed" ]; then
             python3 github_tools/check_dependent_pr.py --scan
           else
             python3 github_tools/check_dependent_pr.py --pr-number "${PR_NUMBER}"
@@ -44,3 +47,4 @@ jobs:
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
