@@ -101,7 +101,7 @@
     "@stylistic/eslint-plugin": "^2.9.0",
     "@types/node": "^20",
     "@types/vscode": "^1.73.0",
-    "@vscode/vsce": "^2.27.0",
+    "@vscode/vsce": "^3.9.1",
     "esbuild": "^0.25.0",
     "eslint": "^9.13.0",
     "typescript": "^5.7.2",
@@ -109,5 +109,8 @@
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }
