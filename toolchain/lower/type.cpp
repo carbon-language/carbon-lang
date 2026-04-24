@@ -275,8 +275,8 @@ auto FunctionTypeInfoBuilder::Build() && -> FunctionTypeInfo {
   // Determine how the parameters are numbered in SemIR, and make sure it's the
   // same for all versions of the function.
   auto semir_info = GetSemIRIndexInfo(functions_.front());
-  CARBON_CHECK(
-      llvm::all_of(functions_.drop_front(), [&](const auto& fn_in_context) {
+  CARBON_CHECK(llvm::all_of(
+      functions_.drop_front(), [&](const FunctionInContext& fn_in_context) {
         return GetSemIRIndexInfo(fn_in_context) == semir_info;
       }));
 
