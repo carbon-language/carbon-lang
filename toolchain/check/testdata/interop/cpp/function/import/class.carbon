@@ -143,6 +143,60 @@ fn F(c: Cpp.C) {
 }
 
 // ============================================================================
+// Move-only class as parameter type
+// ============================================================================
+
+// --- move_only_param_type.h
+
+struct C {
+  C(C&&);
+};
+
+auto foo(C) -> void;
+auto make() -> C;
+auto move(C&) -> C&&;
+
+// --- pass_move_only_param_temporary.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "move_only_param_type.h";
+
+fn F() {
+  Cpp.foo(Cpp.make());
+}
+
+// --- fail_pass_move_only_param_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "move_only_param_type.h";
+
+fn F(c: Cpp.C) {
+  Cpp.foo(c);
+}
+
+// --- fail_pass_move_only_param_ref.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "move_only_param_type.h";
+
+fn F(ref c: Cpp.C) {
+  Cpp.foo(c);
+}
+
+// --- pass_move_only_param_ref_by_move.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "move_only_param_type.h";
+
+fn F(ref c: Cpp.C) {
+  Cpp.foo(Cpp.move(ref c));
+}
+
+// ============================================================================
 // Defined class with a single data member as parameter type
 // ============================================================================
 

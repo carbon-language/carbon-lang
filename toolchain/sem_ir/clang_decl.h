@@ -15,6 +15,50 @@
 
 namespace Carbon::SemIR {
 
+// Information about how to form the Carbon function signature from the Clang
+// function declaration.
+struct Signature : public Printable<Signature> {
+  // A passing mode for a parameter in a C++ function signature.
+  enum class PassingMode : int8_t {
+    Copy,
+    Move
+  };
+
+  enum Kind : int8_t {
+    // A normal function signature: each C++ parameter maps into a Carbon
+    // parameter.
+    Normal,
+    // A function signature taking a tuple pattern that contains the C++
+    // parameters. This is used when importing a constructor that is used for
+    // list initialization from a Carbon tuple.
+    TuplePattern,
+  };
+  // The kind of function signature being imported.
+  Kind kind = Normal;
+  // The number of parameters to import. This can be less than the number of
+  // parameters in the Clang declaration if the Clang declaration has default
+  // arguments. Excludes the implicit object parameter, if there is one.
+  int32_t num_params = -1;
+
+  // The passing mode for each parameter.
+  llvm::SmallVector<PassingMode, 4> passing_modes;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  friend auto operator==(const Signature& lhs, const Signature& rhs)
+      -> bool = default;
+
+  // Hashing for Signature.
+  friend auto CarbonHashValue(const Signature& value, uint64_t seed)
+      -> HashCode {
+    HashCode code = HashValue(std::tuple{value.kind, value.num_params}, seed);
+    for (auto mode : value.passing_modes) {
+      code = HashValue(static_cast<int8_t>(mode), code);
+    }
+    return code;
+  }
+};
+
 // A key describing a Clang declaration that can be looked up in the value
 // store. This is a `clang::Decl*` pointing to a canonical declaration, plus any
 // other information that affects the mapping into Carbon. Currently this
@@ -24,29 +68,6 @@ namespace Carbon::SemIR {
 // A canonical declaration pointer is used so that we can perform direct address
 // comparisons and hash this structure based on its contents.
 struct ClangDeclKey : public Printable<ClangDeclKey> {
-  // Information about how to form the Carbon function signature from the Clang
-  // function declaration.
-  struct Signature {
-    enum Kind : int8_t {
-      // A normal function signature: each C++ parameter maps into a Carbon
-      // parameter.
-      Normal,
-      // A function signature taking a tuple pattern that contains the C++
-      // parameters. This is used when importing a constructor that is used for
-      // list initialization from a Carbon tuple.
-      TuplePattern,
-    };
-    // The kind of function signature being imported.
-    Kind kind = Normal;
-    // The number of parameters to import. This can be less than the number of
-    // parameters in the Clang declaration if the Clang declaration has default
-    // arguments. Excludes the implicit object parameter, if there is one.
-    int32_t num_params = -1;
-
-    friend auto operator==(const Signature& lhs, const Signature& rhs)
-        -> bool = default;
-  };
-
   // For declaration classes that are unrelated to FunctionDecl, no parameter
   // count is expected.
   template <typename DeclT>
@@ -54,35 +75,32 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
              !std::derived_from<clang::FunctionDecl, DeclT> &&
              !std::derived_from<DeclT, clang::FunctionDecl>)
   explicit ClangDeclKey(DeclT* decl)
-      : ClangDeclKey(decl, Signature{}, UncheckedTag()) {}
+      : ClangDeclKey(decl, SignatureId::None, UncheckedTag()) {}
 
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
-  static auto ForFunctionDecl(clang::FunctionDecl* decl, Signature signature)
+  static auto ForFunctionDecl(clang::FunctionDecl* decl, SignatureId signature_id)
       -> ClangDeclKey {
-    return ClangDeclKey(decl, signature, UncheckedTag());
+    return ClangDeclKey(decl, signature_id, UncheckedTag());
   }
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
   static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
     CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
-    return ClangDeclKey(decl, Signature{}, UncheckedTag());
+    return ClangDeclKey(decl, SignatureId::None, UncheckedTag());
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
   auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return decl == rhs.decl && signature == rhs.signature;
+    return decl == rhs.decl && signature_id == rhs.signature_id;
   }
 
   // Hashing for ClangDecl. See common/hashing.h.
   friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)
       -> HashCode {
-    // Manual hashing support is required because `Signature` has padding.
-    return HashValue(std::tuple{value.decl, value.signature.num_params,
-                                value.signature.kind},
-                     seed);
+    return HashValue(std::tuple{value.decl, value.signature_id}, seed);
   }
 
   // The Clang declaration pointing to the Clang AST.
@@ -90,16 +108,16 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // `clang::LazyDeclPtr`.
   clang::Decl* decl;
 
-  // The parameters to import for a function declaration. Otherwise a
-  // default-constructed value.
-  Signature signature;
+  // The parameters to import for a function declaration. Otherwise
+  // SignatureId::None.
+  SignatureId signature_id;
 
  private:
   struct UncheckedTag {
     explicit UncheckedTag() = default;
   };
-  ClangDeclKey(clang::Decl* decl, Signature signature, UncheckedTag /*_*/)
-      : decl(decl->getCanonicalDecl()), signature(signature) {}
+  ClangDeclKey(clang::Decl* decl, SignatureId signature_id, UncheckedTag /*_*/)
+      : decl(decl->getCanonicalDecl()), signature_id(signature_id) {}
 };
 
 // A Clang declaration mapped to a Carbon instruction.
@@ -121,6 +139,10 @@ struct ClangDecl : public Printable<ClangDecl> {
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
 using ClangDeclStore =
     CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>;
+
+// A Signature mapped to an ID.
+using SignatureStore =
+    CanonicalValueStore<SignatureId, Signature, Tag<CheckIRId>, Signature>;
 
 }  // namespace Carbon::SemIR
 

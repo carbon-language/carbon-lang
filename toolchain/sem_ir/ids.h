@@ -486,6 +486,14 @@ struct ClangDeclId : public IdBase<ClangDeclId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `Signature`.
+struct SignatureId : public IdBase<SignatureId> {
+  static constexpr llvm::StringLiteral Label = "signature_id";
+
+  using IdBase::IdBase;
+};
+
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
