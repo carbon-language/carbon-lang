@@ -665,6 +665,11 @@ auto SubstPeriodSelfCallbacks::ConvertReplacement(
 auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
                      SemIR::ConstantId const_id) -> SemIR::ConstantId {
   // Don't replace `.Self` with itself; that is cyclical.
+  //
+  // If the types differ, we would try to convert the replacement to a `.Self`
+  // of the desired type in `const_id`, which is what we already have, so
+  // there's nothing we need to do. But trying to do that conversion recurses
+  // when the type of the `.Self` contains a `.Self`.
   if (auto bind_type =
           context.constant_values().TryGetInstAs<SemIR::SymbolicBinding>(
               GetCanonicalFacetOrTypeValue(
