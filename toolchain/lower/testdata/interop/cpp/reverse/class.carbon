@@ -34,7 +34,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 base class A {
-  var x: ()*;
+  var x: i32*;
   var y: i32;
 }
 

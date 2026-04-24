@@ -32,7 +32,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C {
-  var a: ()*;
+  var a: i32*;
   var b: i32;
 }
 
