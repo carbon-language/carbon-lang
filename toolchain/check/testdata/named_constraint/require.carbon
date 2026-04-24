@@ -566,7 +566,7 @@ constraint N(T:! type) {
 }
 
 // Will satisfy `() as N({})`.
-impl {} as Z(()) where .X = () {}
+impl {} as Z(()) where .X = {} {}
 
 fn F() {
   () as N({});
@@ -591,6 +591,27 @@ fn F() {
   // rather than of the identified facet type of `N` (which would include the
   // require decl's requirements).
   () as N;
+}
+
+// --- todo_fail_require_with_mismatching_rewrite_constraint_period_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+constraint N(T:! type) {
+  require T impls Z(Self) where .X = .Self;
+}
+
+// Will not satisfy `() as N({})` as the rewrite does not match.
+impl {} as Z(()) where .X = () {}
+
+fn F() {
+  // TODO: Should fail, but we're currently checking the requirements of `N`
+  // rather than of the identified facet type of `N` (which would include the
+  // require decl's requirements).
+  () as N({});
 }
 
 // --- fail_require_with_period_self_impls_not_satisfied.carbon
