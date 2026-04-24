@@ -1303,9 +1303,30 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
     // TODO: Add template support.
-    SemIR::InstId pattern_id =
-        AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                        type_id, param_info.want_ref_pattern);
+    SemIR::InstId pattern_id = SemIR::InstId::None;
+    if (i < static_cast<int>(signature.passing_modes.size()) &&
+        signature.passing_modes[i] == SemIR::Signature::PassingMode::Move) {
+      auto entity_name_id = AddBindingEntityName(
+          context, name_id, /*form_id=*/SemIR::InstId::None,
+          /*is_unused=*/false, /*phase=*/BindingPhase::Runtime);
+
+      SemIR::TypeId pattern_type_id = GetPatternType(context, type_id);
+      auto binding_pattern_info = AddBindingPattern(
+          context, loc_id, type_expr_region_id,
+          SemIR::AnyBindingPattern{.kind = SemIR::RefBindingPattern::Kind,
+                                   .type_id = pattern_type_id,
+                                   .entity_name_id = entity_name_id,
+                                   .subpattern_id = SemIR::InstId::None});
+
+      pattern_id = AddInstInNoBlock<SemIR::VarPattern>(
+          context, Parse::VariablePatternId::None,
+          {.type_id = pattern_type_id,
+           .subpattern_id = binding_pattern_info.pattern_id});
+    } else {
+      pattern_id =
+          AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
+                          type_id, param_info.want_ref_pattern);
+    }
     param_ids.push_back(pattern_id);
     param_type_ids.push_back(type_inst_id);
   }

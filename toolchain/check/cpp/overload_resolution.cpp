@@ -149,6 +149,8 @@ static auto ComputeSignature(Context& context,
       const auto& scs = ics.Standard;
       if (scs.ReferenceBinding && !scs.IsLvalueReference) {
         mode = SemIR::Signature::PassingMode::Move;
+      } else if (!scs.ReferenceBinding && (arg_exprs[i]->isPRValue() || arg_exprs[i]->isXValue())) {
+        mode = SemIR::Signature::PassingMode::Move;
       }
 
       // Tweak: treat it as a copy if it's a trivial move and the copy ctor is
