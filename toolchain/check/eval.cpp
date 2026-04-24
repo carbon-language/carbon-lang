@@ -2632,35 +2632,6 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
     // facet that it could possibly refer to, the `T as X` from the `impls`
     // constraint, which eliminates any ambiguity in the resulting facet type.
 
-    class SubstPeriodSelfDiagnoseExplicitCallbacks
-        : public SubstPeriodSelfCallbacks {
-     public:
-      explicit SubstPeriodSelfDiagnoseExplicitCallbacks(
-          Context* context, SemIR::LocId loc_id,
-          SemIR::ConstantId period_self_replacement_id, Phase* phase)
-          : SubstPeriodSelfCallbacks(context, loc_id,
-                                     period_self_replacement_id),
-            phase_(phase) {}
-
-      auto ShouldReplace(bool implicit) -> bool override {
-        if (!implicit && *phase_ != Phase::UnknownDueToError) {
-          CARBON_DIAGNOSTIC(
-              AmbiguousPeriodSelf, Error,
-              "`.Self` is ambiguous after nested `where` in `<type> "
-              "impls ...` clause.");
-          context().emitter().Emit(loc_id(), AmbiguousPeriodSelf);
-          *phase_ = Phase::UnknownDueToError;
-        }
-        return implicit;
-      }
-
-      Phase* phase_;
-    };
-    SubstPeriodSelfDiagnoseExplicitCallbacks
-        callbacks_should_replace_explicit_is_error(
-            &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
-            phase);
-
     class SubstPeriodSelfImplicitOnlyCallbacks
         : public SubstPeriodSelfCallbacks {
      public:
@@ -2678,21 +2649,21 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
         &context, loc_id, context.constant_values().Get(lhs_facet_or_type));
 
     auto self_impls_interface = [&](SemIR::SpecificInterface si) {
-      return SubstPeriodSelf(context,
-                             callbacks_should_replace_explicit_is_error, si);
+      return SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
+                             si);
     };
     auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-      return SubstPeriodSelf(context,
-                             callbacks_should_replace_explicit_is_error, sc);
+      return SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
+                             sc);
     };
     auto type_impls_interface =
         [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
         -> SemIR::FacetTypeInfo::TypeImplsInterface {
       auto self =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
                           context.constant_values().Get(impls.self_type));
       auto interface =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
                           impls.specific_interface);
       return {context.constant_values().GetInstId(self), interface};
     };
@@ -2700,10 +2671,10 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
         [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
         -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
       auto self =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
                           context.constant_values().Get(impls.self_type));
       auto constraint =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
                           impls.specific_named_constraint);
       return {context.constant_values().GetInstId(self), constraint};
     };

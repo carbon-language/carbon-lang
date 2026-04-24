@@ -356,24 +356,11 @@ fn E(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Y2)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                  ^R(T as Z(T)) as Y(T as Z(T))
 
-// --- fail_todo_period_self_impls_ambiguous_period_self_access_argument.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y(T:! type) {
-  let Y1:! type;
-}
-interface X(T:! type) {}
-
-class R(T:! type);
-
-// CHECK:STDERR: fail_todo_period_self_impls_ambiguous_period_self_access_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
-// CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
+// Member designators have an implicit `.Self` which is always allowed. It binds
+// to the innermost facet value rather than being ambiguous.
+fn F(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
-//                                                                          ^ERROR: R(T as Z(T)) as Y(T as Z(T))
+//                                                                          ^Implicit: R(T as Z(T)) as Y(T as Z(T))
 
 // --- fail_type_impls_ambiguous_period_self_argument.carbon
 library "[[@TEST_NAME]]";
@@ -387,9 +374,9 @@ class P;
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:71: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                                       ^~~~~~~~
 // CHECK:STDERR:
 fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)             ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -404,9 +391,9 @@ interface X {}
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:63: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                               ^~~~~~~~
 // CHECK:STDERR:
 fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)     ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -420,15 +407,15 @@ interface X(T:! type) {}
 
 class R(T:! type);
 
-// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:75: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                                           ^~~~~~~~
 // CHECK:STDERR:
 fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                          ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 
-// --- todo_fail_rewrite_rhs_ambiguous_period_self.carbon
+// --- fail_rewrite_rhs_ambiguous_period_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
@@ -438,6 +425,10 @@ interface Y(T:! type) {
 
 class R(T:! type);
 
+// CHECK:STDERR: fail_rewrite_rhs_ambiguous_period_self.carbon:[[@LINE+4]]:69: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
+// CHECK:STDERR:                                                                     ^~~~~
+// CHECK:STDERR:
 fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                  ^ERROR: R(T as Z(T)) as Y(T as Z(T))

@@ -177,6 +177,11 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
+  if (FindAndDiagnoseAmbiguousPeriodSelf(context, lhs_as_type.inst_id,
+                                         rhs_id)) {
+    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementImpls>(
