@@ -24,6 +24,7 @@ import json
 import re
 import os
 import sys
+import requests
 from typing import Any, Optional
 
 # Do some extra work to support direct runs.
@@ -238,6 +239,42 @@ def _parse_and_validate_state(
     return parsed_open, parsed_merged, first_commit
 
 
+def _set_commit_status(
+    sha: str,
+    state: str,
+    description: str,
+    token: str,
+    dry_run: bool,
+) -> None:
+    """Sets the commit status via the GitHub REST API."""
+    url = (
+        "https://api.github.com/repos/carbon-language/carbon-lang/"
+        f"statuses/{sha}"
+    )
+    headers = {
+        "Authorization": f"bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    payload = {
+        "state": state,
+        "description": description,
+        "context": "Dependent PR",
+    }
+    if dry_run:
+        _print_err(
+            f"[Dry-run] Would set commit status on {sha[:8]} to {state} "
+            f"({description})"
+        )
+        return
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        _print_err(f"Set commit status on {sha[:8]} to {state}")
+    except Exception as e:
+        _print_err(f"Error setting commit status on {sha[:8]}: {e}")
+
+
 def _process_pr(
     client: github_helpers.Client,
     pr_number: int,
@@ -245,6 +282,7 @@ def _process_pr(
     open_pr_numbers: set[int],
     label_id: str,
     dry_run: bool,
+    token: str,
     scanning: bool = False,
     max_merged_pr: int = 10000,
 ) -> None:
@@ -323,6 +361,13 @@ def _process_pr(
             )
 
     if not open_deps and not existing_comment_id:
+        _set_commit_status(
+            pr_node["headRefOid"],
+            "success",
+            "No open dependencies",
+            token,
+            dry_run,
+        )
         return
 
     # Keep tracking previously identified dependencies if they are still open,
@@ -338,6 +383,18 @@ def _process_pr(
             newly_merged_deps.append(pr)
 
     merged_deps = list(set(parsed_merged_deps + newly_merged_deps))
+
+    if open_deps:
+        state = "pending"
+        pr_list_str = ", ".join([f"#{num}" for num in open_deps])
+        description = f"Depends on {pr_list_str}"
+    else:
+        state = "success"
+        description = "All dependent PRs are merged"
+
+    _set_commit_status(
+        pr_node["headRefOid"], state, description, token, dry_run
+    )
 
     first_independent_commit_oid = None
     if open_deps:
@@ -515,6 +572,7 @@ def main() -> None:
             open_pr_numbers,
             label_id,
             parsed_args.dry_run,
+            parsed_args.access_token,
             max_merged_pr=max_merged_pr,
         )
     elif parsed_args.scan:
@@ -528,6 +586,7 @@ def main() -> None:
                 open_pr_numbers,
                 label_id,
                 parsed_args.dry_run,
+                parsed_args.access_token,
                 scanning=True,
                 max_merged_pr=max_merged_pr,
             )
