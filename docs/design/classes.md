@@ -2339,13 +2339,14 @@ the type of `U.x`."
 
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
 
-    -   [Treat `self` differently from _all_ parameters](/proposals/p7016.md#treat-self-differently-from-all-parameters)
+    -   [Don't put `self` in either parameter list](/proposals/p7016.md#dont-put-self-in-either-parameter-list)
     -   [`self` syntax in the deduced parameter list `[]`](/proposals/p7016.md#self-syntax-in-the-deduced-parameter-list-)
     -   [`class` modifier for non-instance member variables and functions](/proposals/p7016.md#class-modifier-for-non-instance-member-variables-and-functions)
     -   [Alternative keywords for non-instance member variables](/proposals/p7016.md#alternative-keywords-for-non-instance-member-variables)
         -   [`shared`](/proposals/p7016.md#shared)
         -   [`global`](/proposals/p7016.md#global)
     -   [`static` for non-instance member functions](/proposals/p7016.md#static-for-non-instance-member-functions)
+    -   [`static` for package- and namespace-scope variables](/proposals/p7016.md#static-for-package--and-namespace-scope-variables)
     -   [Distinct `method` introducer](/proposals/p7016.md#distinct-method-introducer)
 
 ## References
