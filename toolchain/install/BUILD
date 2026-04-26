@@ -36,16 +36,17 @@ load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
-    "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
-    "carbon_cc_toolchain_suite",
-    "set_platform_filegroup",
+    "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
+    "carbon_bootstrapped_cc_toolchain",
+    "filegroup_with_stage",
+    "gen_cc_toolchain_paths_with_stage",
 )
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
 load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",
@@ -58,13 +59,29 @@ load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
 package(default_visibility = ["//visibility:public"])
 
-constraint_setting(
-    name = "runtimes_build",
+config_setting(
+    name = "is_runtimes_build",
+    flag_values = {"//:runtimes_build": "True"},
 )
 
-constraint_value(
-    name = "is_runtimes_build",
-    constraint_setting = ":runtimes_build",
+config_setting(
+    name = "not_runtimes_build",
+    flag_values = {"//:runtimes_build": "False"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_0",
+    flag_values = {"//:bootstrap_stage": "0"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_1",
+    flag_values = {"//:bootstrap_stage": "1"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_2",
+    flag_values = {"//:bootstrap_stage": "2"},
 )
 
 cc_library(
@@ -242,7 +259,6 @@ toolchain_files(
     name = "libc_internal_libcxx_hdrs",
     srcs = ["@llvm-project//libc:libcxx_shared_headers_hdrs"],
     prefix = "runtimes/libc/internal/",
-    #remove_prefix = "src",
 )
 
 toolchain_files(
@@ -273,9 +289,25 @@ filegroup(
     ],
 )
 
+# The toolchain configuration starlark needs to switch from referencing the
+# `carbon_runtimes.bzl` starlark in the toolchain layout to the `bazel` tree
+# within the installation.
+#
+# TODO: Maybe we should move the `carbon_runtimes.bzl` to the same directory as
+# the other starlark so we can use relative load lines and avoid this?
+genrule(
+    name = "carbon_cc_toolchain_config_for_install",
+    srcs = ["//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl"],
+    outs = ["carbon_cc_toolchain_config.bzl"],
+    cmd = "sed 's|//toolchain/runtimes:carbon_runtimes.bzl|//bazel:carbon_runtimes.bzl|' $< > $@",
+)
+
 toolchain_files(
     name = "bazel_common_srcs",
-    srcs = ["//bazel/cc_toolchains:installed_cc_toolchain_starlark"],
+    srcs = [
+        ":carbon_cc_toolchain_config_for_install",
+        "//bazel/cc_toolchains:installed_cc_toolchain_starlark",
+    ],
     prefix = "bazel/",
 )
 
@@ -290,7 +322,7 @@ toolchain_files(
 )
 
 toolchain_files(
-    name = "carbon_runtimes_installed",
+    name = "carbon_runtimes_bzl_installed",
     srcs = ["//toolchain/runtimes:carbon_runtimes.bzl"],
     prefix = "bazel/",
 )
@@ -321,7 +353,7 @@ filegroup(
         ":bazel_build_and_module",
         ":bazel_common_srcs",
         ":bazel_install_srcs",
-        ":carbon_runtimes_installed",
+        ":carbon_runtimes_bzl_installed",
 
         # Note that we have to put this here and not in one of the
         # `toolchain_files` because it is a generated file.
@@ -342,6 +374,7 @@ filegroup(
         ":libcxx_hdrs",
         ":libcxxabi_hdrs",
         ":libcxxabi_srcs",
+        ":libcxxabi_textual_srcs",
         ":libunwind_hdrs",
         ":libunwind_srcs",
     ],
@@ -390,8 +423,10 @@ genrule(
         "install_digest_manifest.txt",
     ],
     outs = ["install_digest.txt"],
-    cmd = "$(location :make-installation-digest) " +
-          "$(location install_digest_manifest.txt) $@",
+    cmd = "{0} {1} $@".format(
+        "$(location :make-installation-digest)",
+        "$(location install_digest_manifest.txt)",
+    ),
     tools = [":make-installation-digest"],
 )
 
@@ -436,8 +471,7 @@ cc_library(
     ],
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [":builtins_internal"],
@@ -465,8 +499,7 @@ cc_library(
     includes = ["runtimes/libunwind/include"],
     linkstatic = 1,
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -481,8 +514,7 @@ cc_library(
     name = "libcxxabi_internal",
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     textual_hdrs = [":libcxxabi_textual_srcs"],
@@ -493,8 +525,7 @@ cc_library(
     hdrs = [":libc_internal_libcxx_hdrs"],
     hdrs_check = "strict",
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -527,8 +558,7 @@ cc_library(
         "runtimes/libcxxabi/include",
     ],
     target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
+        ":is_runtimes_build": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [
@@ -543,10 +573,9 @@ filegroup(
     output_group = "archive",
 )
 
-carbon_runtimes(
-    name = "runtimes",
+carbon_runtimes_config(
+    name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
-    clang_hdrs = [":clang_hdrs"],
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
     crt_copts = crt_copts + [
         # Disable all sanitizers for CRT objects.
@@ -569,11 +598,6 @@ carbon_runtimes(
     }),
     libcxx_archive = ":libcxx_archive",
     libunwind_archive = ":libunwind_archive",
-    target_compatible_with = select({
-        "//bazel/cc_toolchains:stage1": [],
-        "//bazel/cc_toolchains:stage2": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
     target_triple = select({
         # TODO: Add other triples (and if needed, constraints) so that we can
         # build the correct Clang resource-dir structure for each.
@@ -602,15 +626,15 @@ platforms = {
     config_setting(
         name = "is_{0}_{1}".format(os, cpu),
         constraint_values = [
-            "@platforms//os:" + os,
-            "@platforms//cpu:" + cpu,
+            "@platforms//os:{}".format(os),
+            "@platforms//cpu:{}".format(cpu),
         ],
     )
     for os, cpus in platforms.items()
     for cpu in cpus
 ]
 
-carbon_cc_toolchain_suite(
+carbon_bootstrapped_cc_toolchain(
     name = "carbon_stage1",
     all_hdrs = [
         ":clang_hdrs",
@@ -623,13 +647,13 @@ carbon_cc_toolchain_suite(
         ":carbon-busybox",
         ":llvm_bins",
     ],
-    build_stage = "//bazel/cc_toolchains:stage1",
+    build_stage = 1,
     clang_hdrs = [":clang_hdrs"],
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_cfg = ":runtimes_cfg",
 )
 
-carbon_cc_toolchain_suite(
+carbon_bootstrapped_cc_toolchain(
     name = "carbon_stage2",
     all_hdrs = [
         ":clang_hdrs",
@@ -642,11 +666,11 @@ carbon_cc_toolchain_suite(
         ":carbon-busybox",
         ":llvm_bins",
     ],
-    base_stage = "//bazel/cc_toolchains:stage1",
-    build_stage = "//bazel/cc_toolchains:stage2",
+    base_stage = 1,
+    build_stage = 2,
     clang_hdrs = [":clang_hdrs"],
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_cfg = ":runtimes_cfg",
     tags = ["manual"],
 )
 
@@ -667,40 +691,32 @@ toolchain_pkg_filegroup(
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
 #
-# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
-# `carbon_toolchain_tar_gz_rule`.
+# For manual tests, the tar rules are `carbon_toolchain_tar` and
+# `carbon_toolchain_tar_gz`.
 pkg_tar_and_test(
+    name = "carbon_toolchain",
     srcs = [":stage1_pkg_data"],
     install_data_manifest = ":install_data_manifest.txt",
-    name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
 )
 
-set_platform_filegroup(
+filegroup_with_stage(
     name = "stage2_pkg_files",
     srcs = [
         ":all_data_files",
         ":gen_digest",
     ],
-    platform = select({
-        ":is_{}_{}".format(os, cpu): ":carbon_stage2_base_{}_{}_platform".format(os, cpu)
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    }),
+    stage = 1,
     tags = ["manual"],
 )
 
-set_platform_filegroup(
+filegroup_with_stage(
     name = "stage2_busybox",
     srcs = [":carbon-busybox"],
-    platform = select({
-        ":is_{}_{}".format(os, cpu): ":carbon_stage2_base_{}_{}_platform".format(os, cpu)
-        for os, cpus in platforms.items()
-        for cpu in cpus
-    }),
+    stage = 1,
     tags = ["manual"],
 )
 
@@ -712,9 +728,9 @@ toolchain_pkg_filegroup(
 )
 
 pkg_tar_and_test(
+    name = "carbon_bootstrapped_toolchain",
     srcs = [":stage2_pkg_data"],
     install_data_manifest = ":install_data_manifest.txt",
-    name_base = "carbon_bootstrapped_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_bootstrapped_toolchain-$(version)",
     package_variables = ":packaging_variables",
@@ -728,12 +744,47 @@ filegroup(
 )
 
 py_test(
-    name = "llvm_symlinks_test",
-    size = "small",
-    srcs = ["llvm_symlinks_test.py"],
+    name = "install_test",
+    size = "large",
+    srcs = ["install_test.py"],
     data = [
         ":built_runtimes",
+        ":carbon-busybox",
         ":install_data",
     ],
     deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+# Generate paths file for stage 1 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage1",
+    stage = 1,
+)
+
+# Test that stage 1 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage1_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage1)"],
+    data = [":gen_cc_tools_paths_stage1"],
+    main = "cc_tools_wrapper_test.py",
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
+)
+
+# Generate paths file for stage 2 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage2",
+    stage = 2,
+    tags = ["manual"],
+)
+
+# Test that stage 2 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage2_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage2)"],
+    data = [":gen_cc_tools_paths_stage2"],
+    main = "cc_tools_wrapper_test.py",
+    tags = ["manual"],
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
 )

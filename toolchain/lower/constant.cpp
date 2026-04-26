@@ -110,6 +110,34 @@ class ConstantContext {
   SemIR::InstId current_constant_inst_id_ = SemIR::InstId::None;
 };
 
+// Get the element type at a given index from a struct.
+static auto GetElementType(llvm::StructType* struct_type, int index)
+    -> llvm::Type* {
+  return struct_type->getElementType(index);
+}
+
+// Get the element type from an array.
+static auto GetElementType(llvm::ArrayType* array_type, int /*index*/)
+    -> llvm::Type* {
+  return array_type->getElementType();
+}
+
+// Add padding if necessary to convert the given constant to the specified,
+// possibly-padded LLVM type. The type of the constant will either already be
+// `llvm_type`, or will be a tail-padded type `<{llvm_type, [i8 x N]}>`.
+static auto PadToType(llvm::Constant* constant, llvm::Type* llvm_type)
+    -> llvm::Constant* {
+  if (constant->getType() == llvm_type) {
+    return constant;
+  }
+  auto* padded = cast<llvm::StructType>(llvm_type);
+  CARBON_CHECK(padded->getNumElements() == 2 &&
+                   padded->getElementType(0) == constant->getType(),
+               "Unexpected type {0} for constant {1}", *llvm_type, *constant);
+  return llvm::ConstantStruct::get(
+      padded, constant, llvm::PoisonValue::get(padded->getElementType(1)));
+}
+
 // Emits an aggregate constant of LLVM type `Type` whose elements are the
 // contents of `refs_id`.
 template <typename ConstantType, typename Type>
@@ -119,9 +147,10 @@ static auto EmitAggregateConstant(ConstantContext& context,
   auto refs = context.sem_ir().inst_blocks().Get(refs_id);
   llvm::SmallVector<llvm::Constant*> elements;
   elements.reserve(refs.size());
-  for (auto ref : refs) {
+  for (auto [i, ref] : llvm::enumerate(refs)) {
     if (auto* constant = context.GetConstant(ref)) {
-      elements.push_back(constant);
+      auto* elem_type = GetElementType(llvm_type, i);
+      elements.push_back(PadToType(constant, elem_type));
     } else {
       return nullptr;
     }

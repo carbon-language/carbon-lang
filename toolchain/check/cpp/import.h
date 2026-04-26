@@ -27,6 +27,19 @@ auto ImportCpp(Context& context,
                llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
 
+// Imports a declaration into the current context that was previously imported
+// into another file.
+auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                           const SemIR::File& file,
+                           SemIR::ClangDeclId clang_decl_id)
+    -> SemIR::ConstantId;
+
+// Imports a constant into the current context that was previously imported into
+// another file.
+auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
+                               const SemIR::File& file, SemIR::InstId inst_id)
+    -> SemIR::ConstantId;
+
 // Imports a declaration from Clang to Carbon. If successful, returns the new
 // Carbon declaration `InstId`. If the declaration was already imported, returns
 // the mapped instruction. All unimported dependencies are imported first.

@@ -1,0 +1,27 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macro is:
+// - CARBON_SEM_IR_CORE_INTERFACE_KIND(Name)
+//   Defines a core interface.
+
+#ifndef CARBON_SEM_IR_CORE_INTERFACE_KIND
+#error "Must define CARBON_SEM_IR_CORE_INTERFACE_KIND x-macro to use this file."
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name)
+#endif
+
+CARBON_SEM_IR_CORE_INTERFACE_KIND(Copy)
+CARBON_SEM_IR_CORE_INTERFACE_KIND(CppUnsafeDeref)
+CARBON_SEM_IR_CORE_INTERFACE_KIND(Default)
+CARBON_SEM_IR_CORE_INTERFACE_KIND(Destroy)
+CARBON_SEM_IR_CORE_INTERFACE_KIND(IntFitsIn)
+
+CARBON_SEM_IR_CORE_INTERFACE_KIND(Unknown)
+
+#undef CARBON_SEM_IR_CORE_INTERFACE_KIND

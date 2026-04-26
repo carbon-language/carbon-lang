@@ -192,7 +192,9 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
 // CHECK:STDOUT:   %assoc0.2e5: %Y.assoc_type = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YF.decl [concrete]
 // CHECK:STDOUT:   %W.type: type = facet_type <@W> [concrete]
-// CHECK:STDOUT:   %.Self.16f: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %T: %type_where = symbolic_binding T, 0 [symbolic]
@@ -221,11 +223,13 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.loc12_10: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.16f]
+// CHECK:STDOUT:       %.Self.ref: %type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc12_21: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc12_15.2: type = where_expr %.Self.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type type
-// CHECK:STDOUT:         requirement_impls %.Self.ref, %W.ref
+// CHECK:STDOUT:         requirement_impls %.loc12_21, %W.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc12_7.2: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]

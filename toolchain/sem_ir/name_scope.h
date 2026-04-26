@@ -217,16 +217,16 @@ class NameScope : public Printable<NameScope> {
     is_closed_import_ = is_closed_import;
   }
 
-  auto is_cpp_scope() const -> bool {
-    return clang_decl_context_id().has_value();
-  }
+  auto is_cpp_scope() const -> bool { return is_cpp_scope_; }
 
   auto clang_decl_context_id() const -> ClangDeclId {
     return clang_decl_context_id_;
   }
 
-  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id) -> void {
+  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id,
+                                 bool is_cpp_scope) -> void {
     clang_decl_context_id_ = clang_decl_context_id;
+    is_cpp_scope_ = is_cpp_scope;
   }
 
   // Returns true if this name scope describes an imported package.
@@ -296,13 +296,18 @@ class NameScope : public Printable<NameScope> {
   // True if this is a closed namespace created by importing a package.
   bool is_closed_import_ = false;
 
-  // Set if this is the `Cpp` scope or a scope inside `Cpp`. Points to the
-  // matching Clang declaration context to look for names.
-  ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
-
   // True if this is the scope of an interface definition, where associated
   // entities will be bound to the interface's `Self` symbolic type.
   bool is_interface_definition_ = false;
+
+  // True if this scope was imported from C++. Set if this is the `Cpp` scope or
+  // a scope inside `Cpp`.
+  bool is_cpp_scope_ = false;
+
+  // The C++ declaration context corresponding to this scope. If `is_cpp_scope_`
+  // is true, this is the C++ scope from which this name scope was imported.
+  // Otherwise, this is the scope to which this name scope is exported.
+  ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.

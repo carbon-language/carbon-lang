@@ -42,6 +42,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> FacetTypeInfo;
 
+  // Returns a FacetTypeInfo that only contains constraints that are extended by
+  // the facet type. It is not canonicalized, so that it can be further modified
+  // by the caller if desired.
+  static auto ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo;
+
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.

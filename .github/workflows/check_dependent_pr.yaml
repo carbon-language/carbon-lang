@@ -1,0 +1,50 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Check Dependent PRs'
+on:
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, closed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check_dependent_prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443 github.com:443 pypi.org:443
+            files.pythonhosted.org:443
+
+      # Note: pull_request_target checks out the base branch by default.
+      # This is safe as it avoids running untrusted code from the PR branch.
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install gql==2.0.0 requests
+
+      - name: Check Dependent PR
+        run: |
+          if [ "$EVENT_ACTION" = "closed" ]; then
+            python3 github_tools/check_dependent_pr.py --scan
+          else
+            python3 github_tools/check_dependent_pr.py --pr-number "${PR_NUMBER}"
+          fi
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}

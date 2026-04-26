@@ -116,16 +116,13 @@ struct FunctionFields {
   // any.
   InstId return_form_inst_id;
 
-  // The parameter pattern insts that are declared by the function's return
-  // form declaration. They will all be OutParamPatterns, and there will be one
-  // for each primitive initializing form in the return form, but they may or
-  // may not be used, depending on whether the type has an in-place initializing
-  // representation.
+  // The parameter pattern inst that is declared by the function's return
+  // declaration. This will be a ReturnSlotPattern, or None if the function
+  // doesn't have a return declaration. It may or may not be used, depending on
+  // whether the type has an in-place initializing representation.
   //
-  // Note: As of this writing we don't support non-initializing return forms,
-  // so this will always be have exactly 1 element if the function has an
-  // explicitly declared return type.
-  InstBlockId return_patterns_id;
+  // TODO: Extend this to support composite return forms.
+  InstId return_pattern_id;
 
   // Which kind of special function this is, if any. This is used in cases where
   // a special function would otherwise be indistinguishable from a normal
@@ -195,8 +192,8 @@ struct Function : public EntityWithParamsBase,
     if (return_type_inst_id.has_value()) {
       out << ", return_form_inst_id: " << return_form_inst_id;
     }
-    if (return_patterns_id.has_value()) {
-      out << ", return_patterns_id: " << return_patterns_id;
+    if (return_pattern_id.has_value()) {
+      out << ", return_pattern_id: " << return_pattern_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(

@@ -18,6 +18,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -133,15 +134,15 @@ static auto HasWitnessForOneField(
 // Returns true if `class_type` should impl `Destroy`.
 static auto CanDestroyClass(
     Context& context, SemIR::LocId loc_id, SemIR::ClassType class_type,
+    const SemIR::CompleteTypeInfo& complete_info,
     SemIR::SpecificInterfaceId query_specific_interface_id, bool is_partial)
     -> DestroyFormat {
-  auto class_info = context.classes().Get(class_type.class_id);
-  // Incomplete and abstract classes can't be destroyed.
-  if (!class_info.is_complete() ||
-      (!is_partial && class_info.inheritance_kind ==
-                          SemIR::Class::InheritanceKind::Abstract)) {
+  // Abstract classes can't be destroyed.
+  if (!is_partial && complete_info.IsAbstract()) {
     return DestroyFormat::NoDestroy;
   }
+
+  auto class_info = context.classes().Get(class_type.class_id);
 
   // `LookupCppImpl` handles C++ types.
   if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
@@ -166,30 +167,40 @@ static auto CanDestroyType(
       context.specific_interfaces().Get(query_specific_interface_id);
   auto destroy_interface_id = query_specific_interface.interface_id;
 
-  auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
+  auto inst_id = context.constant_values().GetInstId(
+      GetCanonicalFacetOrTypeValue(context, query_self_const_id));
+  auto inst = context.insts().Get(inst_id);
+
+  // For facet values, look if the FacetType provides the same.
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
+    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
+    for (auto interface : info.extend_constraints) {
+      if (interface.interface_id == destroy_interface_id) {
+        return DestroyFormat::Trivial;
+      }
+    }
+    return DestroyFormat::NoDestroy;
+  }
+
+  // Incomplete types can not be destroyed.
+  auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
+  if (!TryToCompleteType(context, type_id, loc_id)) {
+    return DestroyFormat::NoDestroy;
+  }
 
   CARBON_KIND_SWITCH(inst) {
     case SemIR::ImplWitnessAccess::Kind:
     case SemIR::SymbolicBinding::Kind: {
-      // These are symbolic, so should never reach `MakeDestroyOpBody`.
-      // For facet values, look if the FacetType provides the same.
-      if (auto facet_type =
-              context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-        const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-        for (auto interface : info.extend_constraints) {
-          if (interface.interface_id == destroy_interface_id) {
-            return DestroyFormat::Trivial;
-          }
-        }
-      }
+      // A symbolic facet of type `type`. Such symbolic values can't be
+      // destroyed.
       return DestroyFormat::NoDestroy;
     }
 
     case CARBON_KIND(SemIR::ArrayType array_type): {
       // A zero element array is always trivially destructible.
       if (auto int_bound =
-              context.sem_ir().GetArrayBoundValue(array_type.bound_id);
+              context.sem_ir().GetZExtIntValue(array_type.bound_id);
           !int_bound || *int_bound == 0) {
         return DestroyFormat::Trivial;
       }
@@ -207,6 +218,7 @@ static auto CanDestroyType(
 
     case CARBON_KIND(SemIR::ClassType class_type): {
       return CanDestroyClass(context, loc_id, class_type,
+                             context.types().GetCompleteTypeInfo(type_id),
                              query_specific_interface_id,
                              /*is_partial=*/false);
     }
@@ -228,6 +240,7 @@ static auto CanDestroyType(
       auto class_type =
           context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
       return CanDestroyClass(context, loc_id, class_type,
+                             context.types().GetCompleteTypeInfo(type_id),
                              query_specific_interface_id,
                              /*is_partial=*/true);
     }
@@ -251,12 +264,6 @@ static auto CanDestroyType(
       return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
-    case CARBON_KIND(SemIR::SymbolicBindingType sym_binding): {
-      return HasWitnessForOneField(context, loc_id,
-                                   sym_binding.facet_value_inst_id,
-                                   query_specific_interface_id);
-    }
-
     case CARBON_KIND(SemIR::TupleType tuple_type): {
       auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
       if (block.empty()) {
@@ -277,7 +284,9 @@ static auto CanDestroyType(
     }
 
     case SemIR::BoolType::Kind:
+    case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
+    case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
     case SemIR::TypeType::Kind:
@@ -519,27 +528,14 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 }
 
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
-    -> CoreInterface {
+    -> SemIR::CoreInterface {
   const auto& interface = context.interfaces().Get(interface_id);
   if (!context.name_scopes().IsCorePackage(interface.parent_scope_id) ||
       !interface.name_id.AsIdentifierId().has_value()) {
-    return CoreInterface::Unknown;
+    return SemIR::CoreInterface::Unknown;
   }
 
-  constexpr auto CoreIdentifiersToInterfaces = std::array{
-      std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
-      std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref},
-      std::pair{CoreIdentifier::Default, CoreInterface::Default},
-      std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
-      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}};
-
-  for (auto [core_identifier, core_interface] : CoreIdentifiersToInterfaces) {
-    if (interface.name_id ==
-        context.core_identifiers().AddNameId(core_identifier)) {
-      return core_interface;
-    }
-  }
-  return CoreInterface::Unknown;
+  return interface.core_interface;
 }
 
 auto BuildPrimitiveCopyWitness(
@@ -658,21 +654,21 @@ static auto MakeIntFitsInWitness(
 }
 
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
-                         CoreInterface core_interface,
+                         SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return MakeDestroyWitness(context, loc_id, query_self_const_id,
                                 query_specific_interface_id, build_witness);
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
-    case CoreInterface::Copy:
-    case CoreInterface::CppUnsafeDeref:
-    case CoreInterface::Default:
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::Copy:
+    case SemIR::CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::Default:
+    case SemIR::CoreInterface::Unknown:
       // TODO: Handle more interfaces, particularly copy, move, and conversion.
       return std::nullopt;
   }

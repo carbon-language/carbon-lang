@@ -2,10 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@bazel_skylib//rules:common_settings.bzl", "string_list_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain_suite")
-load("//bazel:carbon_runtimes.bzl", "carbon_runtimes")
+load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain", "filegroup_with_runtimes_build")
+load("//bazel:carbon_runtimes.bzl", "carbon_runtimes_build", "carbon_runtimes_config")
 load("//bazel:make_include_copts.bzl", "make_include_copts")
 load(
     "//bazel:runtimes_build_vars.bzl",
@@ -41,11 +41,24 @@ _libcxx_hdrs = libcxx_hdrs + [
 
 package(default_visibility = ["//visibility:public"])
 
-constraint_setting(name = "runtimes_build")
+bool_setting(
+    name = "runtimes_build",
+    build_setting_default = False,
+)
 
-constraint_value(
+config_setting(
     name = "is_runtimes_build",
-    constraint_setting = ":runtimes_build",
+    flag_values = {":runtimes_build": "True"},
+)
+
+config_setting(
+    name = "not_runtimes_build",
+    flag_values = {":runtimes_build": "False"},
+)
+
+config_setting(
+    name = "bootstrap_with_exec_config",
+    flag_values = {":bootstrap_exec_config": "True"},
 )
 
 filegroup(
@@ -185,10 +198,76 @@ filegroup(
     output_group = "archive",
 )
 
-carbon_runtimes(
-    name = "runtimes",
+filegroup(
+    name = "carbon_install_digest_file",
+    srcs = ["install_digest.txt"],
+)
+
+filegroup(
+    name = "carbon_install_marker_file",
+    srcs = ["carbon_install.txt"],
+)
+
+filegroup(
+    name = "carbon_busybox_file",
+    srcs = ["carbon-busybox"],
+)
+
+platforms = {
+    "freebsd": ["x86_64"],
+    "linux": [
+        "aarch64",
+        "x86_64",
+    ],
+    "macos": [
+        "arm64",
+        "x86_64",
+    ],
+}
+
+[
+    config_setting(
+        name = "is_{0}_{1}".format(os, cpu),
+        constraint_values = [
+            "@platforms//os:{}".format(os),
+            "@platforms//cpu:{}".format(cpu),
+        ],
+    )
+    for os, cpus in platforms.items()
+    for cpu in cpus
+]
+
+filegroup(
+    name = "base_files",
+    srcs = [
+        ":carbon_busybox_file",
+        ":carbon_install_digest_file",
+        ":carbon_install_marker_file",
+        ":llvm_bins",
+    ],
+)
+
+filegroup(
+    name = "runtimes_compile_files",
+    srcs = [
+        ":base_files",
+        ":clang_hdrs",
+    ],
+)
+
+filegroup(
+    name = "compile_files",
+    srcs = [
+        ":base_files",
+        ":clang_hdrs",
+        ":libcxx_hdrs",
+        ":libunwind_hdrs",
+    ],
+)
+
+carbon_runtimes_config(
+    name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
-    clang_hdrs = [":clang_hdrs"],
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(llvm_version_major),
     crt_copts = crt_copts,
     crtbegin_src = select({
@@ -224,64 +303,27 @@ carbon_runtimes(
     }),
 )
 
-filegroup(
-    name = "carbon_install_digest_file",
-    srcs = ["install_digest.txt"],
-)
-
-filegroup(
-    name = "carbon_install_marker_file",
-    srcs = ["carbon_install.txt"],
-)
-
-filegroup(
-    name = "carbon_busybox_file",
-    srcs = ["carbon-busybox"],
-)
-
-string_list_setting(
-    name = "original_platforms",
-    build_setting_default = [],
-)
-
-platforms = {
-    "freebsd": ["x86_64"],
-    "linux": [
-        "aarch64",
-        "x86_64",
-    ],
-    "macos": [
-        "arm64",
-        "x86_64",
-    ],
-}
-
-[
-    config_setting(
-        name = "is_{0}_{1}".format(os, cpu),
-        constraint_values = [
-            "@platforms//os:" + os,
-            "@platforms//cpu:" + cpu,
-        ],
-    )
-    for os, cpus in platforms.items()
-    for cpu in cpus
-]
-
-carbon_cc_toolchain_suite(
-    name = "carbon",
-    all_hdrs = [
-        ":clang_hdrs",
-        ":libunwind_hdrs",
-        ":libcxx_hdrs",
-    ],
-    base_files = [
-        ":carbon_install_digest_file",
-        ":carbon_install_marker_file",
-        ":carbon_busybox_file",
-        ":llvm_bins",
-    ],
+carbon_runtimes_build(
+    name = "carbon_runtimes_build",
     clang_hdrs = [":clang_hdrs"],
+    config = ":runtimes_cfg",
+    tags = ["manual"],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+filegroup_with_runtimes_build(
+    name = "runtimes",
+    srcs = [":carbon_runtimes_build"],
+)
+
+carbon_cc_toolchain(
+    name = "carbon",
+    base_files_target = ":base_files",
+    compile_files_target = ":compile_files",
     platforms = platforms,
-    runtimes = ":runtimes",
+    runtimes_compile_files_target = ":runtimes_compile_files",
+    runtimes_target = ":runtimes",
 )

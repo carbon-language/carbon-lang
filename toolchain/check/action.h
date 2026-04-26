@@ -28,21 +28,21 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::RefineTypeAction action) -> SemIR::InstId;
 
-// Determines whether the given action depends on a template parameter in a way
-// that means it cannot be performed immediately.
-auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool;
+// Determines whether the given action can be performed immediately (i.e.
+// whether it is non-template-dependent).
+auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool;
 
-// Determines whether the given action operand depends on a template parameter
-// in a way that means the action cannot be performed immediately.
-auto OperandIsDependent(Context& context, SemIR::InstId inst_id) -> bool;
+// Returns the constant-dependence of `inst_id` (i.e. the maximum of the
+// constant-dependences of its type and its value).
+auto OperandDependence(Context& context, SemIR::InstId inst_id)
+    -> SemIR::ConstantDependence;
+auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
+    -> SemIR::ConstantDependence;
 
-// Determines whether the given action operand depends on a template parameter
-// in a way that means the action cannot be performed immediately.
-auto OperandIsDependent(Context& context, SemIR::TypeInstId inst_id) -> bool;
-
-// Determines whether the given type depends on a template parameter
-// in a way that means the action cannot be performed immediately.
-auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool;
+// Returns the constant-dependence of `type_id` (i.e. the constant-dependence
+// of the corresponding type constant).
+auto OperandDependence(Context& context, SemIR::TypeId type_id)
+    -> SemIR::ConstantDependence;
 
 // Adds an instruction to the current block to splice in the result of
 // performing a dependent action.
@@ -66,9 +66,7 @@ template <typename ActionT>
 auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
                   SemIR::TypeInstId result_type_inst_id =
                       SemIR::TypeInstId::None) -> SemIR::InstId {
-  if (ActionIsDependent(context, action_inst) ||
-      (result_type_inst_id.has_value() &&
-       OperandIsDependent(context, result_type_inst_id))) {
+  if (!ActionIsPerformable(context, action_inst)) {
     return AddDependentActionSplice(
         context, SemIR::LocIdAndInst(loc_id, action_inst), result_type_inst_id);
   }
@@ -93,7 +91,7 @@ auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
 template <typename ActionT>
 auto PerformDelayedAction(Context& context, SemIR::LocId loc_id,
                           ActionT action_inst) -> SemIR::InstId {
-  if (ActionIsDependent(context, action_inst)) {
+  if (!ActionIsPerformable(context, action_inst)) {
     return SemIR::InstId::None;
   }
   Internal::BeginPerformDelayedAction(context);

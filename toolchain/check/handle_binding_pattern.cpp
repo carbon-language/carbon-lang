@@ -176,8 +176,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto form_id = node_kind == Parse::FormBindingPattern::Kind
-                     ? context.constant_values().Get(type_expr.inst_id)
-                     : SemIR::ConstantId::None;
+                     ? type_expr.inst_id
+                     : SemIR::InstId::None;
 
   // Adds a binding pattern for `node_id`, with the given kind and subpattern,
   // and adds its name to the current context. The subpattern must not be
@@ -297,17 +297,17 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           auto pattern_type_id =
               GetPatternType(context, type_expr.type_component_id);
           if (is_ref) {
-            param_pattern_id = AddPatternInst<SemIR::RefParamPattern>(
+            param_pattern_id = AddInst<SemIR::RefParamPattern>(
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
-            param_pattern_id = AddPatternInst<SemIR::FormParamPattern>(
-                context, node_id,
-                {.type_id = pattern_type_id,
-                 .pretty_name_id = name_id,
-                 .form_id = form_id});
+            param_pattern_id =
+                AddInst<SemIR::FormParamPattern>(context, node_id,
+                                                 {.type_id = pattern_type_id,
+                                                  .pretty_name_id = name_id,
+                                                  .form_id = form_id});
           } else {
-            param_pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+            param_pattern_id = AddInst<SemIR::ValueParamPattern>(
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           }
@@ -404,14 +404,7 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-
-  // The `.Self` must have a type of `FacetType`, so that it gets wrapped in
-  // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-  // This allows substitution with other facet values without requiring an
-  // additional `FacetAccessType` to be inserted.
-  auto type_id = GetEmptyFacetType(context);
-
-  MakePeriodSelfFacetValue(context, type_id);
+  MakePeriodSelfFacetValue(context, GetEmptyFacetType(context));
   return true;
 }
 

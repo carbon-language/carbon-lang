@@ -41,7 +41,7 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConvert.Main(ptr sret({ i32, i1 }) %return, ptr %o) #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CConvert.Main(ptr sret(<{ i32, i1 }>) %return, ptr %o) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.03e3348579103d79(ptr %o), !dbg !17
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %if.then, label %if.else, !dbg !18
@@ -60,14 +60,14 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAddOrRemoveConst.Main(i32 %a, i32 %b) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc24 = alloca { i32, i1 }, align 8, !dbg !30
-// CHECK:STDOUT:   %_.var.loc25 = alloca { i32, i1 }, align 8, !dbg !31
-// CHECK:STDOUT:   %_.var.loc26 = alloca { i32, i1 }, align 8, !dbg !32
-// CHECK:STDOUT:   %_.var.loc27 = alloca { i32, i1 }, align 8, !dbg !33
-// CHECK:STDOUT:   %_.var.loc28 = alloca { i32, i1 }, align 8, !dbg !34
-// CHECK:STDOUT:   %_.var.loc29 = alloca { i32, i1 }, align 8, !dbg !35
-// CHECK:STDOUT:   %_.var.loc30 = alloca { i32, i1 }, align 8, !dbg !36
-// CHECK:STDOUT:   %_.var.loc31 = alloca { i32, i1 }, align 8, !dbg !37
+// CHECK:STDOUT:   %_.var.loc24 = alloca <{ i32, i1 }>, align 8, !dbg !30
+// CHECK:STDOUT:   %_.var.loc25 = alloca <{ i32, i1 }>, align 8, !dbg !31
+// CHECK:STDOUT:   %_.var.loc26 = alloca <{ i32, i1 }>, align 8, !dbg !32
+// CHECK:STDOUT:   %_.var.loc27 = alloca <{ i32, i1 }>, align 8, !dbg !33
+// CHECK:STDOUT:   %_.var.loc28 = alloca <{ i32, i1 }>, align 8, !dbg !34
+// CHECK:STDOUT:   %_.var.loc29 = alloca <{ i32, i1 }>, align 8, !dbg !35
+// CHECK:STDOUT:   %_.var.loc30 = alloca <{ i32, i1 }>, align 8, !dbg !36
+// CHECK:STDOUT:   %_.var.loc31 = alloca <{ i32, i1 }>, align 8, !dbg !37
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc24), !dbg !30
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %_.var.loc24, i32 %a), !dbg !30
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc25), !dbg !31
@@ -174,13 +174,13 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !96 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !96 {
 // CHECK:STDOUT:   call void @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.30ced37eb1e63547"(ptr %return, i32 %self), !dbg !101
 // CHECK:STDOUT:   ret void, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.30ced37eb1e63547(ptr sret({ i32, i1 }) %return) #0 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.30ced37eb1e63547(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !103 {
 // CHECK:STDOUT:   call void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr %return), !dbg !106
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
@@ -189,43 +189,43 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.77b263a5fd240ddf"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !108 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.77b263a5fd240ddf"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !108 {
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %return, i32 %self), !dbg !112
 // CHECK:STDOUT:   ret void, !dbg !113
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !114 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !114 {
 // CHECK:STDOUT:   call void @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.5d35ad54738af8e4"(ptr %return, i32 %self), !dbg !117
 // CHECK:STDOUT:   ret void, !dbg !118
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.25fb32d66f981ccd"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !119 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.25fb32d66f981ccd"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !119 {
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr %return, i32 %self), !dbg !122
 // CHECK:STDOUT:   ret void, !dbg !123
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.77b263a5fd240ddf"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !124 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.77b263a5fd240ddf"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !124 {
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %return, i32 %self), !dbg !127
 // CHECK:STDOUT:   ret void, !dbg !128
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.693532dcb04bf6dc"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !129 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.693532dcb04bf6dc"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !129 {
 // CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.77b263a5fd240ddf"(ptr %return, i32 %self), !dbg !132
 // CHECK:STDOUT:   ret void, !dbg !133
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.25fb32d66f981ccd"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !134 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.25fb32d66f981ccd"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !134 {
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr %return, i32 %self), !dbg !137
 // CHECK:STDOUT:   ret void, !dbg !138
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.1c991c9fdfba671f"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !139 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.1c991c9fdfba671f"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !139 {
 // CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.25fb32d66f981ccd"(ptr %return, i32 %self), !dbg !142
 // CHECK:STDOUT:   ret void, !dbg !143
 // CHECK:STDOUT: }
@@ -243,20 +243,20 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.30ced37eb1e63547"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !154 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.30ced37eb1e63547"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !154 {
 // CHECK:STDOUT:   call void @_CSome.Optional.Core.30ced37eb1e63547(ptr %return, i32 %self), !dbg !157
 // CHECK:STDOUT:   ret void, !dbg !158
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr sret({ i32, i1 }) %return) #0 !dbg !159 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i32, i1 }, ptr %return, i32 0, i32 1, !dbg !160
+// CHECK:STDOUT: define linkonce_odr void @"_CNone.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !159 {
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !160
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !160
 // CHECK:STDOUT:   ret void, !dbg !161
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.5d35ad54738af8e4"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !162 {
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.5d35ad54738af8e4"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !162 {
 // CHECK:STDOUT:   %temp = alloca i32, align 4, !dbg !165
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !165
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.90a4f5ca3e06badd"(i32 %self), !dbg !165
@@ -268,7 +268,7 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSome.Optional.Core.30ced37eb1e63547(ptr sret({ i32, i1 }) %return, i32 %value) #0 !dbg !168 {
+// CHECK:STDOUT: define linkonce_odr void @_CSome.Optional.Core.30ced37eb1e63547(ptr sret(<{ i32, i1 }>) %return, i32 %value) #0 !dbg !168 {
 // CHECK:STDOUT:   call void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr %return, i32 %value), !dbg !171
 // CHECK:STDOUT:   ret void, !dbg !172
 // CHECK:STDOUT: }
@@ -280,16 +280,16 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSome.Optional.Core.b0246d3dd29c9210(ptr sret({ i32, i1 }) %return, i32 %value) #0 !dbg !178 {
+// CHECK:STDOUT: define linkonce_odr void @_CSome.Optional.Core.b0246d3dd29c9210(ptr sret(<{ i32, i1 }>) %return, i32 %value) #0 !dbg !178 {
 // CHECK:STDOUT:   call void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.5325ffa2b57e13bd"(ptr %return, i32 %value), !dbg !181
 // CHECK:STDOUT:   ret void, !dbg !182
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !183 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw { i32, i1 }, ptr %return, i32 0, i32 0, !dbg !186
+// CHECK:STDOUT: define linkonce_odr void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.bfb441135f07cbe1"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !183 {
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !186
 // CHECK:STDOUT:   store i32 %self, ptr %value, align 4, !dbg !186
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i32, i1 }, ptr %return, i32 0, i32 1, !dbg !187
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !187
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !187
 // CHECK:STDOUT:   ret void, !dbg !188
 // CHECK:STDOUT: }
@@ -301,11 +301,11 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.5325ffa2b57e13bd"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !197 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw { i32, i1 }, ptr %return, i32 0, i32 0, !dbg !200
+// CHECK:STDOUT: define linkonce_odr void @"_CSome.3e8267224c5dc9c2:OptionalStorage.Core.5325ffa2b57e13bd"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !197 {
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !200
 // CHECK:STDOUT:   %1 = call i32 @"_COp.34e7a685d3648824:Copy.Core.64ccbb8e5d9a0b8e"(i32 %self), !dbg !201
 // CHECK:STDOUT:   store i32 %1, ptr %value, align 4, !dbg !200
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i32, i1 }, ptr %return, i32 0, i32 1, !dbg !202
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !202
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !202
 // CHECK:STDOUT:   ret void, !dbg !203
 // CHECK:STDOUT: }

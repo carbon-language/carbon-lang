@@ -15,6 +15,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -1568,6 +1569,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
        .pretty_name_id = name_id});
 }
 
+template <typename ReturnPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyReturnPattern,
+                                            ReturnPatternT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                ReturnPatternT inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Unique<ReturnPatternT>(
+      resolver, import_inst_id,
+      {.type_id =
+           resolver.local_types().GetTypeIdForTypeConstantId(type_const_id)});
+}
+
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ArrayType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
@@ -2227,7 +2245,7 @@ static auto ImportFunctionDecl(ImportContext& context,
         .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
-        .return_patterns_id = SemIR::InstBlockId::None,
+        .return_pattern_id = SemIR::InstId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index,
         .evaluation_mode = import_function.evaluation_mode}});
@@ -2304,8 +2322,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
   auto self_param_id =
       GetLocalConstantInstId(resolver, import_function.self_param_id);
-  auto return_patterns =
-      GetLocalInstBlockContents(resolver, import_function.return_patterns_id);
+  auto return_pattern_id =
+      GetLocalConstantInstId(resolver, import_function.return_pattern_id);
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
@@ -2333,8 +2351,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         resolver, SemIR::FormType::TypeId, import_function.return_form_inst_id,
         return_form_const_id);
   }
-  new_function.return_patterns_id = GetLocalCanonicalInstBlockId(
-      resolver, import_function.return_patterns_id, return_patterns);
+  new_function.return_pattern_id = return_pattern_id;
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
@@ -2805,7 +2822,8 @@ static auto ImportInterfaceDecl(ImportContext& context,
                                      : SemIR::NameScopeId::None,
         .scope_with_self_id = import_interface.is_complete()
                                   ? AddPlaceholderNameScope(context)
-                                  : SemIR::NameScopeId::None}});
+                                  : SemIR::NameScopeId::None,
+        .core_interface = import_interface.core_interface}});
 
   if (import_interface.has_parameters()) {
     interface_decl.type_id = GetGenericInterfaceType(
@@ -4266,6 +4284,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::RefParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
+    case CARBON_KIND(SemIR::RefReturnPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -4318,6 +4339,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ValueParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::ValueReturnPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::VarParamPattern inst): {
@@ -4557,11 +4581,10 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
     }
     auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
-      local_context().TODO(SemIR::LocId::None,
-                           "Unsupported: Importing C++ indirectly");
-      SetResolvedConstId(inst_id, result.indirect_insts,
-                         SemIR::ErrorInst::ConstantId);
-      result.const_id = SemIR::ErrorInst::ConstantId;
+      auto loc_id = SemIR::LocId(AddImportIRInst(*this, inst_id));
+      result.const_id = ImportCppConstantFromFile(local_context(), loc_id,
+                                                  *cursor_ir, cursor_inst_id);
+      SetResolvedConstId(inst_id, result.indirect_insts, result.const_id);
       result.indirect_insts.clear();
       return result;
     }
@@ -4585,8 +4608,8 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
                     [local_ir().import_irs().GetRawIndex(cursor_ir_id)]
                 .GetAttached(cursor_inst_id);
         const_id.has_value()) {
-      SetResolvedConstId(inst_id, result.indirect_insts, const_id);
       result.const_id = const_id;
+      SetResolvedConstId(inst_id, result.indirect_insts, result.const_id);
       result.indirect_insts.clear();
       return result;
     } else {

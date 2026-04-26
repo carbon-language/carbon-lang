@@ -15,6 +15,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -113,6 +114,17 @@ static auto BuildCopyWitness(
     return SemIR::InstId::None;
   }
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    auto class_type_id = SemIR::TypeId::ForTypeConstant(query_self_const_id);
+    if (!Check::RequireCompleteType(
+            context, class_type_id, SemIR::LocId::None, [&](auto& builder) {
+              CARBON_DIAGNOSTIC(IncompleteTypeInCopyWitness, Context,
+                                "argument to C++ call has incomplete type {0}",
+                                SemIR::TypeId);
+              builder.Context(loc_id, IncompleteTypeInCopyWitness,
+                              class_type_id);
+            })) {
+      return SemIR::ErrorInst::InstId;
+    }
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature = {.num_params = 1}};
@@ -220,7 +232,7 @@ static auto BuildDestroyWitness(
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   CoreInterface core_interface,
+                   SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
@@ -231,24 +243,24 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_loc_id);
 
   switch (core_interface) {
-    case CoreInterface::Copy:
+    case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id);
-    case CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::CppUnsafeDeref:
       return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
                                         query_specific_interface_id);
-    case CoreInterface::Default:
+    case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return SemIR::InstId::None;
 
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
 }

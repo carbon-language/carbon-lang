@@ -136,8 +136,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -157,12 +158,14 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   impl_decl @f64.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64 [concrete = constants.%f64]
 // CHECK:STDOUT:     %.loc8_13: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_36: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.loc8_24: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc8_18: type = where_expr %.Self [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_base_facet_type type
-// CHECK:STDOUT:       requirement_impls %.Self.ref, %.loc8_36
+// CHECK:STDOUT:       requirement_impls %.loc8_24, %.loc8_36
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -180,7 +183,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: bool} [concrete]
-// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @I> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -204,12 +209,14 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     %.loc10_11: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: bool} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:     %.loc10_20: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.loc10_31: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_25: type = where_expr %.Self [concrete = constants.%type_where] {
 // CHECK:STDOUT:       requirement_base_facet_type type
-// CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
+// CHECK:STDOUT:       requirement_impls %.loc10_31, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

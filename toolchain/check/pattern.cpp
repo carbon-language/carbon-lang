@@ -69,7 +69,7 @@ auto EndSubpattern(Context& context, NodeStack& node_stack) -> void {
     auto expr_region_id = PopSubpatternExpr(context, *maybe_expr_id);
     auto pattern_type_id =
         GetPatternType(context, context.insts().Get(*maybe_expr_id).type_id());
-    node_stack.Push(node_id, AddPatternInst<SemIR::ExprPattern>(
+    node_stack.Push(node_id, AddInst<SemIR::ExprPattern>(
                                  context, node_id,
                                  {.type_id = pattern_type_id,
                                   .expr_region_id = expr_region_id}));
@@ -81,7 +81,7 @@ auto EndSubpattern(Context& context, NodeStack& node_stack) -> void {
 }
 
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::ConstantId form_id, bool is_unused,
+                          SemIR::InstId form_id, bool is_unused,
                           BindingPhase phase) -> SemIR::EntityNameId {
   SemIR::EntityName entity_name = {
       .name_id = name_id,
@@ -147,8 +147,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                                      .value_id = SemIR::InstId::None}));
 
   auto binding_pattern_id =
-      AddPatternInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                                  context.sem_ir(), name_loc, pattern));
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
+                                                            name_loc, pattern));
 
   if (pattern.kind == SemIR::SymbolicBindingPattern::Kind) {
     context.scope_stack().PushCompileTimeBinding(bind_id);
@@ -206,18 +206,17 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
   auto pattern_type_id = GetPatternType(context, type_id);
   const auto& param_pattern_kind =
       is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
-  auto pattern_id = AddPatternInst(
+  auto pattern_id = AddInst(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), loc_id,
                    SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
                                               .type_id = pattern_type_id,
                                               .pretty_name_id = name_id}));
 
-  auto entity_name_id =
-      AddBindingEntityName(context, name_id,
-                           /*form_id=*/SemIR::ConstantId::None,
-                           /*is_unused=*/false,
-                           /*phase=*/BindingPhase::Runtime);
+  auto entity_name_id = AddBindingEntityName(context, name_id,
+                                             /*form_id=*/SemIR::InstId::None,
+                                             /*is_unused=*/false,
+                                             /*phase=*/BindingPhase::Runtime);
   return AddBindingPattern(context, loc_id, type_expr_region_id,
                            {.kind = SemIR::WrapperBindingPattern::Kind,
                             .type_id = GetPatternType(context, type_id),

@@ -312,14 +312,9 @@ struct FunctionId : public IdBase<FunctionId> {
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
-  // Used when referring to the imported C++.
-  static const CheckIRId Cpp;
-
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void;
 };
-
-inline constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {

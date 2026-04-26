@@ -265,7 +265,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 
   // Check that the tuple is the right size.
   std::optional<uint64_t> array_bound =
-      sem_ir.GetArrayBoundValue(array_type.bound_id);
+      sem_ir.GetZExtIntValue(array_type.bound_id);
   if (!array_bound) {
     // TODO: Should this fall back to using `ImplicitAs`?
     if (target.diagnose) {
@@ -1972,17 +1972,18 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // didn't apply in the template definition.
   // TODO: Support this for targets other than `Value`.
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
-      target.kind == ConversionTarget::Value &&
-      (OperandIsDependent(context, expr_id) ||
-       OperandIsDependent(context, target.type_id))) {
+      target.kind == ConversionTarget::Value) {
     auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
-    return AddDependentActionSplice(
-        context, loc_id,
-        SemIR::ConvertToValueAction{
-            .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
-            .inst_id = expr_id,
-            .target_type_inst_id = target_type_inst_id},
-        target_type_inst_id);
+    SemIR::ConvertToValueAction convert_action = {
+        .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        .inst_id = expr_id,
+        .target_type_inst_id = target_type_inst_id};
+    // We don't use `HandleAction` here because it would call `PerformAction`
+    // inline if it's performable, which would lead to infinite recursion.
+    if (!ActionIsPerformable(context, convert_action)) {
+      return AddDependentActionSplice(context, loc_id, convert_action,
+                                      target_type_inst_id);
+    }
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
@@ -2168,13 +2169,12 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     llvm::ArrayRef<SemIR::InstId> return_arg_ids,
-                     const SemIR::Function& callee,
+                     SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id,
                      bool is_operator_syntax) -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
-  auto return_patterns_id = callee.return_patterns_id;
+  auto return_pattern_id = callee.return_pattern_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -2191,8 +2191,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, return_patterns_id,
-                            self_id, arg_refs, return_arg_ids,
+                            callee.param_patterns_id, return_pattern_id,
+                            self_id, arg_refs, return_arg_id,
                             is_operator_syntax);
 }
 

@@ -6,9 +6,12 @@ CompileFlags:
   # Workaround for https://github.com/clangd/clangd/issues/1582
   Remove: [-march=*]
 Diagnostics:
+  # `unused-function`: has false positives due to not performing template
+  #   instantiation. We get a more reliable version of this warning from the
+  #   compiler.
   # `unused-includes`: has false positives, reporting includes unused when
-  #   they are used.
-  Suppress: [unused-includes]
+  #   they are used. Probably the same root cause as unused-function.
+  Suppress: [unused-function, unused-includes]
 
 ---
 

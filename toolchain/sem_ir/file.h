@@ -66,7 +66,7 @@ struct ExprRegion {
 using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
 using CustomLayoutStore =
-    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
+    BlockValueStore<CustomLayoutId, ObjectSize, Tag<CheckIRId>>;
 
 // The semantic IR for a single file.
 class File : public Printable<File> {
@@ -95,14 +95,21 @@ class File : public Printable<File> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  // Returns array bound value from the bound instruction.
+  // Returns the zero-extended integer value of the given instruction if it is a
+  // constant integer.
   // TODO: Move this function elsewhere.
-  auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
-    if (auto bound = insts().TryGetAs<IntValue>(
-            constant_values().GetConstantInstId(bound_id))) {
-      return ints().Get(bound->int_id).getZExtValue();
+  auto GetZExtIntValue(InstId inst_id) const -> std::optional<uint64_t> {
+    if (auto val = insts().TryGetAs<IntValue>(
+            constant_values().GetConstantInstId(inst_id))) {
+      return ints().Get(val->int_id).getZExtValue();
     }
     return std::nullopt;
+  }
+
+  // Returns the layout of a pointer.
+  // TODO: This should depend on the target machine.
+  auto GetPointerLayout() const -> ObjectLayout {
+    return {.size = ObjectSize::Bytes(8), .alignment = ObjectSize::Bytes(8)};
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
