@@ -63,11 +63,14 @@ struct ConversionTarget {
   Kind kind;
   // The target type for the conversion.
   SemIR::TypeId type_id;
-  // The storage being initialized, if any.
+  // The storage being initialized, if any. It must be valid to reference this
+  // instruction after splicing in `storage_access_block` (if specified), so it
+  // must either dominate the initializer or be one of the instructions in
+  // `storage_access_block`.
   SemIR::InstId storage_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that `storage_id`
-  // depends on, and that can be discarded if `storage_id` is not accessed.
-  // If this is not null or empty, its last element must be storage_id.
+  // depends on. This block will be spliced or merged before any reference to
+  // `storage_id`, and may be discarded if `storage_id` is not accessed.
   PendingBlock* storage_access_block = nullptr;
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback,
@@ -129,15 +132,31 @@ struct InitializeResult {
 // is converted to an initializing expression of the type of `storage_id` if
 // necessary.
 //
-// `storage_id` is used as the storage argument of the resulting expression.
 // `storage_access_block` should be used to supply a pending block that
-// allocates the storage, and typically contains `storage_id`. This block will
-// be inserted before any use of the storage by the initializer, and will be
-// inserted even if the initializer does not actually use the storage.
+// allocates the storage, and typically contains `storage_id`. The target of the
+// initialization will be either `storage_id` itself, or an existing storage
+// argument instruction that is overwritten to hold a copy of `storage_id` as an
+// optimization for SemIR compactness.
 //
-// Because the storage instruction may be written over another instruction
-// rather than being spliced, this function takes it by rvalue reference to
-// remind the caller not to use it after this call.
+// The storage instruction will only be written over an existing instruction if
+// it is the sole instruction in the pending block. This is expected to be a
+// common case. After this happens, the copy of the instruction in the pending
+// block is expected to be unreachable from the SemIR::File. As a result, the
+// `storage_id` instruction should not be referenced again after calling this
+// function, and this function takes it by rvalue reference to remind the caller
+// of this.
+//
+// If the overwrite optimization is not performed, `storage_access_block` will
+// be inserted before any use of the storage by the initializer, and will be
+// inserted even if the initializer does not actually use the storage. It must
+// be valid to reference `storage_id` after splicing in `storage_access_block`,
+// so `storage_id` must either dominate the initializer (but see the TODO below)
+// or be one of the instructions in `storage_access_block`. If `storage_id` is
+// known to always dominate the initializer, `InitializeExisting` should be used
+// instead.
+//
+// TODO: We don't have an implementation of a proper dominance check, so we
+// fake one up by comparing the order in which the insts were created.
 //
 // This function does not guarantee to perform an in-place initialization, so
 // the caller is responsible for passing the returned `inst_id` to an inst that

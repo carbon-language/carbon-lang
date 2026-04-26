@@ -2058,11 +2058,18 @@ auto InitializeExisting(Context& context, SemIR::LocId loc_id,
   auto type_id = context.insts().Get(storage_id).type_id();
   if (for_return &&
       !SemIR::InitRepr::ForType(context.sem_ir(), type_id).MightBeInPlace()) {
-    // TODO: is it safe to use storage_id when the init repr is dependent?
+    // TODO: Is it safe to use storage_id when the init repr is dependent?
     storage_id = SemIR::InstId::None;
   }
-  // TODO: add CHECK that storage_id.index < value_id.index to enforce the
-  // precondition, once existing violations have been cleaned up.
+
+  // TODO: This is only an approximation of a dominance check. Add a general
+  // end-of-phase dominance check and remove the check here and the one in
+  // `MergeReplacing`.
+  CARBON_CHECK(!storage_id.has_value() ||
+                   value_id == SemIR::ErrorInst::InstId ||
+                   context.insts().GetRawIndex(storage_id) <=
+                       context.insts().GetRawIndex(value_id),
+               "Storage might not dominate initializer");
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializing,
