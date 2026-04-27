@@ -166,11 +166,43 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   return record_decl;
 }
 
+// Creates a `clang::FieldDecl` for a Carbon class field. Returns
+// nullptr if an error occurs.
+static auto CreateCppFieldDecl(Context& context,
+                               clang::CXXRecordDecl* record_decl,
+                               SemIR::InstId field_inst_id,
+                               const SemIR::FieldDecl& field_decl)
+    -> clang::FieldDecl* {
+  // Get the field's C++ type.
+  auto unbound_element_type =
+      context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
+  auto cpp_type =
+      MapToCppType(context, context.types().GetTypeIdForTypeInstId(
+                                unbound_element_type.element_type_inst_id));
+  if (cpp_type.isNull()) {
+    context.TODO(field_inst_id, "failed to map Carbon type to C++");
+    return nullptr;
+  }
+
+  // Get the field's C++ identifier.
+  auto* identifier_info = GetClangIdentifierInfo(context, field_decl.name_id);
+  CARBON_CHECK(identifier_info, "field with non-identifier name {0}",
+               field_decl.name_id);
+
+  // Create the `clang::FieldDecl`.
+  auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
+  auto* cpp_field_decl = clang::FieldDecl::Create(
+      context.ast_context(), record_decl, /*StartLoc=*/clang_loc,
+      /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
+      /*BW=*/nullptr,
+      /*Mutable=*/true, clang::ICIS_NoInit);
+  cpp_field_decl->setAccess(clang::AS_public);
+  record_decl->addHiddenDecl(cpp_field_decl);
+
+  return cpp_field_decl;
+}
+
 // Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
-//
-// The C++ decls are stored in `SemIR::Class::clang_field_decl_ids`. If
-// a field cannot be exported for some reason, a
-// `SemIR::ClangDeclId::None` will be stored.
 static auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) {
   auto body = context.inst_blocks().Get(class_info.body_block_id);
   for (auto field_inst_id : body) {
@@ -183,47 +215,19 @@ static auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) {
     auto* decl_context = ExportNameScopeToCpp(
         context, SemIR::LocId(field_inst_id), class_info.scope_id);
     if (!decl_context) {
-      class_info.clang_field_decl_ids.Insert(field_inst_id,
-                                             SemIR::ClangDeclId::None);
       continue;
     }
 
-    // Get the field's C++ type.
-    auto unbound_element_type =
-        context.types().GetAs<SemIR::UnboundElementType>(field_decl->type_id);
-    auto cpp_type =
-        MapToCppType(context, context.types().GetTypeIdForTypeInstId(
-                                  unbound_element_type.element_type_inst_id));
-    if (cpp_type.isNull()) {
-      context.TODO(field_inst_id, "failed to map Carbon type to C++");
-      class_info.clang_field_decl_ids.Insert(field_inst_id,
-                                             SemIR::ClangDeclId::None);
+    auto* cpp_field_decl =
+        CreateCppFieldDecl(context, cast<clang::CXXRecordDecl>(decl_context),
+                           field_inst_id, *field_decl);
+    if (!cpp_field_decl) {
       continue;
     }
-
-    // Get the field's C++ identifier.
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, field_decl->name_id);
-    CARBON_CHECK(identifier_info, "field with non-identifier name {0}",
-                 field_decl->name_id);
-
-    // Create the `clang::FieldDecl`.
-    auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
-    auto* cpp_field_decl = clang::FieldDecl::Create(
-        context.ast_context(), decl_context, /*StartLoc=*/clang_loc,
-        /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
-        /*BW=*/nullptr,
-        /*Mutable=*/true, clang::ICIS_NoInit);
-    cpp_field_decl->setAccess(clang::AS_public);
-
-    auto* parent_class = cast<clang::CXXRecordDecl>(decl_context);
-    parent_class->addHiddenDecl(cpp_field_decl);
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
-    auto clang_decl_id =
-        context.clang_decls().Add({.key = key, .inst_id = field_inst_id});
-    class_info.clang_field_decl_ids.Insert(field_inst_id, clang_decl_id);
+    context.clang_decls().Add({.key = key, .inst_id = field_inst_id});
   }
 }
 
@@ -238,18 +242,18 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   auto& class_info = context.classes().Get(class_type.class_id);
 
   // If the class's fields haven't already been exported, do so now.
-  auto* clang_decl_id = class_info.clang_field_decl_ids[field_inst_id];
-  if (!clang_decl_id) {
+  if (!class_info.fields_exported) {
     ExportAllFieldsToCpp(context, class_info);
-    clang_decl_id = class_info.clang_field_decl_ids[field_inst_id];
+    class_info.fields_exported = true;
   }
 
   // Get the exported `clang::FieldDecl`.
-  if (*clang_decl_id == SemIR::ClangDeclId::None) {
+  auto clang_decl_id = context.clang_decls().Lookup(field_inst_id);
+  if (clang_decl_id == SemIR::ClangDeclId::None) {
     return nullptr;
   }
   return cast<clang::FieldDecl>(
-      context.clang_decls().Get(*clang_decl_id).key.decl);
+      context.clang_decls().Get(clang_decl_id).key.decl);
 }
 
 auto CalculateCppFieldOffsets(

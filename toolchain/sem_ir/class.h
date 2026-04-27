@@ -35,6 +35,9 @@ struct ClassFields {
   // Whether this class or any base class has at least one virtual function.
   bool is_dynamic = false;
 
+  // Whether the class's fields have been exported to C++.
+  bool fields_exported = false;
+
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
@@ -65,18 +68,6 @@ struct ClassFields {
   // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
   InstId vtable_decl_id = InstId::None;
-
-  // Exported C++ field declarations. This map will be empty if
-  // `clang_field_decl_ids_initialized` is false, or if there are no
-  // fields. For any fields that could not be exported due to an error,
-  // map values will be `None`.
-  Map<SemIR::InstId, ClangDeclId> clang_field_decl_ids;
-
-  // Whether `clang_field_decl_ids` has been initialized yet.
-  //
-  // TODO: could replace with `clang_field_decl_ids.empty()` if `Map`
-  // had that method.
-  bool clang_field_decl_ids_initialized = false;
 
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
