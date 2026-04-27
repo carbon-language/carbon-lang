@@ -359,6 +359,13 @@ def _process_pr(
                 first_independent_commit_oid = oid
                 break
 
+        non_linear_history = False
+        if first_independent_commit_oid:
+            idx = current_oids.index(first_independent_commit_oid)
+            non_linear_history = any(
+                oid in dependent_oids for oid in current_oids[idx + 1 :]
+            )
+
     if (
         open_deps == parsed_open_deps
         and merged_deps == parsed_merged_deps
@@ -382,14 +389,20 @@ def _process_pr(
     if open_deps:
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
         if first_independent_commit_oid:
-            short_hash = first_independent_commit_oid[:8]
-            first_commit_linked = (
-                f"[{short_hash}]({pr_number}/commits/{short_hash})"
+            changes_url = (
+                "https://github.com/carbon-language/carbon-lang/pull/"
+                f"{pr_number}/changes/{first_independent_commit_oid}..HEAD"
             )
             comment_body += (
-                f"Depends on {pr_list_str}, start review at "
-                f"{first_commit_linked}"
+                f"Depends on {pr_list_str}, start review with "
+                f"[these changes]({changes_url})"
             )
+            if non_linear_history:
+                comment_body += (
+                    "\n\n> [!WARNING]\n"
+                    "> Not all of those changes should be reviewed due to "
+                    "non-linear history."
+                )
         else:
             comment_body += (
                 f"Depends on {pr_list_str}, unable to identify starting review "
