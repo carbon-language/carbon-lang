@@ -258,7 +258,7 @@ def _set_commit_status(
     payload = {
         "state": state,
         "description": description,
-        "context": "Dependent PR",
+        "context": "PR dependencies check",
     }
     if dry_run:
         _print_err(
@@ -281,8 +281,8 @@ def _process_pr(
     pr_to_commits: dict[int, list[str]],
     open_pr_numbers: set[int],
     label_id: str,
-    dry_run: bool,
     token: str,
+    dry_run: bool = False,
     scanning: bool = False,
     max_merged_pr: int = 10000,
 ) -> None:
@@ -360,16 +360,6 @@ def _process_pr(
                 )
             )
 
-    if not open_deps and not existing_comment_id:
-        _set_commit_status(
-            pr_node["headRefOid"],
-            "success",
-            "No open dependencies",
-            token,
-            dry_run,
-        )
-        return
-
     # Keep tracking previously identified dependencies if they are still open,
     # even if they no longer pass the subset check (e.g. they got new commits).
     for pr in parsed_open_deps:
@@ -387,10 +377,10 @@ def _process_pr(
     if open_deps:
         state = "pending"
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
-        description = f"Depends on {pr_list_str}"
+        description = f"This PR has open dependencies: {pr_list_str}"
     else:
         state = "success"
-        description = "All dependent PRs are merged"
+        description = "This PR has no open dependencies"
 
     _set_commit_status(
         pr_node["headRefOid"], state, description, token, dry_run
@@ -571,8 +561,8 @@ def main() -> None:
             pr_to_commits,
             open_pr_numbers,
             label_id,
-            parsed_args.dry_run,
             parsed_args.access_token,
+            dry_run=parsed_args.dry_run,
             max_merged_pr=max_merged_pr,
         )
     elif parsed_args.scan:
@@ -585,8 +575,8 @@ def main() -> None:
                 pr_to_commits,
                 open_pr_numbers,
                 label_id,
-                parsed_args.dry_run,
                 parsed_args.access_token,
+                dry_run=parsed_args.dry_run,
                 scanning=True,
                 max_merged_pr=max_merged_pr,
             )
