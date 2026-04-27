@@ -325,11 +325,24 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 
 // Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.
 static auto WitnessQueryMatchesInterface(
-    Context& context, SemIR::InstId witness_id,
-    const SemIR::SpecificInterface& interface) -> bool {
-  auto lookup = context.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
-  return interface ==
-         context.specific_interfaces().Get(lookup.query_specific_interface_id);
+    Context& context, SemIR::LocId loc_id, SemIR::InstId impl_self,
+    SemIR::InstId access_witness_id,
+    const SemIR::SpecificInterface& impl_interface) -> bool {
+  auto lookup =
+      context.insts().GetAs<SemIR::LookupImplWitness>(access_witness_id);
+  auto access_interface =
+      context.specific_interfaces().Get(lookup.query_specific_interface_id);
+
+  // The `impl_interface` comes from an IdentifiedFacetType so it has `.Self`
+  // replaced. The access comes from a rewrite constraint, which do not have
+  // `.Self` replaced, so we need to do that here.
+  //
+  // TODO: Do this more eagerly as soon as we know the full decl before we
+  // construct the witness table from it?
+  SubstPeriodSelfCallbacks callbacks(&context, loc_id,
+                                     context.constant_values().Get(impl_self));
+  access_interface = SubstPeriodSelf(context, callbacks, access_interface);
+  return access_interface == impl_interface;
 }
 
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
@@ -351,8 +364,8 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
         auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return WitnessQueryMatchesInterface(context, access.witness_id,
-                                            impl.interface);
+        return WitnessQueryMatchesInterface(context, loc_id, impl.self_id,
+                                            access.witness_id, impl.interface);
       });
 
   if (rewrites_into_interface_to_witness.empty()) {
