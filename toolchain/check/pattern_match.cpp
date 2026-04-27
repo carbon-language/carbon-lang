@@ -634,7 +634,6 @@ auto MatchContext::DoPreWork(State state, SemIR::VarPattern var_pattern,
 auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
                                     SemIR::InstId scrutinee_id,
                                     WorkItem entry) const -> SemIR::InstId {
-  auto storage_id = SemIR::InstId::None;
   CARBON_KIND_SWITCH(state) {
     case CARBON_KIND(CalleeState* _): {
       // We're emitting pattern-match IR for the callee, but we're still on
@@ -646,52 +645,56 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       return scrutinee_id;
     }
     case CARBON_KIND(LocalState* _): {
+      // TODO: Find a more efficient way to put these insts in the global_init
+      // block (or drop the distinction between the global_init block and the
+      // file scope?)
+      if (context_.scope_stack().PeekIndex() == ScopeIndex::Package) {
+        context_.global_init().Resume();
+      }
+
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
       // we start pattern matching.
       auto lookup_result = context_.var_storage_map().Lookup(entry.pattern_id);
       CARBON_CHECK(lookup_result);
-      storage_id = lookup_result.value();
-      break;
+      auto storage_id = lookup_result.value();
+      if (scrutinee_id.has_value()) {
+        auto init_id =
+            InitializeExisting(context_, SemIR::LocId(entry.pattern_id),
+                               storage_id, scrutinee_id, /*for_return=*/false);
+        // TODO: It's a bit weird to use an `Assign` instruction to model
+        // initialization. Consider adding a different instruction for this
+        // purpose.
+        AddInst<SemIR::Assign>(context_, SemIR::LocId(entry.pattern_id),
+                               {.lhs_id = storage_id, .rhs_id = init_id});
+      }
+
+      if (context_.scope_stack().PeekIndex() == ScopeIndex::Package) {
+        context_.global_init().Suspend();
+      }
+      return storage_id;
     }
     case CARBON_KIND(CallerState* _): {
-      storage_id = AddInst<SemIR::TemporaryStorage>(
+      // TODO: This variable's lifetime should end at the end of the call or the
+      // full-expression. We don't use a temporary here, because temporaries are
+      // treated as being immutable.
+      PendingBlock storage_block(&context_);
+      auto storage_id = storage_block.AddInstWithCleanup<SemIR::VarStorage>(
+          SemIR::LocId(entry.pattern_id),
+          {.type_id = pattern_type_id, .pattern_id = entry.pattern_id});
+      // Disable broken lint that suggests a "fix" that doesn't compile.
+      auto init_result = Initialize(
           context_, SemIR::LocId(entry.pattern_id),
-          {.type_id = pattern_type_id});
-      CARBON_CHECK(scrutinee_id.has_value());
-      break;
+          // NOLINTNEXTLINE(performance-move-const-arg)
+          std::move(storage_id), std::move(storage_block), scrutinee_id);
+      // TODO: Consider instead creating something like a `Temporary`
+      // instruction that returns a reference so that constant evaluation can
+      // obtain the value of the var parameter.
+      AddInst<SemIR::Assign>(
+          context_, SemIR::LocId(entry.pattern_id),
+          {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
+      return init_result.storage_id;
     }
   }
-  // TODO: Find a more efficient way to put these insts in the global_init
-  // block (or drop the distinction between the global_init block and the
-  // file scope?)
-  if (context_.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context_.global_init().Resume();
-  }
-  if (scrutinee_id.has_value()) {
-    auto init_id = Initialize(context_, SemIR::LocId(entry.pattern_id),
-                              storage_id, scrutinee_id);
-    // If we created a `TemporaryStorage` to hold the var, create a
-    // corresponding `Temporary` to model that its initialization is complete.
-    // TODO: If the subpattern is a binding, we may want to destroy the
-    // parameter variable in the callee instead of the caller so that we can
-    // support destructive move from it.
-    if (std::holds_alternative<CallerState*>(state)) {
-      storage_id = AddInstWithCleanup<SemIR::Temporary>(
-          context_, SemIR::LocId(entry.pattern_id),
-          {.type_id = context_.insts().Get(storage_id).type_id(),
-           .storage_id = storage_id,
-           .init_id = init_id});
-    } else {
-      // TODO: Consider using different instruction kinds for assignment
-      // versus initialization.
-      AddInst<SemIR::Assign>(context_, SemIR::LocId(entry.pattern_id),
-                             {.lhs_id = storage_id, .rhs_id = init_id});
-    }
-  }
-  if (context_.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context_.global_init().Suspend();
-  }
-  return storage_id;
 }
 
 auto MatchContext::DoPostWork(State /*state*/,

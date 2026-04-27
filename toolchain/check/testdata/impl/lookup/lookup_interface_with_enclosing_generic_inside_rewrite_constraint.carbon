@@ -449,7 +449,7 @@ fn F() {
 // CHECK:STDOUT:   %C.521: type = class_type @C, @C(%OuterParam) [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness.26b: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic]
 // CHECK:STDOUT:   %require_complete.4a2: <witness> = require_complete_type %Y_where.type.b0f [symbolic]
-// CHECK:STDOUT:   %Y.facet: %Y.type.6ae = facet_value %C.521, (%Y.impl_witness.26b) [symbolic]
+// CHECK:STDOUT:   %Y.facet.892: %Y.type.6ae = facet_value %C.521, (%Y.impl_witness.26b) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z1.impl.%Z1.impl_witness_table [concrete]
@@ -829,7 +829,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.impl_witness.loc14_29.2 => constants.%Y.impl_witness.26b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf(constants.%OuterParam, constants.%Y.facet) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%OuterParam, constants.%Y.facet.892) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab

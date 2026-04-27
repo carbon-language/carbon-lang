@@ -435,8 +435,8 @@ auto BuildThunkDefinitionForExport(Context& context,
         context.inst_blocks().Get(thunk_function.call_params_id).back();
 
     SemIR::LocId loc_id(out_param_id);
-    auto init_id =
-        Initialize(context, loc_id, out_param_id, call_id, /*for_return=*/true);
+    auto init_id = InitializeExisting(context, loc_id, out_param_id, call_id,
+                                      /*for_return=*/true);
     AddInst(context, loc_id,
             SemIR::Assign{
                 .lhs_id = out_param_id,

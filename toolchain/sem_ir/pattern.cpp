@@ -55,6 +55,11 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
 
     // TODO: Look through struct patterns.
 
+    if (auto form_pattern = inst.TryAs<FormParamPattern>()) {
+      // TODO: This introduces a name, but we don't model it as a binding.
+      return EntityNameId::None;
+    }
+
     auto [name_id, entity_name_id] = GetBoundEntityName(sem_ir, inst);
     CARBON_CHECK(entity_name_id.has_value(), "Unhandled pattern inst kind {0}",
                  inst);

@@ -110,16 +110,16 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value constants.%i32, (constants.%I.impl_witness) [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %.loc27: %I.type = converted constants.%i32, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %TestOp.specific_fn: <specific function> = specific_function %TestOp.ref, @TestOp(constants.%I.facet) [concrete = constants.%TestOp.specific_fn]
-// CHECK:STDOUT:   %.loc22_25.1: ref %i32 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc27_10.1: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_10.2: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_10.2(%x.ref)
-// CHECK:STDOUT:   %.loc22_25.2: ref %i32 = temporary %.loc22_25.1, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %TestOp.call: init %empty_tuple.type = call %TestOp.specific_fn(%.loc22_25.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc22_25.2, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc22_25.2)
+// CHECK:STDOUT:   %x.var: ref %i32 = var @TestOp.%x.param_patt
+// CHECK:STDOUT:   assign %x.var, %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %TestOp.call: init %empty_tuple.type = call %TestOp.specific_fn(%x.var)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

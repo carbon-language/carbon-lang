@@ -16,6 +16,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -169,12 +170,19 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
                           .op_name = CoreIdentifier::NewCursor},
                          range_id);
   auto cursor_type_id = context.insts().Get(cursor_id).type_id();
-  auto cursor_var_id = AddInstWithCleanup<SemIR::VarStorage>(
-      context, node_id,
+  PendingBlock cursor_var_block(&context);
+  auto cursor_var_id = cursor_var_block.AddInstWithCleanup<SemIR::VarStorage>(
+      node_id,
       {.type_id = cursor_type_id, .pattern_id = SemIR::AbsoluteInstId::None});
-  auto init_id = Initialize(context, node_id, cursor_var_id, cursor_id);
-  AddInst<SemIR::Assign>(context, node_id,
-                         {.lhs_id = cursor_var_id, .rhs_id = init_id});
+  // Disable broken lint that suggests a "fix" that doesn't compile.
+  auto init_result = Initialize(context, node_id,
+                                // NOLINTNEXTLINE(performance-move-const-arg)
+                                std::move(cursor_var_id),
+                                std::move(cursor_var_block), cursor_id);
+  AddInst<SemIR::Assign>(
+      context, node_id,
+      {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
+  cursor_var_id = init_result.storage_id;
 
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);

@@ -15,6 +15,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -126,9 +127,20 @@ static auto BuildCopyWitness(
     return SemIR::InstId::None;
   }
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    auto class_type_id = SemIR::TypeId::ForTypeConstant(query_self_const_id);
+    if (!Check::RequireCompleteType(
+            context, class_type_id, SemIR::LocId::None, [&](auto& builder) {
+              CARBON_DIAGNOSTIC(IncompleteTypeInCopyWitness, Context,
+                                "argument to C++ call has incomplete type {0}",
+                                SemIR::TypeId);
+              builder.Context(loc_id, IncompleteTypeInCopyWitness,
+                              class_type_id);
+            })) {
+      return SemIR::ErrorInst::InstId;
+    }
+
     SemIR::SignatureId signature_id =
         MakeSignature(context, {SemIR::Signature::PassingMode::Copy});
-
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature_id = signature_id};

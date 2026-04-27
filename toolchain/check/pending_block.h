@@ -69,22 +69,21 @@ class PendingBlock {
 
   // Replace the instruction at target_id with the instructions in this block.
   // The new value for target_id should be value_id. Returns the InstId that
-  // should be used to refer to the result from now on. value_id must precede
-  // target_id, or be the last ID in this block, in order to preserve the
-  // property that SemIR is topologically sorted.
+  // should be used to refer to the result from now on. value_id must dominate
+  // target_id (but see below), or refer to an instruction within this block, in
+  // order to preserve the property that SemIR is topologically sorted.
   //
-  // TODO: we could also allow value_id to be one of the other insts in this
-  // block, but that would be costlier to enforce.
+  // TODO: We don't have an implementation of a proper dominance check, so we
+  // fake one up by comparing the order in which the insts were created.
+  // Add a general end-of-phase dominance check and remove the one here and in
+  // `InitializeExisting`.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
       -> SemIR::InstId {
     CARBON_CHECK(target_id != value_id);
-
-    // TODO: consider adding an end-of-phase check that the SemIR::File is in
-    // SSA form, and dropping this check and the ordering preconditions here and
-    // on Initialize.
-    CARBON_CHECK(value_id.index <= target_id.index ||
-                     (!insts_.empty() && insts_.back() == value_id),
-                 "Splice would break topological sorting of insts");
+    CARBON_CHECK(context_->insts().GetRawIndex(value_id) <=
+                         context_->insts().GetRawIndex(target_id) ||
+                     llvm::is_contained(insts_, value_id),
+                 "Splice might break dominance condition");
     SemIR::LocIdAndInst value = context_->insts().GetWithLocId(value_id);
 
     auto result_id = value_id;

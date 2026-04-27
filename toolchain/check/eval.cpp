@@ -20,6 +20,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -2621,7 +2622,8 @@ static auto AddRequirementRewrite(Context& context,
       {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
 }
 
-static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
+static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
+                                SemIR::RequirementImpls impls,
                                 SemIR::InstId period_self_id,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
     -> void {
@@ -2657,40 +2659,15 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
     llvm::append_range(info->type_impls_named_constraints,
                        rhs.type_impls_named_constraints);
+    llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   } else {
-    // Consider `I where C(.Self) impls (J(.Self) where .Self impls K(.Self))`,
-    // when we are evaluating the `C(.Self) impls (<facet type>)` requirement.
-    // The <facet type> is our `rhs` here, and it will contain:
-    // * extend constraint: J(.Self)
-    // * self impls constraint: K(.Self)
-    //
-    // The value of `.Self` changes where we cross a `where` operator. This
-    // means extend constraints retain their original `.Self`, but self impls
-    // constraints should have their `.Self` replaced by the LHS of the impls
-    // requirement.
-    //
-    // However that is not quite enough. The view of the LHS of the impls
-    // requirement should be a facet with a facet type of the RHS extend
-    // constraints. In this case the LHS is C(.Self) and the RHS facet type is
-    // `J(.Self) where .Self impls K(.Self)`. The RHS facet type has impls
-    // constraints (which are on the RHS of a `where` operator), in which their
-    // `.Self` should be replaced by `C(.Self)` converted to the RHS facet
-    // type's extend constraints (which are on the LHS of a `where` operator),
-    // which is `C(.Self) as J(.Self)`. It should be enough to convert the LHS
-    // type to the type of the `.Self` that it is replacing, as that contains
-    // the extend constraints.
-    //
-    // So the final RHS facet type to be merged into `info` is:
-    //
-    // `J(.Self) where (C(.Self) as J(.Self)) impls K(C(.Self) as J(.Self))`.
-
     auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
 
-    auto impls_interface = [&](SemIR::SpecificInterface si)
+    auto extends_interface = [=](SemIR::SpecificInterface si)
         -> SemIR::FacetTypeInfo::TypeImplsInterface {
       return {lhs_facet_or_type, si};
     };
-    auto impls_constraint = [&](SemIR::SpecificNamedConstraint sc)
+    auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
         -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
       return {lhs_facet_or_type, sc};
     };
@@ -2699,47 +2676,145 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     // converted to type impls constraints so they apply to the LHS type.
     llvm::append_range(
         info->type_impls_interfaces,
-        llvm::map_range(rhs.extend_constraints, impls_interface));
+        llvm::map_range(rhs.extend_constraints, extends_interface));
     llvm::append_range(
         info->type_impls_named_constraints,
-        llvm::map_range(rhs.extend_named_constraints, impls_constraint));
+        llvm::map_range(rhs.extend_named_constraints, extends_constraint));
 
-    // To replace the `.Self` in `.Self impls X` we convert from a self impls
-    // constraint to a type impls constraint where the type is the impls LHS
-    // type. We must also replace any `.Self` references in the constraint in
-    // the same way. The LHS type needs to be converted to a facet with its type
-    // containing the RHS facet type's extend constraints so that the extend
-    // constraints can be referenced in impls constraints.
+    // Impls constraints are written as `T impls X` where `T` is a facet and `X`
+    // is a facet type. The `T` can be `.Self`.
     //
-    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
-    // with the RHS extend constraints (interfaces and named constraints).
+    // What's important here is that since `X` is a facet type, it can contain a
+    // `where` expression, and the value of `.Self` changes across a `where`
+    // expression. This can create ambiguous `.Self` references where on the RHS
+    // they refer to a different facet (`T`) than on the LHS, which is diagnosed
+    // as an error.
     //
-    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
-    // constraints.
+    // TODO: For now we do this diagnosis here, but we should diagnose this
+    // during name lookup of `.Self` instead, in order to properly allow only
+    // implicit `.Self` references when it would be ambiguous. Then use
+    // `should_replace_implicit_only` in all cases.
+    //
+    // Implicit `.Self` references can't be avoided when referencing members of
+    // the facet's type such as with `.Member`. As such, we replace implicit
+    // `.Self` references on the RHS of a nested `where` with the inner-most
+    // facet that it could possibly refer to, the `T as X` from the `impls`
+    // constraint, which eliminates any ambiguity in the resulting facet type.
+
+    class SubstPeriodSelfDiagnoseExplicitCallbacks
+        : public SubstPeriodSelfCallbacks {
+     public:
+      explicit SubstPeriodSelfDiagnoseExplicitCallbacks(
+          Context* context, SemIR::LocId loc_id,
+          SemIR::ConstantId period_self_replacement_id, Phase* phase)
+          : SubstPeriodSelfCallbacks(context, loc_id,
+                                     period_self_replacement_id),
+            phase_(phase) {}
+
+      auto ShouldReplace(bool implicit) -> bool override {
+        if (!implicit && *phase_ != Phase::UnknownDueToError) {
+          CARBON_DIAGNOSTIC(
+              AmbiguousPeriodSelf, Error,
+              "`.Self` is ambiguous after nested `where` in `<type> "
+              "impls ...` clause.");
+          context().emitter().Emit(loc_id(), AmbiguousPeriodSelf);
+          *phase_ = Phase::UnknownDueToError;
+        }
+        return implicit;
+      }
+
+      Phase* phase_;
+    };
+    SubstPeriodSelfDiagnoseExplicitCallbacks
+        callbacks_should_replace_explicit_is_error(
+            &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
+            phase);
+
+    class SubstPeriodSelfImplicitOnlyCallbacks
+        : public SubstPeriodSelfCallbacks {
+     public:
+      explicit SubstPeriodSelfImplicitOnlyCallbacks(
+          Context* context, SemIR::LocId loc_id,
+          SemIR::ConstantId period_self_replacement_id)
+          : SubstPeriodSelfCallbacks(context, loc_id,
+                                     period_self_replacement_id) {}
+
+      // TODO: Replace this callback with a SubstPeriodSelf parameter saying
+      // what to replace (as a bool or an enum). Then this subclass can go away.
+      auto ShouldReplace(bool implicit) -> bool override { return implicit; }
+    };
+    SubstPeriodSelfImplicitOnlyCallbacks callbacks_should_replace_implicit_only(
+        &context, loc_id, context.constant_values().Get(lhs_facet_or_type));
+
+    auto self_impls_interface = [&](SemIR::SpecificInterface si) {
+      return SubstPeriodSelf(context,
+                             callbacks_should_replace_explicit_is_error, si);
+    };
+    auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
+      return SubstPeriodSelf(context,
+                             callbacks_should_replace_explicit_is_error, sc);
+    };
+    auto type_impls_interface =
+        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
+        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      auto self =
+          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+                          context.constant_values().Get(impls.self_type));
+      auto interface =
+          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+                          impls.specific_interface);
+      return {context.constant_values().GetInstId(self), interface};
+    };
+    auto type_impls_constraint =
+        [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
+        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      auto self =
+          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+                          context.constant_values().Get(impls.self_type));
+      auto constraint =
+          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
+                          impls.specific_named_constraint);
+      return {context.constant_values().GetInstId(self), constraint};
+    };
+
+    llvm::append_range(
+        info->self_impls_constraints,
+        llvm::map_range(rhs.self_impls_constraints, self_impls_interface));
+    llvm::append_range(info->self_impls_named_constraints,
+                       llvm::map_range(rhs.self_impls_named_constraints,
+                                       self_impls_constraint));
     llvm::append_range(
         info->type_impls_interfaces,
-        llvm::map_range(rhs.self_impls_constraints, impls_interface));
-    llvm::append_range(
-        info->type_impls_named_constraints,
-        llvm::map_range(rhs.self_impls_named_constraints, impls_constraint));
-
-    // Type impls constraints are copied in, but need to have their `.Self`
-    // references replaced by the impls LHS type. Like above, the LHS type
-    // should be converted to a facet type containing the RHS facet type's
-    // extend constraints.
-    //
-    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
-    // with the RHS extend constraints (interfaces and named constraints).
-    //
-    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
-    // constraints.
-    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+        llvm::map_range(rhs.type_impls_interfaces, type_impls_interface));
     llvm::append_range(info->type_impls_named_constraints,
-                       rhs.type_impls_named_constraints);
+                       llvm::map_range(rhs.type_impls_named_constraints,
+                                       type_impls_constraint));
+
+    // TODO: We have to pass explicit `.Self` along unchanged in rewrites. A
+    // rewrite of the form `M(.Self) where .M0 = {}` is an access into `.Self as
+    // M(.Self)`. The first `.Self` is implicit and should be replaced. The
+    // second is explicit but refers to the outer-most facet and should not be
+    // replaced. In the future when we diagnose ambiguous `.Self` in name
+    // lookup, we will replace all implicit `.Self` and leave all explicit
+    // `.Self` alone since they won't be ambiguous.
+    auto rewrite_constraint =
+        [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
+        -> SemIR::FacetTypeInfo::RewriteConstraint {
+      auto lhs_id =
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
+                          context.constant_values().Get(rewrite.lhs_id));
+      auto rhs_id =
+          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
+                          context.constant_values().Get(rewrite.rhs_id));
+      return {context.constant_values().GetInstId(lhs_id),
+              context.constant_values().GetInstId(rhs_id)};
+    };
+
+    llvm::append_range(
+        info->rewrite_constraints,
+        llvm::map_range(rhs.rewrite_constraints, rewrite_constraint));
   }
 
-  // Other requirements are copied in.
-  llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   info->other_requirements |= rhs.other_requirements;
 }
 
@@ -2782,8 +2857,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         break;
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
-        AddRequirementImpls(eval_context.context(), impls,
-                            typed_inst.period_self_id, &info, &phase);
+        AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
+                            impls, typed_inst.period_self_id, &info, &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent _): {
