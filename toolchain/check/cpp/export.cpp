@@ -343,6 +343,9 @@ static auto BuildCppToCarbonThunkDecl(
   clang::DeclarationNameInfo name_info(thunk_name, clang_loc);
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
+  if (target.self_param && target.self_param->is_ref) {
+    ext_proto_info.RefQualifier = clang::RQ_LValue;
+  }
   clang::QualType thunk_function_type = ast_context.getFunctionType(
       cpp_return_type, thunk_param_types, ext_proto_info);
 
