@@ -166,6 +166,32 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   return record_decl;
 }
 
+// Get the `StructTypeField`s from a class's object repr.
+static auto GetStructTypeFields(Context& context,
+                                const SemIR::Class& class_info)
+    -> llvm::ArrayRef<SemIR::StructTypeField> {
+  auto object_repr_type_id =
+      class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+  auto struct_type =
+      context.types().GetAs<SemIR::StructType>(object_repr_type_id);
+  return context.struct_type_fields().Get(struct_type.fields_id);
+}
+
+static auto LookupClassFieldByStructField(
+    const Context& context, const SemIR::NameScope& class_scope,
+    const SemIR::StructTypeField& struct_field)
+    -> std::optional<std::pair<SemIR::InstId, SemIR::FieldDecl>> {
+  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
+    auto field_inst_id =
+        class_scope.GetEntry(*entry_id).result.target_inst_id();
+    if (auto field_decl =
+            context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id)) {
+      return std::make_pair(field_inst_id, *field_decl);
+    }
+  }
+  return std::nullopt;
+}
+
 // Creates a `clang::FieldDecl` for a Carbon class field. Returns
 // nullptr if an error occurs.
 static auto CreateCppFieldDecl(Context& context,
@@ -207,12 +233,15 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
     return;
   }
 
-  auto body = context.inst_blocks().Get(class_info.body_block_id);
-  for (auto field_inst_id : body) {
-    auto field_decl = context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id);
-    if (!field_decl) {
+  const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+
+  for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
+    auto class_field =
+        LookupClassFieldByStructField(context, class_scope, struct_field);
+    if (!class_field) {
       continue;
     }
+    auto [field_inst_id, field_decl] = *class_field;
 
     // Map the parent scope into the C++ AST.
     auto* decl_context = ExportNameScopeToCpp(
@@ -223,7 +252,7 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
 
     auto* cpp_field_decl =
         CreateCppFieldDecl(context, cast<clang::CXXRecordDecl>(decl_context),
-                           field_inst_id, *field_decl);
+                           field_inst_id, field_decl);
     if (!cpp_field_decl) {
       continue;
     }
@@ -263,17 +292,11 @@ auto CalculateCppFieldOffsets(
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
   auto class_info = context.classes().Get(class_id);
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-  auto object_repr_type_id =
-      class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
-  auto struct_type =
-      context.types().GetAs<SemIR::StructType>(object_repr_type_id);
-  auto struct_type_fields =
-      context.struct_type_fields().Get(struct_type.fields_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_type_field : struct_type_fields) {
+  for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
     auto field_type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
-        struct_type_field.type_inst_id);
+        struct_field.type_inst_id);
     auto field_layout = context.sem_ir()
                             .types()
                             .GetCompleteTypeInfo(field_type_id)
@@ -282,19 +305,17 @@ auto CalculateCppFieldOffsets(
     // Use the field's name to look up the corresponding entry in the
     // class. If it's a `FieldDecl`, write out the offset of the
     // corresponding `clang::FieldDecl`.
-    if (auto entry_id = class_scope.Lookup(struct_type_field.name_id)) {
-      auto field_inst_id =
-          class_scope.GetEntry(*entry_id).result.target_inst_id();
-      if (auto field_decl =
-              context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id)) {
-        auto* cpp_field_decl =
-            ExportFieldToCpp(context, field_inst_id, *field_decl);
-        if (!cpp_field_decl) {
-          return false;
-        }
-        field_offsets.insert(
-            {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
+    auto class_field =
+        LookupClassFieldByStructField(context, class_scope, struct_field);
+    if (class_field) {
+      auto [field_inst_id, field_decl] = *class_field;
+      auto* cpp_field_decl =
+          ExportFieldToCpp(context, field_inst_id, field_decl);
+      if (!cpp_field_decl) {
+        return false;
       }
+      field_offsets.insert(
+          {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
     }
 
     class_layout.AppendField(field_layout);
