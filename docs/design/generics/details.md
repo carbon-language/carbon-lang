@@ -2697,10 +2697,7 @@ of `B`.
 The "dot followed by the name of a member" construct, like `.A`, is called a
 _designator_. The name of the designator is looked up in the constraint, and
 refers to the value of that member for whatever type is to satisfy this
-constraint.
-
-While `.A` in `T where .A = B` acts like `.Self.A` or `.Self.(T.A)`, it is not
-valid to use `.Self` to qualify a designator in a rewrite constraint.
+constraint. It may not be `.Self` or a reference to a member through `.Self`.
 
 > **Concern:** Using `=` for this use case is not consistent with other `where`
 > clauses that write a boolean expression that evaluates to `true` when the
@@ -3368,16 +3365,9 @@ its value also changes to become the value of `T`. If that `T` is not written as
 side of the `where` ambiguous as there are now two copies of `.Self` in scope:
 one for `T` and one for the abstract top-level `.Self` value.
 
-Use of an ambiguous `.Self` is an error, unless:
-
--   It is an implicit `.Self` in a designator, such as `.X`. Then `.Self` refers
-    to the inner-most possible value for `.Self`, which is the `T as X` from the
-    `impls` constraint.
--   It is `.Self impls`, the left-hand side of an implements constraint. Then
-    `.Self` also refers to the inner-most possible value for `.Self`.
-
-Any other valid use of `.Self` refers to the top-level `.Self` value
-unambiguously.
+However the `.Self` in `.Self impls` can always be disambiguated as the
+inner-most value of `.Self`, thus it can be allowed even when other use of
+`.Self` are rejected as ambiguous.
 
 ##### Implied constraints
 

@@ -176,8 +176,8 @@ In a nested `where` expression, such as `T impls C where ...`, the meaning of
 refer to either `T` or the top-level value of `.Self`. However designators in
 rewrite and same-type constraints are scoped to the nearest `where` expression,
 and refer to an associated entity from the interface on the left of the `where`
-keyword. For example in
-`U where T impls (C where .A = B)` the value of `T.(C.A)` is rewritten to `B`.
+keyword. For example in `U where T impls (C where .A = B)` the value of
+`T.(C.A)` is rewritten to `B`.
 
 ```carbon
 // ✅ Rewrite constraint specified directly in `impls` refers to
