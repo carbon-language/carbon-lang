@@ -1208,6 +1208,7 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 // returns None.
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
@@ -1236,7 +1237,7 @@ static auto MakeImplicitParamPatternsBlockId(
 
   // TODO: Fill in a location once available.
   auto pattern_id =
-      AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+      AddParamPattern(context, import_ir_inst_id, SemIR::NameId::SelfValue,
                       type_expr_region_id, type_id, param_info.kind);
 
   return context.inst_blocks().Add({pattern_id});
@@ -1250,6 +1251,7 @@ static auto MakeImplicitParamPatternsBlockId(
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
+                                     SemIR::ImportIRInstId import_ir_inst_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclKey::Signature signature)
     -> SemIR::InstBlockId {
@@ -1325,7 +1327,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddInst(
           context, SemIR::LocIdAndInst::RuntimeVerified(
-                       context.sem_ir(), loc_id,
+                       context.sem_ir(), import_ir_inst_id,
                        SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
                                            .elements_id = param_block_id}));
       param_ids = {pattern_id};
@@ -1479,19 +1481,20 @@ struct FunctionSignatureInsts {
 // parameter type. `signature` specifies how to convert the C++ function
 // signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
-    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclKey::Signature signature)
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartImplicitParamList();
-  auto implicit_param_patterns_id =
-      MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
+  auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndImplicitParamList();
   context.full_pattern_stack().StartExplicitParamList();
-  auto param_patterns_id =
-      MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature);
+  auto param_patterns_id = MakeParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl, signature);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
@@ -1560,8 +1563,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     -> std::optional<SemIR::FunctionId> {
   StartFunctionSignature(context);
 
-  auto function_params_insts =
-      CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
+  auto function_params_insts = CreateFunctionSignatureInsts(
+      context, loc_id, import_ir_inst_id, clang_decl, signature);
 
   auto [pattern_block_id, decl_block_id] =
       FinishFunctionSignature(context, /*check_unused=*/false);

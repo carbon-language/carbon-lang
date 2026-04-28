@@ -205,24 +205,14 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::ExprRegionId type_expr_region_id,
                      SemIR::TypeId type_id, ParamPatternKind kind)
     -> SemIR::InstId {
-  auto [binding_pattern_kind, param_pattern_kind] =
-      [kind]() -> std::pair<SemIR::InstKind, SemIR::InstKind> {
+  auto param_pattern_kind = [kind]() -> SemIR::InstKind {
     switch (kind) {
       case ParamPatternKind::Value:
-        return {
-            SemIR::ValueBindingPattern::Kind,
-            SemIR::ValueParamPattern::Kind,
-        };
+        return SemIR::ValueParamPattern::Kind;
       case ParamPatternKind::Ref:
-        return {
-            SemIR::RefBindingPattern::Kind,
-            SemIR::RefParamPattern::Kind,
-        };
+        return SemIR::RefParamPattern::Kind;
       case ParamPatternKind::Var:
-        return {
-            SemIR::RefBindingPattern::Kind,
-            SemIR::VarParamPattern::Kind,
-        };
+        return SemIR::VarParamPattern::Kind;
     }
   }();
 
