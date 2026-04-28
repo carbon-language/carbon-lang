@@ -359,10 +359,10 @@ def _process_pr(
                 first_independent_commit_oid = oid
                 break
 
-        non_linear_history = False
+        any_later_dependent_oids = False
         if first_independent_commit_oid:
             idx = current_oids.index(first_independent_commit_oid)
-            non_linear_history = any(
+            any_later_dependent_oids = any(
                 oid in dependent_oids for oid in current_oids[idx + 1 :]
             )
 
@@ -397,10 +397,10 @@ def _process_pr(
                 f"Depends on {pr_list_str}, start review with "
                 f"[these changes]({changes_url})"
             )
-            if non_linear_history:
+            if any_later_dependent_oids:
                 comment_body += (
                     "\n\n> [!WARNING]\n"
-                    "> Not all of those changes should be reviewed due to "
+                    "> Also contains changes from dependent PRs due to "
                     "non-linear history."
                 )
         else:
