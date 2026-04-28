@@ -458,6 +458,23 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
                               llvm::ArrayRef<clang::Expr*> arg_exprs)
     -> SemIR::InstId;
 
+namespace {
+struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
+  Context& context;
+  SemIR::TypeId arg_type_id;
+  SemIR::LocId loc_id;
+
+  void operator()(auto& builder) const {
+    CARBON_DIAGNOSTIC(
+        IncompleteOperandTypeInCppOperatorLookup, Context,
+        "looking up a C++ operator with incomplete operand type {0}",
+        SemIR::TypeId);
+    builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
+                    arg_type_id);
+  }
+};
+}  // namespace
+
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
     -> SemIR::InstId {
@@ -480,14 +497,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   for (SemIR::TypeId arg_type_id : arg_type_ids) {
-    if (!RequireCompleteType(context, arg_type_id, loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteOperandTypeInCppOperatorLookup, Context,
-              "looking up a C++ operator with incomplete operand type {0}",
-              SemIR::TypeId);
-          builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                          arg_type_id);
-        })) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
       return SemIR::ErrorInst::InstId;
     }
   }
@@ -568,14 +582,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Make sure all operands are complete before lookup.
   for (SemIR::InstId arg_id : arg_ids) {
     SemIR::TypeId arg_type_id = context.insts().Get(arg_id).type_id();
-    if (!RequireCompleteType(context, arg_type_id, loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteOperandTypeInCppOperatorLookup, Context,
-              "looking up a C++ operator with incomplete operand type {0}",
-              SemIR::TypeId);
-          builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                          arg_type_id);
-        })) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
       return SemIR::ErrorInst::InstId;
     }
   }
