@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/export.h"
 
+#include <optional>
+
 #include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -190,15 +192,13 @@ struct FunctionInfo {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
 
-    // Get the function's `self` parameter type, if present.
+    // Get the function's `self` parameter, if present.
     if (function.call_param_ranges.implicit_size() > 0) {
       CARBON_CHECK(function.call_param_ranges.implicit_size() == 1);
 
       auto param_inst_id =
           function_params[function.call_param_ranges.implicit_begin().index];
-      auto scrutinee_type_id = ExtractScrutineeType(
-          context.sem_ir(), context.insts().Get(param_inst_id).type_id());
-      self_type_id = scrutinee_type_id;
+      self_param = Param(context, param_inst_id);
     }
 
     // Get the function's explicit parameters.
@@ -213,15 +213,21 @@ struct FunctionInfo {
 
   // Get the `StorageClass` to use for `CXXMethodDecl`s.
   auto GetStorageClass() const -> clang::StorageClass {
-    if (has_self()) {
+    if (self_param) {
       return clang::SC_None;
     } else {
       return clang::SC_Static;
     }
   }
 
-  // Whether the function has a `self` parameter.
-  auto has_self() const -> bool { return self_type_id != SemIR::TypeId::None; }
+  // Get the `self` param type, or `None` if the function does not have
+  // a `self` param.
+  auto GetSelfTypeId() const -> SemIR::TypeId {
+    if (self_param) {
+      return self_param->type_id;
+    }
+    return SemIR::TypeId::None;
+  }
 
   SemIR::FunctionId function_id;
   const SemIR::Function& function;
@@ -235,9 +241,9 @@ struct FunctionInfo {
   // and whether the parameter is a reference.
   llvm::SmallVector<Param> explicit_params;
 
-  // Type of the function's `self` parameter, or `None` if the function
-  // is not a method.
-  SemIR::TypeId self_type_id = SemIR::TypeId::None;
+  // For methods, the type of `self` and whether it is a reference. If
+  // the function does not have a `self` parameter, this is `nullopt`.
+  std::optional<Param> self_param;
 };
 }  // namespace
 
@@ -258,8 +264,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
 
   // Get parameters types.
   llvm::SmallVector<clang::QualType> cpp_param_types;
-  if (callee.has_self()) {
-    auto cpp_type = MapToCppType(context, callee.self_type_id);
+  if (callee.self_param) {
+    auto cpp_type = MapToCppType(context, callee.self_param->type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon self type to C++");
       return nullptr;
@@ -427,7 +433,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
 
   llvm::SmallVector<clang::Expr*> call_args;
   // For methods, pass the `this` pointer as the first argument to the callee.
-  if (target.has_self()) {
+  if (target.self_param) {
     auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
     clang::QualType class_type =
         sema.getASTContext().getCanonicalTagType(parent_class);
@@ -542,7 +548,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
           context, loc_id,
           {.parent_scope_id = target.function.parent_scope_id,
            .name_id = thunk_name_id,
-           .self_type_id = target.self_type_id,
+           .self_type_id = target.GetSelfTypeId(),
            .param_type_ids = thunk_param_type_ids,
            .params_are_refs = true})
           .second;
