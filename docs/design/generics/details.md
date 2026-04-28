@@ -2699,6 +2699,9 @@ _designator_. The name of the designator is looked up in the constraint, and
 refers to the value of that member for whatever type is to satisfy this
 constraint.
 
+While `.A` in `T where .A = B` acts like `.Self.A` or `.Self.(T.A)`, it is not
+valid to use `.Self` to qualify a designator in a rewrite constraint.
+
 > **Concern:** Using `=` for this use case is not consistent with other `where`
 > clauses that write a boolean expression that evaluates to `true` when the
 > constraint is satisfied.
@@ -3357,6 +3360,24 @@ in `I where .Self impls C`. This has the same requirements as `I & C`, but that
 in `T:! I where .Self impls C`, is represented by an
 [archetype](terminology.md#archetype) that implements both `I` and `C`, but only
 [extends](terminology.md#extending-an-impl) `I`.
+
+The type of `.Self` is changed when crossing a `where`, to have the type to the
+left of the `where`. And when the `where` is nested in a `T impls X` constraint,
+its value also changes to become the value of `T`. If that `T` is not written as
+`.Self` (as in `.Self impls X`), it makes any use of `.Self` on the right-hand
+side of the `where` ambiguous as there are now two copies of `.Self` in scope:
+one for `T` and one for the abstract top-level `.Self` value.
+
+Use of an ambiguous `.Self` is an error, unless:
+
+-   It is an implicit `.Self` in a designator, such as `.X`. Then `.Self` refers
+    to the inner-most possible value for `.Self`, which is the `T as X` from the
+    `impls` constraint.
+-   It is `.Self impls`, the left-hand side of an implements constraint. Then
+    `.Self` also refers to the inner-most possible value for `.Self`.
+
+Any other valid use of `.Self` refers to the top-level `.Self` value
+unambiguously.
 
 ##### Implied constraints
 

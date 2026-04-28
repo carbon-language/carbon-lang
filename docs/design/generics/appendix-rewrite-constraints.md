@@ -171,25 +171,34 @@ interface E {
 }
 ```
 
-The same rules apply to `where`...`impls` constraints. Note that `.T == U`
-constraints are also not allowed in this context, because the reference to `.T`
-is rewritten to `.Self.T`, and `.Self` is ambiguous.
+In a nested `where` expression, such as `T impls C where ...`, the meaning of
+`.Self` becomes ambiguous on the right-hand side of the nested `where` as it can
+refer to either `T` or the top-level value of `.Self`. And such ambiguous uses
+of `.Self` are not allowed. However implicit use of `.Self` through a designator
+always binds to the inner-most possible value of `.Self`, allowing designators
+to be used on the right-hand side of the nested `where`. Any such designators
+would be referring to `T as C`. For example in
+`U where T impls (C where .A = B)` the value of `T.(C.A)` is rewritten to `B`.
 
 ```carbon
-// ❌ Rewrite constraint specified directly in `impls`.
-fn F[T:! A where .U impls (A where .T = i32)]();
+// ✅ Rewrite constraint specified directly in `impls` refers to
+// `.Self.U.(A.T)` which is `(V.(A.U)).(A.T)`.
+fn F[V:! A where .U impls (A where .T = i32)]();
 
-// ❌ Reference to `.T` in same-type constraint is ambiguous:
-// does this mean the outer or inner `.Self.T`?
-fn G[T:! A where .U impls (A where .T == i32)]();
+// ✅ Reference to `.V` in same-type constraint refers to
+// `.Self.U.(A.T)` which is `(V.(A.U)).(A.T)`.
+fn G[V:! A where .U impls (A where .T == i32)]();
 
-// ✅ Not specified directly, but does not result
-// in any rewrites being performed. Return type
-// is not rewritten to `i32`.
-fn H[T:! type where .Self impls C]() -> T.(A.U);
+// ❌ Explicit use of `.Self` in `where` after `impls` is ambiguous,
+// does it refer to the top-level `V` or to the inner-most `V.U`?
+fn F[V:! A where .U impls (A where .T = .Self)]();
+
+// ✅ `.Self impls` is always allowed and refers to the value and type on the
+// left-hand side of the `where`.
+fn H[V:! type where .Self impls C]() -> V.(A.U);
 
 // ✅ Return type is rewritten to `i32`.
-fn I[T:! C]() -> T.(A.U);
+fn I[V:! C]() -> V.(A.U);
 ```
 
 ## Rewrite constraint resolution
