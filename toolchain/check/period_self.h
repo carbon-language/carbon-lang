@@ -23,14 +23,18 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
 
 class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
  public:
+  enum Behaviour {
+    ImplicitOnly,
+    All,
+  };
+
   explicit SubstPeriodSelfCallbacks(
       Context* context, SemIR::LocId loc_id,
-      SemIR::ConstantId period_self_replacement_id);
+      SemIR::ConstantId period_self_replacement_id,
+      Behaviour behaviour = Behaviour::All);
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override;
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override;
-
-  virtual auto ShouldReplace(bool /*implicit*/) -> bool { return true; }
 
   auto loc_id() const -> SemIR::LocId { return loc_id_; }
   auto period_self_replacement_id() const -> SemIR::ConstantId {
@@ -38,14 +42,14 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   }
 
  private:
-  auto GetReplacement(SemIR::InstId period_self, bool implicit)
-      -> SemIR::InstId;
+  auto GetReplacement(SemIR::InstId period_self) -> SemIR::InstId;
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
                           SemIR::TypeId replacement_type_id,
                           SemIR::TypeId period_self_type_id) -> SemIR::InstId;
 
   SemIR::LocId loc_id_;
   SemIR::ConstantId period_self_replacement_id_;
+  Behaviour behaviour_;
 
   // The last output of GetReplacement().
   SemIR::InstId cached_replacement_id_ = SemIR::InstId::None;
