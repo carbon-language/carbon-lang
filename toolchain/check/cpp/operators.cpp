@@ -15,6 +15,7 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -266,6 +267,7 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = init_list_class.scope_id,
                                  .name_id = init_list_class.name_id,
                                  .param_type_ids = {array_type_id},
+                                 .param_kind = ParamPatternKind::Value,
                                  .return_type_id = init_list_type_id});
 
   auto& function = context.functions().Get(function_id);

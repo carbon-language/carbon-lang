@@ -9,6 +9,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/mangler.h"
@@ -543,7 +544,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.self_type_id,
            .param_type_ids = thunk_param_type_ids,
-           .params_are_refs = true})
+           .param_kind = ParamPatternKind::Ref})
           .second;
 
   BuildThunkDefinitionForExport(
