@@ -173,32 +173,32 @@ interface E {
 
 In a nested `where` expression, such as `T impls C where ...`, the meaning of
 `.Self` becomes ambiguous on the right-hand side of the nested `where` as it can
-refer to either `T` or the top-level value of `.Self`. And such ambiguous uses
-of `.Self` are not allowed. However implicit use of `.Self` through a designator
-always binds to the inner-most possible value of `.Self`, allowing designators
-to be used on the right-hand side of the nested `where`. Any such designators
-would be referring to `T as C`. For example in
+refer to either `T` or the top-level value of `.Self`. However designators in
+rewrite and same-type constraints are scoped to the nearest `where` expression,
+and refer to an associated entity from the interface on the left of the `where`
+keyword. For example in
 `U where T impls (C where .A = B)` the value of `T.(C.A)` is rewritten to `B`.
 
 ```carbon
 // ✅ Rewrite constraint specified directly in `impls` refers to
-// `.Self.U.(A.T)` which is `(V.(A.U)).(A.T)`.
+// `(V.(A.U)).(A.T)`.
 fn F[V:! A where .U impls (A where .T = i32)]();
 
 // ✅ Reference to `.V` in same-type constraint refers to
-// `.Self.U.(A.T)` which is `(V.(A.U)).(A.T)`.
+// `(V.(A.U)).(A.T)`.
 fn G[V:! A where .U impls (A where .T == i32)]();
 
-// ❌ Explicit use of `.Self` in `where` after `impls` is ambiguous,
-// does it refer to the top-level `V` or to the inner-most `V.U`?
-fn F[V:! A where .U impls (A where .T = .Self)]();
-
-// ✅ `.Self impls` is always allowed and refers to the value and type on the
-// left-hand side of the `where`.
-fn H[V:! type where .Self impls C]() -> V.(A.U);
+// ✅ Not specified directly, but does not result
+// in any rewrites being performed. Return type
+// is not rewritten to `i32`.
+fn H[T:! type where .Self impls C]() -> T.(A.U);
 
 // ✅ Return type is rewritten to `i32`.
 fn I[V:! C]() -> V.(A.U);
+
+// ❌ This use of `.Self` in a nested `where` after `impls` is ambiguous.
+// Does it refer to the top-level `V` or to the inner-most `V.U`?
+fn J[V:! A where .U impls (A where .T = .Self)]();
 ```
 
 ## Rewrite constraint resolution
