@@ -133,35 +133,35 @@ fn GetRefs() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @int_42.c68 = internal constant i32 42
-// CHECK:STDOUT: @C.val.loc19_20.3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc19_20 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   %.loc19_18.2.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %_.var.1 = alloca {}, align 8, !dbg !15
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc24_22.3.temp = alloca i32, align 4, !dbg !17
+// CHECK:STDOUT:   %_.var.2 = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc25_23.2.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C(ptr %c.var), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !15
-// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk.M(ptr @C.val.loc19_20.3), !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1), !dbg !15
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.1, ptr align 1 @C.val.loc19_20, i64 0, i1 false), !dbg !15
+// CHECK:STDOUT:   call void @_Z9TakeCRRefO1C.carbon_thunk.M(ptr %_.var.1), !dbg !20
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C.carbon_thunk(ptr %c.var), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !16
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi(ptr %n.var), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_22.3.temp), !dbg !17
-// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi.carbon_thunk.M(ptr @int_42.c68), !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2), !dbg !17
+// CHECK:STDOUT:   store i32 42, ptr %_.var.2, align 4, !dbg !17
+// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi.carbon_thunk.M(ptr %_.var.2), !dbg !23
 // CHECK:STDOUT:   %.loc25_23.1 = load i32, ptr %n.var, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_23.2.temp), !dbg !18
 // CHECK:STDOUT:   store i32 %.loc25_23.1, ptr %.loc25_23.2.temp, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi.carbon_thunk(ptr %.loc25_23.2.temp), !dbg !24
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %.loc25_23.2.temp), !dbg !18
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_42.c68), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.2), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -241,6 +241,9 @@ fn GetRefs() {
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #6
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z9TakeCRRefO1C(ptr noundef nonnull align 1 dereferenceable(1)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z13TakeConstCRefRK1C(ptr noundef nonnull align 1 dereferenceable(1)) #3
@@ -259,6 +262,7 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #5 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #6 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -279,9 +283,9 @@ fn GetRefs() {
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 19, column: 17, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 8, column: 19, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 22, column: 3, scope: !11)
-// CHECK:STDOUT: !17 = !DILocation(line: 24, column: 19, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 12, column: 23, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 25, column: 23, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 18, column: 3, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 19, column: 3, scope: !11)
@@ -319,7 +323,6 @@ fn GetRefs() {
 // CHECK:STDOUT: %class.ForceThunk = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @int_42.c68 = internal constant i32 42
 // CHECK:STDOUT: @C.val.loc20_20.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -328,7 +331,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 8, !dbg !15
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc25_22.3.temp = alloca i32, align 4, !dbg !17
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
@@ -339,14 +342,15 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !16
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk.carbon_thunk1(ptr %n.var), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_22.3.temp), !dbg !17
-// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk1.M(ptr @int_42.c68), !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !17
+// CHECK:STDOUT:   store i32 42, ptr %_.var, align 4, !dbg !17
+// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk1.N(ptr %_.var), !dbg !23
 // CHECK:STDOUT:   %.loc26_23.1 = load i32, ptr %n.var, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_23.2.temp), !dbg !18
 // CHECK:STDOUT:   store i32 %.loc26_23.1, ptr %.loc26_23.2.temp, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk1(ptr %.loc26_23.2.temp), !dbg !24
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %.loc26_23.2.temp), !dbg !18
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_42.c68), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -492,7 +496,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 20, column: 17, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 23, column: 3, scope: !11)
-// CHECK:STDOUT: !17 = !DILocation(line: 25, column: 19, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 13, column: 23, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 26, column: 23, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 19, column: 3, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 20, column: 3, scope: !11)

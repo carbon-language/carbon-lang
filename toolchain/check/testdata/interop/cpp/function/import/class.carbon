@@ -134,9 +134,21 @@ import Cpp library "non_copyable_param_type.h";
 
 fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:   Cpp.foo(c);
   // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+12]]:11: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    24 |   Cpp.foo(c);
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'C' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR:     3 |   C(const C&) = delete;
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./non_copyable_param_type.h:6:11: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo(C) -> void;
+  // CHECK:STDERR:           ^
   // CHECK:STDERR:
   Cpp.foo(c);
   //@dump-sem-ir-end
@@ -160,25 +172,9 @@ auto move(C&) -> C&&;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo(C) -> void;
-// CHECK:STDERR:       |      ^~~
-// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   C(C&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo(C) -> void;
-// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: pass_move_only_param_temporary.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo(Cpp.make());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(Cpp.make());
 }
 
@@ -186,24 +182,20 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo(C) -> void;
-// CHECK:STDERR:       |      ^~~
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   C(C&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo(C) -> void;
-// CHECK:STDERR:       |           ^
 import Cpp library "move_only_param_type.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo(c);
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:11: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    23 |   Cpp.foo(c);
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+  // CHECK:STDERR:     3 |   C(C&&);
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./move_only_param_type.h:6:11: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo(C) -> void;
+  // CHECK:STDERR:           ^
   // CHECK:STDERR:
   Cpp.foo(c);
 }
@@ -679,7 +671,9 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
+// CHECK:STDOUT:   %impl.elem0.loc24: <error> = impl_witness_access <error>, element0 [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1061,11 +1055,22 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.83a: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.e61: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f1d: %ptr.as.Copy.impl.Op.type.e61 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.d9e, (%Copy.impl_witness.83a) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.5d0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.798: type = fn_type_with_self_type %Copy.WithSelf.Op.type.5d0, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.f1d, @ptr.as.Copy.impl.Op(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1081,14 +1086,22 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: %ptr) {
+// CHECK:STDOUT: fn @F(%c.param: %ptr.d9e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %c.ref: %ptr = name_ref c, %c
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
+// CHECK:STDOUT:   %c.ref: %ptr.d9e = name_ref c, %c
+// CHECK:STDOUT:   %impl.elem0.loc8: %.798 = impl_witness_access constants.%Copy.impl_witness.83a, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f1d]
+// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %c.ref, %impl.elem0.loc8
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %c.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d9e = call %bound_method.loc8_11.2(%c.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1097,11 +1110,22 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.83a: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.e61: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f1d: %ptr.as.Copy.impl.Op.type.e61 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.d9e, (%Copy.impl_witness.83a) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.5d0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.798: type = fn_type_with_self_type %Copy.WithSelf.Op.type.5d0, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.f1d, @ptr.as.Copy.impl.Op(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1117,14 +1141,22 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: %ptr) {
+// CHECK:STDOUT: fn @F(%c.param: %ptr.d9e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %c.ref: %ptr = name_ref c, %c
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
+// CHECK:STDOUT:   %c.ref: %ptr.d9e = name_ref c, %c
+// CHECK:STDOUT:   %impl.elem0.loc8: %.798 = impl_witness_access constants.%Copy.impl_witness.83a, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f1d]
+// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %c.ref, %impl.elem0.loc8
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %c.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d9e = call %bound_method.loc8_11.2(%c.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

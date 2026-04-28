@@ -394,7 +394,7 @@ static auto ImportNamespaceDecl(Context& context,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
   auto key = SemIR::ClangDeclKey(clang_decl);
- 
+
   // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
       existing_inst_id.has_value()) {
@@ -1156,8 +1156,7 @@ namespace {
 struct ParameterTypeInfo {
   // The type to use for the Carbon parameter.
   TypeExpr type;
-  // Whether to build a `ref` pattern.
-  bool want_ref_pattern;
+  ParamPatternKind kind;
 };
 }  // namespace
 
@@ -1168,32 +1167,41 @@ struct ParameterTypeInfo {
 // true, we must produce a parameter type that has the same calling convention
 // as the C++ type.
 static auto MapParameterType(Context& context, SemIR::LocId loc_id,
-                             clang::QualType param_type) -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None, .want_ref_pattern = false};
+                             clang::QualType param_type,
+                             SemIR::Signature::PassingMode passing_mode)
+    -> ParameterTypeInfo {
+  ParameterTypeInfo info = {.type = TypeExpr::None,
+                            .kind = ParamPatternKind::Value};
 
   // Perform some custom mapping for parameters of reference type:
   //
   //   * `T& x` -> `ref x: T`.
+  //   * `T&& x` -> `var x: T`.
   //   * `const T& x` -> `x: T`.
-  //   * `T&& x` -> `x: T`.
-  //
-  // TODO: For the `&&` mapping, we allow an rvalue reference to bind to a
-  // durable reference expression. This should not be allowed.
+  //   * `const T&& x` -> `x: T`.
   if (param_type->isReferenceType()) {
     clang::QualType pointee_type = param_type->getPointeeType();
-    if (param_type->isLValueReferenceType()) {
-      if (pointee_type.isConstQualified()) {
-        // TODO: Consider only doing this if `const` is the only qualifier. For
-        // now, any other qualifier will fail when mapping the type.
-        auto split_type = pointee_type.getSplitUnqualifiedType();
-        split_type.Quals.removeConst();
-        pointee_type = context.ast_context().getQualifiedType(split_type);
-      } else {
-        // The reference will map to a `ref` pattern.
-        info.want_ref_pattern = true;
-      }
+    if (pointee_type.isConstQualified()) {
+      // TODO: Consider only doing this if `const` is the only qualifier. For
+      // now, any other qualifier will fail when mapping the type.
+      auto split_type = pointee_type.getSplitUnqualifiedType();
+      split_type.Quals.removeConst();
+      pointee_type = context.ast_context().getQualifiedType(split_type);
+    } else if (param_type->isLValueReferenceType()) {
+      // Lvalue references map to a `ref` pattern.
+      info.kind = ParamPatternKind::Ref;
+    } else {
+      // Rvalue references map to a `var` pattern. When given a value expression
+      // as an argument, this will result in a copy. However, if the argument is
+      // of class type, we will map its type to `const T`, which means overload
+      // resolution won't allow the call anyway, so this only permits passing
+      // value expressions of non-class type to a `T&&` parameter.
+      info.kind = ParamPatternKind::Var;
     }
     param_type = pointee_type;
+  } else if (passing_mode == SemIR::Signature::PassingMode::Move) {
+    // Map pass-by-move into a `var` parameter, as we do for a `T&&` parameter.
+    info.kind = ParamPatternKind::Var;
   }
 
   info.type = MapType(context, loc_id, param_type);
@@ -1206,6 +1214,7 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 // returns None.
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
@@ -1218,7 +1227,8 @@ static auto MakeImplicitParamPatternsBlockId(
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
-  auto param_info = MapParameterType(context, loc_id, param_type);
+  auto param_info = MapParameterType(context, loc_id, param_type,
+                                     SemIR::Signature::PassingMode::Copy);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeSubpatternExpr(context, type_inst_id);
@@ -1233,9 +1243,9 @@ static auto MakeImplicitParamPatternsBlockId(
   }
 
   // TODO: Fill in a location once available.
-  auto pattern_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
-                                    type_expr_region_id, type_id,
-                                    param_info.want_ref_pattern);
+  auto pattern_id =
+      AddParamPattern(context, import_ir_inst_id, SemIR::NameId::SelfValue,
+                      type_expr_region_id, type_id, param_info.kind);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1248,6 +1258,7 @@ static auto MakeImplicitParamPatternsBlockId(
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
+                                     SemIR::ImportIRInstId import_ir_inst_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::SignatureId signature_id)
     -> SemIR::InstBlockId {
@@ -1262,7 +1273,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                clang_decl.getNumNonObjectParams(), signature.num_params);
   const auto* function_type =
       clang_decl.getType()->castAs<clang::FunctionProtoType>();
-  for (int i : llvm::seq(signature.num_params)) {
+  // TODO: Stop storing num_params and just use passing_modes.size()?
+  CARBON_CHECK(signature.num_params ==
+               static_cast<int>(signature.passing_modes.size()));
+  for (auto [i, passing_mode] : llvm::enumerate(signature.passing_modes)) {
     const auto* param = clang_decl.getNonObjectParameter(i);
     clang::QualType orig_param_type = function_type->getParamType(
         clang_decl.hasCXXExplicitFunctionObjectParameter() + i);
@@ -1276,7 +1290,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `ConsumeSubpatternExpr()`.
     BeginSubpattern(context);
-    auto param_info = MapParameterType(context, loc_id, param_type);
+    auto param_info =
+        MapParameterType(context, loc_id, param_type, passing_mode);
     auto [type_inst_id, type_id] = param_info.type;
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
@@ -1303,30 +1318,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
     // TODO: Add template support.
-    SemIR::InstId pattern_id = SemIR::InstId::None;
-    if (i < static_cast<int>(signature.passing_modes.size()) &&
-        signature.passing_modes[i] == SemIR::Signature::PassingMode::Move) {
-      auto entity_name_id = AddBindingEntityName(
-          context, name_id, /*form_id=*/SemIR::InstId::None,
-          /*is_unused=*/false, /*phase=*/BindingPhase::Runtime);
-
-      SemIR::TypeId pattern_type_id = GetPatternType(context, type_id);
-      auto binding_pattern_info = AddBindingPattern(
-          context, loc_id, type_expr_region_id,
-          SemIR::AnyBindingPattern{.kind = SemIR::RefBindingPattern::Kind,
-                                   .type_id = pattern_type_id,
-                                   .entity_name_id = entity_name_id,
-                                   .subpattern_id = SemIR::InstId::None});
-
-      pattern_id = AddInstInNoBlock<SemIR::VarPattern>(
-          context, Parse::VariablePatternId::None,
-          {.type_id = pattern_type_id,
-           .subpattern_id = binding_pattern_info.pattern_id});
-    } else {
-      pattern_id =
-          AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                          type_id, param_info.want_ref_pattern);
-    }
+    SemIR::InstId pattern_id =
+        AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
+                        type_id, param_info.kind);
     param_ids.push_back(pattern_id);
     param_type_ids.push_back(type_inst_id);
   }
@@ -1345,7 +1339,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddInst(
           context, SemIR::LocIdAndInst::RuntimeVerified(
-                       context.sem_ir(), loc_id,
+                       context.sem_ir(), import_ir_inst_id,
                        SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
                                            .elements_id = param_block_id}));
       param_ids = {pattern_id};
@@ -1499,19 +1493,19 @@ struct FunctionSignatureInsts {
 // parameter type. `signature` specifies how to convert the C++ function
 // signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
-    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
-    SemIR::SignatureId signature_id)
-    -> std::optional<FunctionSignatureInsts> {
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
+    SemIR::SignatureId signature_id) -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartImplicitParamList();
-  auto implicit_param_patterns_id =
-      MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
+  auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndImplicitParamList();
   context.full_pattern_stack().StartExplicitParamList();
-  auto param_patterns_id =
-      MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature_id);
+  auto param_patterns_id = MakeParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
@@ -1580,8 +1574,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     -> std::optional<SemIR::FunctionId> {
   StartFunctionSignature(context);
 
-  auto function_params_insts =
-      CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature_id);
+  auto function_params_insts = CreateFunctionSignatureInsts(
+      context, loc_id, import_ir_inst_id, clang_decl, signature_id);
 
   auto [pattern_block_id, decl_block_id] =
       FinishFunctionSignature(context, /*check_unused=*/false);
@@ -1651,9 +1645,9 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(decl_id);
 
   context.functions().Get(function_id).clang_decl_id =
-      context.clang_decls().Add(
-          {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id),
-           .inst_id = decl_id});
+      context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
+                                     clang_decl, signature_id),
+                                 .inst_id = decl_id});
 
   return function_id;
 }
@@ -1693,8 +1687,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
-  auto function_id =
-      ImportFunction(context, loc_id, import_ir_inst_id, clang_decl, signature_id);
+  auto function_id = ImportFunction(context, loc_id, import_ir_inst_id,
+                                    clang_decl, signature_id);
   if (!function_id) {
     MarkFailedDecl(context, key);
     return SemIR::ErrorInst::InstId;
@@ -1713,13 +1707,18 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
             BuildCppThunk(context, function_info)) {
       SemIR::Signature thunk_signature;
       thunk_signature.kind = SemIR::Signature::Normal;
-      thunk_signature.num_params = static_cast<int32_t>(thunk_clang_decl->getNumParams());
-      // All thunk parameters are passed by copy (as they are pointers or simple types).
-      thunk_signature.passing_modes.assign(thunk_signature.num_params, SemIR::Signature::PassingMode::Copy);
-      SemIR::SignatureId thunk_signature_id = context.signatures().Add(std::move(thunk_signature));
+      thunk_signature.num_params =
+          static_cast<int32_t>(thunk_clang_decl->getNumParams());
+      // All thunk parameters are passed by copy (as they are pointers or simple
+      // types).
+      thunk_signature.passing_modes.assign(thunk_signature.num_params,
+                                           SemIR::Signature::PassingMode::Copy);
+      SemIR::SignatureId thunk_signature_id =
+          context.signatures().Add(std::move(thunk_signature));
 
-      if (auto thunk_function_id = ImportFunction(
-              context, loc_id, import_ir_inst_id, thunk_clang_decl, thunk_signature_id)) {
+      if (auto thunk_function_id =
+              ImportFunction(context, loc_id, import_ir_inst_id,
+                             thunk_clang_decl, thunk_signature_id)) {
         auto& thunk_function = context.functions().Get(*thunk_function_id);
         thunk_function.SetCppThunk(function_info.first_owning_decl_id);
         SemIR::InstId thunk_function_decl_id =
@@ -1798,8 +1797,7 @@ static auto AddDependentUnimportedTypeDecls(Context& context,
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
     Context& context, const clang::FunctionDecl& clang_decl,
-    SemIR::SignatureId signature_id, ImportWorklist& worklist)
-    -> void {
+    SemIR::SignatureId signature_id, ImportWorklist& worklist) -> void {
   const auto& signature = context.signatures().Get(signature_id);
   const auto* function_type =
       clang_decl.getType()->castAs<clang::FunctionProtoType>();

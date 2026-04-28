@@ -9,6 +9,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -202,27 +203,51 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
 auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
-                     SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
-  auto pattern_type_id = GetPatternType(context, type_id);
-  const auto& param_pattern_kind =
-      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
-  auto pattern_id = AddInst(
-      context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), loc_id,
-                   SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
-                                              .type_id = pattern_type_id,
-                                              .pretty_name_id = name_id}));
+                     SemIR::TypeId type_id, ParamPatternKind kind)
+    -> SemIR::InstId {
+  auto param_pattern_kind = [kind]() -> SemIR::InstKind {
+    switch (kind) {
+      case ParamPatternKind::Value:
+        return SemIR::ValueParamPattern::Kind;
+      case ParamPatternKind::Ref:
+        return SemIR::RefParamPattern::Kind;
+      case ParamPatternKind::Var:
+        return SemIR::VarParamPattern::Kind;
+    }
+  }();
 
   auto entity_name_id = AddBindingEntityName(context, name_id,
                                              /*form_id=*/SemIR::InstId::None,
                                              /*is_unused=*/false,
                                              /*phase=*/BindingPhase::Runtime);
-  return AddBindingPattern(context, loc_id, type_expr_region_id,
-                           {.kind = SemIR::WrapperBindingPattern::Kind,
-                            .type_id = GetPatternType(context, type_id),
-                            .entity_name_id = entity_name_id,
-                            .subpattern_id = pattern_id})
-      .pattern_id;
+
+  auto pattern_type_id = GetPatternType(context, type_id);
+  if (kind == ParamPatternKind::Var) {
+    auto pattern_id = AddBindingPattern(context, loc_id, type_expr_region_id,
+                                        {.kind = SemIR::RefBindingPattern::Kind,
+                                         .type_id = pattern_type_id,
+                                         .entity_name_id = entity_name_id,
+                                         .subpattern_id = SemIR::InstId::None});
+    return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                context.sem_ir(), loc_id,
+                                SemIR::VarParamPattern{
+                                    .type_id = pattern_type_id,
+                                    .subpattern_id = pattern_id.pattern_id}));
+  } else {
+    auto pattern_id = AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
+                                                .type_id = pattern_type_id,
+                                                .pretty_name_id = name_id}));
+
+    return AddBindingPattern(context, loc_id, type_expr_region_id,
+                             {.kind = SemIR::WrapperBindingPattern::Kind,
+                              .type_id = GetPatternType(context, type_id),
+                              .entity_name_id = entity_name_id,
+                              .subpattern_id = pattern_id})
+        .pattern_id;
+  }
 }
 
 }  // namespace Carbon::Check

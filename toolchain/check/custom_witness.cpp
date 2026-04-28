@@ -54,7 +54,7 @@ static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
                                  .self_type_id = self_type_id,
-                                 .self_is_ref = false,
+                                 .self_kind = ParamPatternKind::Value,
                                  .return_type_id = self_type_id});
 
   auto& function = context.functions().Get(function_id);
@@ -341,7 +341,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
       MakeGeneratedFunctionDecl(context, loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
-                                 .self_type_id = self_type_id});
+                                 .self_type_id = self_type_id,
+                                 .self_kind = ParamPatternKind::Ref});
 
   auto& function = context.functions().Get(function_id);
 

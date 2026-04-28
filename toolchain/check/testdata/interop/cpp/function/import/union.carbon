@@ -866,12 +866,23 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %U.8b5: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr.86f: type = ptr_type %U.8b5 [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.230: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%U.8b5) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.053: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%U.8b5) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.909: %ptr.as.Copy.impl.Op.type.053 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.86f, (%Copy.impl_witness.230) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.96b: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.b91: type = fn_type_with_self_type %Copy.WithSelf.Op.type.96b, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.909, @ptr.as.Copy.impl.Op(%U.8b5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -880,21 +891,29 @@ fn F() {
 // CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U.8b5] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%u.param: %ptr) {
+// CHECK:STDOUT: fn @F(%u.param: %ptr.86f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
+// CHECK:STDOUT:   %u.ref: %ptr.86f = name_ref u, %u
+// CHECK:STDOUT:   %impl.elem0.loc8: %.b91 = impl_witness_access constants.%Copy.impl_witness.230, element0 [concrete = constants.%ptr.as.Copy.impl.Op.909]
+// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %u.ref, %impl.elem0.loc8
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @ptr.as.Copy.impl.Op(constants.%U.8b5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %u.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.86f = call %bound_method.loc8_11.2(%u.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -902,12 +921,23 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %U.8b5: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr.86f: type = ptr_type %U.8b5 [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.230: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%U.8b5) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.053: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%U.8b5) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.909: %ptr.as.Copy.impl.Op.type.053 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.86f, (%Copy.impl_witness.230) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.96b: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.b91: type = fn_type_with_self_type %Copy.WithSelf.Op.type.96b, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.909, @ptr.as.Copy.impl.Op(%U.8b5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -916,21 +946,29 @@ fn F() {
 // CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U.8b5] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%u.param: %ptr) {
+// CHECK:STDOUT: fn @F(%u.param: %ptr.86f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
+// CHECK:STDOUT:   %u.ref: %ptr.86f = name_ref u, %u
+// CHECK:STDOUT:   %impl.elem0.loc8: %.b91 = impl_witness_access constants.%Copy.impl_witness.230, element0 [concrete = constants.%ptr.as.Copy.impl.Op.909]
+// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %u.ref, %impl.elem0.loc8
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @ptr.as.Copy.impl.Op(constants.%U.8b5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %u.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.86f = call %bound_method.loc8_11.2(%u.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
