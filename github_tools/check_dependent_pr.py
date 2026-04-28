@@ -234,7 +234,9 @@ def _parse_and_validate_state(
             parsed_merged.append(val)
     if "first_commit" in raw_state:
         fc = raw_state["first_commit"]
-        if isinstance(fc, str) and re.fullmatch(r"[0-9a-fA-F]{40}", fc):
+        if fc is None:
+            first_commit = None
+        elif isinstance(fc, str) and re.fullmatch(r"[0-9a-fA-F]{40}", fc):
             first_commit = fc
         else:
             raise ValueError(
