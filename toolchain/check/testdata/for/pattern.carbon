@@ -497,17 +497,17 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.9fa: %tuple.type.24b = tuple_value (bool, bool) [concrete]
 // CHECK:STDOUT:   %U: %Copy.type = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.type.57a: type = fn_type @tuple.type.as.Copy.impl.Op.1, @tuple.type.as.Copy.impl.da7(%T.56c, %U) [symbolic]
-// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.7f4: %tuple.type.as.Copy.impl.Op.type.57a = struct_value () [symbolic]
+// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.type.52d: type = fn_type @tuple.type.as.Copy.impl.Op.1, @tuple.type.as.Copy.impl.861(%T.56c, %U) [symbolic]
+// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.6ae: %tuple.type.as.Copy.impl.Op.type.52d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.819: <witness> = impl_witness imports.%Copy.impl_witness_table.164 [concrete]
 // CHECK:STDOUT:   %Copy.facet.07e: %Copy.type = facet_value bool, (%Copy.impl_witness.819) [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.f9f: <witness> = impl_witness imports.%Copy.impl_witness_table.3c8, @tuple.type.as.Copy.impl.da7(%Copy.facet.07e, %Copy.facet.07e) [concrete]
-// CHECK:STDOUT:   %Copy.facet.3ce: %Copy.type = facet_value %tuple.type.784, (%Copy.impl_witness.f9f) [concrete]
-// CHECK:STDOUT:   %EmptyRange.717: type = class_type @EmptyRange, @EmptyRange(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.type.a76: type = fn_type @EmptyRange.Make, @EmptyRange(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.d35: %EmptyRange.Make.type.a76 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.128: <witness> = impl_witness imports.%Copy.impl_witness_table.b47, @tuple.type.as.Copy.impl.861(%Copy.facet.07e, %Copy.facet.07e) [concrete]
+// CHECK:STDOUT:   %Copy.facet.def: %Copy.type = facet_value %tuple.type.784, (%Copy.impl_witness.128) [concrete]
+// CHECK:STDOUT:   %EmptyRange.614: type = class_type @EmptyRange, @EmptyRange(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.type.662: type = fn_type @EmptyRange.Make, @EmptyRange(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.e55: %EmptyRange.Make.type.662 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %EmptyRange.Make.d35, @EmptyRange.Make(%Copy.facet.3ce) [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %EmptyRange.Make.e55, @EmptyRange.Make(%Copy.facet.def) [concrete]
 // CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.1ac: type = fn_type @Optional.Get, @Optional(%T.56c) [symbolic]
 // CHECK:STDOUT:   %Optional.Get.748: %Optional.Get.type.1ac = struct_value () [symbolic]
@@ -517,26 +517,26 @@ fn Run() {
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.682: %EmptyRange.as.Iterate.impl.Next.type.b9d = struct_value () [symbolic]
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.16c: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%T.56c) [symbolic]
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.cbe: %EmptyRange.as.Iterate.impl.NewCursor.type.16c = struct_value () [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness.04a: <witness> = impl_witness imports.%Iterate.impl_witness_table, @EmptyRange.as.Iterate.impl(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.a15: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.90c: %EmptyRange.as.Iterate.impl.NewCursor.type.a15 = struct_value () [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.type.f9b: type = fn_type @EmptyRange.as.Iterate.impl.Next, @EmptyRange.as.Iterate.impl(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.4a9: %EmptyRange.as.Iterate.impl.Next.type.f9b = struct_value () [concrete]
-// CHECK:STDOUT:   %Iterate.facet: %Iterate.type = facet_value %EmptyRange.717, (%Iterate.impl_witness.04a) [concrete]
-// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.fea: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet) [concrete]
-// CHECK:STDOUT:   %Iterate.WithSelf.Next.type.346: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet) [concrete]
-// CHECK:STDOUT:   %.a72: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.fea, %Iterate.facet [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.NewCursor.90c, @EmptyRange.as.Iterate.impl.NewCursor(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %.28c: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.346, %Iterate.facet [concrete]
-// CHECK:STDOUT:   %Optional.678: type = class_type @Optional, @Optional(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.Next.4a9, @EmptyRange.as.Iterate.impl.Next(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.type.101: type = fn_type @Optional.HasValue, @Optional(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.960: %Optional.HasValue.type.101 = struct_value () [concrete]
-// CHECK:STDOUT:   %Optional.Get.type.758: type = fn_type @Optional.Get, @Optional(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %Optional.Get.2ff: %Optional.Get.type.758 = struct_value () [concrete]
+// CHECK:STDOUT:   %Iterate.impl_witness.d21: <witness> = impl_witness imports.%Iterate.impl_witness_table, @EmptyRange.as.Iterate.impl(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.d72: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.650: %EmptyRange.as.Iterate.impl.NewCursor.type.d72 = struct_value () [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.type.4be: type = fn_type @EmptyRange.as.Iterate.impl.Next, @EmptyRange.as.Iterate.impl(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.330: %EmptyRange.as.Iterate.impl.Next.type.4be = struct_value () [concrete]
+// CHECK:STDOUT:   %Iterate.facet: %Iterate.type = facet_value %EmptyRange.614, (%Iterate.impl_witness.d21) [concrete]
+// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.1eb: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet) [concrete]
+// CHECK:STDOUT:   %Iterate.WithSelf.Next.type.99a: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet) [concrete]
+// CHECK:STDOUT:   %.fb3: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.1eb, %Iterate.facet [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.NewCursor.650, @EmptyRange.as.Iterate.impl.NewCursor(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %.946: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.99a, %Iterate.facet [concrete]
+// CHECK:STDOUT:   %Optional.d3d: type = class_type @Optional, @Optional(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.Next.330, @EmptyRange.as.Iterate.impl.Next(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.type.b47: type = fn_type @Optional.HasValue, @Optional(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.81c: %Optional.HasValue.type.b47 = struct_value () [concrete]
+// CHECK:STDOUT:   %Optional.Get.type.07d: type = fn_type @Optional.Get, @Optional(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %Optional.Get.eb2: %Optional.Get.type.07d = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.has_value.value.6f9: type = struct_type {.has_value: bool, .value: %tuple.type.784} [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.960, @Optional.HasValue(%Copy.facet.3ce) [concrete]
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.2ff, @Optional.Get(%Copy.facet.3ce) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.81c, @Optional.HasValue(%Copy.facet.def) [concrete]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.eb2, @Optional.Get(%Copy.facet.def) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc10_61.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc10_61.4 [concrete]
@@ -552,8 +552,8 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.import_ref.299: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.8d6) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.0dc)]
-// CHECK:STDOUT:   %Core.import_ref.445: @tuple.type.as.Copy.impl.da7.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.57a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.da7.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.7f4)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.3c8 = impl_witness_table (%Core.import_ref.445), @tuple.type.as.Copy.impl.da7 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.969: @tuple.type.as.Copy.impl.861.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.52d) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.861.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.6ae)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.b47 = impl_witness_table (%Core.import_ref.969), @tuple.type.as.Copy.impl.861 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.4d6: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.164 = impl_witness_table (%Core.import_ref.4d6), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.f5d: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.051) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.6ae)]
@@ -576,20 +576,20 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_42: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc10_48: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc10_52: %tuple.type.24b = tuple_literal (%.loc10_42, %.loc10_48) [concrete = constants.%tuple.9fa]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%tuple.type.784, (constants.%Copy.impl_witness.f9f) [concrete = constants.%Copy.facet.3ce]
-// CHECK:STDOUT:   %.loc10_53: %Copy.type = converted %.loc10_52, %Copy.facet [concrete = constants.%Copy.facet.3ce]
-// CHECK:STDOUT:   %EmptyRange: type = class_type @EmptyRange, @EmptyRange(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.717]
-// CHECK:STDOUT:   %.loc10_54: %EmptyRange.Make.type.a76 = specific_constant imports.%Main.import_ref.299, @EmptyRange(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.Make.d35]
-// CHECK:STDOUT:   %Make.ref: %EmptyRange.Make.type.a76 = name_ref Make, %.loc10_54 [concrete = constants.%EmptyRange.Make.d35]
-// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %Make.ref, @EmptyRange.Make(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.Make.specific_fn]
-// CHECK:STDOUT:   %.loc10_60.1: ref %EmptyRange.717 = temporary_storage
-// CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.717 to %.loc10_60.1 = call %EmptyRange.Make.specific_fn()
-// CHECK:STDOUT:   %.loc10_60.2: ref %EmptyRange.717 = temporary %.loc10_60.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   %impl.elem2: %.a72 = impl_witness_access constants.%Iterate.impl_witness.04a, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.90c]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%tuple.type.784, (constants.%Copy.impl_witness.128) [concrete = constants.%Copy.facet.def]
+// CHECK:STDOUT:   %.loc10_53: %Copy.type = converted %.loc10_52, %Copy.facet [concrete = constants.%Copy.facet.def]
+// CHECK:STDOUT:   %EmptyRange: type = class_type @EmptyRange, @EmptyRange(constants.%Copy.facet.def) [concrete = constants.%EmptyRange.614]
+// CHECK:STDOUT:   %.loc10_54: %EmptyRange.Make.type.662 = specific_constant imports.%Main.import_ref.299, @EmptyRange(constants.%Copy.facet.def) [concrete = constants.%EmptyRange.Make.e55]
+// CHECK:STDOUT:   %Make.ref: %EmptyRange.Make.type.662 = name_ref Make, %.loc10_54 [concrete = constants.%EmptyRange.Make.e55]
+// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %Make.ref, @EmptyRange.Make(constants.%Copy.facet.def) [concrete = constants.%EmptyRange.Make.specific_fn]
+// CHECK:STDOUT:   %.loc10_60.1: ref %EmptyRange.614 = temporary_storage
+// CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.614 to %.loc10_60.1 = call %EmptyRange.Make.specific_fn()
+// CHECK:STDOUT:   %.loc10_60.2: ref %EmptyRange.614 = temporary %.loc10_60.1, %EmptyRange.Make.call
+// CHECK:STDOUT:   %impl.elem2: %.fb3 = impl_witness_access constants.%Iterate.impl_witness.d21, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.650]
 // CHECK:STDOUT:   %bound_method.loc10_61.1: <bound method> = bound_method %.loc10_60.2, %impl.elem2
-// CHECK:STDOUT:   %specific_fn.loc10_61.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc10_61.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.def) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_61.2: <bound method> = bound_method %.loc10_60.2, %specific_fn.loc10_61.1
-// CHECK:STDOUT:   %.loc10_60.3: %EmptyRange.717 = acquire_value %.loc10_60.2
+// CHECK:STDOUT:   %.loc10_60.3: %EmptyRange.614 = acquire_value %.loc10_60.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_61.2(%.loc10_60.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
@@ -597,33 +597,33 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   %impl.elem3: %.28c = impl_witness_access constants.%Iterate.impl_witness.04a, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.4a9]
+// CHECK:STDOUT:   %impl.elem3: %.946 = impl_witness_access constants.%Iterate.impl_witness.d21, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.330]
 // CHECK:STDOUT:   %bound_method.loc10_61.3: <bound method> = bound_method %.loc10_60.2, %impl.elem3
-// CHECK:STDOUT:   %specific_fn.loc10_61.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc10_61.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.def) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_61.4: <bound method> = bound_method %.loc10_60.2, %specific_fn.loc10_61.2
-// CHECK:STDOUT:   %.loc10_61.1: ref %Optional.678 = temporary_storage
-// CHECK:STDOUT:   %.loc10_60.4: %EmptyRange.717 = acquire_value %.loc10_60.2
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.call: init %Optional.678 to %.loc10_61.1 = call %bound_method.loc10_61.4(%.loc10_60.4, %addr)
-// CHECK:STDOUT:   %.loc10_61.2: ref %Optional.678 = temporary %.loc10_61.1, %EmptyRange.as.Iterate.impl.Next.call
-// CHECK:STDOUT:   %.loc10_61.3: %Optional.HasValue.type.101 = specific_constant imports.%Core.import_ref.f5d, @Optional(constants.%Copy.facet.3ce) [concrete = constants.%Optional.HasValue.960]
-// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.101 = name_ref HasValue, %.loc10_61.3 [concrete = constants.%Optional.HasValue.960]
+// CHECK:STDOUT:   %.loc10_61.1: ref %Optional.d3d = temporary_storage
+// CHECK:STDOUT:   %.loc10_60.4: %EmptyRange.614 = acquire_value %.loc10_60.2
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.call: init %Optional.d3d to %.loc10_61.1 = call %bound_method.loc10_61.4(%.loc10_60.4, %addr)
+// CHECK:STDOUT:   %.loc10_61.2: ref %Optional.d3d = temporary %.loc10_61.1, %EmptyRange.as.Iterate.impl.Next.call
+// CHECK:STDOUT:   %.loc10_61.3: %Optional.HasValue.type.b47 = specific_constant imports.%Core.import_ref.f5d, @Optional(constants.%Copy.facet.def) [concrete = constants.%Optional.HasValue.81c]
+// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.b47 = name_ref HasValue, %.loc10_61.3 [concrete = constants.%Optional.HasValue.81c]
 // CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc10_61.2, %HasValue.ref
-// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%Copy.facet.3ce) [concrete = constants.%Optional.HasValue.specific_fn]
+// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%Copy.facet.def) [concrete = constants.%Optional.HasValue.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_61.5: <bound method> = bound_method %.loc10_61.2, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:   %.loc10_61.4: %Optional.678 = acquire_value %.loc10_61.2
+// CHECK:STDOUT:   %.loc10_61.4: %Optional.d3d = acquire_value %.loc10_61.2
 // CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc10_61.5(%.loc10_61.4)
 // CHECK:STDOUT:   %.loc10_61.5: bool = value_of_initializer %Optional.HasValue.call
 // CHECK:STDOUT:   %.loc10_61.6: bool = converted %Optional.HasValue.call, %.loc10_61.5
 // CHECK:STDOUT:   if %.loc10_61.6 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc10_61.7: %Optional.Get.type.758 = specific_constant imports.%Core.import_ref.ab7, @Optional(constants.%Copy.facet.3ce) [concrete = constants.%Optional.Get.2ff]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.758 = name_ref Get, %.loc10_61.7 [concrete = constants.%Optional.Get.2ff]
+// CHECK:STDOUT:   %.loc10_61.7: %Optional.Get.type.07d = specific_constant imports.%Core.import_ref.ab7, @Optional(constants.%Copy.facet.def) [concrete = constants.%Optional.Get.eb2]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.07d = name_ref Get, %.loc10_61.7 [concrete = constants.%Optional.Get.eb2]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc10_61.2, %Get.ref
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%Copy.facet.3ce) [concrete = constants.%Optional.Get.specific_fn]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%Copy.facet.def) [concrete = constants.%Optional.Get.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_61.6: <bound method> = bound_method %.loc10_61.2, %Optional.Get.specific_fn
 // CHECK:STDOUT:   %.loc10_61.8: ref %tuple.type.784 = temporary_storage
-// CHECK:STDOUT:   %.loc10_61.9: %Optional.678 = acquire_value %.loc10_61.2
+// CHECK:STDOUT:   %.loc10_61.9: %Optional.d3d = acquire_value %.loc10_61.2
 // CHECK:STDOUT:   %Optional.Get.call: init %tuple.type.784 to %.loc10_61.8 = call %bound_method.loc10_61.6(%.loc10_61.9)
 // CHECK:STDOUT:   %.loc10_61.10: ref %tuple.type.784 = temporary %.loc10_61.8, %Optional.Get.call
 // CHECK:STDOUT:   %tuple.elem0: ref bool = tuple_access %.loc10_61.10, element0
@@ -664,14 +664,14 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_61.4(%self.param: ref %Optional.678) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_61.4(%self.param: ref %Optional.d3d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.5(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_60(%self.param: ref %EmptyRange.717) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_60(%self.param: ref %EmptyRange.614) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -697,16 +697,16 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.6f4: %tuple.type.24b = tuple_value (%C, %C) [concrete]
 // CHECK:STDOUT:   %U: %Copy.type = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.type.57a: type = fn_type @tuple.type.as.Copy.impl.Op.1, @tuple.type.as.Copy.impl.da7(%T.56c, %U) [symbolic]
-// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.7f4: %tuple.type.as.Copy.impl.Op.type.57a = struct_value () [symbolic]
+// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.type.52d: type = fn_type @tuple.type.as.Copy.impl.Op.1, @tuple.type.as.Copy.impl.861(%T.56c, %U) [symbolic]
+// CHECK:STDOUT:   %tuple.type.as.Copy.impl.Op.6ae: %tuple.type.as.Copy.impl.Op.type.52d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.fab: <witness> = impl_witness imports.%Copy.impl_witness_table.c52 [concrete]
 // CHECK:STDOUT:   %Copy.facet.54f: %Copy.type = facet_value %C, (%Copy.impl_witness.fab) [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.9e2: <witness> = impl_witness imports.%Copy.impl_witness_table.3c8, @tuple.type.as.Copy.impl.da7(%Copy.facet.54f, %Copy.facet.54f) [concrete]
-// CHECK:STDOUT:   %Copy.facet.ad0: %Copy.type = facet_value %tuple.type.d23, (%Copy.impl_witness.9e2) [concrete]
-// CHECK:STDOUT:   %EmptyRange.849: type = class_type @EmptyRange, @EmptyRange(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.type.7da: type = fn_type @EmptyRange.Make, @EmptyRange(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.38a: %EmptyRange.Make.type.7da = struct_value () [concrete]
-// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %EmptyRange.Make.38a, @EmptyRange.Make(%Copy.facet.ad0) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.ee0: <witness> = impl_witness imports.%Copy.impl_witness_table.b47, @tuple.type.as.Copy.impl.861(%Copy.facet.54f, %Copy.facet.54f) [concrete]
+// CHECK:STDOUT:   %Copy.facet.529: %Copy.type = facet_value %tuple.type.d23, (%Copy.impl_witness.ee0) [concrete]
+// CHECK:STDOUT:   %EmptyRange.398: type = class_type @EmptyRange, @EmptyRange(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.type.f96: type = fn_type @EmptyRange.Make, @EmptyRange(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.d4d: %EmptyRange.Make.type.f96 = struct_value () [concrete]
+// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %EmptyRange.Make.d4d, @EmptyRange.Make(%Copy.facet.529) [concrete]
 // CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.1ac: type = fn_type @Optional.Get, @Optional(%T.56c) [symbolic]
 // CHECK:STDOUT:   %Optional.Get.748: %Optional.Get.type.1ac = struct_value () [symbolic]
@@ -716,26 +716,26 @@ fn Run() {
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.682: %EmptyRange.as.Iterate.impl.Next.type.b9d = struct_value () [symbolic]
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.16c: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%T.56c) [symbolic]
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.cbe: %EmptyRange.as.Iterate.impl.NewCursor.type.16c = struct_value () [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness.a9d: <witness> = impl_witness imports.%Iterate.impl_witness_table, @EmptyRange.as.Iterate.impl(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.a4b: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.94e: %EmptyRange.as.Iterate.impl.NewCursor.type.a4b = struct_value () [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.type.24c: type = fn_type @EmptyRange.as.Iterate.impl.Next, @EmptyRange.as.Iterate.impl(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.77c: %EmptyRange.as.Iterate.impl.Next.type.24c = struct_value () [concrete]
-// CHECK:STDOUT:   %Iterate.facet: %Iterate.type = facet_value %EmptyRange.849, (%Iterate.impl_witness.a9d) [concrete]
-// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.43a: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet) [concrete]
-// CHECK:STDOUT:   %Iterate.WithSelf.Next.type.cd1: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet) [concrete]
-// CHECK:STDOUT:   %.722: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.43a, %Iterate.facet [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.NewCursor.94e, @EmptyRange.as.Iterate.impl.NewCursor(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %.44b: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.cd1, %Iterate.facet [concrete]
-// CHECK:STDOUT:   %Optional.2f4: type = class_type @Optional, @Optional(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.Next.77c, @EmptyRange.as.Iterate.impl.Next(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.type.6de: type = fn_type @Optional.HasValue, @Optional(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.de9: %Optional.HasValue.type.6de = struct_value () [concrete]
-// CHECK:STDOUT:   %Optional.Get.type.925: type = fn_type @Optional.Get, @Optional(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %Optional.Get.a9e: %Optional.Get.type.925 = struct_value () [concrete]
+// CHECK:STDOUT:   %Iterate.impl_witness.b87: <witness> = impl_witness imports.%Iterate.impl_witness_table, @EmptyRange.as.Iterate.impl(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.type.bab: type = fn_type @EmptyRange.as.Iterate.impl.NewCursor, @EmptyRange.as.Iterate.impl(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.891: %EmptyRange.as.Iterate.impl.NewCursor.type.bab = struct_value () [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.type.2e7: type = fn_type @EmptyRange.as.Iterate.impl.Next, @EmptyRange.as.Iterate.impl(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.dd1: %EmptyRange.as.Iterate.impl.Next.type.2e7 = struct_value () [concrete]
+// CHECK:STDOUT:   %Iterate.facet: %Iterate.type = facet_value %EmptyRange.398, (%Iterate.impl_witness.b87) [concrete]
+// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.462: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet) [concrete]
+// CHECK:STDOUT:   %Iterate.WithSelf.Next.type.c37: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet) [concrete]
+// CHECK:STDOUT:   %.18e: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.462, %Iterate.facet [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.NewCursor.891, @EmptyRange.as.Iterate.impl.NewCursor(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %.100: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.c37, %Iterate.facet [concrete]
+// CHECK:STDOUT:   %Optional.d08: type = class_type @Optional, @Optional(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %EmptyRange.as.Iterate.impl.Next.dd1, @EmptyRange.as.Iterate.impl.Next(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.type.c7c: type = fn_type @Optional.HasValue, @Optional(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.2a5: %Optional.HasValue.type.c7c = struct_value () [concrete]
+// CHECK:STDOUT:   %Optional.Get.type.7ae: type = fn_type @Optional.Get, @Optional(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %Optional.Get.58f: %Optional.Get.type.7ae = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.has_value.value.a96: type = struct_type {.has_value: bool, .value: %tuple.type.d23} [concrete]
-// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.de9, @Optional.HasValue(%Copy.facet.ad0) [concrete]
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.a9e, @Optional.Get(%Copy.facet.ad0) [concrete]
+// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.2a5, @Optional.HasValue(%Copy.facet.529) [concrete]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.58f, @Optional.Get(%Copy.facet.529) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc10_49.1 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc10_49.3 [concrete]
@@ -752,8 +752,8 @@ fn Run() {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.299: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.8d6) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.0dc)]
-// CHECK:STDOUT:   %Core.import_ref.445: @tuple.type.as.Copy.impl.da7.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.57a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.da7.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.7f4)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.3c8 = impl_witness_table (%Core.import_ref.445), @tuple.type.as.Copy.impl.da7 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.969: @tuple.type.as.Copy.impl.861.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.52d) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.861.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.6ae)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.b47 = impl_witness_table (%Core.import_ref.969), @tuple.type.as.Copy.impl.861 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.cb5: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_40, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c52 = impl_witness_table (%Main.import_ref.cb5), @C.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.f5d: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.051) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.6ae)]
@@ -776,20 +776,20 @@ fn Run() {
 // CHECK:STDOUT:   %C.ref.loc10_36: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc10_39: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_40: %tuple.type.24b = tuple_literal (%C.ref.loc10_36, %C.ref.loc10_39) [concrete = constants.%tuple.6f4]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%tuple.type.d23, (constants.%Copy.impl_witness.9e2) [concrete = constants.%Copy.facet.ad0]
-// CHECK:STDOUT:   %.loc10_41: %Copy.type = converted %.loc10_40, %Copy.facet [concrete = constants.%Copy.facet.ad0]
-// CHECK:STDOUT:   %EmptyRange: type = class_type @EmptyRange, @EmptyRange(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.849]
-// CHECK:STDOUT:   %.loc10_42: %EmptyRange.Make.type.7da = specific_constant imports.%Main.import_ref.299, @EmptyRange(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.Make.38a]
-// CHECK:STDOUT:   %Make.ref: %EmptyRange.Make.type.7da = name_ref Make, %.loc10_42 [concrete = constants.%EmptyRange.Make.38a]
-// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %Make.ref, @EmptyRange.Make(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.Make.specific_fn]
-// CHECK:STDOUT:   %.loc10_48.1: ref %EmptyRange.849 = temporary_storage
-// CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.849 to %.loc10_48.1 = call %EmptyRange.Make.specific_fn()
-// CHECK:STDOUT:   %.loc10_48.2: ref %EmptyRange.849 = temporary %.loc10_48.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   %impl.elem2: %.722 = impl_witness_access constants.%Iterate.impl_witness.a9d, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.94e]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%tuple.type.d23, (constants.%Copy.impl_witness.ee0) [concrete = constants.%Copy.facet.529]
+// CHECK:STDOUT:   %.loc10_41: %Copy.type = converted %.loc10_40, %Copy.facet [concrete = constants.%Copy.facet.529]
+// CHECK:STDOUT:   %EmptyRange: type = class_type @EmptyRange, @EmptyRange(constants.%Copy.facet.529) [concrete = constants.%EmptyRange.398]
+// CHECK:STDOUT:   %.loc10_42: %EmptyRange.Make.type.f96 = specific_constant imports.%Main.import_ref.299, @EmptyRange(constants.%Copy.facet.529) [concrete = constants.%EmptyRange.Make.d4d]
+// CHECK:STDOUT:   %Make.ref: %EmptyRange.Make.type.f96 = name_ref Make, %.loc10_42 [concrete = constants.%EmptyRange.Make.d4d]
+// CHECK:STDOUT:   %EmptyRange.Make.specific_fn: <specific function> = specific_function %Make.ref, @EmptyRange.Make(constants.%Copy.facet.529) [concrete = constants.%EmptyRange.Make.specific_fn]
+// CHECK:STDOUT:   %.loc10_48.1: ref %EmptyRange.398 = temporary_storage
+// CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.398 to %.loc10_48.1 = call %EmptyRange.Make.specific_fn()
+// CHECK:STDOUT:   %.loc10_48.2: ref %EmptyRange.398 = temporary %.loc10_48.1, %EmptyRange.Make.call
+// CHECK:STDOUT:   %impl.elem2: %.18e = impl_witness_access constants.%Iterate.impl_witness.b87, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.891]
 // CHECK:STDOUT:   %bound_method.loc10_49.1: <bound method> = bound_method %.loc10_48.2, %impl.elem2
-// CHECK:STDOUT:   %specific_fn.loc10_49.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc10_49.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.529) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_49.2: <bound method> = bound_method %.loc10_48.2, %specific_fn.loc10_49.1
-// CHECK:STDOUT:   %.loc10_48.3: %EmptyRange.849 = acquire_value %.loc10_48.2
+// CHECK:STDOUT:   %.loc10_48.3: %EmptyRange.398 = acquire_value %.loc10_48.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_49.2(%.loc10_48.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
@@ -797,33 +797,33 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   %impl.elem3: %.44b = impl_witness_access constants.%Iterate.impl_witness.a9d, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.77c]
+// CHECK:STDOUT:   %impl.elem3: %.100 = impl_witness_access constants.%Iterate.impl_witness.b87, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.dd1]
 // CHECK:STDOUT:   %bound_method.loc10_49.3: <bound method> = bound_method %.loc10_48.2, %impl.elem3
-// CHECK:STDOUT:   %specific_fn.loc10_49.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc10_49.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.529) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_49.4: <bound method> = bound_method %.loc10_48.2, %specific_fn.loc10_49.2
-// CHECK:STDOUT:   %.loc10_49.1: ref %Optional.2f4 = temporary_storage
-// CHECK:STDOUT:   %.loc10_48.4: %EmptyRange.849 = acquire_value %.loc10_48.2
-// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.call: init %Optional.2f4 to %.loc10_49.1 = call %bound_method.loc10_49.4(%.loc10_48.4, %addr)
-// CHECK:STDOUT:   %.loc10_49.2: ref %Optional.2f4 = temporary %.loc10_49.1, %EmptyRange.as.Iterate.impl.Next.call
-// CHECK:STDOUT:   %.loc10_49.3: %Optional.HasValue.type.6de = specific_constant imports.%Core.import_ref.f5d, @Optional(constants.%Copy.facet.ad0) [concrete = constants.%Optional.HasValue.de9]
-// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.6de = name_ref HasValue, %.loc10_49.3 [concrete = constants.%Optional.HasValue.de9]
+// CHECK:STDOUT:   %.loc10_49.1: ref %Optional.d08 = temporary_storage
+// CHECK:STDOUT:   %.loc10_48.4: %EmptyRange.398 = acquire_value %.loc10_48.2
+// CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.Next.call: init %Optional.d08 to %.loc10_49.1 = call %bound_method.loc10_49.4(%.loc10_48.4, %addr)
+// CHECK:STDOUT:   %.loc10_49.2: ref %Optional.d08 = temporary %.loc10_49.1, %EmptyRange.as.Iterate.impl.Next.call
+// CHECK:STDOUT:   %.loc10_49.3: %Optional.HasValue.type.c7c = specific_constant imports.%Core.import_ref.f5d, @Optional(constants.%Copy.facet.529) [concrete = constants.%Optional.HasValue.2a5]
+// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.c7c = name_ref HasValue, %.loc10_49.3 [concrete = constants.%Optional.HasValue.2a5]
 // CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc10_49.2, %HasValue.ref
-// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%Copy.facet.ad0) [concrete = constants.%Optional.HasValue.specific_fn]
+// CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%Copy.facet.529) [concrete = constants.%Optional.HasValue.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_49.5: <bound method> = bound_method %.loc10_49.2, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:   %.loc10_49.4: %Optional.2f4 = acquire_value %.loc10_49.2
+// CHECK:STDOUT:   %.loc10_49.4: %Optional.d08 = acquire_value %.loc10_49.2
 // CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc10_49.5(%.loc10_49.4)
 // CHECK:STDOUT:   %.loc10_49.5: bool = value_of_initializer %Optional.HasValue.call
 // CHECK:STDOUT:   %.loc10_49.6: bool = converted %Optional.HasValue.call, %.loc10_49.5
 // CHECK:STDOUT:   if %.loc10_49.6 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc10_49.7: %Optional.Get.type.925 = specific_constant imports.%Core.import_ref.ab7, @Optional(constants.%Copy.facet.ad0) [concrete = constants.%Optional.Get.a9e]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.925 = name_ref Get, %.loc10_49.7 [concrete = constants.%Optional.Get.a9e]
+// CHECK:STDOUT:   %.loc10_49.7: %Optional.Get.type.7ae = specific_constant imports.%Core.import_ref.ab7, @Optional(constants.%Copy.facet.529) [concrete = constants.%Optional.Get.58f]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.7ae = name_ref Get, %.loc10_49.7 [concrete = constants.%Optional.Get.58f]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc10_49.2, %Get.ref
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%Copy.facet.ad0) [concrete = constants.%Optional.Get.specific_fn]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%Copy.facet.529) [concrete = constants.%Optional.Get.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_49.6: <bound method> = bound_method %.loc10_49.2, %Optional.Get.specific_fn
 // CHECK:STDOUT:   %.loc10_49.8: ref %tuple.type.d23 = temporary_storage
-// CHECK:STDOUT:   %.loc10_49.9: %Optional.2f4 = acquire_value %.loc10_49.2
+// CHECK:STDOUT:   %.loc10_49.9: %Optional.d08 = acquire_value %.loc10_49.2
 // CHECK:STDOUT:   %Optional.Get.call: init %tuple.type.d23 to %.loc10_49.8 = call %bound_method.loc10_49.6(%.loc10_49.9)
 // CHECK:STDOUT:   %.loc10_49.10: ref %tuple.type.d23 = temporary %.loc10_49.8, %Optional.Get.call
 // CHECK:STDOUT:   %tuple.elem0: ref %C = tuple_access %.loc10_49.10, element0
@@ -871,12 +871,12 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_49.6(%self.param: ref %Optional.2f4) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_49.6(%self.param: ref %Optional.d08) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_48(%self.param: ref %EmptyRange.849) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_48(%self.param: ref %EmptyRange.398) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
