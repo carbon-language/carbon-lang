@@ -47,6 +47,7 @@ _QUERY_OPEN_PRS = """
     pullRequests(states: OPEN, first: 100%(cursor)s) {
       nodes {
         number
+        headRefOid
         commits(first: 100) {
           nodes {
             commit {
@@ -282,7 +283,8 @@ def _set_commit_status(
 def _process_pr(
     client: github_helpers.Client,
     pr_number: int,
-    pr_to_commits: dict[int, list[str]],
+    pr_to_commits: dict[int, set[str]],
+    pr_to_head: dict[int, str],
     open_pr_numbers: set[int],
     label_id: str,
     token: str,
@@ -306,14 +308,13 @@ def _process_pr(
 
     open_deps: list[int] = []
 
+    current_oids = [c["commit"]["oid"] for c in commits]
+
     if len(commits) <= 1:
         _print_err(
             f"PR #{pr_number} has 1 or fewer commits, skipping overlap check."
         )
-        current_oids = [c["commit"]["oid"] for c in commits]
     else:
-        current_oids = [c["commit"]["oid"] for c in commits]
-
         # Dependency Logic: Overlap and Sequence
         #
         # We consider PR B dependent on PR A if:
@@ -327,10 +328,9 @@ def _process_pr(
         #   strict subset inclusion.
         # - Avoids circular dependencies via the sequence check.
         current_oids_set = set(current_oids)
-        for other_pr_num, other_oids in pr_to_commits.items():
+        for other_pr_num, other_oids_set in pr_to_commits.items():
             if other_pr_num >= pr_number:
                 continue
-            other_oids_set = set(other_oids)
             if not (other_oids_set & current_oids_set):
                 continue
             if not (current_oids_set - other_oids_set):
@@ -410,12 +410,16 @@ def _process_pr(
                 first_independent_commit_oid = oid
                 break
 
-        any_later_dependent_oids = False
-        if first_independent_commit_oid:
-            idx = current_oids.index(first_independent_commit_oid)
-            any_later_dependent_oids = any(
-                oid in dependent_oids for oid in current_oids[idx + 1 :]
-            )
+        last_dep_pr_num = max(open_deps)
+        last_dep_oids = pr_to_commits[last_dep_pr_num]
+        last_dep_head_oid = pr_to_head[last_dep_pr_num]
+
+        # Detect non-linear history: any commit in the current PR that is in
+        # *some* dependency but *not* in the last dependency.
+        any_later_dependent_oids = any(
+            oid in dependent_oids and oid not in last_dep_oids
+            for oid in current_oids
+        )
 
     if (
         open_deps == parsed_open_deps
@@ -439,10 +443,10 @@ def _process_pr(
 
     if open_deps:
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
-        if first_independent_commit_oid:
+        if last_dep_head_oid:
             changes_url = (
                 "https://github.com/carbon-language/carbon-lang/pull/"
-                f"{pr_number}/changes/{first_independent_commit_oid}..HEAD"
+                f"{pr_number}/changes/{last_dep_head_oid}..HEAD"
             )
             comment_body += (
                 f"Depends on {pr_list_str}, start review with "
@@ -551,7 +555,8 @@ def main() -> None:
     client = github_helpers.Client(parsed_args)
 
     _print_err("Loading open PRs ...", end="", flush=True)
-    pr_to_commits: dict[int, list[str]] = {}
+    pr_to_commits: dict[int, set[str]] = {}
+    pr_to_head: dict[int, str] = {}
     open_pr_numbers: set[int] = set()
     for node in client.execute_and_paginate(
         _QUERY_OPEN_PRS, ("repository", "pullRequests")
@@ -559,9 +564,10 @@ def main() -> None:
         _print_err(".", end="", flush=True)
         other_pr_num = node["number"]
         open_pr_numbers.add(other_pr_num)
-        pr_to_commits[other_pr_num] = [
+        pr_to_head[other_pr_num] = node["headRefOid"]
+        pr_to_commits[other_pr_num] = {
             c["commit"]["oid"] for c in node["commits"]["nodes"]
-        ]
+        }
     _print_err()
 
     label_res = client.execute(_QUERY_LABEL)
@@ -576,6 +582,7 @@ def main() -> None:
             client,
             parsed_args.pr_number,
             pr_to_commits,
+            pr_to_head,
             open_pr_numbers,
             label_id,
             parsed_args.access_token,
@@ -590,6 +597,7 @@ def main() -> None:
                 client,
                 node["number"],
                 pr_to_commits,
+                pr_to_head,
                 open_pr_numbers,
                 label_id,
                 parsed_args.access_token,
