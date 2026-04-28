@@ -612,7 +612,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
-  const auto& class_info = context_->classes().Get(class_type.class_id);
+  auto& class_info = context_->classes().Get(class_type.class_id);
   class_decl->startDefinition();
   CARBON_CHECK(class_decl->hasDefinition());
 
@@ -639,8 +639,9 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
 
-  // TODO: Import fields, plus any special member functions that affect class
-  // properties.
+  ExportAllFieldsToCpp(*context_, class_info);
+
+  // TODO: Import any special member functions that affect class properties.
   class_decl->completeDefinition();
 }
 

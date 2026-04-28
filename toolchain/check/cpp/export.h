@@ -31,6 +31,9 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId class_inst_id, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
+// Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
+auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
+
 // Exports a Carbon class field into C++.
 //
 // If the field has already been exported, returns the existing C++

@@ -202,8 +202,11 @@ static auto CreateCppFieldDecl(Context& context,
   return cpp_field_decl;
 }
 
-// Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
-static auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) {
+auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
+  if (class_info.fields_exported) {
+    return;
+  }
+
   auto body = context.inst_blocks().Get(class_info.body_block_id);
   for (auto field_inst_id : body) {
     auto field_decl = context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id);
@@ -229,6 +232,8 @@ static auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) {
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
     context.clang_decls().Add({.key = key, .inst_id = field_inst_id});
   }
+
+  class_info.fields_exported = true;
 }
 
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
@@ -242,10 +247,7 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   auto& class_info = context.classes().Get(class_type.class_id);
 
   // If the class's fields haven't already been exported, do so now.
-  if (!class_info.fields_exported) {
-    ExportAllFieldsToCpp(context, class_info);
-    class_info.fields_exported = true;
-  }
+  ExportAllFieldsToCpp(context, class_info);
 
   // Get the exported `clang::FieldDecl`.
   auto clang_decl_id = context.clang_decls().Lookup(field_inst_id);
