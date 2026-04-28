@@ -1235,7 +1235,8 @@ static auto MakeImplicitParamPatternsBlockId(
     return SemIR::InstBlockId::None;
   }
 
-  // TODO: Fill in a location once available.
+  // TODO: Use a location associated with the object parameter instead of the
+  // location of the function as a whole.
   auto pattern_id =
       AddParamPattern(context, import_ir_inst_id, SemIR::NameId::SelfValue,
                       type_expr_region_id, type_id, param_info.kind);
