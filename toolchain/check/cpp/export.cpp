@@ -260,44 +260,41 @@ auto CalculateCppFieldOffsets(
     Context& context, SemIR::ClassId class_id,
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
   auto class_info = context.classes().Get(class_id);
+  const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+  auto object_repr_type_id =
+      class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+  auto struct_type =
+      context.types().GetAs<SemIR::StructType>(object_repr_type_id);
+  auto struct_type_fields =
+      context.struct_type_fields().Get(struct_type.fields_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-
-  // Reserve space for the base class, if present.
-  auto base_type_id =
-      class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
-  if (base_type_id != SemIR::TypeId::None) {
-    auto field_layout = context.sem_ir()
-                            .types()
-                            .GetCompleteTypeInfo(base_type_id)
-                            .object_layout;
-    class_layout.AppendField(field_layout);
-  }
-
-  auto body = context.inst_blocks().Get(class_info.body_block_id);
-  for (auto field_inst_id : body) {
-    auto field_decl = context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id);
-    if (!field_decl) {
-      continue;
-    }
-
-    auto* cpp_field_decl =
-        ExportFieldToCpp(context, field_inst_id, *field_decl);
-    if (!cpp_field_decl) {
-      return false;
-    }
-
-    auto unbound_element_type =
-        context.types().GetAs<SemIR::UnboundElementType>(field_decl->type_id);
+  for (const auto& struct_type_field : struct_type_fields) {
     auto field_type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
-        unbound_element_type.element_type_inst_id);
+        struct_type_field.type_inst_id);
     auto field_layout = context.sem_ir()
                             .types()
                             .GetCompleteTypeInfo(field_type_id)
                             .object_layout;
 
-    field_offsets.insert(
-        {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
+    // Use the field's name to look up the corresponding entry in the
+    // class. If it's a `FieldDecl`, write out the offset of the
+    // corresponding `clang::FieldDecl`.
+    if (auto entry_id = class_scope.Lookup(struct_type_field.name_id)) {
+      auto field_inst_id =
+          class_scope.GetEntry(*entry_id).result.target_inst_id();
+      if (auto field_decl =
+              context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id)) {
+        auto* cpp_field_decl =
+            ExportFieldToCpp(context, field_inst_id, *field_decl);
+        if (!cpp_field_decl) {
+          return false;
+        }
+        field_offsets.insert(
+            {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
+      }
+    }
+
     class_layout.AppendField(field_layout);
   }
 
