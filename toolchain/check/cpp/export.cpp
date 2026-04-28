@@ -169,6 +169,11 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 namespace {
 struct FunctionInfo {
   struct Param {
+    Param(Context& context, SemIR::InstId param_inst_id)
+        : type_id(ExtractScrutineeType(
+              context.sem_ir(), context.insts().Get(param_inst_id).type_id())),
+          is_ref(context.insts().Is<SemIR::RefParamPattern>(param_inst_id)) {}
+
     // Type of the parameter's scrutinee.
     SemIR::TypeId type_id;
 
@@ -202,11 +207,7 @@ struct FunctionInfo {
     function_params =
         function_params.drop_back(function.call_param_ranges.return_size());
     for (auto param_inst_id : function_params) {
-      explicit_params.push_back(
-          {.type_id = ExtractScrutineeType(
-               context.sem_ir(), context.insts().Get(param_inst_id).type_id()),
-           .is_ref =
-               context.insts().Is<SemIR::RefParamPattern>(param_inst_id)});
+      explicit_params.push_back(Param(context, param_inst_id));
     }
   }
 
