@@ -499,6 +499,16 @@ class TestCheckDependentPR(unittest.TestCase):
             _OID2, "pending", "This PR has open dependencies: #1"
         )
 
+    def test_query_max_merged_pr_explicit_orderBy_and_first_one(self) -> None:
+        self.assertIn(
+            "orderBy: {field: CREATED_AT, direction: DESC}",
+            check_dependent_pr._QUERY_MAX_MERGED_PR,
+        )
+        self.assertIn(
+            "first: 1",
+            check_dependent_pr._QUERY_MAX_MERGED_PR,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

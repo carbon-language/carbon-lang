@@ -118,7 +118,11 @@ _QUERY_LABEL = """
 _QUERY_MAX_MERGED_PR = """
 {
   repository(owner: "carbon-language", name: "carbon-lang") {
-    pullRequests(states: MERGED, first: 1) {
+    pullRequests(
+      states: MERGED
+      orderBy: {field: CREATED_AT, direction: DESC}
+      first: 1
+    ) {
       nodes {
         number
       }
