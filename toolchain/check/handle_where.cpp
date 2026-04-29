@@ -9,6 +9,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/unused.h"

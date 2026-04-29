@@ -5,11 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 #define CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 
-#include <compare>
-
 #include "toolchain/check/context.h"
-#include "toolchain/check/subst.h"
-#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -62,16 +58,6 @@ auto ResolveFacetTypeRewriteConstraints(
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
     -> bool;
 
-// Introduce `.Self` as a symbolic binding into the current scope, and return
-// the `SymbolicBinding` instruction.
-//
-// The type of `.Self` must be a `FacetType`, so that it gets wrapped in
-// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-// This allows substitution with other facet values without requiring an
-// additional `FacetAccessType` to be inserted.
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId;
-
 // Get a FacetType instruction for an empty FacetType. This is the facet
 // equivalent to TypeType.
 //
@@ -89,53 +75,6 @@ auto GetConstantFacetValueForTypeAndInterface(
     Context& context, SemIR::TypeInstId type_inst_id,
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId;
-
-class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
- public:
-  explicit SubstPeriodSelfCallbacks(
-      Context* context, SemIR::LocId loc_id,
-      SemIR::ConstantId period_self_replacement_id);
-  auto Subst(SemIR::InstId& inst_id) -> SubstResult override;
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
-      -> SemIR::InstId override;
-
-  virtual auto ShouldReplace(bool /*implicit*/) -> bool { return true; }
-
-  auto loc_id() const -> SemIR::LocId { return loc_id_; }
-  auto period_self_replacement_id() const -> SemIR::ConstantId {
-    return period_self_replacement_id_;
-  }
-
- private:
-  auto GetReplacement(SemIR::InstId period_self, bool implicit)
-      -> SemIR::InstId;
-  auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
-                          SemIR::TypeId replacement_type_id,
-                          SemIR::TypeId period_self_type_id) -> SemIR::InstId;
-
-  SemIR::LocId loc_id_;
-  SemIR::ConstantId period_self_replacement_id_;
-
-  // The last output of GetReplacement().
-  SemIR::InstId cached_replacement_id_ = SemIR::InstId::None;
-  // The type of the last output of GetReplacement(). If the type of `.Self`
-  // matches, we can reuse the `cached_replacement_id_`.
-  SemIR::TypeId cached_replacement_type_id_ = SemIR::TypeId::None;
-};
-
-// Replace all `.Self` references in `const_id`. The `callbacks` specifies the
-// facet to replace them with.
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::ConstantId const_id) -> SemIR::ConstantId;
-
-// Replace all `.Self` references in the specific of the interface or named
-// constraint. The `callbacks` specifies the facet to replace them with.
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::SpecificInterface interface)
-    -> SemIR::SpecificInterface;
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::SpecificNamedConstraint constraint)
-    -> SemIR::SpecificNamedConstraint;
 
 }  // namespace Carbon::Check
 

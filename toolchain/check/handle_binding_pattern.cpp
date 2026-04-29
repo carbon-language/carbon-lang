@@ -13,6 +13,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"

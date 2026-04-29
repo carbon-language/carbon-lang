@@ -19,6 +19,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
