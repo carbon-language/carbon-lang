@@ -196,7 +196,8 @@ fn F() -> i32 {
 
 When `self` is used instead of an identifier, the pattern must appear as the
 first parameter in the explicit parameter list of a method (as discussed
-[here](classes.md#methods)). During pattern matching in a method call, the
+[here](classes.md#methods)). If the "`:` _expression_" is omitted, it
+defaults to `Self`. During pattern matching in a method call, the
 parameter pattern containing `self` is matched with the object that the method
 was invoked on. In all other respects, the `self` pattern behaves just like an
 ordinary binding pattern, introducing a binding named `self` into scope, just as
