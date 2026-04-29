@@ -170,6 +170,13 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 static auto GetStructTypeFields(Context& context,
                                 const SemIR::Class& class_info)
     -> llvm::ArrayRef<SemIR::StructTypeField> {
+  if (class_info.adapt_id.has_value()) {
+    // The representation of an adapter won't necessarily be a
+    // struct. Return an empty array since adapters can't declare
+    // fields.
+    return {};
+  }
+
   auto object_repr_type_id =
       class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
   auto struct_type =

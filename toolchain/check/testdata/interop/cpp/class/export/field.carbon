@@ -102,3 +102,22 @@ void F() {
   a.y;
 }
 ''';
+
+// --- fail_adapter.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {
+  adapt ();
+}
+
+inline Cpp '''
+void F() {
+  Carbon::A a;
+  // CHECK:STDERR: fail_adapter.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::A' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   a.x = 12;
+  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR:
+  a.x = 12;
+}
+''';
