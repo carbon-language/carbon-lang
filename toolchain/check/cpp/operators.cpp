@@ -301,6 +301,8 @@ static auto GetConversionSignatureToImport(
     // function that takes a tuple pattern:
     //
     //   fn Class.Class((a: A, b: B, c: C)) -> Class;
+    //
+    // TODO: Determine passing modes based on tuple element categories.
     return {
         .kind = SemIR::Signature::TuplePattern,
         .num_params = static_cast<int32_t>(
@@ -311,6 +313,8 @@ static auto GetConversionSignatureToImport(
   // constructor:
   //
   //   fn Class.Class(a: A) -> Class;
+  //
+  // TODO: Determine the best passing mode.
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
     return {.kind = SemIR::Signature::Normal, .num_params = 1};
   }
@@ -641,13 +645,10 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
         --num_params;
       }
 
+      // TODO: Build signature based on argument categories.
       SemIR::Signature signature;
       signature.kind = SemIR::Signature::Normal;
       signature.num_params = num_params;
-      for (int i = 0; i < num_params; ++i) {
-        signature.passing_modes.push_back(
-            SemIR::Signature::PassingMode::Copy);
-      }
       SemIR::SignatureId signature_id =
           context.signatures().Add(std::move(signature));
 

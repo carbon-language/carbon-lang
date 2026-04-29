@@ -20,8 +20,10 @@ namespace Carbon::SemIR {
 struct Signature : public Printable<Signature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
-    Copy,
-    Move,
+    // This parameter is being passed in the default way for its type.
+    Default,
+    // This is a by-value C++ parameter that is passed by move, not copy.
+    ByValueMove,
   };
 
   enum Kind : int8_t {
@@ -38,16 +40,19 @@ struct Signature : public Printable<Signature> {
   // The number of parameters to import. This can be less than the number of
   // parameters in the Clang declaration if the Clang declaration has default
   // arguments. Excludes the implicit object parameter, if there is one.
+  // TODO: Remove this, and use the size of `passing_modes`.
   int32_t num_params = -1;
 
   // The passing mode for each parameter.
+  // TODO: Generalize this to be parameter info, not just passing mode. For now
+  // a struct with a single field would do.
   llvm::SmallVector<PassingMode, 4> passing_modes;
 
   // Returns the passing mode for the i-th parameter.
-  // TODO: Require that `passing_modes.size()` is always `num_params`.
   auto GetPassingMode(int32_t i) const -> PassingMode {
-    return i < static_cast<int32_t>(passing_modes.size()) ? passing_modes[i]
-                                                          : PassingMode::Copy;
+    return i < static_cast<int32_t>(passing_modes.size())
+               ? passing_modes[i]
+               : PassingMode::Default;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;

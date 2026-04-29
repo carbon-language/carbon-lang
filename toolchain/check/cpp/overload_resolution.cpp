@@ -155,10 +155,10 @@ static auto ComputeSignature(Context& context,
     }
 
     const auto& ics = candidate->Conversions[conversion_index];
-    SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::Copy;
+    SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::Default;
 
-    // Determine whether this conversion should perform a move when passing by
-    // value.
+    // Determine whether this conversion should perform a move when passing an
+    // object of class type by value.
     clang::QualType to_type;
     if (ics.isStandard()) {
       const auto& scs = ics.Standard;
@@ -168,17 +168,17 @@ static auto ComputeSignature(Context& context,
         // A standard conversion for a class that is not a reference binding
         // must be a copy or a move. The source is an rvalue, so we want to
         // perform a move.
-        mode = SemIR::Signature::PassingMode::Move;
+        mode = SemIR::Signature::PassingMode::ByValueMove;
         to_type = scs.getToType(2);
       }
     } else if (ics.isUserDefined()) {
       const auto& ucs = ics.UserDefined;
       const auto* ctor =
           dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
-      if (!ucs.After.ReferenceBinding && ctor && ctor->isMoveConstructor()) {
-        // Overload resolution decided to call a move constructor. Therefore we
-        // should perform a move.
-        mode = SemIR::Signature::PassingMode::Move;
+      if (!ucs.After.ReferenceBinding && (!ctor || ctor->isCopyConstructor())) {
+        // Overload resolution called a function other than a copy constructor.
+        // We should pass by move instead of inserting a copy.
+        mode = SemIR::Signature::PassingMode::ByValueMove;
         to_type = ucs.After.getToType(2);
       }
     }
@@ -186,12 +186,12 @@ static auto ComputeSignature(Context& context,
     // If we decided to perform a move, check if it's really necessary. If the
     // copy constructor is also non-deleted and trivial, we can just perform a
     // copy instead. Doing so allows us to generate fewer thunks.
-    if (mode == SemIR::Signature::PassingMode::Move) {
+    if (mode == SemIR::Signature::PassingMode::ByValueMove) {
       const auto* record_decl = to_type->castAsCXXRecordDecl();
       if (record_decl->hasTrivialMoveConstructor() &&
           record_decl->hasTrivialCopyConstructor() &&
           !record_decl->defaultedCopyConstructorIsDeleted()) {
-        mode = SemIR::Signature::PassingMode::Copy;
+        mode = SemIR::Signature::PassingMode::Default;
       }
     }
     signature.passing_modes.push_back(mode);

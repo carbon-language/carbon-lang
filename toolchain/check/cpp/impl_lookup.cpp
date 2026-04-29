@@ -142,7 +142,7 @@ static auto BuildCopyWitness(
     }
 
     SemIR::SignatureId signature_id =
-        MakeSignature(context, {SemIR::Signature::PassingMode::Copy});
+        MakeSignature(context, {SemIR::Signature::PassingMode::Default});
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature_id = signature_id};

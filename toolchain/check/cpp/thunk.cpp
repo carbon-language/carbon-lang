@@ -88,24 +88,20 @@ static auto GenerateThunkMangledName(
       break;
   }
 
-  if (signature.num_params !=
-      static_cast<int>(callee_function_decl.getNumNonObjectParams())) {
-    mangled_name_stream << signature.num_params;
-  }
-
-  // Append passing modes if there are any moves.
-  bool has_moves = false;
-  for (auto mode : signature.passing_modes) {
-    if (mode == SemIR::Signature::PassingMode::Move) {
-      has_moves = true;
-      break;
-    }
-  }
-  if (has_moves) {
+  // Append passing modes if there are any non-default modes. Otherwise, include
+  // the parameter count if it's not the default.
+  if (llvm::any_of(signature.passing_modes, [](auto mode) {
+        return mode != SemIR::Signature::PassingMode::Default;
+      })) {
     mangled_name_stream << ".";
     for (auto mode : signature.passing_modes) {
-      mangled_name_stream << (mode == SemIR::Signature::PassingMode::Move ? "M" : "C");
+      mangled_name_stream << (mode == SemIR::Signature::PassingMode::ByValueMove
+                                  ? "M"
+                                  : "_");
     }
+  } else if (signature.num_params !=
+             static_cast<int>(callee_function_decl.getNumNonObjectParams())) {
+    mangled_name_stream << signature.num_params;
   }
 
   return mangled_name_stream.TakeStr();
@@ -473,7 +469,7 @@ static auto BuildThunkParamRef(clang::Sema& sema,
                                unsigned thunk_index,
                                clang::QualType type = clang::QualType(),
                                SemIR::Signature::PassingMode passing_mode =
-                                   SemIR::Signature::PassingMode::Copy)
+                                   SemIR::Signature::PassingMode::Default)
     -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
@@ -497,8 +493,9 @@ static auto BuildThunkParamRef(clang::Sema& sema,
   // currently pass pointers to non-temporary objects as the argument when
   // calling a thunk, so we'll need to either change that or generate
   // different thunks depending on whether we're moving from each parameter.
-  if (!type.isNull() && (type->isRValueReferenceType() ||
-                         passing_mode == SemIR::Signature::PassingMode::Move)) {
+  if (!type.isNull() &&
+      (type->isRValueReferenceType() ||
+       passing_mode == SemIR::Signature::PassingMode::ByValueMove)) {
     call_arg = clang::ImplicitCastExpr::Create(
         sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
         nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
