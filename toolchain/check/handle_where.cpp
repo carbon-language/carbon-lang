@@ -198,8 +198,6 @@ static auto FindDesignator(Context& context,
   llvm::SmallVector<SemIR::InstId> requirements;
   requirements.reserve(block.size() * 2);
 
-  // These requirement instructions don't have a constant value, but they
-  // contain only canonical instructions.
   for (auto inst_id : block) {
     auto inst = context.insts().Get(inst_id);
     CARBON_KIND_SWITCH(inst) {
