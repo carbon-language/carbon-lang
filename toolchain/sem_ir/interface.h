@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INTERFACE_H_
 
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -33,6 +34,8 @@ struct InterfaceFields {
   InstBlockId body_block_with_self_id = InstBlockId::None;
   // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
+  // Identifies whether the interface is a core interface.
+  CoreInterface core_interface = CoreInterface::Unknown;
 
   // The following members are set at the `}` of the interface definition.
 
@@ -48,6 +51,9 @@ struct Interface : public EntityWithParamsBase,
     out << "{";
     PrintBaseFields(out);
     out << ", require_impls_block_id: " << require_impls_block_id;
+    if (core_interface != CoreInterface::Unknown) {
+      out << ", core_interface: " << core_interface;
+    }
     out << "}";
   }
 

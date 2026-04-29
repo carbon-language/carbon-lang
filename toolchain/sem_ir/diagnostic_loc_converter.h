@@ -9,7 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -71,9 +71,9 @@ class DiagnosticLocConverter {
       -> Diagnostics::ConvertedLoc;
 
  private:
-  // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
+  // Converts an `absolute_node_ref` in either a Carbon file or C++ import to a
   // diagnostic location.
-  auto ConvertImpl(AbsoluteNodeId absolute_node_id, bool token_only) const
+  auto ConvertImpl(AbsoluteNodeRef absolute_node_ref, bool token_only) const
       -> Diagnostics::ConvertedLoc;
 
   // Converts a `node_id` corresponding to a specific check IR to a diagnostic
@@ -82,7 +82,7 @@ class DiagnosticLocConverter {
                    bool token_only) const -> Diagnostics::ConvertedLoc;
 
   // Converts a location pointing into C++ code to a diagnostic location.
-  auto ConvertImpl(ClangSourceLocId clang_source_loc_id) const
+  auto ConvertImpl(const File* file, ClangSourceLocId clang_source_loc_id) const
       -> Diagnostics::ConvertedLoc;
 
   // Converters for each SemIR.

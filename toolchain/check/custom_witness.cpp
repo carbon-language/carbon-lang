@@ -54,7 +54,7 @@ static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
                                  .self_type_id = self_type_id,
-                                 .self_is_ref = false,
+                                 .self_kind = ParamPatternKind::Value,
                                  .return_type_id = self_type_id});
 
   auto& function = context.functions().Get(function_id);
@@ -341,7 +341,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
       MakeGeneratedFunctionDecl(context, loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
-                                 .self_type_id = self_type_id});
+                                 .self_type_id = self_type_id,
+                                 .self_kind = ParamPatternKind::Ref});
 
   auto& function = context.functions().Get(function_id);
 
@@ -527,28 +528,60 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                                        context.inst_blocks().Add(entries));
 }
 
+auto AsCoreIdentifier(SemIR::CoreInterface core_interface) -> CoreIdentifier {
+  using SemIR::CoreInterface;
+  switch (core_interface) {
+    case CoreInterface::AddAssignWith:
+      return CoreIdentifier::AddAssignWith;
+    case CoreInterface::AddWith:
+      return CoreIdentifier::AddWith;
+    case CoreInterface::Copy:
+      return CoreIdentifier::Copy;
+    case CoreInterface::CppUnsafeDeref:
+      return CoreIdentifier::CppUnsafeDeref;
+    case CoreInterface::Dec:
+      return CoreIdentifier::Dec;
+    case CoreInterface::Default:
+      return CoreIdentifier::Default;
+    case CoreInterface::Destroy:
+      return CoreIdentifier::Destroy;
+    case CoreInterface::DivAssignWith:
+      return CoreIdentifier::DivAssignWith;
+    case CoreInterface::DivWith:
+      return CoreIdentifier::DivWith;
+    case CoreInterface::Inc:
+      return CoreIdentifier::Inc;
+    case CoreInterface::IntFitsIn:
+      return CoreIdentifier::IntFitsIn;
+    case CoreInterface::ModAssignWith:
+      return CoreIdentifier::ModAssignWith;
+    case CoreInterface::ModWith:
+      return CoreIdentifier::ModWith;
+    case CoreInterface::MulAssignWith:
+      return CoreIdentifier::MulAssignWith;
+    case CoreInterface::MulWith:
+      return CoreIdentifier::MulWith;
+    case CoreInterface::Negate:
+      return CoreIdentifier::Negate;
+    case CoreInterface::SubAssignWith:
+      return CoreIdentifier::SubAssignWith;
+    case CoreInterface::SubWith:
+      return CoreIdentifier::SubWith;
+    case CoreInterface::Unknown:
+      CARBON_FATAL("{0} doesn't have a `CoreIdentifier` mapping",
+                   core_interface);
+  }
+}
+
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
-    -> CoreInterface {
+    -> SemIR::CoreInterface {
   const auto& interface = context.interfaces().Get(interface_id);
   if (!context.name_scopes().IsCorePackage(interface.parent_scope_id) ||
       !interface.name_id.AsIdentifierId().has_value()) {
-    return CoreInterface::Unknown;
+    return SemIR::CoreInterface::Unknown;
   }
 
-  constexpr auto CoreIdentifiersToInterfaces = std::array{
-      std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
-      std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref},
-      std::pair{CoreIdentifier::Default, CoreInterface::Default},
-      std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
-      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}};
-
-  for (auto [core_identifier, core_interface] : CoreIdentifiersToInterfaces) {
-    if (interface.name_id ==
-        context.core_identifiers().AddNameId(core_identifier)) {
-      return core_interface;
-    }
-  }
-  return CoreInterface::Unknown;
+  return interface.core_interface;
 }
 
 auto BuildPrimitiveCopyWitness(
@@ -667,21 +700,34 @@ static auto MakeIntFitsInWitness(
 }
 
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
-                         CoreInterface core_interface,
+                         SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return MakeDestroyWitness(context, loc_id, query_self_const_id,
                                 query_specific_interface_id, build_witness);
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
-    case CoreInterface::Copy:
-    case CoreInterface::CppUnsafeDeref:
-    case CoreInterface::Default:
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::AddAssignWith:
+    case SemIR::CoreInterface::AddWith:
+    case SemIR::CoreInterface::Copy:
+    case SemIR::CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::Dec:
+    case SemIR::CoreInterface::Default:
+    case SemIR::CoreInterface::DivAssignWith:
+    case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::Inc:
+    case SemIR::CoreInterface::ModAssignWith:
+    case SemIR::CoreInterface::ModWith:
+    case SemIR::CoreInterface::MulAssignWith:
+    case SemIR::CoreInterface::MulWith:
+    case SemIR::CoreInterface::Negate:
+    case SemIR::CoreInterface::SubAssignWith:
+    case SemIR::CoreInterface::SubWith:
+    case SemIR::CoreInterface::Unknown:
       // TODO: Handle more interfaces, particularly copy, move, and conversion.
       return std::nullopt;
   }

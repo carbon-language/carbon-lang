@@ -228,8 +228,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.92d: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.46d: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.4d6: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.312: %HasF.WithSelf.F.type.4d6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
@@ -274,16 +274,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasF.WithSelf.F.decl: @HasF.WithSelf.%HasF.WithSelf.F.type (%HasF.WithSelf.F.type.4d6) = fn_decl @HasF.WithSelf.F [symbolic = @HasF.WithSelf.%HasF.WithSelf.F (constants.%HasF.WithSelf.F.312)] {
-// CHECK:STDOUT:     %self.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.92d) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.92d) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.46d) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.46d) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %self.param: @HasF.WithSelf.F.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @HasF.WithSelf.F.%Self.as_type.loc5_14.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %HasF.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -322,10 +322,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(@HasF.%Self: %HasF.type) {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.92d)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.46d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: @HasF.WithSelf.F.%Self.as_type.loc5_14.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.HasF.impl.F(%self.param: %C) {
@@ -342,8 +342,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.92d
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.46d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
@@ -355,7 +355,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%HasF.facet) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.039
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,8 +364,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasG.type: type = facet_type <@HasG> [concrete]
 // CHECK:STDOUT:   %Self.26c: %HasG.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.ba6: type = symbolic_binding_type Self, 0, %Self.26c [symbolic]
-// CHECK:STDOUT:   %pattern_type.348: type = pattern_type %Self.binding.as_type.ba6 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.6c7: type = facet_access_type %Self.26c [symbolic]
+// CHECK:STDOUT:   %pattern_type.bb3: type = pattern_type %Self.as_type.6c7 [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.type.0fc: type = fn_type @HasG.WithSelf.G, @HasG.WithSelf(%Self.26c) [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.8a1: %HasG.WithSelf.G.type.0fc = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasG.assoc_type: type = assoc_entity_type @HasG [concrete]
@@ -385,8 +385,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.656: %HasF.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.ef3: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self.656) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.efb: %HasF.WithSelf.F.type.ef3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.e84: type = symbolic_binding_type Self, 0, %Self.656 [symbolic]
-// CHECK:STDOUT:   %pattern_type.6ba: type = pattern_type %Self.binding.as_type.e84 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.df8: type = facet_access_type %Self.656 [symbolic]
+// CHECK:STDOUT:   %pattern_type.1f5: type = pattern_type %Self.as_type.df8 [symbolic]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @D.as.HasF.impl.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.189: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %D.as.HasF.impl.F.type: type = fn_type @D.as.HasF.impl.F [concrete]
@@ -455,16 +455,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasG.WithSelf.G.decl: @HasG.WithSelf.%HasG.WithSelf.G.type (%HasG.WithSelf.G.type.0fc) = fn_decl @HasG.WithSelf.G [symbolic = @HasG.WithSelf.%HasG.WithSelf.G (constants.%HasG.WithSelf.G.8a1)] {
-// CHECK:STDOUT:     %self.param_patt: @HasG.WithSelf.G.%pattern_type (%pattern_type.348) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @HasG.WithSelf.G.%pattern_type (%pattern_type.348) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @HasG.WithSelf.G.%pattern_type (%pattern_type.bb3) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @HasG.WithSelf.G.%pattern_type (%pattern_type.bb3) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @HasG.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type.ba6) = value_param call_param0
-// CHECK:STDOUT:     %.loc7_14.1: type = splice_block %.loc7_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.ba6)] {
+// CHECK:STDOUT:     %self.param: @HasG.WithSelf.G.%Self.as_type.loc7_14.1 (%Self.as_type.6c7) = value_param call_param0
+// CHECK:STDOUT:     %.loc7_14.1: type = splice_block %.loc7_14.2 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type.6c7)] {
 // CHECK:STDOUT:       %Self.ref: %HasG.type = name_ref Self, @HasG.%Self [symbolic = %Self (constants.%Self.26c)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.ba6)]
-// CHECK:STDOUT:       %.loc7_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.ba6)]
+// CHECK:STDOUT:       %Self.as_type.loc7_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type.6c7)]
+// CHECK:STDOUT:       %.loc7_14.2: type = converted %Self.ref, %Self.as_type.loc7_14.2 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type.6c7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @HasG.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type.ba6) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @HasG.WithSelf.G.%Self.as_type.loc7_14.1 (%Self.as_type.6c7) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasG.assoc_type = assoc_entity element0, %HasG.WithSelf.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -553,10 +553,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasG.WithSelf.G(@HasG.%Self: %HasG.type) {
 // CHECK:STDOUT:   %Self: %HasG.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.26c)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.ba6)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.348)]
+// CHECK:STDOUT:   %Self.as_type.loc7_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type.6c7)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc7_14.1 [symbolic = %pattern_type (constants.%pattern_type.bb3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @HasG.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type.ba6));
+// CHECK:STDOUT:   fn(%self.param: @HasG.WithSelf.G.%Self.as_type.loc7_14.1 (%Self.as_type.6c7));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.HasG.impl.G(%self.param: %C) {
@@ -566,8 +566,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.d576df.2: %HasF.type) [from "package_a.carbon"] {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.656)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e84)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.6ba)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.df8)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.1f5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -591,8 +591,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf.G(constants.%Self.26c) {
 // CHECK:STDOUT:   %Self => constants.%Self.26c
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.ba6
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.348
+// CHECK:STDOUT:   %Self.as_type.loc7_14.1 => constants.%Self.as_type.6c7
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.bb3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf(constants.%HasG.facet.435) {
@@ -604,7 +604,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf.G(constants.%HasG.facet.435) {
 // CHECK:STDOUT:   %Self => constants.%HasG.facet.435
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc7_14.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8e5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -617,8 +617,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Self.656) {
 // CHECK:STDOUT:   %Self => constants.%Self.656
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.e84
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6ba
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.df8
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1f5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
@@ -630,7 +630,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%HasF.facet) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%D
+// CHECK:STDOUT:   %Self.as_type => constants.%D
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.189
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -643,7 +643,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf.G(constants.%HasG.facet.b67) {
 // CHECK:STDOUT:   %Self => constants.%HasG.facet.b67
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%D
+// CHECK:STDOUT:   %Self.as_type.loc7_14.1 => constants.%D
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.189
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -661,8 +661,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.ef3: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.efb: %HasF.WithSelf.F.type.ef3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.6ba: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.1f5: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, imports.%PackageA.import_ref.995 [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness imports.%HasF.impl_witness_table [concrete]
@@ -756,8 +756,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.d576df.2: %HasF.type) [from "package_a.carbon"] {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.6ba)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.1f5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -773,8 +773,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6ba
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1f5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
@@ -798,8 +798,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.ef3: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.efb: %HasF.WithSelf.F.type.ef3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.6ba: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.1f5: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, imports.%PackageA.import_ref.995 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -916,8 +916,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.d576df.2: %HasF.type) [from "package_a.carbon"] {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.6ba)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.1f5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -933,8 +933,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6ba
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1f5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
@@ -958,8 +958,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %HasG.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.type.15f: type = fn_type @HasG.WithSelf.G, @HasG.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.5c1: %HasG.WithSelf.G.type.15f = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.588: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.69c: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %HasG.assoc_type: type = assoc_entity_type @HasG [concrete]
 // CHECK:STDOUT:   %assoc0: %HasG.assoc_type = assoc_entity element0, imports.%PackageB.import_ref.cd5 [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
@@ -1076,8 +1076,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasG.WithSelf.G(imports.%PackageB.import_ref.945b0d.2: %HasG.type) [from "package_b.carbon"] {
 // CHECK:STDOUT:   %Self: %HasG.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.588)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.69c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1093,8 +1093,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.588
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.69c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf(constants.%HasG.facet) {
@@ -1118,8 +1118,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %HasG.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.type.15f: type = fn_type @HasG.WithSelf.G, @HasG.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %HasG.WithSelf.G.5c1: %HasG.WithSelf.G.type.15f = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.588: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.69c: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %HasG.assoc_type: type = assoc_entity_type @HasG [concrete]
 // CHECK:STDOUT:   %assoc0: %HasG.assoc_type = assoc_entity element0, imports.%PackageB.import_ref.cd5 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -1231,8 +1231,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasG.WithSelf.G(imports.%PackageB.import_ref.945b0d.2: %HasG.type) [from "package_b.carbon"] {
 // CHECK:STDOUT:   %Self: %HasG.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.588)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.69c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1248,8 +1248,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.588
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.69c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf(constants.%HasG.facet) {
@@ -1264,8 +1264,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.336: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.b11: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.H.type.2a4: type = fn_type @Z.WithSelf.H, @Z.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Z.WithSelf.H.514: %Z.WithSelf.H.type.2a4 = struct_value () [symbolic]
@@ -1308,16 +1308,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.WithSelf.H.decl: @Z.WithSelf.%Z.WithSelf.H.type (%Z.WithSelf.H.type.2a4) = fn_decl @Z.WithSelf.H [symbolic = @Z.WithSelf.%Z.WithSelf.H (constants.%Z.WithSelf.H.514)] {
-// CHECK:STDOUT:     %self.param_patt: @Z.WithSelf.H.%pattern_type (%pattern_type.336) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @Z.WithSelf.H.%pattern_type (%pattern_type.336) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Z.WithSelf.H.%pattern_type (%pattern_type.b11) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @Z.WithSelf.H.%pattern_type (%pattern_type.b11) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @Z.WithSelf.H.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %self.param: @Z.WithSelf.H.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Z.WithSelf.H.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Z.WithSelf.H.%Self.as_type.loc5_14.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.WithSelf.H.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1348,10 +1348,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Z.WithSelf.H(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.336)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.b11)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Z.WithSelf.H.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: @Z.WithSelf.H.%Self.as_type.loc5_14.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.Z.impl.H(%self.param: %empty_tuple.type) {
@@ -1368,8 +1368,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.H(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.336
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
@@ -1381,7 +1381,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.H(constants.%Z.facet) {
 // CHECK:STDOUT:   %Self => constants.%Z.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%empty_tuple.type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1396,8 +1396,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.H.type.5e9: type = fn_type @Z.WithSelf.H, @Z.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.H.6f7: %Z.WithSelf.H.type.5e9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.91a: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.288: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, imports.%PackageAssociatedInterface.import_ref.13b [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness imports.%Z.impl_witness_table [concrete]
@@ -1473,8 +1473,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Z.WithSelf.H(imports.%PackageAssociatedInterface.import_ref.b0a283.2: %Z.type) [from "associated_interface.carbon"] {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.91a)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.288)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1490,8 +1490,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.H(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.91a
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.288
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
@@ -1517,13 +1517,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.880: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.c5f: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.type: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K: %Y.WithSelf.K.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
 // CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.K.decl [concrete]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1564,16 +1564,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Y.WithSelf.K.decl: @Y.WithSelf.%Y.WithSelf.K.type (%Y.WithSelf.K.type) = fn_decl @Y.WithSelf.K [symbolic = @Y.WithSelf.%Y.WithSelf.K (constants.%Y.WithSelf.K)] {
-// CHECK:STDOUT:     %self.param_patt: @Y.WithSelf.K.%pattern_type (%pattern_type.880) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @Y.WithSelf.K.%pattern_type (%pattern_type.880) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Y.WithSelf.K.%pattern_type (%pattern_type.c5f) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @Y.WithSelf.K.%pattern_type (%pattern_type.c5f) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @Y.WithSelf.K.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc7_21.1: type = splice_block %.loc7_21.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %self.param: @Y.WithSelf.K.%Self.as_type.loc7_21.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc7_21.1: type = splice_block %.loc7_21.2 [symbolic = %Self.as_type.loc7_21.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Y.type = name_ref Self, @Y.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc7_21.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc7_21.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_21.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc7_21.2: type = converted %Self.ref, %Self.as_type.loc7_21.2 [symbolic = %Self.as_type.loc7_21.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Y.WithSelf.K.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Y.WithSelf.K.%Self.as_type.loc7_21.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, %Y.WithSelf.K.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1603,13 +1603,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(@Y.%Self: %Y.type) {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.880)]
+// CHECK:STDOUT:   %Self.as_type.loc7_21.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_21.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc7_21.1 [symbolic = %pattern_type (constants.%pattern_type.c5f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc7_21.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Y.WithSelf.K.%Self.binding.as_type (%Self.binding.as_type)) {
+// CHECK:STDOUT:   fn(%self.param: @Y.WithSelf.K.%Self.as_type.loc7_21.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1630,8 +1630,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.880
+// CHECK:STDOUT:   %Self.as_type.loc7_21.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c5f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- has_generic_interface.carbon
@@ -1659,9 +1659,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.079: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.1bb: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Self.079) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.378: %Y.WithSelf.K.type.1bb = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.c23: type = symbolic_binding_type Self, 0, %Self.079 [symbolic]
-// CHECK:STDOUT:   %pattern_type.420: type = pattern_type %Self.binding.as_type.c23 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.c23 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.f6c: type = facet_access_type %Self.079 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e9b: type = pattern_type %Self.as_type.f6c [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.f6c [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @AnyParam.as.Y.impl.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.a39: type = pattern_type %AnyParam.33d [concrete]
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.type: type = fn_type @AnyParam.as.Y.impl.K [concrete]
@@ -1797,11 +1797,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.71dd35.2: %Y.type) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.079)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c23)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.420)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.f6c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.e9b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1878,8 +1878,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Self.079) {
 // CHECK:STDOUT:   %Self => constants.%Self.079
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.c23
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.420
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.f6c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
@@ -1891,7 +1891,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Y.facet) {
 // CHECK:STDOUT:   %Self => constants.%Y.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%AnyParam.33d
+// CHECK:STDOUT:   %Self.as_type => constants.%AnyParam.33d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1913,7 +1913,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.b26: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic]
 // CHECK:STDOUT:   %Self.793: %GenericInterface.type.b26 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.a647: type = pattern_type %GenericInterface.type.0da [concrete]
+// CHECK:STDOUT:   %pattern_type.a64: type = pattern_type %GenericInterface.type.0da [concrete]
 // CHECK:STDOUT:   %AnyParam.861: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.0da, %GenericInterface.generic) [concrete]
 // CHECK:STDOUT:   %pattern_type.3ad: type = pattern_type %AnyParam.861 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -1922,9 +1922,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.079: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.1bb: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Self.079) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.378: %Y.WithSelf.K.type.1bb = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.c23: type = symbolic_binding_type Self, 0, %Self.079 [symbolic]
-// CHECK:STDOUT:   %pattern_type.420: type = pattern_type %Self.binding.as_type.c23 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.c23 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.f6c: type = facet_access_type %Self.079 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e9b: type = pattern_type %Self.as_type.f6c [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.f6c [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
 // CHECK:STDOUT:   %assoc0.633: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.0e4 [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness imports.%Y.impl_witness_table [concrete]
@@ -2068,11 +2068,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.71dd35.2: %Y.type) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.079)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c23)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.420)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.f6c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.e9b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -2101,7 +2101,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.0da, constants.%GenericInterface.generic) {
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.0da
 // CHECK:STDOUT:   %X => constants.%GenericInterface.generic
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a647
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a64
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -2115,8 +2115,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Self.079) {
 // CHECK:STDOUT:   %Self => constants.%Self.079
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.c23
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.420
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.f6c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
@@ -2150,9 +2150,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.079: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.1bb: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Self.079) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.378: %Y.WithSelf.K.type.1bb = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.c23: type = symbolic_binding_type Self, 0, %Self.079 [symbolic]
-// CHECK:STDOUT:   %pattern_type.420: type = pattern_type %Self.binding.as_type.c23 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.c23 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.f6c: type = facet_access_type %Self.079 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e9b: type = pattern_type %Self.as_type.f6c [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.f6c [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @AnyParam.as.Y.impl.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.ff6: type = pattern_type %AnyParam.8e0 [concrete]
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.type: type = fn_type @AnyParam.as.Y.impl.K [concrete]
@@ -2283,11 +2283,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.71dd35.2: %Y.type) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.079)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c23)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.420)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.f6c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.e9b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -2362,8 +2362,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Self.079) {
 // CHECK:STDOUT:   %Self => constants.%Self.079
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.c23
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.420
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.f6c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
@@ -2375,7 +2375,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Y.facet) {
 // CHECK:STDOUT:   %Self => constants.%Y.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%AnyParam.8e0
+// CHECK:STDOUT:   %Self.as_type => constants.%AnyParam.8e0
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ff6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2404,9 +2404,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.079: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.1bb: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Self.079) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.K.378: %Y.WithSelf.K.type.1bb = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.c23: type = symbolic_binding_type Self, 0, %Self.079 [symbolic]
-// CHECK:STDOUT:   %pattern_type.420: type = pattern_type %Self.binding.as_type.c23 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.c23 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.f6c: type = facet_access_type %Self.079 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e9b: type = pattern_type %Self.as_type.f6c [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.f6c [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
 // CHECK:STDOUT:   %assoc0.633: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.0e4 [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness imports.%Y.impl_witness_table [concrete]
@@ -2548,11 +2548,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.71dd35.2: %Y.type) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.079)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c23)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.420)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.f6c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.e9b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -2593,8 +2593,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.K(constants.%Self.079) {
 // CHECK:STDOUT:   %Self => constants.%Self.079
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.c23
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.420
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.f6c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
@@ -2634,8 +2634,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.c1b: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c1b [symbolic]
-// CHECK:STDOUT:   %pattern_type.c3e: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.c1b [symbolic]
+// CHECK:STDOUT:   %pattern_type.4af: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.fca: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.c1b) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.6d7: %I.WithSelf.F.type.fca = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -2804,16 +2804,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.fca) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.6d7)] {
-// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.c3e) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.c3e) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.4af) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.4af) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc14_26.1: type = splice_block %.loc14_26.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc14_26.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc14_26.1: type = splice_block %.loc14_26.2 [symbolic = %Self.as_type.loc14_26.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.c1b)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc14_26.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc14_26.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_26.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc14_26.2: type = converted %Self.ref, %Self.as_type.loc14_26.2 [symbolic = %Self.as_type.loc14_26.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc14_26.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -2858,10 +2858,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c1b)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.c3e)]
+// CHECK:STDOUT:   %Self.as_type.loc14_26.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_26.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc14_26.1 [symbolic = %pattern_type (constants.%pattern_type.4af)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc14_26.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C.806) {
@@ -2898,8 +2898,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self.c1b) {
 // CHECK:STDOUT:   %Self => constants.%Self.c1b
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c3e
+// CHECK:STDOUT:   %Self.as_type.loc14_26.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.type.9c0) {
@@ -2917,7 +2917,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%C.806
+// CHECK:STDOUT:   %Self.as_type.loc14_26.1 => constants.%C.806
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2937,8 +2937,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.d36: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.d36) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.d36 [symbolic]
-// CHECK:STDOUT:   %pattern_type.327: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.d36 [symbolic]
+// CHECK:STDOUT:   %pattern_type.613: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%HasExtraInterfaces.import_ref.6b6 [concrete]
 // CHECK:STDOUT:   %Extra8.type: type = facet_type <@Extra8> [concrete]
@@ -3119,8 +3119,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(imports.%HasExtraInterfaces.import_ref.1d0862.2: %I.type) [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d36)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.327)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.613)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -3144,8 +3144,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self.d36) {
 // CHECK:STDOUT:   %Self => constants.%Self.d36
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.327
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.613
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Extra8.WithSelf(constants.%Self.930) {}

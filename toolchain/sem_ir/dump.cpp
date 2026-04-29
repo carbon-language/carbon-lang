@@ -10,10 +10,16 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/stringify.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
+
+static LLVM_DUMP_METHOD auto Dump(const File& file) -> std::string {
+  return PrintToString(file);
+}
 
 static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   RawStringOstream out;
@@ -538,6 +544,58 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   return DumpTypeSummary(file, type_id);
+}
+
+static LLVM_DUMP_METHOD auto Dump(const File& file, const Inst& inst)
+    -> std::string {
+  RawStringOstream out;
+  out << inst;
+
+  if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
+    auto entity_name_id = EntityNameId(inst.arg0());
+    out << "\n  - name:"
+        << DumpNameIfValid(file,
+                           file.entity_names().Get(entity_name_id).name_id);
+  }
+
+  if (inst.type_id().has_value()) {
+    out << "\n  - type: " << DumpTypeSummary(file, inst.type_id());
+  }
+
+  return out.TakeStr();
+}
+
+static LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& scope)
+    -> std::string {
+  RawStringOstream out;
+  out << scope;
+  if (scope.inst_id().has_value()) {
+    out << " " << file.insts().Get(scope.inst_id());
+  }
+  out << DumpNameIfValid(file, scope.name_id());
+  for (const auto& entry : scope.entries()) {
+    out << "\n  - " << entry.name_id << DumpNameIfValid(file, entry.name_id)
+        << ": ";
+    if (entry.result.is_poisoned()) {
+      out << "<poisoned>";
+    } else if (entry.result.is_found()) {
+      switch (entry.result.access_kind()) {
+        case AccessKind::Public:
+          out << "public ";
+          break;
+        case AccessKind::Protected:
+          out << "protected ";
+          break;
+        case AccessKind::Private:
+          out << "private ";
+          break;
+      }
+      out << DumpInstSummary(file, entry.result.target_inst_id());
+    } else {
+      out << "<not-found>";
+    }
+  }
+  return out.TakeStr();
 }
 
 // Functions that can be used instead of the corresponding constructor, which is

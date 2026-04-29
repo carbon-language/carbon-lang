@@ -33,8 +33,8 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.849: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.5c6: type = symbolic_binding_type Self, 0, %Self.849 [symbolic]
-// CHECK:STDOUT:   %pattern_type.b59: type = pattern_type %Self.binding.as_type.5c6 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.f3e: type = facet_access_type %Self.849 [symbolic]
+// CHECK:STDOUT:   %pattern_type.191: type = pattern_type %Self.as_type.f3e [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.b26: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.849) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.983: %I.WithSelf.F.type.b26 = struct_value () [symbolic]
@@ -49,7 +49,7 @@ class C {
 // CHECK:STDOUT:   %I.WithSelf.F.860: %I.WithSelf.F.type.1f2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.5c6 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.f3e [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.fae: type = fn_type_with_self_type %I.WithSelf.F.type.1f2, %I.facet [concrete]
@@ -82,16 +82,16 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.b26) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.983)] {
-// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.b59) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.b59) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.191) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.191) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_23.1: type = splice_block %.loc18_23.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc18_23.1 (%Self.as_type.f3e) = value_param call_param0
+// CHECK:STDOUT:     %.loc18_23.1: type = splice_block %.loc18_23.2 [symbolic = %Self.as_type.loc18_23.1 (constants.%Self.as_type.f3e)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.849)]
-// CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
-// CHECK:STDOUT:       %.loc18_23.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
+// CHECK:STDOUT:       %Self.as_type.loc18_23.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_23.1 (constants.%Self.as_type.f3e)]
+// CHECK:STDOUT:       %.loc18_23.2: type = converted %Self.ref, %Self.as_type.loc18_23.2 [symbolic = %Self.as_type.loc18_23.1 (constants.%Self.as_type.f3e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_23.1 (%Self.as_type.f3e) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0.1f8]
 // CHECK:STDOUT:
@@ -141,13 +141,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.849)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.b59)]
+// CHECK:STDOUT:   %Self.as_type.loc18_23.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc18_23.1 (constants.%Self.as_type.f3e)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_23.1 [symbolic = %pattern_type (constants.%pattern_type.191)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc18_23.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.5c6)) {
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc18_23.1 (%Self.as_type.f3e)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c.patt: %pattern_type.7c7 = ref_binding_pattern c [concrete]
@@ -194,8 +194,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self.849) {
 // CHECK:STDOUT:   %Self => constants.%Self.849
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5c6
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b59
+// CHECK:STDOUT:   %Self.as_type.loc18_23.1 => constants.%Self.as_type.f3e
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.191
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
@@ -207,7 +207,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc18_23.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7c7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

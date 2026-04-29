@@ -15,6 +15,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -2820,7 +2821,8 @@ static auto ImportInterfaceDecl(ImportContext& context,
                                      : SemIR::NameScopeId::None,
         .scope_with_self_id = import_interface.is_complete()
                                   ? AddPlaceholderNameScope(context)
-                                  : SemIR::NameScopeId::None}});
+                                  : SemIR::NameScopeId::None,
+        .core_interface = import_interface.core_interface}});
 
   if (import_interface.has_parameters()) {
     interface_decl.type_id = GetGenericInterfaceType(
@@ -3696,11 +3698,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, name_scope.name_id());
   namespace_decl.name_scope_id =
       resolver.local_name_scopes().Add(inst_id, name_id, parent_scope_id);
+  auto& local_scope =
+      resolver.local_name_scopes().Get(namespace_decl.name_scope_id);
   // Namespaces from this package are eagerly imported, so anything we load here
   // must be a closed import.
-  resolver.local_name_scopes()
-      .Get(namespace_decl.name_scope_id)
-      .set_is_closed_import(true);
+  local_scope.set_is_closed_import(true);
+
+  // If this was a C++ namespace, connect it to the corresponding C++
+  // declaration in this file.
+  if (name_scope.is_cpp_scope()) {
+    if (auto key = FindCorrespondingClangDeclKey(
+            resolver.local_context(), SemIR::LocId(inst_id),
+            resolver.import_ir(), name_scope.clang_decl_context_id())) {
+      auto clang_decl_id = resolver.local_context().clang_decls().Add(
+          {.key = *key, .inst_id = inst_id});
+      local_scope.set_clang_decl_context_id(clang_decl_id, true);
+    }
+  }
+
   auto namespace_const_id =
       ReplacePlaceholderImportedInst(resolver, inst_id, namespace_decl);
   return {.const_id = namespace_const_id};
@@ -3903,23 +3918,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(type_id),
        .elements_id =
            GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elems)});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::SymbolicBindingType inst)
-    -> ResolveResult {
-  auto facet_value_inst_id =
-      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  auto entity_name_id =
-      GetLocalSymbolicEntityNameId(resolver, inst.entity_name_id);
-  return ResolveResult::Deduplicated<SemIR::SymbolicBindingType>(
-      resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .entity_name_id = entity_name_id,
-                 .facet_value_inst_id = facet_value_inst_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -4311,9 +4309,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
-    case CARBON_KIND(SemIR::SymbolicBindingType inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
     case CARBON_KIND(SemIR::Temporary inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -4578,11 +4573,10 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
     }
     auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
-      local_context().TODO(SemIR::LocId::None,
-                           "Unsupported: Importing C++ indirectly");
-      SetResolvedConstId(inst_id, result.indirect_insts,
-                         SemIR::ErrorInst::ConstantId);
-      result.const_id = SemIR::ErrorInst::ConstantId;
+      auto loc_id = SemIR::LocId(AddImportIRInst(*this, inst_id));
+      result.const_id = ImportCppConstantFromFile(local_context(), loc_id,
+                                                  *cursor_ir, cursor_inst_id);
+      SetResolvedConstId(inst_id, result.indirect_insts, result.const_id);
       result.indirect_insts.clear();
       return result;
     }
@@ -4606,8 +4600,8 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
                     [local_ir().import_irs().GetRawIndex(cursor_ir_id)]
                 .GetAttached(cursor_inst_id);
         const_id.has_value()) {
-      SetResolvedConstId(inst_id, result.indirect_insts, const_id);
       result.const_id = const_id;
+      SetResolvedConstId(inst_id, result.indirect_insts, result.const_id);
       result.indirect_insts.clear();
       return result;
     } else {

@@ -22,14 +22,6 @@ namespace Carbon {
 template <typename DerivedT>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class Printable {
-  // Provides simple printing for debuggers.
-  LLVM_DUMP_METHOD auto Dump() const -> std::string {
-    std::string buffer;
-    llvm::raw_string_ostream stream(buffer);
-    static_cast<const DerivedT*>(this)->Print(stream);
-    return buffer;
-  }
-
   // Supports printing to llvm::raw_ostream.
   friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
       -> llvm::raw_ostream& {

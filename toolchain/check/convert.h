@@ -55,7 +55,7 @@ struct ConversionTarget {
     // be present if the initializing representation might be in-place.
     Initializing,
     // Convert to an in-place initializing expression whose storage is
-    // designated by `storage_id` (which must not be `None`)
+    // designated by `storage_id` (which must not be `None`).
     InPlaceInitializing,
     Last = InPlaceInitializing
   };
@@ -63,11 +63,14 @@ struct ConversionTarget {
   Kind kind;
   // The target type for the conversion.
   SemIR::TypeId type_id;
-  // The storage being initialized, if any.
+  // The storage being initialized, if any. It must be valid to reference this
+  // instruction after splicing in `storage_access_block` (if specified), so it
+  // must either dominate the initializer or be one of the instructions in
+  // `storage_access_block`.
   SemIR::InstId storage_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that `storage_id`
-  // depends on, and that can be discarded if `storage_id` is not accessed.
-  // If this is not null or empty, its last element must be storage_id.
+  // depends on. This block will be spliced or merged before any reference to
+  // `storage_id`, and may be discarded if `storage_id` is not accessed.
   PendingBlock* storage_access_block = nullptr;
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback,
@@ -89,12 +92,17 @@ struct ConversionTarget {
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId;
 
-// Converts `value_id` to an initializing expression of the type of
-// `storage_id`, and returns the possibly-converted initializing expression.
+// Performs initialization of `storage_id` from the expression `value_id`, which
+// is converted to an initializing expression of the type of `storage_id` if
+// necessary, and returns the possibly-converted initializing expression.
+//
 // `storage_id` is used as the storage argument of the resulting expression
-// except as noted below, and when it is used as the storage argument it must
-// precede `value_id`. The caller is responsible for passing the result to an
-// inst that is documented as consuming it, such as `Assign`.
+// except as noted below. As a consequence, `storage_id` must dominate
+// `value_id` and its subexpressions.  This will typically only be the case if
+// `storage_id` syntactically precedes `value_id`. Otherwise, some action will
+// need to be taken to reorder the code, such as instead calling `Initialize`
+// with a pending block containing `storage_id`, or creating a separate
+// `InstBlock` to hold either the storage or the initializer.
 //
 // `for_return` indicates that this conversion is initializing the operand of a
 // `return` statement. This means that `storage_id` will be the return slot
@@ -102,11 +110,58 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 // representation is not in-place, so in that case `storage_id` will be used
 // solely for its type.
 //
-// TODO: Consider making the target type a separate parameter, and making
-// storage_id optional.
-auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
-                SemIR::InstId value_id, bool for_return = false)
-    -> SemIR::InstId;
+// This function does not guarantee to perform an in-place initialization, so
+// the caller is responsible for passing the returned `InstId` to an inst that
+// is documented as consuming it, such as `Assign`.
+auto InitializeExisting(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId storage_id, SemIR::InstId value_id,
+                        bool for_return = false) -> SemIR::InstId;
+
+// Result of Initialize.
+struct InitializeResult {
+  // The storage location that contains the initialized value. This may be
+  // different from the `storage_id` that was passed to `Initialize` if the
+  // storage block was written over existing instructions rather than being
+  // spliced in.
+  SemIR::InstId storage_id;
+  // The converted initializing expression used to initialize the storage.
+  SemIR::InstId init_id;
+};
+
+// Performs initialization of `storage_id` from the expression `value_id`, which
+// is converted to an initializing expression of the type of `storage_id` if
+// necessary. `storage_access_block` should be used to supply a pending block
+// that allocates the storage, and typically contains `storage_id`. The target
+// of the initialization will be either `storage_id` itself, or an existing
+// storage argument instruction that is overwritten to hold a copy of
+// `storage_id` as an optimization for SemIR compactness.
+//
+// The storage instruction will only be written over an existing instruction if
+// it is the sole instruction in the pending block. This is expected to be a
+// common case. After this happens, the copy of the instruction in the pending
+// block is expected to be unreachable from the SemIR::File. As a result, the
+// `storage_id` instruction should not be referenced again after calling this
+// function, and this function takes it by rvalue reference to remind the caller
+// of this.
+//
+// If the overwrite optimization is not performed, `storage_access_block` will
+// be inserted before any use of the storage by the initializer, and will be
+// inserted even if the initializer does not actually use the storage. It must
+// be valid to reference `storage_id` after splicing in `storage_access_block`,
+// so `storage_id` must either dominate the initializer (but see the TODO below)
+// or be one of the instructions in `storage_access_block`. If `storage_id` is
+// known to always dominate the initializer, `InitializeExisting` should be used
+// instead.
+//
+// TODO: We don't have an implementation of a proper dominance check, so we
+// fake one up by comparing the order in which the insts were created.
+//
+// This function does not guarantee to perform an in-place initialization, so
+// the caller is responsible for passing the returned `inst_id` to an inst that
+// is documented as consuming it, such as `Assign`.
+auto Initialize(Context& context, SemIR::LocId loc_id,
+                SemIR::InstId&& storage_id, PendingBlock&& storage_access_block,
+                SemIR::InstId value_id) -> InitializeResult;
 
 // Convert the given expression to a value expression of the same type.
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)

@@ -865,7 +865,7 @@ static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return llvm::OptimizationLevel::O1;
     case Lower::OptimizationLevel::Size:
-      return llvm::OptimizationLevel::Oz;
+      return llvm::OptimizationLevel::O2;
     case Lower::OptimizationLevel::Speed:
       return llvm::OptimizationLevel::O3;
   }
@@ -880,7 +880,7 @@ static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return "-O1";
     case Lower::OptimizationLevel::Size:
-      return "-Oz";
+      return "-O2";
     case Lower::OptimizationLevel::Speed:
       return "-O3";
   }

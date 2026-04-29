@@ -490,27 +490,6 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       return SubstResult::FullySubstituted;
     }
 
-    // A symbolic binding `as type` contains the EntityNameId of that symbolic
-    // binding. If it matches a substitution, then we want to point the
-    // EntityNameId to the substitution facet value.
-    if (auto bind =
-            context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
-      auto& entity_name = context().entity_names().Get(bind->entity_name_id);
-
-      for (auto [bind_index, replacement_id] : substitutions_) {
-        if (entity_name.bind_index() == bind_index) {
-          auto replacement_inst_id =
-              context().constant_values().GetInstId(replacement_id);
-          inst_id = RebuildNewInst<SemIR::FacetAccessType>(
-              loc_id_, {
-                           .type_id = SemIR::TypeType::TypeId,
-                           .facet_value_inst_id = replacement_inst_id,
-                       });
-          return SubstResult::FullySubstituted;
-        }
-      }
-    }
-
     auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
             context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {

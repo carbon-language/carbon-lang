@@ -16,7 +16,10 @@
 
 // --- single.h
 
-namespace my_namespace { void foo(); }
+namespace my_namespace {
+  void foo();
+  void bar();
+}
 
 // --- import_single.carbon
 
@@ -231,6 +234,135 @@ struct Y {
 
 fn Use(y: Cpp.Y) -> i32 {
   return y.x.n;
+}
+
+// ============================================================================
+// Import C++ namespace indirectly
+// ============================================================================
+
+// --- namespace_alias.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "single.h";
+
+alias MyNamespaceAlias = Cpp.my_namespace;
+
+fn CallFoo() {
+  MyNamespaceAlias.foo();
+}
+
+// --- fail_indirect_namespace_no_import.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: namespace_alias.carbon:4:1: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
+// CHECK:STDERR: import Cpp library "single.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: namespace_alias.carbon: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
+// CHECK:STDERR:
+import library "namespace_alias";
+
+fn F() {
+  // Imports are not implicitly re-exported, so lookup is expected to fail,
+  // regardless of whether a lookup was performed in the imported file.
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   MyNamespaceAlias.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MyNamespaceAlias.foo();
+
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   MyNamespaceAlias.bar();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MyNamespaceAlias.bar();
+}
+
+// --- fail_indirect_namespace_no_local_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: namespace_alias.carbon: error: semantics TODO: `use of imported C++ declaration with no corresponding local import` [SemanticsTodo]
+// CHECK:STDERR:
+import library "namespace_alias";
+import Cpp;
+
+fn F() {
+  // Imports are not implicitly re-exported, so name lookup is expected to
+  // fail, regardless of whether a lookup was performed in the imported file.
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   MyNamespaceAlias.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MyNamespaceAlias.foo();
+
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   MyNamespaceAlias.bar();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MyNamespaceAlias.bar();
+}
+
+// --- indirect_namespace_same_contents.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "namespace_alias";
+import Cpp library "single.h";
+
+fn F() {
+  // OK, MyNamespaceAlias is an alias for Cpp.my_namespace.
+  MyNamespaceAlias.foo();
+  MyNamespaceAlias.bar();
+}
+
+// --- fail_indirect_namespace_different_contents_invalid.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "namespace_alias";
+import Cpp;
+
+inline Cpp '''
+namespace my_namespace {
+  void bar();
+}
+''';
+
+fn F() {
+  // Cpp imports are not implicitly re-exported, so name lookup is expected to
+  // fail.
+  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   MyNamespaceAlias.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MyNamespaceAlias.foo();
+}
+
+// --- indirect_namespace_different_contents.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "namespace_alias";
+import Cpp;
+
+inline Cpp '''
+namespace my_namespace {
+  void bar();
+  void baz();
+}
+''';
+
+fn F() {
+  // OK, bar is visible here and is found in MyNamespaceAlias, which is an alias
+  // for Cpp.my_namespace.
+  MyNamespaceAlias.bar();
+  MyNamespaceAlias.baz();
 }
 
 // CHECK:STDOUT: --- import_single.carbon

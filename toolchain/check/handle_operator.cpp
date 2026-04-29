@@ -113,7 +113,7 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
   }
   // TODO: Destroy the old value before reinitializing. This will require
   // building the destruction code before we build the RHS subexpression.
-  rhs_id = Initialize(context, node_id, lhs_id, rhs_id);
+  rhs_id = InitializeExisting(context, node_id, lhs_id, rhs_id);
   AddInst<SemIR::Assign>(context, node_id,
                          {.lhs_id = lhs_id, .rhs_id = rhs_id});
   // We model assignment as an expression, so we need to push a value for

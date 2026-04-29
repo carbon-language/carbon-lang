@@ -11,41 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/import.carbon
 
 // ============================================================================
-// Import C++ namespace indirectly
-// ============================================================================
-
-// --- namespace.h
-
-namespace MyNamespace {
-
-class MyClass {};
-
-}  // namespace MyNamespace
-
-// --- namespace_api.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "namespace.h";
-
-alias MyNamespaceAlias = Cpp.MyNamespace;
-
-// --- fail_import_namespace_api.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "namespace_api";
-
-fn F() {
-  // Imports are not implicitly re-exported, so lookup is expected to fail.
-  // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:17: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   var unused x: MyNamespaceAlias.MyClass;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  var unused x: MyNamespaceAlias.MyClass;
-}
-
-// ============================================================================
 // Import C++ struct indirectly
 // ============================================================================
 
@@ -62,11 +27,15 @@ import Cpp library "struct.h";
 alias MyStructAlias = Cpp.MyStruct;
 
 // --- fail_todo_import_struct_api.carbon
-// CHECK:STDERR: fail_todo_import_struct_api.carbon: error: semantics TODO: `Unsupported: Importing C++ indirectly` [SemanticsTodo]
-// CHECK:STDERR:
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_struct_api.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: struct_api.carbon:4:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./struct.h:2:8: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
+// CHECK:STDERR: struct MyStruct { void Foo(); };
+// CHECK:STDERR:        ^
+// CHECK:STDERR:
 import library "struct_api";
 
 fn F() {

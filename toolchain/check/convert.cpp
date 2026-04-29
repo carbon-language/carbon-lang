@@ -24,6 +24,7 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/pending_block.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -1491,8 +1492,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     } else {
       type_inst_id = context.types().GetAsTypeInstId(value_id);
 
-      // Shortcut for lossless round trips through a FacetAccessType (which
-      // evaluates to SymbolicBindingType when wrapping a symbolic binding) when
+      // Shortcut for lossless round trips through a FacetAccessType when
       // converting back to the type of the original symbolic binding facet
       // value.
       //
@@ -1501,9 +1501,6 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
-      //
-      // TODO: This instruction is going to become a `SymbolicBindingType`, so
-      // we'll need to handle that instead.
       auto facet_value_inst_id =
           GetCanonicalFacetOrTypeValue(context, type_inst_id);
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
@@ -2052,22 +2049,60 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
-                SemIR::InstId value_id, bool for_return) -> SemIR::InstId {
+auto InitializeExisting(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId storage_id, SemIR::InstId value_id,
+                        bool for_return) -> SemIR::InstId {
   auto type_id = context.insts().Get(storage_id).type_id();
   if (for_return &&
       !SemIR::InitRepr::ForType(context.sem_ir(), type_id).MightBeInPlace()) {
-    // TODO: is it safe to use storage_id when the init repr is dependent?
+    // TODO: Is it safe to use storage_id when the init repr is dependent?
     storage_id = SemIR::InstId::None;
   }
-  // TODO: add CHECK that storage_id.index < value_id.index to enforce the
-  // precondition, once existing violations have been cleaned up.
+
+  // TODO: This is only an approximation of a dominance check. Add a general
+  // end-of-phase dominance check and remove the check here and the one in
+  // `MergeReplacing`.
+  CARBON_CHECK(!storage_id.has_value() ||
+                   value_id == SemIR::ErrorInst::InstId ||
+                   context.insts().GetRawIndex(storage_id) <=
+                       context.insts().GetRawIndex(value_id),
+               "Storage might not dominate initializer");
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializing,
                   .type_id = type_id,
                   .storage_id = storage_id,
                   .storage_access_block = &target_block});
+}
+
+auto Initialize(Context& context, SemIR::LocId loc_id,
+                SemIR::InstId&& storage_id, PendingBlock&& storage_access_block,
+                SemIR::InstId value_id) -> InitializeResult {
+  CARBON_CHECK(storage_id.has_value());
+  auto type_id = context.insts().Get(storage_id).type_id();
+  auto result_id = Convert(context, loc_id, value_id,
+                           {.kind = ConversionTarget::Initializing,
+                            .type_id = type_id,
+                            .storage_id = storage_id,
+                            .storage_access_block = &storage_access_block});
+
+  // Insert the storage block now, in case it wasn't used by the initializer.
+  storage_access_block.InsertHere();
+  if (result_id == SemIR::ErrorInst::InstId) {
+    return {.storage_id = SemIR::ErrorInst::InstId,
+            .init_id = SemIR::ErrorInst::InstId};
+  }
+
+  // Find the storage argument. If the storage block was spliced or written over
+  // an existing storage argument by `Convert`, the resulting expression will
+  // have a storage argument that points to the possibly-rewritten storage
+  // instruction, and we can use that. Otherwise, the storage access block will
+  // have been inserted above, and we can use `storage_id` unchanged.
+  auto storage_arg_id =
+      SemIR::FindStorageArgForInitializer(context.sem_ir(), result_id);
+  return {
+      .storage_id = storage_arg_id.has_value() ? storage_arg_id : storage_id,
+      .init_id = result_id};
 }
 
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)

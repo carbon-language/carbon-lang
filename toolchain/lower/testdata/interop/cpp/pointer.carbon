@@ -218,9 +218,9 @@ fn Convert() {
 // CHECK:STDOUT: define void @_CPassNonnullPtr.Main(ptr %p) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_15.2.temp = alloca ptr, align 8, !dbg !21
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !21
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.74277d0e61790777"(ptr %p), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_15.2.temp), !dbg !21
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc22_15.2.temp, align 8, !dbg !21
+// CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc22_15.2.temp, align 8, !dbg !21
 // CHECK:STDOUT:   %.loc22_15.4 = load ptr, ptr %.loc22_15.2.temp, align 8, !dbg !21
 // CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %.loc22_15.4), !dbg !22
 // CHECK:STDOUT:   call void @"_COp.b17d31fafee11ec0:core.Destroy.Core"(ptr %.loc22_15.2.temp), !dbg !21
@@ -260,9 +260,9 @@ fn Convert() {
 // CHECK:STDOUT: define void @_CPassNonnullPtrWithThunk.Main(ptr %p) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc35_24.2.temp = alloca ptr, align 8, !dbg !44
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !44
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.74277d0e61790777"(ptr %p), !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc35_24.2.temp), !dbg !44
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_24.2.temp, align 8, !dbg !44
+// CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_24.2.temp, align 8, !dbg !44
 // CHECK:STDOUT:   %.loc35_24.4 = load ptr, ptr %.loc35_24.2.temp, align 8, !dbg !44
 // CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc35_24.4), !dbg !45
 // CHECK:STDOUT:   call void @"_COp.b17d31fafee11ec0:core.Destroy.Core"(ptr %.loc35_24.2.temp), !dbg !44
@@ -294,8 +294,8 @@ fn Convert() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %self) #0 !dbg !53 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self), !dbg !59
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.74277d0e61790777"(ptr %self) #0 !dbg !53 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.a15aada625dab765:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self), !dbg !59
 // CHECK:STDOUT:   ret ptr %1, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,7 +303,7 @@ fn Convert() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #0 !dbg !61 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.a15aada625dab765:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #0 !dbg !61 {
 // CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %self), !dbg !64
 // CHECK:STDOUT:   ret ptr %1, !dbg !65
 // CHECK:STDOUT: }
@@ -330,7 +330,7 @@ fn Convert() {
 // CHECK:STDOUT: declare noundef ptr @_Z18ReturnPtrWithThunki(i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.74277d0e61790777", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -395,7 +395,7 @@ fn Convert() {
 // CHECK:STDOUT: !50 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !6, line: 38, type: !33, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !51 = !DILocation(line: 39, column: 10, scope: !50)
 // CHECK:STDOUT: !52 = !DILocation(line: 39, column: 3, scope: !50)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", scope: null, file: !54, line: 96, type: !55, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !57)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.74277d0e61790777", scope: null, file: !54, line: 96, type: !55, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !57)
 // CHECK:STDOUT: !54 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !55 = !DISubroutineType(types: !56)
 // CHECK:STDOUT: !56 = !{!14, !14}
@@ -403,7 +403,7 @@ fn Convert() {
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !53, type: !14)
 // CHECK:STDOUT: !59 = !DILocation(line: 97, column: 12, scope: !53)
 // CHECK:STDOUT: !60 = !DILocation(line: 97, column: 5, scope: !53)
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !54, line: 71, type: !55, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !62)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.a15aada625dab765:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !54, line: 71, type: !55, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !62)
 // CHECK:STDOUT: !62 = !{!63}
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !61, type: !14)
 // CHECK:STDOUT: !64 = !DILocation(line: 72, column: 12, scope: !61)
@@ -434,9 +434,9 @@ fn Convert() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.1.temp), !dbg !14
 // CHECK:STDOUT:   store ptr %make.call, ptr %.loc9_21.1.temp, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc9_21.3 = load ptr, ptr %.loc9_21.1.temp, align 8, !dbg !14
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.ace022aad6522dbd"(ptr %.loc9_21.3), !dbg !14
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.864cb1aacb88d008"(ptr %.loc9_21.3), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.5.temp), !dbg !14
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc9_21.5.temp, align 8, !dbg !14
+// CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc9_21.5.temp, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc9_21.7 = load ptr, ptr %.loc9_21.5.temp, align 8, !dbg !14
 // CHECK:STDOUT:   call void @_Z4takePK1C(ptr %.loc9_21.7), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.155dfcb6d80d9d93:core.Destroy.Core"(ptr %.loc9_21.5.temp), !dbg !14
@@ -476,13 +476,13 @@ fn Convert() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.ace022aad6522dbd"(ptr %self) #0 !dbg !36 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.Optional.6443ea83fd43c001.Core:OptionalAs.c7a50af9bdd61b43.Core.9cffbb0df40531a7"(ptr %self), !dbg !42
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.864cb1aacb88d008"(ptr %self) #0 !dbg !36 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.Optional.379070d241187444.Core:OptionalAs.f58b2ba767714873.Core.9cffbb0df40531a7"(ptr %self), !dbg !42
 // CHECK:STDOUT:   ret ptr %1, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.Optional.6443ea83fd43c001.Core:OptionalAs.c7a50af9bdd61b43.Core.9cffbb0df40531a7"(ptr %self) #0 !dbg !44 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.Optional.379070d241187444.Core:OptionalAs.f58b2ba767714873.Core.9cffbb0df40531a7"(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !47
 // CHECK:STDOUT:   %temp1 = alloca ptr, align 8, !dbg !47
 // CHECK:STDOUT:   %1 = call i1 @_CHasValue.Optional.Core.e4de4a7eec6ed951(ptr %self), !dbg !48
@@ -597,7 +597,7 @@ fn Convert() {
 // CHECK:STDOUT: !33 = !{!34}
 // CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !20)
 // CHECK:STDOUT: !35 = !DILocation(line: 9, column: 12, scope: !32)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.ace022aad6522dbd", scope: null, file: !37, line: 96, type: !38, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !40)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.81f236ae340cbf98:ImplicitAs.0f95c9e18c91e00a.Core.864cb1aacb88d008", scope: null, file: !37, line: 96, type: !38, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !40)
 // CHECK:STDOUT: !37 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !38 = !DISubroutineType(types: !39)
 // CHECK:STDOUT: !39 = !{!20, !20}
@@ -605,7 +605,7 @@ fn Convert() {
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !20)
 // CHECK:STDOUT: !42 = !DILocation(line: 97, column: 12, scope: !36)
 // CHECK:STDOUT: !43 = !DILocation(line: 97, column: 5, scope: !36)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Optional.6443ea83fd43c001.Core:OptionalAs.c7a50af9bdd61b43.Core.9cffbb0df40531a7", scope: null, file: !37, line: 86, type: !38, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !45)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Optional.379070d241187444.Core:OptionalAs.f58b2ba767714873.Core.9cffbb0df40531a7", scope: null, file: !37, line: 86, type: !38, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !45)
 // CHECK:STDOUT: !45 = !{!46}
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !20)
 // CHECK:STDOUT: !47 = !DILocation(line: 88, column: 31, scope: !44)

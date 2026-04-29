@@ -9,6 +9,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/mangler.h"
@@ -168,6 +169,14 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
 namespace {
 struct FunctionInfo {
+  struct Param {
+    // Type of the parameter's scrutinee.
+    SemIR::TypeId type_id;
+
+    // Whether this is a `ref` param.
+    bool is_ref;
+  };
+
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
                         const SemIR::Function& function,
                         clang::DeclContext* decl_context)
@@ -188,15 +197,17 @@ struct FunctionInfo {
       self_type_id = scrutinee_type_id;
     }
 
-    // Get the function's explicit parameter types.
+    // Get the function's explicit parameters.
     function_params =
         function_params.drop_front(function.call_param_ranges.implicit_size());
     function_params =
         function_params.drop_back(function.call_param_ranges.return_size());
     for (auto param_inst_id : function_params) {
-      auto scrutinee_type_id = ExtractScrutineeType(
-          context.sem_ir(), context.insts().Get(param_inst_id).type_id());
-      param_type_ids.push_back(scrutinee_type_id);
+      explicit_params.push_back(
+          {.type_id = ExtractScrutineeType(
+               context.sem_ir(), context.insts().Get(param_inst_id).type_id()),
+           .is_ref =
+               context.insts().Is<SemIR::RefParamPattern>(param_inst_id)});
     }
   }
 
@@ -220,9 +231,9 @@ struct FunctionInfo {
   // `CXXRecordDecl`.
   clang::DeclContext* decl_context;
 
-  // Types of the function's explicit parameters (excludes implicit
-  // parameters and return parameters).
-  llvm::SmallVector<SemIR::TypeId> param_type_ids;
+  // For each of the function's explicit parameters, the scrutinee type
+  // and whether the parameter is a reference.
+  llvm::SmallVector<Param> explicit_params;
 
   // Type of the function's `self` parameter, or `None` if the function
   // is not a method.
@@ -256,8 +267,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
     cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
     cpp_param_types.push_back(cpp_type);
   }
-  for (auto param_type_id : callee.param_type_ids) {
-    auto cpp_type = MapToCppType(context, param_type_id);
+  for (auto param : callee.explicit_params) {
+    auto cpp_type = MapToCppType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
@@ -471,11 +482,14 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   auto& thunk_ident = context.ast_context().Idents.get(thunk_name);
 
   llvm::SmallVector<clang::QualType> param_types;
-  for (auto type_id : target.param_type_ids) {
-    auto cpp_type = MapToCppType(context, type_id);
+  for (auto param : target.explicit_params) {
+    auto cpp_type = MapToCppType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map C++ type to Carbon");
       return nullptr;
+    }
+    if (param.is_ref) {
+      cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
     }
     param_types.push_back(cpp_type);
   }
@@ -513,7 +527,10 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // Get the thunk's parameters. These match the callee parameters, with
   // the addition of an output parameter for the callee's return value
   // (if it has one).
-  llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids(target.param_type_ids);
+  llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids;
+  for (const auto& param : target.explicit_params) {
+    thunk_param_type_ids.push_back(param.type_id);
+  }
   auto callee_return_type_id =
       target.function.GetDeclaredReturnType(context.sem_ir());
   if (callee_return_type_id != SemIR::TypeId::None) {
@@ -527,7 +544,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.self_type_id,
            .param_type_ids = thunk_param_type_ids,
-           .params_are_refs = true})
+           .param_kind = ParamPatternKind::Ref})
           .second;
 
   BuildThunkDefinitionForExport(

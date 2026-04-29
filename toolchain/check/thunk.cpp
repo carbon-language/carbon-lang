@@ -398,12 +398,33 @@ auto BuildThunkDefinitionForExport(Context& context,
     param_pattern_ids =
         context.inst_blocks().Get(thunk_function.param_patterns_id);
   }
-  auto call_param_ids =
-      context.inst_blocks().Get(thunk_function.call_params_id);
+  llvm::SmallVector<SemIR::InstId> call_param_ids(
+      context.inst_blocks().Get(thunk_function.call_params_id));
 
   if (thunk_has_return_param) {
     param_pattern_ids = param_pattern_ids.drop_back();
-    call_param_ids = call_param_ids.drop_back();
+    call_param_ids.pop_back();
+  }
+
+  auto callee_param_ids =
+      context.inst_blocks().Get(callee_function.call_param_patterns_id);
+
+  // If any explicit parameters of the callee are `ref` parameters,
+  // modify the corresponding call arguments to be `ref` tagged.
+  for (auto index = thunk_function.call_param_ranges.explicit_begin().index;
+       index < thunk_function.call_param_ranges.explicit_end().index; index++) {
+    if (context.insts().Is<SemIR::RefParamPattern>(callee_param_ids[index])) {
+      auto& call_param_id = call_param_ids[index];
+      auto type = context.insts().Get(call_param_id).type_id();
+      SemIR::LocId loc_id(thunk_id);
+      call_param_id =
+          AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                               context.sem_ir(), SemIR::LocId(call_param_id),
+                               SemIR::RefTagExpr{
+                                   .type_id = type,
+                                   .expr_id = call_param_id,
+                               }));
+    }
   }
 
   auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,
@@ -413,8 +434,8 @@ auto BuildThunkDefinitionForExport(Context& context,
         context.inst_blocks().Get(thunk_function.call_params_id).back();
 
     SemIR::LocId loc_id(out_param_id);
-    auto init_id =
-        Initialize(context, loc_id, out_param_id, call_id, /*for_return=*/true);
+    auto init_id = InitializeExisting(context, loc_id, out_param_id, call_id,
+                                      /*for_return=*/true);
     AddInst(context, loc_id,
             SemIR::Assign{
                 .lhs_id = out_param_id,
@@ -450,7 +471,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (CheckFunctionTypeMatches(
+  if (context.functions().Get(callee.function_id).special_function_kind !=
+          SemIR::Function::SpecialFunctionKind::HasCppThunk &&
+      CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
@@ -467,7 +490,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // thunk, and always convert the result of the wrapped call to the return type
   // of the thunk.
   if (!HasDeclaredReturnType(context, signature_id) &&
-      HasDeclaredReturnType(context, callee.function_id)) {
+      HasDeclaredReturnType(context, callee.function_id) &&
+      context.functions().Get(callee.function_id).name_id !=
+          SemIR::NameId::CppOperator) {
     bool success = CheckFunctionReturnTypeMatches(
         context, context.functions().Get(callee.function_id),
         context.functions().Get(signature_id), signature_specific_id);

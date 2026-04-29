@@ -185,7 +185,6 @@ fn Call() {
 // CHECK:STDOUT:   %X.B.cpp_overload_set.type: type = cpp_overload_set_type @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %bound_method.a5d: <bound method> = bound_method %.3af, %X.B.cpp_overload_set.value [concrete]
-// CHECK:STDOUT:   %pattern_type.46b: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %X.B.type: type = fn_type @X.B [concrete]
 // CHECK:STDOUT:   %X.B: %X.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.type: type = cpp_overload_set_type @X.C.cpp_overload_set [concrete]
@@ -226,12 +225,8 @@ fn Call() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.B.decl: %X.B.type = fn_decl @X.B [concrete = constants.%X.B] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
@@ -247,11 +242,9 @@ fn Call() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -865,7 +858,6 @@ fn Call() {
 // CHECK:STDOUT:   %X.D.cpp_overload_set.type: type = cpp_overload_set_type @X.D.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %bound_method.d5c: <bound method> = bound_method %.3af, %X.D.cpp_overload_set.value [concrete]
-// CHECK:STDOUT:   %pattern_type.46b: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -884,11 +876,9 @@ fn Call() {
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

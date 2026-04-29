@@ -191,8 +191,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         out_param_id =
             call_params[function.call_param_ranges.return_begin().index];
         CARBON_CHECK(out_param_id.has_value());
-        expr_id = Initialize(context, loc_id, out_param_id, expr_id,
-                             /*for_return=*/true);
+        expr_id = InitializeExisting(context, loc_id, out_param_id, expr_id,
+                                     /*for_return=*/true);
         if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
                  .MightBeInPlace()) {
           out_param_id = SemIR::InstId::None;

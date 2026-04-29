@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -37,12 +38,12 @@ struct FunctionDeclArgs {
   // The type of the implicit `[self: Self]` parameter, or `None` if there is
   // none.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
-  // Whether `self` is a ref parameter.
-  bool self_is_ref = true;
+  // The kind of the `self` parameter.
+  ParamPatternKind self_kind = ParamPatternKind::Ref;
   // The types of the explicit parameters.
   llvm::ArrayRef<SemIR::TypeId> param_type_ids = {};
-  // Whether the parameters described by `param_type_ids` are references.
-  bool params_are_refs = false;
+  // The kind of the parameters described by `param_type_ids`.
+  ParamPatternKind param_kind = ParamPatternKind::Value;
   // The return type, or `None` if the function doesn't declare a return type.
   SemIR::TypeId return_type_id = SemIR::TypeId::None;
 };
