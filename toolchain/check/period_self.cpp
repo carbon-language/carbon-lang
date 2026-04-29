@@ -277,11 +277,13 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
 
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
     -> bool {
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  if (!const_inst_id.has_value()) {
+    return false;
+  }
   auto query_inst_id =
-      canonicalize
-          ? GetCanonicalFacetOrTypeValue(
-                context, context.constant_values().GetConstantInstId(inst_id))
-          : inst_id;
+      canonicalize ? GetCanonicalFacetOrTypeValue(context, const_inst_id)
+                   : inst_id;
   if (auto bind =
           context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
     const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
