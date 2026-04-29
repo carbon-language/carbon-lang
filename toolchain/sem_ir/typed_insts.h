@@ -1602,7 +1602,8 @@ struct RequirementBaseFacetType {
 
   // No type since not an expression
 
-  // A FacetType, the TypeType singleton, or an ErrorInst.
+  // An expression that evaluates to a FacetType, the TypeType singleton, or an
+  // ErrorInst.
   TypeInstId base_type_inst_id;
 };
 
