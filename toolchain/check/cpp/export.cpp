@@ -187,14 +187,11 @@ static auto GetStructTypeFields(Context& context,
 static auto LookupClassFieldByStructField(
     const Context& context, const SemIR::NameScope& class_scope,
     const SemIR::StructTypeField& struct_field)
-    -> std::optional<std::pair<SemIR::InstId, SemIR::FieldDecl>> {
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
   if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
     auto field_inst_id =
         class_scope.GetEntry(*entry_id).result.target_inst_id();
-    if (auto field_decl =
-            context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id)) {
-      return std::make_pair(field_inst_id, *field_decl);
-    }
+    return context.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
   }
   return std::nullopt;
 }
@@ -248,25 +245,24 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
     if (!class_field) {
       continue;
     }
-    auto [field_inst_id, field_decl] = *class_field;
 
     // Map the parent scope into the C++ AST.
     auto* decl_context = ExportNameScopeToCpp(
-        context, SemIR::LocId(field_inst_id), class_info.scope_id);
+        context, SemIR::LocId(class_field->inst_id), class_info.scope_id);
     if (!decl_context) {
       continue;
     }
 
     auto* cpp_field_decl =
         CreateCppFieldDecl(context, cast<clang::CXXRecordDecl>(decl_context),
-                           field_inst_id, field_decl);
+                           class_field->inst_id, class_field->inst);
     if (!cpp_field_decl) {
       continue;
     }
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
-    context.clang_decls().Add({.key = key, .inst_id = field_inst_id});
+    context.clang_decls().Add({.key = key, .inst_id = class_field->inst_id});
   }
 
   class_info.fields_exported = true;
@@ -315,9 +311,8 @@ auto CalculateCppFieldOffsets(
     auto class_field =
         LookupClassFieldByStructField(context, class_scope, struct_field);
     if (class_field) {
-      auto [field_inst_id, field_decl] = *class_field;
       auto* cpp_field_decl =
-          ExportFieldToCpp(context, field_inst_id, field_decl);
+          ExportFieldToCpp(context, class_field->inst_id, class_field->inst);
       if (!cpp_field_decl) {
         return false;
       }
