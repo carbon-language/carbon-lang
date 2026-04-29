@@ -134,21 +134,9 @@ import Cpp library "non_copyable_param_type.h";
 
 fn F(s: Cpp.S) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:   Cpp.foo(s);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+12]]:11: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    36 |   Cpp.foo(s);
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'S' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:     3 |   S(const S&) = delete;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_copyable_param_type.h:6:11: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(S) -> void;
-  // CHECK:STDERR:           ^
   // CHECK:STDERR:
   Cpp.foo(s);
   //@dump-sem-ir-end
@@ -569,12 +557,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%s.param: %S) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
-// CHECK:STDOUT:   %impl.elem0.loc36: <error> = impl_witness_access <error>, element0 [concrete = <error>]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(<error>)
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%s.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

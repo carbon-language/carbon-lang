@@ -162,12 +162,12 @@ static auto ComputeSignature(Context& context,
     clang::QualType to_type;
     if (ics.isStandard()) {
       const auto& scs = ics.Standard;
-      if (!scs.ReferenceBinding &&
-          (arg_expr->isPRValue() || arg_expr->isXValue()) &&
+      if (!scs.ReferenceBinding && arg_expr->isXValue() &&
           arg_expr->getType()->isRecordType()) {
         // A standard conversion for a class that is not a reference binding
-        // must be a copy or a move. The source is an rvalue, so we want to
-        // perform a move.
+        // must be a copy or a move. The source is an xvalue, so we want to
+        // perform a move. If the source is a prvalue, that indicates that it
+        // came from a Carbon value expression, so we should copy, not move.
         mode = SemIR::Signature::PassingMode::ByValueMove;
         to_type = scs.getToType(2);
       }
@@ -176,8 +176,8 @@ static auto ComputeSignature(Context& context,
       const auto* ctor =
           dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
       if (!ucs.After.ReferenceBinding && (!ctor || ctor->isCopyConstructor())) {
-        // Overload resolution called a function other than a copy constructor.
-        // We should pass by move instead of inserting a copy.
+        // Overload resolution wanted to call a function other than a copy
+        // constructor. We should pass by move instead of inserting a copy.
         mode = SemIR::Signature::PassingMode::ByValueMove;
         to_type = ucs.After.getToType(2);
       }
@@ -188,9 +188,19 @@ static auto ComputeSignature(Context& context,
     // copy instead. Doing so allows us to generate fewer thunks.
     if (mode == SemIR::Signature::PassingMode::ByValueMove) {
       const auto* record_decl = to_type->castAsCXXRecordDecl();
-      if (record_decl->hasTrivialMoveConstructor() &&
-          record_decl->hasTrivialCopyConstructor() &&
-          !record_decl->defaultedCopyConstructorIsDeleted()) {
+      // We can pass by copy instead of by move if:
+      // - the move constructor is defaulted and deleted or non-existent, in
+      //   which case overload resolution for a move will call the copy
+      //   constructor, or
+      // - both move and copy are trivial and not deleted, in which case they
+      //   are equivalent.
+      if (!record_decl->hasMoveConstructor() ||
+          (!record_decl->hasUserDeclaredMoveConstructor() &&
+           record_decl->defaultedMoveConstructorIsDeleted()) ||
+          (record_decl->hasTrivialMoveConstructor() &&
+           !record_decl->defaultedMoveConstructorIsDeleted() &&
+           record_decl->hasTrivialCopyConstructor() &&
+           !record_decl->defaultedCopyConstructorIsDeleted())) {
         mode = SemIR::Signature::PassingMode::Default;
       }
     }
