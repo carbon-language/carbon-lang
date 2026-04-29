@@ -19,10 +19,6 @@ import Cpp inline '''
 constexpr int f(int a, int b) { return a + b; }
 ''';
 
-// CHECK:STDERR: basic.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
 
 // --- bool_param.carbon
@@ -35,10 +31,6 @@ constexpr int f(bool b) {
 }
 ''';
 
-// CHECK:STDERR: bool_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(true)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(true)) = (1, 2, 3);
 
 // --- float_param.carbon
@@ -51,10 +43,6 @@ constexpr int f(float b) {
 }
 ''';
 
-// CHECK:STDERR: float_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
 
 // --- return_bool.carbon

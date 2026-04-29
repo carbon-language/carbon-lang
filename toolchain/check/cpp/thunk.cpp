@@ -472,7 +472,8 @@ static auto BuildThunkParamRef(clang::Sema& sema,
                                clang::FunctionDecl* thunk_function_decl,
                                unsigned thunk_index,
                                clang::QualType type = clang::QualType(),
-                               SemIR::Signature::PassingMode passing_mode = SemIR::Signature::PassingMode::Copy)
+                               SemIR::Signature::PassingMode passing_mode =
+                                   SemIR::Signature::PassingMode::Copy)
     -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
@@ -512,10 +513,10 @@ static auto BuildParamRefForCalleeArg(clang::Sema& sema,
                                       CalleeFunctionInfo callee_info,
                                       unsigned callee_index) -> clang::Expr* {
   unsigned thunk_index = callee_info.GetThunkParamIndex(callee_index);
-  auto mode = callee_info.signature->passing_modes[callee_index];
   return BuildThunkParamRef(
       sema, thunk_function_decl, thunk_index,
-      callee_info.decl->getParamDecl(callee_index)->getType(), mode);
+      callee_info.decl->getParamDecl(callee_index)->getType(),
+      callee_info.signature->GetPassingMode(callee_index));
 }
 
 // Builds an argument list for the callee function by creating suitable uses of

@@ -472,7 +472,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (CheckFunctionTypeMatches(
+  if (context.functions().Get(callee.function_id).special_function_kind !=
+          SemIR::Function::SpecialFunctionKind::HasCppThunk &&
+      CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
@@ -489,7 +491,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // thunk, and always convert the result of the wrapped call to the return type
   // of the thunk.
   if (!HasDeclaredReturnType(context, signature_id) &&
-      HasDeclaredReturnType(context, callee.function_id)) {
+      HasDeclaredReturnType(context, callee.function_id) &&
+      context.functions().Get(callee.function_id).name_id !=
+          SemIR::NameId::CppOperator) {
     bool success = CheckFunctionReturnTypeMatches(
         context, context.functions().Get(callee.function_id),
         context.functions().Get(signature_id), signature_specific_id);

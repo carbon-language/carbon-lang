@@ -36,6 +36,13 @@ fn PassTemporary() {
 }
 
 fn PassValue(c: Cpp.Copyable) {
+  // CHECK:STDERR: copyable.carbon:[[@LINE+7]]:12: error: name `Core.Copy` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR:   Cpp.pass(c);
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: copyable.carbon:[[@LINE-17]]:19: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: void pass(Copyable);
+  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
   Cpp.pass(c);
 }
 
@@ -70,6 +77,13 @@ fn PassTemporary() {
 }
 
 fn PassValue(c: Cpp.CopyOrMove) {
+  // CHECK:STDERR: copy_or_move.carbon:[[@LINE+7]]:12: error: name `Core.Copy` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR:   Cpp.pass(c);
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: copy_or_move.carbon:[[@LINE-17]]:21: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: void pass(CopyOrMove);
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:
   Cpp.pass(c);
 }
 
@@ -95,13 +109,13 @@ struct MoveOnly {
 };
 MoveOnly make();
 // CHECK:STDERR: move_only.carbon:[[@LINE+9]]:6: error: call to deleted constructor of 'MoveOnly' [CppInteropParseError]
-// CHECK:STDERR:    17 | void pass(MoveOnly);
+// CHECK:STDERR:    26 | void pass(MoveOnly);
 // CHECK:STDERR:       |      ^~~~
 // CHECK:STDERR: move_only.carbon:[[@LINE-10]]:3: note: 'MoveOnly' has been explicitly marked deleted here [CppInteropParseNote]
 // CHECK:STDERR:    10 |   MoveOnly(const MoveOnly&) = delete;
 // CHECK:STDERR:       |   ^
 // CHECK:STDERR: move_only.carbon:[[@LINE+3]]:19: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:    17 | void pass(MoveOnly);
+// CHECK:STDERR:    26 | void pass(MoveOnly);
 // CHECK:STDERR:       |                   ^
 void pass(MoveOnly);
 ''';
@@ -121,6 +135,13 @@ fn PassTemporary() {
 }
 
 fn PassValue(c: Cpp.MoveOnly) {
+  // CHECK:STDERR: move_only.carbon:[[@LINE+7]]:12: error: name `Core.Copy` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR:   Cpp.pass(c);
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: move_only.carbon:[[@LINE-21]]:19: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: void pass(MoveOnly);
+  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
   Cpp.pass(c);
 }
 

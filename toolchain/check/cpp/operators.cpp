@@ -454,6 +454,90 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
+static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
+                              clang::OverloadedOperatorKind op_kind,
+                              llvm::ArrayRef<clang::Expr*> arg_exprs)
+    -> SemIR::InstId;
+
+namespace {
+struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
+  Context& context;
+  SemIR::TypeId arg_type_id;
+  SemIR::LocId loc_id;
+
+  void operator()(auto& builder) const {
+    CARBON_DIAGNOSTIC(
+        IncompleteOperandTypeInCppOperatorLookup, Context,
+        "looking up a C++ operator with incomplete operand type {0}",
+        SemIR::TypeId);
+    builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
+                    arg_type_id);
+  }
+};
+}  // namespace
+
+auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                       llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
+    -> SemIR::InstId {
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
+  if (op.interface_name == CoreIdentifier::ImplicitAs ||
+      op.interface_name == CoreIdentifier::As) {
+    context.TODO(loc_id, "handle `as` operator when passed a type");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto op_kind =
+      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
+  if (!op_kind) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  for (SemIR::TypeId arg_type_id : arg_type_ids) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
+      return SemIR::ErrorInst::InstId;
+    }
+  }
+
+  struct Operand {
+    using enum clang::ExprValueKind;
+    explicit Operand(clang::QualType type)
+        : type(type),
+          expression({}, type,
+                     type->isLValueReferenceType()   ? VK_LValue
+                     : type->isRValueReferenceType() ? VK_XValue
+                                                     : VK_PRValue) {}
+    clang::QualType type;
+    clang::OpaqueValueExpr expression;
+  };
+
+  auto cpp_type = MapToCppType(context, arg_type_ids[0]);
+  if (cpp_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+  auto arg0 = Operand(cpp_type);
+  if (arg_type_ids.size() == 1) {
+    return FindClangOperator(context, loc_id, *op_kind, {&arg0.expression});
+  }
+
+  CARBON_CHECK(arg_type_ids.size() == 2);
+  cpp_type = MapToCppType(context, arg_type_ids[1]);
+  if (cpp_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+  auto arg1 = Operand(cpp_type);
+  return FindClangOperator(context, loc_id, *op_kind,
+                           {&arg0.expression, &arg1.expression});
+}
+
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Register an annotation scope to flush any Clang diagnostics when we return.
@@ -461,6 +545,14 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // with Carbon diagnostics.
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
+
+  // We can only handle concrete types in LookupCppOperator.
+  for (auto arg_id : arg_ids) {
+    auto type_id = context.insts().Get(arg_id).type_id();
+    if (type_id.is_symbolic()) {
+      return SemIR::InstId::None;
+    }
+  }
 
   // Handle `ImplicitAs` and `As`.
   if (op.interface_name == CoreIdentifier::ImplicitAs ||
@@ -491,14 +583,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Make sure all operands are complete before lookup.
   for (SemIR::InstId arg_id : arg_ids) {
     SemIR::TypeId arg_type_id = context.insts().Get(arg_id).type_id();
-    if (!RequireCompleteType(context, arg_type_id, loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteOperandTypeInCppOperatorLookup, Context,
-              "looking up a C++ operator with incomplete operand type {0}",
-              SemIR::TypeId);
-          builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                          arg_type_id);
-        })) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
       return SemIR::ErrorInst::InstId;
     }
   }
@@ -507,18 +596,24 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (!maybe_arg_exprs.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
-  auto& arg_exprs = *maybe_arg_exprs;
 
+  return FindClangOperator(context, loc_id, *op_kind, *maybe_arg_exprs);
+}
+
+static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
+                              clang::OverloadedOperatorKind op_kind,
+                              llvm::ArrayRef<clang::Expr*> arg_exprs)
+    -> SemIR::InstId {
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
   clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
-      *op_kind, loc, /*AllowRewritten=*/true);
+      op_kind, loc, /*AllowRewritten=*/true);
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
 
   clang::Sema& sema = context.clang_sema();
 
   // This works for both unary and binary operators.
-  sema.LookupOverloadedBinOp(candidate_set, *op_kind, clang::UnresolvedSet<0>{},
+  sema.LookupOverloadedBinOp(candidate_set, op_kind, clang::UnresolvedSet<0>{},
                              arg_exprs);
 
   clang::OverloadCandidateSet::iterator best_viable_fn;
@@ -541,7 +636,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
 
       // If this is an operator method, the first arg will be used as self.
-      int32_t num_params = arg_ids.size();
+      int32_t num_params = arg_exprs.size();
       if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
         --num_params;
       }
@@ -571,7 +666,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       return SemIR::InstId::None;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
-      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      const char* spelling = clang::getOperatorSpelling(op_kind);
       candidate_set.NoteCandidates(
           clang::PartialDiagnosticAt(
               loc, sema.PDiag(clang::diag::err_ovl_ambiguous_oper_binary)
@@ -581,7 +676,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted:
-      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      const char* spelling = clang::getOperatorSpelling(op_kind);
       auto* message = best_viable_fn->Function->getDeletedMessage();
       // The best viable function might be a different operator if the best
       // candidate is a rewritten candidate, so use the operator kind of the

@@ -263,17 +263,6 @@ static auto FindDesignator(Context& context,
           return FullySubstituted;
         }
       }
-      // FacetAccessType of `.Self` is evaluated to SymbolicBindingType, so we
-      // need to look for this instruction too, since we won't find a `.Self`
-      // directly in that case.
-      if (auto bind =
-              context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
-        auto entity_name = context().entity_names().Get(bind->entity_name_id);
-        if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-          *found_ = true;
-          return FullySubstituted;
-        }
-      }
 
       return SubstOperands;
     }

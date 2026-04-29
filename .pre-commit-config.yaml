@@ -150,6 +150,7 @@ repos:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
           - rich
+          - types-requests
         # Exclusions are:
         # - p#### scripts because they're not tested or maintained.
         # - lit.cfg.py because it has multiple copies, breaking mypy.

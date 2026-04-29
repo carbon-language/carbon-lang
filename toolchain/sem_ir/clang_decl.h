@@ -21,7 +21,7 @@ struct Signature : public Printable<Signature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
     Copy,
-    Move
+    Move,
   };
 
   enum Kind : int8_t {
@@ -42,6 +42,13 @@ struct Signature : public Printable<Signature> {
 
   // The passing mode for each parameter.
   llvm::SmallVector<PassingMode, 4> passing_modes;
+
+  // Returns the passing mode for the i-th parameter.
+  // TODO: Require that `passing_modes.size()` is always `num_params`.
+  auto GetPassingMode(int32_t i) const -> PassingMode {
+    return i < static_cast<int32_t>(passing_modes.size()) ? passing_modes[i]
+                                                          : PassingMode::Copy;
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 

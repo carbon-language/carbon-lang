@@ -130,13 +130,11 @@ struct InitializeResult {
 
 // Performs initialization of `storage_id` from the expression `value_id`, which
 // is converted to an initializing expression of the type of `storage_id` if
-// necessary.
-//
-// `storage_access_block` should be used to supply a pending block that
-// allocates the storage, and typically contains `storage_id`. The target of the
-// initialization will be either `storage_id` itself, or an existing storage
-// argument instruction that is overwritten to hold a copy of `storage_id` as an
-// optimization for SemIR compactness.
+// necessary. `storage_access_block` should be used to supply a pending block
+// that allocates the storage, and typically contains `storage_id`. The target
+// of the initialization will be either `storage_id` itself, or an existing
+// storage argument instruction that is overwritten to hold a copy of
+// `storage_id` as an optimization for SemIR compactness.
 //
 // The storage instruction will only be written over an existing instruction if
 // it is the sole instruction in the pending block. This is expected to be a

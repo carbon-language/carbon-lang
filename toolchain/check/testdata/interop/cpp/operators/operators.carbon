@@ -822,35 +822,6 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// ============================================================================
-// Satisfying constraints
-// ============================================================================
-
-// --- fail_todo_constraints.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-class X {};
-X operator+(X, X);
-''';
-
-// TODO: Use Core.Add() when it is available.
-// TODO: `Sum()` should be declared this way when generics implementation is ready for that:
-// fn Sum[T:! Core.AddWith(.Self) where .Result = .Self](a: T, b: T) -> T
-fn Sum[U:! type, T:! Core.AddWith(U) where .Result = U](a: T, b: U) -> U {
-  return a + b;
-}
-fn Call(x: Cpp.X) -> Cpp.X {
-  // CHECK:STDERR: fail_todo_constraints.carbon:[[@LINE+7]]:10: error: cannot convert type `Cpp.X` into type implementing `Core.AddWith(Cpp.X) where .(Core.AddWith(Cpp.X).Result) = Cpp.X` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   return Sum(x, x);
-  // CHECK:STDERR:          ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_constraints.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Sum[U:! type, T:! Core.AddWith(U) where .Result = U](a: T, b: U) -> U {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return Sum(x, x);
-}
 
 // ============================================================================
 // Operator not found

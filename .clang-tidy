@@ -35,6 +35,7 @@ Checks:
   - '-readability-make-member-function-const'
   - '-readability-math-missing-parentheses'
   - '-readability-static-definition-in-anonymous-namespace'
+  - '-readability-trailing-comma'
   - '-readability-use-anyofallof'
 
   # Warns when we have multiple empty cases in switches, which we do for comment
@@ -94,6 +95,10 @@ Checks:
   # Warns on `= {}` which is also used to indicate which fields do not need to
   # be explicitly initialized in aggregate initialization.
   - '-readability-redundant-member-init'
+  # Broken, wants to remove parens from `*(p + 1)` and `("Foo" + s).str()`.
+  # TODO: Re-enable once https://github.com/llvm/llvm-project/issues/192435 and
+  # related bugs are fixed.
+  - '-readability-redundant-parentheses'
   # Warns when callers use similar names as different parameters.
   - '-readability-suspicious-call-argument'
 

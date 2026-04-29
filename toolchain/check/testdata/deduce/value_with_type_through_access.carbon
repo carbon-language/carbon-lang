@@ -128,7 +128,7 @@ fn G() {
 // CHECK:STDOUT:   %tuple.1f1: %tuple.type = tuple_value (%C) [concrete]
 // CHECK:STDOUT:   %HoldsType.a31: type = class_type @HoldsType, @HoldsType(%tuple.1f1) [concrete]
 // CHECK:STDOUT:   %HoldsType.val: %HoldsType.a31 = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.a646: type = pattern_type %HoldsType.a31 [concrete]
+// CHECK:STDOUT:   %pattern_type.a64: type = pattern_type %HoldsType.a31 [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%tuple.1f1) [concrete]
 // CHECK:STDOUT:   %.31a: ref %HoldsType.a31 = temporary invalid, %HoldsType.val [concrete]
@@ -307,7 +307,7 @@ fn G() {
 // CHECK:STDOUT: specific @F(constants.%tuple.1f1) {
 // CHECK:STDOUT:   %T.loc8_7.1 => constants.%tuple.1f1
 // CHECK:STDOUT:   %HoldsType.loc8_41.1 => constants.%HoldsType.a31
-// CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.a646
+// CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.a64
 // CHECK:STDOUT:   %tuple.elem0.loc8_55.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc8_52 => constants.%pattern_type.7c7
 // CHECK:STDOUT:

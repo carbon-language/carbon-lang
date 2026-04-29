@@ -43,11 +43,11 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.651: %I.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.binding.as_type.3af: type = symbolic_binding_type T, 0, %T.651 [symbolic]
-// CHECK:STDOUT:   %pattern_type.422: type = pattern_type %T.binding.as_type.3af [symbolic]
+// CHECK:STDOUT:   %T.as_type.066: type = facet_access_type %T.651 [symbolic]
+// CHECK:STDOUT:   %pattern_type.f4e: type = pattern_type %T.as_type.066 [symbolic]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.2b8: <witness> = require_complete_type %T.binding.as_type.3af [symbolic]
+// CHECK:STDOUT:   %require_complete.6bb: <witness> = require_complete_type %T.as_type.066 [symbolic]
 // CHECK:STDOUT:   %TestOp.specific_fn: <specific function> = specific_function %TestOp, @TestOp(%I.facet) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -71,33 +71,33 @@ fn Test(x: i32) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9d9 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @TestOp.%pattern_type (%pattern_type.422) = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @TestOp.%pattern_type (%pattern_type.422) = var_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: @TestOp.%pattern_type (%pattern_type.f4e) = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @TestOp.%pattern_type (%pattern_type.f4e) = var_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc22_15: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc22_12.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc22_12.1 (constants.%T.651)]
-// CHECK:STDOUT:     %x.param: ref @TestOp.%T.binding.as_type (%T.binding.as_type.3af) = ref_param call_param0
-// CHECK:STDOUT:     %.loc22_32.1: type = splice_block %.loc22_32.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3af)] {
+// CHECK:STDOUT:     %x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.066) = ref_param call_param0
+// CHECK:STDOUT:     %.loc22_32.1: type = splice_block %.loc22_32.2 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.066)] {
 // CHECK:STDOUT:       %T.ref: %I.type = name_ref T, %T.loc22_12.2 [symbolic = %T.loc22_12.1 (constants.%T.651)]
-// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3af)]
-// CHECK:STDOUT:       %.loc22_32.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3af)]
+// CHECK:STDOUT:       %T.as_type.loc22_32.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.066)]
+// CHECK:STDOUT:       %.loc22_32.2: type = converted %T.ref, %T.as_type.loc22_32.2 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.066)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @TestOp.%T.binding.as_type (%T.binding.as_type.3af) = ref_binding x, %x.param
+// CHECK:STDOUT:     %x: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.066) = ref_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestOp(%T.loc22_12.2: %I.type) {
 // CHECK:STDOUT:   %T.loc22_12.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc22_12.1 (constants.%T.651)]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc22_12.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3af)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.422)]
+// CHECK:STDOUT:   %T.as_type.loc22_32.1: type = facet_access_type %T.loc22_12.1 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.066)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc22_32.1 [symbolic = %pattern_type (constants.%pattern_type.f4e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.2b8)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc22_32.1 [symbolic = %require_complete (constants.%require_complete.6bb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.binding.as_type (%T.binding.as_type.3af)) {
+// CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.066)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -132,13 +132,13 @@ fn Test(x: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestOp(constants.%T.651) {
 // CHECK:STDOUT:   %T.loc22_12.1 => constants.%T.651
-// CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type.3af
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
+// CHECK:STDOUT:   %T.as_type.loc22_32.1 => constants.%T.as_type.066
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f4e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestOp(constants.%I.facet) {
 // CHECK:STDOUT:   %T.loc22_12.1 => constants.%I.facet
-// CHECK:STDOUT:   %T.binding.as_type => constants.%i32
+// CHECK:STDOUT:   %T.as_type.loc22_32.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

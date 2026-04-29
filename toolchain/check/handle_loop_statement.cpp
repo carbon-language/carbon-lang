@@ -174,11 +174,11 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto cursor_var_id = cursor_var_block.AddInstWithCleanup<SemIR::VarStorage>(
       node_id,
       {.type_id = cursor_type_id, .pattern_id = SemIR::AbsoluteInstId::None});
-  // Disable broken lint that suggests a "fix" that doesn't compile.
-  auto init_result = Initialize(context, node_id,
-                                // NOLINTNEXTLINE(performance-move-const-arg)
-                                std::move(cursor_var_id),
-                                std::move(cursor_var_block), cursor_id);
+  auto init_result = Initialize(
+      context, node_id,
+      // Disable broken lint that suggests a "fix" that doesn't compile.
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      std::move(cursor_var_id), std::move(cursor_var_block), cursor_id);
   AddInst<SemIR::Assign>(
       context, node_id,
       {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});

@@ -3909,23 +3909,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::SymbolicBindingType inst)
-    -> ResolveResult {
-  auto facet_value_inst_id =
-      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  auto entity_name_id =
-      GetLocalSymbolicEntityNameId(resolver, inst.entity_name_id);
-  return ResolveResult::Deduplicated<SemIR::SymbolicBindingType>(
-      resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .entity_name_id = entity_name_id,
-                 .facet_value_inst_id = facet_value_inst_id});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::Temporary inst) -> ResolveResult {
   CARBON_CHECK(inst.storage_id == SemIR::InstId::None);
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
@@ -4313,9 +4296,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
-    }
-    case CARBON_KIND(SemIR::SymbolicBindingType inst): {
-      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::Temporary inst): {
       return TryResolveTypedInst(resolver, inst);

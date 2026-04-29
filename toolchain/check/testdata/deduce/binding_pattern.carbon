@@ -280,25 +280,25 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ff3: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b3a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self.738) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.1de: %ImplicitAs.WithSelf.Convert.type.b3a = struct_value () [symbolic]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
-// CHECK:STDOUT:   %ImplicitAs.type.164: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.binding.as_type)> [symbolic_self]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.binding.as_type)> [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   %ImplicitAs.type.9fd: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %type_where [symbolic_self]
 // CHECK:STDOUT:   %V: %type_where = symbolic_binding V, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %V.binding.as_type: type = symbolic_binding_type V, 1, %V [symbolic]
-// CHECK:STDOUT:   %C.635: type = class_type @C, @C(%V.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %C.Create.type.069: type = fn_type @C.Create, @C(%V.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %C.Create.63a: %C.Create.type.069 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.829: <witness> = require_complete_type %C.635 [symbolic]
-// CHECK:STDOUT:   %pattern_type.29e: type = pattern_type %V.binding.as_type [symbolic]
-// CHECK:STDOUT:   %C.Create.specific_fn: <specific function> = specific_function %C.Create.63a, @C.Create(%V.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %require_complete.3f7: <witness> = require_complete_type %V.binding.as_type [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3ee: type = facet_type <@ImplicitAs, @ImplicitAs(%V.binding.as_type)> [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.efc: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %assoc0.57e: %ImplicitAs.assoc_type.efc = assoc_entity element0, imports.%Core.import_ref.201 [symbolic]
-// CHECK:STDOUT:   %require_complete.8dc: <witness> = require_complete_type %ImplicitAs.type.3ee [symbolic]
+// CHECK:STDOUT:   %V.as_type: type = facet_access_type %V [symbolic]
+// CHECK:STDOUT:   %C.771: type = class_type @C, @C(%V.as_type) [symbolic]
+// CHECK:STDOUT:   %C.Create.type.546: type = fn_type @C.Create, @C(%V.as_type) [symbolic]
+// CHECK:STDOUT:   %C.Create.efb: %C.Create.type.546 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.8ea: <witness> = require_complete_type %C.771 [symbolic]
+// CHECK:STDOUT:   %pattern_type.eff: type = pattern_type %V.as_type [symbolic]
+// CHECK:STDOUT:   %C.Create.specific_fn: <specific function> = specific_function %C.Create.efb, @C.Create(%V.as_type) [symbolic]
+// CHECK:STDOUT:   %require_complete.63f: <witness> = require_complete_type %V.as_type [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.596: type = facet_type <@ImplicitAs, @ImplicitAs(%V.as_type)> [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.e29: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.as_type) [symbolic]
+// CHECK:STDOUT:   %assoc0.f06: %ImplicitAs.assoc_type.e29 = assoc_entity element0, imports.%Core.import_ref.201 [symbolic]
+// CHECK:STDOUT:   %require_complete.26d: <witness> = require_complete_type %ImplicitAs.type.596 [symbolic]
 // CHECK:STDOUT:   %assoc0.843: %ImplicitAs.assoc_type.ff3 = assoc_entity element0, imports.%Core.import_ref.cc1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,9 +347,9 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:       %.Self.ref: %type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc9_68: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self.binding.as_type)> [symbolic_self = constants.%ImplicitAs.type.164]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc9_68: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self.as_type)> [symbolic_self = constants.%ImplicitAs.type.9fd]
 // CHECK:STDOUT:       %.loc9_39.2: type = converted %.loc9_39.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %.loc9_32.2: type = where_expr %.Self.2 [symbolic_self = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type type
@@ -404,33 +404,33 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %V.loc9_24.1: %type_where = symbolic_binding V, 1 [symbolic = %V.loc9_24.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %V.binding.as_type: type = symbolic_binding_type V, 1, %V.loc9_24.1 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
-// CHECK:STDOUT:   %C.loc20_6.2: type = class_type @C, @C(%V.binding.as_type) [symbolic = %C.loc20_6.2 (constants.%C.635)]
-// CHECK:STDOUT:   %require_complete.loc20_7: <witness> = require_complete_type %C.loc20_6.2 [symbolic = %require_complete.loc20_7 (constants.%require_complete.829)]
-// CHECK:STDOUT:   %C.Create.type: type = fn_type @C.Create, @C(%V.binding.as_type) [symbolic = %C.Create.type (constants.%C.Create.type.069)]
-// CHECK:STDOUT:   %C.Create: @F.%C.Create.type (%C.Create.type.069) = struct_value () [symbolic = %C.Create (constants.%C.Create.63a)]
-// CHECK:STDOUT:   %C.Create.specific_fn.loc20_7.2: <specific function> = specific_function %C.Create, @C.Create(%V.binding.as_type) [symbolic = %C.Create.specific_fn.loc20_7.2 (constants.%C.Create.specific_fn)]
-// CHECK:STDOUT:   %require_complete.loc20_16.1: <witness> = require_complete_type %V.binding.as_type [symbolic = %require_complete.loc20_16.1 (constants.%require_complete.3f7)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc20_16.2: type = facet_type <@ImplicitAs, @ImplicitAs(%V.binding.as_type)> [symbolic = %ImplicitAs.type.loc20_16.2 (constants.%ImplicitAs.type.3ee)]
-// CHECK:STDOUT:   %require_complete.loc20_16.2: <witness> = require_complete_type %ImplicitAs.type.loc20_16.2 [symbolic = %require_complete.loc20_16.2 (constants.%require_complete.8dc)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.binding.as_type) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.efc)]
-// CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.efc) = assoc_entity element0, imports.%Core.import_ref.201 [symbolic = %assoc0 (constants.%assoc0.57e)]
+// CHECK:STDOUT:   %V.as_type.loc20_6.2: type = facet_access_type %V.loc9_24.1 [symbolic = %V.as_type.loc20_6.2 (constants.%V.as_type)]
+// CHECK:STDOUT:   %C.loc20_6.2: type = class_type @C, @C(%V.as_type.loc20_6.2) [symbolic = %C.loc20_6.2 (constants.%C.771)]
+// CHECK:STDOUT:   %require_complete.loc20_7: <witness> = require_complete_type %C.loc20_6.2 [symbolic = %require_complete.loc20_7 (constants.%require_complete.8ea)]
+// CHECK:STDOUT:   %C.Create.type: type = fn_type @C.Create, @C(%V.as_type.loc20_6.2) [symbolic = %C.Create.type (constants.%C.Create.type.546)]
+// CHECK:STDOUT:   %C.Create: @F.%C.Create.type (%C.Create.type.546) = struct_value () [symbolic = %C.Create (constants.%C.Create.efb)]
+// CHECK:STDOUT:   %C.Create.specific_fn.loc20_7.2: <specific function> = specific_function %C.Create, @C.Create(%V.as_type.loc20_6.2) [symbolic = %C.Create.specific_fn.loc20_7.2 (constants.%C.Create.specific_fn)]
+// CHECK:STDOUT:   %require_complete.loc20_16.1: <witness> = require_complete_type %V.as_type.loc20_6.2 [symbolic = %require_complete.loc20_16.1 (constants.%require_complete.63f)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc20_16.2: type = facet_type <@ImplicitAs, @ImplicitAs(%V.as_type.loc20_6.2)> [symbolic = %ImplicitAs.type.loc20_16.2 (constants.%ImplicitAs.type.596)]
+// CHECK:STDOUT:   %require_complete.loc20_16.2: <witness> = require_complete_type %ImplicitAs.type.loc20_16.2 [symbolic = %require_complete.loc20_16.2 (constants.%require_complete.26d)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.as_type.loc20_6.2) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.e29)]
+// CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.e29) = assoc_entity element0, imports.%Core.import_ref.201 [symbolic = %assoc0 (constants.%assoc0.f06)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %V.ref: %type_where = name_ref V, %V.loc9_24.2 [symbolic = %V.loc9_24.1 (constants.%V)]
-// CHECK:STDOUT:     %V.as_type: type = facet_access_type %V.ref [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
-// CHECK:STDOUT:     %.loc20_6: type = converted %V.ref, %V.as_type [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
-// CHECK:STDOUT:     %C.loc20_6.1: type = class_type @C, @C(constants.%V.binding.as_type) [symbolic = %C.loc20_6.2 (constants.%C.635)]
-// CHECK:STDOUT:     %.loc20_7: @F.%C.Create.type (%C.Create.type.069) = specific_constant @C.%C.Create.decl, @C(constants.%V.binding.as_type) [symbolic = %C.Create (constants.%C.Create.63a)]
-// CHECK:STDOUT:     %Create.ref: @F.%C.Create.type (%C.Create.type.069) = name_ref Create, %.loc20_7 [symbolic = %C.Create (constants.%C.Create.63a)]
+// CHECK:STDOUT:     %V.as_type.loc20_6.1: type = facet_access_type %V.ref [symbolic = %V.as_type.loc20_6.2 (constants.%V.as_type)]
+// CHECK:STDOUT:     %.loc20_6: type = converted %V.ref, %V.as_type.loc20_6.1 [symbolic = %V.as_type.loc20_6.2 (constants.%V.as_type)]
+// CHECK:STDOUT:     %C.loc20_6.1: type = class_type @C, @C(constants.%V.as_type) [symbolic = %C.loc20_6.2 (constants.%C.771)]
+// CHECK:STDOUT:     %.loc20_7: @F.%C.Create.type (%C.Create.type.546) = specific_constant @C.%C.Create.decl, @C(constants.%V.as_type) [symbolic = %C.Create (constants.%C.Create.efb)]
+// CHECK:STDOUT:     %Create.ref: @F.%C.Create.type (%C.Create.type.546) = name_ref Create, %.loc20_7 [symbolic = %C.Create (constants.%C.Create.efb)]
 // CHECK:STDOUT:     %.loc20_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %C.Create.specific_fn.loc20_7.1: <specific function> = specific_function %Create.ref, @C.Create(constants.%V.binding.as_type) [symbolic = %C.Create.specific_fn.loc20_7.2 (constants.%C.Create.specific_fn)]
-// CHECK:STDOUT:     %ImplicitAs.type.loc20_16.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%V.binding.as_type)> [symbolic = %ImplicitAs.type.loc20_16.2 (constants.%ImplicitAs.type.3ee)]
-// CHECK:STDOUT:     %.loc20_16.2: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.efc) = specific_constant imports.%Core.import_ref.178, @ImplicitAs.WithSelf(constants.%V.binding.as_type, constants.%Self.738) [symbolic = %assoc0 (constants.%assoc0.57e)]
-// CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.efc) = name_ref Convert, %.loc20_16.2 [symbolic = %assoc0 (constants.%assoc0.57e)]
-// CHECK:STDOUT:     %.loc20_16.3: @F.%V.binding.as_type (%V.binding.as_type) = converted %.loc20_16.1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %C.Create.specific_fn.loc20_7.1: <specific function> = specific_function %Create.ref, @C.Create(constants.%V.as_type) [symbolic = %C.Create.specific_fn.loc20_7.2 (constants.%C.Create.specific_fn)]
+// CHECK:STDOUT:     %ImplicitAs.type.loc20_16.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%V.as_type)> [symbolic = %ImplicitAs.type.loc20_16.2 (constants.%ImplicitAs.type.596)]
+// CHECK:STDOUT:     %.loc20_16.2: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.e29) = specific_constant imports.%Core.import_ref.178, @ImplicitAs.WithSelf(constants.%V.as_type, constants.%Self.738) [symbolic = %assoc0 (constants.%assoc0.f06)]
+// CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.e29) = name_ref Convert, %.loc20_16.2 [symbolic = %assoc0 (constants.%assoc0.f06)]
+// CHECK:STDOUT:     %.loc20_16.3: @F.%V.as_type.loc20_6.2 (%V.as_type) = converted %.loc20_16.1, <error> [concrete = <error>]
 // CHECK:STDOUT:     %C.Create.call: init %empty_tuple.type = call %C.Create.specific_fn.loc20_7.1(<error>)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -454,19 +454,19 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %V.loc9_24.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%V.binding.as_type) {
-// CHECK:STDOUT:   %T.loc4_10.1 => constants.%V.binding.as_type
+// CHECK:STDOUT: specific @C(constants.%V.as_type) {
+// CHECK:STDOUT:   %T.loc4_10.1 => constants.%V.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C.Create.type => constants.%C.Create.type.069
-// CHECK:STDOUT:   %C.Create => constants.%C.Create.63a
+// CHECK:STDOUT:   %C.Create.type => constants.%C.Create.type.546
+// CHECK:STDOUT:   %C.Create => constants.%C.Create.efb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C.Create(constants.%V.binding.as_type) {
-// CHECK:STDOUT:   %T => constants.%V.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.29e
+// CHECK:STDOUT: specific @C.Create(constants.%V.as_type) {
+// CHECK:STDOUT:   %T => constants.%V.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.eff
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.3f7
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.63f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

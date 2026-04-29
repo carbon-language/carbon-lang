@@ -681,9 +681,9 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       auto storage_id = storage_block.AddInstWithCleanup<SemIR::VarStorage>(
           SemIR::LocId(entry.pattern_id),
           {.type_id = pattern_type_id, .pattern_id = entry.pattern_id});
-      // Disable broken lint that suggests a "fix" that doesn't compile.
       auto init_result = Initialize(
           context_, SemIR::LocId(entry.pattern_id),
+          // Disable broken lint that suggests a "fix" that doesn't compile.
           // NOLINTNEXTLINE(performance-move-const-arg)
           std::move(storage_id), std::move(storage_block), scrutinee_id);
       // TODO: Consider instead creating something like a `Temporary`

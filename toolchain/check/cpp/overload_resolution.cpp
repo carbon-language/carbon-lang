@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/overload_resolution.h"
 
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/DiagnosticSema.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
@@ -141,33 +142,56 @@ static auto ComputeSignature(Context& context,
   signature.num_params = static_cast<int32_t>(arg_exprs.size());
   signature.passing_modes.reserve(signature.num_params);
 
-  for (unsigned i = 0; i < arg_exprs.size(); ++i) {
-    const auto& ics = candidate->Conversions[i];
+  for (auto [i, arg_expr] : llvm::enumerate(arg_exprs)) {
+    // Compute which conversion sequence corresponds to this argument.
+    // TODO: Clang should expose a way to compute this.
+    int conversion_index = i;
+    if (auto* method = dyn_cast<clang::CXXMethodDecl>(candidate->Function)) {
+      if (method->isStatic()) {
+        // Static methods get an object parameter conversion at index 0, even
+        // though there's no argument.
+        ++conversion_index;
+      }
+    }
+
+    const auto& ics = candidate->Conversions[conversion_index];
     SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::Copy;
 
+    // Determine whether this conversion should perform a move when passing by
+    // value.
+    clang::QualType to_type;
     if (ics.isStandard()) {
       const auto& scs = ics.Standard;
-      if (scs.ReferenceBinding && !scs.IsLvalueReference) {
+      if (!scs.ReferenceBinding &&
+          (arg_expr->isPRValue() || arg_expr->isXValue()) &&
+          arg_expr->getType()->isRecordType()) {
+        // A standard conversion for a class that is not a reference binding
+        // must be a copy or a move. The source is an rvalue, so we want to
+        // perform a move.
         mode = SemIR::Signature::PassingMode::Move;
-      } else if (!scs.ReferenceBinding && (arg_exprs[i]->isPRValue() || arg_exprs[i]->isXValue())) {
-        mode = SemIR::Signature::PassingMode::Move;
+        to_type = scs.getToType(2);
       }
+    } else if (ics.isUserDefined()) {
+      const auto& ucs = ics.UserDefined;
+      const auto* ctor =
+          dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
+      if (!ucs.After.ReferenceBinding && ctor && ctor->isMoveConstructor()) {
+        // Overload resolution decided to call a move constructor. Therefore we
+        // should perform a move.
+        mode = SemIR::Signature::PassingMode::Move;
+        to_type = ucs.After.getToType(2);
+      }
+    }
 
-      // Tweak: treat it as a copy if it's a trivial move and the copy ctor is
-      // also non-deleted and trivial.
-      if (mode == SemIR::Signature::PassingMode::Move) {
-        clang::QualType param_type =
-            candidate->Function->getParamDecl(i)->getType();
-        if (const auto* record_type = param_type->getAs<clang::RecordType>()) {
-          if (const auto* record_decl =
-                  dyn_cast<clang::CXXRecordDecl>(record_type->getDecl())) {
-            if (record_decl->hasTrivialMoveConstructor() &&
-                record_decl->hasTrivialCopyConstructor() &&
-                !record_decl->defaultedCopyConstructorIsDeleted()) {
-              mode = SemIR::Signature::PassingMode::Copy;
-            }
-          }
-        }
+    // If we decided to perform a move, check if it's really necessary. If the
+    // copy constructor is also non-deleted and trivial, we can just perform a
+    // copy instead. Doing so allows us to generate fewer thunks.
+    if (mode == SemIR::Signature::PassingMode::Move) {
+      const auto* record_decl = to_type->castAsCXXRecordDecl();
+      if (record_decl->hasTrivialMoveConstructor() &&
+          record_decl->hasTrivialCopyConstructor() &&
+          !record_decl->defaultedCopyConstructorIsDeleted()) {
+        mode = SemIR::Signature::PassingMode::Copy;
       }
     }
     signature.passing_modes.push_back(mode);
