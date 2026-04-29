@@ -179,7 +179,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.loc8_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc8_26.2: %empty_struct_type = converted %.loc8_26.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc8_14: type = where_expr %.Self [concrete = constants.%I_where.type.2d8] {
+// CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%I_where.type.2d8] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc8_26.2
 // CHECK:STDOUT:     }
@@ -194,7 +194,7 @@ fn CallF() {
 // CHECK:STDOUT:     %V.ref: %I.assoc_type = name_ref V, @V.%assoc0 [concrete = constants.%assoc0.f13]
 // CHECK:STDOUT:     %impl.elem0.loc10_21: %.Self.as_type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:     %.loc10_15.1: type = where_expr %.Self [concrete = constants.%I_where.type.1f4] {
+// CHECK:STDOUT:     %.loc10_15.1: type = where_expr [concrete = constants.%I_where.type.1f4] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_21, %int_0
 // CHECK:STDOUT:     }
@@ -330,7 +330,7 @@ fn CallF() {
 // CHECK:STDOUT:     %V.ref: %I.assoc_type = name_ref V, @V.%assoc0 [concrete = constants.%assoc0.f13]
 // CHECK:STDOUT:     %impl.elem0: %.Self.as_type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc15_14.1: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc15_14.1: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %int_0
 // CHECK:STDOUT:     }
@@ -465,7 +465,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.loc18_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_25.2: %empty_tuple.type = converted %.loc18_25.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc18_13.1: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc18_13.1: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc18_19, %.loc18_25.2
 // CHECK:STDOUT:     }
@@ -661,7 +661,7 @@ fn CallF() {
 // CHECK:STDOUT:     %.loc15_24: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %V.ref: <error> = name_ref V, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc15_30: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_18: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc15_18: type = where_expr [concrete = <error>] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type.54b
 // CHECK:STDOUT:       requirement_rewrite %V.ref, <error>
 // CHECK:STDOUT:     }
@@ -794,7 +794,7 @@ fn CallF() {
 // CHECK:STDOUT:       %.loc8_60.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc8_60.2: %empty_struct_type = converted %.loc8_60.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc8_12.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc8_12.2: type = where_expr [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_impls %.loc8_19.2, %ImplicitAs.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc8_60.2

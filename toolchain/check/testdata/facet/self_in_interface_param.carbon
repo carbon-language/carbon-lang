@@ -88,7 +88,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:       %impl.elem0.loc18_25: type = impl_witness_access constants.%I.lookup_impl_witness.42f, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc18_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc18_32.2: type = converted %.loc18_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc18_19.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc18_19.2: type = where_expr [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type.6e7
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_25, %.loc18_32.2
 // CHECK:STDOUT:       }

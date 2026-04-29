@@ -671,7 +671,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:       %impl.elem0.loc6_19: type = impl_witness_access constants.%A.lookup_impl_witness.6a5, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc6_25.2: type = converted %.loc6_25.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc6_13.2: type = where_expr %.Self.2 [concrete = constants.%A_where.type] {
+// CHECK:STDOUT:       %.loc6_13.2: type = where_expr [concrete = constants.%A_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%A.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc6_19, %.loc6_25.2
 // CHECK:STDOUT:       }
@@ -820,7 +820,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:       %impl.elem0.loc14_35: type = impl_witness_access constants.%B.lookup_impl_witness.d4f, element0 [symbolic_self = constants.%impl.elem0.11d]
 // CHECK:STDOUT:       %.loc14_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc14_41.2: type = converted %.loc14_41.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc14_17.2: type = where_expr %.Self.2 [concrete = constants.%facet_type.82c] {
+// CHECK:STDOUT:       %.loc14_17.2: type = where_expr [concrete = constants.%facet_type.82c] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%facet_type.9bb
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc14_23, %.loc14_29.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc14_35, %.loc14_41.2
@@ -865,7 +865,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:       %impl.elem0.loc18_35: type = impl_witness_access constants.%B.lookup_impl_witness.d4f, element0 [symbolic_self = constants.%impl.elem0.11d]
 // CHECK:STDOUT:       %.loc18_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc18_41.2: type = converted %.loc18_41.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc18_17.2: type = where_expr %.Self.2 [concrete = constants.%facet_type.82c] {
+// CHECK:STDOUT:       %.loc18_17.2: type = where_expr [concrete = constants.%facet_type.82c] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%facet_type.9bb
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_23, %.loc18_29.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_35, %.loc18_41.2

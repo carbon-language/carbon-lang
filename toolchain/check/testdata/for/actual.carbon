@@ -450,7 +450,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:       %Int.loc9_85: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_54.1 (constants.%Int.fc6021.1)]
 // CHECK:STDOUT:       %facet_value.loc9_85.2: %facet_type.7e2 = facet_value %Int.loc9_85, (constants.%Destroy.lookup_impl_witness.93c, constants.%Copy.lookup_impl_witness.7a8) [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
 // CHECK:STDOUT:       %.loc9_85.2: %facet_type.7e2 = converted %Int.loc9_85, %facet_value.loc9_85.2 [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
-// CHECK:STDOUT:       %.loc9_24: type = where_expr %.Self [symbolic = %Iterate_where.type (constants.%Iterate_where.type)] {
+// CHECK:STDOUT:       %.loc9_24: type = where_expr [symbolic = %Iterate_where.type (constants.%Iterate_where.type)] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%Iterate.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %Int.loc9_54.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_85.2

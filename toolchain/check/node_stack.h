@@ -420,7 +420,6 @@ class NodeStack {
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
-      case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::ForIn:
@@ -480,6 +479,7 @@ class NodeStack {
       case Parse::NodeKind::VariableIntroducer:
       case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::InlineIntroducer:
+      case Parse::NodeKind::WhereOperand:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:

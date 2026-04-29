@@ -68,6 +68,13 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
                      SemIR::SpecificNamedConstraint constraint)
     -> SemIR::SpecificNamedConstraint;
 
+// Returns whether the constant value of `inst_id` is a reference to `.Self`.
+//
+// If `canonicalize` is true, look at the constant value of `inst_id` and get
+// the canonicalized facet or type to look through FacetAccessType.
+auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
+                  bool canonicalize = true) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PERIOD_SELF_H_

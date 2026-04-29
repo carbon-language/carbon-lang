@@ -2486,17 +2486,6 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), temporary, phase);
 }
 
-// Returns whether `const_id` is the same constant facet value as
-// `facet_value_inst_id`.
-//
-// Compares with the canonical facet value of `const_id`, dropping any `as type`
-// conversions.
-static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
-                             SemIR::InstId facet_value_inst_id) -> bool {
-  auto canon_const_id = GetCanonicalFacetOrTypeValue(context, const_id);
-  return canon_const_id == context.constant_values().Get(facet_value_inst_id);
-}
-
 static auto AddRequirementBase(Context& context,
                                SemIR::RequirementBaseFacetType base,
                                SemIR::FacetTypeInfo* info, Phase* phase)
@@ -2568,7 +2557,6 @@ static auto AddRequirementRewrite(Context& context,
 
 static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
                                 SemIR::RequirementImpls impls,
-                                SemIR::InstId period_self_id,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
     -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
@@ -2587,8 +2575,7 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
   auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
   const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
 
-  if (IsSameFacetValue(context, context.constant_values().Get(lhs_id),
-                       period_self_id)) {
+  if (IsPeriodSelf(context, lhs_id)) {
     // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
     // type constrains for `.Self` gets forwarded to the output facet type to
     // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
@@ -2776,10 +2763,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
-  if (typed_inst.period_self_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
   // Note that these requirement instructions don't have a constant value. That
   // means we have to look for errors inside them, we can't just look to see if
   // their constant value is an error.
@@ -2802,7 +2785,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
         AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
-                            impls, typed_inst.period_self_id, &info, &phase);
+                            impls, &info, &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent _): {

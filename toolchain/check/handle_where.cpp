@@ -63,12 +63,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   context.scope_stack().PushForSameRegion();
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
-  auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, period_self_type_id);
-
-  // Save the `.Self` symbolic binding on the node stack. It will become the
-  // first argument to the `WhereExpr` instruction.
-  context.node_stack().Push(node_id, period_self_inst_id);
+  MakePeriodSelfFacetValue(context, period_self_type_id);
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other
@@ -292,22 +287,20 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop(/*check_unused=*/true);
-  SemIR::InstId period_self_id =
-      context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
 
+  auto type_id = SemIR::TypeType::TypeId;
   if (!FindDesignator(context, requirements_id)) {
     CARBON_DIAGNOSTIC(WhereWithoutDesignator, Error,
                       "`where` clause without a designator; expected `.Self` "
                       "to appear in a requirement, or a member of `.Self`");
     context.emitter().Emit(node_id, WhereWithoutDesignator);
-    period_self_id = SemIR::ErrorInst::InstId;
+    type_id = SemIR::ErrorInst::TypeId;
   }
 
-  AddInstAndPush<SemIR::WhereExpr>(context, node_id,
-                                   {.type_id = SemIR::TypeType::TypeId,
-                                    .period_self_id = period_self_id,
-                                    .requirements_id = requirements_id});
+  AddInstAndPush<SemIR::WhereExpr>(
+      context, node_id,
+      {.type_id = type_id, .requirements_id = requirements_id});
   return true;
 }
 

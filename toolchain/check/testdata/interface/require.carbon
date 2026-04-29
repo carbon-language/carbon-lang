@@ -714,7 +714,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc7_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_32.2: type = converted %.loc7_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_19: type = where_expr %.Self [concrete = constants.%Y_where.type] {
+// CHECK:STDOUT:     %.loc7_19: type = where_expr [concrete = constants.%Y_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc7_32.2
 // CHECK:STDOUT:     }
@@ -873,7 +873,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:     %Self.as_type.loc10_31: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc10_31: type = converted %Self.ref, %Self.as_type.loc10_31 [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc10_19: type = where_expr %.Self [symbolic = %Y_where.type (constants.%Y_where.type)] {
+// CHECK:STDOUT:     %.loc10_19: type = where_expr [symbolic = %Y_where.type (constants.%Y_where.type)] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_31
 // CHECK:STDOUT:     }

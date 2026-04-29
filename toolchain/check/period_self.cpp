@@ -275,4 +275,19 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
   return constraint;
 }
 
+auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
+    -> bool {
+  auto query_inst_id =
+      canonicalize
+          ? GetCanonicalFacetOrTypeValue(
+                context, context.constant_values().GetConstantInstId(inst_id))
+          : inst_id;
+  if (auto bind =
+          context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
+    const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
+    return entity_name.name_id == SemIR::NameId::PeriodSelf;
+  }
+  return false;
+}
+
 }  // namespace Carbon::Check

@@ -255,7 +255,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%N.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc9_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc9_28.2: type = converted %.loc9_28.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc9_16.2: type = where_expr %.Self.2 [concrete = constants.%N_where.type] {
+// CHECK:STDOUT:       %.loc9_16.2: type = where_expr [concrete = constants.%N_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%N.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_28.2
 // CHECK:STDOUT:       }
@@ -310,7 +310,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %B.ref: %A.assoc_type = name_ref B, @B.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%A.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc10_36: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:       %.loc10_25: type = where_expr %.Self.2 [concrete = constants.%A_where.type.f51] {
+// CHECK:STDOUT:       %.loc10_25: type = where_expr [concrete = constants.%A_where.type.f51] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%A.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_36
 // CHECK:STDOUT:       }
@@ -322,7 +322,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%A.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc10_54.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc10_54.2: type = converted %.loc10_54.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc10_42.2: type = where_expr %.Self.3 [concrete = constants.%A_where.type.321] {
+// CHECK:STDOUT:       %.loc10_42.2: type = where_expr [concrete = constants.%A_where.type.321] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%A_where.type.f51
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_54.2
 // CHECK:STDOUT:       }
@@ -379,7 +379,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %F.ref: %E.assoc_type = name_ref F, @F.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%E.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc9_28.2: type = where_expr %.Self.2 [concrete = constants.%E_where.type] {
+// CHECK:STDOUT:       %.loc9_28.2: type = where_expr [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%E.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
@@ -406,7 +406,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0.loc11_45: type = impl_witness_access constants.%E.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc11_45, %i32.loc11_37 [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.loc11_50: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc11_26.2: type = where_expr %.Self.2 [concrete = constants.%E_where.type] {
+// CHECK:STDOUT:       %.loc11_26.2: type = where_expr [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%E.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc11_32, %i32.loc11_37
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.subst, %i32.loc11_50
@@ -511,7 +511,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %L.ref: %J.assoc_type = name_ref L, @L.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%J.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc10_53: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:       %.loc10_30.2: type = where_expr %.Self.2 [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc10_30.2: type = where_expr [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%J.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_42.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_53
@@ -539,7 +539,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc12_45.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc12_45.2: type = converted %.loc12_45.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc12_19.2: type = where_expr %.Self.2 [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc12_19.2: type = where_expr [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%J.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc12_30
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc12_45.2

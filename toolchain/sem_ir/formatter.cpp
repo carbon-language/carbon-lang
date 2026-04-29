@@ -1264,7 +1264,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(WhereExpr where): {
-      FormatArgs(where.period_self_id);
       FormatTrailingBlock(where.requirements_id);
       return;
     }
