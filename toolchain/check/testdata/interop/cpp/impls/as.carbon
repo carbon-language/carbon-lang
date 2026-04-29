@@ -132,8 +132,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: --- conversions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %Source.cpp_operator.type: type = fn_type @Source.cpp_operator [concrete]
 // CHECK:STDOUT:   %Source.cpp_operator: %Source.cpp_operator.type = struct_value () [concrete]
@@ -317,8 +317,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: --- conditionally_explicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.c52b91.1: type = class_type @ConditionallyExplicit.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.285f84.1: type = pattern_type %ConditionallyExplicit.c52b91.1 [concrete]
 // CHECK:STDOUT:   %ptr.1fc: type = ptr_type %Source [concrete]
@@ -526,8 +526,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: --- fail_conditionally_explicit_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.c52b91.1: type = class_type @ConditionallyExplicit.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.285f84.1: type = pattern_type %ConditionallyExplicit.c52b91.1 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.c52b91.2: type = class_type @ConditionallyExplicit.2 [concrete]

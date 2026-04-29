@@ -308,10 +308,10 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: --- arithmetic_operators.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Result: %Destroy.type = symbolic_binding Result, 0 [symbolic]
 // CHECK:STDOUT:   %U.0bd: %Destroy.type = symbolic_binding U, 1 [symbolic]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.6d9: type = facet_type <@AddWith.1, @AddWith.1(%Other)> [symbolic]
 // CHECK:STDOUT:   %Self.b7c: %AddWith.type.6d9 = symbolic_binding Self, 1 [symbolic]

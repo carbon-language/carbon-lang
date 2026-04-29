@@ -410,7 +410,8 @@ auto FunctionTypeInfoBuilder::TryHandleParameter(
       sem_ir.inst_blocks().Get(sem_ir.functions()
                                    .Get(func_ctx.function_id)
                                    .call_param_patterns_id)[index.index];
-  auto param_pattern = sem_ir.insts().Get(param_pattern_id);
+  auto param_pattern = sem_ir.insts().Get(
+      sem_ir.constant_values().GetConstantInstId(param_pattern_id));
   auto param_type_id = ExtractScrutineeType(
       sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, func_ctx.specific_id,
                                              param_pattern_id));
@@ -430,26 +431,6 @@ auto FunctionTypeInfoBuilder::TryHandleParameter(
       param_pattern.type_id());
 
   auto param_kind = param_pattern.kind();
-
-  // Treat a form parameter pattern like the kind of param pattern that
-  // corresponds to its form.
-  if (auto form_param_pattern =
-          param_pattern.TryAs<SemIR::FormParamPattern>()) {
-    auto form_kind = sem_ir.insts().Get(form_param_pattern->form_id).kind();
-    switch (form_kind) {
-      case SemIR::InitForm::Kind:
-        param_kind = SemIR::VarParamPattern::Kind;
-        break;
-      case SemIR::RefForm::Kind:
-        param_kind = SemIR::RefParamPattern::Kind;
-        break;
-      case SemIR::ValueForm::Kind:
-        param_kind = SemIR::ValueParamPattern::Kind;
-        break;
-      default:
-        CARBON_FATAL("Unexpected kind {0} for form inst", form_kind);
-    }
-  }
 
   switch (param_kind) {
     case SemIR::RefParamPattern::Kind:

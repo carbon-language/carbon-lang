@@ -195,8 +195,8 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: --- copy_copyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copyable.Copyable.type: type = fn_type @Copyable.Copyable [concrete]
 // CHECK:STDOUT:   %Copyable.Copyable: %Copyable.Copyable.type = struct_value () [concrete]

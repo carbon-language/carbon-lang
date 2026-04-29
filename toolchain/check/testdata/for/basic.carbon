@@ -57,9 +57,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TrivialRange: type = class_type @TrivialRange [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Optional.Get.type.5bc: type = fn_type @Optional.Get, @Optional(%T.035) [symbolic]
 // CHECK:STDOUT:   %Optional.Get.fa5: %Optional.Get.type.5bc = struct_value () [symbolic]

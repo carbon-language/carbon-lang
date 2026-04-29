@@ -2369,7 +2369,9 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
-    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
+    } else if constexpr (ConstantKind ==
+                             SemIR::InstConstantKind::ConstantInstAction ||
+                         ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
           eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {

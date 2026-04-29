@@ -63,7 +63,6 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-  CARBON_CHECK(pattern.kind != SemIR::FormBindingPattern::Kind);
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -80,8 +79,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
         pattern.subpattern_id);
-    if (subpattern.kind == SemIR::FormParamPattern::Kind) {
-      context.TODO(pattern_id, "Support for cloning form bindings");
+    if (subpattern.kind == SemIR::FormParamPatternAction::Kind) {
+      context.TODO(pattern_id, "Support for cloning generic form bindings");
       return SemIR::ErrorInst::InstId;
     }
     pattern.subpattern_id = RebuildPatternInst<SemIR::AnyLeafParamPattern>(
@@ -297,7 +296,10 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                                             args.consume_front(), callee_id);
   }
 
-  return PerformCall(context, loc_id, callee_id, args);
+  // We treat this as an operator call because it's a call that's synthesized
+  // by the toolchain, not written by the user.
+  return PerformCall(context, loc_id, callee_id, args,
+                     /*is_desugared=*/true);
 }
 
 // Build a call to a function that forwards the arguments of the enclosing
@@ -405,27 +407,6 @@ auto BuildThunkDefinitionForExport(Context& context,
   if (thunk_has_return_param) {
     param_pattern_ids = param_pattern_ids.drop_back();
     call_param_ids.pop_back();
-  }
-
-  auto callee_param_ids =
-      context.inst_blocks().Get(callee_function.call_param_patterns_id);
-
-  // If any explicit parameters of the callee are `ref` parameters,
-  // modify the corresponding call arguments to be `ref` tagged.
-  for (auto index = thunk_function.call_param_ranges.explicit_begin().index;
-       index < thunk_function.call_param_ranges.explicit_end().index; index++) {
-    if (context.insts().Is<SemIR::RefParamPattern>(callee_param_ids[index])) {
-      auto& call_param_id = call_param_ids[index];
-      auto type = context.insts().Get(call_param_id).type_id();
-      SemIR::LocId loc_id(thunk_id);
-      call_param_id =
-          AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                               context.sem_ir(), SemIR::LocId(call_param_id),
-                               SemIR::RefTagExpr{
-                                   .type_id = type,
-                                   .expr_id = call_param_id,
-                               }));
-    }
   }
 
   auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,

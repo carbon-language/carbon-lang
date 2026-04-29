@@ -414,8 +414,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- implicit_conversions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.69a: type = pattern_type %Dest [concrete]
 // CHECK:STDOUT:   %Source.cpp_operator.type: type = fn_type @Source.cpp_operator [concrete]
@@ -613,8 +613,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %InaccessibleConstructor: type = class_type @InaccessibleConstructor [concrete]
 // CHECK:STDOUT:   %pattern_type.b73: type = pattern_type %InaccessibleConstructor [concrete]
 // CHECK:STDOUT:   %ptr.1fc: type = ptr_type %Source [concrete]

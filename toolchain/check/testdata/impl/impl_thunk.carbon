@@ -108,6 +108,23 @@ impl B as X {
   //@dump-sem-ir-end
 }
 
+// --- inheritance_ref_conversion.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {}
+base class B { extend base: A; }
+
+interface X {
+  fn F[self: Self](ref other: Self);
+}
+
+impl B as X {
+  //@dump-sem-ir-begin
+  fn F[self: A](ref other: A);
+  //@dump-sem-ir-end
+}
+
 // --- fail_inheritance_value_conversion_copy_return.carbon
 
 library "[[@TEST_NAME]]";
@@ -756,6 +773,57 @@ impl () as I({}) {
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- inheritance_ref_conversion.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.421a66.1: type = fn_type @B.as.X.impl.F.loc13_30.1 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.8ec460.1: %B.as.X.impl.F.type.421a66.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.421a66.2: type = fn_type @B.as.X.impl.F.loc13_30.2 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.8ec460.2: %B.as.X.impl.F.type.421a66.2 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @B.as.X.impl: %B.ref as %X.ref {
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc13_30.1: %B.as.X.impl.F.type.421a66.1 = fn_decl @B.as.X.impl.F.loc13_30.1 [concrete = constants.%B.as.X.impl.F.8ec460.1] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.1ab = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1ab = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.1ab = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.1ab = at_binding_pattern other, %other.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %A = value_param call_param0
+// CHECK:STDOUT:     %A.ref.loc13_14: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %self: %A = value_binding self, %self.param
+// CHECK:STDOUT:     %other.param: ref %A = ref_param call_param1
+// CHECK:STDOUT:     %A.ref.loc13_28: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %other: ref %A = ref_binding other, %other.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc13_30.2: %B.as.X.impl.F.type.421a66.2 = fn_decl @B.as.X.impl.F.loc13_30.2 [concrete = constants.%B.as.X.impl.F.8ec460.2] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc13_30.1
+// CHECK:STDOUT:   witness = %X.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc13_30.1(%self.param: %A, %other.param: ref %A);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc13_30.2(%self.param: %B, %other.param: ref %B) [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc13_30.1] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc13_30.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.loc8_12.3, %.loc8_29.2)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon

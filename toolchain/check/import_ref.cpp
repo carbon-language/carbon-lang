@@ -1552,8 +1552,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 template <typename ParamPatternT>
   requires SemIR::Internal::HasInstCategory<SemIR::AnyLeafParamPattern,
-                                            ParamPatternT> &&
-           (!std::same_as<ParamPatternT, SemIR::FormParamPattern>)
+                                            ParamPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);

@@ -69,6 +69,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:       object_layout:
@@ -190,6 +195,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:       object_layout:
@@ -201,11 +211,6 @@ fn B() {
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst70000014)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
-// CHECK:STDOUT:       object_layout:
-// CHECK:STDOUT:         size:            0
-// CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst(InstType))':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0

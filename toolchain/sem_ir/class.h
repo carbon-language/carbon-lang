@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -33,6 +34,9 @@ struct ClassFields {
 
   // Whether this class or any base class has at least one virtual function.
   bool is_dynamic = false;
+
+  // Whether the class's fields have been exported to C++.
+  bool fields_exported = false;
 
   // The following members are set at the `{` of the class definition.
 

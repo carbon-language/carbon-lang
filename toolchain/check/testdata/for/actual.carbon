@@ -54,12 +54,12 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %IntRange.type: type = generic_class_type @IntRange [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntRange.generic: %IntRange.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IntRange.265: type = class_type @IntRange, @IntRange(%N) [symbolic]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -488,7 +488,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_16: <witness> = require_complete_type %Int.loc5_28.1 [symbolic = %require_complete.loc5_16 (constants.%require_complete.9019d7.1)]
-// CHECK:STDOUT:   %require_complete.loc5_52: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc5_52 (constants.%require_complete.8a1)]
+// CHECK:STDOUT:   %require_complete.loc5_49: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc5_49 (constants.%require_complete.8a1)]
 // CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1), .end: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.ff1)]
 // CHECK:STDOUT:   %.loc6_22.1: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc6_22.1 (constants.%.4f8)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc5_28.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
@@ -578,7 +578,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc11_17: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc11_17 (constants.%require_complete.8a1)]
 // CHECK:STDOUT:   %require_complete.loc11_31: <witness> = require_complete_type %ptr.loc11_44.1 [symbolic = %require_complete.loc11_31 (constants.%require_complete.45c)]
-// CHECK:STDOUT:   %require_complete.loc11_75: <witness> = require_complete_type %Optional.loc11_75.1 [symbolic = %require_complete.loc11_75 (constants.%require_complete.0bc)]
+// CHECK:STDOUT:   %require_complete.loc11_47: <witness> = require_complete_type %Optional.loc11_75.1 [symbolic = %require_complete.loc11_47 (constants.%require_complete.0bc)]
 // CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type %Int.loc11_43.1 [symbolic = %require_complete.loc12 (constants.%require_complete.9019d7.1)]
 // CHECK:STDOUT:   %pattern_type.loc12: type = pattern_type %Int.loc11_43.1 [symbolic = %pattern_type.loc12 (constants.%pattern_type.764eab.1)]
 // CHECK:STDOUT:   %.loc12_32.3: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc12_32.3 (constants.%.4f8)]
@@ -832,7 +832,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_16 => constants.%complete_type.f8a
-// CHECK:STDOUT:   %require_complete.loc5_52 => constants.%complete_type.c45
+// CHECK:STDOUT:   %require_complete.loc5_49 => constants.%complete_type.c45
 // CHECK:STDOUT:   %struct_type.start.end => constants.%struct_type.start.end.d0a
 // CHECK:STDOUT:   %.loc6_22.1 => constants.%.14e
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.f17
@@ -848,12 +848,12 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %y: Core.IntLiteral = symbolic_binding y, 0 [symbolic]
 // CHECK:STDOUT:   %Read.type: type = fn_type @Read [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Read: %Read.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IntRange.type: type = generic_class_type @IntRange [concrete]
 // CHECK:STDOUT:   %IntRange.generic: %IntRange.type = struct_value () [concrete]

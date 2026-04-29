@@ -388,6 +388,19 @@ struct Call {
   InstBlockId args_id;
 };
 
+struct CalleePatternMatchAction {
+  static constexpr auto Kind =
+      InstKind::CalleePatternMatchAction.Define<Parse::NodeId>(
+          {.ir_name = "callee_pattern_match_action",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId pattern_id;
+  CallParamIndex parent_index;
+};
+
 // A unicode code point character literal. This type only provides compile-time
 // operations, and is represented as an empty type at runtime.
 //
@@ -758,49 +771,23 @@ struct FloatValue {
   FloatId float_id;
 };
 
-// A form binding, such as the `x` declared by `x:? F`. See `AnyBinding` for
-// member documentation.
-struct FormBinding {
+// An action that creates an input parameter pattern with the form specified by
+// `form_id`. See `AnyFormParamAction` for member documentation.
+struct FormParamPatternAction {
   static constexpr auto Kind =
-      InstKind::FormBinding.Define<Parse::FormBindingPatternId>(
-          {.ir_name = "form_binding",
-           .expr_category = ComputedExprCategory::DependsOnOperands,
-           .constant_kind = InstConstantKind::Never});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// A form binding pattern, such as `x:? F`, that is not a parameter. See
-// `AnyBindingPattern` for member documentation.
-struct FormBindingPattern {
-  static constexpr auto Kind =
-      InstKind::FormBindingPattern.Define<Parse::FormBindingPatternId>(
-          {.ir_name = "form_binding_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+      InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_param_pattern_action",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::ConstantInstAction,
            .is_lowered = false});
 
   TypeId type_id;
-  // Note that the EntityName's `form_id` represents the scrutinee form, so it
-  // doesn't directly correspond to `type_id` (which is a pattern type).
-  EntityNameId entity_name_id;
-};
+  MetaInstId form_id;
 
-// A pattern that represents a form-parameterized parameter, such as `x:? F`.
-// See `AnyParamPattern` for member documentation.
-struct FormParamPattern {
-  // TODO: Replace `Parse::NodeId` with `Parse::FormBindingPattern`.
-  static constexpr auto Kind = InstKind::FormParamPattern.Define<Parse::NodeId>(
-      {.ir_name = "form_param_pattern",
-       .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
-
-  TypeId type_id;
+  // A name to associate with this Param in pretty-printed IR. This is not
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
   NameId pretty_name_id;
-  InstId form_id;
 };
 
 // The type `Core.Form`.
@@ -1128,7 +1115,12 @@ struct InPlaceInit {
 };
 
 // Used as the type of template actions that produce instructions.
-using InstType = SingletonTypeInst<InstKind::InstType, "<instruction>">;
+struct InstType
+    : public SingletonTypeInst<InstKind::InstType, "<instruction>"> {
+  // `InstType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // A value of type `InstType` that refers to an instruction. This is used to
 // represent an instruction as a value for use as a result of a template action.
@@ -1341,6 +1333,23 @@ struct Namespace {
 // standard type and be removed.
 using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 
+// An action that creates an output parameter pattern with the form specified by
+// `form_id`. See `AnyFormParamAction` for member documentation.
+struct OutFormParamPatternAction {
+  static constexpr auto Kind =
+      // TODO: Use Parse::AnyReturnDeclId once we support passing node
+      // categories to Define.
+      InstKind::OutFormParamPatternAction
+          .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
+              {.ir_name = "out_form_param_pattern_action",
+               .expr_category = ExprCategory::Value,
+               .constant_kind = InstConstantKind::ConstantInstAction,
+               .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId form_id;
+};
+
 // An output `Call` parameter. See AnyParam for member documentation.
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
@@ -1421,6 +1430,35 @@ struct RefBinding {
   TypeId type_id;
   EntityNameId entity_name_id;
   InstId value_id;
+};
+
+// An action that performs form refinement of the form expression `form_id`:
+// for each operand of `form_id` in a position where a form is expected, if the
+// operand is not a concrete constant, it is wrapped in a `RefineFormAction`.
+// A `RefineFormAction` can be performed (i.e. is non-template-dependent) if we
+// can identify the form operands of `form_id`, which is typically possible only
+// if it will not be rewritten by constant evaluation except to substitute
+// values for its operands. As usual when creating Actions, if possible the
+// nested `RefineFormActions` are performed immediately, and not added to the
+// SemIR.
+//
+// This ensures that a form expression is template-dependent if it depends on
+// any non-concrete constants in form positions, even if those constants are not
+// themselves template-dependent. Unlike type refinement, form refinement does
+// not necessarily produce a concrete result, but it moves as far as possible
+// toward a state where non-concrete constants occur only in type positions, and
+// so the structure of the form is concretely known even if its type component
+// remains symbolic.
+struct RefineFormAction {
+  static constexpr auto Kind = InstKind::RefineFormAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_form_action",
+       .constant_kind = InstConstantKind::ConstantInstAction,
+       .is_lowered = false});
+
+  // Always `Core.Form`.
+  TypeId type_id;
+
+  MetaInstId form_id;
 };
 
 // An action that performs type refinement for an instruction, by creating an
@@ -1810,9 +1848,8 @@ struct SpliceBlock {
 struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
-       // TODO: The expression category is in general dependent on
-       // instantiation. Use ExprCategory::Dependent to model this.
-       .expr_category = ExprCategory::Value});
+       .expr_category = ExprCategory::Dependent,
+       .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   // The instruction that computes the instruction to splice. The type of this
@@ -2249,8 +2286,10 @@ struct ValueReturnPattern {
 };
 
 // A `var` pattern that is a `Call` parameter. See `AnyVarPattern` for member
-// documentation. Note that there is no `VarParam` -- a `VarParamPattern`
-// corresponds to a `RefParam`.
+// documentation. This is functionally equivalent to a `VarPattern` with a
+// `RefParamPattern` subpattern; it is represented as a single inst to reduce
+// SemIR bloat. Note that as a consequence, there is no `VarParam` -- a
+// `VarParamPattern` corresponds to a `RefParam`.
 struct VarParamPattern {
   static constexpr auto Kind =
       InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
@@ -2265,12 +2304,12 @@ struct VarParamPattern {
 
 // A `var` pattern that is not a `Call` parameter.
 struct VarPattern {
-  static constexpr auto Kind =
-      InstKind::VarPattern.Define<Parse::VariablePatternId>(
-          {.ir_name = "var_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::VarPattern.Define<Parse::NodeIdOneOf<
+      Parse::VariablePatternId, Parse::FormBindingPatternId>>(
+      {.ir_name = "var_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of
   // `subpattern_id`.

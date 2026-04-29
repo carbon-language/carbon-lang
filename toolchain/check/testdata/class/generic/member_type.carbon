@@ -61,11 +61,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer.4b9: type = class_type @Outer, @Outer(%T.035) [symbolic]
 // CHECK:STDOUT:   %Inner.bcf: type = class_type @Inner, @Inner(%T.035) [symbolic]
@@ -265,7 +265,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc9_9: <witness> = require_complete_type %T.as_type.loc9_11.1 [symbolic = %require_complete.loc9_9 (constants.%require_complete.89e)]
-// CHECK:STDOUT:   %require_complete.loc9_17: <witness> = require_complete_type %Inner [symbolic = %require_complete.loc9_17 (constants.%require_complete.e6c)]
+// CHECK:STDOUT:   %require_complete.loc9_14: <witness> = require_complete_type %Inner [symbolic = %require_complete.loc9_14 (constants.%require_complete.e6c)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.50e)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
 // CHECK:STDOUT:   %.loc9_38: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc9_38 (constants.%.023)]
@@ -418,7 +418,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc9_9 => constants.%complete_type.f8a
-// CHECK:STDOUT:   %require_complete.loc9_17 => constants.%complete_type.54b
+// CHECK:STDOUT:   %require_complete.loc9_14 => constants.%complete_type.54b
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.033
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.081
 // CHECK:STDOUT:   %.loc9_38 => constants.%.8e2
@@ -741,7 +741,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc11_16: <witness> = require_complete_type %C [symbolic = %require_complete.loc11_16 (constants.%require_complete.4fd)]
-// CHECK:STDOUT:   %require_complete.loc11_26: <witness> = require_complete_type %T [symbolic = %require_complete.loc11_26 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc11_23: <witness> = require_complete_type %T [symbolic = %require_complete.loc11_23 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%T)> [symbolic = %Inner.type (constants.%Inner.type.6ef)]
 // CHECK:STDOUT:   %require_complete.loc11_48: <witness> = require_complete_type %Inner.type [symbolic = %require_complete.loc11_48 (constants.%require_complete.8b6)]
 // CHECK:STDOUT:   %Inner.assoc_type: type = assoc_entity_type @Inner, @Inner(%T) [symbolic = %Inner.assoc_type (constants.%Inner.assoc_type.be2)]
@@ -1003,7 +1003,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc11_16 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc11_26 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc11_23 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.94a
 // CHECK:STDOUT:   %require_complete.loc11_48 => constants.%complete_type.087
 // CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.564

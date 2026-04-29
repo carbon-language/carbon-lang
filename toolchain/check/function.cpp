@@ -6,6 +6,7 @@
 
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
@@ -34,47 +35,12 @@ auto FindSelfPattern(Context& context,
 
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId {
-  auto result_id = SemIR::InstId::None;
-  auto result_type_id = SemIR::TypeId::None;
-  auto form_inst = context.insts().Get(
-      context.constant_values().GetConstantInstId(form_expr.form_inst_id));
-  CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind: {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::RefReturnPattern>(context, loc_id,
-                                                   {.type_id = result_type_id});
-      break;
-    }
-    case SemIR::ValueForm::Kind: {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::ValueReturnPattern>(
-          context, loc_id, {.type_id = result_type_id});
-      break;
-    }
-    case CARBON_KIND(SemIR::InitForm _): {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::OutParamPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = result_type_id,
-           .pretty_name_id = SemIR::NameId::ReturnSlot});
-      break;
-    }
-    case SemIR::SymbolicBinding::Kind:
-      CARBON_CHECK(
-          context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
-      context.TODO(loc_id, "Support symbolic return forms");
-      result_type_id = SemIR::ErrorInst::TypeId;
-      result_id = SemIR::ErrorInst::InstId;
-      break;
-    case SemIR::ErrorInst::Kind:
-      result_type_id = SemIR::ErrorInst::TypeId;
-      result_id = SemIR::ErrorInst::InstId;
-      break;
-    default:
-      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
-  }
+  auto result_type_id = GetPatternType(context, form_expr.type_component_id);
+  auto result_id = HandleAction<SemIR::OutFormParamPatternAction>(
+      context, loc_id, form_expr.type_component_inst_id,
+      {.type_id = SemIR::InstType::TypeId, .form_id = form_expr.form_inst_id});
   return AddInst<SemIR::ReturnSlotPattern>(
-      context, SemIR::LocId(form_expr.form_inst_id),
+      context, loc_id,
       {.type_id = result_type_id,
        .subpattern_id = result_id,
        .type_inst_id = form_expr.type_component_inst_id});

@@ -484,9 +484,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT: --- symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.765: %Destroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T.as_type.2e9: type = facet_access_type %T.765 [symbolic]
 // CHECK:STDOUT:   %ptr.e44: type = ptr_type %T.as_type.2e9 [symbolic]
 // CHECK:STDOUT:   %const: type = const_type %T.as_type.2e9 [symbolic]

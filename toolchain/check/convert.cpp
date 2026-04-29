@@ -1971,7 +1971,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       target.kind == ConversionTarget::Value) {
     auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
     SemIR::ConvertToValueAction convert_action = {
-        .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        .type_id = SemIR::InstType::TypeId,
         .inst_id = expr_id,
         .target_type_inst_id = target_type_inst_id};
     // We don't use `HandleAction` here because it would call `PerformAction`
@@ -2166,8 +2166,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
-                     SemIR::SpecificId callee_specific_id,
-                     bool is_operator_syntax) -> SemIR::InstBlockId {
+                     SemIR::SpecificId callee_specific_id, bool is_desugared)
+    -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_pattern_id = callee.return_pattern_id;
@@ -2188,8 +2188,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_pattern_id,
-                            self_id, arg_refs, return_arg_id,
-                            is_operator_syntax);
+                            self_id, arg_refs, return_arg_id, is_desugared);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
@@ -2235,6 +2234,10 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
   if (form_inst_id == SemIR::ErrorInst::InstId) {
     return Context::FormExpr::Error;
   }
+
+  form_inst_id = HandleAction<SemIR::RefineFormAction>(
+      context, loc_id, SemIR::FormType::TypeInstId,
+      {.type_id = SemIR::InstType::TypeId, .form_id = form_inst_id});
 
   auto form_const_id = context.constant_values().Get(form_inst_id);
   if (!form_const_id.is_constant()) {

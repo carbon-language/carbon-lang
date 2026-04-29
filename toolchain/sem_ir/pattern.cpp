@@ -55,7 +55,7 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
 
     // TODO: Look through struct patterns.
 
-    if (auto form_pattern = inst.TryAs<FormParamPattern>()) {
+    if (auto ref_pattern = inst.TryAs<RefParamPattern>()) {
       // TODO: This introduces a name, but we don't model it as a binding.
       return EntityNameId::None;
     }

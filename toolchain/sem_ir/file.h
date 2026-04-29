@@ -383,7 +383,7 @@ class File : public Printable<File> {
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
   // not add multiple entries with the same `decl` and different `inst_id`.
-  ClangDeclStore clang_decls_;
+  ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
 
   // Storage for function signatures used in C++ interop.
   SignatureStore signatures_;

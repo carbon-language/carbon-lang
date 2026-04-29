@@ -353,7 +353,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc13_22 => constants.%complete_type.1ec
-// CHECK:STDOUT:   %require_complete.loc13_36 => constants.%complete_type.3d0
+// CHECK:STDOUT:   %require_complete.loc13_32 => constants.%complete_type.3d0
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.da5
 // CHECK:STDOUT:   %.loc15_12.1 => constants.%.cab
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.843

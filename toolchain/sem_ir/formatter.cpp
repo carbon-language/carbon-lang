@@ -773,6 +773,15 @@ auto Formatter::FormatFunctionSignature(InstBlockId params_id,
         FormatInstAsType(return_form_id);
         break;
       }
+      case CARBON_KIND(SpliceInst splice): {
+        out() << "out ";
+        FormatName(params[i]);
+        out() << ":? ";
+        // A form isn't a type, but it's close enough for formatting purposes.
+        FormatInstAsType(splice.inst_id);
+        ++i;
+        break;
+      }
       default:
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
