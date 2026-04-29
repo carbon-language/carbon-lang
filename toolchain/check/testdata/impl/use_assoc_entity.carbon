@@ -470,7 +470,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%J_where.type.928] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -503,7 +503,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:     %C.ref.loc21_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc21_13: type = where_expr [concrete = constants.%J_where.type.d0e] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc21_24
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -843,7 +843,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc10_13: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -1349,7 +1349,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc10_20: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -2398,7 +2398,7 @@ fn F() {
 // CHECK:STDOUT:       %impl.elem0.loc8: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:       %i32.loc8_37: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc8_26.2: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:         requirement_base_facet_type %J.ref
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc8, %i32.loc8_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -2697,7 +2697,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness.46a, element0 [symbolic_self = constants.%impl.elem0.a58]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc9_20: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -3156,7 +3156,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %.loc8_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_20: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc8_32.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -3274,7 +3274,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc22_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc22_28.2: type = converted %.loc22_28.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc22_15: type = where_expr [concrete = constants.%J2_where.type.1ad] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J2.type
+// CHECK:STDOUT:       requirement_base_facet_type %J2.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc22_28.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -3290,7 +3290,7 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J2.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %C2.ref.loc31_27: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:     %.loc31_15: type = where_expr [concrete = constants.%J2_where.type.de0] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J2.type
+// CHECK:STDOUT:       requirement_base_facet_type %J2.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C2.ref.loc31_27
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -3603,7 +3603,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc11_31.2: type = converted %.loc11_31.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:     %.loc11_14: type = where_expr [concrete = constants.%K_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%K.type
+// CHECK:STDOUT:       requirement_base_facet_type %K.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %struct_type.a
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -3854,7 +3854,7 @@ fn F() {
 // CHECK:STDOUT:     %struct: %struct_type.b.347 = struct_value (%.loc8_33.2) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc8_33.3: %struct_type.b.347 = converted %.loc8_33.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%M_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%M.type
+// CHECK:STDOUT:       requirement_base_facet_type %M.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc8_33.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -4064,7 +4064,7 @@ fn F() {
 // CHECK:STDOUT:     %struct: %struct_type.b.86f = struct_value (%.loc10_36.2) [concrete = constants.%struct.0f3]
 // CHECK:STDOUT:     %.loc10_36.3: %struct_type.b.86f = converted %.loc10_36.1, %struct [concrete = constants.%struct.0f3]
 // CHECK:STDOUT:     %.loc10_17: type = where_expr [concrete = constants.%M_where.type.2ad] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%M.type
+// CHECK:STDOUT:       requirement_base_facet_type %M.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_36.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -4086,7 +4086,7 @@ fn F() {
 // CHECK:STDOUT:     %struct: %struct_type.b.86f = struct_value (%.loc16_36.2) [concrete = constants.%struct.c94]
 // CHECK:STDOUT:     %.loc16_36.3: %struct_type.b.86f = converted %.loc16_36.1, %struct [concrete = constants.%struct.c94]
 // CHECK:STDOUT:     %.loc16_17: type = where_expr [concrete = constants.%M_where.type.bf5] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%M.type
+// CHECK:STDOUT:       requirement_base_facet_type %M.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc16_36.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -4398,7 +4398,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc8_25.2: %i32 = converted %int_2, %.loc8_25.1 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8_20, %.loc8_25.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -4651,7 +4651,7 @@ fn F() {
 // CHECK:STDOUT:     %T.ref.loc9_44: type = name_ref T, %T.loc9_15.1 [symbolic = %T.loc9_15.2 (constants.%T)]
 // CHECK:STDOUT:     %C.loc9_45.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc9_45.2 (constants.%C.5a3)]
 // CHECK:STDOUT:     %.loc9_31: type = where_expr [symbolic = %Z_where.type (constants.%Z_where.type.ea1)] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%Z.type
+// CHECK:STDOUT:       requirement_base_facet_type %Z.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.loc9_45.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9_18.1: type = splice_block %.loc9_18.2 [concrete = type] {

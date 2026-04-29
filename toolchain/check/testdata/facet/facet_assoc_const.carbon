@@ -696,7 +696,7 @@ fn F(unused T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       %.loc13_55.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc13_55.2: type = converted %.loc13_55.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc13_19.2: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%M.type
+// CHECK:STDOUT:         requirement_base_facet_type %M.ref
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_25, %impl.elem1.loc13_30
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_37, %impl.elem0.subst
 // CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_55.2

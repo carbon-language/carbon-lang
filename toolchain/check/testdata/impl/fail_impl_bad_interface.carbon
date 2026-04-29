@@ -164,7 +164,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_24: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_18: type = where_expr [concrete = constants.%type] {
-// CHECK:STDOUT:       requirement_base_facet_type type
+// CHECK:STDOUT:       requirement_base_facet_type %.loc8_13
 // CHECK:STDOUT:       requirement_impls %.loc8_24, %.loc8_36
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -215,7 +215,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc10_31: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc10_25: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:       requirement_base_facet_type type
+// CHECK:STDOUT:       requirement_base_facet_type %.loc10_20
 // CHECK:STDOUT:       requirement_impls %.loc10_31, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

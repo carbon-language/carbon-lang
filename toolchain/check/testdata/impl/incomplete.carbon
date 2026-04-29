@@ -365,7 +365,7 @@ interface B {
 // CHECK:STDOUT:     %X.ref.loc13: <error> = name_ref X, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc13_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_13: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref.loc13
 // CHECK:STDOUT:       requirement_rewrite %X.ref.loc13, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -379,7 +379,7 @@ interface B {
 // CHECK:STDOUT:     %X.ref.loc22: <error> = name_ref X, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc22_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc22_13: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref.loc22
 // CHECK:STDOUT:       requirement_rewrite %X.ref.loc22, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -475,7 +475,7 @@ interface B {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_19: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_impls %.loc8_19, %Incomplete.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -565,7 +565,7 @@ interface B {
 // CHECK:STDOUT:     %.loc8_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_52.2: type = converted %.loc8_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref.loc8
 // CHECK:STDOUT:       requirement_impls %.loc8_19, %Incomplete.ref.loc8
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8, %.loc8_52.2
 // CHECK:STDOUT:     }
@@ -586,7 +586,7 @@ interface B {
 // CHECK:STDOUT:     %.loc10_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_52.2: type = converted %.loc10_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc10_13: type = where_expr [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_base_facet_type %J.ref.loc10
 // CHECK:STDOUT:       requirement_impls %.loc10_19, %Incomplete.ref.loc10
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10, %.loc10_52.2
 // CHECK:STDOUT:     }
@@ -677,7 +677,7 @@ interface B {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_19: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_impls %.loc8_19, %Incomplete.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -818,7 +818,7 @@ interface B {
 // CHECK:STDOUT:       %.loc16_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc16_32.2: type = converted %.loc16_32.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %.loc16_19.2: type = where_expr [concrete = constants.%X_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%X.type
+// CHECK:STDOUT:         requirement_base_facet_type %X.ref
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc16_32.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

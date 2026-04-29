@@ -228,7 +228,7 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc12_21: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc12_15.2: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:         requirement_base_facet_type type
+// CHECK:STDOUT:         requirement_base_facet_type %.loc12_10
 // CHECK:STDOUT:         requirement_impls %.loc12_21, %W.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

@@ -34,6 +34,9 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     context.emitter().Emit(self_node, WhereOnNonFacetType);
     self_with_constraints_type_id = SemIR::ErrorInst::TypeId;
   }
+  if (self_with_constraints_type_id == SemIR::ErrorInst::TypeId) {
+    self_id = SemIR::ErrorInst::InstId;
+  }
 
   // Strip off any constraints provided by a `WhereExpr` from the `Self` facet
   // type. For a facet type like `I & J where .X = .Y`, this will reduce it down
@@ -75,8 +78,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementBaseFacetType>(
           context, SemIR::LocId(node_id),
-          {.base_type_inst_id =
-               context.types().GetTypeInstId(self_with_constraints_type_id)}));
+          {.base_type_inst_id = context.types().GetAsTypeInstId(self_id)}));
 
   // Add a context stack for tracking rewrite constraints, that will be used to
   // allow later constraints to read from them eagerly.

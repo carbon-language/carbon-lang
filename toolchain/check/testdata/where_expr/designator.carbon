@@ -180,7 +180,7 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.1dc]
 // CHECK:STDOUT:       %.loc9_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc9_21.2: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:         requirement_base_facet_type %I.ref
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc9_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -200,7 +200,7 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc11_23.2: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:         requirement_base_facet_type %I.ref
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc11_41
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -218,7 +218,7 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %.loc13_33: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %.loc13_27.2: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:         requirement_base_facet_type type
+// CHECK:STDOUT:         requirement_base_facet_type %.loc13_22
 // CHECK:STDOUT:         requirement_impls %.loc13_33, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
