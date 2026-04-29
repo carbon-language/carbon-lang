@@ -136,6 +136,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000038:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst50000028, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000039:    {kind: Converted, arg0: inst5000002F, arg1: inst50000038, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst5000003A:    {kind: ReturnExpr, arg0: inst50000039, arg1: inst50000028}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

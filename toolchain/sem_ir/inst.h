@@ -17,6 +17,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -317,6 +318,8 @@ class Inst : public Printable<Inst> {
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
+
+  auto CacheBundleDebugKinds(const BundleStore& bundles) const -> void;
 
   friend auto operator==(Inst lhs, Inst rhs) -> bool {
     return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;

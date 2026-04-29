@@ -114,6 +114,15 @@ static auto OperandDependence(Context& /*context*/, IdT /*id*/)
   return SemIR::ConstantDependence::None;
 }
 
+template <typename BundleT>
+static auto OperandDependence(Context& context,
+                              SemIR::BundleId<BundleT> bundle_id)
+    -> SemIR::ConstantDependence {
+  return std::apply(
+      [&](auto... ids) { return std::max(OperandDependence(context, ids)...); },
+      context.bundles().GetAsTuple(bundle_id));
+}
+
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)

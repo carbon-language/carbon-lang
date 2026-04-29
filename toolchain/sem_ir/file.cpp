@@ -68,7 +68,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // 1 reserved id for `CustomLayoutId::Empty`.
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
-      clang_source_locs_(check_ir_id) {
+      clang_source_locs_(check_ir_id),
+      bundles_(allocator_, check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
   // requiring these types to be complete from Check initialization instead,
@@ -164,12 +165,14 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("insts",
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         for (auto [id, inst] : insts_.enumerate()) {
+                          inst.CacheBundleDebugKinds(bundles_);
                           if (!include_singletons && IsSingletonInstId(id)) {
                             continue;
                           }
                           map.Add(PrintToString(id), Yaml::OutputScalar(inst));
                         }
                       }));
+              map.Add("bundles", bundles_.OutputYaml());
               map.Add("constant_values",
                       constant_values_.OutputYaml(include_singletons));
               map.Add("inst_blocks", inst_blocks_.OutputYaml());

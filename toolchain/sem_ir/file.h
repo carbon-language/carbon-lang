@@ -18,6 +18,7 @@
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/associated_constant.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
@@ -276,6 +277,9 @@ class File : public Printable<File> {
     return clang_source_locs_;
   }
 
+  auto bundles() -> BundleStore& { return bundles_; }
+  auto bundles() const -> const BundleStore& { return bundles_; }
+
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
@@ -424,6 +428,9 @@ class File : public Printable<File> {
 
   // C++ source locations for C++ interop.
   ClangSourceLocStore clang_source_locs_;
+
+  // Storage for instruction argument bundles.
+  BundleStore bundles_;
 };
 
 }  // namespace Carbon::SemIR

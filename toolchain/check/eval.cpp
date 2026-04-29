@@ -848,6 +848,21 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT;
+
+template <typename BundleT>
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::BundleId<BundleT> bundle_id, Phase* phase)
+    -> SemIR::BundleId<BundleT> {
+  return eval_context.context().bundles().AddCanonical(std::apply(
+      [&]<typename... Ids>(Ids... ids) -> BundleT {
+        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id)));
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -896,6 +911,16 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
       return SemIR::ToRaw(id);
     }
   });
+}
+
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    return GetConstantValue(eval_context, id, phase);
+  } else {
+    return id;
+  }
 }
 
 // Given an instruction, replaces its operands with their constant values from
@@ -1028,6 +1053,18 @@ static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
                  IdT::Label);
   }
 }
+
+template <typename BundleT>
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::BundleId<BundleT> bundle_id)
+    -> void {
+  std::apply(
+      [&](auto... ids) -> void {
+        (..., ResolveSpecificDeclForArg(eval_context, ids));
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id));
+}
+
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,

@@ -8,6 +8,7 @@
 #include "common/type_enum.h"
 #include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -28,9 +29,11 @@ using IdKind = TypeEnum<
     // From sem_ir/ids.h.
     AbsoluteInstBlockId,
     AbsoluteInstId,
+    RawBundleId,
     AnyRawId,
     AssociatedConstantId,
     BoolValue,
+    BundleId<CalleePatternMatchAction::Args>,
     CallParamIndex,
     CharId,
     ClangDeclId,

@@ -104,6 +104,7 @@ cc_library(
     hdrs = [
         "associated_constant.h",
         "builtin_function_kind.h",
+        "bundle.h",
         "class.h",
         "constant.h",
         "copy_on_write_block.h",
@@ -153,6 +154,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",

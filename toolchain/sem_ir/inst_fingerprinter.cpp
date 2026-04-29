@@ -392,6 +392,16 @@ struct Worklist {
               ir_inst.inst_id());
   }
 
+  template <typename BundleT>
+  auto Add(BundleId<BundleT> bundle_id) -> void {
+    std::apply([&](auto... ids) { (..., Add(ids)); },
+               sem_ir->bundles().GetAsTuple(bundle_id));
+  }
+
+  auto Add(RawBundleId bundle_id) -> void {
+    CARBON_FATAL("Can't fingerprint untyped bundle ID {}", bundle_id);
+  }
+
   template <typename T>
     requires(SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex,
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)

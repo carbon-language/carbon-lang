@@ -279,6 +279,17 @@ class Formatter {
   auto FormatArg(StringLiteralValueId id) -> void;
   auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
 
+  template <typename BundleT>
+  auto FormatArg(BundleId<BundleT> bundle_id) -> void {
+    llvm::ListSeparator sep;
+    auto format_with_sep = [&](auto id) {
+      out() << sep;
+      FormatArg(id);
+    };
+    std::apply([&](auto... id) -> void { (..., format_with_sep(id)); },
+               sem_ir_->bundles().GetAsTuple(bundle_id));
+  }
+
   // Calls `FormatArg` from an `IdAndKind`.
   auto FormatInstArgAndKind(IdAndKind arg_and_kind) -> void;
 

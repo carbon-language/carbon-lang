@@ -767,8 +767,10 @@ auto MatchContext::DoPreWork(State state, SemIR::SpliceInst splice,
           context_, SemIR::LocId(entry.pattern_id),
           context_.types().GetTypeInstId(splice.type_id),
           {.type_id = SemIR::InstType::TypeId,
-           .pattern_id = entry.pattern_id,
-           .parent_index = callee_state->index.Allocate()});
+           .args_id =
+               context_.bundles().Add<SemIR::CalleePatternMatchAction::Args>(
+                   {.pattern_id = entry.pattern_id,
+                    .parent_index = callee_state->index.Allocate()})});
       callee_state->call_param_patterns.push_back(entry.pattern_id);
       callee_state->call_params.push_back(result_id);
       results_stack_.AppendToTop(result_id);
@@ -976,15 +978,16 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
 
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId {
-  CalleeState state = {.index = IndexSource(action.parent_index)};
+  auto args = context.bundles().Get(action.args_id);
+  CalleeState state = {.index = IndexSource(args.parent_index)};
   MatchContext match(context);
 
   auto result_id = match.MatchWithResult(
       &state,
-      {.pattern_id = action.pattern_id,
+      {.pattern_id = args.pattern_id,
        .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None},
        .allow_unmarked_ref = true});
-  CARBON_CHECK(state.index.Peek().index <= action.parent_index.index + 1,
+  CARBON_CHECK(state.index.Peek().index <= args.parent_index.index + 1,
                "TODO: add support for composite forms");
   return result_id;
 }
