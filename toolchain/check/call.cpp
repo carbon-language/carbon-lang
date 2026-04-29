@@ -212,7 +212,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId callee_id,
                            const SemIR::CalleeFunction& callee_function,
                            llvm::ArrayRef<SemIR::InstId> arg_ids,
-                           bool is_operator_syntax) -> SemIR::InstId {
+                           bool is_desugared) -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
@@ -266,9 +266,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     }
   }
   // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_arg_id, callee,
-      *callee_specific_id, is_operator_syntax);
+  auto converted_args_id =
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_arg_id, callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
@@ -347,7 +347,7 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_operator_syntax)
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
     -> SemIR::InstId {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
@@ -357,16 +357,16 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
-                                   is_operator_syntax);
+                                   is_desugared);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
-      return PerformCallToCppFunction(
-          context, loc_id, overload.cpp_overload_set_id, overload.self_id,
-          arg_ids, is_operator_syntax);
+      return PerformCallToCppFunction(context, loc_id,
+                                      overload.cpp_overload_set_id,
+                                      overload.self_id, arg_ids, is_desugared);
     }
   }
 }

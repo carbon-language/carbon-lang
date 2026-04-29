@@ -55,7 +55,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,
-                              bool is_operator_syntax) -> SemIR::InstId {
+                              bool is_desugared) -> SemIR::InstId {
   auto [template_arg_ids, function_arg_ids] =
       SplitCallArgumentList(context, arg_ids);
   auto callee_id = PerformCppOverloadResolution(
@@ -73,7 +73,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
         fn.self_id = self_id;
       }
       return PerformCallToFunction(context, loc_id, callee_id, fn,
-                                   function_arg_ids, is_operator_syntax);
+                                   function_arg_ids, is_desugared);
     }
     case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
       CARBON_FATAL("overloads can't be recursive");
