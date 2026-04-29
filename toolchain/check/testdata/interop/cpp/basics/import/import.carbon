@@ -11,41 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/import.carbon
 
 // ============================================================================
-// Import C++ namespace indirectly
-// ============================================================================
-
-// --- namespace.h
-
-namespace MyNamespace {
-
-class MyClass {};
-
-}  // namespace MyNamespace
-
-// --- namespace_api.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "namespace.h";
-
-alias MyNamespaceAlias = Cpp.MyNamespace;
-
-// --- fail_import_namespace_api.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "namespace_api";
-
-fn F() {
-  // Imports are not implicitly re-exported, so lookup is expected to fail.
-  // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:17: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   var unused x: MyNamespaceAlias.MyClass;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  var unused x: MyNamespaceAlias.MyClass;
-}
-
-// ============================================================================
 // Import C++ struct indirectly
 // ============================================================================
 

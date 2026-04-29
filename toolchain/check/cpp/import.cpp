@@ -150,6 +150,22 @@ auto ImportCpp(Context& context,
   }
 }
 
+// Returns whether the current context has any C++ imports. If not, produces a
+// suitable diagnostic.
+static auto CheckForCppContextForIndirectImport(Context& context,
+                                                SemIR::LocId loc_id) -> bool {
+  // TODO: We should perform cross-file imports by importing the C++ AST. For
+  // now we require the C++ declaration to already be imported into the
+  // destination file, and find the corresponding declaration there and import
+  // that.
+  if (!context.cpp_context()) {
+    context.TODO(
+        loc_id, "indirect import of C++ declaration with no direct Cpp import");
+    return false;
+  }
+  return true;
+}
+
 // NOLINTNEXTLINE(misc-no-recursion)
 static auto FindCorrespondingType(Context& context, SemIR::LocId loc_id,
                                   clang::QualType type) -> clang::QualType;
@@ -236,6 +252,29 @@ static auto FindCorrespondingDecl(Context& context, SemIR::LocId loc_id,
   return nullptr;
 }
 
+auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
+                                   const SemIR::File& file,
+                                   SemIR::ClangDeclId clang_decl_id)
+    -> std::optional<SemIR::ClangDeclKey> {
+  if (!CheckForCppContextForIndirectImport(context, loc_id)) {
+    return std::nullopt;
+  }
+  CARBON_CHECK(clang_decl_id.has_value());
+  auto key = file.clang_decls().Get(clang_decl_id).key;
+  const auto* decl = key.decl;
+  auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
+  if (!corresponding) {
+    // TODO: This needs a proper diagnostic.
+    context.TODO(
+        loc_id,
+        "use of imported C++ declaration with no corresponding local import");
+    return std::nullopt;
+  }
+
+  key.decl = corresponding;
+  return key;
+}
+
 // Given a type in some C++ AST which is *not* expected to be `context`,
 // find the corresponding type in `context`, if there is one.
 // NOLINTNEXTLINE(misc-no-recursion)
@@ -277,23 +316,15 @@ auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
                            const SemIR::File& file,
                            SemIR::ClangDeclId clang_decl_id)
     -> SemIR::ConstantId {
-  CARBON_CHECK(clang_decl_id.has_value());
-  auto key = file.clang_decls().Get(clang_decl_id).key;
-  const auto* decl = key.decl;
-  auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
-  if (!corresponding) {
-    // TODO: This needs a proper diagnostic.
-    context.TODO(
-        loc_id,
-        "use of imported C++ declaration with no corresponding local import");
+  auto key =
+      FindCorrespondingClangDeclKey(context, loc_id, file, clang_decl_id);
+  if (!key) {
     return SemIR::ErrorInst::ConstantId;
   }
-
-  key.decl = corresponding;
-  auto imported_inst_id = ImportCppDecl(context, loc_id, key);
+  auto imported_inst_id = ImportCppDecl(context, loc_id, *key);
   auto imported_const_id = context.constant_values().Get(imported_inst_id);
   if (!imported_const_id.is_constant()) {
-    context.TODO(loc_id, "imported C++ declant is not constant");
+    context.TODO(loc_id, "imported C++ declaration is not constant");
     return SemIR::ErrorInst::ConstantId;
   }
   return imported_const_id;
@@ -302,13 +333,7 @@ auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
 auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
                                const SemIR::File& file, SemIR::InstId inst_id)
     -> SemIR::ConstantId {
-  // TODO: We should perform cross-file imports by importing the C++ AST. For
-  // now we require the C++ declaration to already be imported into the
-  // destination file, and find the corresponding declaration there and import
-  // that.
-  if (!context.cpp_context()) {
-    context.TODO(
-        loc_id, "indirect import of C++ declaration with no direct Cpp import");
+  if (!CheckForCppContextForIndirectImport(context, loc_id)) {
     return SemIR::ErrorInst::ConstantId;
   }
 

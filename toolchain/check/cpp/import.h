@@ -27,6 +27,14 @@ auto ImportCpp(Context& context,
                llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
 
+// Given a clang declaration ID that was previously imported into another file,
+// returns the corresponding clang declaration key in the current context.
+// Produces an error and returns nullopt on failure.
+auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
+                                   const SemIR::File& file,
+                                   SemIR::ClangDeclId clang_decl_id)
+    -> std::optional<SemIR::ClangDeclKey>;
+
 // Imports a declaration into the current context that was previously imported
 // into another file.
 auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
