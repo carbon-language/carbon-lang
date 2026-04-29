@@ -187,36 +187,6 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  // Associates an argument (arg0 or arg1) with its IdKind.
-  class ArgAndKind {
-   public:
-    explicit ArgAndKind(IdKind kind, int32_t value)
-        : kind_(kind), value_(value) {}
-
-    // Converts to `IdT`, validating the `kind` matches.
-    template <typename IdT>
-    auto As() const -> IdT {
-      CARBON_DCHECK(kind_ == IdKind::For<IdT>);
-      return IdT(value_);
-    }
-
-    // Converts to `IdT`, returning nullopt if the kind is incorrect.
-    template <typename IdT>
-    auto TryAs() const -> std::optional<IdT> {
-      if (kind_ != IdKind::For<IdT>) {
-        return std::nullopt;
-      }
-      return IdT(value_);
-    }
-
-    auto kind() const -> IdKind { return kind_; }
-    auto value() const -> int32_t { return value_; }
-
-   private:
-    IdKind kind_;
-    int32_t value_;
-  };
-
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
   static auto MakeSingleton(InstKind kind) -> Inst {
@@ -330,11 +300,11 @@ class Inst : public Printable<Inst> {
   auto arg1() const -> int32_t { return arg1_; }
 
   // Returns arguments with their IdKind.
-  auto arg0_and_kind() const -> ArgAndKind {
-    return ArgAndKind(ArgKindTable[kind_].first, arg0_);
+  auto arg0_and_kind() const -> IdAndKind {
+    return IdAndKind(ArgKindTable[kind_].first, arg0_);
   }
-  auto arg1_and_kind() const -> ArgAndKind {
-    return ArgAndKind(ArgKindTable[kind_].second, arg1_);
+  auto arg1_and_kind() const -> IdAndKind {
+    return IdAndKind(ArgKindTable[kind_].second, arg1_);
   }
 
   // Sets the type of this instruction.
@@ -344,21 +314,6 @@ class Inst : public Printable<Inst> {
   auto SetArgs(int32_t arg0, int32_t arg1) -> void {
     arg0_ = arg0;
     arg1_ = arg1;
-  }
-
-  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-
-  // Convert a field from its raw representation.
-  template <typename T>
-    requires IdKind::Contains<T>
-  static constexpr auto FromRaw(int32_t raw) -> T {
-    return T(raw);
-  }
-  template <>
-  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
-    return IntId::MakeRaw(raw);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;

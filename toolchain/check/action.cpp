@@ -90,6 +90,13 @@ auto OperandDependence(Context& context, SemIR::InstId inst_id)
       OperandDependence(context, context.constant_values().Get(inst_id)));
 }
 
+static auto OperandDependence(Context& context, SemIR::MetaInstId inst_id)
+    -> SemIR::ConstantDependence {
+  // A meta-instruction operand makes the instruction dependent if its type or
+  // constant value is dependent.
+  return OperandDependence(context, SemIR::InstId{inst_id});
+}
+
 auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
     -> SemIR::ConstantDependence {
   // An instruction operand makes the instruction dependent if its type or
@@ -98,30 +105,27 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
   return OperandDependence(context, context.constant_values().Get(inst_id));
 }
 
-static auto OperandDependence(Context& context, SemIR::Inst::ArgAndKind arg)
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT> &&
+           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
+                       SemIR::CallParamIndex, SemIR::NameId>
+static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
-  CARBON_KIND_SWITCH(arg) {
-    case CARBON_KIND(SemIR::InstId inst_id): {
-      return OperandDependence(context, inst_id);
-    }
+  return SemIR::ConstantDependence::None;
+}
 
-    case CARBON_KIND(SemIR::MetaInstId inst_id): {
-      return OperandDependence(context, inst_id);
-    }
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto OperandDependence(Context& /*context*/, IdT /*id*/)
+    -> SemIR::ConstantDependence {
+  // TODO: Properly handle different argument kinds.
+  CARBON_FATAL("Unexpected argument kind for action: {}", IdT::Label);
+}
 
-    case CARBON_KIND(SemIR::TypeInstId inst_id): {
-      return OperandDependence(context, inst_id);
-    }
-
-    case SemIR::IdKind::None:
-    case SemIR::IdKind::For<SemIR::AbsoluteInstId>:
-    case SemIR::IdKind::For<SemIR::NameId>:
-      return SemIR::ConstantDependence::None;
-
-    default:
-      // TODO: Properly handle different argument kinds.
-      CARBON_FATAL("Unexpected argument kind for action");
-  }
+static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
+    -> SemIR::ConstantDependence {
+  return arg.Dispatch<SemIR::ConstantDependence>(
+      [&](auto id) { return OperandDependence(context, id); });
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
@@ -208,7 +212,7 @@ static auto AddDependentActionSpliceImpl(Context& context,
 // their concrete values, so that the action doesn't need to know which specific
 // it is operating on.
 static auto RefineOperand(Context& context, SemIR::LocId loc_id,
-                          SemIR::Inst::ArgAndKind arg) -> int32_t {
+                          SemIR::IdAndKind arg) -> int32_t {
   if (auto inst_id = arg.TryAs<SemIR::MetaInstId>()) {
     auto inst = context.insts().Get(*inst_id);
     if (inst.Is<SemIR::SpliceInst>()) {

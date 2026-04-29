@@ -1052,8 +1052,16 @@ auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   }
 }
 
-auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
-  GetFormatArgFn(arg_and_kind.kind())(*this, arg_and_kind.value());
+auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
+  arg_and_kind.Dispatch<void>([this]<typename IdT>(IdT arg) {
+    if constexpr (requires { FormatArg(arg); }) {
+      FormatArg(arg);
+    } else if constexpr (std::is_same_v<IdT, IdAndKind::NoneType>) {
+      // Do nothing
+    } else {
+      CARBON_FATAL("Missing FormatArg for {0}", typeid(IdT).name());
+    }
+  });
 }
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
