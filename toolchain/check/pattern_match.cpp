@@ -833,9 +833,10 @@ auto MatchContext::DoPreWork(State state, SemIR::SpliceInst splice,
           context_.types().GetTypeInstId(splice.type_id),
           {.type_id = SemIR::InstType::TypeId,
            .args_id =
-               context_.bundles().Add<SemIR::CalleePatternMatchAction::Args>(
-                   {.pattern_id = entry.pattern_id,
-                    .parent_index = callee_state->index.Allocate()})});
+               context_.bundles()
+                   .AddCanonical<SemIR::CalleePatternMatchAction::Args>(
+                       {.pattern_id = entry.pattern_id,
+                        .parent_index = callee_state->index.Allocate()})});
       callee_state->PushCallParamPattern(
           context_, SemIR::LocId(entry.pattern_id), entry.pattern_id,
           specific_id_stack_.back());
