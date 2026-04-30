@@ -538,27 +538,27 @@ auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
           }
 
           CARBON_KIND_SWITCH(context.insts().Get(impls.rhs_id)) {
+            case CARBON_KIND(SemIR::FacetType facet_type): {
               // If the RHS of the `impls` is a complex facet type (such as when
               // it has specific arguments) but has no `where`, then it will be
               // a FacetType instruction.
-            case CARBON_KIND(SemIR::FacetType facet_type): {
               if (search_facet_type(SemIR::LocId(impls.rhs_id),
                                     facet_type.facet_type_id)) {
                 return true;
               }
               break;
             }
+            case CARBON_KIND(SemIR::WhereExpr rhs_where_expr): {
               // If the RHS of the `impls` contains a `where`, then it will be a
               // WhereExpr instruction.
-            case CARBON_KIND(SemIR::WhereExpr rhs_where_expr): {
               work.push_back(
                   {.where_expr = rhs_where_expr, .search_lhs = true});
               break;
             }
+            default:
               // Otherwise, it's a simple facet type, which is just a reference
               // to an interface or constraint. There's nowhere to look for a
               // `.Self`.
-            default:
               break;
           }
 
