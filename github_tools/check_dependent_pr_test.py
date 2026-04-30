@@ -385,7 +385,9 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        self.assertIn(_OID9[:8], variable_values["body"])
+        self.assertIn(
+            "unable to identify starting review commit", variable_values["body"]
+        )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
