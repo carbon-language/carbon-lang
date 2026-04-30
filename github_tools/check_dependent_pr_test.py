@@ -361,7 +361,8 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        # Uses the last dependency's HEAD (_OID1) instead of sticky first commit (_OID2)
+        # Uses the last dependency's HEAD (_OID1) instead of sticky first
+        # commit (_OID2)
         self.assertIn(_OID1[:8], variable_values["body"])
         self._assert_status(
             _OID3, "pending", "This PR has open dependencies: #1"
@@ -410,7 +411,8 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        # Uses the last dependency's HEAD even if there are no independent commits
+        # Uses the last dependency's HEAD even if there are no independent
+        # commits
         self.assertIn(_OID2[:8], variable_values["body"])
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
