@@ -290,33 +290,150 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
   return false;
 }
 
-auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
-                                        SemIR::InstId impls_lhs_id,
-                                        SemIR::InstId impls_rhs_id) -> bool {
-  // Look for errors up front. We don't need to look for them in the rest of the
-  // function.
-  if (context.constant_values().Get(impls_lhs_id) ==
-          SemIR::ErrorInst::ConstantId ||
-      context.constant_values().Get(impls_rhs_id) ==
-          SemIR::ErrorInst::ConstantId) {
+class FindAndDiagnoseAmbiguousPeriodSelfHelper {
+ public:
+  explicit FindAndDiagnoseAmbiguousPeriodSelfHelper(Context* context)
+      : context_(context) {}
+
+  auto Search(SemIR::InstId impls_lhs_id, SemIR::InstId impls_rhs_id) -> bool {
+    // Look for errors up front. We don't need to look for them in the rest of
+    // the function.
+    if (context().constant_values().Get(impls_lhs_id) ==
+            SemIR::ErrorInst::ConstantId ||
+        context().constant_values().Get(impls_rhs_id) ==
+            SemIR::ErrorInst::ConstantId) {
+      return false;
+    }
+
+    if (IsPeriodSelf(context(), impls_lhs_id)) {
+      // `.Self impls X where ...` does not restrict any use of `.Self` on the
+      // RHS of the `where` since the `.Self` on the LHS of `where` did not
+      // introduce any ambiguity. A `.Self` on the RHS of the `where` applies to
+      // the same thing as on the LHS of the `impls`.
+      return false;
+    }
+
+    struct WorkItem {
+      SemIR::WhereExpr where_expr;
+      bool search_lhs;
+    };
+
+    llvm::SmallVector<WorkItem> work;
+    if (auto where_expr =
+            context().insts().TryGetAs<SemIR::WhereExpr>(impls_rhs_id)) {
+      work.push_back({.where_expr = *where_expr, .search_lhs = false});
+    }
+
+    while (!work.empty()) {
+      auto work_item = work.pop_back_val();
+
+      // Look in the non-canonical WhereExpr for explicit references to `.Self`,
+      // which will be considered as ambiguous.
+      for (auto inst_id : context().inst_blocks().GetOrEmpty(
+               work_item.where_expr.requirements_id)) {
+        auto inst = context().insts().Get(inst_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
+            if (work_item.search_lhs) {
+              // If the base type is more than a reference to an interface or
+              // constraint, such as having specific arguments, it will be a
+              // FacetType instruction.
+              if (auto facet_type =
+                      context().insts().TryGetAs<SemIR::FacetType>(
+                          base.base_type_inst_id)) {
+                if (SearchFacetType(SemIR::LocId(base.base_type_inst_id),
+                                    facet_type->facet_type_id)) {
+                  return true;
+                }
+              }
+            }
+            break;
+          }
+          case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+            if (SearchNonCanonical(rewrite.lhs_id)) {
+              return true;
+            }
+            if (SearchNonCanonical(rewrite.rhs_id)) {
+              return true;
+            }
+            break;
+          }
+          case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+            if (SearchNonCanonical(equiv.lhs_id)) {
+              return true;
+            }
+            if (SearchNonCanonical(equiv.rhs_id)) {
+              return true;
+            }
+            break;
+          }
+          case CARBON_KIND(SemIR::RequirementImpls impls): {
+            if (!IsPeriodSelf(context(), impls.lhs_id)) {
+              if (SearchType(
+                      SemIR::LocId(impls.lhs_id),
+                      context().types().GetTypeIdForTypeInstId(impls.lhs_id))) {
+                return true;
+              }
+            }
+
+            CARBON_KIND_SWITCH(context().insts().Get(impls.rhs_id)) {
+              case CARBON_KIND(SemIR::FacetType facet_type): {
+                // If the RHS of the `impls` is a complex facet type (such as
+                // when it has specific arguments) but has no `where`, then it
+                // will be a FacetType instruction.
+                if (SearchFacetType(SemIR::LocId(impls.rhs_id),
+                                    facet_type.facet_type_id)) {
+                  return true;
+                }
+                break;
+              }
+              case CARBON_KIND(SemIR::WhereExpr rhs_where_expr): {
+                // If the RHS of the `impls` contains a `where`, then it will be
+                // a WhereExpr instruction.
+                work.push_back(
+                    {.where_expr = rhs_where_expr, .search_lhs = true});
+                break;
+              }
+              default:
+                // Otherwise, it's a simple facet type, which is just a
+                // reference to an interface or constraint. There's nowhere to
+                // look for a
+                // `.Self`.
+                break;
+            }
+
+            break;
+          }
+          default:
+            CARBON_FATAL("unexpected inst {0} in WhereExpr requirements block",
+                         inst);
+        }
+      }
+    }
+
     return false;
   }
 
-  if (IsPeriodSelf(context, impls_lhs_id)) {
-    // `.Self impls X where ...` does not restrict any use of `.Self` on the
-    // RHS of the `where` since the `.Self` on the LHS of `where` did not
-    // introduce any ambiguity. A `.Self` on the RHS of the `where` applies to
-    // the same thing as on the LHS of the `impls`.
-    return false;
-  }
-
-  class FindPeriodSelfNameRef : public SubstInstCallbacks {
+ private:
+  class SearchForPeriodSelfBase : public SubstInstCallbacks {
    public:
-    explicit FindPeriodSelfNameRef(Context* context, SemIR::LocId* found)
-        : SubstInstCallbacks(context), found_(found) {}
+    explicit SearchForPeriodSelfBase(Context* context)
+        : SubstInstCallbacks(context) {}
+
+    enum class SearchResult {
+      // Found a `.Self` reference in the instruction.
+      Found,
+      // Not found, and ignore this instruction, don't search its operands.
+      Ignore,
+      // Did not find a `.Self` reference, but keep looking in the operands.
+      NotFound
+    };
+    virtual auto Search(SemIR::InstId inst_id) -> SearchResult = 0;
+    // Returns whether `Search` previously found a `.Self`.
+    virtual auto Found() -> bool = 0;
 
     auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      if (found_->has_value()) {
+      if (Found()) {
         return FullySubstituted;
       }
 
@@ -333,54 +450,57 @@ auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
         return FullySubstituted;
       }
 
-      if (auto name_ref = context().insts().TryGetAs<SemIR::NameRef>(inst_id)) {
-        // Canonicalization not necessary; NameRef contains the SymbolicBinding
-        // directly, not an `as type` conversion.
-        if (IsPeriodSelf(context(), name_ref->value_id,
-                         /*canonicalize=*/false)) {
-          // `.Self` does not have a location, the NameRef pointing to it does.
-          *found_ = SemIR::LocId(inst_id);
+      switch (Search(inst_id)) {
+        case SearchResult::Found:
+        case SearchResult::Ignore:
           return FullySubstituted;
-        }
+        case SearchResult::NotFound:
+          return SubstOperands;
       }
-
-      return SubstOperands;
     }
 
     auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
         -> SemIR::InstId override {
       CARBON_FATAL();
     }
-
-   private:
-    SemIR::LocId* found_;
   };
 
-  class FindCanonicalExplicitPeriodSelf : public SubstInstCallbacks {
+  class SearchNonCanonicalForExplicitPeriodSelf
+      : public SearchForPeriodSelfBase {
    public:
-    explicit FindCanonicalExplicitPeriodSelf(Context* context, bool* found)
-        : SubstInstCallbacks(context), found_(found) {}
+    explicit SearchNonCanonicalForExplicitPeriodSelf(Context* context)
+        : SearchForPeriodSelfBase(context) {}
 
-    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      if (*found_) {
-        return FullySubstituted;
+    auto Search(SemIR::InstId inst_id) -> SearchResult override {
+      if (auto name_ref = context().insts().TryGetAs<SemIR::NameRef>(inst_id)) {
+        // Canonicalization not necessary; NameRef contains the SymbolicBinding
+        // directly, not an `as type` conversion.
+        if (IsPeriodSelf(context(), name_ref->value_id,
+                         /*canonicalize=*/false)) {
+          // `.Self` does not have a location, the NameRef pointing to it does.
+          found_ = SemIR::LocId(inst_id);
+          return SearchResult::Found;
+        }
       }
+      return SearchResult::NotFound;
+    }
 
-      auto const_inst_id =
-          context().constant_values().GetConstantInstId(inst_id);
-      if (const_inst_id == SemIR::TypeType::TypeInstId) {
-        // Recursion base case. TypeType has type TypeType.
-        return FullySubstituted;
-      }
-      if (context().insts().Is<SemIR::FacetType>(const_inst_id)) {
-        // Don't look for `.Self` in nested facet types, they aren't replaced
-        // with a facet value and just remain as abstract. WhereExprs evaluate
-        // to a FacetType but are handled outside of Subst.
-        return FullySubstituted;
-      }
+    auto Found() -> bool override { return found_.has_value(); }
 
-      if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
-              const_inst_id)) {
+    auto FoundLocId() -> SemIR::LocId { return found_; }
+
+   private:
+    SemIR::LocId found_ = SemIR::LocId::None;
+  };
+
+  class SearchCanonicalForExplicitPeriodSelf : public SearchForPeriodSelfBase {
+   public:
+    explicit SearchCanonicalForExplicitPeriodSelf(Context* context)
+        : SearchForPeriodSelfBase(context) {}
+
+    auto Search(SemIR::InstId inst_id) -> SearchResult override {
+      if (auto access =
+              context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
         if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
                 access->witness_id)) {
           // Canonicalization not necessary; We are working with the constant
@@ -389,189 +509,121 @@ auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
           if (IsPeriodSelf(context(), lookup->query_self_inst_id,
                            /*canonicalize=*/false)) {
             // An implicit `.Self` in a member designator is always allowed.
-            return FullySubstituted;
+            return SearchResult::Ignore;
           }
         }
       }
 
       // Canonicalization not necessary; Subst will recurse anyway, so avoid
       // extra work for non-matches.
-      if (IsPeriodSelf(context(), const_inst_id, /*canonicalize=*/false)) {
-        *found_ = true;
-        return FullySubstituted;
+      if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
+        found_ = true;
+        return SearchResult::Found;
       }
-
-      return SubstOperands;
+      return SearchResult::NotFound;
     }
 
-    auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
-        -> SemIR::InstId override {
-      CARBON_FATAL();
-    }
+    auto Found() -> bool override { return found_; }
 
    private:
-    bool* found_;
+    bool found_ = false;
   };
 
-  auto report_ambiguous = [&](SemIR::LocId loc_id) {
+  auto ReportAmbiguous(SemIR::LocId loc_id) -> void {
     CARBON_DIAGNOSTIC(AmbiguousPeriodSelf, Error,
                       "`.Self` is ambiguous after nested `where` in `<type> "
                       "impls ...` clause.");
-    context.emitter().Emit(loc_id, AmbiguousPeriodSelf);
-  };
+    context().emitter().Emit(loc_id, AmbiguousPeriodSelf);
+  }
 
-  auto search_type = [&](SemIR::LocId loc_id, SemIR::TypeId type_id) {
-    bool found_canonical = false;
-    FindCanonicalExplicitPeriodSelf callbacks(&context, &found_canonical);
+  // Searches a type for a reference to `.Self`. Types are canonical, so they
+  // only contain canonical values/inststructions, which have no location of
+  // their own.
+  //
+  // The search excludes ImplWitnessAccess into `.Self`, which represents a
+  // designator like `.X`.
+  //
+  // The search does not recurse into FacetTypes, as some can include valid
+  // references to the top level `.Self`, or abstract `.Self` references that
+  // are not replaced. FacetTypes are handled by the higher level search.
+  //
+  // Returns true if found, and diagnosed.
+  auto SearchType(SemIR::LocId loc_id, SemIR::TypeId type_id) -> bool {
+    SearchCanonicalForExplicitPeriodSelf callbacks(&context());
 
-    auto canonical_inst_id = context.types().GetTypeInstId(type_id);
-    SubstInst(context, canonical_inst_id, callbacks);
+    auto canonical_inst_id = context().types().GetTypeInstId(type_id);
+    SubstInst(context(), canonical_inst_id, callbacks);
 
     // The type has no locations internally, as it stores canonical
     // instructions. If we find any `.Self` reference, we report the entire
     // type.
-    if (found_canonical) {
-      report_ambiguous(loc_id);
+    if (callbacks.Found()) {
+      ReportAmbiguous(loc_id);
       return true;
     }
     return false;
-  };
+  }
 
-  auto search_facet_type = [&](SemIR::LocId loc_id,
-                               SemIR::FacetTypeId facet_type_id) {
-    bool found_canonical = false;
-    FindCanonicalExplicitPeriodSelf callbacks(&context, &found_canonical);
+  // Searches a facet type for a reference to `.Self`. FacetTypes are canonical,
+  // so they only contain canonical values/inststructions, which have no
+  // location of their own.
+  //
+  // The search excludes ImplWitnessAccess into `.Self`, which represents a
+  // designator like `.X`.
+  //
+  // Returns true if found, and diagnosed.
+  auto SearchFacetType(SemIR::LocId loc_id, SemIR::FacetTypeId facet_type_id)
+      -> bool {
+    SearchCanonicalForExplicitPeriodSelf callbacks(&context());
 
-    const auto& info = context.facet_types().Get(facet_type_id);
+    const auto& info = context().facet_types().Get(facet_type_id);
     // The LHS of a `WhereExpr` only has extend constraints.
     for (auto extend : info.extend_constraints) {
-      auto block_id = context.specifics().GetArgsOrEmpty(extend.specific_id);
-      for (auto inst_id : context.inst_blocks().GetOrEmpty(block_id)) {
-        SubstInst(context, inst_id, callbacks);
+      auto block_id = context().specifics().GetArgsOrEmpty(extend.specific_id);
+      for (auto inst_id : context().inst_blocks().GetOrEmpty(block_id)) {
+        SubstInst(context(), inst_id, callbacks);
       }
     }
     for (auto extend : info.extend_named_constraints) {
-      auto block_id = context.specifics().GetArgsOrEmpty(extend.specific_id);
-      for (auto inst_id : context.inst_blocks().GetOrEmpty(block_id)) {
-        SubstInst(context, inst_id, callbacks);
+      auto block_id = context().specifics().GetArgsOrEmpty(extend.specific_id);
+      for (auto inst_id : context().inst_blocks().GetOrEmpty(block_id)) {
+        SubstInst(context(), inst_id, callbacks);
       }
     }
     // The facet type has no locations internally, as it stores canonical
     // instructions. If we find any `.Self` reference, we report the entire
     // facet type.
-    if (found_canonical) {
-      report_ambiguous(loc_id);
+    if (callbacks.Found()) {
+      ReportAmbiguous(loc_id);
       return true;
     }
     return false;
-  };
+  }
 
-  auto search_inst = [&](SemIR::InstId inst_id) {
-    auto found = SemIR::LocId::None;
-    FindPeriodSelfNameRef callbacks(&context, &found);
-    SubstInst(context, inst_id, callbacks);
-    if (found.has_value()) {
-      report_ambiguous(found);
+  // Searches a non-canonical instruction for an explicitly written use of
+  // `.Self`, which is represented as a NameRef instruction.
+  //
+  // Returns true if found, and diagnosed.
+  auto SearchNonCanonical(SemIR::InstId inst_id) -> bool {
+    SearchNonCanonicalForExplicitPeriodSelf callbacks(&context());
+    SubstInst(context(), inst_id, callbacks);
+    if (callbacks.Found()) {
+      ReportAmbiguous(callbacks.FoundLocId());
       return true;
     }
     return false;
-  };
-
-  struct WorkItem {
-    SemIR::WhereExpr where_expr;
-    bool search_lhs;
-  };
-  llvm::SmallVector<WorkItem> work;
-
-  if (auto where_expr =
-          context.insts().TryGetAs<SemIR::WhereExpr>(impls_rhs_id)) {
-    work.push_back({.where_expr = *where_expr, .search_lhs = false});
   }
 
-  while (!work.empty()) {
-    auto work_item = work.pop_back_val();
+  auto context() -> Context& { return *context_; }
 
-    for (auto inst_id : context.inst_blocks().GetOrEmpty(
-             work_item.where_expr.requirements_id)) {
-      auto inst = context.insts().Get(inst_id);
-      CARBON_KIND_SWITCH(inst) {
-        case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
-          if (work_item.search_lhs) {
-            // If the base type is more than a reference to an interface or
-            // constraint, such as having specific arguments, it will be a
-            // FacetType instruction.
-            if (auto facet_type = context.insts().TryGetAs<SemIR::FacetType>(
-                    base.base_type_inst_id)) {
-              if (search_facet_type(SemIR::LocId(base.base_type_inst_id),
-                                    facet_type->facet_type_id)) {
-                return true;
-              }
-            }
-          }
-          break;
-        }
-        case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
-          if (search_inst(rewrite.lhs_id)) {
-            return true;
-          }
-          if (search_inst(rewrite.rhs_id)) {
-            return true;
-          }
-          break;
-        }
-        case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
-          if (search_inst(equiv.lhs_id)) {
-            return true;
-          }
-          if (search_inst(equiv.rhs_id)) {
-            return true;
-          }
-          break;
-        }
-        case CARBON_KIND(SemIR::RequirementImpls impls): {
-          if (!IsPeriodSelf(context, impls.lhs_id)) {
-            if (search_type(
-                    SemIR::LocId(impls.lhs_id),
-                    context.types().GetTypeIdForTypeInstId(impls.lhs_id))) {
-              return true;
-            }
-          }
+  Context* context_;
+};
 
-          CARBON_KIND_SWITCH(context.insts().Get(impls.rhs_id)) {
-            case CARBON_KIND(SemIR::FacetType facet_type): {
-              // If the RHS of the `impls` is a complex facet type (such as when
-              // it has specific arguments) but has no `where`, then it will be
-              // a FacetType instruction.
-              if (search_facet_type(SemIR::LocId(impls.rhs_id),
-                                    facet_type.facet_type_id)) {
-                return true;
-              }
-              break;
-            }
-            case CARBON_KIND(SemIR::WhereExpr rhs_where_expr): {
-              // If the RHS of the `impls` contains a `where`, then it will be a
-              // WhereExpr instruction.
-              work.push_back(
-                  {.where_expr = rhs_where_expr, .search_lhs = true});
-              break;
-            }
-            default:
-              // Otherwise, it's a simple facet type, which is just a reference
-              // to an interface or constraint. There's nowhere to look for a
-              // `.Self`.
-              break;
-          }
-
-          break;
-        }
-        default:
-          CARBON_FATAL("unexpected inst {0} in WhereExpr requirements block",
-                       inst);
-      }
-    }
-  }
-
-  return false;
+auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
+                                        SemIR::InstId impls_lhs_id,
+                                        SemIR::InstId impls_rhs_id) -> bool {
+  FindAndDiagnoseAmbiguousPeriodSelfHelper helper(&context);
+  return helper.Search(impls_lhs_id, impls_rhs_id);
 }
 
 }  // namespace Carbon::Check
