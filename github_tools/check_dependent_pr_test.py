@@ -40,6 +40,36 @@ class TestCheckDependentPR(unittest.TestCase):
         self.assertEqual(kwargs["json"]["context"], "PR dependencies check")
         self.assertEqual(kwargs["json"]["description"], description)
 
+    def _process_pr(
+        self,
+        client: Any,
+        pr_number: int,
+        pr_to_commits: dict[int, list[str]],
+        open_pr_numbers: set[int],
+        label_id: str,
+        token: str,
+        dry_run: bool = False,
+        scanning: bool = False,
+        max_merged_pr: int = 10000,
+    ) -> None:
+        """Helper to call the real _process_pr with converted types."""
+        new_pr_to_commits = {k: set(v) for k, v in pr_to_commits.items()}
+        pr_to_head = {
+            k: v[-1] if v else "dummy_head" for k, v in pr_to_commits.items()
+        }
+        return check_dependent_pr._process_pr(
+            client=client,
+            pr_number=pr_number,
+            pr_to_commits=new_pr_to_commits,
+            pr_to_head=pr_to_head,
+            open_pr_numbers=open_pr_numbers,
+            label_id=label_id,
+            token=token,
+            dry_run=dry_run,
+            scanning=scanning,
+            max_merged_pr=max_merged_pr,
+        )
+
     def _make_comment(
         self,
         open_deps: list[int],
@@ -93,7 +123,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=1,
             pr_to_commits={1: [_OID1]},
@@ -112,7 +142,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=2,
             pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
@@ -136,7 +166,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1])],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=3,
             pr_to_commits={3: [_OID1, _OID2]},
@@ -159,7 +189,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=3,
             pr_to_commits={1: [_OID1, _OID4], 3: [_OID1, _OID2]},
@@ -183,7 +213,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=10,
             pr_to_commits={10: [_OID1, _OID2], 11: [_OID1, _OID3]},
@@ -202,7 +232,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=9,
             pr_to_commits={1: [_OID2], 9: [_OID1, _OID2]},
@@ -224,7 +254,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=7,
             pr_to_commits={1: [_OID1], 7: [_OID1, _OID2]},
@@ -246,7 +276,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1], first_commit=_OID2)],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=6,
             pr_to_commits={1: [_OID1], 6: [_OID1, _OID2]},
@@ -275,7 +305,7 @@ class TestCheckDependentPR(unittest.TestCase):
 
         self.assertRaises(
             json.decoder.JSONDecodeError,
-            check_dependent_pr._process_pr,
+            self._process_pr,
             self.mock_client,
             pr_number=5,
             pr_to_commits={5: [_OID1]},
@@ -298,7 +328,7 @@ class TestCheckDependentPR(unittest.TestCase):
             ],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=14,
             pr_to_commits={1: [_OID1], 14: [_OID1, _OID2]},
@@ -321,7 +351,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2], first_commit=_OID2)],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=11,
             pr_to_commits={1: [_OID1], 11: [_OID1, _OID2, _OID3]},
@@ -331,8 +361,8 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        self.assertIn(_OID2[:8], variable_values["body"])
-        self.assertNotIn(_OID1[:8], variable_values["body"])
+        # Uses the last dependency's HEAD (_OID1) instead of sticky first commit (_OID2)
+        self.assertIn(_OID1[:8], variable_values["body"])
         self._assert_status(
             _OID3, "pending", "This PR has open dependencies: #1"
         )
@@ -345,7 +375,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=12,
             pr_to_commits={1: [_OID9], 12: [_OID1, _OID2]},
@@ -355,7 +385,7 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        self.assertIn(_OID1[:8], variable_values["body"])
+        self.assertIn(_OID9[:8], variable_values["body"])
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
@@ -368,7 +398,7 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=13,
             pr_to_commits={1: [_OID1, _OID2], 13: [_OID1, _OID2]},
@@ -378,9 +408,8 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         calls = self.mock_client.execute.call_args_list
         variable_values = calls[1][1]["variable_values"]
-        self.assertIn(
-            "unable to identify starting review commit", variable_values["body"]
-        )
+        # Uses the last dependency's HEAD even if there are no independent commits
+        self.assertIn(_OID2[:8], variable_values["body"])
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
@@ -391,7 +420,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=1,
             pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
@@ -410,7 +439,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=2,
             pr_to_commits={1: [_OID1], 2: [_OID2]},
@@ -429,7 +458,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=2,
             pr_to_commits={1: [_OID1, _OID2, _OID3], 2: [_OID1, _OID2]},
@@ -448,7 +477,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID4,
             commits=[_OID1, _OID3, _OID4],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=2,
             pr_to_commits={1: [_OID1, _OID2], 2: [_OID1, _OID3, _OID4]},
@@ -469,7 +498,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=1,
             pr_to_commits={1: [_OID1]},
@@ -487,7 +516,7 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        check_dependent_pr._process_pr(
+        self._process_pr(
             self.mock_client,
             pr_number=2,
             pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
@@ -497,6 +526,39 @@ class TestCheckDependentPR(unittest.TestCase):
         )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
+        )
+
+    def test_process_pr_sibling_prs(self) -> None:
+        # PR 1: [_OID1]
+        # PR 2: [_OID1, _OID2]
+        # PR 3: [_OID1, _OID3]
+        # PR 3 depends on PR 1, but not PR 2.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID3,
+            commits=[_OID1, _OID3],
+        )
+        self._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={
+                1: [_OID1],
+                2: [_OID1, _OID2],
+                3: [_OID1, _OID3],
+            },
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 3)
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("addLabelsToLabelable", calls[1][0][0])
+        # Link should only mention PR #1
+        variable_values = calls[2][1]["variable_values"]
+        self.assertIn("Depends on #1", variable_values["body"])
+        self.assertNotIn("#2", variable_values["body"])
+        self._assert_status(
+            _OID3, "pending", "This PR has open dependencies: #1"
         )
 
     def test_query_max_merged_pr_explicit_orderBy_and_first_one(self) -> None:
