@@ -33,7 +33,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       deferred_definition_worklist_(vlog_stream),
       generic_region_stack_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      check_ir_map_(CheckIRToImpportIRStore::MakeWithExplicitSize(
+      check_ir_map_(CheckIRToImportIRStore::MakeWithExplicitSize(
           total_ir_count_, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {

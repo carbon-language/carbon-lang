@@ -125,12 +125,12 @@ impl i32 as I {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc15_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_9.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc15_23: type = splice_block %T.ref [symbolic = %T.loc15_9.1 (constants.%T)] {
+// CHECK:STDOUT:     %T.loc15_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_10.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc15_23: type = splice_block %T.ref [symbolic = %T.loc15_10.1 (constants.%T)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_9.2 [symbolic = %T.loc15_9.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_10.2 [symbolic = %T.loc15_10.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %X.loc15_19.2: @C.%T.loc15_9.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc15_19.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc15_20.2: @C.%T.loc15_10.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc15_20.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @bool.as.I.impl [concrete] {} {
@@ -227,10 +227,10 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc15_9.2: type, %X.loc15_19.2: @C.%T.loc15_9.1 (%T)) {
-// CHECK:STDOUT:   %T.loc15_9.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_9.1 (constants.%T)]
-// CHECK:STDOUT:   %X.loc15_19.1: @C.%T.loc15_9.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc15_19.1 (constants.%X)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc15_9.1 [symbolic = %pattern_type (constants.%pattern_type.51d1c4.1)]
+// CHECK:STDOUT: generic class @C(%T.loc15_10.2: type, %X.loc15_20.2: @C.%T.loc15_10.1 (%T)) {
+// CHECK:STDOUT:   %T.loc15_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_10.1 (constants.%T)]
+// CHECK:STDOUT:   %X.loc15_20.1: @C.%T.loc15_10.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc15_20.1 (constants.%X)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc15_10.1 [symbolic = %pattern_type (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -258,15 +258,14 @@ impl i32 as I {
 // CHECK:STDOUT: fn @i32.as.I.impl.F.loc43_18.2(%c.param: %C.719) [thunk @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %i32.as.I.impl.F.type.6c53e7.1 = name_ref F, @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1 [concrete = constants.%i32.as.I.impl.F.7f652f.1]
-// CHECK:STDOUT:   %c.ref: %C.719 = name_ref c, %c.param
-// CHECK:STDOUT:   %.loc25: %C.899 = converted %c.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %C.899 = converted %c.param, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T, constants.%X) {
-// CHECK:STDOUT:   %T.loc15_9.1 => constants.%T
-// CHECK:STDOUT:   %X.loc15_19.1 => constants.%X
+// CHECK:STDOUT:   %T.loc15_10.1 => constants.%T
+// CHECK:STDOUT:   %X.loc15_20.1 => constants.%X
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,8 +277,8 @@ impl i32 as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%Self.ab9) {
-// CHECK:STDOUT:   %T.loc15_9.1 => constants.%I.type
-// CHECK:STDOUT:   %X.loc15_19.1 => constants.%Self.ab9
+// CHECK:STDOUT:   %T.loc15_10.1 => constants.%I.type
+// CHECK:STDOUT:   %X.loc15_20.1 => constants.%Self.ab9
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,8 +289,8 @@ impl i32 as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%I.facet.e45) {
-// CHECK:STDOUT:   %T.loc15_9.1 => constants.%I.type
-// CHECK:STDOUT:   %X.loc15_19.1 => constants.%I.facet.e45
+// CHECK:STDOUT:   %T.loc15_10.1 => constants.%I.type
+// CHECK:STDOUT:   %X.loc15_20.1 => constants.%I.facet.e45
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,8 +308,8 @@ impl i32 as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(type, constants.%i32) {
-// CHECK:STDOUT:   %T.loc15_9.1 => type
-// CHECK:STDOUT:   %X.loc15_19.1 => constants.%i32
+// CHECK:STDOUT:   %T.loc15_10.1 => type
+// CHECK:STDOUT:   %X.loc15_20.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -330,8 +329,8 @@ impl i32 as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%I.facet.20f) {
-// CHECK:STDOUT:   %T.loc15_9.1 => constants.%I.type
-// CHECK:STDOUT:   %X.loc15_19.1 => constants.%I.facet.20f
+// CHECK:STDOUT:   %T.loc15_10.1 => constants.%I.type
+// CHECK:STDOUT:   %X.loc15_20.1 => constants.%I.facet.20f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9d9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

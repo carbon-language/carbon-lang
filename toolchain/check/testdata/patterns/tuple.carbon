@@ -40,6 +40,24 @@ var t: ((), ()) = ((), ());
 let (a: (), b: ()) = t;
 //@dump-sem-ir-end
 
+// --- grouping_parens.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let (a: ()) = ();
+let (((b: ()))) = ();
+//@dump-sem-ir-end
+
+// --- one_tuple.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let (a: (),) = ((),);
+let (((b: ()),)) = ((),);
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- literal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -166,6 +184,89 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %t.ref: ref %tuple.type = name_ref t, file.%t [concrete = file.%t.var]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- grouping_parens.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple.loc5: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_16: %empty_tuple.type = converted @__global_init.%.loc5, %empty_tuple.loc5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_16
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc6_12.1: type = splice_block %.loc6_12.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc6_12.3: type = converted %.loc6_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple.loc6: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_20: %empty_tuple.type = converted @__global_init.%.loc6, %empty_tuple.loc6 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- one_tuple.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %pattern_type.559: type = pattern_type %tuple.type [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc5_12: %pattern_type.559 = tuple_pattern (%a.patt) [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple.loc5: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_18: %empty_tuple.type = converted @__global_init.%.loc5_18, %empty_tuple.loc5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_18
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc6_15: %pattern_type.559 = tuple_pattern (%b.patt) [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc6_12.1: type = splice_block %.loc6_12.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc6_12.3: type = converted %.loc6_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple.loc6: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_22: %empty_tuple.type = converted @__global_init.%.loc6_22, %empty_tuple.loc6 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_22
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_18: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_20: %tuple.type = tuple_literal (%.loc5_18) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_24: %tuple.type = tuple_literal (%.loc6_22) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

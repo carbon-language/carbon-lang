@@ -103,7 +103,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc4_9.2: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc4_10.2: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_10.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f44 = symbolic_binding_pattern b, 0 [concrete]
@@ -121,7 +121,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc5_20.3: %i32 = converted %int_1000.loc5, %.loc5_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C.loc5: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.a39]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc5_9.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc5_10.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f44 = symbolic_binding_pattern b, 0 [concrete]
@@ -139,12 +139,12 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc6_20.3: %i32 = converted %int_1000.loc6, %.loc6_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C.loc6: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.a39]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc6: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc6: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%a.loc4_9.2: %i32) {
-// CHECK:STDOUT:   %a.loc4_9.1: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
+// CHECK:STDOUT: generic class @C(%a.loc4_10.2: %i32) {
+// CHECK:STDOUT:   %a.loc4_10.1: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_10.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -157,8 +157,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%b.loc5_9.2: %C.a39) {
-// CHECK:STDOUT:   %b.loc5_9.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
+// CHECK:STDOUT: generic class @D(%b.loc5_10.2: %C.a39) {
+// CHECK:STDOUT:   %b.loc5_10.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -172,15 +172,15 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
-// CHECK:STDOUT:   %a.loc4_9.1 => constants.%a
+// CHECK:STDOUT:   %a.loc4_10.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1000.1b6) {
-// CHECK:STDOUT:   %a.loc4_9.1 => constants.%int_1000.1b6
+// CHECK:STDOUT:   %a.loc4_10.1 => constants.%int_1000.1b6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%b) {
-// CHECK:STDOUT:   %b.loc5_9.1 => constants.%b
+// CHECK:STDOUT:   %b.loc5_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
@@ -253,7 +253,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc4_9.2: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc4_10.2: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_10.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc5: %D.type.6dc267.1 = class_decl @D.loc5 [concrete = constants.%D.generic.3c4a9e.1] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f44 = symbolic_binding_pattern b, 0 [concrete]
@@ -271,7 +271,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc5_19.3: %i32 = converted %int_1000, %.loc5_19.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.a39]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc5_9.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc5_10.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc13: %D.type.6dc267.2 = class_decl @D.loc13 [concrete = constants.%D.generic.3c4a9e.2] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f44 = symbolic_binding_pattern b, 0 [concrete]
@@ -289,12 +289,12 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc13_20.3: %i32 = converted %int_1000, %.loc13_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.a39]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc13_9.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc13_9.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc13_10.2: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc13_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%a.loc4_9.2: %i32) {
-// CHECK:STDOUT:   %a.loc4_9.1: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
+// CHECK:STDOUT: generic class @C(%a.loc4_10.2: %i32) {
+// CHECK:STDOUT:   %a.loc4_10.1: %i32 = symbolic_binding a, 0 [symbolic = %a.loc4_10.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -307,14 +307,14 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D.loc5(%b.loc5_9.2: %C.a39) {
-// CHECK:STDOUT:   %b.loc5_9.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
+// CHECK:STDOUT: generic class @D.loc5(%b.loc5_10.2: %C.a39) {
+// CHECK:STDOUT:   %b.loc5_10.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D.loc13(%b.loc13_9.2: %C.a39) {
-// CHECK:STDOUT:   %b.loc13_9.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc13_9.1 (constants.%b)]
+// CHECK:STDOUT: generic class @D.loc13(%b.loc13_10.2: %C.a39) {
+// CHECK:STDOUT:   %b.loc13_10.1: %C.a39 = symbolic_binding b, 0 [symbolic = %b.loc13_10.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -328,18 +328,18 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
-// CHECK:STDOUT:   %a.loc4_9.1 => constants.%a
+// CHECK:STDOUT:   %a.loc4_10.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1000.1b6) {
-// CHECK:STDOUT:   %a.loc4_9.1 => constants.%int_1000.1b6
+// CHECK:STDOUT:   %a.loc4_10.1 => constants.%int_1000.1b6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.loc5(constants.%b) {
-// CHECK:STDOUT:   %b.loc5_9.1 => constants.%b
+// CHECK:STDOUT:   %b.loc5_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.loc13(constants.%b) {
-// CHECK:STDOUT:   %b.loc13_9.1 => constants.%b
+// CHECK:STDOUT:   %b.loc13_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

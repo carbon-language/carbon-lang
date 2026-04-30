@@ -17,7 +17,7 @@
 // CHECK:STDERR:              ^
 // CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+4]]:6: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F(n: i32, n: i32);
-// CHECK:STDERR:      ^
+// CHECK:STDERR:      ^~~~~~
 // CHECK:STDERR:
 fn F(n: i32, n: i32);
 
@@ -50,16 +50,16 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt.loc22_6: %pattern_type.7ce = at_binding_pattern n, %n.param_patt.loc22_7 [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.7ce = at_binding_pattern n, %n.param_patt.loc22_7 [concrete]
 // CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt.loc22_14: %pattern_type.7ce = at_binding_pattern n, %n.param_patt.loc22_15 [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.7ce = at_binding_pattern n, %n.param_patt.loc22_15 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_6: %i32 = value_binding n, %n.param.loc22_7
+// CHECK:STDOUT:     %n.loc22_7: %i32 = value_binding n, %n.param.loc22_7
 // CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc22_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_14: %i32 = value_binding n, %n.param.loc22_15
+// CHECK:STDOUT:     %n.loc22_15: %i32 = value_binding n, %n.param.loc22_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

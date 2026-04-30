@@ -147,8 +147,21 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
+
+    auto const_id = context().constant_values().Get(orig_inst_id);
+    const auto& symbolic =
+        context().constant_values().GetSymbolicConstant(const_id);
+    // Template actions are inserted into the eval block directly, instead of
+    // adding a new instruction, in `AddTemplateActionToEvalBlock`. This means
+    // any instruction that is symbolic because it contains a template action as
+    // an operand would Rebuild that operand with the same instruction. Then the
+    // dependent instruction would be reused unchanged.
+    bool is_template =
+        symbolic.dependence == SemIR::ConstantDependence::Template;
+
     CARBON_CHECK(
-        (inst.IsOneOf<SemIR::SymbolicBinding, SemIR::SymbolicBindingPattern>()),
+        is_template || (inst.IsOneOf<SemIR::SymbolicBinding,
+                                     SemIR::SymbolicBindingPattern>()),
         "Instruction {0} has symbolic constant value but no symbolic operands",
         inst);
 
@@ -653,9 +666,7 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
 
-    // TODO: Store in the specific whether the declaration contains any
-    // ErrorInst values.
-    specific.decl_block_id =
+    std::tie(specific.decl_block_id, specific.decl_block_has_error) =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
   }
@@ -721,10 +732,10 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    // TODO: Store in the specific whether the definition contains any ErrorInst
-    // values.
-    specific.definition_block_id = TryEvalBlockForSpecific(
-        context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
+    std::tie(specific.definition_block_id,
+             specific.definition_block_has_error) =
+        TryEvalBlockForSpecific(context, loc_id, specific_id,
+                                SemIR::GenericInstIndex::Definition);
   }
   return true;
 }

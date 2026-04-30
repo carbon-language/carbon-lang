@@ -251,6 +251,18 @@ struct InlineImportSpecifier {
   InlineImportBodyId body;
 };
 
+using InlineIntroducer =
+    LeafNode<NodeKind::InlineIntroducer, Lex::InlineTokenIndex>;
+struct InlineCppDecl {
+  static constexpr auto Kind = NodeKind::InlineCppDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = InlineIntroducer::Kind});
+
+  InlineIntroducerId introducer;
+  CppNameExprId cpp_name;
+  InlineImportBodyId body;
+  Lex::SemiTokenIndex token;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
@@ -413,6 +425,18 @@ using TuplePatternStart =
     LeafNode<NodeKind::TuplePatternStart, Lex::OpenParenTokenIndex>;
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
+
+// A parenthesized pattern that isn't an explicit parameter list.
+struct ParenPattern {
+  static constexpr auto Kind =
+      NodeKind::ParenPattern.Define({.category = NodeCategory::Pattern,
+                                     .bracketed_by = TuplePatternStart::Kind,
+                                     .child_count = 2});
+
+  TuplePatternStartId left_paren;
+  AnyPatternId inner;
+  Lex::CloseParenTokenIndex token;
+};
 
 // A tuple pattern that isn't an explicit parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {

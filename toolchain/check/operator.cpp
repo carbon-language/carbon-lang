@@ -86,7 +86,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     // argument. Otherwise fall through to call it with a self argument.
     if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
       return PerformCall(context, loc_id, op_fn_id, {operand_id},
-                         /*is_operator_syntax=*/true);
+                         /*is_desugared=*/true);
     }
   }
 
@@ -105,7 +105,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
   // Form `bound_op()`.
   return PerformCall(context, loc_id, bound_op_id, {},
-                     /*is_operator_syntax=*/true);
+                     /*is_desugared=*/true);
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -139,7 +139,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     // call argument.
     if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
       return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id},
-                         /*is_operator_syntax=*/true);
+                         /*is_desugared=*/true);
     }
   }
 
@@ -158,7 +158,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
   // Form `bound_op(rhs)`.
   return PerformCall(context, loc_id, bound_op_id, {rhs_id},
-                     /*is_operator_syntax=*/true);
+                     /*is_desugared=*/true);
 }
 
 }  // namespace Carbon::Check

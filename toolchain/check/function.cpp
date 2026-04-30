@@ -6,6 +6,7 @@
 
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
@@ -32,42 +33,17 @@ auto FindSelfPattern(Context& context,
   });
 }
 
-auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
-                       Context::FormExpr form_expr) -> SemIR::InstBlockId {
-  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
-  auto form_inst = context.insts().Get(
-      context.constant_values().GetConstantInstId(form_expr.form_inst_id));
-  CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind:
-    case SemIR::ValueForm::Kind: {
-      break;
-    }
-    case CARBON_KIND(SemIR::InitForm _): {
-      auto pattern_type_id =
-          GetPatternType(context, form_expr.type_component_id);
-      auto out_param_id = AddPatternInst<SemIR::OutParamPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
-           .pretty_name_id = SemIR::NameId::ReturnSlot});
-      return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = pattern_type_id,
-           .subpattern_id = out_param_id,
-           .type_inst_id = form_expr.type_component_inst_id}));
-      break;
-    }
-    case SemIR::ErrorInst::Kind: {
-      break;
-    }
-    case SemIR::SymbolicBinding::Kind:
-      CARBON_CHECK(
-          context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
-      context.TODO(loc_id, "Support symbolic return forms");
-      break;
-    default:
-      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
-  }
-  return context.inst_blocks().AddCanonical(return_patterns);
+auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
+                      Context::FormExpr form_expr) -> SemIR::InstId {
+  auto result_type_id = GetPatternType(context, form_expr.type_component_id);
+  auto result_id = HandleAction<SemIR::OutFormParamPatternAction>(
+      context, loc_id, form_expr.type_component_inst_id,
+      {.type_id = SemIR::InstType::TypeId, .form_id = form_expr.form_inst_id});
+  return AddInst<SemIR::ReturnSlotPattern>(
+      context, loc_id,
+      {.type_id = result_type_id,
+       .subpattern_id = result_id,
+       .type_inst_id = form_expr.type_component_inst_id});
 }
 
 auto IsValidBuiltinDeclaration(Context& context,
@@ -108,7 +84,7 @@ struct FunctionSignatureInsts {
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
   SemIR::InstId return_form_inst_id = SemIR::InstId::None;
-  SemIR::InstBlockId return_patterns_id = SemIR::InstBlockId::None;
+  SemIR::InstId return_pattern_id = SemIR::InstId::None;
   SemIR::InstId self_param_id = SemIR::InstId::None;
 };
 }  // namespace
@@ -121,25 +97,26 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   StartFunctionSignature(context);
 
-  // Build and add a `[ref self: Self]` parameter if needed.
+  // Build and add a `self: Self` or `ref self: Self` parameter if needed.
   if (args.self_type_id.has_value()) {
     context.full_pattern_stack().StartImplicitParamList();
 
     BeginSubpattern(context);
-    auto self_type_region_id = EndSubpatternAsExpr(
+    auto self_type_region_id = ConsumeSubpatternExpr(
         context, context.types().GetTypeInstId(args.self_type_id));
+    EndEmptySubpattern(context);
 
-    insts.self_param_id = AddParamPattern(
-        context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
-        args.self_type_id, args.self_is_ref);
+    insts.self_param_id =
+        AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                        self_type_region_id, args.self_type_id, args.self_kind);
     insts.implicit_param_patterns_id =
         context.inst_blocks().Add({insts.self_param_id});
 
     context.full_pattern_stack().EndImplicitParamList();
   }
 
-  // Build and add any explicit parameters. We always use value parameters for
-  // now.
+  // Build and add any explicit parameters. Whether these are references
+  // or not is controlled by `args.params_are_refs`.
   context.full_pattern_stack().StartExplicitParamList();
   if (args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
@@ -147,12 +124,13 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     context.inst_block_stack().Push();
     for (auto param_type_id : args.param_type_ids) {
       BeginSubpattern(context);
-      auto param_type_region_id = EndSubpatternAsExpr(
+      auto param_type_region_id = ConsumeSubpatternExpr(
           context, context.types().GetTypeInstId(param_type_id));
+      EndEmptySubpattern(context);
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, /*is_ref=*/false));
+          param_type_id, args.param_kind));
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }
@@ -164,12 +142,12 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
         context, loc_id, context.types().GetTypeInstId(args.return_type_id));
     insts.return_type_inst_id = return_form.type_component_inst_id;
     insts.return_form_inst_id = return_form.form_inst_id;
-    insts.return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
+    insts.return_pattern_id = AddReturnPattern(context, loc_id, return_form);
   }
 
   auto match_results =
       CalleePatternMatch(context, insts.implicit_param_patterns_id,
-                         insts.param_patterns_id, insts.return_patterns_id);
+                         insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
   insts.call_param_ranges = match_results.param_ranges;
@@ -213,7 +191,7 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
               .call_param_ranges = insts.call_param_ranges,
               .return_type_inst_id = insts.return_type_inst_id,
               .return_form_inst_id = insts.return_form_inst_id,
-              .return_patterns_id = insts.return_patterns_id,
+              .return_pattern_id = insts.return_pattern_id,
               .self_param_id = insts.self_param_id,
           }});
   context.generated().push_back(decl_id);
@@ -238,6 +216,10 @@ auto CheckFunctionReturnTypeMatches(Context& context,
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
+    if (new_function.name_id == SemIR::NameId::CppOperator &&
+        !prev_return_type_id.has_value()) {
+      return true;
+    }
     if (!diagnose) {
       return false;
     }
@@ -384,7 +366,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
   // The return parameter will be diagnosed after and differently from other
   // parameters.
   auto return_call_param = SemIR::InstId::None;
-  if (!params_to_complete.empty() && function.return_patterns_id.has_value()) {
+  if (!params_to_complete.empty() && function.return_pattern_id.has_value()) {
     return_call_param = params_to_complete.consume_back();
   }
 
@@ -408,13 +390,10 @@ auto CheckFunctionDefinitionSignature(Context& context,
   }
 
   // Check the return type is complete.
-  if (function.return_patterns_id.has_value()) {
-    for (auto return_pattern_id :
-         context.inst_blocks().Get(function.return_patterns_id)) {
-      CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
-                                     return_pattern_id,
-                                     SemIR::SpecificId::None);
-    }
+  if (function.return_pattern_id.has_value()) {
+    CheckFunctionReturnPatternType(
+        context, SemIR::LocId(function.return_pattern_id),
+        function.return_pattern_id, SemIR::SpecificId::None);
 
     // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
     // so don't `RequireCompleteType` on the return type.

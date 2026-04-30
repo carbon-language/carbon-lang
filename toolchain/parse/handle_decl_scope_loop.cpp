@@ -147,6 +147,9 @@ static constexpr auto DeclIntroducers = [] {
   set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
                  StateKind::FieldDecl);
 
+  set(Lex::TokenKind::Inline, NodeKind::InlineIntroducer,
+      StateKind::InlineDeclAfterIntroducer);
+
   set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
                 StateKind::Package);
   set_packaging(Lex::TokenKind::Library, NodeKind::LibraryIntroducer,
@@ -226,6 +229,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Extern:
         case Lex::TokenKind::Fn:
         case Lex::TokenKind::Import:
+        case Lex::TokenKind::Inline:
         case Lex::TokenKind::Interface:
         case Lex::TokenKind::Let:
         case Lex::TokenKind::Library:

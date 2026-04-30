@@ -21,10 +21,10 @@ auto ConvertArgsToTemplateArgs(Context& context,
                                bool diagnose = true) -> bool;
 
 // Checks and builds SemIR for a call to a C++ function in the given overload
-// set with self `self_id` and arguments `arg_ids`. `is_operator_syntax`
-// indicates that this call was generated from an operator rather than from
-// function call syntax, so arguments to `ref` parameters aren't required to
-// have `ref` tags.
+// set with self `self_id` and arguments `arg_ids`. `is_desugared`
+// indicates that this call was was produced by desugaring, not written as a
+// function call in user code, so arguments to `ref` parameters aren't required
+// to have `ref` tags.
 //
 // Chooses the best viable C++ function by performing Clang overloading
 // resolution over the overload set.
@@ -42,7 +42,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,
-                              bool is_operator_syntax) -> SemIR::InstId;
+                              bool is_desugared) -> SemIR::InstId;
 
 // Checks and builds SemIR for a call to a C++ template name with arguments
 // `arg_ids`.

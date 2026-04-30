@@ -77,8 +77,8 @@ any other expression.
 All the pattern instructions for a given full-pattern are grouped together in a
 distinct block that contains only pattern instructions. Consequently,
 `Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
-for pattern blocks, and provides separate methods like `AddPatternInst` for
-adding instructions to it.
+for pattern blocks, and operations like `AddInst` automatically put
+newly-created pattern insts on that stack.
 
 ## Instruction ordering
 
@@ -125,8 +125,8 @@ be one that emits non-pattern instructions. To handle these situations, we
 speculatively push an instruction block onto the (non-pattern) stack whenever we
 are about to begin handling a subpattern, and then pop it at the end of the
 subpattern, with different treatment depending on whether the subpattern turned
-out to be a subexpression. This is handled by `BeginSubpattern`,
-`EndSubpatternAsExpr`, and `EndSubpatternAsNonExpr`.
+out to involve a subexpression. This is handled by `BeginSubpattern`,
+`ConsumeSubpatternExpr`, `EndSubpattern`, and `EndEmptySubpattern`.
 
 One further complication here is that the type expression can contain control
 flow (such as an `if` expression). Consequently, we can't represent the type

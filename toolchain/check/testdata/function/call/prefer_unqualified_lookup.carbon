@@ -96,7 +96,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %F.loc5_13.2: type = symbolic_binding F, 0 [symbolic = %F.loc5_13.1 (constants.%F)]
+// CHECK:STDOUT:     %F.loc5_14.2: type = symbolic_binding F, 0 [symbolic = %F.loc5_14.1 (constants.%F)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inner.G.decl: %Inner.G.type = fn_decl @Inner.G [symbolic = constants.%Inner.G] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
@@ -106,7 +106,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc13_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %F.loc13_10: type = symbolic_binding F, 0 [symbolic = @Class.%F.loc5_13.1 (constants.%F)]
+// CHECK:STDOUT:     %F.loc13_11: type = symbolic_binding F, 0 [symbolic = @Class.%F.loc5_14.1 (constants.%F)]
 // CHECK:STDOUT:     %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc13_33: Core.Form = init_form %i32.loc13 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param0
@@ -114,11 +114,11 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%F.loc5_13.2: type) {
-// CHECK:STDOUT:   %F.loc5_13.1: type = symbolic_binding F, 0 [symbolic = %F.loc5_13.1 (constants.%F)]
+// CHECK:STDOUT: generic class @Class(%F.loc5_14.2: type) {
+// CHECK:STDOUT:   %F.loc5_14.1: type = symbolic_binding F, 0 [symbolic = %F.loc5_14.1 (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.loc5_13.1) [symbolic = %Inner (constants.%Inner)]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.loc5_14.1) [symbolic = %Inner (constants.%Inner)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [symbolic = @Class.%Inner (constants.%Inner)] {} {}
@@ -131,7 +131,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Inner(@Class.%F.loc5_13.2: type) {
+// CHECK:STDOUT: generic class @Inner(@Class.%F.loc5_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F: type = symbolic_binding F, 0 [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F, @Inner(%F) [symbolic = %Inner.F.type (constants.%Inner.F.type)]
@@ -168,7 +168,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.F(@Class.%F.loc5_13.2: type) {
+// CHECK:STDOUT: generic fn @Inner.F(@Class.%F.loc5_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %i32 {
@@ -184,7 +184,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.G(@Class.%F.loc5_13.2: type) {
+// CHECK:STDOUT: generic fn @Inner.G(@Class.%F.loc5_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.loc13_46: type = symbolic_binding F, 0 [symbolic = %F.loc13_46 (constants.%F)]
 // CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F, @Inner(%F.loc13_46) [symbolic = %Inner.F.type (constants.%Inner.F.type)]
@@ -202,7 +202,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%F) {
-// CHECK:STDOUT:   %F.loc5_13.1 => constants.%F
+// CHECK:STDOUT:   %F.loc5_14.1 => constants.%F
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner => constants.%Inner

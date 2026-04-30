@@ -68,7 +68,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_22: %Animal.type) {
+// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_23: %Animal.type) {
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

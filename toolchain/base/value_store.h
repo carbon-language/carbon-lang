@@ -232,7 +232,7 @@ class ValueStore
 
   auto GetIdTag() const -> IdTagType { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
-    CARBON_DCHECK(id.index >= 0, "{0}", index);
+    CARBON_DCHECK(id.index >= 0, "{0}", id.index);
     auto index = tag_.Remove(id);
 #ifndef NDEBUG
     if (index >= size_) {

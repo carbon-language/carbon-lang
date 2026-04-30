@@ -191,7 +191,9 @@ struct Worklist {
     }
     auto block = sem_ir->custom_layouts().Get(custom_layout_id);
     contents.push_back(block.size());
-    contents.insert(contents.end(), block.begin(), block.end());
+    for (auto size : block) {
+      contents.push_back(size.bits());
+    }
   }
 
   auto Add(NameScopeId name_scope_id) -> void {

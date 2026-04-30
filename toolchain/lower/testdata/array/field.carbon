@@ -77,7 +77,7 @@ class A {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Init", linkageName: "_CInit.A.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 16, column: 27, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 33, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 20, scope: !4)

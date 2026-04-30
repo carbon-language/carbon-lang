@@ -3,8 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load(":carbon_bootstrapping.bzl", "gen_cc_toolchain_paths_with_stage")
 
 package(default_visibility = ["//visibility:public"])
+
+exports_files(["carbon_cc_toolchain_config.bzl"])
 
 # For use by defs.bzl.
 # Matches when asan is enabled on a macOS platform.
@@ -61,5 +65,31 @@ filegroup(
         "cc_toolchain_optimization.bzl",
         "cc_toolchain_sanitizer_features.bzl",
         "cc_toolchain_tools.bzl",
+
+        # TODO: Remove this once we can remove the use of it from Carbon
+        # toolchain rules.
+        "cc_toolchain_carbon_project_features.bzl",
     ],
+)
+
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths",
+    stage = 0,
+)
+
+# Test that the default toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_test",
+    srcs = ["cc_tools_test.py"],
+    args = ["$(location :gen_cc_tools_paths)"],
+    data = [":gen_cc_tools_paths"],
+    deps = [":cc_tools_test_lib"],
+)
+
+# Library containing the test logic, used by tests in other packages.
+py_library(
+    name = "cc_tools_test_lib",
+    srcs = ["cc_tools_test.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_tools//tools/python/runfiles"],
 )

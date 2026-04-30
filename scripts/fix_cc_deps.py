@@ -295,6 +295,18 @@ def main() -> None:
     all_missing_deps: list[tuple[str, set[str]]] = []
     any_ambiguous = False
     for rule_name, rule in carbon_rules.items():
+        # Skip rules building runtimes as the rules that provide their sources
+        # are not analyzed by this script.
+        if rule_name in [
+            "//toolchain/install:builtins",
+            "//toolchain/install:builtins_internal",
+            "//toolchain/install:libc_internal_libcxx",
+            "//toolchain/install:libcxx",
+            "//toolchain/install:libcxxabi_internal",
+            "//toolchain/install:libcxxabi",
+            "//toolchain/install:libunwind",
+        ]:
+            continue
         missing_deps, ambiguous = get_missing_deps(
             header_to_rule_map, generated_files, rule
         )

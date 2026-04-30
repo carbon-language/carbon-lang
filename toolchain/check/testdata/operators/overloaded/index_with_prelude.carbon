@@ -98,7 +98,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.bbe = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IndexWith.assoc_type.b14: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType.9ec) [concrete]
 // CHECK:STDOUT:   %assoc0.ab8: %IndexWith.assoc_type.b14 = assoc_entity element0, imports.%Core.import_ref.434 [concrete]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %assoc0.f5a: %IndexWith.assoc_type.a96 = assoc_entity element0, imports.%Core.import_ref.d9b [symbolic]
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.407: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.9ec) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.9d3: type = impl_witness_access %IndexWith.lookup_impl_witness.407, element0 [symbolic_self]
@@ -115,7 +115,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType.val: %ElementType = struct_value () [concrete]
 // CHECK:STDOUT:   %SubscriptType.val: %SubscriptType.9ec = struct_value () [concrete]
+// CHECK:STDOUT:   %.e36: ref %SubscriptType.9ec = temporary invalid, %SubscriptType.val [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %.8f0: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.cc5, %IndexWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,8 +156,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.9ec)> [concrete = constants.%IndexWith.type.bbe]
 // CHECK:STDOUT:     %.Self: %IndexWith.type.bbe = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %IndexWith.type.bbe = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_47.2: %IndexWith.assoc_type.b14 = specific_constant imports.%Core.import_ref.c44, @IndexWith.WithSelf(constants.%SubscriptType.9ec, constants.%.Self) [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.b14 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.407, element0 [symbolic_self = constants.%impl.elem0.9d3]
@@ -172,8 +174,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_25.1: ref %SubscriptType.9ec = temporary_storage
 // CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.9ec to %.loc14_25.1 = class_init () [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: init %SubscriptType.9ec = converted @__global_init.%.loc14, %.loc14_25.2 [concrete = constants.%SubscriptType.val]
-// CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.9ec = temporary %.loc14_25.1, %.loc14_25.3
-// CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.9ec = acquire_value %.loc14_25.4
+// CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.9ec = temporary %.loc14_25.1, %.loc14_25.3 [concrete = constants.%.e36]
+// CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.9ec = acquire_value %.loc14_25.4 [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %s: %SubscriptType.9ec = value_binding s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
@@ -182,8 +184,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc15_13.2: init %C to %.loc15_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc15_13.3: init %C = converted @__global_init.%.loc15, %.loc15_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.1, %.loc15_13.3
-// CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4
+// CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.1, %.loc15_13.3 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.fde = value_binding_pattern x [concrete]
@@ -290,7 +292,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.d54 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IndexWith.assoc_type.972: type = assoc_entity_type @IndexWith, @IndexWith(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %assoc0.b00: %IndexWith.assoc_type.972 = assoc_entity element0, imports.%Core.import_ref.434 [concrete]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %assoc0.f5a: %IndexWith.assoc_type.a96 = assoc_entity element0, imports.%Core.import_ref.d9b [symbolic]
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.6f5: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(Core.IntLiteral) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.d7c: type = impl_witness_access %IndexWith.lookup_impl_witness.6f5, element0 [symbolic_self]
@@ -349,8 +351,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral)> [concrete = constants.%IndexWith.type.d54]
 // CHECK:STDOUT:     %.Self: %IndexWith.type.d54 = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %IndexWith.type.d54 = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %.loc8_56.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc8_56.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_56.2: %IndexWith.assoc_type.972 = specific_constant imports.%Core.import_ref.c44, @IndexWith.WithSelf(Core.IntLiteral, constants.%.Self) [concrete = constants.%assoc0.b00]
 // CHECK:STDOUT:     %ElementType.ref: %IndexWith.assoc_type.972 = name_ref ElementType, %.loc8_56.2 [concrete = constants.%assoc0.b00]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.6f5, element0 [symbolic_self = constants.%impl.elem0.d7c]
@@ -481,7 +483,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.bbe = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IndexWith.assoc_type.b14: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType.9ec) [concrete]
 // CHECK:STDOUT:   %assoc0.ab8: %IndexWith.assoc_type.b14 = assoc_entity element0, imports.%Core.import_ref.434 [concrete]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %assoc0.f5a: %IndexWith.assoc_type.a96 = assoc_entity element0, imports.%Core.import_ref.d9b [symbolic]
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.407: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.9ec) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.9d3: type = impl_witness_access %IndexWith.lookup_impl_witness.407, element0 [symbolic_self]
@@ -496,6 +498,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType.val: %ElementType = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -533,8 +536,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.9ec)> [concrete = constants.%IndexWith.type.bbe]
 // CHECK:STDOUT:     %.Self: %IndexWith.type.bbe = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %IndexWith.type.bbe = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_47.2: %IndexWith.assoc_type.b14 = specific_constant imports.%Core.import_ref.c44, @IndexWith.WithSelf(constants.%SubscriptType.9ec, constants.%.Self) [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.b14 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.407, element0 [symbolic_self = constants.%impl.elem0.9d3]
@@ -551,8 +554,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc14_13.2: init %C to %.loc14_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: init %C = converted @__global_init.%.loc14, %.loc14_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc14_13.4: ref %C = temporary %.loc14_13.1, %.loc14_13.3
-// CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4
+// CHECK:STDOUT:   %.loc14_13.4: ref %C = temporary %.loc14_13.1, %.loc14_13.3 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.fde = value_binding_pattern x [concrete]
@@ -641,6 +644,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -678,8 +682,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc6_13.2: init %C to %.loc6_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.3: init %C = converted @__global_init.%.loc6, %.loc6_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_13.4: ref %C = temporary %.loc6_13.1, %.loc6_13.3
-// CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4
+// CHECK:STDOUT:   %.loc6_13.4: ref %C = temporary %.loc6_13.1, %.loc6_13.3 [concrete = constants.%.5ea]
+// CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = value_binding_pattern x [concrete]

@@ -53,7 +53,7 @@ auto GlobalInit::Finalize() -> void {
         .call_param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
-        .return_patterns_id = SemIR::InstBlockId::None,
+        .return_pattern_id = SemIR::InstId::None,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

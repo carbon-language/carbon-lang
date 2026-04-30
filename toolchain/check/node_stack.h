@@ -404,7 +404,7 @@ class NodeStack {
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
     set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
-                          Id::KindFor<SemIR::InstBlockId>());
+                          Id::KindFor<SemIR::InstId>());
     return result;
   }
 
@@ -478,6 +478,8 @@ class NodeStack {
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
+      case Parse::NodeKind::InlineImportBody:
+      case Parse::NodeKind::InlineIntroducer:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -511,7 +513,6 @@ class NodeStack {
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::InlineImportSpecifier:
-      case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
       case Parse::NodeKind::MatchCaseGuard:
       case Parse::NodeKind::MatchCaseGuardIntroducer:

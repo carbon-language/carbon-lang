@@ -45,7 +45,7 @@ interface DefaultOrUnformed {
 
 final impl forall [T:! Default] T as DefaultOrUnformed {
   fn Op() -> Self {
-    return T.Op();
+    return T.(Default.Op)();
   }
 }
 

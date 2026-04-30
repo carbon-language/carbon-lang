@@ -37,7 +37,18 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{value_rep: " << value_repr << "}";
+  out << "{value_rep: " << value_repr
+      << ", layout: {size: " << object_layout.size
+      << ", align: " << object_layout.alignment << "}}";
+}
+
+auto ObjectSize::Print(llvm::raw_ostream& out) const -> void {
+  int64_t bytes = bits_ / 8;
+  int64_t bits = bits_ % 8;
+  out << bytes;
+  if (bits != 0) {
+    out << ":" << bits;
+  }
 }
 
 auto ValueRepr::ForType(const File& file, TypeId type_id) -> ValueRepr {

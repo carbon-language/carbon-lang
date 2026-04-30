@@ -52,13 +52,13 @@ fn G() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0, template [template = %T.loc4_22.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_23.2: type = symbolic_binding T, 0, template [template = %T.loc4_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_22.2: type) {
-// CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0, template [template = %T.loc4_22.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc4_23.2: type) {
+// CHECK:STDOUT:   %T.loc4_23.1: type = symbolic_binding T, 0, template [template = %T.loc4_23.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -79,11 +79,11 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_23.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T.loc4_22.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.loc4_23.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

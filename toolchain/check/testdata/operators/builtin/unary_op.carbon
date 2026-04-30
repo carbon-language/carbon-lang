@@ -145,9 +145,9 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
 // CHECK:STDOUT:   %.loc23_17: type = block_arg !if.expr.result.loc23 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !.loc23_14
+// CHECK:STDOUT:   br !.loc23_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23_14:
+// CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete]
@@ -177,9 +177,9 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
 // CHECK:STDOUT:   %.loc24_17: type = block_arg !if.expr.result.loc24 [concrete = bool]
-// CHECK:STDOUT:   br !.loc24_14
+// CHECK:STDOUT:   br !.loc24_15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc24_14:
+// CHECK:STDOUT: !.loc24_15:
 // CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%b.var)

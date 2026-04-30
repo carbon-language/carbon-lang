@@ -16,6 +16,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/interface.h"
@@ -87,6 +88,31 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     // Create a new interface if this isn't a valid redeclaration.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
+
+    if (context.sem_ir().package_id() == PackageNameId::Core) {
+      auto name = context.names().GetIRBaseName(interface_info.name_id);
+      interface_info.core_interface =
+          llvm::StringSwitch<SemIR::CoreInterface>(name)
+              .Case("AddAssignWith", SemIR::CoreInterface::AddAssignWith)
+              .Case("AddWith", SemIR::CoreInterface::AddWith)
+              .Case("Copy", SemIR::CoreInterface::Copy)
+              .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
+              .Case("Dec", SemIR::CoreInterface::Dec)
+              .Case("Default", SemIR::CoreInterface::Default)
+              .Case("Destroy", SemIR::CoreInterface::Destroy)
+              .Case("DivAssignWith", SemIR::CoreInterface::DivAssignWith)
+              .Case("DivWith", SemIR::CoreInterface::DivWith)
+              .Case("Inc", SemIR::CoreInterface::Inc)
+              .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
+              .Case("ModAssignWith", SemIR::CoreInterface::ModAssignWith)
+              .Case("ModWith", SemIR::CoreInterface::ModWith)
+              .Case("MulAssignWith", SemIR::CoreInterface::MulAssignWith)
+              .Case("MulWith", SemIR::CoreInterface::MulWith)
+              .Case("Negate", SemIR::CoreInterface::Negate)
+              .Case("SubAssignWith", SemIR::CoreInterface::SubAssignWith)
+              .Case("SubWith", SemIR::CoreInterface::SubWith)
+              .Default(SemIR::CoreInterface::Unknown);
+    }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id =
@@ -184,7 +210,7 @@ auto HandleParseNode(Context& context,
       context.inst_block_stack().PeekOrAdd();
 
   context.inst_block_stack().Push();
-  context.require_impls_stack().PushArray();
+  context.require_impls_stack().Push(interface_id);
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -213,8 +239,8 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
   auto require_impls_block_id = context.require_impls_blocks().Add(
-      context.require_impls_stack().PeekArray());
-  context.require_impls_stack().PopArray();
+      context.require_impls_stack().PeekTop());
+  context.require_impls_stack().Pop();
 
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {

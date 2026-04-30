@@ -18,7 +18,7 @@ $(git diff --summary "${COMMIT_SHA}^!")
 
 # Setup global git configuration.
 GIT_USERNAME="CarbonInfraBot"
-git config --global user.email "carbon-external-infra@google.com"
+git config --global user.email "infra-role@carbon-lang.dev"
 git config --global user.name "$GIT_USERNAME"
 
 declare -A MIRRORS

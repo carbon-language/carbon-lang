@@ -115,6 +115,7 @@ let n: array(i32, G()) = (1, 2, 3);
 // CHECK:STDOUT:   %bound_method.646: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
+// CHECK:STDOUT:   %.fd3: ref %array_type = temporary invalid, %array [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -181,8 +182,8 @@ let n: array(i32, G()) = (1, 2, 3);
 // CHECK:STDOUT:   %.loc11_35.10: init %i32 to %.loc11_35.9 = in_place_init %.loc11_35.8 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc11_35.11: init %array_type to %.loc11_35.2 = array_init (%.loc11_35.4, %.loc11_35.7, %.loc11_35.10) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_35.12: init %array_type = converted @__global_init.%.loc11, %.loc11_35.11 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_35.13: ref %array_type = temporary %.loc11_35.2, %.loc11_35.12
-// CHECK:STDOUT:   %.loc11_35.14: %array_type = acquire_value %.loc11_35.13
+// CHECK:STDOUT:   %.loc11_35.13: ref %array_type = temporary %.loc11_35.2, %.loc11_35.12 [concrete = constants.%.fd3]
+// CHECK:STDOUT:   %.loc11_35.14: %array_type = acquire_value %.loc11_35.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %n: %array_type = value_binding n, %.loc11_35.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

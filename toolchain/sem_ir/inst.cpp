@@ -61,15 +61,18 @@ auto InstStore::GetUnattachedType(TypeId type_id) const -> TypeId {
   return file_->types().GetUnattachedType(type_id);
 }
 
-// Returns whether a parse node associated with an imported instruction of kind
-// `imported_kind` is usable as the location of a corresponding local
-// instruction of kind `local_kind`.
-static auto HasCompatibleImportedNodeKind(InstKind imported_kind,
+// Returns whether the imported and local instruction kinds are compatible.
+// Instruction kinds are compatible when the kinds are the same, or when the
+// imported kind is intentionally transformed into the local kind. For example,
+// imports form namespace-like entries in their original IR, and are imported
+// as namespaces locally.
+static auto HasCompatibleImportedInstKind(InstKind imported_kind,
                                           InstKind local_kind) -> bool {
   if (imported_kind == local_kind) {
     return true;
   }
   if (imported_kind == ImportDecl::Kind && local_kind == Namespace::Kind) {
+    // Namespace node kinds should be a superset of ImportDecl node kinds.
     static_assert(
         std::is_convertible_v<decltype(ImportDecl::Kind)::TypedNodeId,
                               decltype(Namespace::Kind)::TypedNodeId>);
@@ -82,10 +85,11 @@ auto LocIdAndInst::RuntimeVerified(const File& file, LocId loc_id, Inst inst)
     -> LocIdAndInst {
   switch (loc_id.kind()) {
     case LocId::Kind::ImportIRInstId: {
-      CARBON_CHECK(!inst.kind().disallow_all_node_kinds(),
+      CARBON_CHECK(!IsSingletonInstKind(inst.kind()),
                    "Should never import builtins/singletons: {0}", inst);
-
-      if (inst.kind().allow_all_node_kinds()) {
+      if (inst.IsOneOf<ImportRefLoaded, ImportRefUnloaded>()) {
+        // These don't represent the in-use `InstKind`, so should not be
+        // validated.
         break;
       }
 
@@ -100,7 +104,7 @@ auto LocIdAndInst::RuntimeVerified(const File& file, LocId loc_id, Inst inst)
           file.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
       auto imported_kind =
           import_ir->insts().Get(import_ir_inst.inst_id()).kind();
-      CARBON_CHECK(HasCompatibleImportedNodeKind(imported_kind, inst.kind()),
+      CARBON_CHECK(HasCompatibleImportedInstKind(imported_kind, inst.kind()),
                    "Unexpected imported `InstKind` {0} for {1}", imported_kind,
                    inst);
       break;

@@ -104,8 +104,10 @@ CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedLambdaBody)
 CARBON_DIAGNOSTIC_KIND(ExpectedLambdaBodyAfterReturnType)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpr)
+CARBON_DIAGNOSTIC_KIND(ExpectedPattern)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPeriodOrArrow)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierOrSelfAfterPeriod)
+CARBON_DIAGNOSTIC_KIND(ExpectedBindingName)
 CARBON_DIAGNOSTIC_KIND(ExpectedBindingPattern)
 CARBON_DIAGNOSTIC_KIND(ExpectedGenericBindingPatternAfterTemplate)
 CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
@@ -128,6 +130,11 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
+
+// Inline declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedCppAfterInline)
+CARBON_DIAGNOSTIC_KIND(ExpectedStringAfterInlineCpp)
+CARBON_DIAGNOSTIC_KIND(InlineDeclNotAtFileScope)
 
 // Match diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)
@@ -182,6 +189,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
+CARBON_DIAGNOSTIC_KIND(AmbiguousPeriodSelf)
 
 // ============================================================================
 // Semantics diagnostics
@@ -372,7 +380,6 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessInContext)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
-CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetTypeOfQuerySelf)
 
 // Require checking.
 CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)
@@ -448,6 +455,7 @@ CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAdaptDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBindingDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInCopyWitness)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionReturnType)
@@ -543,6 +551,7 @@ CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+CARBON_DIAGNOSTIC_KIND(WhereWithoutDesignator)
 
 // Facet type resolution.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)

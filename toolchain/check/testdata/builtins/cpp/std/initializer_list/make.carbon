@@ -58,9 +58,9 @@ library "[[@TEST_NAME]]";
 
 class FailIncomplete;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+11]]:20: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+11]]:17: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
-// CHECK:STDERR:                    ^~~~~~~~~~~~~~
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class FailIncomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~

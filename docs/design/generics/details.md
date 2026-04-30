@@ -27,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Return type](#return-type)
 -   [Interfaces recap](#interfaces-recap)
 -   [Facet types](#facet-types)
+    -   [Identified facet types](#identified-facet-types)
 -   [Named constraints](#named-constraints)
     -   [Subtyping between facet types](#subtyping-between-facet-types)
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
@@ -894,6 +895,25 @@ names of the facet type.
 This general structure of facet types holds not just for interfaces, but others
 described in the rest of this document.
 
+### Identified facet types
+
+A facet type is _identified_ if all the interfaces it references are declared
+and all of its named constraints are complete. An identified facet type is
+associated with a known set of interfaces.
+
+A facet type is _partially identified_ if any of its named constraints are in
+the process of being defined. The interfaces associated with a partially
+identified facet type change as the named constraint is fully defined.
+
+Types can implicitly convert to facet types when the requirements of the facet
+type are satisfied, but only if the facet type is identified. Attempting to
+convert to a facet type that is not identified is an error, since the
+requirements of the target facet type are not yet fully determined.
+
+A facet with an unidentified or partially identified facet type may be converted
+_to_ other facet types. While its set of requirements are not fully determined,
+the requirements that are known at that time may be used.
+
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for facet types,
@@ -930,6 +950,54 @@ constraint DrawVectorLegoFish {
   require impls VectorLegoFish;
   // A regular interface requirement. No syntactic difference.
   require impls Drawable;
+}
+```
+
+However a named constraint may not refer to itself as a requirement, as that
+produces a cycle. In general, any use of named constraint inside its own
+definition is disallowed, except through the use of `Self`.
+
+```carbon
+constraint SelfReferential {
+  // ❌ Error: Can not refer to `SelfReferential` inside its own definition.
+  require impls SelfReferential;
+}
+```
+
+The facet type of `Self` is partially identified inside the definition of a
+named constraint. This allows `Self` to be converted to other facet types based
+on the known requirements of the partially identified facet type. Those
+requirements include any `require` ... `impls` statements written before the use
+of `Self`.
+
+```carbon
+interface Z {}
+class UsesZ(T:! Z) {}
+
+interface Y(T:! type) {}
+interface X {}
+
+constraint Constraint {
+  // The partially identified facet type of `Self` includes `Z` after this
+  // statement.
+  require impls Z;
+
+  // OK, the partially identified facet type of `Self` can convert to facet
+  // type `Z` to match the parameter of `UsesZ`.
+  require impls Y(UsesZ(Self));
+
+  // Also OK, as `Self` converts to `Z` again.
+  require UsesZ(Self) impls X;
+}
+
+constraint UseOfFutureRequirement {
+  // ❌ Error: The partially identified facet type of `Self` does not yet
+  // include `Z` since the requirement for `Z` comes later in the definition.
+  require impls Y(UsesZ(Self));
+
+  // The partially identified facet type of `Self` includes `Z` after this
+  // statement.
+  require impls Z;
 }
 ```
 
@@ -1227,6 +1295,27 @@ class Iota {
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
+```
+
+The facet type at the end of a `require` ... `impls` statement must be
+identified.
+
+```carbon
+constraint N;
+
+interface I {
+  // ❌ Error: Facet type `N` is not identified since the constraint `N` is not
+  // complete.
+  require impls N;
+}
+
+interface J;
+
+interface K {
+  // OK, the facet type `J` is identified because the interface `J` is
+  // declared.
+  require impls J;
+}
 ```
 
 Like with named constraints, an interface implementation requirement doesn't by

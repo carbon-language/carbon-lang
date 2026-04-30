@@ -161,7 +161,7 @@ class C {
   // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-10]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 86;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
 
@@ -219,7 +219,7 @@ class B {
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 5;
-    // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     A.SOME_PRIVATE_CONSTANT;
 
@@ -228,7 +228,7 @@ class B {
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     return A.SOME_PROTECTED_CONSTANT;
   }
@@ -239,7 +239,7 @@ class B {
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   protected let INTERNAL_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     return self.internal.INTERNAL_CONSTANT;
   }

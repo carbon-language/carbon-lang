@@ -100,12 +100,43 @@ class ConstantContext {
     return file_context_->llvm_module();
   }
   auto sem_ir() const -> const SemIR::File& { return file_context_->sem_ir(); }
+  auto inst_namer() const -> const SemIR::InstNamer* {
+    return file_context_->inst_namer();
+  }
 
  private:
   FileContext* file_context_;
   const FileContext::LoweredConstantStore* constants_;
   SemIR::InstId current_constant_inst_id_ = SemIR::InstId::None;
 };
+
+// Get the element type at a given index from a struct.
+static auto GetElementType(llvm::StructType* struct_type, int index)
+    -> llvm::Type* {
+  return struct_type->getElementType(index);
+}
+
+// Get the element type from an array.
+static auto GetElementType(llvm::ArrayType* array_type, int /*index*/)
+    -> llvm::Type* {
+  return array_type->getElementType();
+}
+
+// Add padding if necessary to convert the given constant to the specified,
+// possibly-padded LLVM type. The type of the constant will either already be
+// `llvm_type`, or will be a tail-padded type `<{llvm_type, [i8 x N]}>`.
+static auto PadToType(llvm::Constant* constant, llvm::Type* llvm_type)
+    -> llvm::Constant* {
+  if (constant->getType() == llvm_type) {
+    return constant;
+  }
+  auto* padded = cast<llvm::StructType>(llvm_type);
+  CARBON_CHECK(padded->getNumElements() == 2 &&
+                   padded->getElementType(0) == constant->getType(),
+               "Unexpected type {0} for constant {1}", *llvm_type, *constant);
+  return llvm::ConstantStruct::get(
+      padded, constant, llvm::PoisonValue::get(padded->getElementType(1)));
+}
 
 // Emits an aggregate constant of LLVM type `Type` whose elements are the
 // contents of `refs_id`.
@@ -116,8 +147,13 @@ static auto EmitAggregateConstant(ConstantContext& context,
   auto refs = context.sem_ir().inst_blocks().Get(refs_id);
   llvm::SmallVector<llvm::Constant*> elements;
   elements.reserve(refs.size());
-  for (auto ref : refs) {
-    elements.push_back(context.GetConstant(ref));
+  for (auto [i, ref] : llvm::enumerate(refs)) {
+    if (auto* constant = context.GetConstant(ref)) {
+      auto* elem_type = GetElementType(llvm_type, i);
+      elements.push_back(PadToType(constant, elem_type));
+    } else {
+      return nullptr;
+    }
   }
 
   return ConstantType::get(llvm_type, elements);
@@ -172,6 +208,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
   auto* aggr_addr = context.GetConstant(inst.aggregate_id);
+  if (!aggr_addr) {
+    return nullptr;
+  }
   auto* aggr_type = context.GetType(
       context.sem_ir().insts().Get(inst.aggregate_id).type_id());
 
@@ -290,6 +329,25 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
           /*Name=*/"", /*AddressSpace=*/0, &context.llvm_module());
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::Temporary inst)
+    -> llvm::Constant* {
+  auto* const_value = context.GetConstant(inst.init_id);
+
+  llvm::StringRef const_name;
+  if (context.inst_namer()) {
+    const_name = context.inst_namer()->GetUnscopedNameFor(inst.init_id);
+  }
+  if (const_name.empty()) {
+    const_name = "const";
+  }
+
+  auto* global_variable = new llvm::GlobalVariable(
+      context.llvm_module(), context.GetType(inst.type_id),
+      /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
+      const_name);
+  return global_variable;
+}
+
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::UninitializedValue inst) -> llvm::Constant* {
   return llvm::PoisonValue::get(context.GetType(inst.type_id));
@@ -297,6 +355,10 @@ static auto EmitAsConstant(ConstantContext& context,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
     -> llvm::Constant* {
+  if (!inst.pattern_id.has_value()) {
+    // This constant is a placeholder and should not be used by lowering.
+    return nullptr;
+  }
   // Create the corresponding global variable declaration.
   return context.BuildGlobalVariableDecl(inst);
 }

@@ -93,7 +93,26 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !24
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !25
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !26
+// CHECK:STDOUT:   call void @"_COp.d99147c205c0db06:core.Destroy.Core"(ptr %pa.var), !dbg !24
 // CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !27
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !28 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !33
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.fb32c4dfca65e378:core.Destroy.Core"(ptr %self) #0 !dbg !34 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.d99147c205c0db06:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -116,7 +135,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairOfInts.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 9, column: 12, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 5, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairAdapter.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
@@ -137,6 +156,22 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !25 = !DILocation(line: 27, column: 25, scope: !21)
 // CHECK:STDOUT: !26 = !DILocation(line: 28, column: 10, scope: !21)
 // CHECK:STDOUT: !27 = !DILocation(line: 28, column: 3, scope: !21)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 27, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
+// CHECK:STDOUT: !30 = !{null, !16}
+// CHECK:STDOUT: !31 = !{!32}
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !16)
+// CHECK:STDOUT: !33 = !DILocation(line: 27, column: 3, scope: !28)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Op", linkageName: "_COp.fb32c4dfca65e378:core.Destroy.Core", scope: null, file: !3, line: 27, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !37)
+// CHECK:STDOUT: !35 = !DISubroutineType(types: !36)
+// CHECK:STDOUT: !36 = !{null, !7}
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !34, type: !7)
+// CHECK:STDOUT: !39 = !DILocation(line: 27, column: 3, scope: !34)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d99147c205c0db06:core.Destroy.Core", scope: null, file: !3, line: 27, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !41)
+// CHECK:STDOUT: !41 = !{!42}
+// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !7)
+// CHECK:STDOUT: !43 = !DILocation(line: 27, column: 3, scope: !40)
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:

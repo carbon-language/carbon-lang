@@ -76,11 +76,11 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %i32.loc15_10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc15_6.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_6.1 (constants.%N.5de)]
+// CHECK:STDOUT:     %N.loc15_7.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_7.1 (constants.%N.5de)]
 // CHECK:STDOUT:     %a.param: @F.%ptr.loc15_31.1 (%ptr) = value_param call_param0
 // CHECK:STDOUT:     %.loc15_31: type = splice_block %ptr.loc15_31.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)] {
 // CHECK:STDOUT:       %i32.loc15_24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_6.2 [symbolic = %N.loc15_6.1 (constants.%N.5de)]
+// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_7.2 [symbolic = %N.loc15_7.1 (constants.%N.5de)]
 // CHECK:STDOUT:       %impl.elem0: %.0a7 = impl_witness_access constants.%ImplicitAs.impl_witness.640, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.dd4]
 // CHECK:STDOUT:       %bound_method.loc15_29.2: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
@@ -95,11 +95,11 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc15_6.2: %i32) {
-// CHECK:STDOUT:   %N.loc15_6.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_6.1 (constants.%N.5de)]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc15_6.1, constants.%Int.as.ImplicitAs.impl.Convert.dd4 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
-// CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %N.loc15_6.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_29.1 (constants.%bound_method)]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1: init Core.IntLiteral = call %bound_method.loc15_29.1(%N.loc15_6.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT: generic fn @F(%N.loc15_7.2: %i32) {
+// CHECK:STDOUT:   %N.loc15_7.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_7.1 (constants.%N.5de)]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc15_7.1, constants.%Int.as.ImplicitAs.impl.Convert.dd4 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
+// CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %N.loc15_7.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_29.1 (constants.%bound_method)]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1: init Core.IntLiteral = call %bound_method.loc15_29.1(%N.loc15_7.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:   %array_type.loc15_30.1: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1, constants.%i32 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
 // CHECK:STDOUT:   %ptr.loc15_31.1: type = ptr_type %array_type.loc15_30.1 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_31.1 [symbolic = %pattern_type (constants.%pattern_type.bb8)]
@@ -108,7 +108,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.5de) {
-// CHECK:STDOUT:   %N.loc15_6.1 => constants.%N.5de
+// CHECK:STDOUT:   %N.loc15_7.1 => constants.%N.5de
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound => constants.%Int.as.ImplicitAs.impl.Convert.bound
 // CHECK:STDOUT:   %bound_method.loc15_29.1 => constants.%bound_method
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 => constants.%Int.as.ImplicitAs.impl.Convert.call

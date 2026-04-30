@@ -31,9 +31,9 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnCUsed();
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D` [IncompleteTypeInFunctionReturnType]
@@ -42,9 +42,9 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnDUsed() -> D;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnDUsed();
 }
@@ -66,9 +66,9 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:7:23: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUnused() -> C;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:                    ^~~~
   // CHECK:STDERR:
   ReturnCUnused();
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+12]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
@@ -79,9 +79,9 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:8:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnCUsed();
   ReturnDUnused();
@@ -217,8 +217,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [concrete]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc34_15.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -279,9 +279,9 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc34_15.1 = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call
-// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_15.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%.loc33_17.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -294,5 +294,10 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUsed [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %D) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc34_15.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc34_15.2(%self.param: ref %D) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

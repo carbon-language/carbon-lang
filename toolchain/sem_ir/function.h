@@ -24,6 +24,7 @@ struct FunctionFields {
     Builtin,
     CoreWitness,
     Thunk,
+    CppThunk,
     HasCppThunk,
   };
 
@@ -115,16 +116,13 @@ struct FunctionFields {
   // any.
   InstId return_form_inst_id;
 
-  // The parameter pattern insts that are declared by the function's return
-  // form declaration. They will all be OutParamPatterns, and there will be one
-  // for each primitive initializing form in the return form, but they may or
-  // may not be used, depending on whether the type has an in-place initializing
-  // representation.
+  // The parameter pattern inst that is declared by the function's return
+  // declaration. This will be a ReturnSlotPattern, or None if the function
+  // doesn't have a return declaration. It may or may not be used, depending on
+  // whether the type has an in-place initializing representation.
   //
-  // Note: As of this writing we don't support non-initializing return forms,
-  // so this will always be have exactly 1 element if the function has an
-  // explicitly declared return type.
-  InstBlockId return_patterns_id;
+  // TODO: Extend this to support composite return forms.
+  InstId return_pattern_id;
 
   // Which kind of special function this is, if any. This is used in cases where
   // a special function would otherwise be indistinguishable from a normal
@@ -194,8 +192,8 @@ struct Function : public EntityWithParamsBase,
     if (return_type_inst_id.has_value()) {
       out << ", return_form_inst_id: " << return_form_inst_id;
     }
-    if (return_patterns_id.has_value()) {
-      out << ", return_patterns_id: " << return_patterns_id;
+    if (return_pattern_id.has_value()) {
+      out << ", return_pattern_id: " << return_pattern_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -231,6 +229,13 @@ struct Function : public EntityWithParamsBase,
                : InstId::None;
   }
 
+  // Gets the `InstId` of the C++ function called by this thunk.
+  auto cpp_thunk_callee() const -> InstId {
+    return special_function_kind == SpecialFunctionKind::CppThunk
+               ? InstId(special_function_kind_data.index)
+               : InstId::None;
+  }
+
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
@@ -255,10 +260,10 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Sets that this function is generated for a `Core` witness. These will
-  // typically have a custom implementation, but may use builtin functions, such
-  // as `NoOp`. We still track them differently in order to support mangling.
-  auto SetCoreWitness(BuiltinFunctionKind kind = BuiltinFunctionKind::None)
-      -> void {
+  // typically have a custom implementation for a `None` kind, but may use
+  // builtin functions, most often `NoOp`. We still track them differently in
+  // order to support mangling.
+  auto SetCoreWitness(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CoreWitness;
     special_function_kind_data = AnyRawId(kind.AsInt());
@@ -268,6 +273,13 @@ struct Function : public EntityWithParamsBase,
   auto SetThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a C++ thunk.
+  auto SetCppThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 
