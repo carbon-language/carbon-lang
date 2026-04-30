@@ -50,10 +50,10 @@ fn Use(d: Derived) -> i32 {
 // CHECK:STDOUT:   %Derived.other_func.call.vtable = load ptr, ptr %d, align 8, !dbg !18
 // CHECK:STDOUT:   %Derived.other_func.call = call ptr @llvm.load.relative.i32(ptr %Derived.other_func.call.vtable, i32 0), !dbg !18
 // CHECK:STDOUT:   call void %Derived.other_func.call(ptr %d), !dbg !18
-// CHECK:STDOUT:   %.loc31_11.1.base = getelementptr inbounds nuw { ptr, [16 x i8] }, ptr %d, i32 0, i32 1, !dbg !19
-// CHECK:STDOUT:   %.loc31_11.3.i = getelementptr inbounds nuw [16 x i8], ptr %.loc31_11.1.base, i32 0, i32 8, !dbg !19
-// CHECK:STDOUT:   %.loc31_11.4 = load i32, ptr %.loc31_11.3.i, align 4, !dbg !19
-// CHECK:STDOUT:   ret i32 %.loc31_11.4, !dbg !20
+// CHECK:STDOUT:   %.loc22_11.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d, i32 0, i32 0, !dbg !19
+// CHECK:STDOUT:   %.loc22_11.3.i = getelementptr inbounds nuw [16 x i8], ptr %.loc22_11.1.base, i32 0, i32 8, !dbg !19
+// CHECK:STDOUT:   %.loc22_11.4 = load i32, ptr %.loc22_11.3.i, align 4, !dbg !19
+// CHECK:STDOUT:   ret i32 %.loc22_11.4, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
@@ -77,13 +77,13 @@ fn Use(d: Derived) -> i32 {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !6, line: 29, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !16)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !6, line: 20, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !16)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{!14, !15}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !11, type: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 30, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 31, column: 10, scope: !11)
-// CHECK:STDOUT: !20 = !DILocation(line: 31, column: 3, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 3, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 10, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 3, scope: !11)
