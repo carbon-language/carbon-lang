@@ -67,7 +67,7 @@ Example usage:
   dump context() inst42
 """)
 
-    args = command.split(" ")
+    args = command.split()
     if len(args) < 2:
         print_usage()
         return
