@@ -110,17 +110,11 @@ static auto PopFieldNameNodes(Context& context, size_t field_count)
     -> llvm::SmallVector<Parse::NodeId> {
   llvm::SmallVector<Parse::NodeId> nodes;
   nodes.reserve(field_count);
-  while (true) {
+  for ([[maybe_unused]] auto i : llvm::seq(field_count)) {
     auto [name_node, _] =
-        context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::MemberName>();
-    if (name_node.has_value()) {
-      nodes.push_back(name_node);
-    } else {
-      break;
-    }
+        context.node_stack().PopWithNodeId<Parse::NodeCategory::MemberName>();
+    nodes.push_back(name_node);
   }
-  CARBON_CHECK(nodes.size() == field_count, "Found {0} names, expected {1}",
-               nodes.size(), field_count);
   return nodes;
 }
 
