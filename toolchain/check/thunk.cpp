@@ -527,6 +527,8 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
                                  .name_id = thunk_name_id,
                                  .self_type_id = class_info.self_type_id});
 
+  context.functions().Get(thunk_function_id).SetThunk(SemIR::InstId::None);
+
   context.scope_stack().PushForDeclName();
   StartFunctionDefinition(context, thunk_inst_id, thunk_function_id);
 

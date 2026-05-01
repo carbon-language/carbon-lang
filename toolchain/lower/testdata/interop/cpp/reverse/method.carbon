@@ -102,7 +102,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_C__destroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
+// CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.A.Main"(ptr noundef nonnull align 1 dereferenceable(1) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,8 +115,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__destroy_thunk.A.Main(ptr %self) #4 !dbg !21 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
@@ -140,6 +140,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nounwind }
+// CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -166,7 +167,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
 // CHECK:STDOUT: !20 = !DILocation(line: 6, column: 3, scope: !14)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk.A.Main", scope: null, file: !6, line: 5, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.A.Main", scope: null, file: !6, line: 5, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !17)
 // CHECK:STDOUT: !24 = !DILocation(line: 5, column: 1, scope: !21)
@@ -221,7 +222,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_C__destroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
+// CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.A.Main"(ptr noundef nonnull align 1 dereferenceable(1) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,8 +235,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret i32 %a, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__destroy_thunk.A.Main(ptr %self) #4 !dbg !23 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
@@ -268,6 +269,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nounwind }
+// CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -296,7 +298,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !14, type: !18)
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 2, scope: !14, type: !17)
 // CHECK:STDOUT: !22 = !DILocation(line: 8, column: 5, scope: !14)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk.A.Main", scope: null, file: !6, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.A.Main", scope: null, file: !6, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{null, !18}
 // CHECK:STDOUT: !26 = !{!27}
@@ -344,8 +346,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__destroy_thunk.A.Main(ptr %self) #2 !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #3 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !21
@@ -374,6 +376,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -394,7 +397,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk.A.Main", scope: null, file: !6, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !19)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.A.Main", scope: null, file: !6, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !19)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{null, !18}
 // CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
