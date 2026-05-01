@@ -11,6 +11,7 @@
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Lower {
 
@@ -175,7 +176,12 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     return result.value();
   }
 
-  if (auto result = file_context_->global_variables().Lookup(inst_id)) {
+  // Look up global variables (local or imported).
+  auto [current_sem_ir, current_inst_id] =
+      SemIR::GetCanonicalFileAndInstId(&sem_ir(), inst_id);
+  auto& defining_file_context = GetFileContext(current_sem_ir);
+  if (auto result =
+          defining_file_context.global_variables().Lookup(current_inst_id)) {
     return result.value();
   }
 

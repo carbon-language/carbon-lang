@@ -335,6 +335,14 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.3d608d0372c8fc08:core.Destroy.Core"(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_COp.301c2cde953858ec:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
