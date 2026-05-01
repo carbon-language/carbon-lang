@@ -80,11 +80,6 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
 
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
-    prev_class.scope_id = new_class.scope_id;
-    prev_class.body_block_id = new_class.body_block_id;
-    prev_class.adapt_id = new_class.adapt_id;
-    prev_class.base_id = new_class.base_id;
-    prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
   if (prev_import_ir_id.has_value() ||
