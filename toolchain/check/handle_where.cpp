@@ -35,6 +35,9 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     self_with_constraints_type_id = SemIR::ErrorInst::TypeId;
   }
   if (self_with_constraints_type_id == SemIR::ErrorInst::TypeId) {
+    // Keep `self_id` in sync with `self_with_constraints_type_id`, if one is an
+    //  error they both are. Note that ExprAsType may have returned ErrorInst,
+    //  or we may have set it to ErrorInst in this function.
     self_id = SemIR::ErrorInst::InstId;
   }
 
