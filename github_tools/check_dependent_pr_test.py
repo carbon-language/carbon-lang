@@ -40,36 +40,6 @@ class TestCheckDependentPR(unittest.TestCase):
         self.assertEqual(kwargs["json"]["context"], "PR dependencies check")
         self.assertEqual(kwargs["json"]["description"], description)
 
-    def _process_pr(
-        self,
-        client: Any,
-        pr_number: int,
-        pr_to_commits: dict[int, list[str]],
-        open_pr_numbers: set[int],
-        label_id: str,
-        token: str,
-        dry_run: bool = False,
-        scanning: bool = False,
-        max_merged_pr: int = 10000,
-    ) -> None:
-        """Helper to call the real _process_pr with converted types."""
-        new_pr_to_commits = {k: set(v) for k, v in pr_to_commits.items()}
-        pr_to_head = {
-            k: v[-1] if v else "dummy_head" for k, v in pr_to_commits.items()
-        }
-        return check_dependent_pr._process_pr(
-            client=client,
-            pr_number=pr_number,
-            pr_to_commits=new_pr_to_commits,
-            pr_to_head=pr_to_head,
-            open_pr_numbers=open_pr_numbers,
-            label_id=label_id,
-            token=token,
-            dry_run=dry_run,
-            scanning=scanning,
-            max_merged_pr=max_merged_pr,
-        )
-
     def _make_comment(
         self,
         open_deps: list[int],
@@ -123,10 +93,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=1,
-            pr_to_commits={1: [_OID1]},
+            pr_to_commits={1: {_OID1}},
+            pr_to_head={1: _OID1},
             open_pr_numbers={1},
             label_id="label_id",
             token="test_token",
@@ -142,10 +113,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 2: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 2: _OID2},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -166,10 +138,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1])],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=3,
-            pr_to_commits={3: [_OID1, _OID2]},
+            pr_to_commits={3: {_OID1, _OID2}},
+            pr_to_head={3: _OID2},
             open_pr_numbers={3},
             label_id="label_dependent",
             token="test_token",
@@ -189,10 +162,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=3,
-            pr_to_commits={1: [_OID1, _OID4], 3: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1, _OID4}, 3: {_OID1, _OID2}},
+            pr_to_head={1: _OID4, 3: _OID2},
             open_pr_numbers={1, 3},
             label_id="label_dependent",
             token="test_token",
@@ -213,10 +187,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=10,
-            pr_to_commits={10: [_OID1, _OID2], 11: [_OID1, _OID3]},
+            pr_to_commits={10: {_OID1, _OID2}, 11: {_OID1, _OID3}},
+            pr_to_head={10: _OID2, 11: _OID3},
             open_pr_numbers={10, 11},
             label_id="label_dependent",
             token="test_token",
@@ -232,10 +207,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=9,
-            pr_to_commits={1: [_OID2], 9: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID2}, 9: {_OID1, _OID2}},
+            pr_to_head={1: _OID2, 9: _OID2},
             open_pr_numbers={1, 9},
             label_id="label_dependent",
             token="test_token",
@@ -254,10 +230,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=7,
-            pr_to_commits={1: [_OID1], 7: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 7: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 7: _OID2},
             open_pr_numbers={1, 7},
             label_id="label_dependent",
             token="test_token",
@@ -276,10 +253,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1], first_commit=_OID2)],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=6,
-            pr_to_commits={1: [_OID1], 6: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 6: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 6: _OID2},
             open_pr_numbers={1, 6},
             label_id="label_dependent",
             token="test_token",
@@ -305,10 +283,11 @@ class TestCheckDependentPR(unittest.TestCase):
 
         self.assertRaises(
             json.decoder.JSONDecodeError,
-            self._process_pr,
+            check_dependent_pr._process_pr,
             self.mock_client,
             pr_number=5,
-            pr_to_commits={5: [_OID1]},
+            pr_to_commits={5: {_OID1}},
+            pr_to_head={5: _OID1},
             open_pr_numbers={5},
             label_id="label_dependent",
             token="test_token",
@@ -328,10 +307,11 @@ class TestCheckDependentPR(unittest.TestCase):
             ],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=14,
-            pr_to_commits={1: [_OID1], 14: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 14: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 14: _OID2},
             open_pr_numbers={1, 14},
             label_id="label_dependent",
             token="test_token",
@@ -351,10 +331,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2], first_commit=_OID2)],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=11,
-            pr_to_commits={1: [_OID1], 11: [_OID1, _OID2, _OID3]},
+            pr_to_commits={1: {_OID1}, 11: {_OID1, _OID2, _OID3}},
+            pr_to_head={1: _OID1, 11: _OID3},
             open_pr_numbers={1, 11},
             label_id="label_dependent",
             token="test_token",
@@ -376,10 +357,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=12,
-            pr_to_commits={1: [_OID9], 12: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID9}, 12: {_OID1, _OID2}},
+            pr_to_head={1: _OID9, 12: _OID2},
             open_pr_numbers={1, 12},
             label_id="label_dependent",
             token="test_token",
@@ -401,10 +383,11 @@ class TestCheckDependentPR(unittest.TestCase):
             comments=[self._make_comment(open_deps=[1, 2])],
             has_dependent_label=True,
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=13,
-            pr_to_commits={1: [_OID1, _OID2], 13: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1, _OID2}, 13: {_OID1, _OID2}},
+            pr_to_head={1: _OID2, 13: _OID2},
             open_pr_numbers={1, 13},
             label_id="label_dependent",
             token="test_token",
@@ -424,10 +407,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=1,
-            pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 2: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 2: _OID2},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -443,10 +427,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            pr_to_commits={1: [_OID1], 2: [_OID2]},
+            pr_to_commits={1: {_OID1}, 2: {_OID2}},
+            pr_to_head={1: _OID1, 2: _OID2},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -462,10 +447,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            pr_to_commits={1: [_OID1, _OID2, _OID3], 2: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1, _OID2, _OID3}, 2: {_OID1, _OID2}},
+            pr_to_head={1: _OID3, 2: _OID2},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -481,10 +467,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID4,
             commits=[_OID1, _OID3, _OID4],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            pr_to_commits={1: [_OID1, _OID2], 2: [_OID1, _OID3, _OID4]},
+            pr_to_commits={1: {_OID1, _OID2}, 2: {_OID1, _OID3, _OID4}},
+            pr_to_head={1: _OID2, 2: _OID4},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -502,10 +489,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID1,
             commits=[_OID1],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=1,
-            pr_to_commits={1: [_OID1]},
+            pr_to_commits={1: {_OID1}},
+            pr_to_head={1: _OID1},
             open_pr_numbers={1},
             label_id="label_id",
             token="test_token",
@@ -520,10 +508,11 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=2,
-            pr_to_commits={1: [_OID1], 2: [_OID1, _OID2]},
+            pr_to_commits={1: {_OID1}, 2: {_OID1, _OID2}},
+            pr_to_head={1: _OID1, 2: _OID2},
             open_pr_numbers={1, 2},
             label_id="label_dependent",
             token="test_token",
@@ -542,14 +531,15 @@ class TestCheckDependentPR(unittest.TestCase):
             head_ref_oid=_OID3,
             commits=[_OID1, _OID3],
         )
-        self._process_pr(
+        check_dependent_pr._process_pr(
             self.mock_client,
             pr_number=3,
             pr_to_commits={
-                1: [_OID1],
-                2: [_OID1, _OID2],
-                3: [_OID1, _OID3],
+                1: {_OID1},
+                2: {_OID1, _OID2},
+                3: {_OID1, _OID3},
             },
+            pr_to_head={1: _OID1, 2: _OID2, 3: _OID3},
             open_pr_numbers={1, 2, 3},
             label_id="label_dependent",
             token="test_token",
