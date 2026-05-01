@@ -235,6 +235,19 @@ fn F() {
   impl {} as Z {}
 }
 
+// --- todo_fail_orphan_in_block_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  class C {}
+  // Neither C nor Z are defined within or by this block scope.
+  {
+    impl C as Z {}
+  }
+}
+
 // --- fail_todo_orphan_in_generic_fn_scope.carbon
 library "[[@TEST_NAME]]";
 
