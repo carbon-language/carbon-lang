@@ -39,11 +39,14 @@ struct Signature : public Printable<Signature> {
   Kind kind = Normal;
   // The number of parameters to import. This can be less than the number of
   // parameters in the Clang declaration if the Clang declaration has default
-  // arguments. Excludes the implicit object parameter, if there is one.
-  // TODO: Remove this, and use the size of `passing_modes`.
+  // arguments. Excludes the (implicit or explicit) object parameter, if there
+  // is one.
+  // TODO: Once we always compute `passing_modes`, remove this and use
+  // `passing_modes.size()`.
   int32_t num_params = -1;
 
-  // The passing mode for each parameter.
+  // The passing mode for each parameter. Excludes the (implicit or explicit)
+  // object parameter, if there is one.
   // TODO: Generalize this to be parameter info, not just passing mode. For now
   // a struct with a single field would do.
   llvm::SmallVector<PassingMode, 4> passing_modes;
