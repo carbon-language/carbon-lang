@@ -801,6 +801,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
 
   // Build the destructor body.
   clang::Sema::ContextRAII context_raii(sema, cpp_destructor_decl);
+  sema.ActOnStartOfFunctionDef(nullptr, cpp_destructor_decl);
 
   // Create a clang call expr to call the Carbon thunk.
   clang::ExprResult callee =
@@ -811,7 +812,6 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
                                               call_args, clang_loc);
 
-  sema.ActOnStartOfFunctionDef(nullptr, cpp_destructor_decl);
   sema.ActOnFinishFunctionBody(cpp_destructor_decl, call.get());
 
   return cpp_destructor_decl;
