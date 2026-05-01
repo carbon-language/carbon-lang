@@ -214,3 +214,116 @@ import library "imports";
 constraint N(T:! type) {}
 
 impl ImportedAnyParam(N) as ImportedY {}
+
+// --- todo_fail_orphan_in_class_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+// Neither {} nor Z are defined within or by the scope of `C`.
+class C {
+  impl {} as Z {}
+}
+
+// --- todo_fail_orphan_in_fn_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+// Neither {} nor Z are defined within or by the scope of `F`.
+fn F() {
+  impl {} as Z {}
+}
+
+// --- fail_todo_orphan_in_generic_fn_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+// Neither {} nor Z are defined within or by the scope of `F`.
+fn F(T:! type) {
+  // TODO: The error should be about being an orphan, not an unused binding.
+  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+8]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
+  // CHECK:STDERR:   impl {} as Z {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE-6]]:6: warning: binding `T` unused [UnusedBinding]
+  // CHECK:STDERR: fn F(T:! type) {
+  // CHECK:STDERR:      ^~~~~~~~
+  // CHECK:STDERR:
+  impl {} as Z {}
+}
+
+// --- name_defined_by_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+class C {
+  impl as ImportedY {}
+};
+
+// --- name_defined_in_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+fn F() {
+  class C {}
+  impl C as ImportedY {}
+};
+
+// --- name_defined_after_in_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+fn F() {
+  class C;
+  impl C as ImportedY {}
+  class C {}
+};
+
+// --- name_defined_in_nested_namespace_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+namespace N;
+class N.C {}
+
+impl N.C as ImportedY {}
+
+// --- name_defined_after_in_nested_namespace_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+namespace N;
+class N.C;
+
+impl N.C as ImportedY {}
+
+class N.C {}
+
+// --- name_defined_in_nested_class_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+class C {
+  class D {}
+}
+impl C.D as ImportedY {}
+
+// --- name_defined_after_in_nested_class_scope.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+class C {
+  class D;
+}
+impl C.D as ImportedY {}
+
+class C.D {}
