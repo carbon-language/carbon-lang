@@ -2166,8 +2166,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
-                     SemIR::SpecificId callee_specific_id,
-                     bool is_operator_syntax) -> SemIR::InstBlockId {
+                     SemIR::SpecificId callee_specific_id, bool is_desugared)
+    -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_pattern_id = callee.return_pattern_id;
@@ -2188,8 +2188,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_pattern_id,
-                            self_id, arg_refs, return_arg_id,
-                            is_operator_syntax);
+                            self_id, arg_refs, return_arg_id, is_desugared);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)

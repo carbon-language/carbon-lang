@@ -206,15 +206,15 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
-// argument values for runtime parameters. `is_operator_syntax` indicates that
-// this call was generated from an operator rather than from function call
-// syntax, so arguments to `ref` parameters aren't required to have `ref` tags.
+// argument values for runtime parameters. `is_desugared` indicates that this
+// call was produced by desugaring, not written as a function call in user code,
+// so arguments to `ref` parameters aren't required to have `ref` tags.
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
-                     SemIR::SpecificId callee_specific_id,
-                     bool is_operator_syntax) -> SemIR::InstBlockId;
+                     SemIR::SpecificId callee_specific_id, bool is_desugared)
+    -> SemIR::InstBlockId;
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {

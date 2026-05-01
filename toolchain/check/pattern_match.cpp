@@ -995,7 +995,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId return_pattern_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_operator_syntax)
+                        SemIR::InstId return_arg_id, bool is_desugared)
     -> SemIR::InstBlockId {
   CallerState state = {.callee_specific_id = specific_id};
   MatchContext match(context);
@@ -1011,7 +1011,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id))) {
     match.Match(&state, {.pattern_id = param_pattern_id,
                          .work = MatchContext::PreWork{.scrutinee_id = arg_id},
-                         .allow_unmarked_ref = is_operator_syntax});
+                         .allow_unmarked_ref = is_desugared});
   }
 
   // Track the return storage, if present.
