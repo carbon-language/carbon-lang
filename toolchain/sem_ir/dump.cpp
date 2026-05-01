@@ -309,7 +309,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
        llvm::enumerate(identified_facet_type.required_impls())) {
     auto [self, req_interface] = req_impl;
     out << "\n  - self: " << DumpConstantSummary(file, self);
-    out << "\n    impls "
+    out << "\n    impls: "
         << DumpInterfaceSummary(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
