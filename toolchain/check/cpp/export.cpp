@@ -770,10 +770,10 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                carbon_function_decl);
 }
 
-auto ExportDestructorToCpp(Context& context, SemIR::LocId loc_id,
-                           const SemIR::Class& class_info,
+auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl* {
+  SemIR::LocId loc_id(class_info.first_decl_id());
   auto clang_loc = record_decl->getLocation();
 
   // Create C++ destructor decl.

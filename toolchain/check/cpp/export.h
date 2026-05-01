@@ -61,8 +61,7 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 // Export a Carbon destructor into C++.
 //
 // The destructor calls the `Destroy` operator.
-auto ExportDestructorToCpp(Context& context, SemIR::LocId loc_id,
-                           const SemIR::Class& class_info,
+auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl*;
 
