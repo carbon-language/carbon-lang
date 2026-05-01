@@ -248,21 +248,12 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         context, loc_id, callee.return_pattern_id, *callee_specific_id);
     if (arg_type_id == SemIR::ErrorInst::TypeId) {
       return_type_id = SemIR::ErrorInst::TypeId;
-    }
-    switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
-      case SemIR::InitRepr::InPlace:
-      case SemIR::InitRepr::Dependent:
-        // Tentatively use storage for a temporary as the return argument.
-        // This will be replaced if necessary when we perform initialization.
-        return_arg_id = AddInst<SemIR::TemporaryStorage>(
-            context, loc_id, {.type_id = arg_type_id});
-        break;
-      case SemIR::InitRepr::None:
-      case SemIR::InitRepr::ByCopy:
-      case SemIR::InitRepr::Incomplete:
-      case SemIR::InitRepr::Abstract:
-        return_arg_id = SemIR::InstId::None;
-        break;
+    } else if (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id)
+                   .MightBeInPlace()) {
+      // Tentatively use storage for a temporary as the return argument.
+      // This will be replaced if necessary when we perform initialization.
+      return_arg_id = AddInst<SemIR::TemporaryStorage>(
+          context, loc_id, {.type_id = arg_type_id});
     }
   }
   // Convert the arguments to match the parameters.
