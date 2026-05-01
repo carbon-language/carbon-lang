@@ -102,6 +102,7 @@ static auto BuildInterfaceDecl(Context& context,
               .Case("Destroy", SemIR::CoreInterface::Destroy)
               .Case("DivAssignWith", SemIR::CoreInterface::DivAssignWith)
               .Case("DivWith", SemIR::CoreInterface::DivWith)
+              .Case("EqWith", SemIR::CoreInterface::EqWith)
               .Case("Inc", SemIR::CoreInterface::Inc)
               .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
               .Case("ModAssignWith", SemIR::CoreInterface::ModAssignWith)
@@ -109,6 +110,7 @@ static auto BuildInterfaceDecl(Context& context,
               .Case("MulAssignWith", SemIR::CoreInterface::MulAssignWith)
               .Case("MulWith", SemIR::CoreInterface::MulWith)
               .Case("Negate", SemIR::CoreInterface::Negate)
+              .Case("OrderedWith", SemIR::CoreInterface::OrderedWith)
               .Case("SubAssignWith", SemIR::CoreInterface::SubAssignWith)
               .Case("SubWith", SemIR::CoreInterface::SubWith)
               .Default(SemIR::CoreInterface::Unknown);

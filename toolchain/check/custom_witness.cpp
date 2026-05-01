@@ -551,45 +551,13 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 }
 
 auto AsCoreIdentifier(SemIR::CoreInterface core_interface) -> CoreIdentifier {
-  using SemIR::CoreInterface;
   switch (core_interface) {
-    case CoreInterface::AddAssignWith:
-      return CoreIdentifier::AddAssignWith;
-    case CoreInterface::AddWith:
-      return CoreIdentifier::AddWith;
-    case CoreInterface::Copy:
-      return CoreIdentifier::Copy;
-    case CoreInterface::CppUnsafeDeref:
-      return CoreIdentifier::CppUnsafeDeref;
-    case CoreInterface::Dec:
-      return CoreIdentifier::Dec;
-    case CoreInterface::Default:
-      return CoreIdentifier::Default;
-    case CoreInterface::Destroy:
-      return CoreIdentifier::Destroy;
-    case CoreInterface::DivAssignWith:
-      return CoreIdentifier::DivAssignWith;
-    case CoreInterface::DivWith:
-      return CoreIdentifier::DivWith;
-    case CoreInterface::Inc:
-      return CoreIdentifier::Inc;
-    case CoreInterface::IntFitsIn:
-      return CoreIdentifier::IntFitsIn;
-    case CoreInterface::ModAssignWith:
-      return CoreIdentifier::ModAssignWith;
-    case CoreInterface::ModWith:
-      return CoreIdentifier::ModWith;
-    case CoreInterface::MulAssignWith:
-      return CoreIdentifier::MulAssignWith;
-    case CoreInterface::MulWith:
-      return CoreIdentifier::MulWith;
-    case CoreInterface::Negate:
-      return CoreIdentifier::Negate;
-    case CoreInterface::SubAssignWith:
-      return CoreIdentifier::SubAssignWith;
-    case CoreInterface::SubWith:
-      return CoreIdentifier::SubWith;
-    case CoreInterface::Unknown:
+#define CARBON_SEM_IR_CORE_INTERFACE_EXCLUDE_UNKNOWN
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  case SemIR::CoreInterface::Name:              \
+    return CoreIdentifier::Name;
+#include "toolchain/sem_ir/core_interface_kind.def"
+    case SemIR::CoreInterface::Unknown:
       CARBON_FATAL("{0} doesn't have a `CoreIdentifier` mapping",
                    core_interface);
   }
@@ -741,12 +709,14 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Default:
     case SemIR::CoreInterface::DivAssignWith:
     case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::EqWith:
     case SemIR::CoreInterface::Inc:
     case SemIR::CoreInterface::ModAssignWith:
     case SemIR::CoreInterface::ModWith:
     case SemIR::CoreInterface::MulAssignWith:
     case SemIR::CoreInterface::MulWith:
     case SemIR::CoreInterface::Negate:
+    case SemIR::CoreInterface::OrderedWith:
     case SemIR::CoreInterface::SubAssignWith:
     case SemIR::CoreInterface::SubWith:
     case SemIR::CoreInterface::Unknown:
