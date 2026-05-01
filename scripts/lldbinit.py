@@ -118,7 +118,7 @@ Example usage:
     # Look for <type><id> as a single argument.
     if m := re.fullmatch("([a-z_]+)(?:0x)?([0-9A-Fa-f]+)", args[1]):
         if m[1] in id_types:
-            if len(args) != 2:
+            if len(args) > 2:
                 print_usage()
                 return
             make_id_fn = id_types[m[1]]
@@ -126,16 +126,18 @@ Example usage:
             print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
 
-    # Look for <type> <id> as two arguments.
+    # Look for <type> <id> as two arguments. If there's no <id>, the <type>
+    # should just be treated as a variable name.
     if args[1] in id_types:
-        if len(args) != 3:
+        if len(args) > 3:
             print_usage()
             return
-        if m := re.fullmatch("(?:0x)?([0-9A-Fa-f]+)", args[2]):
-            make_id_fn = id_types[args[1]]
-            id = int(m[1], 16)
-            print_dump(context, f"{make_id_fn}({id})")
-            found_id_type = True
+        elif len(args) == 3:
+            if m := re.fullmatch("(?:0x)?([0-9A-Fa-f]+)", args[2]):
+                make_id_fn = id_types[args[1]]
+                id = int(m[1], 16)
+                print_dump(context, f"{make_id_fn}({id})")
+                found_id_type = True
 
     if not found_id_type:
         # Use `--` to escape a variable name like `inst22`.
