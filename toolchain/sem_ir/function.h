@@ -255,7 +255,7 @@ struct Function : public EntityWithParamsBase,
   // When merging a declaration and definition, prefer things which would point
   // at the definition for diagnostics.
   auto MergeDefinition(const Function& definition) -> void {
-    EntityWithParamsBase::MergeDefinition(definition);
+    EntityWithParamsBase::MergeBaseDefinition(definition);
     call_param_patterns_id = definition.call_param_patterns_id;
     call_params_id = definition.call_params_id;
     return_type_inst_id = definition.return_type_inst_id;

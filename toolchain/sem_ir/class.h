@@ -110,7 +110,7 @@ struct Class : public EntityWithParamsBase,
   // When merging a declaration and definition, prefer things which would point
   // at the definition for diagnostics.
   auto MergeDefinition(const Class& definition) -> void {
-    EntityWithParamsBase::MergeDefinition(definition);
+    EntityWithParamsBase::MergeBaseDefinition(definition);
     scope_id = definition.scope_id;
     body_block_id = definition.body_block_id;
     adapt_id = definition.adapt_id;
