@@ -549,6 +549,8 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT: --- form_generic_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Form.type: type = fn_type @Form [concrete]
 // CHECK:STDOUT:   %Form.ea2: %Form.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.13f: type = pattern_type Core.Form [concrete]
@@ -586,7 +588,7 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:     %.loc4_30.3: Core.Form = splice_inst %.loc4_30.1 [template = %.loc4_30.2 (constants.%.344)]
 // CHECK:STDOUT:     %.loc4_26.6: @F.%.loc4_26.3 (%.82f) = splice_inst %.loc4_26.2 [template = %.loc4_26.4 (constants.%.f74)]
 // CHECK:STDOUT:     %.loc4_23.1: type = splice_block %.loc4_23.3 [concrete = Core.Form] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Form.ref.loc4_17: %Form.type = name_ref Form, imports.%Core.Form [concrete = constants.%Form.ea2]
 // CHECK:STDOUT:       %Form.call: init type = call %Form.ref.loc4_17() [concrete = Core.Form]

@@ -16,21 +16,22 @@
 
 namespace Carbon::Check {
 
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId {
+auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id) -> SemIR::InstId {
   CARBON_CHECK(self_type_id == SemIR::ErrorInst::TypeId ||
                context.types().Is<SemIR::FacetType>(self_type_id));
   auto entity_name_id = context.entity_names().AddCanonical({
       .name_id = SemIR::NameId::PeriodSelf,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
   });
-  auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::SymbolicBinding>({
-                   .type_id = self_type_id,
-                   .entity_name_id = entity_name_id,
-                   // `None` because there is no equivalent non-symbolic value.
-                   .value_id = SemIR::InstId::None,
-               }));
+  auto inst_id = AddInst<SemIR::SymbolicBinding>(
+      context, loc_id,
+      {
+          .type_id = self_type_id,
+          .entity_name_id = entity_name_id,
+          // `None` because there is no equivalent non-symbolic value.
+          .value_id = SemIR::InstId::None,
+      });
   auto existing = context.scope_stack().LookupOrAddName(
       SemIR::NameId::PeriodSelf, inst_id, ScopeIndex::None,
       IsCurrentPositionReachable(context));

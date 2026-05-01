@@ -1816,7 +1816,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%U.as_type.2b8
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.07d
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.74d
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.5c0
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.5c0
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%require_complete.311
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.f21
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.8c2
@@ -1839,7 +1839,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%U.as_type.2b8
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.593
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.db3
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.db3
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.db3
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%require_complete.b71
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.2a6
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.065
@@ -1862,7 +1862,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%U.as_type.2b8
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.9532
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.17c
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.afa
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.afa
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%require_complete.665
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.9cb
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.97c
@@ -1885,7 +1885,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%U.as_type.2b8
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.0e2
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.94d
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.5a5
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.5a5
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%require_complete.3a4
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.dad
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.06d
@@ -1908,7 +1908,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%U.as_type.2b8
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.c6f
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.428
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.2d4
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.2d4
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%require_complete.9441
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.12a6
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.66e
@@ -1931,7 +1931,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.344
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.a81
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0ae
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.0ae
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.f61
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.12a0
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.f75
@@ -1972,7 +1972,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.306
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.b37
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.107
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.107
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.5cf
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.e34
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.7a2
@@ -2013,7 +2013,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.0cd
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.2dd
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.594
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.594
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.b32
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.674
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.f1b
@@ -2054,7 +2054,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.4c2
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.e82
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.c70
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.c70
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.8b32
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.e0e
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.9fa
@@ -2095,7 +2095,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.009
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.e1e
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.76e
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.76e
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.5b6
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.242
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.355
@@ -2136,7 +2136,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%i16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.a18
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.8b1
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.ba7
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.ba7
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.59d
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.f28
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.4f0
@@ -2177,7 +2177,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%i16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.a1b
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.bd5
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.d04
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.d04
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.d4c
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.d0c7
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.108
@@ -2218,7 +2218,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%i16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.ee9
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.5ca
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.3cf
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.3cf
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.d8f
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.4dc
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.aae
@@ -2259,7 +2259,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%i16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.9ae
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.014
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.197
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.197
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.b92
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.2e1
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.e80
@@ -2300,7 +2300,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%i16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.406
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.fe7
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.7d0
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.7d0
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.dfc
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.81b
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.ffe
@@ -2341,7 +2341,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.e9e
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.4a7
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.3d9
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.3d9
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.0d9
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.7ba
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.29a
@@ -2382,7 +2382,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.84c
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.e7a
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.384
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.384
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.a34
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.45d
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.0f9
@@ -2423,7 +2423,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.d1b
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.2e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.84b
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.84b
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.043
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.d0cd
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.8c6
@@ -2464,7 +2464,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.26e
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.eb5
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.203
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.203
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.d76
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.f8e
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.109
@@ -2505,7 +2505,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.5c4
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.1e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0c5
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.0c5
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.1bb
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.ef1
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.1db
@@ -2546,7 +2546,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.344
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.a81
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0ae
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.0ae
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.f61
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.12a0
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.f75
@@ -2587,7 +2587,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.306
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.b37
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.107
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.107
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.5cf
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.e34
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.7a2
@@ -2628,7 +2628,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.0cd
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.2dd
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.594
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.594
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.b32
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.674
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.f1b
@@ -2669,7 +2669,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.4c2
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.e82
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.c70
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.c70
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.8b32
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.e0e
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.9fa
@@ -2710,7 +2710,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.009
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.e1e
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.76e
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.76e
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.5b6
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.242
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.355
@@ -2751,7 +2751,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.e9e
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.4a7
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.3d9
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.3d9
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.0d9
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.7ba
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.29a
@@ -2792,7 +2792,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.84c
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.e7a
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.384
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.384
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.a34
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.45d
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.0f9
@@ -2833,7 +2833,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.d1b
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.2e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.84b
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.84b
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.043
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.d0cd
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.8c6
@@ -2874,7 +2874,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.26e
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.eb5
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.203
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.203
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.d76
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.f8e
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.109
@@ -2915,7 +2915,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.5c4
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.1e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0c5
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.0c5
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.1bb
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.ef1
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.1db
@@ -2956,7 +2956,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int64
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.ee5
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.221
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.954
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.954
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.7fa
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.083
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.330
@@ -2997,7 +2997,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int64
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.b41
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.660
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.ea7
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.ea7
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.6f3
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.d4d
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.b7b
@@ -3038,7 +3038,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int64
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.166
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.60a
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.39e
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.39e
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.7a4
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.604
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.cbc
@@ -3079,7 +3079,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int64
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.70f
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.f02
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.ad5
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.ad5
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.e31
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.245
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.03e
@@ -3120,7 +3120,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int64
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.a92
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.b13
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.856
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.856
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.780
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.6bd
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.f50
@@ -3161,7 +3161,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.e9e
 // CHECK:STDOUT:   %facet_type.loc123_20 => constants.%facet_type.4a7
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.3d9
+// CHECK:STDOUT:   %.Self.loc123_38.1 => constants.%.Self.3d9
 // CHECK:STDOUT:   %require_complete.loc123 => constants.%complete_type.0d9
 // CHECK:STDOUT:   %.Self.as_type.loc123_44.1 => constants.%.Self.as_type.7ba
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.29a
@@ -3202,7 +3202,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.84c
 // CHECK:STDOUT:   %facet_type.loc134_20 => constants.%facet_type.e7a
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.384
+// CHECK:STDOUT:   %.Self.loc134_38.1 => constants.%.Self.384
 // CHECK:STDOUT:   %require_complete.loc134 => constants.%complete_type.a34
 // CHECK:STDOUT:   %.Self.as_type.loc134_44.1 => constants.%.Self.as_type.45d
 // CHECK:STDOUT:   %SubWith.assoc_type => constants.%SubWith.assoc_type.0f9
@@ -3243,7 +3243,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.d1b
 // CHECK:STDOUT:   %facet_type.loc145_20 => constants.%facet_type.2e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.84b
+// CHECK:STDOUT:   %.Self.loc145_38.1 => constants.%.Self.84b
 // CHECK:STDOUT:   %require_complete.loc145 => constants.%complete_type.043
 // CHECK:STDOUT:   %.Self.as_type.loc145_44.1 => constants.%.Self.as_type.d0cd
 // CHECK:STDOUT:   %MulWith.assoc_type => constants.%MulWith.assoc_type.8c6
@@ -3284,7 +3284,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.26e
 // CHECK:STDOUT:   %facet_type.loc156_20 => constants.%facet_type.eb5
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.203
+// CHECK:STDOUT:   %.Self.loc156_38.1 => constants.%.Self.203
 // CHECK:STDOUT:   %require_complete.loc156 => constants.%complete_type.d76
 // CHECK:STDOUT:   %.Self.as_type.loc156_44.1 => constants.%.Self.as_type.f8e
 // CHECK:STDOUT:   %DivWith.assoc_type => constants.%DivWith.assoc_type.109
@@ -3325,7 +3325,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.5c4
 // CHECK:STDOUT:   %facet_type.loc167_20 => constants.%facet_type.1e6
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0c5
+// CHECK:STDOUT:   %.Self.loc167_38.1 => constants.%.Self.0c5
 // CHECK:STDOUT:   %require_complete.loc167 => constants.%complete_type.1bb
 // CHECK:STDOUT:   %.Self.as_type.loc167_44.1 => constants.%.Self.as_type.ef1
 // CHECK:STDOUT:   %ModWith.assoc_type => constants.%ModWith.assoc_type.1db

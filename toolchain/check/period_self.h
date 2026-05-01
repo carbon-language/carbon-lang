@@ -18,8 +18,8 @@ namespace Carbon::Check {
 // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
 // This allows substitution with other facet values without requiring an
 // additional `FacetAccessType` to be inserted.
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId;
+auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id) -> SemIR::InstId;
 
 class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
  public:

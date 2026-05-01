@@ -97,7 +97,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc27_9.1: type = splice_block %.loc27_9.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc27_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
@@ -111,7 +111,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc39_18.1: type = splice_block %.loc39_18.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc39: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc39_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39

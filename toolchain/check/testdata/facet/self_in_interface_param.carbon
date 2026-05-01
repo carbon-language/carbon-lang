@@ -73,14 +73,14 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:     %impl.elem0.loc18_39: type = impl_witness_access constants.%I.lookup_impl_witness.baf, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc18_39.6: Core.Form = init_form %impl.elem0.loc18_39 [concrete = constants.%.262]
 // CHECK:STDOUT:     %.loc18_19.1: type = splice_block %.loc18_19.2 [symbolic_self = constants.%I_where.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.loc18_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %.Self.ref.loc18_12: %type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:       %.Self.ref.loc18_12: %type = name_ref .Self, %.Self.loc18_7 [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.Self.as_type.loc18_17: type = facet_access_type %.Self.ref.loc18_12 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %.loc18_17: type = converted %.Self.ref.loc18_12, %.Self.as_type.loc18_17 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %I.type: type = facet_type <@I, @I(constants.%.Self.as_type.246)> [symbolic_self = constants.%I.type.6e7]
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref.loc18_25: %I.type.6e7 = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.loc18_19: %I.type.6e7 = symbolic_binding .Self [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.ref.loc18_25: %I.type.6e7 = name_ref .Self, %.Self.loc18_19 [symbolic_self = constants.%.Self.534]
 // CHECK:STDOUT:       %.Self.as_type.loc18_25: type = facet_access_type %.Self.ref.loc18_25 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc18_25.1: type = converted %.Self.ref.loc18_25, %.Self.as_type.loc18_25 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc18_25.2: %I.assoc_type.24b = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.as_type.246, constants.%.Self.534) [symbolic_self = constants.%assoc0.0ba]
