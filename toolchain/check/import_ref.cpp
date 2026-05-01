@@ -2580,7 +2580,8 @@ static auto ImportImplDecl(ImportContext& context,
       context, import_impl.latest_decl_id(), impl_decl);
   impl_decl.impl_id = context.local_impls().Add(
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
-       {.self_id = SemIR::TypeInstId::None,
+       {.enclosing_scope_id = SemIR::NameScopeId::None,
+        .self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id,
