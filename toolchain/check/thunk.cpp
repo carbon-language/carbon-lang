@@ -519,8 +519,8 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
                        const SemIR::Class& class_info) -> SemIR::FunctionId {
   // Create a new function declaration.
-  auto thunk_name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add("destroy_thunk"));
+  auto thunk_name_id = SemIR::NameId::ForIdentifier(
+      context.identifiers().Add("__destroy_thunk"));
   auto [thunk_inst_id, thunk_function_id] =
       MakeGeneratedFunctionDecl(context, loc_id,
                                 {.parent_scope_id = class_info.scope_id,

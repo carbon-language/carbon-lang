@@ -141,7 +141,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_Cdestroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
+// CHECK:STDOUT:   call void @_C__destroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,7 +165,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.A.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.A.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self) #5 !dbg !21 {
@@ -307,7 +307,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_Cdestroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
+// CHECK:STDOUT:   call void @_C__destroy_thunk.A.Main(ptr noundef nonnull align 1 dereferenceable(1) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -331,7 +331,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret i32 %a, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.A.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.A.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self) #5 !dbg !23 {
@@ -437,7 +437,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.A.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.A.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.1afa5e4ee26f3f8f:core.Destroy.Core"(ptr %self) #2 !dbg !15 {

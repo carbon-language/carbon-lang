@@ -231,7 +231,7 @@ fn G() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_Cdestroy_thunk.A.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
+// CHECK:STDOUT:   call void @_C__destroy_thunk.A.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -313,7 +313,7 @@ fn G() {
 // CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !14
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   invoke void @_Cdestroy_thunk.B.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
+// CHECK:STDOUT:   invoke void @_C__destroy_thunk.B.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
 // CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
@@ -418,7 +418,7 @@ fn G() {
 // CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   invoke void @_Cdestroy_thunk.C.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
+// CHECK:STDOUT:   invoke void @_C__destroy_thunk.C.Main(ptr noundef nonnull align 8 dereferenceable(16) %this1)
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
 // CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
@@ -459,7 +459,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CCallC.Main(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.A.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.A.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #5 !dbg !18 {
@@ -487,7 +487,7 @@ fn G() {
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.B.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.B.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.1a8ac7d7e1ca560e:core.Destroy.Core"(ptr %self) #5 !dbg !40 {
@@ -509,7 +509,7 @@ fn G() {
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.C.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.C.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e9c7e36fd2e174ea:core.Destroy.Core"(ptr %self) #5 !dbg !52 {
@@ -636,7 +636,7 @@ fn G() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Cdestroy_thunk.C.Main(ptr)
+// CHECK:STDOUT: declare void @_C__destroy_thunk.C.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #1 !dbg !19 {
