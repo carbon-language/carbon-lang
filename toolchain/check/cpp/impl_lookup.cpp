@@ -369,14 +369,63 @@ static auto BuildCppEqWithWitness(
                             {equal_to_id, not_equal_to_id});
 }
 
+static auto LookupCppComparisonOperators(
+    Context& context, SemIR::LocId loc_id, CoreIdentifier interface,
+    llvm::ArrayRef<CoreIdentifier> operator_names,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto args =
+      context.inst_blocks().Get(context.specifics()
+                                    .Get(context.specific_interfaces()
+                                             .Get(query_specific_interface_id)
+                                             .specific_id)
+                                    .args_id);
+  CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
+
+  auto arg_type_id = context.types().GetTypeIdForTypeInstId(args[0]);
+  auto operators = llvm::SmallVector<SemIR::InstId, 4>();
+  for (auto operator_name : operator_names) {
+    auto lookup_id = LookupCppOperator(
+        context, loc_id,
+        {.interface_name = interface, .op_name = operator_name},
+        {self_type_id, arg_type_id});
+    if (lookup_id == SemIR::ErrorInst::InstId ||
+        lookup_id == SemIR::InstId::None) {
+      return lookup_id;
+    }
+
+    auto return_type_id = context.functions()
+                              .Get(context.insts()
+                                       .GetAs<SemIR::FunctionDecl>(lookup_id)
+                                       .function_id)
+                              .return_type_inst_id;
+    if (!return_type_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    if (!context.insts().Is<SemIR::BoolType>(return_type_id)) {
+      context.TODO(loc_id, "Comparison operations must return `bool`");
+      return SemIR::InstId::None;
+    }
+
+    operators.push_back(lookup_id);
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, operators);
+}
+
 static auto BuildCppInequalityOperatorWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  (void)query_self_const_id;
-  (void)query_specific_interface_id;
-  context.TODO(loc_id, "implement operator<=> witness");
-  return SemIR::InstId::None;
+  return LookupCppComparisonOperators(
+      context, loc_id, CoreIdentifier::OrderedWith,
+      {CoreIdentifier::Less, CoreIdentifier::LessOrEquivalent,
+       CoreIdentifier::Greater, CoreIdentifier::GreaterOrEquivalent},
+      query_self_const_id, query_specific_interface_id);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
