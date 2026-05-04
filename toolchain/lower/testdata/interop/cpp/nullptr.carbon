@@ -59,7 +59,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_18.2.temp = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc14_22.1.temp = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr poison), !dbg !14
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4"(ptr poison), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_18.2.temp), !dbg !14
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, ptr %.loc12_18.2.temp, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc12_18.4 = load ptr, ptr %.loc12_18.2.temp, align 8, !dbg !14
@@ -69,7 +69,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc14_22.1.temp, align 8, !dbg !15
 // CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr %.loc14_22.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %.loc14_22.1.temp), !dbg !15
-// CHECK:STDOUT:   call void @"_COp.dc33c1983710215f:core.Destroy.Core"(ptr %.loc12_18.2.temp), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.e34c165b4a1e692a:core.Destroy.Core"(ptr %.loc12_18.2.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.dc33c1983710215f:core.Destroy.Core"(ptr %self) #0 !dbg !33 {
+// CHECK:STDOUT: define weak_odr void @"_COp.e34c165b4a1e692a:core.Destroy.Core"(ptr %self) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -132,7 +132,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !48
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %a.var), !dbg !49
 // CHECK:STDOUT:   %.loc28_10 = load ptr, ptr %a.var, align 8, !dbg !50
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc28_10), !dbg !51
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4"(ptr %.loc28_10), !dbg !51
 // CHECK:STDOUT:   call void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %a.var), !dbg !48
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !51
 // CHECK:STDOUT: }
@@ -155,7 +155,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc32_28.1.temp), !dbg !55
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %.loc32_28.1.temp), !dbg !55
 // CHECK:STDOUT:   %.loc32_28.4 = load ptr, ptr %.loc32_28.1.temp, align 8, !dbg !55
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %.loc32_28.4), !dbg !56
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4"(ptr %.loc32_28.4), !dbg !56
 // CHECK:STDOUT:   call void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %.loc32_28.1.temp), !dbg !55
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !56
 // CHECK:STDOUT: }
@@ -163,13 +163,13 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvertNullptrConstant.Main() #0 !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr poison), !dbg !58
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4"(ptr poison), !dbg !58
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4"(ptr %self) #0 !dbg !59 {
-// CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.95809cda2a4fffc7(), !dbg !65
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4"(ptr %self) #0 !dbg !59 {
+// CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.06b91a9f98f18410(), !dbg !65
 // CHECK:STDOUT:   ret ptr %1, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,7 +179,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare ptr @_CMake.NullptrT.CppCompat.Core()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.95809cda2a4fffc7() #0 !dbg !67 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.06b91a9f98f18410() #0 !dbg !67 {
 // CHECK:STDOUT:   ret ptr null, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,7 +188,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare ptr @_Z13ReturnNullptrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4", { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -233,7 +233,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !25)
 // CHECK:STDOUT: !32 = !DILocation(line: 12, column: 15, scope: !29)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.dc33c1983710215f:core.Destroy.Core", scope: null, file: !6, line: 12, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e34c165b4a1e692a:core.Destroy.Core", scope: null, file: !6, line: 12, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !25)
 // CHECK:STDOUT: !36 = !DILocation(line: 12, column: 15, scope: !33)
@@ -259,7 +259,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !56 = !DILocation(line: 32, column: 3, scope: !54)
 // CHECK:STDOUT: !57 = distinct !DISubprogram(name: "ConvertNullptrConstant", linkageName: "_CConvertNullptrConstant.Main", scope: null, file: !6, line: 35, type: !38, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !58 = !DILocation(line: 36, column: 3, scope: !57)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.NullptrT.CppCompat.Core:ImplicitAs.83dbfcd16e56a769.Core.b88d1103f417c6d4", scope: null, file: !60, line: 51, type: !61, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !63)
+// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.NullptrT.CppCompat.Core:ImplicitAs.a5972e826b98ae3c.Core.b88d1103f417c6d4", scope: null, file: !60, line: 51, type: !61, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !63)
 // CHECK:STDOUT: !60 = !DIFile(filename: "{{.*}}/prelude/types/cpp/nullptr.carbon", directory: "")
 // CHECK:STDOUT: !61 = !DISubroutineType(types: !62)
 // CHECK:STDOUT: !62 = !{!25, !25}
@@ -267,6 +267,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !59, type: !25)
 // CHECK:STDOUT: !65 = !DILocation(line: 52, column: 14, scope: !59)
 // CHECK:STDOUT: !66 = !DILocation(line: 52, column: 7, scope: !59)
-// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.95809cda2a4fffc7", scope: null, file: !68, line: 27, type: !38, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.06b91a9f98f18410", scope: null, file: !68, line: 27, type: !38, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !68 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !69 = !DILocation(line: 28, column: 5, scope: !67)

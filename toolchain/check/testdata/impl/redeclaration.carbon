@@ -195,3 +195,35 @@ fn F() {
   // TODO: found non-final `impl` with the same type structure as another non-final `impl`.
   impl G() as Z {}
 }
+
+// --- redecl_of_imported_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+impl C as Z {}
+
+// --- fail_redecl_of_imported_impl.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_redecl_of_imported_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: impl C as Z {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as Z {}
+
+// --- decl_of_imported_impl_in_new_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+impl C as Z {}
+
+// --- todo_fail_decl_of_imported_impl_in_new_scope.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+class D {
+  // TODO: This is not treated as a redeclaration since it is in a different
+  // scope. But it should be rejected by the orphan rule v2.
+  impl C as Z {}
+}

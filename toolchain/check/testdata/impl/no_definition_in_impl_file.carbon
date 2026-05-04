@@ -162,12 +162,12 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
-// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.A.impl.276de1.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.A.impl.276de1.1 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.A.impl.276de1.3 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.A.impl.276de1.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
@@ -182,11 +182,11 @@ impl () as D;
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.1: imports.%Main.import_ref.e5c as imports.%Main.import_ref.e6f [from "fail_decl_in_api_definition_in_impl.carbon"];
+// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.684: imports.%Main.import_ref.e5c as imports.%Main.import_ref.e6f [from "fail_decl_in_api_definition_in_impl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.2: %.loc8_7.2 as %A.ref;
+// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.1: %.loc8_7.2 as %A.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.3: %.loc14_7.2 as %A.ref {
+// CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.2: %.loc14_7.2 as %A.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -342,7 +342,7 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_40.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_40.2 = import <none>
-// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.C.impl.2d264c.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.C.impl.2d2 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C.type]
@@ -357,9 +357,9 @@ impl () as D;
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.2d264c.1: imports.%Main.import_ref.e5c as imports.%Main.import_ref.961 [from "fail_decl_in_api_decl_in_impl.carbon"];
+// CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.645: imports.%Main.import_ref.e5c as imports.%Main.import_ref.961 [from "fail_decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.2d264c.2: %.loc8_7.2 as %C.ref;
+// CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.2d2: %.loc8_7.2 as %C.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

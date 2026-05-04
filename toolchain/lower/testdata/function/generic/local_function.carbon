@@ -29,19 +29,19 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 0), !dbg !8
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.5662bbc72901b5f6(i32 0), !dbg !8
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %y) #0 !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.5662bbc72901b5f6(i32 %y) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call i32 @"_CG:enclosed.64ccbb8e5d9a0b8e"(i32 %y), !dbg !15
+// CHECK:STDOUT:   %G.call = call i32 @"_CG:enclosed.5662bbc72901b5f6"(i32 %y), !dbg !15
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CG:enclosed.64ccbb8e5d9a0b8e"(i32 %x) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CG:enclosed.5662bbc72901b5f6"(i32 %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !20
 // CHECK:STDOUT: }
@@ -61,14 +61,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 23, column: 10, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 23, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.64ccbb8e5d9a0b8e", scope: null, file: !3, line: 17, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !13)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5662bbc72901b5f6", scope: null, file: !3, line: 17, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !13)
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{!7, !7}
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !10, type: !7)
 // CHECK:STDOUT: !15 = !DILocation(line: 19, column: 10, scope: !10)
 // CHECK:STDOUT: !16 = !DILocation(line: 19, column: 3, scope: !10)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG:enclosed.64ccbb8e5d9a0b8e", scope: null, file: !3, line: 18, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !18)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG:enclosed.5662bbc72901b5f6", scope: null, file: !3, line: 18, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !18)
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 18, column: 21, scope: !17)

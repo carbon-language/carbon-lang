@@ -83,8 +83,8 @@ auto CheckAssociatedFunctionImplementation(
 }
 
 // Returns true if impl redeclaration parameters and scopes match.
-static auto ImplRedeclParamsMatch(Context& context, const SemIR::Impl& new_impl,
-                                  const SemIR::Impl& prev_impl) -> bool {
+static auto ImplRedeclMatches(Context& context, const SemIR::Impl& new_impl,
+                              const SemIR::Impl& prev_impl) -> bool {
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
@@ -95,14 +95,47 @@ static auto ImplRedeclParamsMatch(Context& context, const SemIR::Impl& new_impl,
     return false;
   }
 
+  // If the scopes are different, it is not treated as a redeclaration.
+  auto new_scope_inst =
+      context.insts().Get(context.constant_values().GetConstantInstId(
+          new_impl.parent_scope_inst_id));
+  auto prev_scope_inst =
+      context.insts().Get(context.constant_values().GetConstantInstId(
+          prev_impl.parent_scope_inst_id));
+  if (new_scope_inst.kind() != prev_scope_inst.kind()) {
+    return false;
+  }
+  if (new_scope_inst.Is<SemIR::ClassType>()) {
+    auto new_class = new_scope_inst.As<SemIR::ClassType>();
+    auto prev_class = prev_scope_inst.As<SemIR::ClassType>();
+    if (new_class.class_id != prev_class.class_id) {
+      return false;
+    }
+  } else if (new_scope_inst.Is<SemIR::Namespace>()) {
+    auto new_namespace = new_scope_inst.As<SemIR::Namespace>();
+    auto prev_namespace = prev_scope_inst.As<SemIR::Namespace>();
+    if (new_namespace.name_scope_id != prev_namespace.name_scope_id) {
+      return false;
+    }
+  } else if (new_scope_inst.Is<SemIR::StructValue>()) {
+    // A functions's constant value is a StructValue.
+    auto new_struct = new_scope_inst.As<SemIR::StructValue>();
+    auto prev_struct = prev_scope_inst.As<SemIR::StructValue>();
+    if (new_struct.type_id != prev_struct.type_id) {
+      return false;
+    }
+  } else {
+    CARBON_FATAL("unexpected scope {0} for impl", new_scope_inst);
+  }
+
   return true;
 }
 
-// Following #4672, disallowing defining non-extern declarations in another
-// file.
-static auto VerifyImplRedeclNotImported(Context& context,
-                                        const SemIR::Impl& new_impl,
-                                        const SemIR::Impl& prev_impl) -> bool {
+static auto VerifyImplRedeclIsValid(Context& context,
+                                    const SemIR::Impl& new_impl,
+                                    const SemIR::Impl& prev_impl) -> bool {
+  // Following #4672, disallowing defining non-extern declarations in another
+  // file.
   if (auto import_ref =
           context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.self_id)) {
     // TODO: Handle extern.
@@ -113,13 +146,6 @@ static auto VerifyImplRedeclNotImported(Context& context,
     return false;
   }
 
-  return true;
-}
-
-static auto VerifyImplRedeclNotAlreadyDefined(Context& context,
-                                              const SemIR::Impl& new_impl,
-                                              const SemIR::Impl& prev_impl)
-    -> bool {
   if (prev_impl.has_definition_started()) {
     // Impls aren't merged in order to avoid generic region lookup into a
     // mismatching table.
@@ -258,26 +284,10 @@ auto FindImplId(Context& context, const SemIR::Impl& query_impl)
   for (auto prev_impl_id : lookup_bucket_ref) {
     auto& prev_impl = context.impls().Get(prev_impl_id);
 
-    if (ImplRedeclParamsMatch(context, query_impl, prev_impl)) {
-      if (!VerifyImplRedeclNotImported(context, query_impl, prev_impl)) {
-        return NewImpl{.lookup_bucket = lookup_bucket_ref,
-                       .find_had_error = true};
-      }
-      if (query_impl.enclosing_scope_id != prev_impl.enclosing_scope_id) {
-        // Different scope, not treated as a redeclaration.
-        //
-        // We do this after diagnosing a redecl of an import, since imported
-        // impls have no enclosing_scope_id, so this check is not valid against
-        // them, and we don't want to treat it as a new decl if they otherwise
-        // match.
-        //
-        // But we do this before checking for other errors, because if they are
-        // in different scopes, then they are not redecls, so we shouldn't
-        // diagnose them in that way. Given the params match, they will overlap,
-        // and generate an error later.
-        continue;
-      }
-      if (!VerifyImplRedeclNotAlreadyDefined(context, query_impl, prev_impl)) {
+    if (ImplRedeclMatches(context, query_impl, prev_impl)) {
+      if (!VerifyImplRedeclIsValid(context, query_impl, prev_impl)) {
+        // Found an invalid redecl, which has been diagnosed as such. Treat it
+        // as a new decl, with an error.
         return NewImpl{.lookup_bucket = lookup_bucket_ref,
                        .find_had_error = true};
       }

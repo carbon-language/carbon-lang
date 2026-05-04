@@ -20,7 +20,7 @@ struct ImplFields {
 
   // The name scope containing the impl (as opposed to the scope _of_ the impl).
   // Note that this is None for an imported impl.
-  NameScopeId enclosing_scope_id;
+  InstId parent_scope_inst_id;
 
   // The following members always have values and do not change.
 
