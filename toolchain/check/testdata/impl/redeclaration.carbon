@@ -219,11 +219,21 @@ interface Z {}
 class C {}
 impl C as Z {}
 
-// --- todo_fail_decl_of_imported_impl_in_new_scope.impl.carbon
+// --- fail_decl_of_imported_impl_in_new_scope.impl.carbon
 impl library "[[@TEST_NAME]]";
 
 class D {
-  // TODO: This is not treated as a redeclaration since it is in a different
-  // scope. But it should be rejected by the orphan rule v2.
+  // This is not treated as a redeclaration since it is in a different scope.
+  // But that means it overlaps fully with the impl from the api file, which is
+  // a separate error.
+
+  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE+8]]:3: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+  // CHECK:STDERR:   impl C as Z {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE-10]]:1: in import [InImport]
+  // CHECK:STDERR: decl_of_imported_impl_in_new_scope.carbon:5:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+  // CHECK:STDERR: impl C as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   impl C as Z {}
 }
