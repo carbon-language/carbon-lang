@@ -48,7 +48,7 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   context.inst_block_stack().Push();
 
   // Push the bracketing node.
-  context.node_stack().Push(node_id);
+  context.node_stack().Push(node_id, context.scope_stack().PeekInstId());
 
   // Optional modifiers follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Impl>();
@@ -143,10 +143,11 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
-// associated name that describes them.
+// associated name that describes them. The ImplIntroducer node also records the
+// parent scope, which is returned.
 static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
-    -> NameComponent {
+    -> std::pair<NameComponent, SemIR::InstId> {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
@@ -164,8 +165,8 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
                  SemIR::InstBlockId::Empty);
   }
 
-  Parse::NodeId first_param_node_id =
-      context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
+  auto [first_param_node_id, parent_scope_inst_id] =
+      context.node_stack().PopWithNodeId<Parse::NodeKind::ImplIntroducer>();
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
@@ -176,19 +177,20 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
-  return {.name_loc_id = Parse::NodeId::None,
-          .name_id = SemIR::NameId::None,
-          .first_param_node_id = first_param_node_id,
-          .last_param_node_id = *last_param_iter,
-          .implicit_params_loc_id = implicit_params_loc_id,
-          .implicit_param_patterns_id =
-              implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
-          .params_loc_id = Parse::NodeId::None,
-          .param_patterns_id = SemIR::InstBlockId::None,
-          .call_param_patterns_id = SemIR::InstBlockId::None,
-          .call_params_id = SemIR::InstBlockId::None,
-          .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
-          .pattern_block_id = pattern_block_id};
+  return {{.name_loc_id = Parse::NodeId::None,
+           .name_id = SemIR::NameId::None,
+           .first_param_node_id = first_param_node_id,
+           .last_param_node_id = *last_param_iter,
+           .implicit_params_loc_id = implicit_params_loc_id,
+           .implicit_param_patterns_id =
+               implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
+           .params_loc_id = Parse::NodeId::None,
+           .param_patterns_id = SemIR::InstBlockId::None,
+           .call_param_patterns_id = SemIR::InstBlockId::None,
+           .call_params_id = SemIR::InstBlockId::None,
+           .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
+           .pattern_block_id = pattern_block_id},
+          parent_scope_inst_id};
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -200,7 +202,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   auto [self_type_node, self_type_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
   // Pop the `impl` introducer and any `forall` parameters as a "name".
-  auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
+  auto [name, parent_scope_inst_id] =
+      PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
@@ -238,7 +241,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     SemIR::Impl impl = {name_context.MakeEntityWithParamsBase(
                             name, impl_decl_id,
                             /*is_extern=*/false, SemIR::LibraryNameId::None),
-                        {.self_id = self_type_inst_id,
+                        {.parent_scope_inst_id = parent_scope_inst_id,
+                         .self_id = self_type_inst_id,
                          .constraint_id = constraint_type_inst_id,
                          .interface = specific_interface,
                          .is_final = is_final}};

@@ -63,6 +63,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %E.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -70,8 +72,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
-// CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.584: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %.c0f: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.584, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %E.type, %type.as.BitAndWith.impl.Op [concrete]
@@ -82,8 +84,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.8d3: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.8d3), @type.as.BitAndWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.79e: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.79e), @type.as.BitAndWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,10 +93,10 @@ fn G(T:! Z) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.3 [concrete = constants.%E.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %E.ref.loc8_10: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
 // CHECK:STDOUT:       %E.ref.loc8_14: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
-// CHECK:STDOUT:       %impl.elem0: %.d15 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:       %impl.elem0: %.c0f = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %E.ref.loc8_10, %impl.elem0 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:       %type.as.BitAndWith.impl.Op.call: init type = call %bound_method(%E.ref.loc8_10, %E.ref.loc8_14) [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.loc8_12.2: type = value_of_initializer %type.as.BitAndWith.impl.Op.call [concrete = constants.%E.type]
@@ -129,6 +131,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E1.type: type = facet_type <@E1> [concrete]
 // CHECK:STDOUT:   %E2.type: type = facet_type <@E2> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -146,7 +150,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9: type = splice_block %E2.ref [concrete = constants.%E2.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %E2.ref: type = name_ref E2, file.%E2.decl [concrete = constants.%E2.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_7.2: %E2.type = symbolic_binding T, 0 [symbolic = %T.loc9_7.1 (constants.%T.f45530.2)]

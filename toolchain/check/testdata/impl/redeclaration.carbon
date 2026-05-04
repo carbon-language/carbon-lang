@@ -2,9 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
-// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,97 +10,220 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/redeclaration.carbon
 
-interface I {}
+// --- redeclaration_no_class.carbon
+library "[[@TEST_NAME]]";
 
-impl i32 as I;
+interface Z {}
 
-class X {
-  impl i32 as I;
+impl {} as Z;
+impl {} as Z {}
+
+// --- redeclaration_in_class.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+// `impl as Z` is normalized to `impl Self as Z` so they are treated as
+// syntactically the same.
+class C {
+  impl as Z;
+  impl as Z;
+  impl Self as Z {}
 }
 
-impl i32 as I {}
+class D {
+  impl Self as Z;
+  impl Self as Z;
+  impl as Z {}
+}
 
-// CHECK:STDOUT: --- redeclaration.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%I.impl_witness) [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc17: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc23: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT:
-// CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl: %i32.loc17 as %I.ref.loc17 {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %I.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc20: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
+// --- fail_todo_redeclaration_reenter_class.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C;
+
+class C {
+  impl as Z;
+}
+
+// TODO: This should typecheck (see p5366).
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:         ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+8]]:9: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:         ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+4]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+impl C.(as Z) {}
+
+// --- fail_todo_redeclaration_reenter_class_explicit_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C;
+
+class C {
+  impl Self as Z;
+}
+
+// TODO: This should typecheck (see p5366).
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR:         ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+8]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR:                    ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C.(Self as Z) {}
+
+// --- fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C {
+  impl as Z;
+}
+
+// TODO: This should typecheck (see p5366).
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR:         ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+8]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR:                    ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: impl C.(Self as Z) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C.(Self as Z) {}
+
+// --- fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C {
+  impl Self as Z;
+}
+
+// TODO: This should typecheck (see p5366).
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:         ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+8]]:9: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:         ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+4]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl C.(as Z) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+impl C.(as Z) {}
+
+// --- fail_redeclaration_inside_class_is_separate_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C;
+impl C as Z;
+
+class C {
+  // CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+3]]:3: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+  // CHECK:STDERR:   impl C as Z {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  impl C as Z {}
+}
+
+// CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+4]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR: impl C as Z {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as Z {}
+
+// --- fail_redeclaration_outside_class_is_separate_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C {
+  impl C as Z {}
+}
+
+// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: impl C as Z {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE-6]]:3: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:   impl C as Z {}
+// CHECK:STDERR:   ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as Z {}
+
+// --- fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  // CHECK:STDERR: fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE+4]]:22: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+  // CHECK:STDERR:   musteval fn G() -> auto {
+  // CHECK:STDERR:                      ^~~~
+  // CHECK:STDERR:
+  musteval fn G() -> auto {
+    class C {}
+    impl C as Z {}
+    return C;
+  }
+  // TODO: This is not a redeclaration, since it's in a different scope.
+  // TODO: found non-final `impl` with the same type structure as another non-final `impl`.
+  impl G() as Z {}
+}
+
+// --- redecl_of_imported_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+impl C as Z {}
+
+// --- fail_redecl_of_imported_impl.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_redecl_of_imported_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: impl C as Z {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as Z {}
+
+// --- decl_of_imported_impl_in_new_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+impl C as Z {}
+
+// --- todo_fail_decl_of_imported_impl_in_new_scope.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+class D {
+  // TODO: This is not treated as a redeclaration since it is in a different
+  // scope. But it should be rejected by the orphan rule v2.
+  impl C as Z {}
+}

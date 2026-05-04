@@ -22,6 +22,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -2487,17 +2488,6 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), temporary, phase);
 }
 
-// Returns whether `const_id` is the same constant facet value as
-// `facet_value_inst_id`.
-//
-// Compares with the canonical facet value of `const_id`, dropping any `as type`
-// conversions.
-static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
-                             SemIR::InstId facet_value_inst_id) -> bool {
-  auto canon_const_id = GetCanonicalFacetOrTypeValue(context, const_id);
-  return canon_const_id == context.constant_values().Get(facet_value_inst_id);
-}
-
 static auto AddRequirementBase(Context& context,
                                SemIR::RequirementBaseFacetType base,
                                SemIR::FacetTypeInfo* info, Phase* phase)
@@ -2569,7 +2559,6 @@ static auto AddRequirementRewrite(Context& context,
 
 static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
                                 SemIR::RequirementImpls impls,
-                                SemIR::InstId period_self_id,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
     -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
@@ -2588,8 +2577,7 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
   auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
   const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
 
-  if (IsSameFacetValue(context, context.constant_values().Get(lhs_id),
-                       period_self_id)) {
+  if (IsPeriodSelf(context, lhs_id)) {
     // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
     // type constrains for `.Self` gets forwarded to the output facet type to
     // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
@@ -2629,96 +2617,46 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
     // Impls constraints are written as `T impls X` where `T` is a facet and `X`
     // is a facet type. The `T` can be `.Self`.
     //
-    // What's important here is that since `X` is a facet type, it can contain a
-    // `where` expression, and the value of `.Self` changes across a `where`
-    // expression. This can create ambiguous `.Self` references where on the RHS
-    // they refer to a different facet (`T`) than on the LHS, which is diagnosed
-    // as an error.
+    // A value for `.Self` is not known here, so we do not replace them
+    // generally. However in `T impls X where ...` the value of `.Self` on the
+    // RHS of the `where` refers to the `T`. Generally this would make the
+    // `.Self` be ambiguous, but any explicit use of an ambiguous `.Self` is
+    // diagnosed before we get here. So any explicit `.Self` left over are known
+    // to be non-ambiguous and refer to the top level value for `.Self`.
     //
-    // TODO: For now we do this diagnosis here, but we should diagnose this
-    // during name lookup of `.Self` instead, in order to properly allow only
-    // implicit `.Self` references when it would be ambiguous. Then use
-    // `should_replace_implicit_only` in all cases.
-    //
-    // Implicit `.Self` references can't be avoided when referencing members of
-    // the facet's type such as with `.Member`. As such, we replace implicit
-    // `.Self` references on the RHS of a nested `where` with the inner-most
-    // facet that it could possibly refer to, the `T as X` from the `impls`
-    // constraint, which eliminates any ambiguity in the resulting facet type.
+    // However, implicit references to `.Self`, via designators, are bound to
+    // the innermost possible value, which makes them bound to the `T` on the
+    // RHS of the nested `where`. We need to replace those implicit `.Self`
+    // references here so that we are left with a facet type where all `.Self`
+    // references are to the same top-level value for `.Self` and can all be
+    // replaced together later.
 
-    class SubstPeriodSelfDiagnoseExplicitCallbacks
-        : public SubstPeriodSelfCallbacks {
-     public:
-      explicit SubstPeriodSelfDiagnoseExplicitCallbacks(
-          Context* context, SemIR::LocId loc_id,
-          SemIR::ConstantId period_self_replacement_id, Phase* phase)
-          : SubstPeriodSelfCallbacks(context, loc_id,
-                                     period_self_replacement_id),
-            phase_(phase) {}
-
-      auto ShouldReplace(bool implicit) -> bool override {
-        if (!implicit && *phase_ != Phase::UnknownDueToError) {
-          CARBON_DIAGNOSTIC(
-              AmbiguousPeriodSelf, Error,
-              "`.Self` is ambiguous after nested `where` in `<type> "
-              "impls ...` clause.");
-          context().emitter().Emit(loc_id(), AmbiguousPeriodSelf);
-          *phase_ = Phase::UnknownDueToError;
-        }
-        return implicit;
-      }
-
-      Phase* phase_;
-    };
-    SubstPeriodSelfDiagnoseExplicitCallbacks
-        callbacks_should_replace_explicit_is_error(
-            &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
-            phase);
-
-    class SubstPeriodSelfImplicitOnlyCallbacks
-        : public SubstPeriodSelfCallbacks {
-     public:
-      explicit SubstPeriodSelfImplicitOnlyCallbacks(
-          Context* context, SemIR::LocId loc_id,
-          SemIR::ConstantId period_self_replacement_id)
-          : SubstPeriodSelfCallbacks(context, loc_id,
-                                     period_self_replacement_id) {}
-
-      // TODO: Replace this callback with a SubstPeriodSelf parameter saying
-      // what to replace (as a bool or an enum). Then this subclass can go away.
-      auto ShouldReplace(bool implicit) -> bool override { return implicit; }
-    };
-    SubstPeriodSelfImplicitOnlyCallbacks callbacks_should_replace_implicit_only(
-        &context, loc_id, context.constant_values().Get(lhs_facet_or_type));
+    SubstPeriodSelfCallbacks callbacks(
+        &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
+        SubstPeriodSelfCallbacks::Behaviour::ImplicitOnly);
 
     auto self_impls_interface = [&](SemIR::SpecificInterface si) {
-      return SubstPeriodSelf(context,
-                             callbacks_should_replace_explicit_is_error, si);
+      return SubstPeriodSelf(context, callbacks, si);
     };
     auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-      return SubstPeriodSelf(context,
-                             callbacks_should_replace_explicit_is_error, sc);
+      return SubstPeriodSelf(context, callbacks, sc);
     };
     auto type_impls_interface =
         [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
         -> SemIR::FacetTypeInfo::TypeImplsInterface {
-      auto self =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
-                          context.constant_values().Get(impls.self_type));
+      auto self = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(impls.self_type));
       auto interface =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
-                          impls.specific_interface);
+          SubstPeriodSelf(context, callbacks, impls.specific_interface);
       return {context.constant_values().GetInstId(self), interface};
     };
     auto type_impls_constraint =
         [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
         -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
-      auto self =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
-                          context.constant_values().Get(impls.self_type));
+      auto self = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(impls.self_type));
       auto constraint =
-          SubstPeriodSelf(context, callbacks_should_replace_explicit_is_error,
-                          impls.specific_named_constraint);
+          SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
       return {context.constant_values().GetInstId(self), constraint};
     };
 
@@ -2735,22 +2673,13 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
                        llvm::map_range(rhs.type_impls_named_constraints,
                                        type_impls_constraint));
 
-    // TODO: We have to pass explicit `.Self` along unchanged in rewrites. A
-    // rewrite of the form `M(.Self) where .M0 = {}` is an access into `.Self as
-    // M(.Self)`. The first `.Self` is implicit and should be replaced. The
-    // second is explicit but refers to the outer-most facet and should not be
-    // replaced. In the future when we diagnose ambiguous `.Self` in name
-    // lookup, we will replace all implicit `.Self` and leave all explicit
-    // `.Self` alone since they won't be ambiguous.
     auto rewrite_constraint =
         [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
         -> SemIR::FacetTypeInfo::RewriteConstraint {
-      auto lhs_id =
-          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
-                          context.constant_values().Get(rewrite.lhs_id));
-      auto rhs_id =
-          SubstPeriodSelf(context, callbacks_should_replace_implicit_only,
-                          context.constant_values().Get(rewrite.rhs_id));
+      auto lhs_id = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(rewrite.lhs_id));
+      auto rhs_id = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(rewrite.rhs_id));
       return {context.constant_values().GetInstId(lhs_id),
               context.constant_values().GetInstId(rhs_id)};
     };
@@ -2777,10 +2706,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
-  if (typed_inst.period_self_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
   // Note that these requirement instructions don't have a constant value. That
   // means we have to look for errors inside them, we can't just look to see if
   // their constant value is an error.
@@ -2803,7 +2728,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
         AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
-                            impls, typed_inst.period_self_id, &info, &phase);
+                            impls, &info, &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent _): {

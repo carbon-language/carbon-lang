@@ -72,19 +72,19 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.50c: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.84b: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.fcf: %T.as_type.as.DefaultOrUnformed.impl.Op.type.84b = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.85d: %T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %TwoTypes.Op.type: type = fn_type @TwoTypes.Op [concrete]
 // CHECK:STDOUT:   %TwoTypes.Op: %TwoTypes.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.2e3: <witness> = custom_witness (%TwoTypes.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.c59: %Default.type = facet_value %TwoTypes, (%custom_witness.2e3) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.b6a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.16f, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.c59) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTypes, (%DefaultOrUnformed.impl_witness.b6a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8ca: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.fc3, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.c59) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTypes, (%DefaultOrUnformed.impl_witness.8ca) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.627: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.84b) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.fcf)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.16f = impl_witness_table (%Core.import_ref.627), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.653: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.85d)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.fc3 = impl_witness_table (%Core.import_ref.653), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -98,7 +98,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.b6a) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.8ca) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc7_34.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_34.1 [concrete = constants.%TwoTypes]
 // CHECK:STDOUT:   %.loc7_34.2: type = converted %.loc7_34.1, %as_type [concrete = constants.%TwoTypes]
@@ -117,19 +117,19 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.50c: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.84b: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.fcf: %T.as_type.as.DefaultOrUnformed.impl.Op.type.84b = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.50c) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.85d: %T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %TwoTypes.Op.type: type = fn_type @TwoTypes.Op [concrete]
 // CHECK:STDOUT:   %TwoTypes.Op: %TwoTypes.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.2e3: <witness> = custom_witness (%TwoTypes.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.c59: %Default.type = facet_value %TwoTypes, (%custom_witness.2e3) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.b6a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.16f, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.c59) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTypes, (%DefaultOrUnformed.impl_witness.b6a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8ca: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.fc3, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.c59) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTypes, (%DefaultOrUnformed.impl_witness.8ca) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.627: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.84b) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.fcf)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.16f = impl_witness_table (%Core.import_ref.627), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.653: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.2c3) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.85d)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.fc3 = impl_witness_table (%Core.import_ref.653), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -143,7 +143,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.b6a) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTypes, (constants.%DefaultOrUnformed.impl_witness.8ca) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc7_32.1: %DefaultOrUnformed.type = converted constants.%TwoTypes, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_32.1 [concrete = constants.%TwoTypes]
 // CHECK:STDOUT:   %.loc7_32.2: type = converted %.loc7_32.1, %as_type [concrete = constants.%TwoTypes]

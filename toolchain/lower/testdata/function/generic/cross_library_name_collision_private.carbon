@@ -77,30 +77,30 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.ce17bf05555dc18d(i32 1, i32 2), !dbg !7
-// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.ce17bf05555dc18d(i32 1, i32 2), !dbg !8
+// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.2382f01eaa053e7b(i32 1, i32 2), !dbg !7
+// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.2382f01eaa053e7b(i32 1, i32 2), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !10 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %b), !dbg !18
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.2382f01eaa053e7b(i32 %a, i32 %b) #0 !dbg !10 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.2382f01eaa053e7b(i32 %a, i32 %b), !dbg !18
 // CHECK:STDOUT:   ret i32 %1, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.ce17bf05555dc18d(i32 %a, i32 %b) #0 !dbg !20 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %b), !dbg !25
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.2382f01eaa053e7b(i32 %a, i32 %b) #0 !dbg !20 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.2382f01eaa053e7b(i32 %a, i32 %b), !dbg !25
 // CHECK:STDOUT:   ret i32 %1, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.ce17bf05555dc18d(i32 %a, i32 %_) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2382f01eaa053e7b(i32 %a, i32 %_) #0 !dbg !27 {
 // CHECK:STDOUT:   ret i32 %a, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CF.Main.ce17bf05555dc18d, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.2382f01eaa053e7b, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 16, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 11, column: 16, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.ce17bf05555dc18d", scope: null, file: !11, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.2382f01eaa053e7b", scope: null, file: !11, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !11 = !DIFile(filename: "lib1.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{!14, !14, !14}
@@ -127,14 +127,14 @@ fn Run() {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !10, type: !14)
 // CHECK:STDOUT: !18 = !DILocation(line: 9, column: 10, scope: !10)
 // CHECK:STDOUT: !19 = !DILocation(line: 9, column: 3, scope: !10)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.ce17bf05555dc18d", scope: null, file: !21, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.2382f01eaa053e7b", scope: null, file: !21, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !21 = !DIFile(filename: "lib2.carbon", directory: "")
 // CHECK:STDOUT: !22 = !{!23, !24}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !20, type: !14)
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !20, type: !14)
 // CHECK:STDOUT: !25 = !DILocation(line: 12, column: 10, scope: !20)
 // CHECK:STDOUT: !26 = !DILocation(line: 12, column: 3, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.ce17bf05555dc18d", scope: null, file: !11, line: 4, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2382f01eaa053e7b", scope: null, file: !11, line: 4, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
 // CHECK:STDOUT: !28 = !{!29, !30}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !14)
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !27, type: !14)

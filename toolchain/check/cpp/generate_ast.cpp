@@ -641,6 +641,8 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
 
   ExportAllFieldsToCpp(*context_, class_info);
 
+  class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
+
   // TODO: Import any special member functions that affect class properties.
   class_decl->completeDefinition();
 }

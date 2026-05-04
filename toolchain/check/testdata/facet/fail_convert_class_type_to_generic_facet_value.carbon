@@ -120,12 +120,12 @@ fn G() {
 // CHECK:STDOUT:     %U.patt: @CallGenericMethod.%pattern_type (%pattern_type.c49) = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_26.1: type = splice_block %.loc27_26.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc27_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc27_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc27_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc27_23.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc27_52: type = splice_block %Generic.type.loc27_52.2 [symbolic = %Generic.type.loc27_52.1 (constants.%Generic.type.03dff7.2)] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc27_40: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.835 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc27_23.2 [symbolic = %T.loc27_23.1 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc27_52.2: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc27_52.1 (constants.%Generic.type.03dff7.2)]

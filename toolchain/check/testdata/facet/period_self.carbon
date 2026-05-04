@@ -356,24 +356,11 @@ fn E(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Y2)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                  ^R(T as Z(T)) as Y(T as Z(T))
 
-// --- fail_todo_period_self_impls_ambiguous_period_self_access_argument.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y(T:! type) {
-  let Y1:! type;
-}
-interface X(T:! type) {}
-
-class R(T:! type);
-
-// CHECK:STDERR: fail_todo_period_self_impls_ambiguous_period_self_access_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
-// CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
+// Member designators have an implicit `.Self` which is always allowed. It binds
+// to the innermost facet value rather than being ambiguous.
+fn F(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
-//                                                                          ^ERROR: R(T as Z(T)) as Y(T as Z(T))
+//                                                                          ^Implicit: R(T as Z(T)) as Y(T as Z(T))
 
 // --- fail_type_impls_ambiguous_period_self_argument.carbon
 library "[[@TEST_NAME]]";
@@ -387,9 +374,9 @@ class P;
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:71: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                                       ^~~~~~~~
 // CHECK:STDERR:
 fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)             ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -404,9 +391,9 @@ interface X {}
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:63: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                               ^~~~~~~~
 // CHECK:STDERR:
 fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)     ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -420,15 +407,15 @@ interface X(T:! type) {}
 
 class R(T:! type);
 
-// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:32: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:75: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                                           ^~~~~~~~
 // CHECK:STDERR:
 fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                          ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 
-// --- todo_fail_rewrite_rhs_ambiguous_period_self.carbon
+// --- fail_rewrite_rhs_ambiguous_period_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
@@ -438,6 +425,10 @@ interface Y(T:! type) {
 
 class R(T:! type);
 
+// CHECK:STDERR: fail_rewrite_rhs_ambiguous_period_self.carbon:[[@LINE+4]]:69: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
+// CHECK:STDERR:                                                                     ^~~~~
+// CHECK:STDERR:
 fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
 //                                                                  ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -516,7 +507,7 @@ fn F() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67d)]
@@ -542,14 +533,14 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0.loc8_39: type = impl_witness_access constants.%I.lookup_impl_witness.baf, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_39.6: Core.Form = init_form %impl.elem0.loc8_39 [concrete = constants.%.262]
 // CHECK:STDOUT:     %.loc8_19.1: type = splice_block %.loc8_19.2 [symbolic_self = constants.%I_where.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.loc8_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %.Self.ref.loc8_12: %type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:       %.Self.ref.loc8_12: %type = name_ref .Self, %.Self.loc8_7 [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.Self.as_type.loc8_17: type = facet_access_type %.Self.ref.loc8_12 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %.loc8_17: type = converted %.Self.ref.loc8_12, %.Self.as_type.loc8_17 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %I.type: type = facet_type <@I, @I(constants.%.Self.as_type.246)> [symbolic_self = constants.%I.type.6e7]
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref.loc8_25: %I.type.6e7 = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.loc8_19: %I.type.6e7 = symbolic_binding .Self [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.ref.loc8_25: %I.type.6e7 = name_ref .Self, %.Self.loc8_19 [symbolic_self = constants.%.Self.534]
 // CHECK:STDOUT:       %.Self.as_type.loc8_25: type = facet_access_type %.Self.ref.loc8_25 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc8_25.1: type = converted %.Self.ref.loc8_25, %.Self.as_type.loc8_25 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc8_25.2: %I.assoc_type.24b = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.as_type.246, constants.%.Self.534) [symbolic_self = constants.%assoc0.0ba]
@@ -557,8 +548,8 @@ fn F() {
 // CHECK:STDOUT:       %impl.elem0.loc8_25: type = impl_witness_access constants.%I.lookup_impl_witness.42f, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc8_32.2: type = converted %.loc8_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc8_19.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type.6e7
+// CHECK:STDOUT:       %.loc8_19.2: type = where_expr [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type %I.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc8_25, %.loc8_32.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -582,15 +573,15 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem0.loc12_47: type = impl_witness_access constants.%I.lookup_impl_witness.baf, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc12_47.4: Core.Form = init_form %impl.elem0.loc12_47 [concrete = constants.%.262]
 // CHECK:STDOUT:     %.loc12_27.1: type = splice_block %.loc12_27.2 [symbolic_self = constants.%I_where.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.loc12_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %.Self.ref.loc12_12: %type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:       %.Self.ref.loc12_12: %type = name_ref .Self, %.Self.loc12_7 [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.loc12_21: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       %.Self.as_type.loc12_18: type = facet_access_type %.Self.ref.loc12_12 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %.loc12_18: type = converted %.Self.ref.loc12_12, %.Self.as_type.loc12_18 [symbolic_self = constants.%.Self.as_type.246]
 // CHECK:STDOUT:       %I.type: type = facet_type <@I, @I(constants.%.Self.as_type.246)> [symbolic_self = constants.%I.type.6e7]
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref.loc12_33: %I.type.6e7 = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.loc12_27: %I.type.6e7 = symbolic_binding .Self [symbolic_self = constants.%.Self.534]
+// CHECK:STDOUT:       %.Self.ref.loc12_33: %I.type.6e7 = name_ref .Self, %.Self.loc12_27 [symbolic_self = constants.%.Self.534]
 // CHECK:STDOUT:       %.Self.as_type.loc12_33: type = facet_access_type %.Self.ref.loc12_33 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc12_33.1: type = converted %.Self.ref.loc12_33, %.Self.as_type.loc12_33 [symbolic_self = constants.%.Self.as_type.089]
 // CHECK:STDOUT:       %.loc12_33.2: %I.assoc_type.24b = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.as_type.246, constants.%.Self.534) [symbolic_self = constants.%assoc0.0ba]
@@ -598,8 +589,8 @@ fn F() {
 // CHECK:STDOUT:       %impl.elem0.loc12_33: type = impl_witness_access constants.%I.lookup_impl_witness.42f, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc12_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc12_40.2: type = converted %.loc12_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc12_27.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type.6e7
+// CHECK:STDOUT:       %.loc12_27.2: type = where_expr [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type %I.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc12_33, %.loc12_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

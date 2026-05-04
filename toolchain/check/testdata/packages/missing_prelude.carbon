@@ -228,12 +228,12 @@ let n: type = i32;
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %.loc6_35: Core.Form = init_form %X.ref [concrete = constants.%.054]
 // CHECK:STDOUT:     %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc6_9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_12.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_29: type = splice_block %T.ref [symbolic = %T.loc6_9.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc6_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_9.2 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_26.2: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_26.1 (constants.%N)]
@@ -591,12 +591,12 @@ let n: type = i32;
 // CHECK:STDOUT:     %N.patt: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_15.1: type = splice_block %.loc6_15.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc6_12: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_32: type = splice_block %T.ref [symbolic = %T.loc6_12.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc6_29: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_12.2 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_29.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]

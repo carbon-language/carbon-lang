@@ -2580,7 +2580,8 @@ static auto ImportImplDecl(ImportContext& context,
       context, import_impl.latest_decl_id(), impl_decl);
   impl_decl.impl_id = context.local_impls().Add(
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
-       {.self_id = SemIR::TypeInstId::None,
+       {.parent_scope_inst_id = SemIR::InstId::None,
+        .self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id,
@@ -2656,8 +2657,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   // Load constants for the definition.
-  auto parent_scope_id =
-      GetLocalNameScopeId(resolver, import_impl.parent_scope_id);
   auto implicit_param_patterns = GetLocalInstBlockContents(
       resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
@@ -2665,12 +2664,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto constraint_const_id =
       GetLocalConstantId(resolver, import_impl.constraint_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
+  // Go directly to the simpler GetLocalConstantInstId to get an inst of the
+  // same type locally. This does not handle symbolic values in a way that they
+  // can be specialized but what we want for this instruction is just the
+  // constant value to determine the scope.
+  new_impl.parent_scope_inst_id =
+      GetLocalConstantInstId(resolver, import_impl.parent_scope_inst_id);
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(impl_const_id, new_impl.first_decl_id());
   }
 
-  new_impl.parent_scope_id = parent_scope_id;
   new_impl.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_impl.implicit_param_patterns_id,
       implicit_param_patterns);
