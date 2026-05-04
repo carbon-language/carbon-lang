@@ -235,7 +235,7 @@ fn F() {
   impl {} as Z {}
 }
 
-// --- todo_fail_orphan_in_block_scope.carbon
+// --- fail_todo_orphan_in_block_scope.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -244,8 +244,21 @@ fn F() {
   class C {}
   // Neither C nor Z are defined within or by this block scope.
   {
+    // TODO: Block scopes are not yet supported.
+    // CHECK:STDERR: todo_fail_orphan_in_block_scope.carbon:[[@LINE+8]]:5: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
+    // CHECK:STDERR:     impl C as Z {}
+    // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
+    // CHECK:STDERR: todo_fail_orphan_in_block_scope.carbon:[[@LINE+4]]:5: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+    // CHECK:STDERR:     impl C as Z {}
+    // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
     impl C as Z {}
   }
+// CHECK:STDERR: todo_fail_orphan_in_block_scope.carbon:[[@LINE+4]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 // --- fail_todo_orphan_in_generic_fn_scope.carbon
