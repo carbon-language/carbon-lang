@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -31,16 +32,24 @@ class PendingBlock {
     // If `block` is not null, enters the scope. If `block` is null, this object
     // has no effect.
     explicit DiscardUnusedInstsScope(PendingBlock* block)
-        : block_(block), size_(block ? block->insts_.size() : 0) {}
+        : block_(block),
+          size_(block ? block->insts_.size() : 0),
+          cleanups_size_(block ? block->cleanups_.size() : 0) {}
     ~DiscardUnusedInstsScope() {
-      if (block_ && block_->insts_.size() > size_) {
-        block_->insts_.truncate(size_);
+      if (block_) {
+        if (block_->insts_.size() > size_) {
+          block_->insts_.truncate(size_);
+        }
+        if (block_->cleanups_.size() > cleanups_size_) {
+          block_->cleanups_.truncate(cleanups_size_);
+        }
       }
     }
 
    private:
     PendingBlock* block_;
     size_t size_;
+    size_t cleanups_size_;
   };
 
   template <typename InstT, typename LocT>
@@ -54,8 +63,10 @@ class PendingBlock {
   template <typename InstT, typename LocT>
     requires(std::convertible_to<LocT, SemIR::LocId>)
   auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
-    auto inst_id = AddInstWithCleanupInNoBlock(*context_, loc_id, inst);
+    auto inst_id =
+        AddInstInNoBlock(*context_, SemIR::LocIdAndInst(loc_id, inst));
     insts_.push_back(inst_id);
+    cleanups_.push_back(inst_id);
     return inst_id;
   }
 
@@ -65,6 +76,7 @@ class PendingBlock {
       context_->inst_block_stack().AddInstId(id);
     }
     insts_.clear();
+    AddPendingCleanups();
   }
 
   // Replace the instruction at target_id with the instructions in this block.
@@ -91,6 +103,13 @@ class PendingBlock {
       // The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
       result_id = target_id;
+
+      // If this instruction needed a cleanup, the instruction that now needs a
+      // cleanup is `target_id`.
+      CARBON_CHECK(cleanups_.size() <= 1);
+      if (cleanups_.size() == 1 && cleanups_[0] == value_id) {
+        cleanups_[0] = target_id;
+      }
     } else {
       // Anything else: splice it into the IR, replacing `target_id`. This
       // includes empty blocks, which `Add` handles.
@@ -101,15 +120,23 @@ class PendingBlock {
     }
 
     ReplaceLocIdAndInstBeforeConstantUse(*context_, target_id, value);
-
-    // Prepare to stash more pending instructions.
     insts_.clear();
+
+    AddPendingCleanups();
     return result_id;
   }
 
  private:
+  auto AddPendingCleanups() -> void {
+    for (auto id : cleanups_) {
+      MaybeAddCleanupForInst(*context_, id);
+    }
+    cleanups_.clear();
+  }
+
   Context* context_;
   llvm::SmallVector<SemIR::InstId> insts_;
+  llvm::SmallVector<SemIR::InstId> cleanups_;
 };
 
 }  // namespace Carbon::Check

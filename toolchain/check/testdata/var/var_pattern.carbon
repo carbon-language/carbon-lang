@@ -1020,8 +1020,8 @@ fn Call() {
 // CHECK:STDOUT:   %MakeInit.call: init %X to %a.var = call %MakeInit.ref()
 // CHECK:STDOUT:   assign %a.var, %MakeInit.call
 // CHECK:STDOUT:   %TakeVar.call: init %empty_tuple.type = call %TakeVar.ref(%a.var)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method <unexpected>.inst{{[0-9A-F]+}}.loc7_12, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(<unexpected>.inst{{[0-9A-F]+}}.loc7_12)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
