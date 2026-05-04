@@ -326,6 +326,10 @@ static auto BuildCppComparisonWitness(
         {self_type_id, arg_type_id});
     if (lookup_id == SemIR::ErrorInst::InstId ||
         lookup_id == SemIR::InstId::None) {
+      // `T.(Core.EqWith(U))` is only valid if both `t == u` and `t != u` are
+      // valid expressions. Looking for `t != u` is pointless if we're unable to
+      // find a valid `t == u`, because `t != u` won't provide further useful
+      // information at this point.
       return lookup_id;
     }
 
@@ -335,11 +339,6 @@ static auto BuildCppComparisonWitness(
                                        .function_id)
                               .return_type_inst_id;
     if (!return_type_id.has_value()) {
-      return SemIR::InstId::None;
-    }
-
-    if (!context.insts().Is<SemIR::BoolType>(return_type_id)) {
-      context.TODO(loc_id, "Comparison operations must return `bool`");
       return SemIR::InstId::None;
     }
 
