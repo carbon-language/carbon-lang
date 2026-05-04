@@ -41,7 +41,6 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 
 library "[[@TEST_NAME]]";
 
-
 import Cpp inline '''c++
 struct A {
   int value;
@@ -572,15 +571,15 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !6, line: 57, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !6, line: 33, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !15 = !{!16, !17}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !14)
-// CHECK:STDOUT: !18 = !DILocation(line: 58, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 57, column: 1, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 34, column: 3, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 33, column: 1, scope: !11)
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS1A", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
@@ -589,36 +588,36 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: !25 = !{i64 0, i64 4, !7}
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"bool", !9, i64 0}
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk.Cpp", scope: null, file: !6, line: 9, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk.Cpp", scope: null, file: !6, line: 8, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{!14, !14, !14}
 // CHECK:STDOUT: !31 = !{!32, !33}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !14)
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 2, scope: !28, type: !14)
-// CHECK:STDOUT: !34 = !DILocation(line: 9, column: 15, scope: !28)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk.Cpp", scope: null, file: !6, line: 17, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
+// CHECK:STDOUT: !34 = !DILocation(line: 8, column: 15, scope: !28)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk.Cpp", scope: null, file: !6, line: 16, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
 // CHECK:STDOUT: !36 = !{!37, !38}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !35, type: !14)
-// CHECK:STDOUT: !39 = !DILocation(line: 17, column: 15, scope: !35)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk.Cpp", scope: null, file: !6, line: 13, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
+// CHECK:STDOUT: !39 = !DILocation(line: 16, column: 15, scope: !35)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk.Cpp", scope: null, file: !6, line: 12, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
 // CHECK:STDOUT: !41 = !{!42, !43}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !14)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 2, scope: !40, type: !14)
-// CHECK:STDOUT: !44 = !DILocation(line: 13, column: 15, scope: !40)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk.Cpp", scope: null, file: !6, line: 28, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !44 = !DILocation(line: 12, column: 15, scope: !40)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk.Cpp", scope: null, file: !6, line: 20, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
 // CHECK:STDOUT: !46 = !{!47, !48}
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !14)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !45, type: !14)
-// CHECK:STDOUT: !49 = !DILocation(line: 28, column: 15, scope: !45)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.2434026e6d8bb659", scope: null, file: !6, line: 34, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
+// CHECK:STDOUT: !49 = !DILocation(line: 20, column: 15, scope: !45)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.2434026e6d8bb659", scope: null, file: !6, line: 26, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
 // CHECK:STDOUT: !51 = !{!52, !53}
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !50, type: !14)
 // CHECK:STDOUT: !53 = !DILocalVariable(arg: 2, scope: !50, type: !14)
-// CHECK:STDOUT: !54 = !DILocation(line: 39, column: 3, scope: !50)
-// CHECK:STDOUT: !55 = !DILocation(line: 40, column: 3, scope: !50)
-// CHECK:STDOUT: !56 = !DILocation(line: 45, column: 3, scope: !50)
-// CHECK:STDOUT: !57 = !DILocation(line: 46, column: 3, scope: !50)
-// CHECK:STDOUT: !58 = !DILocation(line: 34, column: 1, scope: !50)
+// CHECK:STDOUT: !54 = !DILocation(line: 27, column: 3, scope: !50)
+// CHECK:STDOUT: !55 = !DILocation(line: 28, column: 3, scope: !50)
+// CHECK:STDOUT: !56 = !DILocation(line: 29, column: 3, scope: !50)
+// CHECK:STDOUT: !57 = !DILocation(line: 30, column: 3, scope: !50)
+// CHECK:STDOUT: !58 = !DILocation(line: 26, column: 1, scope: !50)
 // CHECK:STDOUT: !59 = !{!60, !8, i64 0}
 // CHECK:STDOUT: !60 = !{!"_ZTS1A", !8, i64 0}

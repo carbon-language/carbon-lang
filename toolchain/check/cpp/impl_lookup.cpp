@@ -330,6 +330,10 @@ static auto BuildCppComparisonWitness(
       // valid expressions. Looking for `t != u` is pointless if we're unable to
       // find a valid `t == u`, because `t != u` won't provide further useful
       // information at this point.
+      //
+      // The behavior is dependent on which expression is checked first: no
+      // diagnostic is produced for an erroneous `operator!=` will be emitted if
+      // lookup for `operator==` produces `SemIR::InstId::None`.
       return lookup_id;
     }
 
