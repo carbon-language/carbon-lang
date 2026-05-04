@@ -4553,26 +4553,30 @@ library depends on.
 #### Orphan rule
 
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
-given impl can only be defined in a library that must be imported for it to
-apply. Specifically, given a specific type and specific interface, `impl`
-declarations that can match can only be in libraries that must have been
-imported to name that type or interface. This is achieved with the _orphan
-rule_.
+given `impl` can only be defined where it is always visible when it could be
+used. Specifically, given a specific type and specific interface, `impl`
+declarations that can match must imported along with some name in that type or
+interface.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
-be defined in the same library as the `impl`, that is some name must be _local_.
+have an owning declaration that is in the same file as the `impl` declaration,
+and either:
+
+-   the owning declaration is a definition whose scope contains the `impl`
+    declaration, or
+-   the owning declaration is withinin the scope containing the `impl`
+    declaration, including nested scopes.
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
 `A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
-defined in some library that must be imported in any code that looks up whether
-that interface is implemented for that type. This requires that `impl` is
-defined in the same library that defines the interface or one of the names
-needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
-`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
-this `impl` to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an `impl` with the definition. This accomplishes a
-few goals:
+defined in a file where one of the names `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`,
+or `E` is introduced by its owning declaration. This ensures that if the name is
+imported, the `impl` will be imported along with it. We further require that the
+`impl` be attached through its type structure to its current scope in some way.
+This ensures that when declared within a generic context, the `impl` is only
+accessible through a specific of the enclosing generic.
+
+This rule accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
     is actually used, avoiding
