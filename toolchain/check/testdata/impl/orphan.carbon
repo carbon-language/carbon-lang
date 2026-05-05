@@ -225,6 +225,16 @@ class C {
   impl {} as Z {}
 }
 
+// --- valid_in_fn_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  class C {}
+  impl C as Z {}
+}
+
 // --- todo_fail_orphan_in_fn_scope.carbon
 library "[[@TEST_NAME]]";
 
@@ -233,6 +243,16 @@ interface Z {}
 // Neither {} nor Z are defined within or by the scope of `F`.
 fn F() {
   impl {} as Z {}
+}
+
+// --- valid_in_generic_fn_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F(unused T:! type) {
+  class C {}
+  impl C as Z {}
 }
 
 // --- fail_todo_orphan_in_generic_fn_scope.carbon
@@ -248,6 +268,18 @@ fn F(unused T:! type) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl {} as Z {}
+}
+
+// --- valid_in_block_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  if (true) {
+    class C {}
+    impl C as Z {}
+  }
 }
 
 // --- todo_fail_orphan_in_block_scope.carbon
