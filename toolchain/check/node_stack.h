@@ -416,7 +416,6 @@ class NodeStack {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
-      case Parse::NodeKind::ImplIntroducer:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
@@ -460,6 +459,7 @@ class NodeStack {
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::ImplIntroducer:
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LambdaIntroducer:

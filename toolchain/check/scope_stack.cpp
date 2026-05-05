@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/find.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/ids.h"
@@ -167,6 +168,17 @@ auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
   CARBON_CHECK(PeekIndex() == index,
                "Scope index {0} does not enclose the current scope {1}", index,
                PeekIndex());
+}
+
+auto ScopeStack::AddImplIdToParent(SemIR::ImplId impl_id) -> void {
+  CARBON_DCHECK(scope_stack_.size() >= 2);
+  auto& entry = scope_stack_[scope_stack_.size() - 2];
+  entry.impl_decls.push_back(impl_id);
+}
+auto ScopeStack::FindImplIdInParent(SemIR::ImplId impl_id) -> bool {
+  CARBON_DCHECK(scope_stack_.size() >= 2);
+  auto& entry = scope_stack_[scope_stack_.size() - 2];
+  return Contains(entry.impl_decls, impl_id);
 }
 
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,

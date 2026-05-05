@@ -82,8 +82,46 @@ auto CheckAssociatedFunctionImplementation(
                     defer_thunk_definition);
 }
 
+// Returns whether the scope of the `new_impl` is the same as the scope of the
+// `prev_impl`. This accounts for matching namespace and class scopes across
+// imports, and function and block scopes locally.
+static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
+                        SemIR::ImplId prev_impl_id,
+                        const SemIR::Impl& prev_impl) -> bool {
+  if (new_impl.parent_scope_inst_id.has_value() !=
+      prev_impl.parent_scope_inst_id.has_value()) {
+    return false;
+  }
+  if (new_impl.parent_scope_id.has_value()) {
+    auto new_scope_inst =
+        context.insts().Get(context.constant_values().GetConstantInstId(
+            new_impl.parent_scope_inst_id));
+    auto prev_scope_inst =
+        context.insts().Get(context.constant_values().GetConstantInstId(
+            prev_impl.parent_scope_inst_id));
+    if (new_scope_inst.kind() != prev_scope_inst.kind()) {
+      return false;
+    }
+    if (new_scope_inst.Is<SemIR::ClassType>()) {
+      auto new_class = new_scope_inst.As<SemIR::ClassType>();
+      auto prev_class = prev_scope_inst.As<SemIR::ClassType>();
+      return new_class.class_id == prev_class.class_id;
+    } else if (new_scope_inst.Is<SemIR::Namespace>()) {
+      auto new_namespace = new_scope_inst.As<SemIR::Namespace>();
+      auto prev_namespace = prev_scope_inst.As<SemIR::Namespace>();
+      return new_namespace.name_scope_id == prev_namespace.name_scope_id;
+    }
+  }
+  // They are each in a function or block scope. These scopes can't be
+  // re-entered across import so we just need to look to see they are the same
+  // scope locally. The new impl has a scope entry of its own on the stack, so
+  // look in the parent for the previous impl.
+  return context.scope_stack().FindImplIdInParent(prev_impl_id);
+}
+
 // Returns true if impl redeclaration parameters and scopes match.
 static auto ImplRedeclMatches(Context& context, const SemIR::Impl& new_impl,
+                              SemIR::ImplId prev_impl_id,
                               const SemIR::Impl& prev_impl) -> bool {
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
@@ -91,41 +129,12 @@ static auto ImplRedeclMatches(Context& context, const SemIR::Impl& new_impl,
                               DeclParams(prev_impl), SemIR::SpecificId::None,
                               /*diagnose=*/false, /*check_syntax=*/true,
                               /*check_self=*/true)) {
-    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
 
   // If the scopes are different, it is not treated as a redeclaration.
-  auto new_scope_inst =
-      context.insts().Get(context.constant_values().GetConstantInstId(
-          new_impl.parent_scope_inst_id));
-  auto prev_scope_inst =
-      context.insts().Get(context.constant_values().GetConstantInstId(
-          prev_impl.parent_scope_inst_id));
-  if (new_scope_inst.kind() != prev_scope_inst.kind()) {
+  if (!ScopesMatch(context, new_impl, prev_impl_id, prev_impl)) {
     return false;
-  }
-  if (new_scope_inst.Is<SemIR::ClassType>()) {
-    auto new_class = new_scope_inst.As<SemIR::ClassType>();
-    auto prev_class = prev_scope_inst.As<SemIR::ClassType>();
-    if (new_class.class_id != prev_class.class_id) {
-      return false;
-    }
-  } else if (new_scope_inst.Is<SemIR::Namespace>()) {
-    auto new_namespace = new_scope_inst.As<SemIR::Namespace>();
-    auto prev_namespace = prev_scope_inst.As<SemIR::Namespace>();
-    if (new_namespace.name_scope_id != prev_namespace.name_scope_id) {
-      return false;
-    }
-  } else if (new_scope_inst.Is<SemIR::StructValue>()) {
-    // A functions's constant value is a StructValue.
-    auto new_struct = new_scope_inst.As<SemIR::StructValue>();
-    auto prev_struct = prev_scope_inst.As<SemIR::StructValue>();
-    if (new_struct.type_id != prev_struct.type_id) {
-      return false;
-    }
-  } else {
-    CARBON_FATAL("unexpected scope {0} for impl", new_scope_inst);
   }
 
   return true;
@@ -284,7 +293,7 @@ auto FindImplId(Context& context, const SemIR::Impl& query_impl)
   for (auto prev_impl_id : lookup_bucket_ref) {
     auto& prev_impl = context.impls().Get(prev_impl_id);
 
-    if (ImplRedeclMatches(context, query_impl, prev_impl)) {
+    if (ImplRedeclMatches(context, query_impl, prev_impl_id, prev_impl)) {
       if (!VerifyImplRedeclIsValid(context, query_impl, prev_impl)) {
         // Found an invalid redecl, which has been diagnosed as such. Treat it
         // as a new decl, with an error.

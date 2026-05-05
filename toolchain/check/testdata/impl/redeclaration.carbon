@@ -227,3 +227,38 @@ class D {
   // scope. But it should be rejected by the orphan rule v2.
   impl C as Z {}
 }
+
+// --- redecl_in_block_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+
+fn F() {
+  if (true) {
+    impl C as Z;
+    impl C as Z {}
+  }
+}
+
+// --- fail_different_block_scope_is_separate_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C {}
+
+fn F() {
+  if (true) {
+    impl C as Z {}
+  }
+  if (true) {
+    // CHECK:STDERR: fail_different_block_scope_is_separate_impl.carbon:[[@LINE+7]]:5: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+    // CHECK:STDERR:     impl C as Z {}
+    // CHECK:STDERR:     ^~~~~~~~~~~~~
+    // CHECK:STDERR: fail_different_block_scope_is_separate_impl.carbon:[[@LINE-6]]:5: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+    // CHECK:STDERR:     impl C as Z {}
+    // CHECK:STDERR:     ^~~~~~~~~~~~~
+    // CHECK:STDERR:
+    impl C as Z {}
+  }
+}
