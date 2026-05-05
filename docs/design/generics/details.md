@@ -4555,12 +4555,12 @@ library depends on.
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
 given `impl` can only be defined where it is always visible when it could be
 used. Specifically, given a specific type and specific interface, `impl`
-declarations that can match must imported along with some name in that type or
-interface.
+declarations that can match must be imported along with some name in that type
+or interface.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
-have an owning declaration that is in the same file as the `impl` declaration,
-and either:
+be an _anchor name_, which is an owning declaration that is in the same file as
+the `impl` declaration, and either:
 
 -   the owning declaration is a definition whose scope contains the `impl`
     declaration, or
@@ -4572,9 +4572,55 @@ Let's say you have some interface `I(T, U(V))` being implemented for some type
 defined in a file where one of the names `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`,
 or `E` is introduced by its owning declaration. This ensures that if the name is
 imported, the `impl` will be imported along with it. We further require that the
-`impl` be attached through its type structure to its current scope in some way.
-This ensures that when declared within a generic context, the `impl` is only
-accessible through a specific of the enclosing generic.
+`impl` be anchored by a name in its type structure to its current scope in some
+way. This ensures that when declared within a generic context, the `impl` is
+only accessible through a specific of the enclosing generic.
+
+```carbon
+class A {}
+
+fn F(T:! type) {
+  class B { class C {} }
+
+  // Accepted; anchored by the name `B`.
+  impl B as Z {}
+
+  // Accepted; anchored by the name `C`.
+  impl B.C as Z {}
+
+  class D {
+    // Accepted; anchored by the name `D`.
+    impl D as Z {}
+    // Accepted; anchored by implied `Self` which resolves to the name `D`.
+    impl as Z {}
+    // Accepted; anchored by `Self` which resolves to the name `D`.
+    impl Self as Z {}
+  }
+
+  class E {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {};
+  }
+
+  if (true) {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {}
+  }
+
+  fn G() {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {}
+  }
+
+  // ❌ Rejected, no anchor name. Note that it has no way to specify a value
+  // for the `T` binding.
+  impl A as Z {}
+
+  // ❌ Rejected, no anchor name. A binding can not be an anchor name, only an
+  // entity declaration can.
+  impl A as Y(T) {}
+}
+```
 
 This rule accomplishes a few goals:
 
@@ -4589,6 +4635,9 @@ This rule accomplishes a few goals:
 -   Allowing the `impl` to be defined with either the interface or the type
     partially addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+This rule was modified by [proposal 7140](/proposals/p7140.md), which includes
+some [alternatives considered](/proposals/p7140.md#alternatives-considered).
 
 Note that [the rules for specialization](#lookup-resolution-and-specialization)
 do allow there to be more than one `impl` to be defined for a type, by
