@@ -235,49 +235,32 @@ fn F() {
   impl {} as Z {}
 }
 
-// --- fail_todo_orphan_in_block_scope.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {}
-
-fn F() {
-  class C {}
-  // Neither C nor Z are defined within or by this block scope.
-  {
-    // TODO: Block scopes are not yet supported.
-    // CHECK:STDERR: fail_todo_orphan_in_block_scope.carbon:[[@LINE+8]]:5: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
-    // CHECK:STDERR:     impl C as Z {}
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_orphan_in_block_scope.carbon:[[@LINE+4]]:5: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-    // CHECK:STDERR:     impl C as Z {}
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR:
-    impl C as Z {}
-  }
-// CHECK:STDERR: fail_todo_orphan_in_block_scope.carbon:[[@LINE+4]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
-}
-
 // --- fail_todo_orphan_in_generic_fn_scope.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 
 // Neither {} nor Z are defined within or by the scope of `F`.
-fn F(T:! type) {
+fn F(unused T:! type) {
   // TODO: The error should be about being an orphan, not an unused binding.
-  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+8]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
+  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
   // CHECK:STDERR:   impl {} as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE-6]]:6: warning: binding `T` unused [UnusedBinding]
-  // CHECK:STDERR: fn F(T:! type) {
-  // CHECK:STDERR:      ^~~~~~~~
-  // CHECK:STDERR:
   impl {} as Z {}
+}
+
+// --- todo_fail_orphan_in_block_scope.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  class C {}
+  // Neither C nor Z are defined within or by this if block scope.
+  if (true) {
+    impl C as Z {}
+  }
 }
 
 // --- name_defined_by_scope.carbon
