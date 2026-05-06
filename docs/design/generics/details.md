@@ -4577,6 +4577,8 @@ way. This ensures that when declared within a generic context, the `impl` is
 only accessible through a specific of the enclosing generic.
 
 ```carbon
+interface Z {}
+interface Y(T:! type) {}
 class A {}
 
 fn F(T:! type) {
@@ -4587,6 +4589,17 @@ fn F(T:! type) {
 
   // Accepted; anchored by the name `C`.
   impl B.C as Z {}
+
+  // Accepted; anchored by the name `B`.
+  impl A as Y(B) {}
+
+  // Accepted; anchored by the name `C`.
+  impl A as Y(B.C) {}
+
+  interface X {}
+
+  // Accepted; anchored by the name `X`.
+  impl A as X {}
 
   class D {
     // Accepted; anchored by the name `D`.
@@ -4636,17 +4649,9 @@ This rule accomplishes a few goals:
     partially addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-This rule was modified by [proposal 7140](/proposals/p7140.md), which includes
-some [alternatives considered](/proposals/p7140.md#alternatives-considered).
-
 Note that [the rules for specialization](#lookup-resolution-and-specialization)
 do allow there to be more than one `impl` to be defined for a type, by
 unambiguously picking one as most specific.
-
-> **References:** Implementation coherence is
-> [defined in terminology](terminology.md#coherence), and is
-> [a goal for Carbon generics](goals.md#coherence). More detail can be found in
-> [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
@@ -4654,8 +4659,23 @@ sufficient since it
 [need not be imported](/proposals/p0920.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
 Since Carbon in addition requires there be no cyclic library dependencies, we
-conclude that there is at most one library that can contain `impl` definitions
-with a particular type structure.
+conclude that there is at most one library api file that can contain owning
+`impl` declarations with a particular type structure.
+
+##### References
+
+Implementation coherence is
+ [defined in terminology](terminology.md#coherence), and is
+ [a goal for Carbon generics](goals.md#coherence). More detail can be found in
+ [this appendix with the rationale and alternatives considered](appendix-coherence.md).
+
+##### Alternatives considered
+
+Alternative choices for the orphan rule were considered:
+ - [A syntactic check, instead of applying the rule after evaluation](/proposals/p7140.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
+ - [Disallowing the anchor name to be in a nested scope](/proposals/p7140.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
+ - [Anchoring to a definition](/proposals/p7140.md#anchoring-to-a-definition)
+
 
 #### Overlap rule
 
