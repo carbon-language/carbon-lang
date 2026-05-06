@@ -20,10 +20,10 @@ namespace Carbon::SemIR {
 struct Signature : public Printable<Signature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
-    // This parameter is being passed in the default way for its type.
-    Default,
-    // This is a by-value C++ parameter that is passed by move, not copy.
-    ByValueMove,
+    // This parameter is a by-value parameter passed as `var` (the default).
+    ByVar,
+    // This is a by-value C++ parameter that is passed by-value as an optimization.
+    ByValue,
   };
 
   enum Kind : int8_t {
@@ -55,7 +55,7 @@ struct Signature : public Printable<Signature> {
   auto GetPassingMode(int32_t i) const -> PassingMode {
     return i < static_cast<int32_t>(passing_modes.size())
                ? passing_modes[i]
-               : PassingMode::Default;
+               : PassingMode::ByVar;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;

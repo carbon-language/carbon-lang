@@ -1311,9 +1311,12 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
       info.kind = ParamPatternKind::Var;
     }
     param_type = pointee_type;
-  } else if (passing_mode == SemIR::Signature::PassingMode::ByValueMove) {
-    // Map pass-by-move into a `var` parameter, as we do for a `T&&` parameter.
-    info.kind = ParamPatternKind::Var;
+  } else {
+    // C++ by-value parameters default to being passed as `var`, and are instead
+    // passed `ByValue` as an optimization only when it's correct to do so.
+    if (passing_mode != SemIR::Signature::PassingMode::ByValue) {
+      info.kind = ParamPatternKind::Var;
+    }
   }
 
   info.type = MapType(context, loc_id, param_type);
@@ -1340,7 +1343,7 @@ static auto MakeImplicitParamPatternsBlockId(
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
   auto param_info = MapParameterType(context, loc_id, param_type,
-                                     SemIR::Signature::PassingMode::Default);
+                                     SemIR::Signature::PassingMode::ByVar);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeSubpatternExpr(context, type_inst_id);
@@ -1819,6 +1822,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       thunk_signature.kind = SemIR::Signature::Normal;
       thunk_signature.num_params =
           static_cast<int32_t>(thunk_clang_decl->getNumParams());
+      thunk_signature.passing_modes.assign(thunk_signature.num_params,
+                                           SemIR::Signature::PassingMode::ByValue);
       SemIR::SignatureId thunk_signature_id =
           context.signatures().Add(std::move(thunk_signature));
 

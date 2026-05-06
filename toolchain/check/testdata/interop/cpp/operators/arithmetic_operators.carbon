@@ -493,6 +493,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %assoc1.646: %AddWith.assoc_type.f75 = assoc_entity element1, imports.%Core.import_ref.1b1 [concrete]
 // CHECK:STDOUT:   %Op.type.67547d.1: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.8fb557.1: %Op.type.67547d.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.833: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.e06) [concrete]
+// CHECK:STDOUT:   %.368: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.833, %Destroy.facet.e06 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.77e: %Destroy.type = facet_value %i16, (%custom_witness.8d7fae.2) [concrete]
 // CHECK:STDOUT:   %custom_witness.47f: <witness> = custom_witness (%Int16, %Op.8fb557.1), @AddWith.1, @AddWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.c79: %facet_type.e97 = facet_value %i16, (%custom_witness.8d7fae.2, %custom_witness.47f) [concrete]
@@ -658,6 +660,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %assoc1.38b: %AddWith.assoc_type.29a = assoc_entity element1, imports.%Core.import_ref.1b1 [concrete]
 // CHECK:STDOUT:   %Int16.Op.type.180c8b.8: type = fn_type @Int16.Op.8 [concrete]
 // CHECK:STDOUT:   %Int16.Op.c3e49c.8: %Int16.Op.type.180c8b.8 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.2e1: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.c06) [concrete]
+// CHECK:STDOUT:   %.e6c: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.2e1, %Destroy.facet.c06 [concrete]
 // CHECK:STDOUT:   %custom_witness.200: <witness> = custom_witness (%Int32, %Int16.Op.c3e49c.8), @AddWith.1, @AddWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.2b7: %facet_type.14d = facet_value %Int16, (%custom_witness.e5b, %custom_witness.200) [concrete]
 // CHECK:STDOUT:   %complete_type.0d9: <witness> = complete_type_witness %facet_type.4a7 [concrete]
@@ -728,54 +732,54 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %.Self.as_type.ef1: type = facet_access_type %.Self.0c5 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.4d3: type = pattern_type %facet_type.422 [concrete]
 // CHECK:STDOUT:   %facet_type.b0a: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int16) where %impl.elem0.cdb = %Int32> [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.2: type = fn_type @Int32.Op.2 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.2: %Int32.Op.type.68b858.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.116: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.2), @AddWith.1, @AddWith.1(%Int16) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.3: type = fn_type @Int32.Op.3 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.3: %Int32.Op.type.68b858.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.116: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.3), @AddWith.1, @AddWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.741: %facet_type.b0a = facet_value %Int32, (%custom_witness.ce1, %custom_witness.116) [concrete]
 // CHECK:STDOUT:   %pattern_type.e21: type = pattern_type %facet_type.b0a [concrete]
 // CHECK:STDOUT:   %facet_type.afb: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int16) where %impl.elem0.345 = %Int32> [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.3: type = fn_type @Int32.Op.3 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.3: %Int32.Op.type.68b858.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.904: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.3), @SubWith.1, @SubWith.1(%Int16) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.4: type = fn_type @Int32.Op.4 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.4: %Int32.Op.type.68b858.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.904: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.4), @SubWith.1, @SubWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.f31: %facet_type.afb = facet_value %Int32, (%custom_witness.ce1, %custom_witness.904) [concrete]
 // CHECK:STDOUT:   %pattern_type.6ad: type = pattern_type %facet_type.afb [concrete]
 // CHECK:STDOUT:   %facet_type.bfe: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int16) where %impl.elem0.6fb = %Int32> [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.4: type = fn_type @Int32.Op.4 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.4: %Int32.Op.type.68b858.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.04f: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.4), @MulWith.1, @MulWith.1(%Int16) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.5: type = fn_type @Int32.Op.5 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.5: %Int32.Op.type.68b858.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.04f: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.5), @MulWith.1, @MulWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.daa: %facet_type.bfe = facet_value %Int32, (%custom_witness.ce1, %custom_witness.04f) [concrete]
 // CHECK:STDOUT:   %pattern_type.8a2: type = pattern_type %facet_type.bfe [concrete]
 // CHECK:STDOUT:   %facet_type.917: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int16) where %impl.elem0.e43 = %Int32> [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.5: type = fn_type @Int32.Op.5 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.5: %Int32.Op.type.68b858.5 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.53b: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.5), @DivWith.1, @DivWith.1(%Int16) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.6: type = fn_type @Int32.Op.6 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.6: %Int32.Op.type.68b858.6 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.53b: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.6), @DivWith.1, @DivWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.437: %facet_type.917 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.53b) [concrete]
 // CHECK:STDOUT:   %pattern_type.b7f: type = pattern_type %facet_type.917 [concrete]
 // CHECK:STDOUT:   %facet_type.d08: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int16) where %impl.elem0.cba = %Int32> [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.6: type = fn_type @Int32.Op.6 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.6: %Int32.Op.type.68b858.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.895: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.6), @ModWith.1, @ModWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.9f1: %facet_type.d08 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.895) [concrete]
-// CHECK:STDOUT:   %pattern_type.a04: type = pattern_type %facet_type.d08 [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.68b858.7: type = fn_type @Int32.Op.7 [concrete]
 // CHECK:STDOUT:   %Int32.Op.6afff1.7: %Int32.Op.type.68b858.7 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.78d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.7), @AddWith.1, @AddWith.1(%Int32) [concrete]
-// CHECK:STDOUT:   %facet_value.fca: %facet_type.14d = facet_value %Int32, (%custom_witness.ce1, %custom_witness.78d) [concrete]
+// CHECK:STDOUT:   %custom_witness.895: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.7), @ModWith.1, @ModWith.1(%Int16) [concrete]
+// CHECK:STDOUT:   %facet_value.9f1: %facet_type.d08 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.895) [concrete]
+// CHECK:STDOUT:   %pattern_type.a04: type = pattern_type %facet_type.d08 [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.68b858.8: type = fn_type @Int32.Op.8 [concrete]
 // CHECK:STDOUT:   %Int32.Op.6afff1.8: %Int32.Op.type.68b858.8 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.64d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.8), @SubWith.1, @SubWith.1(%Int32) [concrete]
-// CHECK:STDOUT:   %facet_value.9a9: %facet_type.f15 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.64d) [concrete]
+// CHECK:STDOUT:   %custom_witness.78d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.8), @AddWith.1, @AddWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %facet_value.fca: %facet_type.14d = facet_value %Int32, (%custom_witness.ce1, %custom_witness.78d) [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.68b858.9: type = fn_type @Int32.Op.9 [concrete]
 // CHECK:STDOUT:   %Int32.Op.6afff1.9: %Int32.Op.type.68b858.9 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.7b6d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.9), @MulWith.1, @MulWith.1(%Int32) [concrete]
-// CHECK:STDOUT:   %facet_value.03b: %facet_type.c22 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.7b6d) [concrete]
+// CHECK:STDOUT:   %custom_witness.64d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.9), @SubWith.1, @SubWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %facet_value.9a9: %facet_type.f15 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.64d) [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.68b858.10: type = fn_type @Int32.Op.10 [concrete]
 // CHECK:STDOUT:   %Int32.Op.6afff1.10: %Int32.Op.type.68b858.10 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.db6: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.10), @DivWith.1, @DivWith.1(%Int32) [concrete]
-// CHECK:STDOUT:   %facet_value.a2b: %facet_type.529 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.db6) [concrete]
+// CHECK:STDOUT:   %custom_witness.7b6d: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.10), @MulWith.1, @MulWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %facet_value.03b: %facet_type.c22 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.7b6d) [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.68b858.11: type = fn_type @Int32.Op.11 [concrete]
 // CHECK:STDOUT:   %Int32.Op.6afff1.11: %Int32.Op.type.68b858.11 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.e01: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.11), @ModWith.1, @ModWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %custom_witness.db6: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.11), @DivWith.1, @DivWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %facet_value.a2b: %facet_type.529 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.db6) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.12: type = fn_type @Int32.Op.12 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.12: %Int32.Op.type.68b858.12 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.e01: <witness> = custom_witness (%Int32, %Int32.Op.6afff1.12), @ModWith.1, @ModWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.a4c: %facet_type.422 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.e01) [concrete]
 // CHECK:STDOUT:   %Int64.Op.type.445ce8.1: type = fn_type @Int64.Op.1 [concrete]
 // CHECK:STDOUT:   %Int64.Op.b941da.1: %Int64.Op.type.445ce8.1 = struct_value () [concrete]
@@ -792,6 +796,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %assoc1.cd6: %AddWith.assoc_type.330 = assoc_entity element1, imports.%Core.import_ref.1b1 [concrete]
 // CHECK:STDOUT:   %Op.type.67547d.6: type = fn_type @Op.6 [concrete]
 // CHECK:STDOUT:   %Op.8fb557.6: %Op.type.67547d.6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.f16: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.b0a) [concrete]
+// CHECK:STDOUT:   %.db1: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.f16, %Destroy.facet.b0a [concrete]
 // CHECK:STDOUT:   %custom_witness.1b7: <witness> = custom_witness (%Int64, %Op.8fb557.6), @AddWith.1, @AddWith.1(%Int64) [concrete]
 // CHECK:STDOUT:   %facet_value.054: %facet_type.7b1 = facet_value %Int32, (%custom_witness.ce1, %custom_witness.1b7) [concrete]
 // CHECK:STDOUT:   %complete_type.7fa: <witness> = complete_type_witness %facet_type.221 [concrete]
@@ -891,12 +897,6 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.ad6: <witness> = custom_witness (%Int64, %Op.8fb557.15), @ModWith.1, @ModWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.766: %facet_type.f0f = facet_value %Int64, (%custom_witness.d7e, %custom_witness.ad6) [concrete]
 // CHECK:STDOUT:   %pattern_type.bd2: type = pattern_type %facet_type.f0f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.f16: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.b0a) [concrete]
-// CHECK:STDOUT:   %.db1: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.f16, %Destroy.facet.b0a [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.2e1: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.c06) [concrete]
-// CHECK:STDOUT:   %.e6c: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.2e1, %Destroy.facet.c06 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.833: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.e06) [concrete]
-// CHECK:STDOUT:   %.368: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.833, %Destroy.facet.e06 [concrete]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.type.4d3b38.1: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%Other)> [symbolic]
 // CHECK:STDOUT:   %Self.a00362.1: %AddAssignWith.type.4d3b38.1 = symbolic_binding Self, 1 [symbolic]
@@ -1037,9 +1037,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddAssignWith.type.a71: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %AddAssignWith.assoc_type.b4b: type = assoc_entity_type @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.e09: %AddAssignWith.assoc_type.b4b = assoc_entity element0, imports.%Core.import_ref.7e1 [concrete]
-// CHECK:STDOUT:   %Int32.Op.type.68b858.12: type = fn_type @Int32.Op.12 [concrete]
-// CHECK:STDOUT:   %Int32.Op.6afff1.12: %Int32.Op.type.68b858.12 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.c02: <witness> = custom_witness (%Int32.Op.6afff1.12), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %Int32.Op.type.68b858.13: type = fn_type @Int32.Op.13 [concrete]
+// CHECK:STDOUT:   %Int32.Op.6afff1.13: %Int32.Op.type.68b858.13 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.c02: <witness> = custom_witness (%Int32.Op.6afff1.13), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet.d85: %AddAssignWith.type.a71 = facet_value %Int32, (%custom_witness.c02) [concrete]
 // CHECK:STDOUT:   %pattern_type.736: type = pattern_type %AddAssignWith.type.a71 [concrete]
 // CHECK:STDOUT:   %SubAssignWith.type.35f: type = facet_type <@SubAssignWith.1, @SubAssignWith.1(%Int32)> [concrete]
@@ -1074,9 +1074,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.203: <witness> = custom_witness (%Int32.Op.6afff1.17), @ModAssignWith.1, @ModAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet.b82: %ModAssignWith.type.36f = facet_value %Int32, (%custom_witness.203) [concrete]
 // CHECK:STDOUT:   %pattern_type.ebe: type = pattern_type %ModAssignWith.type.36f [concrete]
-// CHECK:STDOUT:   %Int64.Op.type.445ce8.2: type = fn_type @Int64.Op.2 [concrete]
-// CHECK:STDOUT:   %Int64.Op.b941da.2: %Int64.Op.type.445ce8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.3a4: <witness> = custom_witness (%Int64.Op.b941da.2), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
+// CHECK:STDOUT:   %Int64.Op.type.445ce8.3: type = fn_type @Int64.Op.3 [concrete]
+// CHECK:STDOUT:   %Int64.Op.b941da.3: %Int64.Op.type.445ce8.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.3a4: <witness> = custom_witness (%Int64.Op.b941da.3), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet.b70: %AddAssignWith.type.a71 = facet_value %Int64, (%custom_witness.3a4) [concrete]
 // CHECK:STDOUT:   %Int64.Op.type.445ce8.4: type = fn_type @Int64.Op.4 [concrete]
 // CHECK:STDOUT:   %Int64.Op.b941da.4: %Int64.Op.type.445ce8.4 = struct_value () [concrete]
@@ -2572,8 +2572,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.fce
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.523
 // CHECK:STDOUT:   %.loc126_5.4 => constants.%.a28
-// CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.6afff1.2
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.6afff1.2
+// CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.6afff1.3
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.6afff1.3
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc126_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2613,8 +2613,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.099
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.5d6
 // CHECK:STDOUT:   %.loc137_5.4 => constants.%.43e
-// CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.6afff1.3
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.6afff1.3
+// CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.6afff1.4
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.6afff1.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc137_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2654,8 +2654,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.aea
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.f3c
 // CHECK:STDOUT:   %.loc148_5.4 => constants.%.a30
-// CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.6afff1.4
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.6afff1.4
+// CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.6afff1.5
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.6afff1.5
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc148_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2695,8 +2695,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.687
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.b6a
 // CHECK:STDOUT:   %.loc159_5.4 => constants.%.c6a
-// CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.6afff1.5
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.6afff1.5
+// CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.6afff1.6
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.6afff1.6
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc159_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2736,8 +2736,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.7e6
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.55e
 // CHECK:STDOUT:   %.loc170_5.4 => constants.%.274
-// CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.6afff1.6
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.6afff1.6
+// CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.6afff1.7
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.6afff1.7
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc170_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2777,8 +2777,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.e5b
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.13e
 // CHECK:STDOUT:   %.loc126_5.4 => constants.%.56e
-// CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.6afff1.7
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.6afff1.7
+// CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.6afff1.8
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.6afff1.8
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc126_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2818,8 +2818,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.e26
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.d8a
 // CHECK:STDOUT:   %.loc137_5.4 => constants.%.cb1
-// CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.6afff1.8
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.6afff1.8
+// CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.6afff1.9
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.6afff1.9
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc137_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2859,8 +2859,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.b74
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.25b
 // CHECK:STDOUT:   %.loc148_5.4 => constants.%.e42
-// CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.6afff1.9
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.6afff1.9
+// CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.6afff1.10
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.6afff1.10
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc148_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2900,8 +2900,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.8b3
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.f6d
 // CHECK:STDOUT:   %.loc159_5.4 => constants.%.c6f
-// CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.6afff1.10
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.6afff1.10
+// CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.6afff1.11
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.6afff1.11
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc159_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -2941,8 +2941,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.c6b
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.b72
 // CHECK:STDOUT:   %.loc170_5.4 => constants.%.a97
-// CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.6afff1.11
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.6afff1.11
+// CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.6afff1.12
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.6afff1.12
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.2e1
 // CHECK:STDOUT:   %.loc170_5.5 => constants.%.e6c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.ce1
@@ -3538,8 +3538,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.type => constants.%AddAssignWith.WithSelf.Op.type.181
 // CHECK:STDOUT:   %.loc227_5.2 => constants.%.e44
 // CHECK:STDOUT:   %AddAssignWith.lookup_impl_witness => constants.%custom_witness.c02
-// CHECK:STDOUT:   %impl.elem0.loc227_5.2 => constants.%Int32.Op.6afff1.12
-// CHECK:STDOUT:   %specific_impl_fn.loc227_5.2 => constants.%Int32.Op.6afff1.12
+// CHECK:STDOUT:   %impl.elem0.loc227_5.2 => constants.%Int32.Op.6afff1.13
+// CHECK:STDOUT:   %specific_impl_fn.loc227_5.2 => constants.%Int32.Op.6afff1.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.187) {
@@ -3648,8 +3648,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.type => constants.%AddAssignWith.WithSelf.Op.type.750
 // CHECK:STDOUT:   %.loc227_5.2 => constants.%.5d8
 // CHECK:STDOUT:   %AddAssignWith.lookup_impl_witness => constants.%custom_witness.3a4
-// CHECK:STDOUT:   %impl.elem0.loc227_5.2 => constants.%Int64.Op.b941da.2
-// CHECK:STDOUT:   %specific_impl_fn.loc227_5.2 => constants.%Int64.Op.b941da.2
+// CHECK:STDOUT:   %impl.elem0.loc227_5.2 => constants.%Int64.Op.b941da.3
+// CHECK:STDOUT:   %specific_impl_fn.loc227_5.2 => constants.%Int64.Op.b941da.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.bd0) {

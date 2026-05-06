@@ -155,56 +155,56 @@ static auto ComputeSignature(Context& context,
     }
 
     const auto& ics = candidate->Conversions[conversion_index];
-    SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::Default;
-
-    // Determine whether this conversion should perform a move when passing an
-    // object of class type by value.
-    clang::QualType to_type;
-    if (ics.isStandard()) {
-      const auto& scs = ics.Standard;
-      if (!scs.ReferenceBinding && arg_expr->isXValue() &&
-          arg_expr->getType()->isRecordType()) {
-        // A standard conversion for a class that is not a reference binding
-        // must be a copy or a move. The source is an xvalue, so we want to
-        // perform a move. If the source is a prvalue, that indicates that it
-        // came from a Carbon value expression, so we should copy, not move.
-        mode = SemIR::Signature::PassingMode::ByValueMove;
-        to_type = scs.getToType(2);
-      }
-    } else if (ics.isUserDefined()) {
-      const auto& ucs = ics.UserDefined;
-      const auto* ctor =
-          dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
-      if (!ucs.After.ReferenceBinding && (!ctor || ctor->isCopyConstructor())) {
-        // Overload resolution wanted to call a function other than a copy
-        // constructor. We should pass by move instead of inserting a copy.
-        mode = SemIR::Signature::PassingMode::ByValueMove;
-        to_type = ucs.After.getToType(2);
-      }
-    }
-
-    // If we decided to perform a move, check if it's really necessary. If the
-    // copy constructor is also non-deleted and trivial, we can just perform a
-    // copy instead. Doing so allows us to generate fewer thunks.
-    if (mode == SemIR::Signature::PassingMode::ByValueMove) {
-      const auto* record_decl = to_type->castAsCXXRecordDecl();
-      // We can pass by copy instead of by move if:
-      // - the move constructor is defaulted and deleted or non-existent, in
-      //   which case overload resolution for a move will call the copy
-      //   constructor, or
-      // - both move and copy are trivial and not deleted, in which case they
-      //   are equivalent.
-      if (!record_decl->hasMoveConstructor() ||
-          (!record_decl->hasUserDeclaredMoveConstructor() &&
-           record_decl->defaultedMoveConstructorIsDeleted()) ||
-          (record_decl->hasTrivialMoveConstructor() &&
-           !record_decl->defaultedMoveConstructorIsDeleted() &&
-           record_decl->hasTrivialCopyConstructor() &&
-           !record_decl->defaultedCopyConstructorIsDeleted())) {
-        mode = SemIR::Signature::PassingMode::Default;
-      }
-    }
-    signature.passing_modes.push_back(mode);
+     SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::ByValue;
+ 
+     // Determine whether this conversion should perform a move when passing an
+     // object of class type by value.
+     clang::QualType to_type;
+     if (ics.isStandard()) {
+       const auto& scs = ics.Standard;
+       if (!scs.ReferenceBinding && arg_expr->isXValue() &&
+           arg_expr->getType()->isRecordType()) {
+         // A standard conversion for a class that is not a reference binding
+         // must be a copy or a move. The source is an xvalue, so we want to
+         // perform a move. If the source is a prvalue, that indicates that it
+         // came from a Carbon value expression, so we should copy, not move.
+         mode = SemIR::Signature::PassingMode::ByVar;
+         to_type = scs.getToType(2);
+       }
+     } else if (ics.isUserDefined()) {
+       const auto& ucs = ics.UserDefined;
+       const auto* ctor =
+           dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
+       if (!ucs.After.ReferenceBinding && (!ctor || ctor->isCopyConstructor())) {
+         // Overload resolution wanted to call a function other than a copy
+         // constructor. We should pass by move instead of inserting a copy.
+         mode = SemIR::Signature::PassingMode::ByVar;
+         to_type = ucs.After.getToType(2);
+       }
+     }
+ 
+     // If we decided to pass by var, check if it's safe to use pass-by-Carbon-value
+     // instead. If the copy constructor is non-deleted and trivial, we can just
+     // perform a copy instead. Doing so allows us to generate fewer thunks.
+     if (mode == SemIR::Signature::PassingMode::ByVar) {
+       const auto* record_decl = to_type->castAsCXXRecordDecl();
+       // We can pass by copy instead of by move if:
+       // - the move constructor is defaulted and deleted or non-existent, in
+       //   which case overload resolution for a move will call the copy
+       //   constructor, or
+       // - both move and copy are trivial and not deleted, in which case they
+       //   are equivalent.
+       if (!record_decl->hasMoveConstructor() ||
+           (!record_decl->hasUserDeclaredMoveConstructor() &&
+            record_decl->defaultedMoveConstructorIsDeleted()) ||
+           (record_decl->hasTrivialMoveConstructor() &&
+            !record_decl->defaultedMoveConstructorIsDeleted() &&
+            record_decl->hasTrivialCopyConstructor() &&
+            !record_decl->defaultedCopyConstructorIsDeleted())) {
+         mode = SemIR::Signature::PassingMode::ByValue;
+       }
+     }
+     signature.passing_modes.push_back(mode);
   }
 
   return context.signatures().Add(std::move(signature));

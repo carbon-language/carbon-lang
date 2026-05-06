@@ -67,7 +67,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_22.1.temp), !dbg !15
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc14_22.1.temp, align 8, !dbg !15
-// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr %.loc14_22.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk.V(ptr %.loc14_22.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.705e422c84320121:core.Destroy.Core"(ptr %.loc14_22.1.temp), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.e34c165b4a1e692a:core.Destroy.Core"(ptr %.loc12_18.2.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !18
@@ -76,7 +76,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare void @_Z7TakePtrPi(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z11TakeNullptrDn.carbon_thunk(ptr noundef %n) #2 {
+// CHECK:STDOUT: define internal void @_Z11TakeNullptrDn.carbon_thunk.V(ptr noundef %n) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %n, ptr %n.addr, align 8, !tbaa !19

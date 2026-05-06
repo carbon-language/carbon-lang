@@ -197,6 +197,20 @@ fn Call() {
 // CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk.type: type = fn_type @D__carbon_thunk [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %X.X.type: type = fn_type @X.X [concrete]
+// CHECK:STDOUT:   %X.X: %X.X.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const.551: type = const_type %X [concrete]
+// CHECK:STDOUT:   %ptr.8e3: type = ptr_type %const.551 [concrete]
+// CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
+// CHECK:STDOUT:   %X__carbon_thunk: %X__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type.8ba98d.1: type = fn_type @X.Op.1 [concrete]
+// CHECK:STDOUT:   %X.Op.745665.1: %X.Op.type.8ba98d.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b1c: <witness> = custom_witness (%X.Op.745665.1), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.c04: %Copy.type = facet_value %X, (%custom_witness.b1c) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.887: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c04) [concrete]
+// CHECK:STDOUT:   %.157: type = fn_type_with_self_type %Copy.WithSelf.Op.type.887, %Copy.facet.c04 [concrete]
+// CHECK:STDOUT:   %X.Op.bound.b0f: <bound method> = bound_method %X.val, %X.Op.745665.1 [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -237,6 +251,16 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %D__carbon_thunk.decl: %D__carbon_thunk.type = fn_decl @D__carbon_thunk [concrete = constants.%D__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.X.decl: %X.X.type = fn_decl @X.X [concrete = constants.%X.X] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X__carbon_thunk.decl: %X__carbon_thunk.type = fn_decl @X__carbon_thunk [concrete = constants.%X__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -385,6 +409,20 @@ fn Call() {
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc12_7.3: %X = acquire_value %.loc12_7.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc12_7: %.157 = impl_witness_access constants.%custom_witness.b1c, element0 [concrete = constants.%X.Op.745665.1]
+// CHECK:STDOUT:   %bound_method.loc12_7: <bound method> = bound_method %.loc12_7.3, %impl.elem0.loc12_7 [concrete = constants.%X.Op.bound.b0f]
+// CHECK:STDOUT:   %.loc12_7.4: ref %X = temporary_storage
+// CHECK:STDOUT:   %Op.ref.loc12_7.1: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc12_7.5: ref %X = value_as_ref %.loc12_7.3
+// CHECK:STDOUT:   %addr.loc12_7.1: %ptr.1f9 = addr_of %.loc12_7.5
+// CHECK:STDOUT:   %.loc12_7.6: %ptr.8e3 = as_compatible %addr.loc12_7.1
+// CHECK:STDOUT:   %.loc12_7.7: %ptr.8e3 = converted %addr.loc12_7.1, %.loc12_7.6
+// CHECK:STDOUT:   %addr.loc12_7.2: %ptr.1f9 = addr_of %self.var
+// CHECK:STDOUT:   %X__carbon_thunk.call: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc12_7.7, %addr.loc12_7.2)
+// CHECK:STDOUT:   %.loc12_7.8: init %X to %self.var = mark_in_place_init %X__carbon_thunk.call
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0.loc12_19: %.9db = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f1a]
 // CHECK:STDOUT:   %bound_method.loc12_19.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d43]
 // CHECK:STDOUT:   %specific_fn.loc12_19: <specific function> = specific_function %impl.elem0.loc12_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -399,11 +437,10 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_22: init %i32 = call %bound_method.loc12_22.2(%int_2.loc12) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %int_2.loc12, %.loc12_22.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc12_7.4: ref %X = value_as_ref %.loc12_7.3
-// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc12_7.4
-// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc12_19.2, %.loc12_22.2)
+// CHECK:STDOUT:   %addr.loc12_23: %ptr.1f9 = addr_of %self.var
+// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc12_23, %.loc12_19.2, %.loc12_22.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.ref.loc12: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %Op.ref.loc12_7.2: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc10: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -477,17 +514,48 @@ fn Call() {
 // CHECK:STDOUT:   %pattern_type.45c: type = pattern_type %ptr.1f9 [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk.type: type = fn_type @D__carbon_thunk [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Self.035: %Copy.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.255: type = facet_access_type %Self.035 [symbolic]
+// CHECK:STDOUT:   %.435d17.1: Core.Form = init_form %Self.as_type.255 [symbolic]
+// CHECK:STDOUT:   %.1d8: Core.Form = init_form %X [concrete]
+// CHECK:STDOUT:   %X.X.type: type = fn_type @X.X [concrete]
+// CHECK:STDOUT:   %X.X: %X.X.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const.551: type = const_type %X [concrete]
+// CHECK:STDOUT:   %ptr.8e3: type = ptr_type %const.551 [concrete]
+// CHECK:STDOUT:   %pattern_type.c91: type = pattern_type %ptr.8e3 [concrete]
+// CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
+// CHECK:STDOUT:   %X__carbon_thunk: %X__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.e08: <witness> = custom_witness (), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.8e5: %Copy.type = facet_value %X, (%custom_witness.e08) [concrete]
+// CHECK:STDOUT:   %X.Op.type.8ba98d.1: type = fn_type @X.Op.1 [concrete]
+// CHECK:STDOUT:   %X.Op.745665.1: %X.Op.type.8ba98d.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b1c: <witness> = custom_witness (%X.Op.745665.1), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.c04: %Copy.type = facet_value %X, (%custom_witness.b1c) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.887: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c04) [concrete]
+// CHECK:STDOUT:   %.157: type = fn_type_with_self_type %Copy.WithSelf.Op.type.887, %Copy.facet.c04 [concrete]
+// CHECK:STDOUT:   %X.Op.bound.b0f: <bound method> = bound_method %X.val, %X.Op.745665.1 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Self.765: %Destroy.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.cb2: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Self.765) [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.9f1: %Destroy.WithSelf.Op.type.cb2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.assoc_type: type = assoc_entity_type @Destroy [concrete]
+// CHECK:STDOUT:   %assoc0.9d9: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.8bb [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
-// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type.8ba98d.2: type = fn_type @X.Op.2 [concrete]
+// CHECK:STDOUT:   %X.Op.745665.2: %X.Op.type.8ba98d.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b67: <witness> = custom_witness (%X.Op.745665.2), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.a54: %Destroy.type = facet_value %X, (%custom_witness.b67) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ac0: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.a54) [concrete]
+// CHECK:STDOUT:   %.46e: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.ac0, %Destroy.facet.a54 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -631,7 +699,34 @@ fn Call() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
+// CHECK:STDOUT:   %Core.import_ref.1f7: type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @Copy.WithSelf.Op.%Self.as_type (constants.%Self.as_type.255)]
+// CHECK:STDOUT:   %Core.import_ref.e4b: Core.Form = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @Copy.WithSelf.Op.%.1 (constants.%.435d17.1)]
+// CHECK:STDOUT:   %X.X.decl: %X.X.type = fn_decl @X.X [concrete = constants.%X.X] {
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.46b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.46b = at_binding_pattern _, %_.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.46b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.46b = return_slot_pattern %return.param_patt, imports.%X.decl [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.param: %X = value_param call_param0
+// CHECK:STDOUT:     %_: %X = value_binding _, %_.param
+// CHECK:STDOUT:     %return.param: ref %X = out_param call_param1
+// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X__carbon_thunk.decl: %X__carbon_thunk.type = fn_decl @X__carbon_thunk [concrete = constants.%X__carbon_thunk] {
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.c91 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.c91 = at_binding_pattern _, %_.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.45c = value_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.45c = at_binding_pattern r#return, %return.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.param: %ptr.8e3 = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.8e3 = value_binding _, %_.param
+// CHECK:STDOUT:     %return.param: %ptr.1f9 = value_param call_param1
+// CHECK:STDOUT:     %return: %ptr.1f9 = value_binding r#return, %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.06b: %Destroy.assoc_type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0.9d9]
+// CHECK:STDOUT:   %Core.import_ref.8bb: @Destroy.WithSelf.%Destroy.WithSelf.Op.type (%Destroy.WithSelf.Op.type.cb2) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.9f1)]
 // CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
@@ -781,24 +876,55 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method.loc13_16: <bound method> = bound_method %.loc13_7.2, %D.ref [concrete = constants.%bound_method.d5c]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc13_7.3: %X = acquire_value %.loc13_7.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:   %impl.elem0.loc13: %.9db = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f1a]
-// CHECK:STDOUT:   %bound_method.loc13_19.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d43]
-// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %.1: type = specific_constant imports.%Core.import_ref.1f7, @Copy.WithSelf.Op(constants.%Copy.facet.8e5) [concrete = constants.%X]
+// CHECK:STDOUT:   %.2: type = specific_constant imports.%Core.import_ref.e4b, @Copy.WithSelf.Op(constants.%Copy.facet.8e5) [concrete = constants.%.1d8]
+// CHECK:STDOUT:   %X.Op.decl.1: %X.Op.type.8ba98d.1 = fn_decl @X.Op.1 [concrete = constants.%X.Op.745665.1] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.46b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.46b = return_slot_pattern %return.param_patt, invalid [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %X = value_param call_param0
+// CHECK:STDOUT:     %self: %X = value_binding self, %self.param
+// CHECK:STDOUT:     %return.param: ref %X = out_param call_param1
+// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc13_7: %.157 = impl_witness_access constants.%custom_witness.b1c, element0 [concrete = constants.%X.Op.745665.1]
+// CHECK:STDOUT:   %bound_method.loc13_7: <bound method> = bound_method %.loc13_7.3, %impl.elem0.loc13_7 [concrete = constants.%X.Op.bound.b0f]
+// CHECK:STDOUT:   %.loc13_7.4: ref %X = temporary_storage
+// CHECK:STDOUT:   %Op.ref.loc13_7.1: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
+// CHECK:STDOUT:   %self.var: ref %X = var @X.D.%self.param_patt
+// CHECK:STDOUT:   %.loc13_7.5: ref %X = value_as_ref %.loc13_7.3
+// CHECK:STDOUT:   %addr.loc13_7.1: %ptr.1f9 = addr_of %.loc13_7.5
+// CHECK:STDOUT:   %.loc13_7.6: %ptr.8e3 = as_compatible %addr.loc13_7.1
+// CHECK:STDOUT:   %.loc13_7.7: %ptr.8e3 = converted %addr.loc13_7.1, %.loc13_7.6
+// CHECK:STDOUT:   %addr.loc13_7.2: %ptr.1f9 = addr_of %self.var
+// CHECK:STDOUT:   %X__carbon_thunk.call: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc13_7.7, %addr.loc13_7.2)
+// CHECK:STDOUT:   %.loc13_7.8: init %X to %self.var = mark_in_place_init %X__carbon_thunk.call
+// CHECK:STDOUT:   assign %self.var, %.loc13_7.8
+// CHECK:STDOUT:   %impl.elem0.loc13_19: %.9db = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f1a]
+// CHECK:STDOUT:   %bound_method.loc13_19.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d43]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_19.2: <bound method> = bound_method %int_1.loc13, %specific_fn.loc13 [concrete = constants.%bound_method.e79]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_19.2(%int_1.loc13) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %int_1.loc13, %.loc13_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc13_7.4: ref %X = value_as_ref %.loc13_7.3
-// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc13_7.4
-// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc13_19.2)
-// CHECK:STDOUT:   %X.Op.decl: %X.Op.type = fn_decl @X.Op [concrete = constants.%X.Op] {
+// CHECK:STDOUT:   %addr.loc13_20: %ptr.1f9 = addr_of %self.var
+// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc13_20, %.loc13_19.2)
+// CHECK:STDOUT:   %Op.ref.1: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.06b [concrete = constants.%assoc0.9d9]
+// CHECK:STDOUT:   %X.Op.decl.2: %X.Op.type.8ba98d.2 = fn_decl @X.Op.2 [concrete = constants.%X.Op.745665.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.46b = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Op.ref.loc13: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %impl.elem0.1: %.46e = impl_witness_access constants.%custom_witness.b67, element0 [concrete = constants.%X.Op.745665.2]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %self.var, %impl.elem0.1
+// CHECK:STDOUT:   %Op.ref.2: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.var, %Op.ref.2
+// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%self.var)
+// CHECK:STDOUT:   %Op.ref.loc13_7.2: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc11: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -823,13 +949,31 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C__carbon_thunk(%a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.D(%self.param: %X, %a.param: %i32);
+// CHECK:STDOUT: fn @X.D(%self.param: ref %X, %a.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D__carbon_thunk(%_.param: %ptr.1f9, %a.param: %i32);
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @X.X(%_.param: %X) -> out %return.param: %X;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @X__carbon_thunk(%_.param: %ptr.8e3, %return.param: %ptr.1f9);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @X.Op.1(%self.param: %X) -> out %return.param: %X [thunk imports.%X.X.decl] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Op.ref: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
+// CHECK:STDOUT:   %.1: ref %X = splice_block %return.param {}
+// CHECK:STDOUT:   %.2: ref %X = value_as_ref %self.param
+// CHECK:STDOUT:   %addr.1: %ptr.1f9 = addr_of %.2
+// CHECK:STDOUT:   %.3: %ptr.8e3 = as_compatible %addr.1
+// CHECK:STDOUT:   %.4: %ptr.8e3 = converted %addr.1, %.3
+// CHECK:STDOUT:   %addr.2: %ptr.1f9 = addr_of %.1
+// CHECK:STDOUT:   %X__carbon_thunk.call: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.4, %addr.2)
+// CHECK:STDOUT:   %.5: init %X to %.1 = mark_in_place_init %X__carbon_thunk.call
+// CHECK:STDOUT:   return %.5 to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.cpp_destructor(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.Op(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl] {
+// CHECK:STDOUT: fn @X.Op.2(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref

@@ -91,12 +91,12 @@ static auto GenerateThunkMangledName(
   // Append passing modes if there are any non-default modes. Otherwise, include
   // the parameter count if it's not the default.
   if (llvm::any_of(signature.passing_modes, [](auto mode) {
-        return mode != SemIR::Signature::PassingMode::Default;
+        return mode != SemIR::Signature::PassingMode::ByVar;
       })) {
     mangled_name_stream << ".";
     for (auto mode : signature.passing_modes) {
-      mangled_name_stream << (mode == SemIR::Signature::PassingMode::ByValueMove
-                                  ? "M"
+      mangled_name_stream << (mode == SemIR::Signature::PassingMode::ByValue
+                                  ? "V"
                                   : "_");
     }
   } else if (signature.num_params !=
@@ -267,7 +267,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
       decl->getType()->castAs<clang::FunctionProtoType>();
   for (int i : llvm::seq(decl->getNumParams())) {
     if (!IsSimpleAbiType(ast_context, function_type->getParamType(i),
-                         /*for_parameter=*/true)) {
+                         /*for_parameter=*/true) ||
+        signature.GetPassingMode(i) == SemIR::Signature::PassingMode::ByVar) {
       return true;
     }
   }
@@ -469,7 +470,7 @@ static auto BuildThunkParamRef(clang::Sema& sema,
                                unsigned thunk_index,
                                clang::QualType type = clang::QualType(),
                                SemIR::Signature::PassingMode passing_mode =
-                                   SemIR::Signature::PassingMode::Default)
+                                   SemIR::Signature::PassingMode::ByVar)
     -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
@@ -495,7 +496,8 @@ static auto BuildThunkParamRef(clang::Sema& sema,
   // different thunks depending on whether we're moving from each parameter.
   if (!type.isNull() &&
       (type->isRValueReferenceType() ||
-       passing_mode == SemIR::Signature::PassingMode::ByValueMove)) {
+       (!type->isReferenceType() &&
+        passing_mode == SemIR::Signature::PassingMode::ByVar))) {
     call_arg = clang::ImplicitCastExpr::Create(
         sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
         nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
@@ -752,6 +754,10 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
           {.type_id = GetPointerType(
                context, context.types().GetTypeInstId(callee_param_type_id)),
            .lvalue_id = arg_id});
+      arg_id =
+          ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
+    } else if (context.insts().Is<SemIR::RefParam>(callee_param_inst_id) &&
+               context.insts().Is<SemIR::ValueParam>(thunk_param_inst_id)) {
       arg_id =
           ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
     }

@@ -23,12 +23,12 @@ auto Signature::Print(llvm::raw_ostream& out) const -> void {
   }
   out << ", num_params: " << num_params;
   if (!passing_modes.empty() && llvm::any_of(passing_modes, [](auto mode) {
-        return mode != PassingMode::Default;
+        return mode != PassingMode::ByVar;
       })) {
     out << ", modes: [";
     llvm::ListSeparator sep;
     for (auto mode : passing_modes) {
-      out << sep << (mode == PassingMode::ByValueMove ? "move" : "default");
+      out << sep << (mode == PassingMode::ByValue ? "value" : "var");
     }
     out << "]";
   }

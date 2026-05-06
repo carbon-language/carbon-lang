@@ -743,14 +743,37 @@ fn Four() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_27.1.temp = alloca [1 x i8], align 1, !dbg !21
 // CHECK:STDOUT:   %.loc13_18.1.temp = alloca [1 x i8], align 1, !dbg !22
+// CHECK:STDOUT:   %_.var.1 = alloca i32, align 4
 // CHECK:STDOUT:   %.loc14_21.2.temp = alloca [1 x i8], align 1, !dbg !23
+// CHECK:STDOUT:   %_.var.2 = alloca i32, align 4
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 1, ptr %.loc12_27.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk.V(i32 1, ptr %.loc12_27.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 2, ptr %.loc13_18.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1)
+// CHECK:STDOUT:   store i32 2, ptr %_.var.1, align 4
+// CHECK:STDOUT:   %.3 = load i32, ptr %_.var.1, align 4
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 %.3, ptr %.loc13_18.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_21.2.temp), !dbg !23
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 3, ptr %.loc14_21.2.temp), !dbg !23
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2)
+// CHECK:STDOUT:   store i32 3, ptr %_.var.2, align 4
+// CHECK:STDOUT:   %.6 = load i32, ptr %_.var.2, align 4
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 %.6, ptr %.loc14_21.2.temp), !dbg !23
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.2), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.1), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_ZN1CC1Ei.carbon_thunk.V(i32 noundef %0, ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !7
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   %2 = load i32, ptr %.addr, align 4, !tbaa !7
+// CHECK:STDOUT:   call void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %1, i32 noundef %2)
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -780,19 +803,35 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTwo.Main() #0 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !26
-// CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !26
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !27
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !27
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !33
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTwo.Main() #0 !dbg !34 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !35
+// CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !36
+// CHECK:STDOUT:   %_.var.1 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.2 = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !35
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk.VV(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !35
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !36
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1)
+// CHECK:STDOUT:   store i32 3, ptr %_.var.1, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2)
+// CHECK:STDOUT:   store i32 4, ptr %_.var.2, align 4
+// CHECK:STDOUT:   %.5 = load i32, ptr %_.var.1, align 4
+// CHECK:STDOUT:   %.6 = load i32, ptr %_.var.2, align 4
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 %.5, i32 %.6, ptr %.loc19_23.2.temp), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.2), !dbg !37
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.1), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk.VV(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -824,19 +863,34 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CThree.Main() #0 !dbg !29 {
+// CHECK:STDOUT: define void @_CThree.Main() #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !30
-// CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk3(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !31
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !40
+// CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !41
+// CHECK:STDOUT:   %_.var.1 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.2 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.3 = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !40
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.VVV(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !40
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !41
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1)
+// CHECK:STDOUT:   store i32 4, ptr %_.var.1, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2)
+// CHECK:STDOUT:   store i32 5, ptr %_.var.2, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.3)
+// CHECK:STDOUT:   store i32 6, ptr %_.var.3, align 4
+// CHECK:STDOUT:   %.7 = load i32, ptr %_.var.1, align 4
+// CHECK:STDOUT:   %.8 = load i32, ptr %_.var.2, align 4
+// CHECK:STDOUT:   %.9 = load i32, ptr %_.var.3, align 4
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 %.7, i32 %.8, i32 %.9, ptr %.loc24_26.2.temp), !dbg !41
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.3), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.2), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.1), !dbg !42
+// CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk3(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk.VVV(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -874,19 +928,39 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFour.Main() #0 !dbg !33 {
+// CHECK:STDOUT: define void @_CFour.Main() #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !34
-// CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !35
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !35
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !45
+// CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !46
+// CHECK:STDOUT:   %_.var.1 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.2 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.3 = alloca i32, align 4
+// CHECK:STDOUT:   %_.var.4 = alloca i32, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !45
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.VVVV(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !45
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !46
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1)
+// CHECK:STDOUT:   store i32 5, ptr %_.var.1, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2)
+// CHECK:STDOUT:   store i32 6, ptr %_.var.2, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.3)
+// CHECK:STDOUT:   store i32 7, ptr %_.var.3, align 4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.4)
+// CHECK:STDOUT:   store i32 8, ptr %_.var.4, align 4
+// CHECK:STDOUT:   %.9 = load i32, ptr %_.var.1, align 4
+// CHECK:STDOUT:   %.10 = load i32, ptr %_.var.2, align 4
+// CHECK:STDOUT:   %.11 = load i32, ptr %_.var.3, align 4
+// CHECK:STDOUT:   %.12 = load i32, ptr %_.var.4, align 4
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 %.9, i32 %.10, i32 %.11, i32 %.12, ptr %.loc29_29.2.temp), !dbg !46
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.4), !dbg !47
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.3), !dbg !47
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.2), !dbg !47
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.1), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk.VVVV(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -983,8 +1057,8 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN1CC1Ei.carbon_thunk, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.7e389eab4a7e5487:core.Destroy.Core", { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 9 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -1019,16 +1093,28 @@ fn Four() {
 // CHECK:STDOUT: !21 = !DILocation(line: 12, column: 18, scope: !20)
 // CHECK:STDOUT: !22 = !DILocation(line: 13, column: 18, scope: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 14, column: 18, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 1, scope: !20)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 18, scope: !25)
-// CHECK:STDOUT: !27 = !DILocation(line: 19, column: 18, scope: !25)
-// CHECK:STDOUT: !28 = !DILocation(line: 17, column: 1, scope: !25)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !30 = !DILocation(line: 23, column: 18, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 24, column: 18, scope: !29)
-// CHECK:STDOUT: !32 = !DILocation(line: 22, column: 1, scope: !29)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !6, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !34 = !DILocation(line: 28, column: 18, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 29, column: 18, scope: !33)
-// CHECK:STDOUT: !36 = !DILocation(line: 27, column: 1, scope: !33)
+// CHECK:STDOUT: !24 = !DILocation(line: 4294967295, scope: !20)
+// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 1, scope: !20)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !27, line: 5, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !27 = !DIFile(filename: "./multi_argument.h", directory: "")
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !29 = !{null, !30}
+// CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !31 = !{!32}
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !26, type: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 5, column: 8, scope: !26)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !35 = !DILocation(line: 18, column: 18, scope: !34)
+// CHECK:STDOUT: !36 = !DILocation(line: 19, column: 18, scope: !34)
+// CHECK:STDOUT: !37 = !DILocation(line: 4294967295, scope: !34)
+// CHECK:STDOUT: !38 = !DILocation(line: 17, column: 1, scope: !34)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !40 = !DILocation(line: 23, column: 18, scope: !39)
+// CHECK:STDOUT: !41 = !DILocation(line: 24, column: 18, scope: !39)
+// CHECK:STDOUT: !42 = !DILocation(line: 4294967295, scope: !39)
+// CHECK:STDOUT: !43 = !DILocation(line: 22, column: 1, scope: !39)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !6, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !45 = !DILocation(line: 28, column: 18, scope: !44)
+// CHECK:STDOUT: !46 = !DILocation(line: 29, column: 18, scope: !44)
+// CHECK:STDOUT: !47 = !DILocation(line: 4294967295, scope: !44)
+// CHECK:STDOUT: !48 = !DILocation(line: 27, column: 1, scope: !44)
