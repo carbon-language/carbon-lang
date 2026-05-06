@@ -333,7 +333,11 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
                                         name_context.parent_scope_id,
                                         name_context.initial_scope_index);
   if (lookup_result.is_poisoned()) {
-    name_context.poisoning_loc_id = lookup_result.poisoning_loc_id();
+    auto poisoning_loc_id = lookup_result.poisoning_loc_id();
+    if (!poisoning_loc_id.has_value()) {
+      poisoning_loc_id = name_context.loc_id;
+    }
+    name_context.poisoning_loc_id = poisoning_loc_id;
     name_context.state = NameContext::State::Poisoned;
   } else if (!lookup_result.is_found()) {
     // Invalid indicates an unresolved name. Store it and return.
