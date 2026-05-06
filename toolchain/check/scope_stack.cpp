@@ -170,17 +170,6 @@ auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
                PeekIndex());
 }
 
-auto ScopeStack::AddImplIdToParent(SemIR::ImplId impl_id) -> void {
-  CARBON_DCHECK(scope_stack_.size() >= 2);
-  auto& entry = scope_stack_[scope_stack_.size() - 2];
-  entry.impl_decls.push_back(impl_id);
-}
-auto ScopeStack::FindImplIdInParent(SemIR::ImplId impl_id) -> bool {
-  CARBON_DCHECK(scope_stack_.size() >= 2);
-  auto& entry = scope_stack_[scope_stack_.size() - 2];
-  return Contains(entry.impl_decls, impl_id);
-}
-
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
                           bool is_reachable) -> void {
   auto& lexical_results = lexical_lookup_.Get(name_id);

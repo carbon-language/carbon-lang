@@ -82,67 +82,92 @@ auto CheckAssociatedFunctionImplementation(
                     defer_thunk_definition);
 }
 
+static auto GetScopeInstId(Context& context, SemIR::InstId scope_inst_id)
+    -> SemIR::InstId {
+  if (!scope_inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+  auto inst_id = context.constant_values().GetConstantInstId(scope_inst_id);
+  if (auto struct_val = context.insts().TryGetAs<SemIR::StructValue>(inst_id)) {
+    inst_id = context.types().GetTypeInstId(struct_val->type_id);
+  }
+  return inst_id;
+}
+
+enum class ImplRedeclType {
+  ValidRedecl,
+  Mismatch,
+  DiagnosedInvalidRedecl,
+};
+
 // Returns whether the scope of the `new_impl` is the same as the scope of the
-// `prev_impl`. This accounts for matching namespace and class scopes across
-// imports, and function and block scopes locally.
+// `prev_impl`. If the `new_impl` is in an invalid scope for a redecl, that is
+// diagnosed.
 static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
-                        SemIR::ImplId prev_impl_id,
-                        const SemIR::Impl& prev_impl) -> bool {
-  if (new_impl.parent_scope_inst_id.has_value() !=
-      prev_impl.parent_scope_inst_id.has_value()) {
-    return false;
-  }
-  if (new_impl.parent_scope_id.has_value()) {
-    auto new_scope_inst =
-        context.insts().Get(context.constant_values().GetConstantInstId(
-            new_impl.parent_scope_inst_id));
-    auto prev_scope_inst =
-        context.insts().Get(context.constant_values().GetConstantInstId(
-            prev_impl.parent_scope_inst_id));
-    if (new_scope_inst.kind() != prev_scope_inst.kind()) {
-      return false;
+                        const SemIR::Impl& prev_impl) -> ImplRedeclType {
+  auto new_id = GetScopeInstId(context, new_impl.parent_scope_inst_id);
+  auto prev_id = GetScopeInstId(context, prev_impl.parent_scope_inst_id);
+  if (new_id.has_value()) {
+    auto new_scope_inst = context.insts().Get(new_id);
+    CARBON_KIND_SWITCH(new_scope_inst) {
+      case CARBON_KIND(SemIR::ClassType new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::ClassType>(prev_id)) {
+          if (new_scope.class_id == prev_scope->class_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      case CARBON_KIND(SemIR::GenericClassType new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::GenericClassType>(prev_id)) {
+          if (new_scope.class_id == prev_scope->class_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      case CARBON_KIND(SemIR::Namespace new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::Namespace>(prev_id)) {
+          if (new_scope.name_scope_id == prev_scope->name_scope_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      default:
+        break;
     }
-    if (new_scope_inst.Is<SemIR::ClassType>()) {
-      auto new_class = new_scope_inst.As<SemIR::ClassType>();
-      auto prev_class = prev_scope_inst.As<SemIR::ClassType>();
-      return new_class.class_id == prev_class.class_id;
-    } else if (new_scope_inst.Is<SemIR::Namespace>()) {
-      auto new_namespace = new_scope_inst.As<SemIR::Namespace>();
-      auto prev_namespace = prev_scope_inst.As<SemIR::Namespace>();
-      return new_namespace.name_scope_id == prev_namespace.name_scope_id;
-    }
   }
-  // They are each in a function or block scope. These scopes can't be
-  // re-entered across import so we just need to look to see they are the same
-  // scope locally. The new impl has a scope entry of its own on the stack, so
-  // look in the parent for the previous impl.
-  return context.scope_stack().FindImplIdInParent(prev_impl_id);
+
+  // The redecl is is an invalid scope.
+  CARBON_DIAGNOSTIC(ImplDeclInInvalidScope, Error,
+                    "impl redeclation not in a declarative scope; "
+                    "redeclaration is allowed only in a class or namespace");
+  context.emitter().Emit(new_impl.latest_decl_id(), ImplDeclInInvalidScope);
+  return ImplRedeclType::DiagnosedInvalidRedecl;
 }
 
 // Returns true if impl redeclaration parameters and scopes match.
-static auto ImplRedeclMatches(Context& context, const SemIR::Impl& new_impl,
-                              SemIR::ImplId prev_impl_id,
-                              const SemIR::Impl& prev_impl) -> bool {
+static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
+                             const SemIR::Impl& prev_impl) -> ImplRedeclType {
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::None,
                               /*diagnose=*/false, /*check_syntax=*/true,
                               /*check_self=*/true)) {
-    return false;
+    return ImplRedeclType::Mismatch;
   }
 
   // If the scopes are different, it is not treated as a redeclaration.
-  if (!ScopesMatch(context, new_impl, prev_impl_id, prev_impl)) {
-    return false;
+  if (auto scope_result = ScopesMatch(context, new_impl, prev_impl);
+      scope_result != ImplRedeclType::ValidRedecl) {
+    return scope_result;
   }
 
-  return true;
-}
-
-static auto VerifyImplRedeclIsValid(Context& context,
-                                    const SemIR::Impl& new_impl,
-                                    const SemIR::Impl& prev_impl) -> bool {
   // Following #4672, disallowing defining non-extern declarations in another
   // file.
   if (auto import_ref =
@@ -152,7 +177,7 @@ static auto VerifyImplRedeclIsValid(Context& context,
                       "redeclaration of imported impl");
     // TODO: Note imported declaration
     context.emitter().Emit(new_impl.latest_decl_id(), RedeclImportedImpl);
-    return false;
+    return ImplRedeclType::DiagnosedInvalidRedecl;
   }
 
   if (prev_impl.has_definition_started()) {
@@ -168,10 +193,10 @@ static auto VerifyImplRedeclIsValid(Context& context,
                new_impl.constraint_id)
         .Note(prev_impl.definition_id, ImplPreviousDefinition)
         .Emit();
-    return false;
+    return ImplRedeclType::DiagnosedInvalidRedecl;
   }
 
-  return true;
+  return ImplRedeclType::ValidRedecl;
 }
 
 // Looks for any unused generic bindings. If one is found, it is diagnosed and
@@ -293,15 +318,19 @@ auto FindImplId(Context& context, const SemIR::Impl& query_impl)
   for (auto prev_impl_id : lookup_bucket_ref) {
     auto& prev_impl = context.impls().Get(prev_impl_id);
 
-    if (ImplRedeclMatches(context, query_impl, prev_impl_id, prev_impl)) {
-      if (!VerifyImplRedeclIsValid(context, query_impl, prev_impl)) {
+    auto redecl_type = VerifyImplRedecl(context, query_impl, prev_impl);
+    switch (redecl_type) {
+      case ImplRedeclType::ValidRedecl:
+        // Found a valid redecl.
+        return RedeclaredImpl{.prev_impl_id = prev_impl_id};
+      case ImplRedeclType::Mismatch:
+        // Did not match as a redecl, try again.
+        break;
+      case ImplRedeclType::DiagnosedInvalidRedecl:
         // Found an invalid redecl, which has been diagnosed as such. Treat it
         // as a new decl, with an error.
         return NewImpl{.lookup_bucket = lookup_bucket_ref,
                        .find_had_error = true};
-      }
-      // Found a valid redecl.
-      return RedeclaredImpl{.prev_impl_id = prev_impl_id};
     }
   }
 

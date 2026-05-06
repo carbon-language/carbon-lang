@@ -311,9 +311,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     }
   }
 
-  // Record this `impl` decl was written in the parent scope.
-  context.scope_stack().AddImplIdToParent(impl_id);
-
   // `FindImplId` returned an existing ImplId, or we added a new id with
   // `AddImpl` above. Write that ImplId into the ImplDecl instruction and finish
   // it.

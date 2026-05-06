@@ -94,9 +94,6 @@ class ScopeStack {
     return Peek(1).scope_inst_id;
   }
 
-  auto AddImplIdToParent(SemIR::ImplId impl_id) -> void;
-  auto FindImplIdInParent(SemIR::ImplId impl_id) -> bool;
-
   // Returns the specific associated with the innermost enclosing scope that is
   // associated with a specific. This will generally be the self specific of the
   // innermost enclosing generic, as there is no way to enter any other specific
@@ -258,9 +255,6 @@ class ScopeStack {
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     Set<SemIR::NameId> names = {};
-
-    // A set of `impl` decls written in the scope, sorted by their id index.
-    llvm::SmallVector<SemIR::ImplId> impl_decls;
   };
 
   // A scope in which `return` can be used.
