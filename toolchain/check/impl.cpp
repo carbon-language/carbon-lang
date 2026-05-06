@@ -19,6 +19,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -81,12 +82,9 @@ auto CheckAssociatedFunctionImplementation(
                     defer_thunk_definition);
 }
 
-// Returns true if impl redeclaration parameters match.
-static auto CheckImplRedeclParamsMatch(Context& context,
-                                       const SemIR::Impl& new_impl,
-                                       SemIR::ImplId prev_impl_id) -> bool {
-  auto& prev_impl = context.impls().Get(prev_impl_id);
-
+// Returns true if impl redeclaration parameters and scopes match.
+static auto ImplRedeclMatches(Context& context, const SemIR::Impl& new_impl,
+                              const SemIR::Impl& prev_impl) -> bool {
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
@@ -96,17 +94,46 @@ static auto CheckImplRedeclParamsMatch(Context& context,
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
+
+  // If the scopes are different, it is not treated as a redeclaration.
+  auto new_scope_inst =
+      context.insts().Get(context.constant_values().GetConstantInstId(
+          new_impl.parent_scope_inst_id));
+  auto prev_scope_inst =
+      context.insts().Get(context.constant_values().GetConstantInstId(
+          prev_impl.parent_scope_inst_id));
+  if (new_scope_inst.kind() != prev_scope_inst.kind()) {
+    return false;
+  }
+  if (new_scope_inst.Is<SemIR::ClassType>()) {
+    auto new_class = new_scope_inst.As<SemIR::ClassType>();
+    auto prev_class = prev_scope_inst.As<SemIR::ClassType>();
+    if (new_class.class_id != prev_class.class_id) {
+      return false;
+    }
+  } else if (new_scope_inst.Is<SemIR::Namespace>()) {
+    auto new_namespace = new_scope_inst.As<SemIR::Namespace>();
+    auto prev_namespace = prev_scope_inst.As<SemIR::Namespace>();
+    if (new_namespace.name_scope_id != prev_namespace.name_scope_id) {
+      return false;
+    }
+  } else if (new_scope_inst.Is<SemIR::StructValue>()) {
+    // A functions's constant value is a StructValue.
+    auto new_struct = new_scope_inst.As<SemIR::StructValue>();
+    auto prev_struct = prev_scope_inst.As<SemIR::StructValue>();
+    if (new_struct.type_id != prev_struct.type_id) {
+      return false;
+    }
+  } else {
+    CARBON_FATAL("unexpected scope {0} for impl", new_scope_inst);
+  }
+
   return true;
 }
 
-// Returns whether an impl can be redeclared. For example, defined impls
-// cannot be redeclared.
-static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
-                              SemIR::ImplId prev_impl_id) -> bool {
-  auto& prev_impl = context.impls().Get(prev_impl_id);
-
-  // TODO: Following #3763, disallow redeclarations in different scopes.
-
+static auto VerifyImplRedeclIsValid(Context& context,
+                                    const SemIR::Impl& new_impl,
+                                    const SemIR::Impl& prev_impl) -> bool {
   // Following #4672, disallowing defining non-extern declarations in another
   // file.
   if (auto import_ref =
@@ -134,8 +161,6 @@ static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
         .Emit();
     return false;
   }
-
-  // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
   return true;
 }
@@ -257,16 +282,17 @@ auto FindImplId(Context& context, const SemIR::Impl& query_impl)
   // TODO: Detect two impl declarations with the same self type and interface,
   // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
-    if (CheckImplRedeclParamsMatch(context, query_impl, prev_impl_id)) {
-      if (IsValidImplRedecl(context, query_impl, prev_impl_id)) {
-        return RedeclaredImpl{.prev_impl_id = prev_impl_id};
-      } else {
-        // IsValidImplRedecl() has issued a diagnostic, take care to avoid
-        // generating more diagnostics for this declaration.
+    auto& prev_impl = context.impls().Get(prev_impl_id);
+
+    if (ImplRedeclMatches(context, query_impl, prev_impl)) {
+      if (!VerifyImplRedeclIsValid(context, query_impl, prev_impl)) {
+        // Found an invalid redecl, which has been diagnosed as such. Treat it
+        // as a new decl, with an error.
         return NewImpl{.lookup_bucket = lookup_bucket_ref,
                        .find_had_error = true};
       }
-      break;
+      // Found a valid redecl.
+      return RedeclaredImpl{.prev_impl_id = prev_impl_id};
     }
   }
 

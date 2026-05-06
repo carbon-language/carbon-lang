@@ -210,12 +210,12 @@ fn F() {
 // CHECK:STDOUT:     %ElementType.patt: %pattern_type.98f = symbolic_binding_pattern ElementType, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_37.1: type = splice_block %.loc4_37.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_34: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_37.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %SubscriptType.loc4_34.2: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_34.1 (constants.%SubscriptType)]
 // CHECK:STDOUT:     %.loc4_57.1: type = splice_block %.loc4_57.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_54: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_57.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ElementType.loc4_54.2: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_54.1 (constants.%ElementType)]

@@ -14,6 +14,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -410,13 +411,12 @@ auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
-    -> bool {
+                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-  MakePeriodSelfFacetValue(context, GetEmptyFacetType(context));
+  MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
   return true;
 }
 

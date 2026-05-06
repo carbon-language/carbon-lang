@@ -174,8 +174,8 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %impl.elem0: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc16_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc16_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

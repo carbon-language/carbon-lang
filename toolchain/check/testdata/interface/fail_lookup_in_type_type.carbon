@@ -80,8 +80,8 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc8_14: type = where_expr %.Self [concrete = constants.%type] {
-// CHECK:STDOUT:       requirement_base_facet_type type
+// CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%type] {
+// CHECK:STDOUT:       requirement_base_facet_type %.loc8_9
 // CHECK:STDOUT:       requirement_impls %.loc8_20, %.loc8_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]

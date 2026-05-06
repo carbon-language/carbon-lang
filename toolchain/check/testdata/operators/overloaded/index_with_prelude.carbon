@@ -162,8 +162,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.b14 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.407, element0 [symbolic_self = constants.%impl.elem0.9d3]
 // CHECK:STDOUT:     %ElementType.ref.loc8_62: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc8_41: type = where_expr %.Self [concrete = constants.%IndexWith_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%IndexWith.type.bbe
+// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -357,8 +357,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: %IndexWith.assoc_type.972 = name_ref ElementType, %.loc8_56.2 [concrete = constants.%assoc0.b00]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.6f5, element0 [symbolic_self = constants.%impl.elem0.d7c]
 // CHECK:STDOUT:     %C.ref.loc8_71: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8_50: type = where_expr %.Self [concrete = constants.%IndexWith_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%IndexWith.type.d54
+// CHECK:STDOUT:     %.loc8_50: type = where_expr [concrete = constants.%IndexWith_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc8_71
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -542,8 +542,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.b14 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.407, element0 [symbolic_self = constants.%impl.elem0.9d3]
 // CHECK:STDOUT:     %ElementType.ref.loc8_62: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc8_41: type = where_expr %.Self [concrete = constants.%IndexWith_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%IndexWith.type.bbe
+// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

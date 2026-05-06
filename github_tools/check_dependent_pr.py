@@ -333,7 +333,14 @@ def _process_pr(
         for other_pr_num, other_oids_set in pr_to_commits.items():
             if other_pr_num >= pr_number:
                 continue
-            if not (other_oids_set & current_oids_set):
+
+            # Filter out commits from PRs earlier than other_pr_num.
+            new_commits_in_other_pr = other_oids_set.copy()
+            for prev_pr_num, prev_oids_set in pr_to_commits.items():
+                if prev_pr_num < other_pr_num:
+                    new_commits_in_other_pr -= prev_oids_set
+
+            if not (new_commits_in_other_pr & current_oids_set):
                 continue
             if not (current_oids_set - other_oids_set):
                 continue
@@ -414,7 +421,14 @@ def _process_pr(
 
         last_dep_pr_num = max(open_deps)
         last_dep_oids = pr_to_commits[last_dep_pr_num]
-        last_dep_head_oid = pr_to_head[last_dep_pr_num]
+
+        # Find the most recent commit in the current PR that is also in the
+        # last dependent PR.
+        last_dep_head_oid = None
+        for oid in reversed(current_oids):
+            if oid in last_dep_oids:
+                last_dep_head_oid = oid
+                break
 
         # Detect non-linear history: any commit in the current PR that is in
         # *some* dependency but *not* in the last dependency.

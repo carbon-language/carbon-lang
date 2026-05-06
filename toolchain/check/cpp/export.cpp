@@ -555,6 +555,20 @@ static auto BuildCppToCarbonThunkDecl(
   return thunk_function_decl;
 }
 
+// Get an expr for accessing `this` in a method.
+static auto GetThisArg(clang::Sema& sema, clang::SourceLocation clang_loc,
+                       clang::CXXRecordDecl* record_decl) -> clang::Expr* {
+  clang::QualType class_type =
+      sema.getASTContext().getCanonicalTagType(record_decl);
+  auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
+  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
+                                          /*IsImplicit=*/true);
+  return clang::UnaryOperator::Create(
+      sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
+      clang::ExprValueKind::VK_LValue, clang::ExprObjectKind::OK_Ordinary,
+      clang_loc, /*CanOverflow=*/false, clang::FPOptionsOverride());
+}
+
 // Create the body of a C++ thunk that calls a Carbon thunk. The
 // arguments are passed by reference to the callee.
 static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
@@ -599,16 +613,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
   // For methods, pass the `this` pointer as the first argument to the callee.
   if (target.self_param) {
     auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
-    clang::QualType class_type =
-        sema.getASTContext().getCanonicalTagType(parent_class);
-    auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
-    auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
-                                            /*IsImplicit=*/true);
-    this_expr = clang::UnaryOperator::Create(
-        sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
-        clang::ExprValueKind::VK_LValue, clang::ExprObjectKind::OK_Ordinary,
-        clang_loc, /*CanOverflow=*/false, clang::FPOptionsOverride());
-    call_args.push_back(this_expr);
+    call_args.push_back(GetThisArg(sema, clang_loc, parent_class));
   }
   for (auto* param : function_decl->parameters()) {
     clang::Expr* call_arg =
@@ -763,6 +768,53 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   return BuildCppToCarbonThunk(context, loc_id, target_function_info,
                                context.names().GetFormatted(callee.name_id),
                                carbon_function_decl);
+}
+
+auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
+                           clang::CXXRecordDecl* record_decl)
+    -> clang::CXXDestructorDecl* {
+  SemIR::LocId loc_id(class_info.first_decl_id());
+  auto clang_loc = record_decl->getLocation();
+
+  // Create C++ destructor decl.
+  auto class_type = context.ast_context().getCanonicalTagType(record_decl);
+  auto name =
+      context.ast_context().DeclarationNames.getCXXDestructorName(class_type);
+  clang::DeclarationNameInfo name_info(name, clang_loc);
+  clang::QualType type = context.ast_context().getFunctionType(
+      context.ast_context().VoidTy, llvm::ArrayRef<clang::QualType>(),
+      clang::FunctionProtoType::ExtProtoInfo());
+  auto* cpp_destructor_decl = clang::CXXDestructorDecl::Create(
+      context.ast_context(), record_decl,
+      /*StartLoc=*/clang_loc, name_info, type, /*TInfo=*/nullptr,
+      /*UsesFPIntrin=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
+      clang::ConstexprSpecKind::Unspecified);
+  cpp_destructor_decl->setAccess(clang::AS_public);
+
+  // Create Carbon thunk that destroys the object, and get a C++
+  // function decl for calling it.
+  auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
+  auto* cpp_function_decl =
+      BuildCppFunctionDeclForCarbonFn(context, loc_id, thunk_function_id);
+
+  clang::Sema& sema = context.clang_sema();
+
+  // Build the destructor body.
+  clang::Sema::ContextRAII context_raii(sema, cpp_destructor_decl);
+  sema.ActOnStartOfFunctionDef(nullptr, cpp_destructor_decl);
+
+  // Create a clang call expr to call the Carbon thunk.
+  clang::ExprResult callee =
+      sema.BuildDeclRefExpr(cpp_function_decl, cpp_function_decl->getType(),
+                            clang::VK_PRValue, clang_loc);
+  llvm::SmallVector<clang::Expr*> call_args;
+  call_args.push_back(GetThisArg(sema, clang_loc, record_decl));
+  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
+                                              call_args, clang_loc);
+
+  sema.ActOnFinishFunctionBody(cpp_destructor_decl, call.get());
+
+  return cpp_destructor_decl;
 }
 
 }  // namespace Carbon::Check

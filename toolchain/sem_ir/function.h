@@ -252,6 +252,18 @@ struct Function : public EntityWithParamsBase,
                              SpecificId specific_id = SpecificId::None) const
       -> InstId;
 
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const Function& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    call_param_patterns_id = definition.call_param_patterns_id;
+    call_params_id = definition.call_params_id;
+    return_type_inst_id = definition.return_type_inst_id;
+    return_form_inst_id = definition.return_form_inst_id;
+    return_pattern_id = definition.return_pattern_id;
+    self_param_id = definition.self_param_id;
+  }
+
   // Sets that this function is a builtin function.
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);

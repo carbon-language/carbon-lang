@@ -107,6 +107,17 @@ struct Class : public EntityWithParamsBase,
     return complete_type_witness_id.has_value();
   }
 
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const Class& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    scope_id = definition.scope_id;
+    body_block_id = definition.body_block_id;
+    adapt_id = definition.adapt_id;
+    base_id = definition.base_id;
+    complete_type_witness_id = definition.complete_type_witness_id;
+  }
+
   // Gets the type that this class type adapts. Returns `None` if there is no
   // such type, or if the class is not yet defined.
   auto GetAdaptedType(const File& file, SpecificId specific_id) const -> TypeId;

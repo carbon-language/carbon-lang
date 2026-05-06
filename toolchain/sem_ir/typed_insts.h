@@ -1640,7 +1640,8 @@ struct RequirementBaseFacetType {
 
   // No type since not an expression
 
-  // A FacetType, the TypeType singleton, or an ErrorInst.
+  // An expression that evaluates to a FacetType, the TypeType singleton, or an
+  // ErrorInst.
   TypeInstId base_type_inst_id;
 };
 
@@ -2369,9 +2370,6 @@ struct WhereExpr {
        .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
-  // This is the `.Self` symbolic binding. Its type matches the left type
-  // argument of the `where`.
-  InstId period_self_id;
   InstBlockId requirements_id;
 };
 

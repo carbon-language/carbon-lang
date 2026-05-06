@@ -78,7 +78,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc9_11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: type = value_binding A, %Class.ref.loc9
@@ -87,7 +87,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc15_20.1: type = splice_block %.loc15_20.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc15_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: type = value_binding B, %Class.ref.loc15

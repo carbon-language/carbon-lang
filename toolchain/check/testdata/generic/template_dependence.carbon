@@ -33,6 +33,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: --- type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %T.67db0b.1 [template]
@@ -46,7 +48,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f8f9.1, @Copy [template]
-// CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67db0b.1) [template]
+// CHECK:STDOUT:   %.fe0: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67db0b.1) [template]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e8f8f9.1, (%Copy.lookup_impl_witness.2e6) [template]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d82: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [template]
 // CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d82, %Copy.facet [template]
@@ -66,7 +68,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %ptr.loc5_37: type = ptr_type %T.ref.loc5_36 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:     %.loc5_37.2: Core.Form = init_form %ptr.loc5_37 [template = %.loc5_37.1 (constants.%.cb6cb9.1)]
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_16.2: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T.67db0b.1)]
@@ -93,7 +95,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.fbe)]
 // CHECK:STDOUT:   %require_complete.loc5_33: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_33 (constants.%require_complete.ef162c.1)]
-// CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_16.1) [template = %.loc6_10.3 (constants.%.2f2)]
+// CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_16.1) [template = %.loc6_10.3 (constants.%.fe0)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [template = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
@@ -127,6 +129,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: --- mixed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
@@ -154,12 +158,12 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc5_43.4: type = converted %.loc5_43.3, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:     %.loc5_43.5: Core.Form = init_form %.loc5_43.4 [template = %.loc5_43.2 (constants.%.f18)]
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.loc5_16: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_16.2: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5_29.1: type = splice_block %.loc5_29.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.loc5_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc5_29.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc5_26.2: type = symbolic_binding U, 1 [symbolic = %U.loc5_26.1 (constants.%U)]

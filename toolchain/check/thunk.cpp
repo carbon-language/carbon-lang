@@ -17,6 +17,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_ref.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
@@ -513,6 +514,40 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   }
 
   return thunk_id;
+}
+
+auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
+                       const SemIR::Class& class_info) -> SemIR::FunctionId {
+  // Create a new function declaration.
+  auto thunk_name_id = SemIR::NameId::ForIdentifier(
+      context.identifiers().Add("__destroy_thunk"));
+  auto [thunk_inst_id, thunk_function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = class_info.scope_id,
+                                 .name_id = thunk_name_id,
+                                 .self_type_id = class_info.self_type_id});
+
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  thunk_function.SetThunk(SemIR::InstId::None);
+
+  context.scope_stack().PushForDeclName();
+  StartFunctionDefinition(context, thunk_inst_id, thunk_function_id);
+
+  // Get `self` arg.
+  auto params = context.inst_blocks().Get(thunk_function.call_params_id);
+  auto self_inst_id = params[0];
+
+  // Build the function body. This calls the `Destroy` operator on `self`.
+  auto destroy_inst_id = BuildUnaryOperator(
+      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
+      self_inst_id);
+  DiscardExpr(context, destroy_inst_id);
+  BuildReturnWithNoExpr(context, loc_id);
+
+  FinishFunctionDefinition(context, thunk_function_id);
+  context.scope_stack().Pop();
+
+  return thunk_function_id;
 }
 
 }  // namespace Carbon::Check

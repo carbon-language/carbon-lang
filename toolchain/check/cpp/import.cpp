@@ -848,6 +848,8 @@ static auto BuildClassDefinition(Context& context,
 
   class_info.inheritance_kind = GetInheritanceKind(clang_def);
 
+  class_info.is_dynamic = clang_def->isDynamicClass();
+
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
