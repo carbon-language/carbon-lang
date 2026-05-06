@@ -87,6 +87,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
+            -   [References](#references)
+            -   [Alternatives considered](#alternatives-considered)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
@@ -133,7 +135,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Value constraints for template parameters](#value-constraints-for-template-parameters)
--   [References](#references)
+-   [References](#references-1)
 
 <!-- tocstop -->
 
@@ -4664,18 +4666,18 @@ conclude that there is at most one library api file that can contain owning
 
 ##### References
 
-Implementation coherence is
- [defined in terminology](terminology.md#coherence), and is
- [a goal for Carbon generics](goals.md#coherence). More detail can be found in
- [this appendix with the rationale and alternatives considered](appendix-coherence.md).
+Implementation coherence is [defined in terminology](terminology.md#coherence),
+and is [a goal for Carbon generics](goals.md#coherence). More detail can be
+found in
+[this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
 ##### Alternatives considered
 
 Alternative choices for the orphan rule were considered:
- - [A syntactic check, instead of applying the rule after evaluation](/proposals/p7140.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
- - [Disallowing the anchor name to be in a nested scope](/proposals/p7140.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
- - [Anchoring to a definition](/proposals/p7140.md#anchoring-to-a-definition)
 
+-   [A syntactic check, instead of applying the rule after evaluation](/proposals/p7140.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
+-   [Disallowing the anchor name to be in a nested scope](/proposals/p7140.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
+-   [Anchoring to a definition](/proposals/p7140.md#anchoring-to-a-definition)
 
 #### Overlap rule
 
