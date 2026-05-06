@@ -119,7 +119,9 @@ static auto OperandDependence(Context& context,
                               SemIR::BundleId<BundleT> bundle_id)
     -> SemIR::ConstantDependence {
   return std::apply(
-      [&](auto... ids) { return std::max(OperandDependence(context, ids)...); },
+      [&](auto... ids) {
+        return std::max({OperandDependence(context, ids)...});
+      },
       context.bundles().GetAsTuple(bundle_id));
 }
 

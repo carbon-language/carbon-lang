@@ -29,7 +29,6 @@ using IdKind = TypeEnum<
     // From sem_ir/ids.h.
     AbsoluteInstBlockId,
     AbsoluteInstId,
-    RawBundleId,
     AnyRawId,
     AssociatedConstantId,
     BoolValue,
@@ -65,6 +64,7 @@ using IdKind = TypeEnum<
     NameId,
     NameScopeId,
     NamedConstraintId,
+    RawBundleId,
     RequireImplsId,
     SpecificId,
     SpecificInterfaceId,
@@ -168,7 +168,16 @@ concept IsIdKindType =
     SameAsOneOf<T, IdAndKind::NoneType, IdAndKind::InvalidType>;
 }
 
-// Specialization for None.
+// Specializations for Invalid and None.
+inline auto ToRaw(IdAndKind::InvalidType /*invalid*/) -> int32_t {
+  CARBON_FATAL("Invalid ID kind");
+}
+template <typename T>
+  requires std::is_same_v<T, IdAndKind::InvalidType>
+auto FromRaw(int32_t /*raw*/) -> IdAndKind::InvalidType {
+  CARBON_FATAL("Invalid ID kind");
+}
+
 static constexpr auto ToRaw(IdAndKind::NoneType /*none*/) -> int32_t {
   return AnyIdBase::NoneIndex;
 }

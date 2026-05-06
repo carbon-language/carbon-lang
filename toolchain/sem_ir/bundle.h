@@ -56,6 +56,8 @@ namespace Carbon::SemIR {
 // purposes, but this must be requested separately by calling `CacheDebugKind`
 // because it adds storage overhead, and it affects only the store's debug
 // printing operations.
+// TODO: Consider storing and populating the cache separately, and passing it
+// into the debug printing operations.
 //
 // In rare cases, a single `RawBundleId` may correspond to multiple typed
 // bundle IDs, and hence to multiple bundles with different types. However,
@@ -284,6 +286,13 @@ class BundleStore {
   }
 
   // The bundles in the store, represented as blocks of `AnyRawId`s.
+  //
+  // TODO: Consider instead representing this as a flat array of `AnyRawId`s,
+  // with the Bundle ID's index pointing to the start of the bundle in the
+  // array. This would probably be more efficient, because it would be a single
+  // contiguous allocation, and would avoid redundantly storing the size of
+  // each block. However, it would substantially complicate debug printing in
+  // the case where the kind cache is incomplete or unavailable.
   BlockValueStore<RawBundleId, AnyRawId, Tag<CheckIRId>> store_;
 
   // The cached ID kinds for the bundles in `store_`.

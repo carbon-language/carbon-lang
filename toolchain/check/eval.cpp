@@ -901,15 +901,7 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::IdAndKind arg_and_kind, Phase* phase)
     -> int32_t {
   return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
-    if constexpr (HasGetConstantValueOverload<IdT>) {
-      // If we have a custom `GetConstantValue` overload, call it.
-      return SemIR::ToRaw(GetConstantValue(eval_context, id, phase));
-    } else if constexpr (std::same_as<IdT, SemIR::IdAndKind::InvalidType>) {
-      CARBON_FATAL("Unexpected invalid IdKind");
-    } else {
-      // Otherwise, we assume the value is already constant.
-      return SemIR::ToRaw(id);
-    }
+    return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
   });
 }
 
