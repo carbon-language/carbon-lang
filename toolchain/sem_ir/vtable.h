@@ -19,6 +19,8 @@ struct VtableFields {
   // non-overriden functions in base classes, forming the complete vtable for
   // the class.
   InstBlockId virtual_functions_id;
+
+  bool carbon_native_vtable = true;
 };
 
 struct Vtable : public VtableFields, public Printable<Vtable> {

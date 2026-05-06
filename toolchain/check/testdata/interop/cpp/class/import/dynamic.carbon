@@ -66,6 +66,10 @@ auto DoThing() -> int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %FurtherBase.further_base_func.type: type = fn_type @FurtherBase.further_base_func [concrete]
+// CHECK:STDOUT:   %FurtherBase.further_base_func: %FurtherBase.further_base_func.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.func.type: type = fn_type @Base.func [concrete]
+// CHECK:STDOUT:   %Base.func: %Base.func.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,6 +78,16 @@ auto DoThing() -> int {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
+// CHECK:STDOUT:   %FurtherBase.further_base_func.decl: %FurtherBase.further_base_func.type = fn_decl @FurtherBase.further_base_func [concrete = constants.%FurtherBase.further_base_func] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.func.decl: %Base.func.type = fn_decl @Base.func [concrete = constants.%Base.func] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,7 +95,18 @@ auto DoThing() -> int {
 // CHECK:STDOUT:   inline_cpp "\n// TODO: Carbon lowering should request clang to generate the vtable.\nvoid WorkaroundToEmitCtorAndVtable() {\n  Carbon::Derived d;\n}\n\n// TODO: Carbon lowering should emit initialization that refers to the\n// Clang-lowered vtable.\nauto DoThing() -> int {\n  Carbon::Derived d;\n  return Use(d);\n}\n\n"
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: vtable @Base.vtable {
+// CHECK:STDOUT:   imports.%FurtherBase.further_base_func.decl
+// CHECK:STDOUT:   imports.%Base.func.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @FurtherBase.vtable {
+// CHECK:STDOUT:   imports.%FurtherBase.further_base_func.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
+// CHECK:STDOUT:   constants.%FurtherBase.further_base_func
+// CHECK:STDOUT:   constants.%Base.func
 // CHECK:STDOUT:   @Derived.%Derived.other_func.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

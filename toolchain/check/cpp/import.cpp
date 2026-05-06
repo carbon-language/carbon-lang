@@ -861,6 +861,39 @@ static auto BuildClassDefinition(Context& context,
                                    context, SemIR::WitnessType::TypeInstId),
                                .object_repr_type_inst_id = object_repr_id}));
 
+  if (class_info.is_dynamic) {
+    llvm::SmallVector<SemIR::InstId> vtable;
+    const auto& vtable_layout = dyn_cast<clang::ItaniumVTableContext>(
+                                    context.ast_context().getVTableContext())
+                                    ->getVTableLayout(clang_def);
+    auto vtable_components = vtable_layout.vtable_components();
+    vtable.reserve(vtable_components.size());
+    auto num_components = 0;
+    for (const auto& vtable_component : vtable_components) {
+      if (vtable_component.getKind() !=
+          clang::VTableComponent::CK_FunctionPointer) {
+        continue;
+      }
+      ++num_components;
+      const auto* method_decl = vtable_component.getFunctionDecl();
+      vtable.push_back(ImportCppFunctionDecl(
+          context, SemIR::LocId(import_ir_inst_id),
+          const_cast<clang::CXXMethodDecl*>(method_decl),
+          {.num_params = static_cast<int32_t>(method_decl->getNumParams())}));
+    }
+    vtable.truncate(num_components);
+    auto vtable_id = context.vtables().Add(
+        {{.class_id = class_id,
+          .virtual_functions_id = context.inst_blocks().Add(vtable),
+          .carbon_native_vtable = false}});
+    auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
+    class_info.vtable_decl_id =
+        AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                             context.sem_ir(), import_ir_inst_id,
+                             SemIR::VtableDecl{.type_id = vptr_type_id,
+                                               .vtable_id = vtable_id}));
+  }
+
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 

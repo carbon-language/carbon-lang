@@ -71,11 +71,11 @@ auto DoThing() -> int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon7DerivedC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN4BaseC2Ev = comdat any
-// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11FurtherBase17further_base_funcEv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN4Base4funcEv = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN4BaseC2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11FurtherBaseC2Ev = comdat any
 // CHECK:STDOUT:
@@ -97,7 +97,7 @@ auto DoThing() -> int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTV11FurtherBase = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_Cother_func.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
+// CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [3 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_ZN11FurtherBase17further_base_funcEv to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32), i32 trunc (i64 sub (i64 ptrtoint (ptr @_ZN4Base4funcEv to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32), i32 trunc (i64 sub (i64 ptrtoint (ptr @_Cother_func.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local unnamed_addr constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZN4Base4funcEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
@@ -161,28 +161,11 @@ auto DoThing() -> int {
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_Cother_func.Derived.Main(ptr %self) #4 !dbg !20 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 3, !dbg !27
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
-// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #4
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !16
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef i32 @_ZN11FurtherBase17further_base_funcEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #1 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !28
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !20
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret i32 11
 // CHECK:STDOUT: }
@@ -196,11 +179,28 @@ auto DoThing() -> int {
 // CHECK:STDOUT:   ret i32 7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cother_func.Derived.Main(ptr %self) #4 !dbg !22 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 3, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #4
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !16
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !28
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !20
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !16
 // CHECK:STDOUT:   ret void
@@ -209,8 +209,8 @@ auto DoThing() -> int {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon7DerivedC2Ev, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN4Base4funcEv, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN4Base4funcEv, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -242,13 +242,13 @@ auto DoThing() -> int {
 // CHECK:STDOUT: !17 = !{!"vtable pointer", !10, i64 0}
 // CHECK:STDOUT: !18 = !{!19, !19, i64 0}
 // CHECK:STDOUT: !19 = !{!"p1 _ZTSN6Carbon7DerivedE", !13, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "other_func", linkageName: "_Cother_func.Derived.Main", scope: null, file: !6, line: 29, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
-// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !22 = !{!23, !24}
-// CHECK:STDOUT: !23 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !24 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !25 = !{!26}
-// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !20, type: !24)
-// CHECK:STDOUT: !27 = !DILocation(line: 30, column: 5, scope: !20)
-// CHECK:STDOUT: !28 = !{!29, !29, i64 0}
-// CHECK:STDOUT: !29 = !{!"p1 _ZTS11FurtherBase", !13, i64 0}
+// CHECK:STDOUT: !20 = !{!21, !21, i64 0}
+// CHECK:STDOUT: !21 = !{!"p1 _ZTS11FurtherBase", !13, i64 0}
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "other_func", linkageName: "_Cother_func.Derived.Main", scope: null, file: !6, line: 29, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !24 = !{!25, !26}
+// CHECK:STDOUT: !25 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !27 = !{!28}
+// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !22, type: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 30, column: 5, scope: !22)
