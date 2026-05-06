@@ -141,7 +141,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !77 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b"(ptr %self, i32 1), !dbg !81
+// CHECK:STDOUT:   call void @"_COp:thunk:AddAssignWith.37e622b8bcf1ddff.Core:Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b"(ptr %self, i32 1), !dbg !81
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b"(ptr %self, i32 %other) #2 !dbg !105 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk:AddAssignWith.37e622b8bcf1ddff.Core:Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b"(ptr %self, i32 %other) #2 !dbg !105 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.0b8d6a4f60e9338d:ImplicitAs.11da3bb3c3dce533.Core.fe879877fb5b368f"(i32 %other), !dbg !111
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !112
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !112
@@ -323,7 +323,7 @@ fn F() {
 // CHECK:STDOUT: !102 = !DILocalVariable(arg: 1, scope: !100, type: !26)
 // CHECK:STDOUT: !103 = !DILocation(line: 136, column: 12, scope: !100)
 // CHECK:STDOUT: !104 = !DILocation(line: 136, column: 5, scope: !100)
-// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b", scope: null, file: !78, line: 299, type: !106, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !108)
+// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.37e622b8bcf1ddff.Core:Int.9452f4c51951679b.Core:AddAssignWith.3fed4bf7a4851faa.Core.5c85b74322e1187b", scope: null, file: !78, line: 299, type: !106, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !108)
 // CHECK:STDOUT: !106 = !DISubroutineType(types: !107)
 // CHECK:STDOUT: !107 = !{null, !15, !15}
 // CHECK:STDOUT: !108 = !{!109, !110}

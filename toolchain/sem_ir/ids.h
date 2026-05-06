@@ -307,6 +307,13 @@ struct FunctionId : public IdBase<FunctionId> {
   using IdBase::IdBase;
 };
 
+// The ID of a thunk info record.
+struct ThunkId : public IdBase<ThunkId> {
+  static constexpr llvm::StringLiteral Label = "thunk";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {

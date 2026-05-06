@@ -51,15 +51,16 @@ class Mangler {
   // Mangle this qualified name with inner scope first, working outwards. This
   // may reduce the incidence of common prefixes in the name mangling. (i.e.:
   // every standard library name won't have a common prefix that has to be
-  // skipped and compared before getting to the interesting part)
-  auto MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
-                                       SemIR::NameScopeId name_scope_id)
-      -> void;
+  // skipped and compared before getting to the interesting part).
+  auto MangleInverseQualifiedNameScope(
+      llvm::raw_ostream& os, SemIR::NameScopeId name_scope_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
+      char initial_prefix = '.') -> void;
 
-  // Mangle the unqualified name of the specified `Class`.
-  auto MangleUnqualifiedClass(llvm::raw_ostream& os,
-                              const SemIR::Class& class_info,
-                              SemIR::SpecificId specific_id) -> void;
+  // Mangle the unqualified name of the specified entity.
+  auto MangleUnqualifiedName(llvm::raw_ostream& os,
+                             const SemIR::EntityWithParamsBase& entity,
+                             SemIR::SpecificId specific_id) -> void;
 
   // Generates a mangled name using Clang mangling for imported C++ functions.
   auto MangleCppClang(const clang::NamedDecl* decl) -> std::string;

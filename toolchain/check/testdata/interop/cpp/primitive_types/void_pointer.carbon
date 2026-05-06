@@ -151,9 +151,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.429: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e02, @ptr.as.ImplicitAs.impl.1b5(%S) [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.31c: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.1b5(%S) [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.b9d: %ptr.as.ImplicitAs.impl.Convert.type.31c = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.5c7, (%ImplicitAs.impl_witness.429) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.068: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.874, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.d36: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.068, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.ed7: %ImplicitAs.type.02d = facet_value %ptr.5c7, (%ImplicitAs.impl_witness.429) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.068: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.874, %ImplicitAs.facet.ed7) [concrete]
+// CHECK:STDOUT:   %.d36: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.068, %ImplicitAs.facet.ed7 [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn.9f6: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.b9d, @ptr.as.ImplicitAs.impl.Convert.1(%S) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,9 +205,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f70: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e02, @ptr.as.ImplicitAs.impl.1b5(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.791: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.1b5(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.af8: %ptr.as.ImplicitAs.impl.Convert.type.791 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.31e, (%ImplicitAs.impl_witness.f70) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.1e1: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.874, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.41e: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.1e1, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.bcb: %ImplicitAs.type.02d = facet_value %ptr.31e, (%ImplicitAs.impl_witness.f70) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.1e1: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.874, %ImplicitAs.facet.bcb) [concrete]
+// CHECK:STDOUT:   %.41e: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.1e1, %ImplicitAs.facet.bcb [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn.a56: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.af8, @ptr.as.ImplicitAs.impl.Convert.1(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,14 +261,14 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.502: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.1b5(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.02e: %ptr.as.ImplicitAs.impl.Convert.type.502 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.429: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e02, @ptr.as.ImplicitAs.impl.1b5(%S) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.5c7, (%ImplicitAs.impl_witness.429) [concrete]
-// CHECK:STDOUT:   %As.impl_witness.58f: <witness> = impl_witness imports.%As.impl_witness_table.0dc, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.d89: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.ed7: %ImplicitAs.type.02d = facet_value %ptr.5c7, (%ImplicitAs.impl_witness.429) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.58f: <witness> = impl_witness imports.%As.impl_witness_table.0dc, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet.ed7) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.d89: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet.ed7) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.e8b: %T.as_type.as.As.impl.Convert.type.d89 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.d24 = facet_value %ptr.5c7, (%As.impl_witness.58f) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.2d8: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%ptr.874, %As.facet) [concrete]
 // CHECK:STDOUT:   %.187: type = fn_type_with_self_type %As.WithSelf.Convert.type.2d8, %As.facet [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.e8b, @T.as_type.as.As.impl.Convert(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.e8b, @T.as_type.as.As.impl.Convert(%ptr.874, %ImplicitAs.facet.ed7) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -295,7 +295,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ptr.loc10_46: type = ptr_type %void.ref.loc10_41 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   %impl.elem0: %.187 = impl_witness_access constants.%As.impl_witness.58f, element0 [concrete = constants.%T.as_type.as.As.impl.Convert.e8b]
 // CHECK:STDOUT:   %bound_method.loc10_35.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet.ed7) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc10_35.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_35.1: %ptr.874 = value_of_initializer %T.as_type.as.As.impl.Convert.call
@@ -328,14 +328,14 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.502: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.1b5(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.02e: %ptr.as.ImplicitAs.impl.Convert.type.502 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f70: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e02, @ptr.as.ImplicitAs.impl.1b5(%C) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.31e, (%ImplicitAs.impl_witness.f70) [concrete]
-// CHECK:STDOUT:   %As.impl_witness.a9a: <witness> = impl_witness imports.%As.impl_witness_table.0dc, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.758: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.bcb: %ImplicitAs.type.02d = facet_value %ptr.31e, (%ImplicitAs.impl_witness.f70) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.a9a: <witness> = impl_witness imports.%As.impl_witness_table.0dc, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet.bcb) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.758: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet.bcb) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.57a: %T.as_type.as.As.impl.Convert.type.758 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.d24 = facet_value %ptr.31e, (%As.impl_witness.a9a) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.dc8: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%ptr.874, %As.facet) [concrete]
 // CHECK:STDOUT:   %.85e: type = fn_type_with_self_type %As.WithSelf.Convert.type.dc8, %As.facet [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.57a, @T.as_type.as.As.impl.Convert(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.57a, @T.as_type.as.As.impl.Convert(%ptr.874, %ImplicitAs.facet.bcb) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -360,7 +360,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ptr.loc10_46: type = ptr_type %void.ref.loc10_41 [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   %impl.elem0: %.85e = impl_witness_access constants.%As.impl_witness.a9a, element0 [concrete = constants.%T.as_type.as.As.impl.Convert.57a]
 // CHECK:STDOUT:   %bound_method.loc10_35.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet.bcb) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.call: init %ptr.874 = call %bound_method.loc10_35.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_35.1: %ptr.874 = value_of_initializer %T.as_type.as.As.impl.Convert.call
