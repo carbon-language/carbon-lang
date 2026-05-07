@@ -91,26 +91,13 @@ static auto BuildInterfaceDecl(Context& context,
 
     if (context.sem_ir().package_id() == PackageNameId::Core) {
       auto name = context.names().GetIRBaseName(interface_info.name_id);
+      // This is awful for readability, but it's the only viable way to ensure
+      // adding new core interfaces are automatically picked up.
       interface_info.core_interface =
           llvm::StringSwitch<SemIR::CoreInterface>(name)
-              .Case("AddAssignWith", SemIR::CoreInterface::AddAssignWith)
-              .Case("AddWith", SemIR::CoreInterface::AddWith)
-              .Case("Copy", SemIR::CoreInterface::Copy)
-              .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
-              .Case("Dec", SemIR::CoreInterface::Dec)
-              .Case("Default", SemIR::CoreInterface::Default)
-              .Case("Destroy", SemIR::CoreInterface::Destroy)
-              .Case("DivAssignWith", SemIR::CoreInterface::DivAssignWith)
-              .Case("DivWith", SemIR::CoreInterface::DivWith)
-              .Case("Inc", SemIR::CoreInterface::Inc)
-              .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
-              .Case("ModAssignWith", SemIR::CoreInterface::ModAssignWith)
-              .Case("ModWith", SemIR::CoreInterface::ModWith)
-              .Case("MulAssignWith", SemIR::CoreInterface::MulAssignWith)
-              .Case("MulWith", SemIR::CoreInterface::MulWith)
-              .Case("Negate", SemIR::CoreInterface::Negate)
-              .Case("SubAssignWith", SemIR::CoreInterface::SubAssignWith)
-              .Case("SubWith", SemIR::CoreInterface::SubWith)
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  .Case(#Name, SemIR::CoreInterface::Name)
+#include "toolchain/sem_ir/core_interface_kind.def"
               .Default(SemIR::CoreInterface::Unknown);
     }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
