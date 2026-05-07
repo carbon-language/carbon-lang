@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/core_identifier.h"
@@ -353,6 +355,115 @@ static auto BuildCppComparisonWitness(
                             query_specific_interface_id, operators);
 }
 
+namespace {
+struct CppBeginEndEntries {
+  SemIR::InstId iterator_type = SemIR::InstId::None;
+  SemIR::InstId sentinel_type = SemIR::InstId::None;
+  SemIR::InstId begin_fn = SemIR::InstId::None;
+  SemIR::InstId end_fn = SemIR::InstId::None;
+
+  auto BeginAndEndBothFound() const -> bool {
+    CARBON_CHECK(iterator_type != SemIR::ErrorInst::InstId);
+    CARBON_CHECK(sentinel_type != SemIR::ErrorInst::InstId);
+    CARBON_CHECK(begin_fn != SemIR::ErrorInst::InstId);
+    CARBON_CHECK(end_fn != SemIR::ErrorInst::InstId);
+    return iterator_type.has_value() && sentinel_type.has_value() &&
+           begin_fn.has_value() && end_fn.has_value();
+  }
+};
+}  // namespace
+
+[[maybe_unused]] static auto LookupCppBeginEndMethods(
+    Context& context, SemIR::LocId loc_id, clang::CXXRecordDecl* class_decl,
+    clang::Sema::LookupNameKind lookup_type) -> ErrorOr<CppBeginEndEntries> {
+  auto& clang_sema = context.clang_sema();
+  auto lookup_method =
+      [&](llvm::StringLiteral method_name) -> ErrorOr<DeclInfo> {
+    auto lookup_info = clang::LookupResult(
+        clang_sema, &clang_sema.getASTContext().Idents.get(method_name),
+        clang::SourceLocation(), lookup_type);
+    clang_sema.LookupQualifiedName(lookup_info, class_decl);
+
+    if (lookup_info.isAmbiguous()) {
+      return Error("ambiguous lookup");
+    }
+
+    if (!lookup_info.isSingleResult()) {
+      context.TODO(loc_id, "overload sets not implemented yet");
+      return Error("overload sets not implemented yet");
+    }
+
+    if (lookup_info.empty()) {
+      return DeclInfo{
+          .decl = nullptr,
+          .signature = {.num_params = 0},
+      };
+    }
+
+    return DeclInfo{
+        .decl = *lookup_info.begin(),
+        .signature = {.num_params = 0},
+    };
+  };
+
+  auto begin_fn = lookup_method("begin");
+  if (!begin_fn.ok()) {
+    return std::move(begin_fn).error();
+  }
+
+  auto end_fn = lookup_method("end");
+  if (!end_fn.ok()) {
+    return std::move(end_fn).error();
+  }
+
+  auto begin_fn_id = GetFunctionId(context, loc_id, *begin_fn);
+  auto end_fn_id = GetFunctionId(context, loc_id, *end_fn);
+  auto iterator_type_id = context.functions()
+                              .Get(context.insts()
+                                       .GetAs<SemIR::FunctionDecl>(begin_fn_id)
+                                       .function_id)
+                              .return_type_inst_id;
+  if (iterator_type_id == SemIR::ErrorInst::InstId) {
+    return Error("couldn't find return type for begin");
+  }
+
+  auto sentinel_type_id =
+      context.functions()
+          .Get(
+              context.insts().GetAs<SemIR::FunctionDecl>(end_fn_id).function_id)
+          .return_type_inst_id;
+  if (sentinel_type_id == SemIR::ErrorInst::InstId) {
+    return Error("couldn't find return type for end");
+  }
+
+  return CppBeginEndEntries{
+      .iterator_type = iterator_type_id,
+      .sentinel_type = sentinel_type_id,
+      .begin_fn = begin_fn_id,
+      .end_fn = end_fn_id,
+  };
+}
+
+static auto BuildCppRangeForIterateWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  auto range_for_witness = LookupCppBeginEndMethods(
+      context, loc_id, class_decl, clang::Sema::LookupMemberName);
+  if (!range_for_witness.ok()) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (range_for_witness->BeginAndEndBothFound()) {
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              {&range_for_witness->iterator_type, 4});
+  }
+
+  return SemIR::InstId::None;
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
@@ -416,6 +527,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
+
+    case SemIR::CoreInterface::CppRangeForIterate:
+      return BuildCppRangeForIterateWitness(
+          context, loc_id, query_self_const_id, query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
     case SemIR::CoreInterface::IntFitsIn:
