@@ -382,3 +382,39 @@ fn G(T:! I where .I1 impls K) {
   // information that `.I1 impls K`.
   F(T);
 }
+
+// --- find_witness_from_facet_in_lookup_target_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+class D(T:! type) {}
+class E {}
+interface X(T:! type) {}
+interface V(T:! type) {}
+
+constraint W(T:! type) {
+  require Self impls X(T);
+}
+
+fn F(B:! W(E), C:! type where E impls V(.Self)) {
+  // These find a witness for `E as X(E)` from the facet `B`.
+  E as (V(C) where B impls X(.Self));
+  E as (V(C) where B impls X(E));
+}
+
+// --- find_witness_from_facet_in_specific_in_lookup_target_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+class D(T:! type) {}
+class E {}
+interface X(T:! type) {}
+interface V(T:! type) {}
+
+constraint W(T:! type) {
+  require D(Self) impls X(T);
+}
+
+fn F(B:! W(E), C:! type where E impls V(.Self)) {
+  // These find a witness for `E as X(E)` from the facet `B`.
+  E as (V(C) where D(B) impls X(.Self));
+  E as (V(C) where D(B) impls X(E));
+}
