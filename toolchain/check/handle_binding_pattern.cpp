@@ -489,6 +489,9 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
     -> bool {
+  (void)context;
+  (void)node_id;
+#if 0
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
       ExprAsType(context, type_node, parsed_type_id);
@@ -532,6 +535,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
       context.decl_introducer_state_stack()
           .innermost()
           .modifier_set.GetAccessKind());
+#endif
   return true;
 }
 

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CLASS_H_
 #define CARBON_TOOLCHAIN_CHECK_CLASS_H_
 
+#include <optional>
+
 #include "toolchain/check/context.h"
 
 namespace Carbon::Check {
@@ -22,6 +24,10 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,
                             llvm::ArrayRef<SemIR::InstId> body) -> void;
+
+// If the current state is in a `var` decl inside a class, returns the
+// corresponding `ClassDecl`. Otherwise returns nullopt.
+auto GetClassDeclForVar(Context& context) -> std::optional<SemIR::ClassDecl>;
 
 }  // namespace Carbon::Check
 

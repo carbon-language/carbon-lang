@@ -717,11 +717,10 @@ struct FacetValue {
 // A field in a class, of the form `var field: field_type;`. The type of the
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
-  static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
-          {.ir_name = "field_decl",
-           .expr_category = ExprCategory::NotExpr,
-           .constant_kind = InstConstantKind::AlwaysUnique});
+  static constexpr auto Kind = InstKind::FieldDecl.Define<Parse::NodeId>(
+      {.ir_name = "field_decl",
+       .expr_category = ExprCategory::NotExpr,
+       .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
   NameId name_id;

@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
@@ -18,6 +19,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -116,6 +118,11 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
+      // For class fields, a `FieldDecl` has been created; do not create
+      // a `VarPattern`.
+      if (GetClassDeclForVar(context)) {
+        return true;
+      }
       pattern_id = AddInst<SemIR::VarPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
@@ -141,6 +148,13 @@ static auto EndFullPattern(Context& context) -> void {
     return;
   }
   auto pattern_block_id = context.pattern_block_stack().Pop();
+
+  // For class fields, a `FieldDecl` has been created; skip creating a
+  // name binding and var storage.
+  if (GetClassDeclForVar(context)) {
+    return;
+  }
+
   AddInst<SemIR::NameBindingDecl>(context, context.node_stack().PeekNodeId(),
                                   {.pattern_block_id = pattern_block_id});
 
@@ -191,6 +205,11 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
+  if (GetClassDeclForVar(context)) {
+    context.TODO(node_id, "Field initializer");
+    return false;
+  }
+
   return HandleInitializer(context, node_id);
 }
 
@@ -268,18 +287,22 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
       EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
     }
 
-    // A variable declaration without an explicit initializer is initialized by
-    // calling `(T as Core.DefaultOrUnformed).Op()`.
-    if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
-      StartPatternInitializer(context);
-      decl_info.init_id =
-          MakeDefaultInit(context, node_id, context.node_stack().PeekPattern());
-      EndPatternInitializer(context);
+    // A non-class variable declaration without an explicit initializer
+    // is initialized by calling `(T as Core.DefaultOrUnformed).Op()`.
+    if (!GetClassDeclForVar(context)) {
+      if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
+        StartPatternInitializer(context);
+        decl_info.init_id = MakeDefaultInit(context, node_id,
+                                            context.node_stack().PeekPattern());
+        EndPatternInitializer(context);
+      }
     }
   }
   context.full_pattern_stack().PopFullPattern();
 
-  decl_info.pattern_id = context.node_stack().PopPattern();
+  if (!GetClassDeclForVar(context)) {
+    decl_info.pattern_id = context.node_stack().PopPattern();
+  }
 
   context.node_stack().PopAndDiscardSoloNodeId<IntroducerNodeKind>();
 
@@ -385,6 +408,10 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
+
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    return true;
+  }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   return true;
