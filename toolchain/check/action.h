@@ -93,7 +93,11 @@ auto HandleAction(Context& context, LocIdT loc_id,
                                     result_type_inst_id);
   }
 
-  return PerformAction(context, loc_id, action_inst);
+  auto result_id = PerformAction(context, loc_id, action_inst);
+  CARBON_CHECK(result_type_inst_id == SemIR::TypeInstId::None ||
+               context.types().GetTypeIdForTypeInstId(result_type_inst_id) ==
+                   context.insts().Get(result_id).type_id());
+  return result_id;
 }
 
 namespace Internal {

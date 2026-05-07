@@ -38,7 +38,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000007, call_params_id: inst_block70000008, return_type_inst_id: inst70000024, return_form_inst_id: inst70000021, return_pattern_id: inst7000002B}
+// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000007, call_params_id: inst_block70000008, return_type_inst_id: inst70000024, return_form_inst_id: inst70000021, return_pattern_id: inst7000002C}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
@@ -113,33 +113,33 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:     inst70000024:    {kind: TypeComponentOf, arg0: inst70000022, type: type(TypeType)}
 // CHECK:STDOUT:     inst70000025:    {kind: PatternType, arg0: inst70000024, type: type(TypeType)}
 // CHECK:STDOUT:     inst70000026:    {kind: OutFormParamPatternAction, arg0: inst70000021, type: type(inst(InstType))}
-// CHECK:STDOUT:     inst70000027:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant7000000C)}
-// CHECK:STDOUT:     inst70000028:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant70000008)}
+// CHECK:STDOUT:     inst70000027:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant7000000D)}
+// CHECK:STDOUT:     inst70000028:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant70000009)}
 // CHECK:STDOUT:     inst70000029:    {kind: TypeComponentOf, arg0: inst70000023, type: type(TypeType)}
-// CHECK:STDOUT:     inst7000002A:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant7000000C)}
-// CHECK:STDOUT:     inst7000002B:    {kind: ReturnSlotPattern, arg0: inst70000027, arg1: inst70000024, type: type(symbolic_constant7000000F)}
-// CHECK:STDOUT:     inst7000002C:    {kind: ReturnSlotPattern, arg0: inst70000028, arg1: inst70000024, type: type(symbolic_constant70000009)}
-// CHECK:STDOUT:     inst7000002D:    {kind: PatternType, arg0: inst70000029, type: type(TypeType)}
-// CHECK:STDOUT:     inst7000002E:    {kind: ReturnSlotPattern, arg0: inst7000002A, arg1: inst70000029, type: type(symbolic_constant7000000F)}
+// CHECK:STDOUT:     inst7000002A:    {kind: PatternType, arg0: inst70000029, type: type(TypeType)}
+// CHECK:STDOUT:     inst7000002B:    {kind: SpliceInst, arg0: inst70000026, type: type(symbolic_constant7000000D)}
+// CHECK:STDOUT:     inst7000002C:    {kind: ReturnSlotPattern, arg0: inst70000027, arg1: inst70000024, type: type(symbolic_constant7000000D)}
+// CHECK:STDOUT:     inst7000002D:    {kind: ReturnSlotPattern, arg0: inst70000028, arg1: inst70000024, type: type(symbolic_constant70000009)}
+// CHECK:STDOUT:     inst7000002E:    {kind: ReturnSlotPattern, arg0: inst7000002B, arg1: inst70000029, type: type(symbolic_constant7000000D)}
 // CHECK:STDOUT:     inst7000002F:    {kind: SpliceBlock, arg0: inst_block70000005, arg1: inst70000017, type: type(TypeType)}
 // CHECK:STDOUT:     inst70000030:    {kind: CalleePatternMatchAction, arg0: bundle70000000, type: type(inst(InstType))}
-// CHECK:STDOUT:     inst70000031:    {kind: SpliceInst, arg0: inst70000030, type: type(symbolic_constant7000000C)}
+// CHECK:STDOUT:     inst70000031:    {kind: SpliceInst, arg0: inst70000030, type: type(symbolic_constant7000000D)}
 // CHECK:STDOUT:     inst70000032:    {kind: ReturnSlot, arg0: inst70000024, arg1: inst70000031, type: type(symbolic_constant7000000C)}
 // CHECK:STDOUT:     inst70000033:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block7000000A, type: type(inst7000003C)}
 // CHECK:STDOUT:     inst70000034:    {kind: RefineFormAction, arg0: inst7000001D, type: type(inst(InstType))}
 // CHECK:STDOUT:     inst70000035:    {kind: SpliceInst, arg0: inst70000034, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst70000036:    {kind: OutFormParamPatternAction, arg0: inst70000035, type: type(inst(InstType))}
 // CHECK:STDOUT:     inst70000037:    {kind: TypeComponentOf, arg0: inst70000035, type: type(TypeType)}
-// CHECK:STDOUT:     inst70000038:    {kind: SpliceInst, arg0: inst70000036, type: type(symbolic_constant70000015)}
-// CHECK:STDOUT:     inst70000039:    {kind: PatternType, arg0: inst70000037, type: type(TypeType)}
-// CHECK:STDOUT:     inst7000003A:    {kind: ReturnSlotPattern, arg0: inst70000038, arg1: inst70000037, type: type(symbolic_constant70000017)}
+// CHECK:STDOUT:     inst70000038:    {kind: PatternType, arg0: inst70000037, type: type(TypeType)}
+// CHECK:STDOUT:     inst70000039:    {kind: SpliceInst, arg0: inst70000036, type: type(symbolic_constant70000016)}
+// CHECK:STDOUT:     inst7000003A:    {kind: ReturnSlotPattern, arg0: inst70000039, arg1: inst70000037, type: type(symbolic_constant70000016)}
 // CHECK:STDOUT:     inst7000003B:    {kind: CalleePatternMatchAction, arg0: bundle70000001, type: type(inst(InstType))}
 // CHECK:STDOUT:     inst7000003C:    {kind: FunctionType, arg0: function70000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst7000003D:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst7000003E:    {kind: StructValue, arg0: inst_block_empty, type: type(inst7000003C)}
 // CHECK:STDOUT:   bundles:
 // CHECK:STDOUT:     bundle70000000:  {arg0: inst70000027, arg1: call_param0}
-// CHECK:STDOUT:     bundle70000001:  {arg0: inst70000038, arg1: call_param0}
+// CHECK:STDOUT:     bundle70000001:  {arg0: inst70000039, arg1: call_param0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -165,12 +165,12 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:       inst70000024:    symbolic_constant70000008
 // CHECK:STDOUT:       inst70000025:    symbolic_constant70000009
 // CHECK:STDOUT:       inst70000026:    symbolic_constant7000000A
-// CHECK:STDOUT:       inst70000027:    symbolic_constant7000000D
+// CHECK:STDOUT:       inst70000027:    symbolic_constant7000000E
 // CHECK:STDOUT:       inst70000028:    symbolic_constant7000000B
 // CHECK:STDOUT:       inst70000029:    symbolic_constant7000000C
 // CHECK:STDOUT:       inst7000002A:    symbolic_constant7000000D
-// CHECK:STDOUT:       inst7000002B:    symbolic_constant70000010
-// CHECK:STDOUT:       inst7000002C:    symbolic_constant7000000E
+// CHECK:STDOUT:       inst7000002B:    symbolic_constant7000000E
+// CHECK:STDOUT:       inst7000002C:    symbolic_constant70000010
 // CHECK:STDOUT:       inst7000002D:    symbolic_constant7000000F
 // CHECK:STDOUT:       inst7000002E:    symbolic_constant70000010
 // CHECK:STDOUT:       inst7000002F:    concrete_constant(inst(FormType))
@@ -201,10 +201,10 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:       symbolic_constant7000000A: {inst: inst70000026, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl4}}
 // CHECK:STDOUT:       symbolic_constant7000000B: {inst: inst70000028, kind: template, attached: null}
 // CHECK:STDOUT:       symbolic_constant7000000C: {inst: inst70000024, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl5}}
-// CHECK:STDOUT:       symbolic_constant7000000D: {inst: inst70000028, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl6}}
-// CHECK:STDOUT:       symbolic_constant7000000E: {inst: inst7000002C, kind: template, attached: null}
-// CHECK:STDOUT:       symbolic_constant7000000F: {inst: inst70000025, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl7}}
-// CHECK:STDOUT:       symbolic_constant70000010: {inst: inst7000002C, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl8}}
+// CHECK:STDOUT:       symbolic_constant7000000D: {inst: inst70000025, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl6}}
+// CHECK:STDOUT:       symbolic_constant7000000E: {inst: inst70000028, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl7}}
+// CHECK:STDOUT:       symbolic_constant7000000F: {inst: inst7000002D, kind: template, attached: null}
+// CHECK:STDOUT:       symbolic_constant70000010: {inst: inst7000002D, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl8}}
 // CHECK:STDOUT:       symbolic_constant70000011: {inst: inst70000030, kind: template, attached: {generic: generic70000000, index: generic_inst_in_decl9}}
 // CHECK:STDOUT:       symbolic_constant70000012: {inst: inst70000034, kind: template, attached: null}
 // CHECK:STDOUT:       symbolic_constant70000013: {inst: inst70000035, kind: template, attached: null}
@@ -235,7 +235,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:       0:               inst70000031
 // CHECK:STDOUT:     inst_block70000009:
 // CHECK:STDOUT:       0:               inst70000019
-// CHECK:STDOUT:       1:               inst7000002B
+// CHECK:STDOUT:       1:               inst7000002C
 // CHECK:STDOUT:     inst_block7000000A:
 // CHECK:STDOUT:       0:               inst7000001F
 // CHECK:STDOUT:       1:               inst70000021
@@ -256,7 +256,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:       4:               inst70000026
 // CHECK:STDOUT:       5:               inst70000029
 // CHECK:STDOUT:       6:               inst7000002A
-// CHECK:STDOUT:       7:               inst7000002D
+// CHECK:STDOUT:       7:               inst7000002B
 // CHECK:STDOUT:       8:               inst7000002E
 // CHECK:STDOUT:       9:               inst70000030
 // CHECK:STDOUT:     inst_block7000000E:

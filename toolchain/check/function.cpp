@@ -45,8 +45,9 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId {
   auto result_type_id = GetPatternType(context, form_expr.type_component_id);
+  auto result_type_inst_id = context.types().GetTypeInstId(result_type_id);
   auto result_id = HandleAction<SemIR::OutFormParamPatternAction>(
-      context, loc_id, form_expr.type_component_inst_id,
+      context, loc_id, result_type_inst_id,
       {.type_id = SemIR::InstType::TypeId, .form_id = form_expr.form_inst_id});
   return AddInst<SemIR::ReturnSlotPattern>(
       context, loc_id,
