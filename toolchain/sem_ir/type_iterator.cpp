@@ -133,6 +133,14 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
                                 .facet = access.facet_value_inst_id};
     }
 
+    case TupleAccess::Kind: {
+      // Tuple access of a concrete value would have evaluated to the accessed
+      // value, so we only see TupleAccess in a type when it's a symbolic value.
+      CARBON_CHECK(sem_ir_->constant_values().Get(inst_id).is_symbolic());
+      return Step::SymbolicType{.entity_name_id = EntityNameId::None,
+                                .facet = inst_id};
+    }
+
       // ==== Concrete types ====
 
     case AssociatedEntityType::Kind:
@@ -232,30 +240,6 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
           PushInstId(field.type_inst_id);
         }
         return Step::StructStart{.type_id = type_id};
-      }
-    }
-    case CARBON_KIND(TupleAccess access): {
-      if (access.tuple_id == SemIR::ErrorInst::InstId) {
-        return Step::Error();
-      }
-
-      auto tuple = sem_ir_->insts().Get(access.tuple_id);
-      if (auto value = tuple.TryAs<TupleValue>()) {
-        auto elements = sem_ir_->inst_blocks().GetOrEmpty(value->elements_id);
-        PushInstId(elements[access.index.index]);
-        return std::nullopt;
-      } else if (auto type = tuple.TryAs<TupleType>()) {
-        auto elements =
-            sem_ir_->inst_blocks().GetOrEmpty(type->type_elements_id);
-        PushInstId(elements[access.index.index]);
-        return std::nullopt;
-      } else {
-        if (access.type_id == TypeType::TypeId) {
-          return Step::ConcreteType{.type_id = TypeId::None};
-        } else {
-          return Step::SymbolicType{.entity_name_id = EntityNameId::None,
-                                    .facet = inst_id};
-        }
       }
     }
 
