@@ -91,7 +91,7 @@ fn F() {
   G(C);
 }
 
-// --- fail_todo_facet_access_type_of_self_meets_constraint.carbon
+// --- facet_access_type_of_self_meets_constraint.carbon
 library "[[@TEST_NAME]]";
 
 class C(T:! type) {}
@@ -105,9 +105,6 @@ constraint W {
 }
 
 fn F(w:! W) {
-  // TODO: Lookups for `C(w) as <something>` need to look into the facet types
-  // of any facet value in the type `C(w)`, so that it can find a witness from
-  // the constraint `W`.
   C(w) as Y;
   D as NeedsY(C(w));
 }
