@@ -780,7 +780,7 @@ static auto IndexOfImplWitnessInIdentifiedFacetType(
     SemIR::SpecificInterface query_specific_interface) -> IndexInFacetValue {
   // The self in the identified facet type is a canonicalized facet value, so we
   // canonicalize the query for comparison.
-  auto canonical_self =
+  auto canonical_query_self_const_id =
       GetCanonicalFacetOrTypeValue(context, query_self_const_id);
 
   const auto& identified =
@@ -788,7 +788,7 @@ static auto IndexOfImplWitnessInIdentifiedFacetType(
   auto facet_type_req_impls = llvm::enumerate(identified.required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {
     auto [req_self, req_specific_interface] = e.value();
-    return req_self == canonical_self &&
+    return req_self == canonical_query_self_const_id &&
            req_specific_interface == query_specific_interface;
   });
   if (it == facet_type_req_impls.end()) {
