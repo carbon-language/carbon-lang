@@ -38,7 +38,7 @@ class C {
   extend base: Cpp.A;
 }
 
-// --- fail_todo_impl_abstract_member.carbon
+// --- impl_abstract_member.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -47,7 +47,17 @@ import Cpp library "abstract.h";
 class C {
   extend base: Cpp.A;
   override fn f[unused ref self: Self]() {}
-  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+}
+
+// --- fail_impl_mismatch_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "abstract.h";
+
+class C {
+  extend base: Cpp.A;
+  // CHECK:STDERR: fail_impl_mismatch_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
   // CHECK:STDERR:   override fn invalid[unused ref self: Self]() {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
