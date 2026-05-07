@@ -342,11 +342,11 @@ static auto TryGetSpecificWitnessIdForImpl(
 struct FacetWitnessSource {
   // A facet, of type FacetType. If this is a FacetValue, we may be able to get
   // a concrete witness out of it.
-  SemIR::ConstantId facet;
+  SemIR::ConstantId facet_const_id;
   // The set of witnesses this facet provides at least symbolically. Encodes
   // the order of the witnesses for looking for a concrete witness in `facet`
   // if it's a FacetValue.
-  SemIR::IdentifiedFacetTypeId identified;
+  SemIR::IdentifiedFacetTypeId identified_facet_type_id;
 };
 
 // Collect witnesses from facets in the query. The facets' types in the query
@@ -372,11 +372,12 @@ static auto CollectFacetWitnessSources(
     }
     auto facet_const_id = context.constant_values().Get(facet);
     auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-    auto identified =
+    auto identified_id =
         TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
                                allow_partially_identified);
-    if (identified.has_value()) {
-      witnesses.push_back({.facet = facet_const_id, .identified = identified});
+    if (identified_id.has_value()) {
+      witnesses.push_back({.facet_const_id = facet_const_id,
+                           .identified_facet_type_id = identified_id});
     }
   };
 
