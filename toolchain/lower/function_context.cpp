@@ -17,14 +17,14 @@ namespace Carbon::Lower {
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
     FileContext& specific_file_context,
-    SemIR::FunctionId function_id,
+    SemIR::FunctionId specific_sem_ir_function_id,
     SemIR::SpecificId specific_id,
     SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
       specific_file_context_(&specific_file_context),
-      function_id_(function_id),
+      specific_sem_ir_function_id_(specific_sem_ir_function_id),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),

@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/return/no_return_from_run.carbon
 
-// We expect this to lower to LLVM IR that returns int32 0.
+// We expect this to lower to LLVM IR that returns i32 0.
 fn Run() {}
 
 // LLVM IR for calls to Run should reflect the i32 call type of the lowered Run function.

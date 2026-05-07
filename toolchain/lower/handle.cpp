@@ -263,9 +263,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Return /*inst*/) -> void {
   // The 'Run()' entry point does not need to specify a return type, but
-  // calling programs expect an int32 return type. In this situation we
-  // modify the lowered IR to return 0i32.
-  if (SemIR::IsEntryPoint(context.sem_ir(), context.function_id())) {
+  // the C runtime and system ABI expects the entry point to return an `int`.
+  // In this situation we modify the lowered IR to return `0`
+  // with the expected LLVM type that corresponds to the `int` type.
+  if (SemIR::IsEntryPoint(context.specific_sem_ir(),
+                          context.specific_sem_ir_function_id())) {
     context.builder().CreateRet(context.builder().getInt32(0));
     return;
   }

@@ -27,7 +27,8 @@ class FunctionContext {
   // be null (see members).
   explicit FunctionContext(
       FileContext& file_context, llvm::Function* function,
-      FileContext& specific_file_context, SemIR::FunctionId function_id,
+      FileContext& specific_file_context,
+      SemIR::FunctionId specific_sem_ir_function_id,
       SemIR::SpecificId specific_id,
       SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
       llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
@@ -244,7 +245,9 @@ class FunctionContext {
     return specific_file_context_->sem_ir();
   }
 
-  auto function_id() -> SemIR::FunctionId { return function_id_; }
+  auto specific_sem_ir_function_id() -> SemIR::FunctionId {
+    return specific_sem_ir_function_id_;
+  }
 
   // The specific ID for the function that is being lowered. Note that this is
   // an ID from `specific_sem_ir()`, not from `sem_ir()`.
@@ -318,7 +321,7 @@ class FunctionContext {
   FileContext* specific_file_context_;
 
   // The function id of the function we're lowering.
-  SemIR::FunctionId function_id_;
+  SemIR::FunctionId specific_sem_ir_function_id_;
 
   // The specific id, if the function is a specific.
   SemIR::SpecificId specific_id_;
