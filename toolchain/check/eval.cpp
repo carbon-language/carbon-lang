@@ -848,6 +848,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
+// Returns the constant value of `id` if it has a `GetConstantValue` overload,
+// and otherwise returns `id` itself.
 template <typename IdT>
 static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
                                           Phase* phase) -> IdT;
@@ -892,6 +894,16 @@ static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
 };
 
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    return GetConstantValue(eval_context, id, phase);
+  } else {
+    return id;
+  }
+}
+
 // Given the stored value `arg` of an instruction field and its corresponding
 // kind `kind`, returns the constant value to use for that field, if it has a
 // constant phase. `*phase` is updated to include the new constant value. If
@@ -903,16 +915,6 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
   return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
     return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
   });
-}
-
-template <typename IdT>
-static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
-                                          Phase* phase) -> IdT {
-  if constexpr (HasGetConstantValueOverload<IdT>) {
-    return GetConstantValue(eval_context, id, phase);
-  } else {
-    return id;
-  }
 }
 
 // Given an instruction, replaces its operands with their constant values from

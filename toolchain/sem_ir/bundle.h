@@ -291,11 +291,17 @@ class BundleStore {
   // with the Bundle ID's index pointing to the start of the bundle in the
   // array. This would probably be more efficient, because it would be a single
   // contiguous allocation, and would avoid redundantly storing the size of
-  // each block. However, it would substantially complicate debug printing in
-  // the case where the kind cache is incomplete or unavailable.
+  // each block. However, it would require a different approach to debug
+  // printing, which currently needs to get the bundle size from `store_`
+  // when the kind cache is incomplete or unavailable.
   BlockValueStore<RawBundleId, AnyRawId, Tag<CheckIRId>> store_;
 
   // The cached ID kinds for the bundles in `store_`.
+  //
+  // TODO: Consider factoring this out as a separate class, which is populated
+  // by the user and then passed into the debug-printing methods. That would
+  // avoid the need for a mutable member, and reduce the risk of the cache
+  // being incomplete.
   mutable ValueStore<RawBundleId, IdKindSet, Tag<CheckIRId>> bundle_kind_cache_;
 };
 
