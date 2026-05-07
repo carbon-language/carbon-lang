@@ -296,7 +296,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.C.Cpp"(ptr sret([8 x i8]) %return) #2 !dbg !19 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr sret([8 x i8]) %return) #2 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %return), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
@@ -307,7 +307,7 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret([8 x i8]) %return) #0 !dbg !25 {
-// CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !27
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr %return), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,7 +353,7 @@ fn Four() {
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTS1C", !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.C.Cpp", scope: null, file: !20, line: 4, type: !21, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp", scope: null, file: !20, line: 4, type: !21, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !20 = !DIFile(filename: "./default.h", directory: "")
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{!23}
@@ -407,7 +407,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.ImplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !22 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.2e5fb550c65543cf.Core:ImplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %return), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !27
@@ -424,7 +424,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.ExplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.cad83ce9b7db87bf.Core:ExplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %return), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !31
@@ -435,13 +435,13 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.22b4681b019423d7"(ptr sret([4 x i8]) %return) #0 !dbg !32 {
-// CHECK:STDOUT:   call void @"_COp:thunk.ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !34
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.2e5fb550c65543cf.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.1a27c303748a2360"(ptr sret([4 x i8]) %return) #0 !dbg !36 {
-// CHECK:STDOUT:   call void @"_COp:thunk.ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !37
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.cad83ce9b7db87bf.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -503,7 +503,7 @@ fn Four() {
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS26ImplicitlyDefaultedDefault", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.ImplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 2, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.2e5fb550c65543cf.Core:ImplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 2, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !23 = !DIFile(filename: "./defaulted_default.h", directory: "")
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{!26}
@@ -511,7 +511,7 @@ fn Four() {
 // CHECK:STDOUT: !27 = !DILocation(line: 2, column: 8, scope: !22)
 // CHECK:STDOUT: !28 = !{!29, !29, i64 0}
 // CHECK:STDOUT: !29 = !{!"p1 _ZTS26ExplicitlyDefaultedDefault", !21, i64 0}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.cad83ce9b7db87bf.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !31 = !DILocation(line: 7, column: 3, scope: !30)
 // CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d288d62be0e5d791:DefaultOrUnformed.Core.22b4681b019423d7", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !33 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
@@ -552,7 +552,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #2 !dbg !22 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.692da64e78c7deec.Core:Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26
@@ -595,7 +595,7 @@ fn Four() {
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS4Copy", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Copy.Cpp", scope: null, file: !23, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.692da64e78c7deec.Core:Copy.Cpp", scope: null, file: !23, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
 // CHECK:STDOUT: !23 = !DIFile(filename: "./copy.h", directory: "")
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !22, type: !14)

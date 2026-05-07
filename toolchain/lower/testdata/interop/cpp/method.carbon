@@ -329,7 +329,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.1275069080.NeedThunk.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !29 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.fdeb6dbda014bd1f.Core:NeedThunk.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !35
@@ -342,7 +342,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.1275069227.NeedThunk.Cpp"(ptr %self) #3 !dbg !43 {
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.91afe58d20fe9768.Core:NeedThunk.Cpp"(ptr %self) #3 !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
@@ -398,7 +398,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !26 = !{!"p1 omnipotent char", !24, i64 0}
 // CHECK:STDOUT: !27 = !{}
 // CHECK:STDOUT: !28 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.1275069080.NeedThunk.Cpp", scope: null, file: !30, line: 2, type: !31, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.fdeb6dbda014bd1f.Core:NeedThunk.Cpp", scope: null, file: !30, line: 2, type: !31, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
 // CHECK:STDOUT: !30 = !DIFile(filename: "./thunk.h", directory: "")
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !32 = !{!14, !14}
@@ -412,7 +412,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !39)
 // CHECK:STDOUT: !42 = !DILocation(line: 8, column: 14, scope: !36)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.1275069227.NeedThunk.Cpp", scope: null, file: !30, line: 2, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !44)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.91afe58d20fe9768.Core:NeedThunk.Cpp", scope: null, file: !30, line: 2, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !44)
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !14)
 // CHECK:STDOUT: !46 = !DILocation(line: 2, column: 8, scope: !43)

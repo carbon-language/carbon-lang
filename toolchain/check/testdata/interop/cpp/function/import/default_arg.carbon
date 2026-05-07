@@ -516,6 +516,8 @@ fn Call() {
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Self.035: %Copy.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.735e75.1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Self.035) [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.7fb9a5.1: %Copy.WithSelf.Op.type.735e75.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.255: type = facet_access_type %Self.035 [symbolic]
 // CHECK:STDOUT:   %.435d17.1: Core.Form = init_form %Self.as_type.255 [symbolic]
 // CHECK:STDOUT:   %.1d8: Core.Form = init_form %X [concrete]
@@ -543,6 +545,8 @@ fn Call() {
 // CHECK:STDOUT:   %assoc0.9d9: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.8bb [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.efb: <witness> = custom_witness (), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.2e4: %Destroy.type = facet_value %X, (%custom_witness.efb) [concrete]
 // CHECK:STDOUT:   %X.Op.type.8ba98d.2: type = fn_type @X.Op.2 [concrete]
 // CHECK:STDOUT:   %X.Op.745665.2: %X.Op.type.8ba98d.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b67: <witness> = custom_witness (%X.Op.745665.2), @Destroy [concrete]
@@ -700,6 +704,7 @@ fn Call() {
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.decl: %Copy.WithSelf.Op.type.735e75.1 = fn_decl @Copy.WithSelf.Op [symbolic = @Copy.WithSelf.%Copy.WithSelf.Op (constants.%Copy.WithSelf.Op.7fb9a5.1)] {} {}
 // CHECK:STDOUT:   %Core.import_ref.1f7: type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @Copy.WithSelf.Op.%Self.as_type (constants.%Self.as_type.255)]
 // CHECK:STDOUT:   %Core.import_ref.e4b: Core.Form = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @Copy.WithSelf.Op.%.1 (constants.%.435d17.1)]
 // CHECK:STDOUT:   %X.X.decl: %X.X.type = fn_decl @X.X [concrete = constants.%X.X] {
@@ -726,6 +731,7 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.06b: %Destroy.assoc_type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0.9d9]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.cb2 = fn_decl @Destroy.WithSelf.Op [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.9f1)] {} {}
 // CHECK:STDOUT:   %Core.import_ref.8bb: @Destroy.WithSelf.%Destroy.WithSelf.Op.type (%Destroy.WithSelf.Op.type.cb2) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.9f1)]
 // CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern [concrete]
@@ -957,7 +963,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X__carbon_thunk(%_.param: %ptr.8e3, %return.param: %ptr.1f9);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.Op.1(%self.param: %X) -> out %return.param: %X [thunk imports.%X.X.decl] {
+// CHECK:STDOUT: fn @X.Op.1(%self.param: %X) -> out %return.param: %X [thunk imports.%X.X.decl for imports.%Copy.WithSelf.Op.decl, @Copy.WithSelf.Op(constants.%Copy.facet.8e5)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Op.ref: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
 // CHECK:STDOUT:   %.1: ref %X = splice_block %return.param {}
@@ -973,7 +979,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.cpp_destructor(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.Op.2(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl] {
+// CHECK:STDOUT: fn @X.Op.2(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl for imports.%Destroy.WithSelf.Op.decl, @Destroy.WithSelf.Op(constants.%Destroy.facet.2e4)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref

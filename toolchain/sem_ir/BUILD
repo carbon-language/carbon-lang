@@ -128,6 +128,7 @@ cc_library(
         "pattern.h",
         "require_impls.h",
         "struct_type_field.h",
+        "thunk.h",
         "type.h",
         "type_info.h",
         "type_iterator.h",

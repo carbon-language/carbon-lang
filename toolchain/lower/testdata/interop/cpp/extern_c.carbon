@@ -273,7 +273,7 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.X.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !24 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.b2719e7f54af1af9.Core:X.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1XC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !30
@@ -323,7 +323,7 @@ fn MyF() {
 // CHECK:STDOUT: !21 = !{!22, !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"p1 _ZTS1X", !23, i64 0}
 // CHECK:STDOUT: !23 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.X.Cpp", scope: null, file: !25, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.b2719e7f54af1af9.Core:X.Cpp", scope: null, file: !25, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DIFile(filename: "./extern_c_with_special_name.h", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{!14, !14}

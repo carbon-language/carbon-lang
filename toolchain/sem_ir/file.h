@@ -40,6 +40,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
@@ -173,6 +174,8 @@ class File : public Printable<File> {
   auto cpp_overload_sets() const -> const CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
+  auto thunks() -> ThunkStore& { return thunks_; }
+  auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
@@ -331,6 +334,9 @@ class File : public Printable<File> {
 
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
+
+  // Storage for thunk info records.
+  ThunkStore thunks_;
 
   // Storage for classes.
   ClassStore classes_;

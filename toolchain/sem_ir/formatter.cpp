@@ -569,9 +569,18 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                            /*use_hex_escapes=*/true)
           << "\"";
   }
-  if (fn.thunk_decl_id().has_value()) {
+  if (fn.thunk_id().has_value()) {
     out() << " [thunk ";
-    FormatArg(fn.thunk_decl_id());
+    const auto& thunk_info = sem_ir_->thunks().Get(fn.thunk_id());
+    FormatArg(thunk_info.callee_id);
+    if (thunk_info.signature_id.has_value()) {
+      out() << " for ";
+      FormatName(sem_ir_->functions().Get(thunk_info.signature_id).first_owning_decl_id);
+      if (thunk_info.specific_id.has_value()) {
+        out() << ", ";
+        FormatName(thunk_info.specific_id);
+      }
+    }
     out() << "]";
   }
 

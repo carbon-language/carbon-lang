@@ -176,7 +176,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.C.Cpp"(ptr sret({}) %return) #2 !dbg !29 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %return), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
@@ -237,7 +237,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !43 {
-// CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !45
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr %return), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"p1 _ZTS1C", !28, i64 0}
 // CHECK:STDOUT: !28 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -365,7 +365,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.C.Cpp"(ptr sret({}) %return) #2 !dbg !29 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %return), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
@@ -448,7 +448,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr sret({}) %return) #0 !dbg !45 {
-// CHECK:STDOUT:   call void @"_COp:thunk.C.Cpp"(ptr %return), !dbg !47
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr %return), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -508,7 +508,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"p1 _ZTS1C", !28, i64 0}
 // CHECK:STDOUT: !28 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
