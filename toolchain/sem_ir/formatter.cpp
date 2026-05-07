@@ -575,7 +575,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     FormatArg(thunk_info.callee_id);
     if (thunk_info.signature_id.has_value()) {
       out() << " for ";
-      FormatName(sem_ir_->functions().Get(thunk_info.signature_id).first_owning_decl_id);
+      FormatName(sem_ir_->functions()
+                     .Get(thunk_info.signature_id)
+                     .first_owning_decl_id);
       if (thunk_info.specific_id.has_value()) {
         out() << ", ";
         FormatName(thunk_info.specific_id);
