@@ -332,8 +332,8 @@ static auto BuildCppComparisonWitness(
       // information at this point.
       //
       // The behavior is dependent on which expression is checked first: no
-      // diagnostic is produced for an erroneous `operator!=` will be emitted if
-      // lookup for `operator==` produces `SemIR::InstId::None`.
+      // diagnostic will be emitted for an erroneous `operator!=` if lookup for
+      // `operator==` produces `SemIR::InstId::None`.
       return lookup_id;
     }
 
