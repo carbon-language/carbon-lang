@@ -1307,7 +1307,8 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
     SemIR::ImportIRInstId import_ir_inst_id,
-    const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
+    const clang::FunctionDecl& clang_decl,
+    SemIR::SignatureId signature_id) -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
       isa<clang::CXXConstructorDecl>(clang_decl)) {
@@ -1319,16 +1320,8 @@ static auto MakeImplicitParamPatternsBlockId(
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
-  SemIR::Signature::PassingMode passing_mode =
-      SemIR::Signature::PassingMode::ByVar;
-  if (param_type->isReferenceType()) {
-    clang::QualType pointee_type = param_type->getPointeeType();
-    if (pointee_type.isConstQualified()) {
-      passing_mode = SemIR::Signature::PassingMode::ByValue;
-    } else if (param_type->isLValueReferenceType()) {
-      passing_mode = SemIR::Signature::PassingMode::ByRef;
-    }
-  }
+  const auto& signature = context.signatures().Get(signature_id);
+  SemIR::Signature::PassingMode passing_mode = signature.self_passing_mode;
   auto param_info = MapParameterType(context, loc_id, param_type,
                                      passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
@@ -1598,7 +1591,7 @@ static auto CreateFunctionSignatureInsts(
     SemIR::SignatureId signature_id) -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartImplicitParamList();
   auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
-      context, loc_id, import_ir_inst_id, *clang_decl);
+      context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }

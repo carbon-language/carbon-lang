@@ -109,9 +109,12 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
 // modes, and adds it to the value store.
 static auto MakeSignature(
     Context& context,
-    std::initializer_list<SemIR::Signature::PassingMode> modes)
+    std::initializer_list<SemIR::Signature::PassingMode> modes,
+    SemIR::Signature::PassingMode self_passing_mode =
+        SemIR::Signature::PassingMode::ByRef)
     -> SemIR::SignatureId {
-  return context.signatures().Add(SemIR::Signature::Make(modes));
+  return context.signatures().Add(SemIR::Signature::Make(
+      modes, SemIR::Signature::Normal, self_passing_mode));
 }
 
 static auto BuildCopyWitness(
@@ -176,7 +179,24 @@ static auto BuildCppUnsafeDerefWitness(
     context.TODO(loc_id, "operator* overload sets not implemented yet");
     return SemIR::ErrorInst::InstId;
   }
-  SemIR::SignatureId signature_id = MakeSignature(context, {});
+  auto* cpp_method = dyn_cast<clang::CXXMethodDecl>(*candidates.begin());
+  SemIR::Signature::PassingMode self_passing_mode =
+      SemIR::Signature::PassingMode::ByRef;
+  if (cpp_method && !cpp_method->isStatic()) {
+    clang::QualType param_type =
+        cpp_method->getFunctionObjectParameterReferenceType();
+    if (param_type->isReferenceType()) {
+      clang::QualType pointee_type = param_type->getPointeeType();
+      if (pointee_type.isConstQualified()) {
+        self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+      } else if (param_type->isLValueReferenceType()) {
+        self_passing_mode = SemIR::Signature::PassingMode::ByRef;
+      }
+    } else {
+      self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+    }
+  }
+  SemIR::SignatureId signature_id = MakeSignature(context, {}, self_passing_mode);
 
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};

@@ -92,7 +92,7 @@ static auto GenerateThunkMangledName(
   // TODO: Pick one "likely" set of passing modes for the function and omit the
   // suffix for that signature.
   mangled_name_stream << ".";
-  for (auto mode : signature.passing_modes) {
+  auto append_mode = [&](SemIR::Signature::PassingMode mode) {
     switch (mode) {
       case SemIR::Signature::PassingMode::ByValue:
         mangled_name_stream << "_";
@@ -104,6 +104,15 @@ static auto GenerateThunkMangledName(
         mangled_name_stream << "r";
         break;
     }
+  };
+
+  if (isa<clang::CXXMethodDecl>(callee_function_decl) &&
+      !cast<clang::CXXMethodDecl>(callee_function_decl).isStatic() &&
+      !isa<clang::CXXConstructorDecl>(callee_function_decl)) {
+    append_mode(signature.self_passing_mode);
+  }
+  for (auto mode : signature.passing_modes) {
+    append_mode(mode);
   }
 
   return mangled_name_stream.TakeStr();
@@ -260,8 +269,9 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   auto& ast_context = context.ast_context();
   if (callee_info.has_implicit_object_parameter() &&
-      !IsSimpleAbiType(ast_context, callee_info.implicit_object_parameter_type,
-                       /*for_parameter=*/true)) {
+      (!IsSimpleAbiType(ast_context, callee_info.implicit_object_parameter_type,
+                        /*for_parameter=*/true) ||
+       signature.self_passing_mode == SemIR::Signature::PassingMode::ByVar)) {
     return true;
   }
 
@@ -549,7 +559,8 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
         cast<clang::CXXMethodDecl>(callee_info.decl)
             ->getFunctionObjectParameterReferenceType();
     auto* object_param_ref =
-        BuildThunkParamRef(sema, thunk_function_decl, 0, object_param_type);
+        BuildThunkParamRef(sema, thunk_function_decl, 0, object_param_type,
+                           callee_info.signature->self_passing_mode);
     constexpr bool IsArrow = false;
     auto object =
         sema.PerformMemberExprBaseConversion(object_param_ref, IsArrow);

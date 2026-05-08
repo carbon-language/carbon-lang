@@ -251,6 +251,23 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
         candidate->Conversions[conversion_index], arg_expr));
   }
 
+  if (auto* method = dyn_cast<clang::CXXMethodDecl>(candidate->Function)) {
+    if (!method->isStatic() && !isa<clang::CXXConstructorDecl>(method)) {
+      clang::QualType param_type =
+          method->getFunctionObjectParameterReferenceType();
+      if (param_type->isReferenceType()) {
+        clang::QualType pointee_type = param_type->getPointeeType();
+        if (pointee_type.isConstQualified()) {
+          signature.self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+        } else if (param_type->isLValueReferenceType()) {
+          signature.self_passing_mode = SemIR::Signature::PassingMode::ByRef;
+        }
+      } else {
+        signature.self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+      }
+    }
+  }
+
   return context.signatures().Add(std::move(signature));
 }
 

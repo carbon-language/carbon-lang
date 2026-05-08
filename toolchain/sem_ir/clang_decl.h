@@ -57,13 +57,20 @@ struct Signature : public Printable<Signature> {
   // TODO: Generalize this to be parameter info, not just passing mode.
   llvm::SmallVector<PassingMode, 4> passing_modes;
 
+  // The passing mode for the (implicit or explicit) object parameter, if there
+  // is one. Otherwise PassingMode::ByRef.
+  PassingMode self_passing_mode = PassingMode::ByRef;
+
   // Convenience function to make a fixed signature.
   static auto Make(std::initializer_list<SemIR::Signature::PassingMode> modes,
-                   Kind kind = Normal) -> Signature {
+                   Kind kind = Normal,
+                   PassingMode self_passing_mode = PassingMode::ByRef)
+      -> Signature {
     Signature signature;
     signature.kind = kind;
     signature.num_params = static_cast<int32_t>(modes.size());
     signature.passing_modes.assign(modes.begin(), modes.end());
+    signature.self_passing_mode = self_passing_mode;
     return signature;
   }
 
@@ -78,13 +85,17 @@ struct Signature : public Printable<Signature> {
 
   auto operator==(const Signature& rhs) const -> bool {
     return kind == rhs.kind && num_params == rhs.num_params &&
-           passing_modes == rhs.passing_modes;
+           passing_modes == rhs.passing_modes &&
+           self_passing_mode == rhs.self_passing_mode;
   }
 
   // Hashing for Signature.
   friend auto CarbonHashValue(const Signature& value, uint64_t seed)
       -> HashCode {
-    HashCode code = HashValue(std::tuple{value.kind, value.num_params}, seed);
+    HashCode code = HashValue(
+        std::tuple{value.kind, value.num_params,
+                   static_cast<int8_t>(value.self_passing_mode)},
+        seed);
     for (auto mode : value.passing_modes) {
       code = HashValue(static_cast<int8_t>(mode), static_cast<uint64_t>(code));
     }

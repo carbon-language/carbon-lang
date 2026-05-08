@@ -337,8 +337,23 @@ static auto GetConversionSignatureToImport(
   // `Source::operator Dest`:
   //
   //   fn Source.<conversion function>[self: Source]() -> Dest;
-  CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
-  return context.signatures().Add(SemIR::Signature::Make({}));
+  auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
+  SemIR::Signature::PassingMode self_passing_mode =
+      SemIR::Signature::PassingMode::ByRef;
+  clang::QualType param_type =
+      conversion_decl->getFunctionObjectParameterReferenceType();
+  if (param_type->isReferenceType()) {
+    clang::QualType pointee_type = param_type->getPointeeType();
+    if (pointee_type.isConstQualified()) {
+      self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+    } else if (param_type->isLValueReferenceType()) {
+      self_passing_mode = SemIR::Signature::PassingMode::ByRef;
+    }
+  } else {
+    self_passing_mode = SemIR::Signature::PassingMode::ByValue;
+  }
+  return context.signatures().Add(
+      SemIR::Signature::Make({}, SemIR::Signature::Normal, self_passing_mode));
 }
 
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,

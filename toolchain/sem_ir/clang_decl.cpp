@@ -43,6 +43,20 @@ auto Signature::Print(llvm::raw_ostream& out) const -> void {
     }
     out << "]";
   }
+  if (self_passing_mode != PassingMode::ByRef) {
+    out << ", self_mode: ";
+    switch (self_passing_mode) {
+      case PassingMode::ByValue:
+        out << "value";
+        break;
+      case PassingMode::ByVar:
+        out << "var";
+        break;
+      case PassingMode::ByRef:
+        out << "ref";
+        break;
+    }
+  }
   out << "}";
 }
 
