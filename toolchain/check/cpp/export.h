@@ -58,6 +58,13 @@ auto CalculateCppFieldOffsets(
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId function_id) -> clang::FunctionDecl*;
 
+// Export a Carbon destructor into C++.
+//
+// The destructor calls the `Destroy` operator.
+auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
+                           clang::CXXRecordDecl* record_decl)
+    -> clang::CXXDestructorDecl*;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_EXPORT_H_

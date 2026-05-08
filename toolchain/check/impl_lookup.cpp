@@ -339,23 +339,93 @@ static auto TryGetSpecificWitnessIdForImpl(
                                            impl.witness_id);
 }
 
-// Identify the facet type of the query self. It is allowed to be partially
-// identified.
-static auto IdentifyQuerySelfFacetType(Context& context, SemIR::LocId loc_id,
-                                       SemIR::ConstantId query_self_const_id)
-    -> SemIR::IdentifiedFacetTypeId {
+struct FacetWitnessSource {
+  // A facet, of type FacetType. If this is a FacetValue, we may be able to get
+  // a concrete witness out of it.
+  SemIR::ConstantId facet_const_id;
+  // The set of witnesses this facet provides at least symbolically. Encodes
+  // the order of the witnesses for looking for a concrete witness in `facet`
+  // if it's a FacetValue.
+  SemIR::IdentifiedFacetTypeId identified_facet_type_id;
+};
+
+// Collect witnesses from facets in the query. The facets' types in the query
+// self are allowed to be partially identified to support the use of `Self`
+// inside a named constraint, which can appear anywhere in the query self, e.g.
+// as `Self` or as `C(Self)`.
+static auto CollectFacetWitnessSources(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::ConstantId query_facet_type_const_id)
+    -> llvm::SmallVector<FacetWitnessSource> {
   auto query_self_inst_id =
       context.constant_values().GetInstId(query_self_const_id);
+  auto query_facet_type_inst_id =
+      context.constant_values().GetInstId(query_facet_type_const_id);
 
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-      context.insts().Get(query_self_inst_id).type_id());
-  if (!facet_type) {
-    return SemIR::IdentifiedFacetTypeId::None;
+  llvm::SmallVector<FacetWitnessSource> witnesses;
+
+  auto push_facet = [&](SemIR::InstId facet, bool allow_partially_identified) {
+    auto type_id = context.insts().Get(facet).type_id();
+    if (type_id == SemIR::TypeType::TypeId) {
+      return;
+    }
+    auto facet_const_id = context.constant_values().Get(facet);
+    auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+    auto identified_id =
+        TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
+                               allow_partially_identified);
+    if (identified_id.has_value()) {
+      witnesses.push_back({.facet_const_id = facet_const_id,
+                           .identified_facet_type_id = identified_id});
+    }
+  };
+
+  auto collect_facets = [&](SemIR::TypeIterator& iter,
+                            bool allow_partially_identified) {
+    for (auto done = false; !done;) {
+      auto next = iter.Next();
+      CARBON_KIND_SWITCH(next.any) {
+        using Step = SemIR::TypeIterator::Step;
+        case CARBON_KIND(Step::Done _): {
+          done = true;
+          break;
+        }
+        case CARBON_KIND(Step::FacetValue value): {
+          // We want to store FacetValues since they come with final witnesses,
+          // regardless of whether they internally hold a concrete type or a
+          // symbolic one (with non-final witnesses of its own).
+          push_facet(value.facet_value_inst_id, allow_partially_identified);
+          break;
+        }
+        case CARBON_KIND(Step::SymbolicType symbolic): {
+          // We want to store SymbolicTypes. They may occur inside or outside of
+          // a FacetValue. If inside a FacetValue, they may provide a non-final
+          // witness for more things than the FacetValue would, since the
+          // FacetValue represents a conversion which can lose part of the facet
+          // type.
+          push_facet(symbolic.facet, allow_partially_identified);
+          break;
+        }
+        default:
+          break;
+      }
+    }
+  };
+
+  {
+    SemIR::TypeIterator iter(&context.sem_ir());
+    iter.Add(query_self_inst_id);
+    collect_facets(iter, /*allow_partially_identified=*/true);
   }
 
-  return TryToIdentifyFacetType(context, loc_id, query_self_const_id,
-                                *facet_type,
-                                /*allow_partially_identified=*/true);
+  {
+    SemIR::TypeIterator iter(&context.sem_ir());
+    iter.Add(context.insts().GetAs<SemIR::FacetType>(query_facet_type_inst_id));
+    collect_facets(iter, /*allow_partially_identified=*/false);
+  }
+
+  return witnesses;
 }
 
 // Given a query `orig_inst_self` and `orig_interface`, try find a matching
@@ -695,35 +765,27 @@ class IndexInFacetValue {
 inline constexpr auto IndexInFacetValue::None = IndexInFacetValue(-1);
 inline constexpr auto IndexInFacetValue::Unstable = IndexInFacetValue(-2);
 
-// Looks in the facet type of the query self facet value and returns the index
-// of `query_specific_interface` in the defined interface order for that facet
-// type. The order comes from the `query_self_type_identified_id` which must be
-// the IdentifiedFacetType of the type of `query_self_const_id `.
-//
-// If the query self is not a facet value, the IdentifiedFacetType would be
-// None.
+// Looks in the identified facet type and returns the index of a witness that
+// `query_self_const_id` impls `query_specific_interface` in the defined
+// interface order for that facet type.
 //
 // The IdentifiedFacetType must not be partially identified in order to find an
 // index, as that implies the interface order is not yet stable. In that case,
 // no index will be found.
 //
-// If the `query_specific_interface` is not part of the facet type of the query
-// self, returns -1 to indicate it was not found.
-static auto IndexOfImplWitnessInSelfFacetValue(
-    Context& context, SemIR::ConstantId query_self_const_id,
-    SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
+// If the `query_specific_interface` is not part of the facet type, returns -1
+// to indicate it was not found.
+static auto IndexOfImplWitnessInIdentifiedFacetType(
+    Context& context, SemIR::IdentifiedFacetTypeId identified_facet_type_id,
+    SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface) -> IndexInFacetValue {
-  if (!query_self_type_identified_id.has_value()) {
-    return IndexInFacetValue::None;
-  }
-
   // The self in the identified facet type is a canonicalized facet value, so we
   // canonicalize the query for comparison.
   auto canonical_query_self_const_id =
       GetCanonicalFacetOrTypeValue(context, query_self_const_id);
 
   const auto& identified =
-      context.identified_facet_types().Get(query_self_type_identified_id);
+      context.identified_facet_types().Get(identified_facet_type_id);
   auto facet_type_req_impls = llvm::enumerate(identified.required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {
     auto [req_self, req_specific_interface] = e.value();
@@ -740,44 +802,47 @@ static auto IndexOfImplWitnessInSelfFacetValue(
   return IndexInFacetValue(static_cast<int32_t>((*it).index()));
 }
 
-static auto FindFinalWitnessFromSelfFacetValue(
-    Context& context, SemIR::ConstantId query_self_const_id,
-    SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
+static auto FindFinalWitnessFromFacetValue(
+    Context& context, llvm::ArrayRef<FacetWitnessSource> witness_sources,
+    SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
-  auto facet_value = context.constant_values().TryGetInstAs<SemIR::FacetValue>(
-      query_self_const_id);
-  if (!facet_value) {
-    return SemIR::InstId::None;
-  }
+  for (auto [facet, identified_id] : witness_sources) {
+    auto facet_value =
+        context.constant_values().TryGetInstAs<SemIR::FacetValue>(facet);
+    if (!facet_value) {
+      // This facet can not provide a final witness, keep looking.
+      continue;
+    }
 
-  auto index_in_facet_value = IndexOfImplWitnessInSelfFacetValue(
-      context, query_self_const_id, query_self_type_identified_id,
-      query_specific_interface);
-  auto stable_index = index_in_facet_value.GetStableIndex();
-  if (stable_index < 0) {
-    return SemIR::InstId::None;
-  }
+    auto index_in_facet_value = IndexOfImplWitnessInIdentifiedFacetType(
+        context, identified_id, query_self_const_id, query_specific_interface);
+    auto stable_index = index_in_facet_value.GetStableIndex();
+    if (stable_index < 0) {
+      // No witness in this facet, keep looking.
+      continue;
+    }
 
-  auto witness_id =
-      context.inst_blocks().Get(facet_value->witnesses_block_id)[stable_index];
-  if (context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
-    // Did not find a final witness.
-    return SemIR::InstId::None;
+    auto witness_id = context.inst_blocks().Get(
+        facet_value->witnesses_block_id)[stable_index];
+    if (!context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
+      // Found a final witness.
+      return witness_id;
+    }
   }
-
-  return witness_id;
+  return SemIR::InstId::None;
 }
 
 static auto FindNonFinalWitness(
     Context& context, SemIR::LocId loc_id,
+    llvm::ArrayRef<FacetWitnessSource> witness_sources,
     SemIR::ConstantId query_self_const_id,
-    SemIR::IdentifiedFacetTypeId query_self_type_identified_id,
     SemIR::SpecificInterface query_specific_interface) -> bool {
-  auto index = IndexOfImplWitnessInSelfFacetValue(context, query_self_const_id,
-                                                  query_self_type_identified_id,
-                                                  query_specific_interface);
-  if (index.WasFound()) {
-    return true;
+  for (auto [_, identified_id] : witness_sources) {
+    auto index = IndexOfImplWitnessInIdentifiedFacetType(
+        context, identified_id, query_self_const_id, query_specific_interface);
+    if (index.WasFound()) {
+      return true;
+    }
   }
 
   // TODO: Remove SpecificInterfaceId from LookupCustomWitness apis, switch to
@@ -869,6 +934,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::Empty;
   }
 
+  // Find all the facets in the query and their witnesses.
+  auto witness_sources = CollectFacetWitnessSources(
+      context, loc_id, query_self_const_id, query_facet_type_const_id);
+
   // Cycles are diagnosed even if they are found when diagnostics are otherwise
   // being suppressed (such as during deduce).
   if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
@@ -891,17 +960,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // order of the interfaces in `req_impls`.
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
   for (const auto& req_impl : req_impls) {
-    // Identify the type of the requirement's self up front, if it's a facet, so
-    // we only have to do this once.
-    auto req_self_type_identified_id =
-        IdentifyQuerySelfFacetType(context, loc_id, req_impl.self_facet_value);
-
     // If the self facet contains a final witness for the required interface, we
     // use that and avoid any further work. This is strictly an optimization,
     // since that same final witness should be found by evaluating a
     // LookupImplWitness instruction for the required self+interface pair.
-    auto result_witness_id = FindFinalWitnessFromSelfFacetValue(
-        context, req_impl.self_facet_value, req_self_type_identified_id,
+    auto result_witness_id = FindFinalWitnessFromFacetValue(
+        context, witness_sources, req_impl.self_facet_value,
         req_impl.specific_interface);
     if (result_witness_id.has_value()) {
       // Found a final witness, use it.
@@ -933,8 +997,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // Did not find a final witness. If we find a non-final witness, then we use
     // the `LookupImplWitness` as our witness so that monomorphization can
     // produce a final witness later.
-    if (!FindNonFinalWitness(context, loc_id, req_impl.self_facet_value,
-                             req_self_type_identified_id,
+    if (!FindNonFinalWitness(context, loc_id, witness_sources,
+                             req_impl.self_facet_value,
                              req_impl.specific_interface)) {
       // At least one queried interface in the facet type has no witness for the
       // given type, we can stop looking for more.

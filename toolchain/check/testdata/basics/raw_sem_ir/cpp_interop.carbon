@@ -268,6 +268,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000054:    {kind: AddrOf, arg0: inst50000053, type: type(inst50000020)}
 // CHECK:STDOUT:     inst50000055:    {kind: Call, arg0: inst50000043, arg1: inst_block5000001C, type: type(inst5000001E)}
 // CHECK:STDOUT:     inst50000056:    {kind: Return}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))

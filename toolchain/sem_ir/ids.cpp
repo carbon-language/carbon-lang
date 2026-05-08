@@ -286,4 +286,13 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto AnyRawId::Print(llvm::raw_ostream& out) const -> void {
+  out << AnyRawId::Label;
+  if (has_value()) {
+    out << llvm::format_hex_no_prefix(index, 0, /*Upper=*/true);
+  } else {
+    out << "<none>";
+  }
+}
+
 }  // namespace Carbon::SemIR

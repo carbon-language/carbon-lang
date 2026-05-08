@@ -200,6 +200,13 @@ class ValueStore
 
   auto size() const -> size_t { return size_; }
 
+  // Makes an iterable range over the IDs in the ValueStore.
+  auto ids() const -> auto {
+    return llvm::map_range(llvm::seq(size_), [tag = tag_](int32_t i) -> IdType {
+      return tag.Apply(i);
+    });
+  }
+
   // Makes an iterable range over references to all values in the ValueStore.
   auto values() [[clang::lifetimebound]] -> auto {
     return llvm::map_range(llvm::seq(size_), [&](int32_t i) -> RefType {

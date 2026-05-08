@@ -122,12 +122,12 @@ impl i32 as I {
 // CHECK:STDOUT:     %X.patt: @C.%pattern_type (%pattern_type.51d1c4.1) = symbolic_binding_pattern X, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc15_10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc15_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_10.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc15_23: type = splice_block %T.ref [symbolic = %T.loc15_10.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc15_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_10.2 [symbolic = %T.loc15_10.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.loc15_20.2: @C.%T.loc15_10.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc15_20.1 (constants.%X)]
@@ -255,7 +255,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @i32.as.I.impl.F.loc43_18.1(%c.param: %C.899);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.I.impl.F.loc43_18.2(%c.param: %C.719) [thunk @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1] {
+// CHECK:STDOUT: fn @i32.as.I.impl.F.loc43_18.2(%c.param: %C.719) [thunk @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1 for @I.WithSelf.%I.WithSelf.F.decl, @I.WithSelf.F(constants.%I.facet.20f)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %i32.as.I.impl.F.type.6c53e7.1 = name_ref F, @i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.1 [concrete = constants.%i32.as.I.impl.F.7f652f.1]
 // CHECK:STDOUT:   %.loc25: %C.899 = converted %c.param, <error> [concrete = <error>]

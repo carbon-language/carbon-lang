@@ -192,7 +192,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %require_complete.56d: <witness> = require_complete_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.484: <witness> = lookup_impl_witness %ptr.18e, @Copy [symbolic]
-// CHECK:STDOUT:   %.f1d: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.091) [symbolic]
+// CHECK:STDOUT:   %.e00: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.091) [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.18e, (%Copy.lookup_impl_witness.484) [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.be8: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic]
 // CHECK:STDOUT:   %.e5c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.be8, %Copy.facet [symbolic]
@@ -235,7 +235,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: @C.F.%C (%C) = value_binding self, %self.param.loc20
 // CHECK:STDOUT:     %.loc20_41.1: type = splice_block %.loc20_41.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc20_41.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc20: type = symbolic_binding U, 1 [symbolic = %U.loc14_23.1 (constants.%U.091)]
@@ -291,7 +291,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc14: @C.F.%C (%C) = value_binding self, %self.param.loc14
 // CHECK:STDOUT:       %.loc14_26.1: type = splice_block %.loc14_26.2 [concrete = type] {
-// CHECK:STDOUT:         %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.Self.loc14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:         %.loc14_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc14_23.2: type = symbolic_binding U, 1 [symbolic = %U.loc14_23.1 (constants.%U.091)]
@@ -325,7 +325,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20_29: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_29 (constants.%require_complete.a31)]
 // CHECK:STDOUT:   %require_complete.loc20_48: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_48 (constants.%require_complete.56d)]
-// CHECK:STDOUT:   %.loc20_69.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_23.1) [symbolic = %.loc20_69.1 (constants.%.f1d)]
+// CHECK:STDOUT:   %.loc20_69.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_23.1) [symbolic = %.loc20_69.1 (constants.%.e00)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc14_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.484)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc14_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.be8)]

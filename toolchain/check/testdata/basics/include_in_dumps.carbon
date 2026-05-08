@@ -219,9 +219,9 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e26 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.a52: %I.WithSelf.Op.type.537 = struct_value () [concrete]
-// CHECK:STDOUT:   %.c12: type = fn_type_with_self_type %I.WithSelf.Op.type.537, %I.facet [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.382: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.6ab: %I.WithSelf.Op.type.382 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d7e: type = fn_type_with_self_type %I.WithSelf.Op.type.382, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op.type: type = fn_type @C.as.I.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op: %C.as.I.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -243,8 +243,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Main.import_ref.f72: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.4bc: %C.as.I.impl.Op.type = import_ref Main//included_with_range, loc14_32, loaded [concrete = constants.%C.as.I.impl.Op]
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.4bc), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.7f4: %C.as.I.impl.Op.type = import_ref Main//included_with_range, loc14_32, loaded [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.7f4), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -292,7 +292,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Op.ref: %I.assoc_type = name_ref Op, imports.%Main.import_ref.d09 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.c12 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.d7e = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   return
@@ -324,8 +324,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.537
-// CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.a52
+// CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.382
+// CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.6ab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_excluded.carbon
@@ -344,8 +344,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e26 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
-// CHECK:STDOUT:   %.c12: type = fn_type_with_self_type %I.WithSelf.Op.type.537, %I.facet [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.382: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
+// CHECK:STDOUT:   %.d7e: type = fn_type_with_self_type %I.WithSelf.Op.type.382, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op.type: type = fn_type @C.as.I.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op: %C.as.I.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -359,8 +359,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.d09: %I.assoc_type = import_ref Main//excluded_with_range, loc6_29, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.import_ref.e26: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.f73) = import_ref Main//excluded_with_range, loc6_29, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.f53)]
-// CHECK:STDOUT:   %Main.import_ref.4bc: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_32, loaded [concrete = constants.%C.as.I.impl.Op]
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.4bc), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.7f4: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_32, loaded [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.7f4), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -387,7 +387,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Op.ref: %I.assoc_type = name_ref Op, imports.%Main.import_ref.d09 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.c12 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.d7e = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   return

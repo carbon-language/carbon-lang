@@ -36,6 +36,38 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
+template <typename T>
+static auto CacheIfBundleId(T /*arg*/, const BundleStore& /*bundle_store*/)
+    -> void {}
+
+template <typename BundleT>
+static auto CacheIfBundleId(BundleId<BundleT> arg,
+                            const BundleStore& bundle_store) -> void {
+  bundle_store.CacheDebugKind(arg);
+}
+
+auto Inst::CacheBundleDebugKinds(const BundleStore& bundles) const -> void {
+  auto cache_args = [&](auto info) {
+    using Info = decltype(info);
+    if constexpr (Info::NumArgs > 0) {
+      CacheIfBundleId(FromRaw<typename Info::template ArgType<0>>(arg0_),
+                      bundles);
+    }
+    if constexpr (Info::NumArgs > 1) {
+      CacheIfBundleId(FromRaw<typename Info::template ArgType<1>>(arg1_),
+                      bundles);
+    }
+  };
+
+  switch (kind()) {
+#define CARBON_SEM_IR_INST_KIND(Name)               \
+  case Name::Kind:                                  \
+    cache_args(Internal::InstLikeTypeInfo<Name>()); \
+    break;
+#include "toolchain/sem_ir/inst_kind.def"
+  }
+}
+
 // Returns the IdKind of an instruction's argument, or None if there is no
 // argument with that index.
 template <typename InstKind, int ArgIndex>

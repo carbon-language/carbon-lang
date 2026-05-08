@@ -26,6 +26,32 @@ auto TypeIterator::Next() -> Step {
       case CARBON_KIND(EndType _): {
         return Step::End();
       }
+      case CARBON_KIND(FacetType facet_type): {
+        const auto& info = sem_ir_->facet_types().Get(facet_type.facet_type_id);
+        for (const auto& extend : info.extend_constraints) {
+          Push(SpecificInterface{extend.interface_id, extend.specific_id});
+        }
+        for (const auto& extend : info.extend_named_constraints) {
+          Push(SpecificNamedConstraint{extend.named_constraint_id,
+                                       extend.specific_id});
+        }
+        for (const auto& impls : info.self_impls_constraints) {
+          Push(SpecificInterface{impls.interface_id, impls.specific_id});
+        }
+        for (const auto& impls : info.self_impls_named_constraints) {
+          Push(SpecificNamedConstraint{impls.named_constraint_id,
+                                       impls.specific_id});
+        }
+        for (const auto& type_impls : info.type_impls_interfaces) {
+          PushInstId(type_impls.self_type);
+          Push(type_impls.specific_interface);
+        }
+        for (const auto& type_impls : info.type_impls_named_constraints) {
+          PushInstId(type_impls.self_type);
+          Push(type_impls.specific_named_constraint);
+        }
+        break;
+      }
       case CARBON_KIND(SpecificInterface interface): {
         auto args = GetSpecificArgs(interface.specific_id);
         if (args.empty()) {
@@ -37,15 +63,31 @@ auto TypeIterator::Next() -> Step {
           return Step::InterfaceStart{.interface_id = interface.interface_id};
         }
       }
+      case CARBON_KIND(SpecificNamedConstraint constraint): {
+        auto args = GetSpecificArgs(constraint.specific_id);
+        if (args.empty()) {
+          return Step::NamedConstraintStartOnly{
+              {.named_constraint_id = constraint.named_constraint_id}};
+        } else {
+          Push(EndType());
+          PushArgs(args);
+          return Step::NamedConstraintStart{.named_constraint_id =
+                                                constraint.named_constraint_id};
+        }
+      }
       case CARBON_KIND(StructFieldName value): {
         return Step::StructFieldName{.name_id = value.name_id};
       }
       case CARBON_KIND(SymbolicNonTypeValue value): {
         return Step::SymbolicValue{.inst_id = value.inst_id};
       }
+      case CARBON_KIND(FacetValueItem facet_value): {
+        return Step::FacetValue{.facet_value_inst_id =
+                                    facet_value.facet_value_inst_id};
+      }
       case CARBON_KIND(SymbolicType symbolic): {
         return Step::SymbolicType{.entity_name_id = symbolic.entity_name_id,
-                                  .facet_type_id = symbolic.facet_type_id};
+                                  .facet = symbolic.facet};
       }
       case CARBON_KIND(TypeId type_id): {
         if (auto step = ProcessTypeId(type_id)) {
@@ -68,11 +110,11 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
 
     case CARBON_KIND(SymbolicBinding bind): {
       return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
-                                .facet_type_id = type_id};
+                                .facet = inst_id};
     }
     case CARBON_KIND(SymbolicBindingPattern bind): {
       return Step::SymbolicType{.entity_name_id = bind.entity_name_id,
-                                .facet_type_id = type_id};
+                                .facet = inst_id};
     }
 
     case Call::Kind:
@@ -81,9 +123,6 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     }
 
     case CARBON_KIND(FacetAccessType access): {
-      auto facet_type_id =
-          sem_ir_->insts().Get(access.facet_value_inst_id).type_id();
-
       auto entity_name_id = SemIR::EntityNameId::None;
       if (auto facet_value = sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(
               access.facet_value_inst_id)) {
@@ -91,20 +130,15 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
       }
 
       return Step::SymbolicType{.entity_name_id = entity_name_id,
-                                .facet_type_id = facet_type_id};
+                                .facet = access.facet_value_inst_id};
     }
 
-    case CARBON_KIND(TupleAccess access): {
-      auto facet_type_id = sem_ir_->insts().Get(access.tuple_id).type_id();
-
-      auto entity_name_id = SemIR::EntityNameId::None;
-      if (auto facet_value = sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(
-              access.tuple_id)) {
-        entity_name_id = facet_value->entity_name_id;
-      }
-
-      return Step::SymbolicType{.entity_name_id = entity_name_id,
-                                .facet_type_id = facet_type_id};
+    case TupleAccess::Kind: {
+      // Tuple access of a concrete value would have evaluated to the accessed
+      // value, so we only see TupleAccess in a type when it's a symbolic value.
+      CARBON_CHECK(sem_ir_->constant_values().Get(inst_id).is_symbolic());
+      return Step::SymbolicType{.entity_name_id = EntityNameId::None,
+                                .facet = inst_id};
     }
 
       // ==== Concrete types ====
@@ -248,8 +282,7 @@ auto TypeIterator::TryGetInstIdAsTypeId(InstId inst_id) const
             sem_ir_->insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
       entity_name_id = bind->entity_name_id;
     }
-    return SymbolicType{.entity_name_id = entity_name_id,
-                        .facet_type_id = type_id_of_inst_id};
+    return SymbolicType{.entity_name_id = entity_name_id, .facet = inst_id};
   }
   // Non-type values are concrete, only types are symbolic.
   if (type_id_of_inst_id != TypeType::TypeId) {
@@ -277,6 +310,12 @@ auto TypeIterator::PushArgs(llvm::ArrayRef<InstId> args) -> void {
 // Push an instruction's type value into the work queue, or a marker if the
 // instruction has a symbolic value.
 auto TypeIterator::PushInstId(InstId inst_id) -> void {
+  // We push FacetValues as a separate work step, then also recurse into them
+  // below.
+  if (sem_ir_->insts().Is<FacetValue>(inst_id)) {
+    Push(FacetValueItem{.facet_value_inst_id = inst_id});
+  }
+
   auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
   if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
     Push(std::get<SymbolicType>(maybe_type_id));

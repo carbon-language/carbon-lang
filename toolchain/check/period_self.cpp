@@ -16,21 +16,22 @@
 
 namespace Carbon::Check {
 
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId {
+auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id) -> SemIR::InstId {
   CARBON_CHECK(self_type_id == SemIR::ErrorInst::TypeId ||
                context.types().Is<SemIR::FacetType>(self_type_id));
   auto entity_name_id = context.entity_names().AddCanonical({
       .name_id = SemIR::NameId::PeriodSelf,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
   });
-  auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::SymbolicBinding>({
-                   .type_id = self_type_id,
-                   .entity_name_id = entity_name_id,
-                   // `None` because there is no equivalent non-symbolic value.
-                   .value_id = SemIR::InstId::None,
-               }));
+  auto inst_id = AddInst<SemIR::SymbolicBinding>(
+      context, loc_id,
+      {
+          .type_id = self_type_id,
+          .entity_name_id = entity_name_id,
+          // `None` because there is no equivalent non-symbolic value.
+          .value_id = SemIR::InstId::None,
+      });
   auto existing = context.scope_stack().LookupOrAddName(
       SemIR::NameId::PeriodSelf, inst_id, ScopeIndex::None,
       IsCurrentPositionReachable(context));
@@ -41,10 +42,11 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
 
 SubstPeriodSelfCallbacks::SubstPeriodSelfCallbacks(
     Context* context, SemIR::LocId loc_id,
-    SemIR::ConstantId period_self_replacement_id)
+    SemIR::ConstantId period_self_replacement_id, Behaviour behaviour)
     : SubstInstCallbacks(context),
       loc_id_(loc_id),
-      period_self_replacement_id_(period_self_replacement_id) {}
+      period_self_replacement_id_(period_self_replacement_id),
+      behaviour_(behaviour) {}
 
 auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
   // FacetTypes are concrete even if they have `.Self` inside them, but we
@@ -59,51 +61,45 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
     return FullySubstituted;
   }
 
-  // For `.X` (which is `.Self.X`) replace the `.Self` in the query self
-  // position, and report it as `implicit`. Any `.Self` references in the
-  // specific interface would be replaced later and not treated as `implicit`.
-  //
-  // TODO: This all goes away when eval doesn't need to know about implicit
-  // .Self for diagnostics, once we diagnose invalid `.Self` in name lookup.
+  // Look for implicit use of `.Self` in designators: `.X` is really `.Self.X`.
   if (auto access =
           context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
     if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
             access->witness_id)) {
-      if (auto bind = context().insts().TryGetAs<SemIR::SymbolicBinding>(
-              witness->query_self_inst_id)) {
-        const auto& entity_name =
-            context().entity_names().Get(bind->entity_name_id);
-        if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-          auto replacement_id =
-              GetReplacement(witness->query_self_inst_id, true);
-          auto new_witness =
-              Rebuild(access->witness_id,
-                      SemIR::LookupImplWitness{
-                          .type_id = witness->type_id,
-                          .query_self_inst_id = replacement_id,
-                          // Don't replace `.Self` in the interface specific
-                          // here. That is an explicit `.Self` use. We'll
-                          // revisit the instruction for that.
-                          .query_specific_interface_id =
-                              witness->query_specific_interface_id,
-                      });
-          auto new_access = Rebuild(inst_id, SemIR::ImplWitnessAccess{
-                                                 .type_id = access->type_id,
-                                                 .witness_id = new_witness,
-                                                 .index = access->index,
-                                             });
-          inst_id = new_access;
-          return SubstAgain;
-        }
+      // Canonicalization not necessary; We are working with the constant
+      // value already, and the query self in a witness is already
+      // canonicalized.
+      if (IsPeriodSelf(context(), witness->query_self_inst_id,
+                       /*canonicalize=*/false)) {
+        auto replacement_id = GetReplacement(witness->query_self_inst_id);
+        auto new_witness =
+            Rebuild(access->witness_id,
+                    SemIR::LookupImplWitness{
+                        .type_id = witness->type_id,
+                        .query_self_inst_id = replacement_id,
+                        // Don't replace `.Self` in the interface specific
+                        // here. That is an explicit `.Self` use. We'll
+                        // revisit the instruction for that.
+                        .query_specific_interface_id =
+                            witness->query_specific_interface_id,
+                    });
+        auto new_access = Rebuild(inst_id, SemIR::ImplWitnessAccess{
+                                               .type_id = access->type_id,
+                                               .witness_id = new_witness,
+                                               .index = access->index,
+                                           });
+        inst_id = new_access;
+        return SubstAgain;
       }
     }
   }
 
-  if (auto bind = context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
-    const auto& entity_name =
-        context().entity_names().Get(bind->entity_name_id);
-    if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-      inst_id = GetReplacement(inst_id, false);
+  // Look for explicit use of `.Self`.
+  if (behaviour_ == Behaviour::All) {
+    // Canonicalization not necessary; Subst will recurse anyway, so avoid
+    // extra work for non-matches.
+    if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
+      inst_id = GetReplacement(inst_id);
       return FullySubstituted;
     }
   }
@@ -116,12 +112,8 @@ auto SubstPeriodSelfCallbacks::Rebuild(SemIR::InstId orig_inst_id,
   return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
 }
 
-auto SubstPeriodSelfCallbacks::GetReplacement(SemIR::InstId period_self,
-                                              bool implicit) -> SemIR::InstId {
-  if (!ShouldReplace(implicit)) {
-    return period_self;
-  }
-
+auto SubstPeriodSelfCallbacks::GetReplacement(SemIR::InstId period_self)
+    -> SemIR::InstId {
   auto period_self_type_id = context().insts().Get(period_self).type_id();
   CARBON_CHECK(context().types().Is<SemIR::FacetType>(period_self_type_id));
 
@@ -277,11 +269,13 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
 
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
     -> bool {
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  if (!const_inst_id.has_value()) {
+    return false;
+  }
   auto query_inst_id =
-      canonicalize
-          ? GetCanonicalFacetOrTypeValue(
-                context, context.constant_values().GetConstantInstId(inst_id))
-          : inst_id;
+      canonicalize ? GetCanonicalFacetOrTypeValue(context, const_inst_id)
+                   : inst_id;
   if (auto bind =
           context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
     const auto& entity_name = context.entity_names().Get(bind->entity_name_id);

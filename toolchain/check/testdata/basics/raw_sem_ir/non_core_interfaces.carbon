@@ -114,6 +114,7 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst6000001C:    {kind: AssociatedConstantDecl, arg0: assoc_const60000001, arg1: inst_block6000000C, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001D:    {kind: AssociatedEntity, arg0: element1, arg1: inst6000001C, type: type(inst60000018)}
 // CHECK:STDOUT:     inst6000001E:    {kind: AssociatedEntity, arg0: element1, arg1: inst6000001C, type: type(inst60000018)}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -487,6 +488,7 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst5000009C:    {kind: RequireCompleteType, arg0: inst50000089, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst5000009D:    {kind: RequireCompleteType, arg0: inst5000008A, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst5000009E:    {kind: Return}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
