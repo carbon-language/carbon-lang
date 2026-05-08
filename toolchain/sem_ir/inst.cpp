@@ -129,12 +129,12 @@ auto LocIdAndInst::RuntimeVerified(const File& file, LocId loc_id, Inst inst)
   return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
 }
 
-template class BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>>;
-
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
 template class ValueStore<SemIR::InstBlockId,
                           llvm::MutableArrayRef<SemIR::InstId>,
                           Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
+                               Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

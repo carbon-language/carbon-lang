@@ -7,7 +7,7 @@
 
 #include "toolchain/base/block_value_store.h"
 
-namespace Carbon::SemIR {
+namespace Carbon {
 
 template <typename IdT, typename ElementT, typename TagIdT>
 BlockValueStore<IdT, ElementT, TagIdT>::BlockValueStore(
@@ -62,6 +62,25 @@ auto BlockValueStore<IdT, ElementT, TagIdT>::CollectMemUsage(
                     canonical_blocks_, KeyContext(this));
 }
 
-}  // namespace Carbon::SemIR
+template <typename IdT, typename ElementT, typename TagIdT>
+auto BlockValueStore<IdT, ElementT, TagIdT>::AllocateCopy(ConstRefType data)
+    -> RefType {
+  auto result = AllocateUninitialized(data.size());
+  std::uninitialized_copy(data.begin(), data.end(), result.begin());
+  return result;
+}
+
+template <typename IdT, typename ElementT, typename TagIdT>
+auto BlockValueStore<IdT, ElementT, TagIdT>::AllocateUninitialized(size_t size)
+    -> RefType {
+  // We're not going to run a destructor, so ensure that's OK.
+  static_assert(std::is_trivially_destructible_v<ElementType>);
+
+  auto storage = static_cast<ElementType*>(
+      allocator_->Allocate(size * sizeof(ElementType), alignof(ElementType)));
+  return RefType(storage, size);
+}
+
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_IMPL_H_

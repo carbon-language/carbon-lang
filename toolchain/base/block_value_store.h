@@ -15,7 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 
-namespace Carbon::SemIR {
+namespace Carbon {
 
 // Provides a block-based ValueStore, which uses slab allocation of added
 // blocks. This allows references to values to outlast vector resizes that might
@@ -110,21 +110,10 @@ class BlockValueStore
 
  protected:
   // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(ConstRefType data) -> RefType {
-    auto result = AllocateUninitialized(data.size());
-    std::uninitialized_copy(data.begin(), data.end(), result.begin());
-    return result;
-  }
+  auto AllocateCopy(ConstRefType data) -> RefType;
 
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(size_t size) -> RefType {
-    // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<ElementType>);
-
-    auto storage = static_cast<ElementType*>(
-        allocator_->Allocate(size * sizeof(ElementType), alignof(ElementType)));
-    return RefType(storage, size);
-  }
+  auto AllocateUninitialized(size_t size) -> RefType;
 
   // Allow children to have more complex value handling.
   auto values() -> ValueStore<IdT, RefType, TagIdT>& { return values_; }
@@ -149,6 +138,6 @@ class BlockValueStore<IdT, ElementT, TagIdT>::KeyContext
   const BlockValueStore* store_;
 };
 
-}  // namespace Carbon::SemIR
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_H_

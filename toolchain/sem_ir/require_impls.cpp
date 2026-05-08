@@ -7,15 +7,12 @@
 #include "toolchain/base/block_value_store_impl.h"
 #include "toolchain/base/value_store_impl.h"
 
-namespace Carbon::SemIR {
-template class BlockValueStore<RequireImplsBlockId, RequireImplsId,
-                               Tag<CheckIRId>>;
-}  // namespace Carbon::SemIR
-
 namespace Carbon {
 template class ValueStore<SemIR::RequireImplsId, SemIR::RequireImpls,
                           Tag<SemIR::CheckIRId>>;
 template class ValueStore<SemIR::RequireImplsBlockId,
                           llvm::MutableArrayRef<SemIR::RequireImplsId>,
                           Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::RequireImplsBlockId, SemIR::RequireImplsId,
+                               Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

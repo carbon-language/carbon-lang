@@ -207,8 +207,6 @@ auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
 }
 
-template class BlockValueStore<CustomLayoutId, ObjectSize, Tag<CheckIRId>>;
-
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
@@ -219,4 +217,6 @@ template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
 template class ValueStore<SemIR::CustomLayoutId,
                           llvm::MutableArrayRef<SemIR::ObjectSize>,
                           Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                               Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

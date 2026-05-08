@@ -35,15 +35,15 @@ inline auto CarbonHashValue(const StructTypeField& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-extern template class BlockValueStore<StructTypeFieldsId, StructTypeField,
-                                      Tag<CheckIRId>>;
-
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
 extern template class ValueStore<SemIR::StructTypeFieldsId,
                                  llvm::MutableArrayRef<SemIR::StructTypeField>,
                                  Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::StructTypeFieldsId,
+                                      SemIR::StructTypeField,
+                                      Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_STRUCT_TYPE_FIELD_H_

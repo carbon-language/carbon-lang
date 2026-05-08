@@ -426,9 +426,6 @@ class File : public Printable<File> {
   ClangSourceLocStore clang_source_locs_;
 };
 
-extern template class BlockValueStore<CustomLayoutId, ObjectSize,
-                                      Tag<CheckIRId>>;
-
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
@@ -439,6 +436,8 @@ extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
 extern template class ValueStore<SemIR::CustomLayoutId,
                                  llvm::MutableArrayRef<SemIR::ObjectSize>,
                                  Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                                      Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_
