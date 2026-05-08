@@ -79,8 +79,8 @@ especially important to the coherence of generics and templates.
 -   When an `impl` needs to be resolved, only those `impl` declarations that
     appear earlier are considered. However, if a later `impl` declaration would
     change the result of any earlier `impl` lookup, the program is invalid.
--   Declarations in an API file are sufficient for use by clients that import
-    the library without having to consult the definition in the impl file.
+-   Declarations in an API file that are insufficient for use by clients that
+    import the library require a definition in the API file.
 
 ## Exceptions
 
