@@ -285,7 +285,9 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
 static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
-    clang::FunctionDecl* function_decl) -> SemIR::Signature {
+    clang::FunctionDecl* function_decl, clang::DeclAccessPair found_decl,
+    SemIR::Signature::PassingMode passing_mode, const clang::Expr* arg_expr)
+    -> SemIR::SignatureId {
   // If we're performing a constructor initialization from a list, form a
   // function signature that takes a single tuple or struct pattern
   // instead of a function signature with one parameter per C++ parameter.
@@ -302,11 +304,23 @@ static auto GetConversionSignatureToImport(
     //
     //   fn Class.Class((a: A, b: B, c: C)) -> Class;
     //
-    // TODO: Determine passing modes based on tuple element categories.
-    return {
-        .kind = SemIR::Signature::TuplePattern,
-        .num_params = static_cast<int32_t>(
-            context.inst_blocks().Get(tuple_type->type_elements_id).size())};
+    // In order to determine how to map the parameters, we need to build the
+    // conversion sequences again. Clang already threw them away.
+    clang::OverloadCandidateSet candidates(
+        function_decl->getLocation(),
+        clang::OverloadCandidateSet::CSK_InitByUserDefinedConversion);
+    auto arg_exprs = cast<clang::InitListExpr>(arg_expr)->inits();
+    context.clang_sema().AddOverloadCandidate(
+        function_decl, found_decl, arg_exprs, candidates,
+        /*SuppressUserConversions=*/false, /*PartialOverloading=*/false,
+        /*AllowExplicit=*/false);
+    clang::OverloadCandidateSet::iterator best;
+    auto result = candidates.BestViableFunction(
+        context.clang_sema(), function_decl->getLocation(), best);
+    CARBON_CHECK(result == clang::OverloadingResult::OR_Success);
+
+    return ComputeClangDeclSignatureFromBestViableFunction(context, best,
+                                                           arg_exprs);
   }
 
   // Any other initialization using a constructor is calling a converting
@@ -316,7 +330,7 @@ static auto GetConversionSignatureToImport(
   //
   // TODO: Determine the best passing mode.
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
-    return {.kind = SemIR::Signature::Normal, .num_params = 1};
+    return context.signatures().Add(SemIR::Signature::Make({passing_mode}));
   }
 
   // Otherwise, the initialization is calling a conversion function
@@ -324,7 +338,7 @@ static auto GetConversionSignatureToImport(
   //
   //   fn Source.<conversion function>[self: Source]() -> Dest;
   CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
-  return {.kind = SemIR::Signature::Normal, .num_params = 0};
+  return context.signatures().Add(SemIR::Signature::Make({}));
 }
 
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
@@ -377,6 +391,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
+  SemIR::Signature::PassingMode passing_mode =
+      SemIR::Signature::PassingMode::ByValue;
+
   // Scan the steps looking for user-defined conversions. For now we just find
   // and return the first such conversion function. We skip over standard
   // conversions; we'll perform those using the Carbon rules as part of calling
@@ -404,9 +421,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         sema.MarkFunctionReferenced(loc, step.Function.Function);
 
-        auto signature = GetConversionSignatureToImport(
-            context, source_id, step.Kind, step.Function.Function);
-        SemIR::SignatureId signature_id = context.signatures().Add(std::move(signature));
+        SemIR::SignatureId signature_id = GetConversionSignatureToImport(
+            context, source_id, step.Kind, step.Function.Function,
+            step.Function.FoundDecl, passing_mode, arg_expr);
         auto result_id = ImportCppFunctionDecl(
             context, loc_id, step.Function.Function, signature_id);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
@@ -439,7 +456,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
       case clang::InitializationSequence::SK_ConversionSequence:
       case clang::InitializationSequence::SK_ConversionSequenceNoNarrowing: {
         // Implicit conversions are handled by the normal Carbon conversion
-        // logic, so we ignore them here.
+        // logic, so we ignore them here other than to determine how to pass the
+        // value to a converting constructor.
+        passing_mode = GetPassingModeForCppParameter(*step.ICS, arg_expr);
         continue;
       }
 
@@ -640,17 +659,14 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
 
       // If this is an operator method, the first arg will be used as self.
-      int32_t num_params = arg_exprs.size();
+      auto arg_exprs_for_signature = arg_exprs;
       if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
-        --num_params;
+        arg_exprs_for_signature.consume_front();
       }
 
-      // TODO: Build signature based on argument categories.
-      SemIR::Signature signature;
-      signature.kind = SemIR::Signature::Normal;
-      signature.num_params = num_params;
       SemIR::SignatureId signature_id =
-          context.signatures().Add(std::move(signature));
+          ComputeClangDeclSignatureFromBestViableFunction(
+              context, best_viable_fn, arg_exprs_for_signature);
 
       auto result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, signature_id);

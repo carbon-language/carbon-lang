@@ -86,12 +86,12 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %by_val__carbon_thunk.call = call i32 @_ZNK1A6by_valEv.carbon_thunk(ptr %a), !dbg !18
+// CHECK:STDOUT:   %by_val__carbon_thunk.call = call i32 @_ZNK1A6by_valEv.carbon_thunk.(ptr %a), !dbg !18
 // CHECK:STDOUT:   ret i32 %by_val__carbon_thunk.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZNK1A6by_valEv.carbon_thunk(ptr noundef nonnull align 8 dereferenceable(12) %this) #1 {
+// CHECK:STDOUT: define internal noundef i32 @_ZNK1A6by_valEv.carbon_thunk.(ptr noundef nonnull align 8 dereferenceable(12) %this) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !20
@@ -276,19 +276,19 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   %self.var = alloca {}, align 8
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !17
-// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.V(ptr %n, ptr @int_1.30e), !dbg !20
+// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk._(ptr %n, ptr @int_1.30e), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_3.1.temp), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %self.var)
-// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr %n, ptr %self.var), !dbg !18
+// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %n, ptr %self.var), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !19
-// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.V(ptr %self.var, ptr @int_1.30e), !dbg !18
+// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk._(ptr %self.var, ptr @int_1.30e), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.V(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %c) #1 {
+// CHECK:STDOUT: define internal void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %c) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
@@ -302,7 +302,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.V(ptr noundef %0, ptr noundef %c) #1 {
+// CHECK:STDOUT: define internal void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk._(ptr noundef %0, ptr noundef %c) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
@@ -317,7 +317,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr noundef %0, ptr noundef %return) #2 {
+// CHECK:STDOUT: define internal void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr noundef %0, ptr noundef %return) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -331,7 +331,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Copy.fdeb6dbda014bd1f.Core:NeedThunk.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !35
+// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

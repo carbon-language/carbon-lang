@@ -213,33 +213,10 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %X.X.type: type = fn_type @X.X [concrete]
-// CHECK:STDOUT:   %X.X: %X.X.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const.551: type = const_type %X [concrete]
-// CHECK:STDOUT:   %ptr.8e3: type = ptr_type %const.551 [concrete]
-// CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
-// CHECK:STDOUT:   %X__carbon_thunk: %X__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
-// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b1c: <witness> = custom_witness (%X.Op), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.c04: %Copy.type = facet_value %X, (%custom_witness.b1c) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.887: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c04) [concrete]
-// CHECK:STDOUT:   %.157: type = fn_type_with_self_type %Copy.WithSelf.Op.type.887, %Copy.facet.c04 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.decl: %operator_Plus__carbon_thunk.type = fn_decl @operator_Plus__carbon_thunk [concrete = constants.%operator_Plus__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.X.decl: %X.X.type = fn_decl @X.X [concrete = constants.%X.X] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X__carbon_thunk.decl: %X__carbon_thunk.type = fn_decl @X__carbon_thunk [concrete = constants.%X__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -251,38 +228,13 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %a.ref: %X = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %X = name_ref b, %b
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc11_10: %.157 = impl_witness_access constants.%custom_witness.b1c, element0 [concrete = constants.%X.Op]
-// CHECK:STDOUT:   %bound_method.loc11_10: <bound method> = bound_method %a.ref, %impl.elem0.loc11_10
-// CHECK:STDOUT:   %.loc11_10.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Op.ref.loc11_10: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc11_10.2: ref %X = value_as_ref %a.ref
-// CHECK:STDOUT:   %addr.loc11_10.1: %ptr.1f9 = addr_of %.loc11_10.2
-// CHECK:STDOUT:   %.loc11_10.3: %ptr.8e3 = as_compatible %addr.loc11_10.1
-// CHECK:STDOUT:   %.loc11_10.4: %ptr.8e3 = converted %addr.loc11_10.1, %.loc11_10.3
-// CHECK:STDOUT:   %addr.loc11_10.2: %ptr.1f9 = addr_of %_.var.1
-// CHECK:STDOUT:   %X__carbon_thunk.call.loc11_10: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc11_10.4, %addr.loc11_10.2)
-// CHECK:STDOUT:   %.loc11_10.5: init %X to %_.var.1 = mark_in_place_init %X__carbon_thunk.call.loc11_10
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc11_14: %.157 = impl_witness_access constants.%custom_witness.b1c, element0 [concrete = constants.%X.Op]
-// CHECK:STDOUT:   %bound_method.loc11_14: <bound method> = bound_method %b.ref, %impl.elem0.loc11_14
-// CHECK:STDOUT:   %.loc11_14.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Op.ref.loc11_14: %X.X.type = name_ref Op, imports.%X.X.decl [concrete = constants.%X.X]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc11_14.2: ref %X = value_as_ref %b.ref
-// CHECK:STDOUT:   %addr.loc11_14.1: %ptr.1f9 = addr_of %.loc11_14.2
-// CHECK:STDOUT:   %.loc11_14.3: %ptr.8e3 = as_compatible %addr.loc11_14.1
-// CHECK:STDOUT:   %.loc11_14.4: %ptr.8e3 = converted %addr.loc11_14.1, %.loc11_14.3
-// CHECK:STDOUT:   %addr.loc11_14.2: %ptr.1f9 = addr_of %_.var.2
-// CHECK:STDOUT:   %X__carbon_thunk.call.loc11_14: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc11_14.4, %addr.loc11_14.2)
-// CHECK:STDOUT:   %.loc11_14.5: init %X to %_.var.2 = mark_in_place_init %X__carbon_thunk.call.loc11_14
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %addr.loc11_12.1: %ptr.1f9 = addr_of %_.var.1
-// CHECK:STDOUT:   %addr.loc11_12.2: %ptr.1f9 = addr_of %_.var.2
+// CHECK:STDOUT:   %.loc11_10: ref %X = value_as_ref %a.ref
+// CHECK:STDOUT:   %addr.loc11_12.1: %ptr.1f9 = addr_of %.loc11_10
+// CHECK:STDOUT:   %.loc11_14: ref %X = value_as_ref %b.ref
+// CHECK:STDOUT:   %addr.loc11_12.2: %ptr.1f9 = addr_of %.loc11_14
 // CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_34.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
 // CHECK:STDOUT:   %.loc11_12: init %X to %.loc9_34.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %.loc11_12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -20,6 +20,16 @@ auto CheckCppOverloadAccess(
     SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
     SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None) -> void;
 
+// Returns the passing mode to use for a parameter given the implicit
+// conversion sequence and the argument expression.
+auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
+                                   const clang::Expr* arg_expr)
+    -> SemIR::Signature::PassingMode;
+
+auto ComputeClangDeclSignatureFromBestViableFunction(
+    Context& context, clang::OverloadCandidateSet::iterator candidate,
+    llvm::ArrayRef<clang::Expr*> arg_exprs) -> SemIR::SignatureId;
+
 // Resolves which function to call using Clang overload resolution. Returns an
 // instruction referring to that function, or an error instruction if overload
 // resolution failed.

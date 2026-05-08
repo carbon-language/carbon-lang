@@ -28,7 +28,18 @@ auto Signature::Print(llvm::raw_ostream& out) const -> void {
     out << ", modes: [";
     llvm::ListSeparator sep;
     for (auto mode : passing_modes) {
-      out << sep << (mode == PassingMode::ByValue ? "value" : "var");
+      out << sep;
+      switch (mode) {
+        case PassingMode::ByValue:
+          out << "value";
+          break;
+        case PassingMode::ByVar:
+          out << "var";
+          break;
+        case PassingMode::ByRef:
+          out << "ref";
+          break;
+      }
     }
     out << "]";
   }

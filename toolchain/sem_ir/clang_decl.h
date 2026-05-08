@@ -20,10 +20,17 @@ namespace Carbon::SemIR {
 struct Signature : public Printable<Signature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
-    // This parameter is a by-value parameter passed as `var` (the default).
-    ByVar,
-    // This is a by-value C++ parameter that is passed by-value as an optimization.
+    // This parameter is passed by Carbon value. This is used for a C++
+    // non-reference parameter that would be copied at the call site, and for a
+    // C++ const reference parameter (either lvalue or rvalue reference).
     ByValue,
+    // This parameter is passed as a Carbon var parameter. This is used for a
+    // C++ non-reference parameter that would be moved or constructed in-place
+    // at the call site, or for a C++ non-const rvalue reference parameter.
+    ByVar,
+    // This parameter is passed as a Carbon ref parameter. This is used for a
+    // C++ non-const lvalue reference parameter.
+    ByRef,
   };
 
   enum Kind : int8_t {
@@ -47,9 +54,18 @@ struct Signature : public Printable<Signature> {
 
   // The passing mode for each parameter. Excludes the (implicit or explicit)
   // object parameter, if there is one.
-  // TODO: Generalize this to be parameter info, not just passing mode. For now
-  // a struct with a single field would do.
+  // TODO: Generalize this to be parameter info, not just passing mode.
   llvm::SmallVector<PassingMode, 4> passing_modes;
+
+  // Convenience function to make a fixed signature.
+  static auto Make(std::initializer_list<SemIR::Signature::PassingMode> modes,
+                   Kind kind = Normal) -> Signature {
+    Signature signature;
+    signature.kind = kind;
+    signature.num_params = static_cast<int32_t>(modes.size());
+    signature.passing_modes.assign(modes.begin(), modes.end());
+    return signature;
+  }
 
   // Returns the passing mode for the i-th parameter.
   auto GetPassingMode(int32_t i) const -> PassingMode {

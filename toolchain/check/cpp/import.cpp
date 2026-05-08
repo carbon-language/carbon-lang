@@ -1272,6 +1272,19 @@ struct ParameterTypeInfo {
 };
 }  // namespace
 
+// Maps a C++ parameter passing mode to a Carbon pattern kind.
+static auto GetParamPatternKindForPassingMode(
+    SemIR::Signature::PassingMode mode) -> ParamPatternKind {
+  switch (mode) {
+    case SemIR::Signature::PassingMode::ByValue:
+      return ParamPatternKind::Value;
+    case SemIR::Signature::PassingMode::ByVar:
+      return ParamPatternKind::Var;
+    case SemIR::Signature::PassingMode::ByRef:
+      return ParamPatternKind::Ref;
+  }
+}
+
 // Given the type of a C++ function parameter, returns information about the
 // type to use for the corresponding Carbon parameter.
 //
@@ -1282,45 +1295,9 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type,
                              SemIR::Signature::PassingMode passing_mode)
     -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None,
-                            .kind = ParamPatternKind::Value};
-
-  // Perform some custom mapping for parameters of reference type:
-  //
-  //   * `T& x` -> `ref x: T`.
-  //   * `T&& x` -> `var x: T`.
-  //   * `const T& x` -> `x: T`.
-  //   * `const T&& x` -> `x: T`.
-  if (param_type->isReferenceType()) {
-    clang::QualType pointee_type = param_type->getPointeeType();
-    if (pointee_type.isConstQualified()) {
-      // TODO: Consider only doing this if `const` is the only qualifier. For
-      // now, any other qualifier will fail when mapping the type.
-      auto split_type = pointee_type.getSplitUnqualifiedType();
-      split_type.Quals.removeConst();
-      pointee_type = context.ast_context().getQualifiedType(split_type);
-    } else if (param_type->isLValueReferenceType()) {
-      // Lvalue references map to a `ref` pattern.
-      info.kind = ParamPatternKind::Ref;
-    } else {
-      // Rvalue references map to a `var` pattern. When given a value expression
-      // as an argument, this will result in a copy. However, if the argument is
-      // of class type, we will map its type to `const T`, which means overload
-      // resolution won't allow the call anyway, so this only permits passing
-      // value expressions of non-class type to a `T&&` parameter.
-      info.kind = ParamPatternKind::Var;
-    }
-    param_type = pointee_type;
-  } else {
-    // C++ by-value parameters default to being passed as `var`, and are instead
-    // passed `ByValue` as an optimization only when it's correct to do so.
-    if (passing_mode != SemIR::Signature::PassingMode::ByValue) {
-      info.kind = ParamPatternKind::Var;
-    }
-  }
-
-  info.type = MapType(context, loc_id, param_type);
-  return info;
+  param_type = param_type.getNonReferenceType().getUnqualifiedType();
+  return {.type = MapType(context, loc_id, param_type),
+          .kind = GetParamPatternKindForPassingMode(passing_mode)};
 }
 
 // Returns a block for the implicit parameters of the given function
@@ -1342,8 +1319,18 @@ static auto MakeImplicitParamPatternsBlockId(
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
+  SemIR::Signature::PassingMode passing_mode =
+      SemIR::Signature::PassingMode::ByVar;
+  if (param_type->isReferenceType()) {
+    clang::QualType pointee_type = param_type->getPointeeType();
+    if (pointee_type.isConstQualified()) {
+      passing_mode = SemIR::Signature::PassingMode::ByValue;
+    } else if (param_type->isLValueReferenceType()) {
+      passing_mode = SemIR::Signature::PassingMode::ByRef;
+    }
+  }
   auto param_info = MapParameterType(context, loc_id, param_type,
-                                     SemIR::Signature::PassingMode::ByVar);
+                                     passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeSubpatternExpr(context, type_inst_id);
@@ -1822,8 +1809,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       thunk_signature.kind = SemIR::Signature::Normal;
       thunk_signature.num_params =
           static_cast<int32_t>(thunk_clang_decl->getNumParams());
-      thunk_signature.passing_modes.assign(thunk_signature.num_params,
-                                           SemIR::Signature::PassingMode::ByValue);
+      thunk_signature.passing_modes.assign(
+          thunk_signature.num_params, SemIR::Signature::PassingMode::ByValue);
       SemIR::SignatureId thunk_signature_id =
           context.signatures().Add(std::move(thunk_signature));
 

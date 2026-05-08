@@ -88,20 +88,22 @@ static auto GenerateThunkMangledName(
       break;
   }
 
-  // Append passing modes if there are any non-default modes. Otherwise, include
-  // the parameter count if it's not the default.
-  if (llvm::any_of(signature.passing_modes, [](auto mode) {
-        return mode != SemIR::Signature::PassingMode::ByVar;
-      })) {
-    mangled_name_stream << ".";
-    for (auto mode : signature.passing_modes) {
-      mangled_name_stream << (mode == SemIR::Signature::PassingMode::ByValue
-                                  ? "V"
-                                  : "_");
+  // Append passing modes.
+  // TODO: Pick one "likely" set of passing modes for the function and omit the
+  // suffix for that signature.
+  mangled_name_stream << ".";
+  for (auto mode : signature.passing_modes) {
+    switch (mode) {
+      case SemIR::Signature::PassingMode::ByValue:
+        mangled_name_stream << "_";
+        break;
+      case SemIR::Signature::PassingMode::ByVar:
+        mangled_name_stream << "v";
+        break;
+      case SemIR::Signature::PassingMode::ByRef:
+        mangled_name_stream << "r";
+        break;
     }
-  } else if (signature.num_params !=
-             static_cast<int>(callee_function_decl.getNumNonObjectParams())) {
-    mangled_name_stream << signature.num_params;
   }
 
   return mangled_name_stream.TakeStr();

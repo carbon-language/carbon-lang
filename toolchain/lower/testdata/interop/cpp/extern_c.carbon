@@ -227,22 +227,12 @@ fn MyF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main(ptr sret({}) %return, ptr %a, ptr %b) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_10.1.temp = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %_.var.1 = alloca {}, align 8
-// CHECK:STDOUT:   %.loc7_14.1.temp = alloca {}, align 8, !dbg !19
-// CHECK:STDOUT:   %_.var.2 = alloca {}, align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_10.1.temp), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.1)
-// CHECK:STDOUT:   call void @_ZN1XC1ERKS_.carbon_thunk(ptr %a, ptr %_.var.1), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2)
-// CHECK:STDOUT:   call void @_ZN1XC1ERKS_.carbon_thunk(ptr %b, ptr %_.var.2), !dbg !19
-// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk(ptr %_.var.1, ptr %_.var.2, ptr %return), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !20
+// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk.__(ptr %a, ptr %b, ptr %return), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zpl1XS_.carbon_thunk(ptr noundef %0, ptr noundef %1, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zpl1XS_.carbon_thunk.__(ptr noundef %0, ptr noundef %1, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
@@ -250,50 +240,21 @@ fn MyF() {
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.X, align 1
 // CHECK:STDOUT:   %agg.tmp2 = alloca %struct.X, align 1
 // CHECK:STDOUT:   %undef.agg.tmp = alloca %struct.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !21
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   %4 = load ptr, ptr %.addr1, align 8, !tbaa !21
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !20
+// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !20
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !20
+// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8, !tbaa !20
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !20
+// CHECK:STDOUT:   %4 = load ptr, ptr %.addr1, align 8, !tbaa !20
 // CHECK:STDOUT:   call void @_Zpl1XS_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN1XC1ERKS_.carbon_thunk(ptr noundef %0, ptr noundef %return) #2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !21
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.b2719e7f54af1af9.Core:X.Cpp"(ptr sret({}) %return, ptr %self) #3 !dbg !24 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1XC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !30
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Zpl1XS_() #5
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN1XC1ERKS_.carbon_thunk, { 0, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: declare void @_Zpl1XS_() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -318,18 +279,10 @@ fn MyF() {
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !14)
 // CHECK:STDOUT: !18 = !DILocation(line: 7, column: 10, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 14, scope: !11)
-// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 3, scope: !11)
-// CHECK:STDOUT: !21 = !{!22, !22, i64 0}
-// CHECK:STDOUT: !22 = !{!"p1 _ZTS1X", !23, i64 0}
-// CHECK:STDOUT: !23 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.b2719e7f54af1af9.Core:X.Cpp", scope: null, file: !25, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
-// CHECK:STDOUT: !25 = !DIFile(filename: "./extern_c_with_special_name.h", directory: "")
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
-// CHECK:STDOUT: !27 = !{!14, !14}
-// CHECK:STDOUT: !28 = !{!29}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !14)
-// CHECK:STDOUT: !30 = !DILocation(line: 2, column: 8, scope: !24)
+// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT: !20 = !{!21, !21, i64 0}
+// CHECK:STDOUT: !21 = !{!"p1 _ZTS1X", !22, i64 0}
+// CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_asm_label.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_asm_label.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

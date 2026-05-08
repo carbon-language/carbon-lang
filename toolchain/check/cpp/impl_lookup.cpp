@@ -111,11 +111,7 @@ static auto MakeSignature(
     Context& context,
     std::initializer_list<SemIR::Signature::PassingMode> modes)
     -> SemIR::SignatureId {
-  SemIR::Signature signature;
-  signature.kind = SemIR::Signature::Normal;
-  signature.num_params = static_cast<int32_t>(modes.size());
-  signature.passing_modes.assign(modes.begin(), modes.end());
-  return context.signatures().Add(std::move(signature));
+  return context.signatures().Add(SemIR::Signature::Make(modes));
 }
 
 static auto BuildCopyWitness(
@@ -142,7 +138,7 @@ static auto BuildCopyWitness(
     }
 
     SemIR::SignatureId signature_id =
-        MakeSignature(context, {SemIR::Signature::PassingMode::ByVar});
+        MakeSignature(context, {SemIR::Signature::PassingMode::ByValue});
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature_id = signature_id};

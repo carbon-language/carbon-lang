@@ -109,10 +109,6 @@ import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
   // TODO: This should eventually be accepted if we support `volatile`.
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers &` [SemanticsTodo]
-  // CHECK:STDERR:   p->volatile_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   p->volatile_this();
 }
 
@@ -451,7 +447,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk.call: init %empty_tuple.type = call imports.%HasQualifiers__carbon_thunk.decl(%.loc22_8.7, %addr.loc22_8.2)
 // CHECK:STDOUT:   %.loc22_8.8: init %HasQualifiers to %self.var = mark_in_place_init %HasQualifiers__carbon_thunk.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%ref_ref_this__carbon_thunk.decl(%self.var)
+// CHECK:STDOUT:   %ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%ref_ref_this__carbon_thunk.decl(%.3)
 // CHECK:STDOUT:   %Make.ref.loc23: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc23_8.1: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc23: init %HasQualifiers to %.loc23_8.1 = call %Make.ref.loc23()

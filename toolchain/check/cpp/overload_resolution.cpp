@@ -131,12 +131,105 @@ auto CheckCppOverloadAccess(
                .highest_allowed_access = allowed_access_kind});
 }
 
+// Computes the passing mode for a C++ function parameter that is a reference.
+static auto ComputePassingModeForReferenceBinding(
+    const clang::StandardConversionSequence& scs)
+    -> SemIR::Signature::PassingMode {
+  CARBON_CHECK(scs.ReferenceBinding);
+  auto pointee_type = scs.getToType(2);
+  if (pointee_type.isConstQualified()) {
+    // Reference to const is always mapped to Carbon pass by value.
+    return SemIR::Signature::PassingMode::ByValue;
+  }
+  // Rvalue reference to non-const is passed as a `var` to force a copy or move
+  // in the caller. Lvalue reference to non-const is passed by reference.
+  return scs.IsLvalueReference ? SemIR::Signature::PassingMode::ByRef
+                               : SemIR::Signature::PassingMode::ByVar;
+}
+
+// Returns whether move-construction of type `type` is known to be equivalent to
+// a copy. If so, it's safe to map C++ pass-by-value into Carbon pass-by-value
+// instead of pass-by-var.
+static auto IsMoveEquivalentToCopy(clang::QualType type) {
+  // We can pass by copy instead of by move if:
+  // - The type is not a class type.
+  auto* record_decl = type->getAsCXXRecordDecl();
+  if (!record_decl) {
+    return true;
+  }
+
+  // - The move constructor is defaulted and deleted or non-existent, in
+  //   which case overload resolution for a move will call the copy
+  //   constructor.
+  if (!record_decl->hasMoveConstructor() ||
+      (!record_decl->hasUserDeclaredMoveConstructor() &&
+       record_decl->defaultedMoveConstructorIsDeleted())) {
+    return true;
+  }
+
+  // - Both move and copy are trivial and not deleted, in which case they
+  //   are equivalent.
+  if (record_decl->hasTrivialMoveConstructor() &&
+      !record_decl->defaultedMoveConstructorIsDeleted() &&
+      record_decl->hasTrivialCopyConstructor() &&
+      !record_decl->defaultedCopyConstructorIsDeleted()) {
+    return true;
+  }
+
+  // Otherwise we need a move, so we pass by var.
+  return false;
+}
+
+auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
+                                   const clang::Expr* arg_expr)
+    -> SemIR::Signature::PassingMode {
+  if (ics.isStandard()) {
+    const auto& scs = ics.Standard;
+    if (scs.ReferenceBinding) {
+      return ComputePassingModeForReferenceBinding(scs);
+    }
+
+    // Most standard conversions can be mapped to Carbon pass by value. The
+    // exception is where the source is an initializing expression of record
+    // type, which we map to pass by var, unless a copy would do the same thing.
+    if (arg_expr->isXValue() && !IsMoveEquivalentToCopy(arg_expr->getType())) {
+      return SemIR::Signature::PassingMode::ByVar;
+    }
+
+    return SemIR::Signature::PassingMode::ByValue;
+  }
+
+  if (ics.isUserDefined()) {
+    const auto& ucs = ics.UserDefined;
+    if (ucs.After.ReferenceBinding) {
+      return ComputePassingModeForReferenceBinding(ucs.After);
+    }
+
+    const auto* ctor =
+        dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
+    if (ctor && ctor->isCopyConstructor()) {
+      // Overload resolution wanted to call a copy constructor to initialize
+      // this parameter. Pass by value instead; we'll copy in the thunk.
+      return SemIR::Signature::PassingMode::ByValue;
+    }
+
+    // We're calling a user-defined conversion, so we're performing
+    // initialization. Pass by move unless the type being initialized doesn't
+    // distinguish moves and copies.
+    return IsMoveEquivalentToCopy(ucs.After.getToType(2))
+               ? SemIR::Signature::PassingMode::ByValue
+               : SemIR::Signature::PassingMode::ByVar;
+  }
+
+  // TODO: Support ellipsis conversion sequences.
+  CARBON_FATAL("Unexpected kind of implicit conversion sequence");
+}
+
 // Computes the signature for a C++ function candidate based on the conversions
 // performed on the arguments.
-static auto ComputeSignature(Context& context,
-                             clang::OverloadCandidateSet::iterator candidate,
-                             llvm::ArrayRef<clang::Expr*> arg_exprs)
-    -> SemIR::SignatureId {
+auto ComputeClangDeclSignatureFromBestViableFunction(
+    Context& context, clang::OverloadCandidateSet::iterator candidate,
+    llvm::ArrayRef<clang::Expr*> arg_exprs) -> SemIR::SignatureId {
   SemIR::Signature signature;
   signature.kind = SemIR::Signature::Normal;
   signature.num_params = static_cast<int32_t>(arg_exprs.size());
@@ -154,57 +247,8 @@ static auto ComputeSignature(Context& context,
       }
     }
 
-    const auto& ics = candidate->Conversions[conversion_index];
-     SemIR::Signature::PassingMode mode = SemIR::Signature::PassingMode::ByValue;
- 
-     // Determine whether this conversion should perform a move when passing an
-     // object of class type by value.
-     clang::QualType to_type;
-     if (ics.isStandard()) {
-       const auto& scs = ics.Standard;
-       if (!scs.ReferenceBinding && arg_expr->isXValue() &&
-           arg_expr->getType()->isRecordType()) {
-         // A standard conversion for a class that is not a reference binding
-         // must be a copy or a move. The source is an xvalue, so we want to
-         // perform a move. If the source is a prvalue, that indicates that it
-         // came from a Carbon value expression, so we should copy, not move.
-         mode = SemIR::Signature::PassingMode::ByVar;
-         to_type = scs.getToType(2);
-       }
-     } else if (ics.isUserDefined()) {
-       const auto& ucs = ics.UserDefined;
-       const auto* ctor =
-           dyn_cast_or_null<clang::CXXConstructorDecl>(ucs.ConversionFunction);
-       if (!ucs.After.ReferenceBinding && (!ctor || ctor->isCopyConstructor())) {
-         // Overload resolution wanted to call a function other than a copy
-         // constructor. We should pass by move instead of inserting a copy.
-         mode = SemIR::Signature::PassingMode::ByVar;
-         to_type = ucs.After.getToType(2);
-       }
-     }
- 
-     // If we decided to pass by var, check if it's safe to use pass-by-Carbon-value
-     // instead. If the copy constructor is non-deleted and trivial, we can just
-     // perform a copy instead. Doing so allows us to generate fewer thunks.
-     if (mode == SemIR::Signature::PassingMode::ByVar) {
-       const auto* record_decl = to_type->castAsCXXRecordDecl();
-       // We can pass by copy instead of by move if:
-       // - the move constructor is defaulted and deleted or non-existent, in
-       //   which case overload resolution for a move will call the copy
-       //   constructor, or
-       // - both move and copy are trivial and not deleted, in which case they
-       //   are equivalent.
-       if (!record_decl->hasMoveConstructor() ||
-           (!record_decl->hasUserDeclaredMoveConstructor() &&
-            record_decl->defaultedMoveConstructorIsDeleted()) ||
-           (record_decl->hasTrivialMoveConstructor() &&
-            !record_decl->defaultedMoveConstructorIsDeleted() &&
-            record_decl->hasTrivialCopyConstructor() &&
-            !record_decl->defaultedCopyConstructorIsDeleted())) {
-         mode = SemIR::Signature::PassingMode::ByValue;
-       }
-     }
-     signature.passing_modes.push_back(mode);
+    signature.passing_modes.push_back(GetPassingModeForCppParameter(
+        candidate->Conversions[conversion_index], arg_expr));
   }
 
   return context.signatures().Add(std::move(signature));
@@ -260,7 +304,8 @@ auto PerformCppOverloadResolution(
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
       SemIR::SignatureId signature_id =
-          ComputeSignature(context, best_viable_fn, arg_exprs);
+          ComputeClangDeclSignatureFromBestViableFunction(
+              context, best_viable_fn, arg_exprs);
 
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, signature_id);
