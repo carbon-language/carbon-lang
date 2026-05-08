@@ -391,11 +391,21 @@ static auto CollectFacetWitnessSources(
           done = true;
           break;
         }
-        case CARBON_KIND(Step::FacetValue value): {
-          // We want to store FacetValues since they come with final witnesses,
-          // regardless of whether they internally hold a concrete type or a
-          // symbolic one (with non-final witnesses of its own).
-          push_facet(value.facet_value_inst_id, allow_partially_identified);
+        case CARBON_KIND(Step::TypeWrapper wrapper): {
+          switch (wrapper.kind) {
+            case Step::TypeWrapper::FacetValue:
+              // We want to store FacetValues since they come with final
+              // witnesses, regardless of whether they internally hold a
+              // concrete type or a symbolic one (with non-final witnesses of
+              // its own).
+              push_facet(wrapper.inst_id, allow_partially_identified);
+              break;
+            case Step::TypeWrapper::ImplWitnessAccess:
+              // We want to store ImplWitnessAccess because the associated
+              // constant may be a facet with witnesses.
+              push_facet(wrapper.inst_id, allow_partially_identified);
+              break;
+          }
           break;
         }
         case CARBON_KIND(Step::SymbolicType symbolic): {
