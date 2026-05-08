@@ -15,10 +15,12 @@ BlockValueStore<IdT, ElementT, TagIdT>::BlockValueStore(
     int32_t initial_reserved_ids)
   requires(!IdTagIsUntagged<IdTagType>)
     : allocator_(&allocator), values_(tag_id, initial_reserved_ids) {
-  auto empty = RefType();
-  auto empty_val = canonical_blocks_.Insert(
-      empty, [&] { return values_.Add(empty); }, KeyContext(this));
-  CARBON_CHECK(empty_val.key() == IdT::Empty);
+  if constexpr (requires { IdT::Empty; }) {
+    auto empty = RefType();
+    auto empty_val = canonical_blocks_.Insert(
+        empty, [&] { return values_.Add(empty); }, KeyContext(this));
+    CARBON_CHECK(empty_val.key() == IdT::Empty);
+  }
 }
 
 template <typename IdT, typename ElementT, typename TagIdT>

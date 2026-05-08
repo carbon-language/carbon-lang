@@ -206,7 +206,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId orig_new_param_pattern_id,
                              SemIR::InstId orig_prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool check_syntax, bool check_self) -> bool {
+                             bool check_syntax,
+                             SemIR::TypeId self_type_override_id) -> bool {
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
@@ -236,9 +237,9 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   pattern_stack.push_back({.prev_id = orig_prev_param_pattern_id,
                            .new_id = orig_new_param_pattern_id});
 
-  // When `check_self` is false, we need to disable type checking as soon as we
-  // determine this is a `self` parameter, and that decision needs to persist
-  // across the handling of any subpatterns.
+  // When `self_type_override_id` is specified, we need to disable type checking
+  // as soon as we determine this is a `self` parameter, and that decision needs
+  // to persist across the handling of any subpatterns.
   bool check_type = true;
   do {
     auto patterns = pattern_stack.pop_back_val();
@@ -251,9 +252,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 
     // Conditionally checks for and diagnoses a type mismatch between the old
     // and new parameter patterns. Returns false if a mismatch was found.
-    auto check_for_type_mismatch = [&]() {
-      auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
-          context.sem_ir(), prev_specific_id, patterns.prev_id);
+    auto check_for_type_mismatch_with = [&](SemIR::TypeId prev_param_type_id) {
       if (check_type && !context.types().AreEqualAcrossDeclarations(
                             new_param_pattern.type_id(), prev_param_type_id)) {
         if (diagnose) {
@@ -273,6 +272,11 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         return false;
       }
       return true;
+    };
+
+    auto check_for_type_mismatch = [&]() {
+      return check_for_type_mismatch_with(SemIR::GetTypeOfInstInSpecific(
+          context.sem_ir(), prev_specific_id, patterns.prev_id));
     };
 
     CARBON_KIND_SWITCH(new_param_pattern) {
@@ -300,9 +304,13 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                                 .Get(prev_any_binding_pattern.entity_name_id)
                                 .name_id;
 
-        if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
-            prev_name_id == SemIR::NameId::SelfValue) {
+        // If this is the self parameter, and we have a type override for it,
+        // check against that type instead.
+        if (new_name_id == SemIR::NameId::SelfValue &&
+            prev_name_id == SemIR::NameId::SelfValue &&
+            self_type_override_id.has_value()) {
           check_type = false;
+          check_for_type_mismatch_with(self_type_override_id);
         }
 
         if (new_any_binding_pattern.kind ==
@@ -339,7 +347,8 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool check_syntax, bool check_self) -> bool {
+                              bool check_syntax,
+                              SemIR::TypeId self_type_override_id) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -398,7 +407,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
                           prev_specific_id, diagnose, check_syntax,
-                          check_self)) {
+                          self_type_override_id)) {
       return false;
     }
   }
@@ -521,7 +530,8 @@ static auto CheckRedeclParamSyntax(Context& context,
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
                             SemIR::SpecificId prev_specific_id, bool diagnose,
-                            bool check_syntax, bool check_self) -> bool {
+                            bool check_syntax,
+                            SemIR::TypeId self_type_override_id) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -530,16 +540,16 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
           context, new_entity.loc_id, new_entity.implicit_param_patterns_id,
           prev_entity.loc_id, prev_entity.implicit_param_patterns_id,
           /*is_implicit_param=*/true, prev_specific_id, diagnose, check_syntax,
-          check_self)) {
+          self_type_override_id)) {
     return false;
   }
-  // Don't forward `check_self` here because it's extra cost, and `self` is only
-  // allowed in implicit params.
+  // Don't forward `self_type_override_id` here because it's extra cost, and
+  // `self` is only allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc_id,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, check_syntax, /*check_self=*/true)) {
+                         diagnose, check_syntax, SemIR::TypeId::None)) {
     return false;
   }
   if (check_syntax &&

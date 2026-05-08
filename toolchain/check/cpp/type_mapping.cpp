@@ -226,8 +226,8 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
   }
 
   // Otherwise, find the existing C++ declaration or create a new one.
-  auto* tag_decl = ExportClassToCpp(context, SemIR::LocId(class_inst_id),
-                                    class_inst_id, class_type);
+  auto* tag_decl =
+      ExportClassToCpp(context, SemIR::LocId(class_inst_id), class_type);
   if (!tag_decl) {
     return clang::QualType();
   }
@@ -518,7 +518,10 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
 
     case SemIR::ExprCategory::ReprInitializing:
     case SemIR::ExprCategory::InPlaceInitializing:
-      value_kind = clang::ExprValueKind::VK_PRValue;
+      // A Carbon initializing expression is much more similar to a C++ prvalue
+      // than a C++ xvalue, but we encode it as an xvalue expression to request
+      // that it be passed through the thunk by move rather than by copy.
+      value_kind = clang::ExprValueKind::VK_XValue;
       break;
 
     case SemIR::ExprCategory::Mixed:

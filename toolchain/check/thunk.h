@@ -16,6 +16,7 @@ namespace Carbon::Check {
 // unchanged if it can be used directly.
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
+                SemIR::TypeId signature_self_type_override_id,
                 SemIR::InstId callee_id, bool defer_definition)
     -> SemIR::InstId;
 
@@ -45,6 +46,10 @@ auto BuildThunkDefinitionForExport(Context& context,
                                    SemIR::FunctionId callee_function_id,
                                    SemIR::InstId thunk_id,
                                    SemIR::InstId callee_id) -> void;
+
+// Build a function that destroys an object of the given class.
+auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
+                       const SemIR::Class& class_info) -> SemIR::FunctionId;
 
 }  // namespace Carbon::Check
 

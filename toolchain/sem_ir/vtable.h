@@ -19,6 +19,13 @@ struct VtableFields {
   // non-overriden functions in base classes, forming the complete vtable for
   // the class.
   InstBlockId virtual_functions_id;
+
+  // Specifies that this vtable uses Carbon's native vtable layout, rather than
+  // an Itanium-compatible vtable layout for C++ interop.
+  // TODO: This might change to an enum representing more diverse vtable layouts
+  // (eg: Carbon type with a C++ vtable distinct from a C++ type with a C++
+  // vtable, maybe other language interop, etc)
+  bool carbon_native_vtable = true;
 };
 
 struct Vtable : public VtableFields, public Printable<Vtable> {

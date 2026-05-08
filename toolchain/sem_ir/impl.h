@@ -16,7 +16,13 @@
 namespace Carbon::SemIR {
 
 struct ImplFields {
-  // This following members always have values and do not change.
+  // The following members are set at the start of the impl declaration.
+
+  // The name scope containing the impl (as opposed to the scope _of_ the impl).
+  // Note that this is None for an imported impl.
+  InstId parent_scope_inst_id;
+
+  // The following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
   TypeInstId self_id;

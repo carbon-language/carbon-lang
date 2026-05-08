@@ -1033,17 +1033,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case CARBON_KIND(SymbolicBindingType inst): {
-      auto bind =
-          sem_ir().insts().GetAs<SymbolicBinding>(inst.facet_value_inst_id);
-      auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".binding.as_type");
-      } else {
-        AddInstName("binding.as_type");
-      }
-      return;
-    }
     case CARBON_KIND(FacetType inst): {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);

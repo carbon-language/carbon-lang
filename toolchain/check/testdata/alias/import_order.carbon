@@ -38,7 +38,6 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete]
@@ -54,25 +53,23 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: type = alias_binding a, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %a: type = alias_binding a, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [concrete = constants.%C]
-// CHECK:STDOUT:   %b: type = alias_binding b, %a [concrete = constants.%C]
+// CHECK:STDOUT:   %b: type = alias_binding b, %a.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = alias_binding c, %b [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %b.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
-// CHECK:STDOUT:   %d: type = alias_binding d, %c [concrete = constants.%C]
+// CHECK:STDOUT:   %d: type = alias_binding d, %c.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_19.2: type = converted %.loc4_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc4_16: %C.elem = field_decl v, element0 [concrete]
+// CHECK:STDOUT:   %.loc4: %C.elem = field_decl v, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.v [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .v = %.loc4_16
+// CHECK:STDOUT:   .v = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon

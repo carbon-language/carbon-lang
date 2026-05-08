@@ -54,8 +54,10 @@ class BlockValueStore
 
   // Adds a block with the given content, returning an ID to reference it.
   auto Add(ConstRefType content) -> IdT {
-    if (content.empty()) {
-      return IdT::Empty;
+    if constexpr (requires { IdT::Empty; }) {
+      if (content.empty()) {
+        return IdT::Empty;
+      }
     }
     return values_.Add(AllocateCopy(content));
   }
@@ -79,8 +81,10 @@ class BlockValueStore
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
   auto AddCanonical(ConstRefType content) -> IdT {
-    if (content.empty()) {
-      return IdT::Empty;
+    if constexpr (requires { IdT::Empty; }) {
+      if (content.empty()) {
+        return IdT::Empty;
+      }
     }
     auto result = canonical_blocks_.Insert(
         content, [&] { return Add(content); }, KeyContext(this));
@@ -104,9 +108,13 @@ class BlockValueStore
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto size() const -> int { return values_.size(); }
+  auto size() const -> size_t { return values_.size(); }
 
   auto GetRawIndex(IdT id) const -> int { return values_.GetRawIndex(id); }
+
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
+
+  auto ids() const -> auto { return values_.ids(); }
 
  protected:
   // Allocates a copy of the given data using our slab allocator.

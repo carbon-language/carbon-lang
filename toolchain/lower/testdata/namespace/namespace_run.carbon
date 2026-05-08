@@ -28,10 +28,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #0 !dbg !8 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CRun.Foo.Main(), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   call void @_CRun.Foo.Main(), !dbg !12
+// CHECK:STDOUT:   ret i32 0, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -47,6 +47,9 @@ fn Run() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 5, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 17, type: !9, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
+// CHECK:STDOUT: !10 = !{!11}
+// CHECK:STDOUT: !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 5, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !8)

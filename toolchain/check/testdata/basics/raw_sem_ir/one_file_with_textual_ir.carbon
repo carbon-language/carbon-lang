@@ -28,6 +28,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002A}}
 // CHECK:STDOUT:   entity_names:
@@ -57,6 +58,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(Error)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
@@ -131,6 +137,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000038:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst50000028, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000039:    {kind: Converted, arg0: inst5000002F, arg1: inst50000038, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst5000003A:    {kind: ReturnExpr, arg0: inst50000039, arg1: inst50000028}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

@@ -40,6 +40,9 @@ class FullPatternStack {
     // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
 
+    // A non-static `var` field declaration inside a class.
+    FieldDecl,
+
     // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
 
@@ -62,6 +65,12 @@ class FullPatternStack {
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
+  // Whether the kind of the current full-pattern is a non-static class
+  // `var` decl.
+  auto IsCurrentKindFieldDecl() -> bool {
+    return !empty() && CurrentKind() == Kind::FieldDecl;
+  }
+
   // Marks the start of a new full-pattern for a parameterized entity
   // declaration, such as a function or impl. The kind is initially
   // NotInEitherParamList.
@@ -73,6 +82,13 @@ class FullPatternStack {
   // Marks the start of a new full-pattern for a name binding declaration.
   auto PushNameBindingDecl() -> void {
     kind_stack_.push_back(Kind::NameBindingDecl);
+    bind_name_stack_.PushArray();
+  }
+
+  // Marks the start of a new full-pattern for a non-staitc `var` field
+  // declaration.
+  auto PushFieldDecl() -> void {
+    kind_stack_.push_back(Kind::FieldDecl);
     bind_name_stack_.PushArray();
   }
 

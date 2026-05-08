@@ -165,7 +165,6 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_10.2 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc7: @A.%A.elem (%A.elem.8a2) = field_decl v, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1

@@ -45,9 +45,9 @@ fn CallClassFunction() {
 // CHECK:STDERR:
 var global_var: Class;
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:27: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:24: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
-// CHECK:STDERR:                           ^~~~~
+// CHECK:STDERR:                        ^~~~~~~~
 // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-34]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
@@ -76,9 +76,9 @@ fn MemberAccess(p: Class*) -> () {
   return (*p).n;
 }
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:23: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:20: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
-// CHECK:STDERR:                       ^~~~~
+// CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-65]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
@@ -135,9 +135,9 @@ fn CallReturnIncomplete() {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-118]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-35]]:26: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-35]]:23: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnIncomplete() -> Class;
-  // CHECK:STDERR:                          ^~~~~
+  // CHECK:STDERR:                       ^~~~~~~~
   // CHECK:STDERR:
   ReturnIncomplete();
 }
@@ -147,7 +147,7 @@ fn CallReturnIncomplete() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+7]]:10: error: field has incomplete type `C` [IncompleteTypeInFieldDecl]
+  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var c: C;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_in_definition.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]

@@ -104,7 +104,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.5ae44f439e6b6107.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !28
 // CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !29
@@ -192,7 +192,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !22 = !DILocation(line: 20, column: 34, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 20, column: 28, scope: !19)
 // CHECK:STDOUT: !24 = !DILocation(line: 20, column: 21, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.61ea2aba74ab3bf1:I.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.5ae44f439e6b6107.Main:61ea2aba74ab3bf1:I.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 3, scope: !25)
@@ -289,12 +289,12 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.0bac38e8a17f7a1f(ptr sret({}) %return, ptr %c, ptr %b) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF:thunk.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %return, ptr %c, ptr %b), !dbg !45
+// CHECK:STDOUT:   call void @"_CF:thunk:I.1f5037c5d69ffaf4.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %return, ptr %c, ptr %b), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #3 !dbg !47 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.1f5037c5d69ffaf4.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #3 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_38.2.temp = alloca {}, align 8, !dbg !51
 // CHECK:STDOUT:   %.loc18_38.6.temp = alloca {}, align 8, !dbg !51
@@ -370,7 +370,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 2, scope: !41, type: !7)
 // CHECK:STDOUT: !45 = !DILocation(line: 26, column: 10, scope: !41)
 // CHECK:STDOUT: !46 = !DILocation(line: 26, column: 3, scope: !41)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !22, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.1f5037c5d69ffaf4.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !22, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
 // CHECK:STDOUT: !48 = !{!49, !50}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !47, type: !7)
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 2, scope: !47, type: !7)

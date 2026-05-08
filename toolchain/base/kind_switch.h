@@ -210,6 +210,12 @@ CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                               15, 16, 17, 18, 19, 20, 21, 22);
 CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                               15, 16, 17, 18, 19, 20, 21, 22, 23);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
 
 #undef CARBON_INTERNAL_KIND_IDENTIFIER
 #undef CARBON_INTERNAL_KIND_IDENTIFIERS
@@ -308,15 +314,21 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
-// name, making it look more like a typical `case`.
+// name, making it look more like a typical `case`. We use an unbraced `if` body
+// to avoid lint warnings that the `else` is unbraced. Braces are required after
+// the `:`, but we don't have a good way to enforce that.
+//
+// TODO: Replace the `;` with `{}` if
+// https://github.com/llvm/llvm-project/issues/194694 is fixed.
 #define CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)                \
   if (typed_variable_decl =                                              \
           ::Carbon::Internal::Kind::Cast<CARBON_KIND_INTERNAL_WRAP_TYPE( \
               typed_variable_decl)>(                                     \
               std::forward<decltype(carbon_internal_kind_switch_value)>( \
                   carbon_internal_kind_switch_value));                   \
-      false) {                                                           \
-  } else [[maybe_unused]]                                                \
+      false)                                                             \
+    ;                                                                    \
+  else [[maybe_unused]]                                                  \
     CARBON_INTERNAL_KIND_LABEL(__LINE__)
 
 // Helper for `CARBON_KIND_ANY` that expands the now-suffixed macro.

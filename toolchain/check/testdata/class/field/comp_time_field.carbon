@@ -35,19 +35,19 @@ class Class {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:8: error: expected `:` in field declaration [ExpectedFieldColon]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   var C:! type = Class;
-  // CHECK:STDERR:        ^~
+  // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:16: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var C:! type = Class;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   var C:! type = Class;
 
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:25: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var template D:! type = Class;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR:                         ^
   // CHECK:STDERR:
   var template D:! type = Class;
 }
@@ -78,7 +78,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc9_11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: type = value_binding A, %Class.ref.loc9
@@ -87,7 +87,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc15_20.1: type = splice_block %.loc15_20.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc15_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: type = value_binding B, %Class.ref.loc15

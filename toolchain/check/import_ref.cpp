@@ -158,6 +158,9 @@ class ImportContext {
 
   // Returns the file we are importing from.
   auto import_ir() -> const SemIR::File& { return import_ir_; }
+  auto import_thunks() -> const SemIR::ThunkStore& {
+    return import_ir().thunks();
+  }
 
   // Accessors into value stores of the file we are importing from.
   auto import_associated_constants() -> const SemIR::AssociatedConstantStore& {
@@ -1552,8 +1555,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 template <typename ParamPatternT>
   requires SemIR::Internal::HasInstCategory<SemIR::AnyLeafParamPattern,
-                                            ParamPatternT> &&
-           (!std::same_as<ParamPatternT, SemIR::FormParamPattern>)
+                                            ParamPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
@@ -2324,6 +2326,25 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalConstantInstId(resolver, import_function.self_param_id);
   auto return_pattern_id =
       GetLocalConstantInstId(resolver, import_function.return_pattern_id);
+
+  const SemIR::ThunkInfo* import_thunk_info = nullptr;
+  if (import_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::Thunk &&
+      import_function.thunk_id().has_value()) {
+    import_thunk_info =
+        &resolver.import_thunks().Get(import_function.thunk_id());
+  }
+  auto thunk_signature_inst_id =
+      import_thunk_info
+          ? GetLocalConstantInstId(resolver,
+                                   resolver.import_functions()
+                                       .Get(import_thunk_info->signature_id)
+                                       .first_decl_id())
+          : SemIR::InstId::None;
+  auto thunk_specific_data = GetLocalSpecificData(
+      resolver, import_thunk_info ? import_thunk_info->specific_id
+                                  : SemIR::SpecificId::None);
+
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
@@ -2370,11 +2391,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {
+      auto thunk_signature_type_id =
+          resolver.local_insts().Get(thunk_signature_inst_id).type_id();
       auto entity_name_id = resolver.local_entity_names().AddCanonical(
           {.name_id = new_function.name_id,
            .parent_scope_id = new_function.parent_scope_id});
-      new_function.SetThunk(AddImportRef(
-          resolver, import_function.thunk_decl_id(), entity_name_id));
+      SemIR::ThunkInfo local_thunk_info = {
+          .callee_id = AddImportRef(resolver, import_thunk_info->callee_id,
+                                    entity_name_id),
+          .signature_id =
+              resolver.local_types()
+                  .GetAs<SemIR::FunctionType>(thunk_signature_type_id)
+                  .function_id};
+      if (import_thunk_info->specific_id.has_value()) {
+        local_thunk_info.specific_id = GetOrAddLocalSpecific(
+            resolver, import_thunk_info->specific_id, thunk_specific_data);
+      }
+      new_function.SetThunk(resolver.local_ir().thunks().Add(local_thunk_info));
       break;
     }
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
@@ -2421,6 +2454,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   for (auto [import_vtable_entry_inst_id, local_vtable_entry_inst_id] :
        llvm::zip_equal(virtual_functions, lazy_virtual_functions)) {
+    if (!local_vtable_entry_inst_id.has_value()) {
+      continue;
+    }
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
@@ -2581,7 +2617,8 @@ static auto ImportImplDecl(ImportContext& context,
       context, import_impl.latest_decl_id(), impl_decl);
   impl_decl.impl_id = context.local_impls().Add(
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
-       {.self_id = SemIR::TypeInstId::None,
+       {.parent_scope_inst_id = SemIR::InstId::None,
+        .self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id,
@@ -2657,8 +2694,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   // Load constants for the definition.
-  auto parent_scope_id =
-      GetLocalNameScopeId(resolver, import_impl.parent_scope_id);
   auto implicit_param_patterns = GetLocalInstBlockContents(
       resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
@@ -2666,12 +2701,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto constraint_const_id =
       GetLocalConstantId(resolver, import_impl.constraint_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
+  // Go directly to the simpler GetLocalConstantInstId to get an inst of the
+  // same type locally. This does not handle symbolic values in a way that they
+  // can be specialized but what we want for this instruction is just the
+  // constant value to determine the scope.
+  new_impl.parent_scope_inst_id =
+      GetLocalConstantInstId(resolver, import_impl.parent_scope_inst_id);
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(impl_const_id, new_impl.first_decl_id());
   }
 
-  new_impl.parent_scope_id = parent_scope_id;
   new_impl.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_impl.implicit_param_patterns_id,
       implicit_param_patterns);
@@ -3699,11 +3739,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, name_scope.name_id());
   namespace_decl.name_scope_id =
       resolver.local_name_scopes().Add(inst_id, name_id, parent_scope_id);
+  auto& local_scope =
+      resolver.local_name_scopes().Get(namespace_decl.name_scope_id);
   // Namespaces from this package are eagerly imported, so anything we load here
   // must be a closed import.
-  resolver.local_name_scopes()
-      .Get(namespace_decl.name_scope_id)
-      .set_is_closed_import(true);
+  local_scope.set_is_closed_import(true);
+
+  // If this was a C++ namespace, connect it to the corresponding C++
+  // declaration in this file.
+  if (name_scope.is_cpp_scope()) {
+    if (auto key = FindCorrespondingClangDeclKey(
+            resolver.local_context(), SemIR::LocId(inst_id),
+            resolver.import_ir(), name_scope.clang_decl_context_id())) {
+      auto clang_decl_id = resolver.local_context().clang_decls().Add(
+          {.key = *key, .inst_id = inst_id});
+      local_scope.set_clang_decl_context_id(clang_decl_id, true);
+    }
+  }
+
   auto namespace_const_id =
       ReplacePlaceholderImportedInst(resolver, inst_id, namespace_decl);
   return {.const_id = namespace_const_id};
@@ -3906,23 +3959,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(type_id),
        .elements_id =
            GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elems)});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::SymbolicBindingType inst)
-    -> ResolveResult {
-  auto facet_value_inst_id =
-      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  auto entity_name_id =
-      GetLocalSymbolicEntityNameId(resolver, inst.entity_name_id);
-  return ResolveResult::Deduplicated<SemIR::SymbolicBindingType>(
-      resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .entity_name_id = entity_name_id,
-                 .facet_value_inst_id = facet_value_inst_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -4313,9 +4349,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
-    }
-    case CARBON_KIND(SemIR::SymbolicBindingType inst): {
-      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::Temporary inst): {
       return TryResolveTypedInst(resolver, inst);

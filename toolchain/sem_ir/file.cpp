@@ -40,6 +40,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
+      thunks_(check_ir_id),
       classes_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
@@ -57,6 +58,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // `ImportIRId::{ApiForImpl,Cpp}`.
       import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
+      clang_decl_signatures_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
@@ -70,10 +72,12 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // 1 reserved id for `CustomLayoutId::Empty`.
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
-      clang_source_locs_(check_ir_id) {
+      clang_source_locs_(check_ir_id),
+      bundles_(allocator_, check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
-  // requiring these types to be complete from Check initialization instead.
+  // requiring these types to be complete from Check initialization instead,
+  // and consider doing this automatically for all singleton types.
   types_.SetComplete(
       TypeType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId},
@@ -85,6 +89,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
   types_.SetComplete(
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
+  types_.SetComplete(
+      InstType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
 
   insts_.Reserve(SingletonInstKinds.size());
@@ -138,40 +146,43 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
   return Yaml::OutputMapping([this, include_singletons](
                                  Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("names", names().OutputYaml());
-              map.Add("import_irs", import_irs_.OutputYaml());
-              map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
-              map.Add("clang_decls", clang_decls_.OutputYaml());
-              map.Add("name_scopes", name_scopes_.OutputYaml());
-              map.Add("entity_names", entity_names_.OutputYaml());
-              map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
-              map.Add("functions", functions_.OutputYaml());
-              map.Add("classes", classes_.OutputYaml());
-              map.Add("interfaces", interfaces_.OutputYaml());
-              map.Add("associated_constants",
-                      associated_constants_.OutputYaml());
-              map.Add("impls", impls_.OutputYaml());
-              map.Add("generics", generics_.OutputYaml());
-              map.Add("specifics", specifics_.OutputYaml());
-              map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
-              map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
-              map.Add("types", types_.OutputYaml());
-              map.Add("facet_types", facet_types_.OutputYaml());
-              map.Add("insts",
-                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                        for (auto [id, inst] : insts_.enumerate()) {
-                          if (!include_singletons && IsSingletonInstId(id)) {
-                            continue;
-                          }
-                          map.Add(PrintToString(id), Yaml::OutputScalar(inst));
-                        }
-                      }));
-              map.Add("constant_values",
-                      constant_values_.OutputYaml(include_singletons));
-              map.Add("inst_blocks", inst_blocks_.OutputYaml());
-              map.Add("value_stores", value_stores_->OutputYaml());
-            }));
+    map.Add(
+        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+          map.Add("names", names().OutputYaml());
+          map.Add("import_irs", import_irs_.OutputYaml());
+          map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+          map.Add("clang_decls", clang_decls_.OutputYaml());
+          map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
+          map.Add("name_scopes", name_scopes_.OutputYaml());
+          map.Add("entity_names", entity_names_.OutputYaml());
+          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
+          map.Add("functions", functions_.OutputYaml());
+          map.Add("classes", classes_.OutputYaml());
+          map.Add("interfaces", interfaces_.OutputYaml());
+          map.Add("associated_constants", associated_constants_.OutputYaml());
+          map.Add("impls", impls_.OutputYaml());
+          map.Add("generics", generics_.OutputYaml());
+          map.Add("specifics", specifics_.OutputYaml());
+          map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
+          map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
+          map.Add("types", types_.OutputYaml());
+          map.Add("facet_types", facet_types_.OutputYaml());
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    for (auto [id, inst] : insts_.enumerate()) {
+                      inst.CacheBundleDebugKinds(bundles_);
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
+                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+                    }
+                  }));
+          map.Add("bundles", bundles_.OutputYaml());
+          map.Add("constant_values",
+                  constant_values_.OutputYaml(include_singletons));
+          map.Add("inst_blocks", inst_blocks_.OutputYaml());
+          map.Add("value_stores", value_stores_->OutputYaml());
+        }));
   });
 }
 
@@ -183,6 +194,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
                     cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
@@ -192,6 +204,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decl_signatures_"),
+                    clang_decl_signatures_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);

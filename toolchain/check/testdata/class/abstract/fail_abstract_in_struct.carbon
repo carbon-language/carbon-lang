@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 abstract class Abstract1 {}
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: field has abstract type `{.m1: Abstract1}` [AbstractTypeInFieldDecl]
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `{.m1: Abstract1}` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var a: {.m1: Abstract1};
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
@@ -129,7 +129,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
-// CHECK:STDOUT:   %struct_type.m1.ea7: type = struct_type {.m1: %Abstract1} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -150,8 +149,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
-// CHECK:STDOUT:   %struct_type.m1: type = struct_type {.m1: %Abstract1} [concrete = constants.%struct_type.m1.ea7]
 // CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

@@ -18,6 +18,7 @@
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/associated_constant.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
@@ -40,6 +41,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
@@ -173,6 +175,8 @@ class File : public Printable<File> {
   auto cpp_overload_sets() const -> const CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
+  auto thunks() -> ThunkStore& { return thunks_; }
+  auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
@@ -234,6 +238,12 @@ class File : public Printable<File> {
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
+  auto clang_decl_signatures() -> ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
+  auto clang_decl_signatures() const -> const ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -275,6 +285,9 @@ class File : public Printable<File> {
   auto clang_source_locs() const -> const ClangSourceLocStore& {
     return clang_source_locs_;
   }
+
+  auto bundles() -> BundleStore& { return bundles_; }
+  auto bundles() const -> const BundleStore& { return bundles_; }
 
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
@@ -330,6 +343,9 @@ class File : public Printable<File> {
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
 
+  // Storage for thunk info records.
+  ThunkStore thunks_;
+
   // Storage for classes.
   ClassStore classes_;
 
@@ -381,7 +397,10 @@ class File : public Printable<File> {
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
   // not add multiple entries with the same `decl` and different `inst_id`.
-  ClangDeclStore clang_decls_;
+  ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
+
+  // Storage for function signatures used in C++ interop.
+  ClangDeclSignatureStore clang_decl_signatures_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.
@@ -424,6 +443,9 @@ class File : public Printable<File> {
 
   // C++ source locations for C++ interop.
   ClangSourceLocStore clang_source_locs_;
+
+  // Storage for instruction argument bundles.
+  BundleStore bundles_;
 };
 
 }  // namespace Carbon::SemIR

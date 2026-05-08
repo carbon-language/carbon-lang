@@ -5,10 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 #define CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 
-#include <compare>
-
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -60,16 +57,6 @@ auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
     -> bool;
-
-// Introduce `.Self` as a symbolic binding into the current scope, and return
-// the `SymbolicBinding` instruction.
-//
-// The type of `.Self` must be a `FacetType`, so that it gets wrapped in
-// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-// This allows substitution with other facet values without requiring an
-// additional `FacetAccessType` to be inserted.
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId;
 
 // Get a FacetType instruction for an empty FacetType. This is the facet
 // equivalent to TypeType.

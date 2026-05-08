@@ -47,6 +47,17 @@ auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
                        SemIR::SpecificInterface query_specific_interface,
                        SemIR::ImplId target_impl) -> bool;
 
+// Given a self facet, returns the canonical query self for a LookupImplWitness
+// instruction. The canonicalization looks through `FacetValue` and makes a
+// canonical form for `facet` and `facet as type`.
+//
+// If the input self facet is a `FacetValue` that is looked through, it can be
+// returned in `out_facet_value`, in order to preserve its facet type and
+// witnesses.
+auto GetCanonicalQuerySelfForLookupImplWitness(
+    Context& context, SemIR::ConstantId self,
+    SemIR::InstId* out_facet_value = nullptr) -> SemIR::ConstantId;
+
 // The kind of impl lookup being performed by a call to
 // `EvalLookupSingleFinalWitness`.
 enum class EvalImplLookupMode {

@@ -76,7 +76,7 @@ For example:
 namespace Widgets;
 
 interface Widgets.Widget {
-  fn Grow[ref self: Self](factor: f64);
+  fn Grow(ref self, factor: f64);
 }
 
 class Widgets.Cog {
@@ -218,11 +218,11 @@ Being part of the `impl` rather than the interface, no further
 
 ```carbon
 interface Cowboy {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class Avatar {
@@ -288,7 +288,7 @@ operand instead.
 
 ```carbon
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 impl i32 as Printable;
@@ -327,7 +327,7 @@ For example:
 
 ```
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 fn GenericPrint[T:! Printable](a: T) {
@@ -362,7 +362,7 @@ fn F[T:! type](x: GenericWrapper(T)) -> T {
 }
 
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 fn DrawChecked[T:! Renderable](c: T) {
   // `Draw` resolves to `(T as Renderable).Draw` or
@@ -370,8 +370,8 @@ fn DrawChecked[T:! Renderable](c: T) {
   c.Draw();
 }
 
-class Cowboy { fn Draw[self: Self](); }
-impl Cowboy as Renderable { fn Draw[self: Self](); }
+class Cowboy { fn Draw(self); }
+impl Cowboy as Renderable { fn Draw(self); }
 
 fn CallsDrawChecked(c: Cowboy) {
   // ✅ Calls member of `impl Cowboy as Renderable`.
@@ -461,7 +461,7 @@ when looking in multiple interfaces that are
 
 ```carbon
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 fn DrawTemplate2[template T:! Renderable](c: T) {
@@ -470,23 +470,23 @@ fn DrawTemplate2[template T:! Renderable](c: T) {
   c.Draw();
 }
 
-class Cowboy { fn Draw[self: Self](); }
-impl Cowboy as Renderable { fn Draw[self: Self](); }
+class Cowboy { fn Draw(self); }
+impl Cowboy as Renderable { fn Draw(self); }
 
 class Pig { }
 impl Pig as Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class RoundWidget {
   impl as Renderable {
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  fn Draw[self: Self]() {}
+  fn Draw(self) {}
   impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -558,7 +558,7 @@ For example:
 ```carbon
 interface Addable {
   // #1
-  fn Add[self: Self](other: Self) -> Self;
+  fn Add(self, other: Self) -> Self;
   // #2
   default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
@@ -569,7 +569,7 @@ interface Addable {
 class Integer {
   extend impl as Addable {
     // #3
-    fn Add[self: Self](other: Self) -> Self;
+    fn Add(self, other: Self) -> Self;
     // #4, generated from default implementation for #2.
     // fn Sum[...](...);
   }
@@ -602,13 +602,13 @@ naming the interface member as a member of the class.
 ```carbon
 interface Renderable {
   // #5
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class RoundWidget {
   impl as Renderable {
     // #6
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
   // `Draw` names #5, the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
@@ -616,7 +616,7 @@ class RoundWidget {
 
 class SquareWidget {
   // #7
-  fn Draw[self: Self]() {}
+  fn Draw(self) {}
   impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -639,14 +639,14 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `SquareWidget`, #7.
   // The outer member access fails because we can't call
-  // #7, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #7, `Draw(self: SquareWidget)`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
   // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access fails because we can't call
-  // #6, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #6, `Draw(self: RoundWidget)`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
@@ -784,7 +784,7 @@ on what instance member `M` was found:
 
     ```carbon
     class Blob {
-      fn Mutate[ref self: Self](n: i32);
+      fn Mutate(ref self, n: i32);
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.
@@ -805,7 +805,7 @@ instance member. For example:
 ```carbon
 interface DebugPrint {
   // instance member
-  fn Print[self:Self]();
+  fn Print(self);
 }
 impl i32 as DebugPrint;
 impl type as DebugPrint;
@@ -876,7 +876,7 @@ always used for lookup.
 
 ```
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 impl i32 as Printable;
 

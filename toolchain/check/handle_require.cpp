@@ -10,6 +10,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -273,8 +274,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto [self_node_id, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::RequireImpls>();
 
-  auto decl_block_id = context.inst_block_stack().Pop();
-
   // Process modifiers.
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Require>();
@@ -294,6 +293,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       auto scope_id = context.scope_stack().PeekNameScopeId();
       context.name_scopes().Get(scope_id).set_has_error();
     }
+    context.inst_block_stack().Pop();
     DiscardGenericDecl(context);
     return true;
   }
@@ -302,19 +302,32 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   if (identified_facet_type->required_impls().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
     // This is not an error though.
+    context.inst_block_stack().Pop();
     DiscardGenericDecl(context);
     return true;
   }
 
-  // TODO: Substitute .Self here.
-  auto constraint_type_inst_id =
-      context.types().GetAsTypeInstId(constraint_inst_id);
+  // The identified facet type also replaced `.Self` references, but we want to
+  // store the full facet type not just the identified one. So we have to
+  // replace `.Self` references explicitly here in the canonical constraint. We
+  // do this after `ValidateRequire()` which has ensured the constraint is in
+  // fact a FacetType.
+  auto constraint_type_inst_id = SubstPeriodSelfInFacetType(
+      context, constraint_node_id, self_inst_id,
+      context.types().GetAsTypeInstId(constraint_inst_id));
+  // The replacement of `.Self` can create a new FacetType instruction which we
+  // want to be part of the require decl's inst block, so we defer the Pop until
+  // after the subst.
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   auto require_impls_decl =
       SemIR::RequireImplsDecl{// To be filled in after.
                               .require_impls_id = SemIR::RequireImplsId::None,
                               .decl_block_id = decl_block_id};
   auto decl_id = AddPlaceholderInst(context, node_id, require_impls_decl);
+  // TODO: We don't need to store the `self_inst_id` anymore, since we've
+  // encoded it into the constraints of the facet type which was converted to
+  // the form `<Self> where .Self impls <Constraint>`.
   auto require_impls_id = context.require_impls().Add(
       {.self_id = self_inst_id,
        .facet_type_inst_id = constraint_type_inst_id,

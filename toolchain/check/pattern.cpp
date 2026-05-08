@@ -5,10 +5,14 @@
 #include "toolchain/check/pattern.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -101,9 +105,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::FormBindingPattern::Kind:
-      bind_name_kind = SemIR::FormBinding::Kind;
-      break;
     case SemIR::RefBindingPattern::Kind:
       bind_name_kind = SemIR::RefBinding::Kind;
       break;
@@ -116,9 +117,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     case SemIR::WrapperBindingPattern::Kind: {
       auto subpattern = context.insts().Get(pattern.subpattern_id);
       CARBON_KIND_SWITCH(subpattern) {
-        case SemIR::FormParamPattern::Kind:
-          bind_name_kind = SemIR::FormBinding::Kind;
-          break;
         case SemIR::RefParamPattern::Kind:
         case SemIR::VarPattern::Kind:
           bind_name_kind = SemIR::RefBinding::Kind;
@@ -137,6 +135,32 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                    pattern.kind);
   }
   auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
+
+  // Handle `var` decls in a class by creating a `FieldDecl`.
+  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
+    auto class_decl =
+        context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
+    auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    auto field_type_id = GetUnboundElementType(
+        context, context.types().GetTypeInstId(class_info.self_type_id),
+        context.types().GetTypeInstId(type_id));
+
+    if (name_id == SemIR::NameId::Underscore) {
+      CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
+                        "expected identifier in field declaration");
+      context.emitter().Emit(name_loc, FieldNamedUnderscore);
+    }
+
+    auto field_id =
+        AddInst<SemIR::FieldDecl>(context, name_loc,
+                                  {.type_id = field_type_id,
+                                   .name_id = name_id,
+                                   .index = SemIR::ElementIndex::None});
+    context.field_decls_stack().AppendToTop(field_id);
+
+    return {.pattern_id = field_id, .bind_id = field_id};
+  }
 
   auto bind_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
@@ -202,27 +226,124 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
 auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
-                     SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
-  auto pattern_type_id = GetPatternType(context, type_id);
-  const auto& param_pattern_kind =
-      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
-  auto pattern_id = AddInst(
-      context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), loc_id,
-                   SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
-                                              .type_id = pattern_type_id,
-                                              .pretty_name_id = name_id}));
+                     SemIR::TypeId type_id, ParamPatternKind kind)
+    -> SemIR::InstId {
+  auto param_pattern_kind = [kind]() -> SemIR::InstKind {
+    switch (kind) {
+      case ParamPatternKind::Value:
+        return SemIR::ValueParamPattern::Kind;
+      case ParamPatternKind::Ref:
+        return SemIR::RefParamPattern::Kind;
+      case ParamPatternKind::Var:
+        return SemIR::VarParamPattern::Kind;
+    }
+  }();
 
   auto entity_name_id = AddBindingEntityName(context, name_id,
                                              /*form_id=*/SemIR::InstId::None,
                                              /*is_unused=*/false,
                                              /*phase=*/BindingPhase::Runtime);
-  return AddBindingPattern(context, loc_id, type_expr_region_id,
-                           {.kind = SemIR::WrapperBindingPattern::Kind,
-                            .type_id = GetPatternType(context, type_id),
-                            .entity_name_id = entity_name_id,
-                            .subpattern_id = pattern_id})
-      .pattern_id;
+
+  auto pattern_type_id = GetPatternType(context, type_id);
+  if (kind == ParamPatternKind::Var) {
+    auto pattern_id = AddBindingPattern(context, loc_id, type_expr_region_id,
+                                        {.kind = SemIR::RefBindingPattern::Kind,
+                                         .type_id = pattern_type_id,
+                                         .entity_name_id = entity_name_id,
+                                         .subpattern_id = SemIR::InstId::None});
+    return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                context.sem_ir(), loc_id,
+                                SemIR::VarParamPattern{
+                                    .type_id = pattern_type_id,
+                                    .subpattern_id = pattern_id.pattern_id}));
+  } else {
+    auto pattern_id = AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
+                                                .type_id = pattern_type_id,
+                                                .pretty_name_id = name_id}));
+
+    return AddBindingPattern(context, loc_id, type_expr_region_id,
+                             {.kind = SemIR::WrapperBindingPattern::Kind,
+                              .type_id = GetPatternType(context, type_id),
+                              .entity_name_id = entity_name_id,
+                              .subpattern_id = pattern_id})
+        .pattern_id;
+  }
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::FormParamPatternAction action) -> SemIR::InstId {
+  auto form_inst = context.insts().Get(
+      context.constant_values().GetConstantInstId(action.form_id));
+  auto type_id =
+      GetPatternType(context, GetTypeComponent(context, action.form_id));
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::InitForm::Kind: {
+      auto ref_param_pattern_id = AddInst(
+          context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::RefParamPattern{.type_id = type_id,
+                                     .pretty_name_id = action.pretty_name_id}));
+      return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                                  context.sem_ir(), loc_id,
+                                  SemIR::VarPattern{
+                                      .type_id = type_id,
+                                      .subpattern_id = ref_param_pattern_id}));
+    }
+    case SemIR::RefForm::Kind: {
+      return AddInst(
+          context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::RefParamPattern{.type_id = type_id,
+                                     .pretty_name_id = action.pretty_name_id}));
+    }
+    case SemIR::ValueForm::Kind: {
+      return AddInst(context,
+                     SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), loc_id,
+                         SemIR::ValueParamPattern{
+                             .type_id = type_id,
+                             .pretty_name_id = action.pretty_name_id}));
+    }
+    case SemIR::ErrorInst::Kind: {
+      return SemIR::ErrorInst::InstId;
+    }
+    default:
+      CARBON_FATAL("Unexpected param pattern form: {0}", form_inst);
+  }
+}
+
+// TODO: can we share code with FormParamPatternAction?
+auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
+                   SemIR::OutFormParamPatternAction action) -> SemIR::InstId {
+  auto form_inst = context.insts().Get(
+      context.constant_values().GetConstantInstId(action.form_id));
+  auto type_id =
+      GetPatternType(context, GetTypeComponent(context, action.form_id));
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::ValueForm::Kind: {
+      return AddInst<SemIR::ValueReturnPattern>(
+          context, SemIR::LocId(action.form_id), {.type_id = type_id});
+    }
+    case SemIR::RefForm::Kind: {
+      return AddInst<SemIR::RefReturnPattern>(
+          context, SemIR::LocId(action.form_id), {.type_id = type_id});
+    }
+    case CARBON_KIND(SemIR::InitForm _): {
+      return AddInst<SemIR::OutParamPattern>(
+          context, SemIR::LocId(action.form_id),
+          {.type_id = type_id, .pretty_name_id = SemIR::NameId::ReturnSlot});
+    }
+    case SemIR::ErrorInst::Kind: {
+      return SemIR::ErrorInst::InstId;
+    }
+    default:
+      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
+  }
 }
 
 }  // namespace Carbon::Check

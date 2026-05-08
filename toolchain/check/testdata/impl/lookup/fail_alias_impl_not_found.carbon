@@ -87,7 +87,7 @@ fn F(c: C) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %F: %I.assoc_type = alias_binding F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F: %I.assoc_type = alias_binding F, %F.ref [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

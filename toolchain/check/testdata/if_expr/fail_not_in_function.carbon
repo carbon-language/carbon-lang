@@ -55,14 +55,6 @@ fn F(a: if true then i32 else f64);
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+12]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:                  ^~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,12 +88,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

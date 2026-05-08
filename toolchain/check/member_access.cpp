@@ -464,14 +464,14 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   // things.
   if (required) {
     return HandleAction<SemIR::AccessMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   } else {
     return HandleAction<SemIR::AccessOptionalMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   }
@@ -493,7 +493,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
     if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                      base_const_id, &lookup_scopes)) {
+                                      base_const_id, /*extended_scope=*/false,
+                                      &lookup_scopes)) {
       return LookupMemberNameInScope(
           context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
           /*lookup_in_type_of_base=*/false, required);
@@ -534,7 +535,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       auto base_type_const_id = context.types().GetConstantId(base_type_id);
       llvm::SmallVector<LookupScope> lookup_scopes;
       if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
-                                        base_const_id, &lookup_scopes)) {
+                                        base_const_id, /*extended_scope=*/false,
+                                        &lookup_scopes)) {
         // The name scope constant needs to be a type, but is currently a
         // FacetType, so perform `as type` to get a FacetAccessType.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
@@ -596,7 +598,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
           //
           // TODO: This can be replaced with `lookup_const_id` once we stop
           // having to look through the facet at its type for the scope.
-          context.types().GetConstantId(base_type_id), &lookup_scopes)) {
+          context.types().GetConstantId(base_type_id), /*extended_scope=*/false,
+          &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
         /*lookup_in_type_of_base=*/true, required);

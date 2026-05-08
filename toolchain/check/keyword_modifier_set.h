@@ -109,6 +109,12 @@ class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
 
   // Returns the access kind from modifiers.
   auto GetAccessKind() const -> SemIR::AccessKind {
+    if (HasAnyOf(KeywordModifierSet::Override)) {
+      // TODO: Instead of hiding `override fn`s, we should expose them but make
+      // calls that we cannot statically devirtualize call the base class
+      // version (the one whose signature is in the vtable).
+      return SemIR::AccessKind::Hidden;
+    }
     if (HasAnyOf(KeywordModifierSet::Protected)) {
       return SemIR::AccessKind::Protected;
     }

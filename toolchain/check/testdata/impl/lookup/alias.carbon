@@ -105,7 +105,7 @@ fn G(c: C) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %G: %HasF.assoc_type = alias_binding G, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %G: %HasF.assoc_type = alias_binding G, %F.ref [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -37,6 +37,7 @@ fn B() {
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
 // CHECK:STDOUT:   entity_names:    {}
@@ -68,6 +69,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:       object_layout:
@@ -91,6 +97,7 @@ fn B() {
 // CHECK:STDOUT:     inst50000012:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000013:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000011)}
 // CHECK:STDOUT:     inst50000014:    {kind: Return}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -154,6 +161,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000002, inst_id: inst50000010}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir70000002, inst_id: inst50000010}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000011, name0: inst70000012}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000017}}
@@ -188,6 +196,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:       object_layout:
@@ -199,11 +212,6 @@ fn B() {
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst70000014)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
-// CHECK:STDOUT:       object_layout:
-// CHECK:STDOUT:         size:            0
-// CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst(InstType))':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
@@ -225,6 +233,7 @@ fn B() {
 // CHECK:STDOUT:     inst7000001B:    {kind: NameRef, arg0: name1, arg1: inst70000017, type: type(inst70000019)}
 // CHECK:STDOUT:     inst7000001C:    {kind: Call, arg0: inst7000001B, arg1: inst_block_empty, type: type(inst70000014)}
 // CHECK:STDOUT:     inst7000001D:    {kind: Return}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

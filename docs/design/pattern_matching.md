@@ -131,7 +131,8 @@ would, in the cases where they overlap.
 
 A name binding pattern is a pattern.
 
--   _binding-pattern_ ::= `ref`? (_identifier_ | `self`) `:` _expression_
+-   _binding-pattern_ ::= `ref`? (_identifier_ `:` _expression_ | `self` (`:`
+    _expression_)?)
 -   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _pattern_ ::= _binding-pattern_
 
@@ -193,13 +194,15 @@ fn F() -> i32 {
 }
 ```
 
-When `self` is used instead of an identifier, the pattern must appear in the
-implicit parameter list of a method (as discussed [here](classes.md#methods)).
-During pattern matching in a method call, the parameter pattern containing
-`self` is matched with the object that the method was invoked on. In all other
-respects, the `self` pattern behaves just like an ordinary binding pattern,
-introducing a binding named `self` into scope, just as if `self` were an
-identifier rather than a keyword.
+When `self` is used instead of an identifier, the pattern must appear as the
+first parameter in the explicit parameter list of a method, optionally nested
+within a `var` pattern, as discussed [here](classes.md#methods). If the "`:`
+_expression_" is omitted, it defaults to `Self`. During pattern matching in a
+method call, the parameter pattern containing `self` is matched with the object
+that the method was invoked on, and the call arguments are matched against the
+subsequent parameters. In all other respects, the `self` pattern behaves just
+like an ordinary binding pattern, introducing a binding named `self` into scope,
+just as if `self` were an identifier rather than a keyword.
 
 #### Anonymous bindings
 

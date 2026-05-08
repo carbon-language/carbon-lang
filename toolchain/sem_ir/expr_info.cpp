@@ -15,7 +15,7 @@
 namespace Carbon::SemIR {
 
 // Returns the InstId represented by an instruction operand.
-static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
+static auto AsAnyInstId(IdAndKind arg) -> InstId {
   if (auto inst_id = arg.TryAs<SemIR::InstId>()) {
     return *inst_id;
   }
@@ -92,21 +92,6 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             // TODO: support `ref` returns from C++.
             return ExprCategory::ReprInitializing;
           }
-        }
-      } else if constexpr (std::same_as<TypedInstT, FormBinding>) {
-        auto form_id = ir->entity_names().Get(inst.entity_name_id).form_id;
-        auto form_inst = ir->insts().Get(form_id);
-        CARBON_KIND_SWITCH(form_inst) {
-          case InitForm::Kind:
-            // A `var` binding pattern produces a `ref` binding.
-          case RefForm::Kind:
-            return ExprCategory::DurableRef;
-          case ValueForm::Kind:
-            return ExprCategory::Value;
-          case ErrorInst::Kind:
-            return ExprCategory::Error;
-          default:
-            CARBON_FATAL("Unexpected kind for form inst {0}", form_inst);
         }
       } else {
         static_assert(

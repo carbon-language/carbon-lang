@@ -12,6 +12,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -962,7 +963,7 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 }
 
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
-                              SemIR::ConstantId self_const_id,
+                              SemIR::ConstantId initial_self_const_id,
                               const SemIR::FacetType& facet_type,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
@@ -975,43 +976,65 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // constant values into specifics).
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
-                                    .self_const_id = self_const_id};
+                                    .self_const_id = initial_self_const_id};
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;
   }
 
   struct SelfImplsFacetType {
+    // Whether the impling of facet type should be considered as extending in
+    // the resulting IdentifiedFacetType.
     bool extend;
+    // Whether we should replace `.Self` in the self type. This is false for the
+    // top-level self, since we'd be replacing parts of it with itself, which is
+    // cyclical. It becomes true when recursing into a `T impls ...` constraint
+    // where the self type is now something else.
+    bool subst_self;
     SemIR::ConstantId self;
     SemIR::FacetTypeId facet_type;
   };
 
   // Work queue.
   llvm::SmallVector<SelfImplsFacetType> work = {
-      {true, self_const_id, facet_type.facet_type_id}};
+      {true, false, initial_self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
   bool partially_identified = false;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
 
+  // `.Self` is always replaced with the top-level self type.
+  auto period_self_replacement_id = initial_self_const_id;
+
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
     bool facet_type_extends = next_impls.extend;
+    auto subst_period_self_in_self = next_impls.subst_self;
     auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
     const auto& facet_type_info =
         context.facet_types().Get(next_impls.facet_type);
 
-    auto self_and_interface = [&](SemIR::SpecificInterface interface)
+    auto self_and_interface = [&](SemIR::SpecificInterface impls_interface)
         -> SemIR::IdentifiedFacetType::RequiredImpl {
-      return {self_const_id, interface};
+      auto self = subst_period_self_in_self
+                      ? SubstPeriodSelf(context, loc_id, self_const_id,
+                                        period_self_replacement_id)
+                      : self_const_id;
+      auto interface = SubstPeriodSelf(context, loc_id, impls_interface,
+                                       period_self_replacement_id);
+      return {self, interface};
     };
     auto type_and_interface =
-        [&](const SemIR::FacetTypeInfo::TypeImplsInterface& impls)
+        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
         -> SemIR::IdentifiedFacetType::RequiredImpl {
-      return {context.constant_values().Get(impls.self_type),
-              impls.specific_interface};
+      auto self = SubstPeriodSelf(
+          context, loc_id, context.constant_values().Get(impls.self_type),
+          period_self_replacement_id);
+      auto interface =
+          SubstPeriodSelf(context, loc_id, impls.specific_interface,
+                          period_self_replacement_id);
+      return {self, interface};
     };
 
     if (facet_type_extends) {
@@ -1095,7 +1118,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
                 .facet_type_id;
         bool extend = facet_type_extends && require.extend_self;
-        work.push_back({extend, require_self, facet_type_id});
+        work.push_back(
+            {extend, subst_period_self_in_self, require_self, facet_type_id});
       }
     }
 
@@ -1151,7 +1175,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
                 .facet_type_id;
-        work.push_back({false, require_self, facet_type_id});
+        work.push_back(
+            {false, subst_period_self_in_self, require_self, facet_type_id});
       }
     }
 
@@ -1212,7 +1237,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
                 .facet_type_id;
-        work.push_back({false, require_self, facet_type_id});
+        work.push_back({false, true, require_self, facet_type_id});
       }
     }
   }

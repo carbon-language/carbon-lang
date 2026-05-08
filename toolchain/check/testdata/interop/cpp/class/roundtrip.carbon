@@ -41,3 +41,19 @@ auto F(C *p) -> Carbon::CAlias* {
   return p;
 }
 ''';
+
+// --- import.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+class Class1;
+
+inline Cpp '''
+void func(Carbon::Class1* _Nonnull);
+''';
+
+fn Caller(p: Class1*) {
+  Cpp.func(p);
+}

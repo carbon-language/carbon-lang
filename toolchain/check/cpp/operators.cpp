@@ -15,9 +15,11 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -266,6 +268,7 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = init_list_class.scope_id,
                                  .name_id = init_list_class.name_id,
                                  .param_type_ids = {array_type_id},
+                                 .param_kind = ParamPatternKind::Value,
                                  .return_type_id = init_list_type_id});
 
   auto& function = context.functions().Get(function_id);
@@ -283,44 +286,67 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
 static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
-    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::Signature {
+    clang::FunctionDecl* function_decl, clang::DeclAccessPair found_decl,
+    clang::Expr* arg_expr) -> SemIR::ClangDeclSignatureId {
+  auto signature_kind = SemIR::ClangDeclSignature::Normal;
+  clang::Expr* self_expr = nullptr;
+  llvm::ArrayRef<clang::Expr*> arg_exprs(arg_expr);
+
   // If we're performing a constructor initialization from a list, form a
   // function signature that takes a single tuple or struct pattern
   // instead of a function signature with one parameter per C++ parameter.
   if (step_kind ==
       clang::InitializationSequence::SK_ConstructorInitializationFromList) {
+    // Initialization from a tuple `(a, b, c)` results in a constructor
+    // function that takes a tuple pattern:
+    //
+    //   fn Class.Class((a: A, b: B, c: C)) -> Class;
+    //
     // The source type should always be a tuple type, because we don't support
     // C++ initialization from struct types.
     auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(
         context.insts().Get(source_id).type_id());
     CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
-
-    // Initialization from a tuple `(a, b, c)` results in a constructor
-    // function that takes a tuple pattern:
-    //
-    //   fn Class.Class((a: A, b: B, c: C)) -> Class;
-    return {
-        .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
-        .num_params = static_cast<int32_t>(
-            context.inst_blocks().Get(tuple_type->type_elements_id).size())};
+    arg_exprs = cast<clang::InitListExpr>(arg_expr)->inits();
+    signature_kind = SemIR::ClangDeclSignature::TuplePattern;
   }
 
-  // Any other initialization using a constructor is calling a converting
-  // constructor:
-  //
-  //   fn Class.Class(a: A) -> Class;
+  // In order to determine how to map the parameters, we need to build the
+  // conversion sequence(s) again. Clang already threw them away. The only way
+  // to do this is to "redo" overload resolution with our single candidate.
+  clang::OverloadCandidateSet candidates(
+      function_decl->getLocation(),
+      clang::OverloadCandidateSet::CSK_InitByUserDefinedConversion);
+
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
-    return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
-            .num_params = 1};
+    // This is either tuple list initialization as described above or a
+    // constructor call:
+    //
+    //   fn Class.Class(a: A) -> Class;
+    context.clang_sema().AddOverloadCandidate(function_decl, found_decl,
+                                              arg_exprs, candidates);
+  } else {
+    // Otherwise, the initialization is calling a conversion function
+    // `Source::operator Dest`:
+    //
+    //   fn Source.<conversion function>[self: Source]() -> Dest;
+    auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
+    self_expr = arg_expr;
+    arg_exprs = {};
+    context.clang_sema().AddMethodCandidate(
+        conversion_decl, found_decl, conversion_decl->getParent(),
+        self_expr->getType(), self_expr->Classify(context.ast_context()),
+        arg_exprs, candidates);
   }
 
-  // Otherwise, the initialization is calling a conversion function
-  // `Source::operator Dest`:
-  //
-  //   fn Source.<conversion function>[self: Source]() -> Dest;
-  CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
-  return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
-          .num_params = 0};
+  clang::OverloadCandidateSet::iterator best;
+  auto result = candidates.BestViableFunction(
+      context.clang_sema(), function_decl->getLocation(), best);
+  CARBON_CHECK(result == clang::OverloadingResult::OR_Success ||
+               result == clang::OverloadingResult::OR_Deleted);
+
+  return ComputeClangDeclSignatureFromBestViableFunction(
+      context, best, self_expr, arg_exprs, signature_kind);
 }
 
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
@@ -400,10 +426,12 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         sema.MarkFunctionReferenced(loc, step.Function.Function);
 
-        auto signature = GetConversionSignatureToImport(
-            context, source_id, step.Kind, step.Function.Function);
+        SemIR::ClangDeclSignatureId signature_id =
+            GetConversionSignatureToImport(context, source_id, step.Kind,
+                                           step.Function.Function,
+                                           step.Function.FoundDecl, arg_expr);
         auto result_id = ImportCppFunctionDecl(
-            context, loc_id, step.Function.Function, signature);
+            context, loc_id, step.Function.Function, signature_id);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
                 result_id)) {
           CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
@@ -453,6 +481,90 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
+static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
+                              clang::OverloadedOperatorKind op_kind,
+                              llvm::ArrayRef<clang::Expr*> arg_exprs)
+    -> SemIR::InstId;
+
+namespace {
+struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
+  Context& context;
+  SemIR::TypeId arg_type_id;
+  SemIR::LocId loc_id;
+
+  void operator()(auto& builder) const {
+    CARBON_DIAGNOSTIC(
+        IncompleteOperandTypeInCppOperatorLookup, Context,
+        "looking up a C++ operator with incomplete operand type {0}",
+        SemIR::TypeId);
+    builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
+                    arg_type_id);
+  }
+};
+}  // namespace
+
+auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                       llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
+    -> SemIR::InstId {
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
+  if (op.interface_name == CoreIdentifier::ImplicitAs ||
+      op.interface_name == CoreIdentifier::As) {
+    context.TODO(loc_id, "handle `as` operator when passed a type");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto op_kind =
+      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
+  if (!op_kind) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  for (SemIR::TypeId arg_type_id : arg_type_ids) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
+      return SemIR::ErrorInst::InstId;
+    }
+  }
+
+  struct Operand {
+    using enum clang::ExprValueKind;
+    explicit Operand(clang::QualType type)
+        : type(type),
+          expression({}, type,
+                     type->isLValueReferenceType()   ? VK_LValue
+                     : type->isRValueReferenceType() ? VK_XValue
+                                                     : VK_PRValue) {}
+    clang::QualType type;
+    clang::OpaqueValueExpr expression;
+  };
+
+  auto cpp_type = MapToCppType(context, arg_type_ids[0]);
+  if (cpp_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+  auto arg0 = Operand(cpp_type);
+  if (arg_type_ids.size() == 1) {
+    return FindClangOperator(context, loc_id, *op_kind, {&arg0.expression});
+  }
+
+  CARBON_CHECK(arg_type_ids.size() == 2);
+  cpp_type = MapToCppType(context, arg_type_ids[1]);
+  if (cpp_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+  auto arg1 = Operand(cpp_type);
+  return FindClangOperator(context, loc_id, *op_kind,
+                           {&arg0.expression, &arg1.expression});
+}
+
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Register an annotation scope to flush any Clang diagnostics when we return.
@@ -460,6 +572,14 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // with Carbon diagnostics.
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
+
+  // We can only handle concrete types in LookupCppOperator.
+  for (auto arg_id : arg_ids) {
+    auto type_id = context.insts().Get(arg_id).type_id();
+    if (type_id.is_symbolic()) {
+      return SemIR::InstId::None;
+    }
+  }
 
   // Handle `ImplicitAs` and `As`.
   if (op.interface_name == CoreIdentifier::ImplicitAs ||
@@ -490,14 +610,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Make sure all operands are complete before lookup.
   for (SemIR::InstId arg_id : arg_ids) {
     SemIR::TypeId arg_type_id = context.insts().Get(arg_id).type_id();
-    if (!RequireCompleteType(context, arg_type_id, loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteOperandTypeInCppOperatorLookup, Context,
-              "looking up a C++ operator with incomplete operand type {0}",
-              SemIR::TypeId);
-          builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                          arg_type_id);
-        })) {
+    if (!RequireCompleteType(context, arg_type_id, loc_id,
+                             DiagnoseIncompleteOperandTypeInCppOperatorLookup{
+                                 .context = context,
+                                 .arg_type_id = arg_type_id,
+                                 .loc_id = loc_id})) {
       return SemIR::ErrorInst::InstId;
     }
   }
@@ -506,18 +623,24 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (!maybe_arg_exprs.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
-  auto& arg_exprs = *maybe_arg_exprs;
 
+  return FindClangOperator(context, loc_id, *op_kind, *maybe_arg_exprs);
+}
+
+static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
+                              clang::OverloadedOperatorKind op_kind,
+                              llvm::ArrayRef<clang::Expr*> arg_exprs)
+    -> SemIR::InstId {
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
   clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
-      *op_kind, loc, /*AllowRewritten=*/true);
+      op_kind, loc, /*AllowRewritten=*/true);
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
 
   clang::Sema& sema = context.clang_sema();
 
   // This works for both unary and binary operators.
-  sema.LookupOverloadedBinOp(candidate_set, *op_kind, clang::UnresolvedSet<0>{},
+  sema.LookupOverloadedBinOp(candidate_set, op_kind, clang::UnresolvedSet<0>{},
                              arg_exprs);
 
   clang::OverloadCandidateSet::iterator best_viable_fn;
@@ -540,14 +663,18 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
 
       // If this is an operator method, the first arg will be used as self.
-      int32_t num_params = arg_ids.size();
-      if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
-        --num_params;
+      clang::Expr* self_expr = nullptr;
+      auto arg_exprs_for_signature = arg_exprs;
+      if (IsObjectMemberFunction(*best_viable_fn->Function)) {
+        self_expr = arg_exprs_for_signature.consume_front();
       }
 
-      auto result_id =
-          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function,
-                                {.num_params = num_params});
+      SemIR::ClangDeclSignatureId signature_id =
+          ComputeClangDeclSignatureFromBestViableFunction(
+              context, best_viable_fn, self_expr, arg_exprs_for_signature);
+
+      auto result_id = ImportCppFunctionDecl(
+          context, loc_id, best_viable_fn->Function, signature_id);
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,
@@ -561,7 +688,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       return SemIR::InstId::None;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
-      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      const char* spelling = clang::getOperatorSpelling(op_kind);
       candidate_set.NoteCandidates(
           clang::PartialDiagnosticAt(
               loc, sema.PDiag(clang::diag::err_ovl_ambiguous_oper_binary)
@@ -571,7 +698,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted:
-      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      const char* spelling = clang::getOperatorSpelling(op_kind);
       auto* message = best_viable_fn->Function->getDeletedMessage();
       // The best viable function might be a different operator if the best
       // candidate is a rewritten candidate, so use the operator kind of the

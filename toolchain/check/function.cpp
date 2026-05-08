@@ -6,6 +6,7 @@
 
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
@@ -34,47 +35,12 @@ auto FindSelfPattern(Context& context,
 
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId {
-  auto result_id = SemIR::InstId::None;
-  auto result_type_id = SemIR::TypeId::None;
-  auto form_inst = context.insts().Get(
-      context.constant_values().GetConstantInstId(form_expr.form_inst_id));
-  CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind: {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::RefReturnPattern>(context, loc_id,
-                                                   {.type_id = result_type_id});
-      break;
-    }
-    case SemIR::ValueForm::Kind: {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::ValueReturnPattern>(
-          context, loc_id, {.type_id = result_type_id});
-      break;
-    }
-    case CARBON_KIND(SemIR::InitForm _): {
-      result_type_id = GetPatternType(context, form_expr.type_component_id);
-      result_id = AddInst<SemIR::OutParamPattern>(
-          context, SemIR::LocId(form_expr.form_inst_id),
-          {.type_id = result_type_id,
-           .pretty_name_id = SemIR::NameId::ReturnSlot});
-      break;
-    }
-    case SemIR::SymbolicBinding::Kind:
-      CARBON_CHECK(
-          context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
-      context.TODO(loc_id, "Support symbolic return forms");
-      result_type_id = SemIR::ErrorInst::TypeId;
-      result_id = SemIR::ErrorInst::InstId;
-      break;
-    case SemIR::ErrorInst::Kind:
-      result_type_id = SemIR::ErrorInst::TypeId;
-      result_id = SemIR::ErrorInst::InstId;
-      break;
-    default:
-      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
-  }
+  auto result_type_id = GetPatternType(context, form_expr.type_component_id);
+  auto result_id = HandleAction<SemIR::OutFormParamPatternAction>(
+      context, loc_id, form_expr.type_component_inst_id,
+      {.type_id = SemIR::InstType::TypeId, .form_id = form_expr.form_inst_id});
   return AddInst<SemIR::ReturnSlotPattern>(
-      context, SemIR::LocId(form_expr.form_inst_id),
+      context, loc_id,
       {.type_id = result_type_id,
        .subpattern_id = result_id,
        .type_inst_id = form_expr.type_component_inst_id});
@@ -140,9 +106,9 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
         context, context.types().GetTypeInstId(args.self_type_id));
     EndEmptySubpattern(context);
 
-    insts.self_param_id = AddParamPattern(
-        context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
-        args.self_type_id, args.self_is_ref);
+    insts.self_param_id =
+        AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                        self_type_region_id, args.self_type_id, args.self_kind);
     insts.implicit_param_patterns_id =
         context.inst_blocks().Add({insts.self_param_id});
 
@@ -164,7 +130,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, /*is_ref=*/args.params_are_refs));
+          param_type_id, args.param_kind));
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }
@@ -250,6 +216,10 @@ auto CheckFunctionReturnTypeMatches(Context& context,
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
+    if (new_function.name_id == SemIR::NameId::CppOperator &&
+        !prev_return_type_id.has_value()) {
+      return true;
+    }
     if (!diagnose) {
       return false;
     }
@@ -334,11 +304,12 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self, bool diagnose)
-    -> bool {
+                              bool check_syntax,
+                              SemIR::TypeId self_type_override_id,
+                              bool diagnose) -> bool {
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
-                              diagnose, check_syntax, check_self)) {
+                              diagnose, check_syntax, self_type_override_id)) {
     return false;
   }
   if (!CheckFunctionReturnTypeMatches(context, new_function, prev_function,

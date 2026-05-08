@@ -436,6 +436,9 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
                                  callee_function->function_id);
     }
+    case CARBON_KIND(SemIR::FieldDecl field_decl): {
+      return ExportFieldToCpp(*context_, target_inst_id, field_decl);
+    }
     default:
       return nullptr;
   }
@@ -488,7 +491,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
           context_->constant_values().Get(decl_context_inst_id),
-          SemIR::ConstantId::None, &lookup_scopes)) {
+          SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
 
@@ -609,9 +612,18 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
-  const auto& class_info = context_->classes().Get(class_type.class_id);
+  auto& class_info = context_->classes().Get(class_type.class_id);
   class_decl->startDefinition();
   CARBON_CHECK(class_decl->hasDefinition());
+
+  // If the Carbon class is final, mark the C++ class as also being `final`.
+  // Abstract classes are handled when generating the destructor declaration.
+  if (class_info.inheritance_kind == SemIR::Class::InheritanceKind::Final) {
+    // TODO: Find the location of the `final` modifier and use it here.
+    class_decl->addAttr(clang::FinalAttr::Create(
+        context_->ast_context(),
+        GetCppLocation(*context_, SemIR::LocId(class_info.definition_id))));
+  }
 
   // If the Carbon class has a base class that we can map into C++, add that as
   // a C++ base class.
@@ -636,8 +648,11 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
 
-  // TODO: Import fields, plus any special member functions that affect class
-  // properties.
+  ExportAllFieldsToCpp(*context_, class_info);
+
+  class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
+
+  // TODO: Import any special member functions that affect class properties.
   class_decl->completeDefinition();
 }
 
@@ -668,8 +683,8 @@ auto CarbonExternalASTSource::layoutRecordType(
   size = layout.size.bytes() * 8;
   alignment = layout.alignment.bits();
 
-  // TODO: Add field offsets once we import fields.
-  static_cast<void>(field_offsets);
+  // Fill in `field_offsets`.
+  CalculateCppFieldOffsets(*context_, class_type.class_id, field_offsets);
 
   // Add offset for base class, if any.
   if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);

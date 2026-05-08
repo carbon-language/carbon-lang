@@ -94,9 +94,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc16: %Inner.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc17: %Inner.elem = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -108,9 +106,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc23: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   %Inner.ref.loc24: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %.loc24: %Outer.elem = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.d.8f4 [concrete = constants.%complete_type.3ed]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

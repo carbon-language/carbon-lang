@@ -174,7 +174,7 @@ provided for built-in types as necessary to give the semantics described above.
 ```
 // Simple `=`.
 interface AssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint Assign { extend AssignWith(Self); }
 ```
@@ -188,7 +188,7 @@ Given `var x: T` and `y: U`:
 ```
 // Compound `+=`.
 interface AddAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint AddAssign { extend AddAssignWith(Self); }
 ```
@@ -196,7 +196,7 @@ constraint AddAssign { extend AddAssignWith(Self); }
 ```
 // Compound `-=`.
 interface SubAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint SubAssign { extend SubAssignWith(Self); }
 ```
@@ -204,7 +204,7 @@ constraint SubAssign { extend SubAssignWith(Self); }
 ```
 // Compound `*=`.
 interface MulAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint MulAssign { extend MulAssignWith(Self); }
 ```
@@ -212,7 +212,7 @@ constraint MulAssign { extend MulAssignWith(Self); }
 ```
 // Compound `/=`.
 interface DivAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint DivAssign { extend DivAssignWith(Self); }
 ```
@@ -220,16 +220,16 @@ constraint DivAssign { extend DivAssignWith(Self); }
 ```
 // Compound `%=`.
 interface ModAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint ModAssign { extend ModAssignWith(Self); }
 ```
 
 ```
 // Increment `++`.
-interface Inc { fn Op[ref self: Self](); }
+interface Inc { fn Op(ref self); }
 // Decrement `++`.
-interface Dec { fn Op[ref self: Self](); }
+interface Dec { fn Op(ref self); }
 ```
 
 Given `var x: T` and `y: U`:
@@ -247,7 +247,7 @@ Given `var x: T` and `y: U`:
 ```
 // Compound `&=`.
 interface BitAndAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint BitAndAssign { extend BitAndAssignWith(Self); }
 ```
@@ -255,7 +255,7 @@ constraint BitAndAssign { extend BitAndAssignWith(Self); }
 ```
 // Compound `|=`.
 interface BitOrAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint BitOrAssign { extend BitOrAssignWith(Self); }
 ```
@@ -263,7 +263,7 @@ constraint BitOrAssign { extend BitOrAssignWith(Self); }
 ```
 // Compound `^=`.
 interface BitXorAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint BitXorAssign { extend BitXorAssignWith(Self); }
 ```
@@ -271,7 +271,7 @@ constraint BitXorAssign { extend BitXorAssignWith(Self); }
 ```
 // Compound `<<=`.
 interface LeftShiftAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
 ```
@@ -279,7 +279,7 @@ constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
 ```
 // Compound `>>=`.
 interface RightShiftAssignWith(U:! type) {
-  fn Op[ref self: Self](other: U);
+  fn Op(ref self, other: U);
 }
 constraint RightShiftAssign { extend RightShiftAssignWith(Self); }
 ```
@@ -309,7 +309,7 @@ This defaulting is accomplished by a parameterized implementation of
 ```
 impl forall [U:! type, T:! OpWith(U) where .Self impls AssignWith(.Self.Result)]
     T as OpAssignWith(U) {
-  fn Op[ref self: Self](other: U) {
+  fn Op(ref self, other: U) {
     // Here, `$` is the operator described by `OpWith`.
     *self = *self $ other;
   }

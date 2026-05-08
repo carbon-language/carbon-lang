@@ -118,7 +118,6 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ConstDeref: type = class_type @ConstDeref [concrete]
-// CHECK:STDOUT:   %pattern_type.3fb: type = pattern_type %ConstDeref [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -153,12 +152,9 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Core.import_ref.83d: %CppUnsafeDeref.assoc_type = import_ref Core//prelude/operators/deref, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %Core.import_ref.ad7: @CppUnsafeDeref.WithSelf.%CppUnsafeDeref.WithSelf.Op.type (%CppUnsafeDeref.WithSelf.Op.type.792) = import_ref Core//prelude/operators/deref, loc{{\d+_\d+}}, loaded [symbolic = @CppUnsafeDeref.WithSelf.%CppUnsafeDeref.WithSelf.Op (constants.%CppUnsafeDeref.WithSelf.Op.a80)]
 // CHECK:STDOUT:   %ConstDeref.cpp_operator.decl: %ConstDeref.cpp_operator.type = fn_decl @ConstDeref.cpp_operator [concrete = constants.%ConstDeref.cpp_operator] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.3fb = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.3fb = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %self.param: %ConstDeref = value_param call_param0
-// CHECK:STDOUT:     %self: %ConstDeref = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.decl: %operator_Star__carbon_thunk.type = fn_decl @operator_Star__carbon_thunk [concrete = constants.%operator_Star__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
@@ -179,8 +175,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
 // CHECK:STDOUT:   %Op.ref.loc13_43: %ConstDeref.cpp_operator.type = name_ref Op, imports.%ConstDeref.cpp_operator.decl [concrete = constants.%ConstDeref.cpp_operator]
 // CHECK:STDOUT:   %ConstDeref.cpp_operator.bound: <bound method> = bound_method %int_ptr.ref, %Op.ref.loc13_43
-// CHECK:STDOUT:   %.loc13: %ConstDeref = acquire_value %int_ptr.ref
-// CHECK:STDOUT:   %operator_Star__carbon_thunk.call: ref %i32 = call imports.%operator_Star__carbon_thunk.decl(%.loc13)
+// CHECK:STDOUT:   %operator_Star__carbon_thunk.call: ref %i32 = call imports.%operator_Star__carbon_thunk.decl(%int_ptr.ref)
 // CHECK:STDOUT:   return %operator_Star__carbon_thunk.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

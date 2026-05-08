@@ -4,18 +4,25 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -69,7 +76,7 @@ namespace {
 struct DeclInfo {
   // If null, no C++ decl was found and no witness can be created.
   clang::NamedDecl* decl = nullptr;
-  SemIR::ClangDeclKey::Signature signature;
+  SemIR::ClangDeclSignatureId signature_id;
 };
 }  // namespace
 
@@ -91,7 +98,7 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
   }
 
   auto fn_id =
-      ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.signature);
+      ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.signature_id);
   if (fn_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
@@ -100,6 +107,18 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
   return fn_id;
+}
+
+// Creates a signature with `Normal` kind and the given parameter passing
+// modes, and adds it to the value store.
+static auto MakeSignature(
+    Context& context,
+    std::initializer_list<SemIR::ClangDeclSignature::PassingMode> modes,
+    SemIR::ClangDeclSignature::PassingMode self_passing_mode =
+        SemIR::ClangDeclSignature::PassingMode::ByRef)
+    -> SemIR::ClangDeclSignatureId {
+  return context.clang_decl_signatures().Add(SemIR::ClangDeclSignature::Make(
+      modes, SemIR::ClangDeclSignature::Normal, self_passing_mode));
 }
 
 static auto BuildCopyWitness(
@@ -113,9 +132,23 @@ static auto BuildCopyWitness(
     return SemIR::InstId::None;
   }
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    auto class_type_id = SemIR::TypeId::ForTypeConstant(query_self_const_id);
+    if (!Check::RequireCompleteType(
+            context, class_type_id, SemIR::LocId::None, [&](auto& builder) {
+              CARBON_DIAGNOSTIC(IncompleteTypeInCopyWitness, Context,
+                                "argument to C++ call has incomplete type {0}",
+                                SemIR::TypeId);
+              builder.Context(loc_id, IncompleteTypeInCopyWitness,
+                              class_type_id);
+            })) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    SemIR::ClangDeclSignatureId signature_id = MakeSignature(
+        context, {SemIR::ClangDeclSignature::PassingMode::ByValue});
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
-                              .signature = {.num_params = 1}};
+                              .signature_id = signature_id};
     auto fn_id = GetFunctionId(context, loc_id, decl_info);
     if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
       return fn_id;
@@ -150,8 +183,14 @@ static auto BuildCppUnsafeDerefWitness(
     context.TODO(loc_id, "operator* overload sets not implemented yet");
     return SemIR::ErrorInst::InstId;
   }
+
+  // TODO: Parameterize the interface by the form of the operand and compute the
+  // appropriate passing mode here.
+  SemIR::ClangDeclSignatureId signature_id =
+      MakeSignature(context, {}, SemIR::ClangDeclSignature::PassingMode::ByRef);
+
   auto decl_info =
-      DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
+      DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
@@ -186,9 +225,11 @@ static auto BuildDefaultWitness(
   // That happens if class_decl->hasUninitializedExplicitInitFields() is true.
   //
   // TODO: Consider treating such types as not implementing `Default`.
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
+
   auto decl_info =
       DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
-               .signature = {.num_params = 0}};
+               .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
@@ -209,14 +250,247 @@ static auto BuildDestroyWitness(
   if (!class_decl) {
     return SemIR::InstId::None;
   }
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
+
   auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
-                            .signature = {.num_params = 0}};
+                            .signature_id = signature_id};
   auto fn_id = GetFunctionId(context, loc_id, decl_info);
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {fn_id});
+}
+
+// Attempts to build a witness table entry for a C++ unary operator.
+static auto BuildCppUnaryOperatorWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
+    bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto fn_id = LookupCppOperator(
+      context, loc_id, {.interface_name = AsCoreIdentifier(core_interface)},
+      {self_type_id});
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+
+  if (has_associated_result_type) {
+    auto result_type_id =
+        context.functions()
+            .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+            .return_type_inst_id;
+    if (result_type_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              {result_type_id, fn_id});
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
+// Attempts to build a witness table entry for a C++ binary operator.
+static auto BuildCppBinaryOperatorWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
+    bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto args =
+      context.inst_blocks().Get(context.specifics()
+                                    .Get(context.specific_interfaces()
+                                             .Get(query_specific_interface_id)
+                                             .specific_id)
+                                    .args_id);
+  CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
+  auto arg_type_id = context.types().GetTypeIdForTypeInstId(args.front());
+  auto fn_id = LookupCppOperator(
+      context, loc_id, {.interface_name = AsCoreIdentifier(core_interface)},
+      {self_type_id, arg_type_id});
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  if (has_associated_result_type) {
+    auto result_type_id =
+        context.functions()
+            .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+            .return_type_inst_id;
+    if (result_type_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              {result_type_id, fn_id});
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
+static auto BuildCppComparisonWitness(
+    Context& context, SemIR::LocId loc_id, CoreIdentifier interface,
+    llvm::ArrayRef<CoreIdentifier> operator_names,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto args =
+      context.inst_blocks().Get(context.specifics()
+                                    .Get(context.specific_interfaces()
+                                             .Get(query_specific_interface_id)
+                                             .specific_id)
+                                    .args_id);
+  CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
+
+  auto arg_type_id = context.types().GetTypeIdForTypeInstId(args[0]);
+  auto operators = llvm::SmallVector<SemIR::InstId, 4>();
+  for (auto operator_name : operator_names) {
+    auto lookup_id = LookupCppOperator(
+        context, loc_id,
+        {.interface_name = interface, .op_name = operator_name},
+        {self_type_id, arg_type_id});
+    if (lookup_id == SemIR::ErrorInst::InstId ||
+        lookup_id == SemIR::InstId::None) {
+      // `T.(Core.EqWith(U))` is only valid if both `t == u` and `t != u` are
+      // valid expressions. Looking for `t != u` is pointless if we're unable to
+      // find a valid `t == u`, because `t != u` won't provide further useful
+      // information at this point.
+      //
+      // The behavior is dependent on which expression is checked first: no
+      // diagnostic will be emitted for an erroneous `operator!=` if lookup for
+      // `operator==` produces `SemIR::InstId::None`.
+      return lookup_id;
+    }
+
+    auto return_type_id = context.functions()
+                              .Get(context.insts()
+                                       .GetAs<SemIR::FunctionDecl>(lookup_id)
+                                       .function_id)
+                              .return_type_inst_id;
+    if (!return_type_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    operators.push_back(lookup_id);
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, operators);
+}
+
+static auto LookupCppMethod(
+    Context& context, clang::Sema& clang_sema, SemIR::LocId loc_id,
+    const clang::DeclarationNameInfo& name_info,
+    clang::CXXRecordDecl* class_decl,
+    [[maybe_unused]] SemIR::ConstantId query_self_const_id) -> SemIR::InstId {
+  constexpr auto LookupKind = clang::Sema::LookupMemberName;
+  auto lookup_info = clang::LookupResult(clang_sema, name_info, LookupKind);
+  clang_sema.LookupQualifiedName(lookup_info, class_decl);
+  if (lookup_info.empty()) {
+    return SemIR::InstId::None;
+  }
+
+  if (!lookup_info.isSingleResult()) {
+    context.TODO(loc_id, "{method_name} overload sets unsupported");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto decl_info = DeclInfo{
+      .decl = *lookup_info.begin(),
+      .signature_id = MakeSignature(
+          context, {}, SemIR::ClangDeclSignature::PassingMode::ByValue)};
+  return GetFunctionId(context, loc_id, decl_info);
+}
+
+static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
+                                 SemIR::LocId loc_id,
+                                 const clang::DeclarationNameInfo& name_info,
+                                 clang::CXXRecordDecl* class_decl,
+                                 SemIR::ConstantId query_self_const_id)
+    -> SemIR::InstId {
+  (void)clang_sema;
+  (void)name_info;
+  (void)class_decl;
+  (void)query_self_const_id;
+  context.TODO(loc_id, "support ADL begin/end");
+  return SemIR::ErrorInst::InstId;
+}
+
+using LookupBeginEndCallees = auto(Context&, clang::Sema&, SemIR::LocId,
+                                   const clang::DeclarationNameInfo&,
+                                   clang::CXXRecordDecl*, SemIR::ConstantId)
+    -> SemIR::InstId;
+
+static auto BuildCppRangeForIterateWitnessImpl(
+    Context& context, SemIR::LocId loc_id,
+    LookupBeginEndCallees range_for_lookup, clang::CXXRecordDecl* class_decl,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto& clang_sema = context.clang_sema();
+  auto begin_name_info = clang::DeclarationNameInfo(
+      &clang_sema.PP.getIdentifierTable().get("begin"),
+      clang::SourceLocation());
+  auto begin_fn_id =
+      range_for_lookup(context, clang_sema, loc_id, begin_name_info, class_decl,
+                       query_self_const_id);
+  if (begin_fn_id == SemIR::InstId::None ||
+      begin_fn_id == SemIR::ErrorInst::InstId) {
+    return begin_fn_id;
+  }
+
+  auto begin_result_type_id =
+      context.functions()
+          .Get(context.insts()
+                   .GetAs<SemIR::FunctionDecl>(begin_fn_id)
+                   .function_id)
+          .return_type_inst_id;
+  if (begin_result_type_id == SemIR::ErrorInst::InstId ||
+      begin_result_type_id == SemIR::InstId::None) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto end_name_info = clang::DeclarationNameInfo(
+      &clang_sema.PP.getIdentifierTable().get("end"), clang::SourceLocation());
+  auto end_fn_id = range_for_lookup(context, clang_sema, loc_id, end_name_info,
+                                    class_decl, query_self_const_id);
+  if (end_fn_id == SemIR::InstId::None ||
+      end_fn_id == SemIR::ErrorInst::InstId) {
+    return end_fn_id;
+  }
+
+  auto end_result_type_id =
+      context.functions()
+          .Get(
+              context.insts().GetAs<SemIR::FunctionDecl>(end_fn_id).function_id)
+          .return_type_inst_id;
+  if (end_result_type_id == SemIR::ErrorInst::InstId ||
+      end_result_type_id == SemIR::InstId::None) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {begin_result_type_id, end_result_type_id, begin_fn_id, end_fn_id});
+}
+
+static auto BuildCppRangeForIterateWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (auto with_members = BuildCppRangeForIterateWitnessImpl(
+          context, loc_id, LookupCppMethod, class_decl, query_self_const_id,
+          query_specific_interface_id);
+      with_members != SemIR::InstId::None) {
+    return with_members;
+  }
+
+  return BuildCppRangeForIterateWitnessImpl(
+      context, loc_id, LookupCppUnqualified, class_decl, query_self_const_id,
+      query_specific_interface_id);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
@@ -231,6 +505,45 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_loc_id);
 
   switch (core_interface) {
+    case SemIR::CoreInterface::Inc:
+    case SemIR::CoreInterface::Dec:
+      return BuildCppUnaryOperatorWitness(context, loc_id, core_interface,
+                                          /*has_associated_result_type=*/false,
+                                          query_self_const_id,
+                                          query_specific_interface_id);
+    case SemIR::CoreInterface::Negate:
+      return BuildCppUnaryOperatorWitness(
+          context, loc_id, core_interface, /*has_associated_result_type=*/true,
+          query_self_const_id, query_specific_interface_id);
+    case SemIR::CoreInterface::AddWith:
+    case SemIR::CoreInterface::SubWith:
+    case SemIR::CoreInterface::MulWith:
+    case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::ModWith:
+      return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
+                                           /*has_associated_result_type=*/true,
+                                           query_self_const_id,
+                                           query_specific_interface_id);
+    case SemIR::CoreInterface::AddAssignWith:
+    case SemIR::CoreInterface::SubAssignWith:
+    case SemIR::CoreInterface::MulAssignWith:
+    case SemIR::CoreInterface::DivAssignWith:
+    case SemIR::CoreInterface::ModAssignWith:
+      return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
+                                           /*has_associated_result_type=*/false,
+                                           query_self_const_id,
+                                           query_specific_interface_id);
+    case SemIR::CoreInterface::EqWith:
+      return BuildCppComparisonWitness(
+          context, loc_id, CoreIdentifier::EqWith,
+          {CoreIdentifier::Equal, CoreIdentifier::NotEqual},
+          query_self_const_id, query_specific_interface_id);
+    case SemIR::CoreInterface::OrderedWith:
+      return BuildCppComparisonWitness(
+          context, loc_id, CoreIdentifier::OrderedWith,
+          {CoreIdentifier::Less, CoreIdentifier::LessOrEquivalent,
+           CoreIdentifier::Greater, CoreIdentifier::GreaterOrEquivalent},
+          query_self_const_id, query_specific_interface_id);
     case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id);
@@ -243,6 +556,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
+
+    case SemIR::CoreInterface::CppRangeForIterate:
+      return BuildCppRangeForIterateWitness(
+          context, loc_id, query_self_const_id, query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
     case SemIR::CoreInterface::IntFitsIn:
