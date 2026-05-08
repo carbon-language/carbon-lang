@@ -116,8 +116,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 }
 
 auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
-                      SemIR::InstId class_inst_id, SemIR::ClassType class_type)
-    -> clang::TagDecl* {
+                      SemIR::ClassType class_type) -> clang::TagDecl* {
   // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
   // This should be refactored.
 
@@ -131,9 +130,11 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
   // That could either be a CXXRecordDecl or an EnumDecl.
-  if (auto* decl_context =
-          GetClangDeclContextForScope(context, class_info.scope_id)) {
-    return cast<clang::TagDecl>(decl_context);
+  if (auto clang_decl_id =
+          context.clang_decls().Lookup(class_info.first_decl_id());
+      clang_decl_id.has_value()) {
+    return cast<clang::TagDecl>(
+        context.clang_decls().Get(clang_decl_id).key.decl);
   }
 
   auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
@@ -157,8 +158,8 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
   auto key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(cast<clang::Decl>(record_decl));
-  auto clang_decl_id =
-      context.clang_decls().Add({.key = key, .inst_id = class_inst_id});
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = class_info.first_decl_id()});
   if (class_info.scope_id.has_value()) {
     // TODO: Record the Carbon class -> clang declaration mapping for incomplete
     // classes too.

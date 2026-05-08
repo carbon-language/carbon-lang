@@ -48,10 +48,6 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: import.carbon:[[@LINE+4]]:1: error: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Class1;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
 class Class1;
 
 inline Cpp '''
@@ -59,12 +55,5 @@ void func(Carbon::Class1* _Nonnull);
 ''';
 
 fn Caller(p: Class1*) {
-  // CHECK:STDERR: import.carbon:[[@LINE+7]]:13: error: no matching function for call to 'func' [CppInteropParseError]
-  // CHECK:STDERR:    13 |   Cpp.func(p);
-  // CHECK:STDERR:       |             ^
-  // CHECK:STDERR: import.carbon:[[@LINE-7]]:6: note: candidate function not viable: cannot convert argument of incomplete type 'Carbon::Class1 * _Nonnull' to 'Carbon::Class1 * _Nonnull' (aka 'Carbon::Class1 *') for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     9 | void func(Carbon::Class1* _Nonnull);
-  // CHECK:STDERR:       |      ^    ~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.func(p);
 }
