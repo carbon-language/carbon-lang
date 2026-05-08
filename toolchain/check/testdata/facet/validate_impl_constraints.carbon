@@ -425,7 +425,9 @@ library "[[@TEST_NAME]]";
 interface X {}
 interface Y {}
 interface Z {
+  // A type type, which has no witnesses.
   let Z1:! type;
+  // A facet type, but not one that provides a witness for `.Z2 as Y`.
   let Z2:! type where .Self impls X;
 }
 fn F(T:! Z where .Z1 impls Y and .Z2 impls Y) {
@@ -442,6 +444,8 @@ class C(T:! type) {}
 
 interface Y {}
 interface Z {
+  // Note that the facet type is not an exact type match for `Y` so that we
+  // cause an actual impl lookup to happen when we convert `.Z1` to `Y`.
   let Z1:! type where .Self impls Y and C(.Self) impls Y;
 }
 fn F(T:! Z) {
