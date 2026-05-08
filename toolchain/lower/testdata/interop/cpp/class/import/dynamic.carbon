@@ -39,6 +39,9 @@ auto Use(Base& b) -> int {
 
 base class Derived {
   extend base: Cpp.Base;
+  // TODO: `other_func` should appear in the vtable (it currently
+  // doesn't because the CXXRecordDecl we export has no CXXMethodDecl
+  // children - those need to be added, and in the right order)
   virtual fn other_func[unused self: Self]() -> i32 {
     return 3;
   }
