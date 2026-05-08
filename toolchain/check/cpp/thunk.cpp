@@ -70,6 +70,13 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
   return clang::GlobalDecl(decl);
 }
 
+// Returns whether the given function is an object member function (i.e., a
+// non-static member function that is not a constructor).
+static auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool {
+  const auto* method = dyn_cast<clang::CXXMethodDecl>(&decl);
+  return method && !method->isStatic() && !isa<clang::CXXConstructorDecl>(&decl);
+}
+
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
@@ -106,9 +113,7 @@ static auto GenerateThunkMangledName(
     }
   };
 
-  if (isa<clang::CXXMethodDecl>(callee_function_decl) &&
-      !cast<clang::CXXMethodDecl>(callee_function_decl).isStatic() &&
-      !isa<clang::CXXConstructorDecl>(callee_function_decl)) {
+  if (IsObjectMemberFunction(callee_function_decl)) {
     append_mode(signature.self_passing_mode);
   }
   for (auto mode : signature.passing_modes) {
@@ -173,7 +178,7 @@ struct CalleeFunctionInfo {
     auto& ast_context = decl->getASTContext();
     const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
     bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
-    has_object_parameter = method_decl && !method_decl->isStatic() && !is_ctor;
+    has_object_parameter = IsObjectMemberFunction(*decl);
     if (has_object_parameter && method_decl->isImplicitObjectMemberFunction()) {
       implicit_object_parameter_type =
           method_decl->getFunctionObjectParameterReferenceType();
