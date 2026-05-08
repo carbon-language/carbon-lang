@@ -472,7 +472,7 @@ static auto BuildThunkParamRef(clang::Sema& sema,
                                unsigned thunk_index,
                                clang::QualType type = clang::QualType(),
                                SemIR::Signature::PassingMode passing_mode =
-                                   SemIR::Signature::PassingMode::ByVar)
+                                   SemIR::Signature::PassingMode::ByValue)
     -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
@@ -488,18 +488,8 @@ static auto BuildThunkParamRef(clang::Sema& sema,
     call_arg = deref_result.get();
   }
 
-  // Cast to an rvalue when initializing an rvalue reference. The validity of
-  // the initialization of the reference should be validated by the caller of
-  // the thunk.
-  //
-  // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
-  // currently pass pointers to non-temporary objects as the argument when
-  // calling a thunk, so we'll need to either change that or generate
-  // different thunks depending on whether we're moving from each parameter.
-  if (!type.isNull() &&
-      (type->isRValueReferenceType() ||
-       (!type->isReferenceType() &&
-        passing_mode == SemIR::Signature::PassingMode::ByVar))) {
+  // Cast to an xvalue when using pass-by-`var`.
+  if (passing_mode == SemIR::Signature::PassingMode::ByVar) {
     call_arg = clang::ImplicitCastExpr::Create(
         sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
         nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
