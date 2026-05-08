@@ -183,18 +183,8 @@ static auto BuildCppUnsafeDerefWitness(
   SemIR::Signature::PassingMode self_passing_mode =
       SemIR::Signature::PassingMode::ByRef;
   if (cpp_method && !cpp_method->isStatic()) {
-    clang::QualType param_type =
-        cpp_method->getFunctionObjectParameterReferenceType();
-    if (param_type->isReferenceType()) {
-      clang::QualType pointee_type = param_type->getPointeeType();
-      if (pointee_type.isConstQualified()) {
-        self_passing_mode = SemIR::Signature::PassingMode::ByValue;
-      } else if (param_type->isLValueReferenceType()) {
-        self_passing_mode = SemIR::Signature::PassingMode::ByRef;
-      }
-    } else {
-      self_passing_mode = SemIR::Signature::PassingMode::ByValue;
-    }
+    self_passing_mode = GetDefaultPassingModeForCppParameterType(
+        cpp_method->getFunctionObjectParameterReferenceType());
   }
   SemIR::SignatureId signature_id = MakeSignature(context, {}, self_passing_mode);
 

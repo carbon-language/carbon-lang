@@ -339,19 +339,8 @@ static auto GetConversionSignatureToImport(
   //   fn Source.<conversion function>[self: Source]() -> Dest;
   auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
   SemIR::Signature::PassingMode self_passing_mode =
-      SemIR::Signature::PassingMode::ByRef;
-  clang::QualType param_type =
-      conversion_decl->getFunctionObjectParameterReferenceType();
-  if (param_type->isReferenceType()) {
-    clang::QualType pointee_type = param_type->getPointeeType();
-    if (pointee_type.isConstQualified()) {
-      self_passing_mode = SemIR::Signature::PassingMode::ByValue;
-    } else if (param_type->isLValueReferenceType()) {
-      self_passing_mode = SemIR::Signature::PassingMode::ByRef;
-    }
-  } else {
-    self_passing_mode = SemIR::Signature::PassingMode::ByValue;
-  }
+      GetDefaultPassingModeForCppParameterType(
+          conversion_decl->getFunctionObjectParameterReferenceType());
   return context.signatures().Add(
       SemIR::Signature::Make({}, SemIR::Signature::Normal, self_passing_mode));
 }
