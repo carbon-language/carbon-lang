@@ -23,7 +23,7 @@ interface Z {
 
 // There's 2 ImplWitnessAccess instructions in the type, but they together
 // resolve to a symbolic type value, so the type structure is: `?C(?)`
-impl forall [U:! Z where .Z1 impls Y] U as X(U.Z1.(Y.Y1)) {}
+impl forall [T:! Z where .Z1 impls Y] T as X(T.Z1.(Y.Y1)) {}
 
 class C {
   impl as Y where .Y1 = {} {}
@@ -44,11 +44,10 @@ fn G(V:! Z where .Z1 impls Y) {
   V as X(V.(Z.Z1).(Y.Y1));
 }
 
-// TODO: This creates an infinite loop in `.Self` substitution.
-// fn H(U:! type, V:! Z where .Z1 impls (Y where .Y1 = U)) {
-//   // The type structure is `?C(?)`, without using an ImplWitnessAccess, which
-//   // will match the impl's `?C(?)`. This would fail if ImplWitnessAccess
-//   // instructions were treated as Concrete in the type structure, since the
-//   // impl's type structure would be more specific than the query's.
-//   V as X(U);
-// }
+fn H(U:! type, V:! Z where .Z1 impls (Y where .Y1 = U)) {
+  // The type structure is `?C(?)`, without using an ImplWitnessAccess, which
+  // will match the impl's `?C(?)`. This would fail if ImplWitnessAccess
+  // instructions were treated as Concrete in the type structure, since the
+  // impl's type structure would be more specific than the query's.
+  V as X(U);
+}
