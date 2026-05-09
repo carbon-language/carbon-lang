@@ -440,9 +440,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& name_scope)
   RawStringOstream out;
   out << name_scope;
   if (name_scope.inst_id().has_value()) {
-    out << " " << file.insts().Get(name_scope.inst_id());
+    out << ": " << DumpInstSummary(file, name_scope.inst_id());
   }
-  out << DumpNameIfValid(file, name_scope.name_id());
+  out << "\n- name: " << name_scope.name_id()
+      << DumpNameIfValid(file, name_scope.name_id());
   for (const auto& entry : name_scope.entries()) {
     out << "\n  - " << entry.name_id << DumpNameIfValid(file, entry.name_id)
         << ": ";
