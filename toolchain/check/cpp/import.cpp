@@ -1295,7 +1295,14 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type,
                              SemIR::Signature::PassingMode passing_mode)
     -> ParameterTypeInfo {
-  param_type = param_type.getNonReferenceType().getUnqualifiedType();
+  if (param_type->isReferenceType()) {
+    // TODO: For now, we only remove `const`; any other qualifier will fail when
+    // mapping the type.
+    auto split_type =
+        param_type.getNonReferenceType().getSplitUnqualifiedType();
+    split_type.Quals.removeConst();
+    param_type = context.ast_context().getQualifiedType(split_type);
+  }
   return {.type = MapType(context, loc_id, param_type),
           .kind = GetParamPatternKindForPassingMode(passing_mode)};
 }
