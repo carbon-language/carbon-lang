@@ -137,8 +137,12 @@ static auto ComputePassingModeForReferenceBinding(
     -> SemIR::Signature::PassingMode {
   CARBON_CHECK(scs.ReferenceBinding);
   auto pointee_type = scs.getToType(2);
-  if (pointee_type.isConstQualified()) {
-    // Reference to const is always mapped to Carbon pass by value.
+  if (pointee_type.isConstQualified() ||
+      (scs.IsLvalueReference && scs.BindsToRvalue)) {
+    // Reference to const is always mapped to Carbon pass by value. A non-const
+    // lvalue reference bound to an rvalue only happens when initializing an
+    // object parameter with no ref-qualifier from an rvalue, which we also
+    // model as pass-by-value.
     return SemIR::Signature::PassingMode::ByValue;
   }
   // Rvalue reference to non-const is passed as a `var` to force a copy or move

@@ -201,7 +201,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc15_12.2: ref %X = temporary %.loc15_12.1, %F.call
 // CHECK:STDOUT:   %g.ref: %X.g.cpp_overload_set.type = name_ref g, imports.%X.g.cpp_overload_set.value [concrete = constants.%X.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_12.2, %g.ref
-// CHECK:STDOUT:   %X.g.call: init %i32 = call imports.%X.g.decl(%.loc15_12.2)
+// CHECK:STDOUT:   %.loc15_12.3: %X = acquire_value %.loc15_12.2
+// CHECK:STDOUT:   %X.g.call: init %i32 = call imports.%X.g.decl(%.loc15_12.3)
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc15_12.2)
 // CHECK:STDOUT:   return %X.g.call
