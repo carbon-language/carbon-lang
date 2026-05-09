@@ -38,6 +38,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
+      thunks_(check_ir_id),
       classes_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
@@ -68,10 +69,12 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // 1 reserved id for `CustomLayoutId::Empty`.
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
-      clang_source_locs_(check_ir_id) {
+      clang_source_locs_(check_ir_id),
+      bundles_(allocator_, check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
-  // requiring these types to be complete from Check initialization instead.
+  // requiring these types to be complete from Check initialization instead,
+  // and consider doing this automatically for all singleton types.
   types_.SetComplete(
       TypeType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId},
@@ -83,6 +86,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
   types_.SetComplete(
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
+  types_.SetComplete(
+      InstType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
 
   insts_.Reserve(SingletonInstKinds.size());
@@ -159,12 +166,14 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("insts",
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         for (auto [id, inst] : insts_.enumerate()) {
+                          inst.CacheBundleDebugKinds(bundles_);
                           if (!include_singletons && IsSingletonInstId(id)) {
                             continue;
                           }
                           map.Add(PrintToString(id), Yaml::OutputScalar(inst));
                         }
                       }));
+              map.Add("bundles", bundles_.OutputYaml());
               map.Add("constant_values",
                       constant_values_.OutputYaml(include_singletons));
               map.Add("inst_blocks", inst_blocks_.OutputYaml());
@@ -181,6 +190,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
                     cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);

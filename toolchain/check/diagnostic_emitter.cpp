@@ -10,7 +10,7 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/stringify.h"

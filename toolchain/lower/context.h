@@ -16,7 +16,7 @@
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -72,7 +72,7 @@ class Context {
   auto Finalize() && -> std::unique_ptr<llvm::Module>;
 
   // Returns location information for use with DebugInfo.
-  auto GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI;
+  auto GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {

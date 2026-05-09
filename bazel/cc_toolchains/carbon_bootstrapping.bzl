@@ -63,17 +63,19 @@ def filegroup_with_stage_and_exec(name, srcs, stage, tags = []):
     `filegroup_with_stage`. But when it is _enabled_, it also adds an `exec`
     config transition.
     """
+    impl_tags = tags if "manual" in tags else tags + ["manual"]
+
     filegroup_with_stage(
         name = name + "_stage_only",
         srcs = srcs,
         stage = stage,
-        tags = tags,
+        tags = impl_tags,
     )
 
     _exec_filegroup(
         name = name + "_with_exec",
         srcs = [":" + name + "_stage_only"],
-        tags = tags,
+        tags = impl_tags,
     )
 
     native.alias(
@@ -150,18 +152,20 @@ def carbon_bootstrapped_cc_toolchain(
         runtimes_cfg: The runtimes configuration to use in the toolchain.
         tags: Tags to apply to the toolchain.
     """
+    impl_tags = tags if "manual" in tags else tags + ["manual"]
+
     filegroup_with_stage_and_exec(
         name = "{}_clang_hdrs".format(name),
         srcs = clang_hdrs,
         stage = base_stage,
-        tags = tags,
+        tags = impl_tags,
     )
 
     filegroup_with_stage_and_exec(
         name = "{}_base_files".format(name),
         srcs = base_files,
         stage = base_stage,
-        tags = tags,
+        tags = impl_tags,
     )
 
     filegroup_with_stage_and_exec(
@@ -171,14 +175,14 @@ def carbon_bootstrapped_cc_toolchain(
             ":{}_clang_hdrs".format(name),
         ],
         stage = base_stage,
-        tags = tags,
+        tags = impl_tags,
     )
 
     filegroup_with_stage_and_exec(
         name = "{}_compile_files".format(name),
         srcs = [":{}_base_files".format(name)] + all_hdrs,
         stage = base_stage,
-        tags = tags,
+        tags = impl_tags,
     )
 
     # The runtimes build for this stage of the bootstrap is only compatible with
@@ -188,14 +192,7 @@ def carbon_bootstrapped_cc_toolchain(
         name = "{}_runtimes_build".format(name),
         config = runtimes_cfg,
         clang_hdrs = ["{}_clang_hdrs".format(name)],
-        tags = tags,
-        target_compatible_with = select({
-            ":is_runtimes_build": [],
-            "//conditions:default": ["@platforms//:incompatible"],
-        }) + select({
-            ":is_bootstrap_stage_{}".format(build_stage): [],
-            "//conditions:default": ["@platforms//:incompatible"],
-        }),
+        tags = impl_tags,
     )
 
     # Wrap the runtimes build in a filegroup that both sets the stage to the
@@ -207,7 +204,7 @@ def carbon_bootstrapped_cc_toolchain(
         srcs = [":{}_runtimes_build".format(name)],
         stage = build_stage,
         enable_runtimes_build = True,
-        tags = tags,
+        tags = impl_tags,
     )
 
     carbon_cc_toolchain(

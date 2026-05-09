@@ -20,7 +20,9 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -846,6 +848,23 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
+// Returns the constant value of `id` if it has a `GetConstantValue` overload,
+// and otherwise returns `id` itself.
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT;
+
+template <typename BundleT>
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::BundleId<BundleT> bundle_id, Phase* phase)
+    -> SemIR::BundleId<BundleT> {
+  return eval_context.context().bundles().AddCanonical(std::apply(
+      [&]<typename... Ids>(Ids... ids) -> BundleT {
+        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id)));
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -875,31 +894,14 @@ static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
 };
 
-using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
-    -> int32_t;
-
-// Returns the arg handler for an `IdKind`.
-template <typename... Types>
-static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
-  static constexpr std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> Table =
-      {
-          [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-            auto id = SemIR::Inst::FromRaw<Types>(arg);
-            if constexpr (HasGetConstantValueOverload<Types>) {
-              // If we have a custom `GetConstantValue` overload, call it.
-              return SemIR::Inst::ToRaw(
-                  GetConstantValue(eval_context, id, phase));
-            } else {
-              // Otherwise, we assume the value is already constant.
-              return arg;
-            }
-          }...,
-          // Invalid and None handling (ordering-sensitive).
-          [](auto...) -> int32_t { CARBON_FATAL("Unexpected invalid IdKind"); },
-          [](EvalContext& /*context*/, int32_t arg,
-             Phase* /*phase*/) -> int32_t { return arg; },
-      };
-  return Table[id_kind.ToIndex()];
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    return GetConstantValue(eval_context, id, phase);
+  } else {
+    return id;
+  }
 }
 
 // Given the stored value `arg` of an instruction field and its corresponding
@@ -908,10 +910,11 @@ static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
 // the resulting phase is not constant, the returned value is not useful and
 // will typically be `NoneIndex`.
 static auto GetConstantValueForArg(EvalContext& eval_context,
-                                   SemIR::Inst::ArgAndKind arg_and_kind,
-                                   Phase* phase) -> int32_t {
-  return GetArgHandlerFn(arg_and_kind.kind())(eval_context,
-                                              arg_and_kind.value(), phase);
+                                   SemIR::IdAndKind arg_and_kind, Phase* phase)
+    -> int32_t {
+  return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
+    return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
+  });
 }
 
 // Given an instruction, replaces its operands with their constant values from
@@ -983,76 +986,86 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                       specific_id);
 }
 
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::FacetTypeId facet_type_id)
+    -> void {
+  const auto& info = eval_context.context().facet_types().Get(facet_type_id);
+  for (const auto& interface : info.extend_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& interface : info.self_impls_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& constraint : info.extend_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& constraint : info.self_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_interfaces) {
+    ResolveSpecificDeclForSpecificId(eval_context,
+                                     type_impls.specific_interface.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(
+        eval_context, type_impls.specific_named_constraint.specific_id);
+  }
+}
+
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::SpecificId specific_id) -> void {
+  ResolveSpecificDeclForSpecificId(eval_context, specific_id);
+}
+
+static auto ResolveSpecificDeclForArg(
+    EvalContext& eval_context, SemIR::SpecificInterfaceId specific_interface_id)
+    -> void {
+  ResolveSpecificDeclForSpecificId(eval_context,
+                                   eval_context.specific_interfaces()
+                                       .Get(specific_interface_id)
+                                       .specific_id);
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT> &&
+           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::DestInstId,
+                       SemIR::EntityNameId, SemIR::InstBlockId, SemIR::InstId,
+                       SemIR::MetaInstId, SemIR::StructTypeFieldsId,
+                       SemIR::TypeInstId>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  // These id types have a GetConstantValue() overload but that overload
+  // does not canonicalize any SpecificId in the value type.
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    CARBON_FATAL("Missing case for {0} which has a GetConstantValue() overload",
+                 IdT::Label);
+  }
+}
+
+template <typename BundleT>
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::BundleId<BundleT> bundle_id)
+    -> void {
+  std::apply(
+      [&](auto... ids) -> void {
+        (..., ResolveSpecificDeclForArg(eval_context, ids));
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id));
+}
+
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-    // This switch must handle any field type that has a GetConstantValue()
-    // overload which canonicalizes a specific (and thus potentially forms a new
-    // specific) as part of forming its constant value.
-    CARBON_KIND_SWITCH(arg_and_kind) {
-      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-        const auto& info =
-            eval_context.context().facet_types().Get(facet_type_id);
-        for (const auto& interface : info.extend_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& interface : info.self_impls_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& constraint : info.extend_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& constraint : info.self_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& type_impls : info.type_impls_interfaces) {
-          ResolveSpecificDeclForSpecificId(
-              eval_context, type_impls.specific_interface.specific_id);
-        }
-        for (const auto& type_impls : info.type_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(
-              eval_context, type_impls.specific_named_constraint.specific_id);
-        }
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificId specific_id): {
-        ResolveSpecificDeclForSpecificId(eval_context, specific_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificInterfaceId specific_interface_id): {
-        ResolveSpecificDeclForSpecificId(eval_context,
-                                         eval_context.specific_interfaces()
-                                             .Get(specific_interface_id)
-                                             .specific_id);
-        break;
-      }
-
-        // These id types have a GetConstantValue() overload but that overload
-        // does not canonicalize any SpecificId in the value type.
-      case SemIR::IdKind::For<SemIR::DestInstId>:
-      case SemIR::IdKind::For<SemIR::EntityNameId>:
-      case SemIR::IdKind::For<SemIR::InstBlockId>:
-      case SemIR::IdKind::For<SemIR::InstId>:
-      case SemIR::IdKind::For<SemIR::MetaInstId>:
-      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-      case SemIR::IdKind::For<SemIR::TypeInstId>:
-        break;
-
-      case SemIR::IdKind::None:
-        // No arg.
-        break;
-
-      default:
-        CARBON_CHECK(
-            !KindHasGetConstantValueOverload(arg_and_kind.kind()),
-            "Missing case for {0} which has a GetConstantValue() overload",
-            arg_and_kind.kind());
-        break;
-    }
+    arg_and_kind.Dispatch<void>(
+        [&](auto id) { ResolveSpecificDeclForArg(eval_context, id); });
   }
 }
 
@@ -2368,7 +2381,9 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
-    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
+    } else if constexpr (ConstantKind ==
+                             SemIR::InstConstantKind::ConstantInstAction ||
+                         ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
           eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
@@ -2467,63 +2482,6 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
 }
 
 template <>
-auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
-                                                  SemIR::InstId inst_id,
-                                                  SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  // If a specific provides a new value for the binding with `entity_name_id`,
-  // the SymbolicBindingType is evaluated for that new value.
-  const auto& bind_name = eval_context.entity_names().Get(
-      inst.As<SemIR::SymbolicBindingType>().entity_name_id);
-  if (bind_name.bind_index().has_value()) {
-    if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-        value.has_value()) {
-      auto value_inst_id = eval_context.constant_values().GetInstId(value);
-
-      // A SymbolicBindingType can evaluate to a FacetAccessType if the new
-      // value of the entity is a facet value that that does not have a concrete
-      // type (a FacetType) and does not have a new EntityName to point to (a
-      // SymbolicBinding).
-      auto access = SemIR::FacetAccessType{
-          .type_id = SemIR::TypeType::TypeId,
-          .facet_value_inst_id = value_inst_id,
-      };
-      return ConvertEvalResultToConstantId(
-          eval_context.context(),
-          EvalConstantInst(eval_context.context(), access),
-          SemIR::SymbolicBindingType::Kind,
-          ComputeInstPhase(eval_context.context(), access));
-    }
-  }
-
-  Phase phase = Phase::Concrete;
-  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
-      !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    return SemIR::ConstantId::NotConstant;
-  }
-  // Propagate error phase after getting the constant value for all fields.
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
-  // Evaluation of SymbolicBindingType.
-  //
-  // Like FacetAccessType, a SymbolicBindingType of a FacetValue just evaluates
-  // to the type inside.
-  //
-  // TODO: Look in ScopeStack with the entity_name_id to find the facet value
-  // and get its constant value in the current specific context. The
-  // facet_value_inst_id will go away.
-  if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
-          inst.As<SemIR::SymbolicBindingType>().facet_value_inst_id)) {
-    return eval_context.constant_values().Get(facet_value->type_inst_id);
-  }
-
-  return MakeConstantResult(eval_context.context(), inst, phase);
-}
-
-template <>
 auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
                                         SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -2539,17 +2497,6 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   }
 
   return MakeConstantResult(eval_context.context(), temporary, phase);
-}
-
-// Returns whether `const_id` is the same constant facet value as
-// `facet_value_inst_id`.
-//
-// Compares with the canonical facet value of `const_id`, dropping any `as type`
-// conversions.
-static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
-                             SemIR::InstId facet_value_inst_id) -> bool {
-  auto canon_const_id = GetCanonicalFacetOrTypeValue(context, const_id);
-  return canon_const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
 static auto AddRequirementBase(Context& context,
@@ -2568,7 +2515,10 @@ static auto AddRequirementBase(Context& context,
     const auto& base_info =
         context.facet_types().Get(base_facet_type->facet_type_id);
     info->extend_constraints.append(base_info.extend_constraints);
+    info->extend_named_constraints.append(base_info.extend_named_constraints);
     info->self_impls_constraints.append(base_info.self_impls_constraints);
+    info->self_impls_named_constraints.append(
+        base_info.self_impls_named_constraints);
     info->type_impls_interfaces.append(base_info.type_impls_interfaces);
     info->type_impls_named_constraints.append(
         base_info.type_impls_named_constraints);
@@ -2618,8 +2568,8 @@ static auto AddRequirementRewrite(Context& context,
       {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
 }
 
-static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
-                                SemIR::InstId period_self_id,
+static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
+                                SemIR::RequirementImpls impls,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
     -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
@@ -2638,8 +2588,7 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
   auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
   const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
 
-  if (IsSameFacetValue(context, context.constant_values().Get(lhs_id),
-                       period_self_id)) {
+  if (IsPeriodSelf(context, lhs_id)) {
     // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
     // type constrains for `.Self` gets forwarded to the output facet type to
     // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
@@ -2654,40 +2603,15 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
     llvm::append_range(info->type_impls_named_constraints,
                        rhs.type_impls_named_constraints);
+    llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   } else {
-    // Consider `I where C(.Self) impls (J(.Self) where .Self impls K(.Self))`,
-    // when we are evaluating the `C(.Self) impls (<facet type>)` requirement.
-    // The <facet type> is our `rhs` here, and it will contain:
-    // * extend constraint: J(.Self)
-    // * self impls constraint: K(.Self)
-    //
-    // The value of `.Self` changes where we cross a `where` operator. This
-    // means extend constraints retain their original `.Self`, but self impls
-    // constraints should have their `.Self` replaced by the LHS of the impls
-    // requirement.
-    //
-    // However that is not quite enough. The view of the LHS of the impls
-    // requirement should be a facet with a facet type of the RHS extend
-    // constraints. In this case the LHS is C(.Self) and the RHS facet type is
-    // `J(.Self) where .Self impls K(.Self)`. The RHS facet type has impls
-    // constraints (which are on the RHS of a `where` operator), in which their
-    // `.Self` should be replaced by `C(.Self)` converted to the RHS facet
-    // type's extend constraints (which are on the LHS of a `where` operator),
-    // which is `C(.Self) as J(.Self)`. It should be enough to convert the LHS
-    // type to the type of the `.Self` that it is replacing, as that contains
-    // the extend constraints.
-    //
-    // So the final RHS facet type to be merged into `info` is:
-    //
-    // `J(.Self) where (C(.Self) as J(.Self)) impls K(C(.Self) as J(.Self))`.
-
     auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
 
-    auto impls_interface = [&](SemIR::SpecificInterface si)
+    auto extends_interface = [=](SemIR::SpecificInterface si)
         -> SemIR::FacetTypeInfo::TypeImplsInterface {
       return {lhs_facet_or_type, si};
     };
-    auto impls_constraint = [&](SemIR::SpecificNamedConstraint sc)
+    auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
         -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
       return {lhs_facet_or_type, sc};
     };
@@ -2696,47 +2620,86 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     // converted to type impls constraints so they apply to the LHS type.
     llvm::append_range(
         info->type_impls_interfaces,
-        llvm::map_range(rhs.extend_constraints, impls_interface));
+        llvm::map_range(rhs.extend_constraints, extends_interface));
     llvm::append_range(
         info->type_impls_named_constraints,
-        llvm::map_range(rhs.extend_named_constraints, impls_constraint));
+        llvm::map_range(rhs.extend_named_constraints, extends_constraint));
 
-    // To replace the `.Self` in `.Self impls X` we convert from a self impls
-    // constraint to a type impls constraint where the type is the impls LHS
-    // type. We must also replace any `.Self` references in the constraint in
-    // the same way. The LHS type needs to be converted to a facet with its type
-    // containing the RHS facet type's extend constraints so that the extend
-    // constraints can be referenced in impls constraints.
+    // Impls constraints are written as `T impls X` where `T` is a facet and `X`
+    // is a facet type. The `T` can be `.Self`.
     //
-    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
-    // with the RHS extend constraints (interfaces and named constraints).
+    // A value for `.Self` is not known here, so we do not replace them
+    // generally. However in `T impls X where ...` the value of `.Self` on the
+    // RHS of the `where` refers to the `T`. Generally this would make the
+    // `.Self` be ambiguous, but any explicit use of an ambiguous `.Self` is
+    // diagnosed before we get here. So any explicit `.Self` left over are known
+    // to be non-ambiguous and refer to the top level value for `.Self`.
     //
-    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
-    // constraints.
+    // However, implicit references to `.Self`, via designators, are bound to
+    // the innermost possible value, which makes them bound to the `T` on the
+    // RHS of the nested `where`. We need to replace those implicit `.Self`
+    // references here so that we are left with a facet type where all `.Self`
+    // references are to the same top-level value for `.Self` and can all be
+    // replaced together later.
+
+    SubstPeriodSelfCallbacks callbacks(
+        &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
+        SubstPeriodSelfCallbacks::Behaviour::ImplicitOnly);
+
+    auto self_impls_interface = [&](SemIR::SpecificInterface si) {
+      return SubstPeriodSelf(context, callbacks, si);
+    };
+    auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
+      return SubstPeriodSelf(context, callbacks, sc);
+    };
+    auto type_impls_interface =
+        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
+        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      auto self = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(impls.self_type));
+      auto interface =
+          SubstPeriodSelf(context, callbacks, impls.specific_interface);
+      return {context.constant_values().GetInstId(self), interface};
+    };
+    auto type_impls_constraint =
+        [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
+        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      auto self = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(impls.self_type));
+      auto constraint =
+          SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
+      return {context.constant_values().GetInstId(self), constraint};
+    };
+
+    llvm::append_range(
+        info->self_impls_constraints,
+        llvm::map_range(rhs.self_impls_constraints, self_impls_interface));
+    llvm::append_range(info->self_impls_named_constraints,
+                       llvm::map_range(rhs.self_impls_named_constraints,
+                                       self_impls_constraint));
     llvm::append_range(
         info->type_impls_interfaces,
-        llvm::map_range(rhs.self_impls_constraints, impls_interface));
-    llvm::append_range(
-        info->type_impls_named_constraints,
-        llvm::map_range(rhs.self_impls_named_constraints, impls_constraint));
-
-    // Type impls constraints are copied in, but need to have their `.Self`
-    // references replaced by the impls LHS type. Like above, the LHS type
-    // should be converted to a facet type containing the RHS facet type's
-    // extend constraints.
-    //
-    // TODO: Convert the LHS used in the TypeImplsNamedConstraint to a facet
-    // with the RHS extend constraints (interfaces and named constraints).
-    //
-    // TODO: Replace `.Self` with the LHS type as a facet with the RHS extend
-    // constraints.
-    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+        llvm::map_range(rhs.type_impls_interfaces, type_impls_interface));
     llvm::append_range(info->type_impls_named_constraints,
-                       rhs.type_impls_named_constraints);
+                       llvm::map_range(rhs.type_impls_named_constraints,
+                                       type_impls_constraint));
+
+    auto rewrite_constraint =
+        [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
+        -> SemIR::FacetTypeInfo::RewriteConstraint {
+      auto lhs_id = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(rewrite.lhs_id));
+      auto rhs_id = SubstPeriodSelf(
+          context, callbacks, context.constant_values().Get(rewrite.rhs_id));
+      return {context.constant_values().GetInstId(lhs_id),
+              context.constant_values().GetInstId(rhs_id)};
+    };
+
+    llvm::append_range(
+        info->rewrite_constraints,
+        llvm::map_range(rhs.rewrite_constraints, rewrite_constraint));
   }
 
-  // Other requirements are copied in.
-  llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   info->other_requirements |= rhs.other_requirements;
 }
 
@@ -2753,10 +2716,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
-
-  if (typed_inst.period_self_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::ConstantId;
-  }
 
   // Note that these requirement instructions don't have a constant value. That
   // means we have to look for errors inside them, we can't just look to see if
@@ -2779,8 +2738,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         break;
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
-        AddRequirementImpls(eval_context.context(), impls,
-                            typed_inst.period_self_id, &info, &phase);
+        AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
+                            impls, &info, &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent _): {

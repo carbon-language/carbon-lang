@@ -130,9 +130,9 @@ class Derived {
   var d: {};
 }
 
-// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:27: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
+// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:24: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
 // CHECK:STDERR: fn Return(a: Abstract) -> Abstract {
-// CHECK:STDERR:                           ^~~~~~~~
+// CHECK:STDERR:                        ^~~~~~~~~~~
 // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-12]]:1: note: class was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,9 +222,9 @@ fn CallReturnAbstract() {
   // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:24: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:21: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnAbstract() -> Abstract;
-  // CHECK:STDERR:                        ^~~~~~~~
+  // CHECK:STDERR:                     ^~~~~~~~~~~
   // CHECK:STDERR:
   ReturnAbstract();
 }

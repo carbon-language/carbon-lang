@@ -40,6 +40,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
@@ -146,6 +147,217 @@ auto ImportCpp(Context& context,
         /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
+  }
+}
+
+// Returns whether the current context has any C++ imports. If not, produces a
+// suitable diagnostic.
+static auto CheckForCppContextForIndirectImport(Context& context,
+                                                SemIR::LocId loc_id) -> bool {
+  // TODO: We should perform cross-file imports by importing the C++ AST. For
+  // now we require the C++ declaration to already be imported into the
+  // destination file, and find the corresponding declaration there and import
+  // that.
+  if (!context.cpp_context()) {
+    context.TODO(
+        loc_id, "indirect import of C++ declaration with no direct Cpp import");
+    return false;
+  }
+  return true;
+}
+
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType type) -> clang::QualType;
+
+// Given a class template specialization in some C++ AST which is *not* expected
+// to be `context`, find the corresponding declaration in `context`, if there is
+// one.
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingTemplateSpecialization(
+    Context& context, SemIR::LocId loc_id,
+    const clang::ClassTemplateSpecializationDecl* source_spec,
+    clang::ClassTemplateDecl* target_template) -> clang::Decl* {
+  const auto& args = source_spec->getTemplateArgs();
+  auto loc = GetCppLocation(context, loc_id);
+  clang::TemplateArgumentListInfo arg_list(loc, loc);
+  for (unsigned i = 0; i < args.size(); ++i) {
+    const auto& arg = args[i];
+    if (arg.getKind() == clang::TemplateArgument::Type) {
+      auto type = FindCorrespondingType(context, loc_id, arg.getAsType());
+      if (type.isNull()) {
+        return nullptr;
+      }
+      arg_list.addArgument(clang::TemplateArgumentLoc(
+          clang::TemplateArgument(type),
+          context.ast_context().getTrivialTypeSourceInfo(type, loc)));
+    } else {
+      return nullptr;
+    }
+  }
+
+  clang::TemplateName template_name(target_template);
+  auto clang_type = context.clang_sema().CheckTemplateIdType(
+      clang::ElaboratedTypeKeyword::None, template_name, loc, arg_list,
+      /*Scope=*/nullptr, /*ForNestedNameSpecifier=*/false);
+  if (!clang_type.isNull()) {
+    return clang_type->getAsCXXRecordDecl();
+  }
+  return nullptr;
+}
+
+// Given a declaration in some C++ AST which is *not* expected to be `context`,
+// find the corresponding declaration in `context`, if there is one.
+// TODO: Make this non-recursive, or remove it once we support importing C++
+// ASTs for cross file imports.
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingDecl(Context& context, SemIR::LocId loc_id,
+                                  const clang::Decl* decl) -> clang::Decl* {
+  if (const auto* named_decl = dyn_cast<clang::NamedDecl>(decl)) {
+    auto* parent = dyn_cast_or_null<clang::DeclContext>(FindCorrespondingDecl(
+        context, loc_id, cast<clang::Decl>(named_decl->getDeclContext())));
+    if (!parent) {
+      return nullptr;
+    }
+    clang::DeclarationName name;
+    if (auto* identifier = named_decl->getDeclName().getAsIdentifierInfo()) {
+      name = &context.ast_context().Idents.get(identifier->getName());
+    } else {
+      // TODO: Handle more name kinds.
+      return nullptr;
+    }
+    auto decls = parent->lookup(name);
+    // TODO: If there are multiple results, try to pick the right one.
+    if (!decls.isSingleResult() ||
+        decls.front()->getKind() != named_decl->getKind()) {
+      if (const auto* source_spec =
+              dyn_cast<clang::ClassTemplateSpecializationDecl>(named_decl)) {
+        if (auto* target_template =
+                dyn_cast<clang::ClassTemplateDecl>(decls.front())) {
+          if (auto* result = FindCorrespondingTemplateSpecialization(
+                  context, loc_id, source_spec, target_template)) {
+            return result;
+          }
+        }
+      }
+      return nullptr;
+    }
+    return decls.front();
+  }
+
+  if (isa<clang::TranslationUnitDecl>(decl)) {
+    return context.ast_context().getTranslationUnitDecl();
+  }
+
+  return nullptr;
+}
+
+auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
+                                   const SemIR::File& file,
+                                   SemIR::ClangDeclId clang_decl_id)
+    -> std::optional<SemIR::ClangDeclKey> {
+  if (!CheckForCppContextForIndirectImport(context, loc_id)) {
+    return std::nullopt;
+  }
+  CARBON_CHECK(clang_decl_id.has_value());
+  auto key = file.clang_decls().Get(clang_decl_id).key;
+  const auto* decl = key.decl;
+  auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
+  if (!corresponding) {
+    // TODO: This needs a proper diagnostic.
+    context.TODO(
+        loc_id,
+        "use of imported C++ declaration with no corresponding local import");
+    return std::nullopt;
+  }
+
+  key.decl = corresponding;
+  return key;
+}
+
+// Given a type in some C++ AST which is *not* expected to be `context`,
+// find the corresponding type in `context`, if there is one.
+// NOLINTNEXTLINE(misc-no-recursion)
+static auto FindCorrespondingType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType type) -> clang::QualType {
+  if (type.isNull()) {
+    return clang::QualType();
+  }
+
+  if (const auto* builtin = type->getAs<clang::BuiltinType>()) {
+    switch (builtin->getKind()) {
+#define BUILTIN_TYPE(Id, SingletonId) \
+  case clang::BuiltinType::Id:        \
+    return context.ast_context().SingletonId;
+#include "clang/AST/BuiltinTypes.def"
+#undef BUILTIN_TYPE
+      default:
+        return clang::QualType();
+    }
+  }
+
+  if (const auto* record = type->getAs<clang::RecordType>()) {
+    const auto* decl = record->getDecl();
+    auto* corresponding_decl = FindCorrespondingDecl(context, loc_id, decl);
+    if (!corresponding_decl) {
+      return clang::QualType();
+    }
+    if (const auto* tag_decl = dyn_cast<clang::TagDecl>(corresponding_decl)) {
+      return context.ast_context().getTypeDeclType(
+          cast<clang::TypeDecl>(tag_decl));
+    }
+    return clang::QualType();
+  }
+
+  return clang::QualType();
+}
+
+auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                           const SemIR::File& file,
+                           SemIR::ClangDeclId clang_decl_id)
+    -> SemIR::ConstantId {
+  auto key =
+      FindCorrespondingClangDeclKey(context, loc_id, file, clang_decl_id);
+  if (!key) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto imported_inst_id = ImportCppDecl(context, loc_id, *key);
+  auto imported_const_id = context.constant_values().Get(imported_inst_id);
+  if (!imported_const_id.is_constant()) {
+    context.TODO(loc_id, "imported C++ declaration is not constant");
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return imported_const_id;
+}
+
+auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
+                               const SemIR::File& file, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  if (!CheckForCppContextForIndirectImport(context, loc_id)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
+  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      const auto& class_info = file.classes().Get(class_type.class_id);
+      CARBON_CHECK(class_info.scope_id.has_value());
+      return ImportCppDeclFromFile(
+          context, loc_id, file,
+          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
+    }
+
+    case CARBON_KIND(SemIR::Namespace namespace_decl): {
+      return ImportCppDeclFromFile(context, loc_id, file,
+                                   file.name_scopes()
+                                       .Get(namespace_decl.name_scope_id)
+                                       .clang_decl_context_id());
+    }
+
+    default: {
+      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+      return SemIR::ErrorInst::ConstantId;
+    }
   }
 }
 
@@ -636,6 +848,8 @@ static auto BuildClassDefinition(Context& context,
 
   class_info.inheritance_kind = GetInheritanceKind(clang_def);
 
+  class_info.is_dynamic = clang_def->isDynamicClass();
+
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
@@ -1053,8 +1267,7 @@ namespace {
 struct ParameterTypeInfo {
   // The type to use for the Carbon parameter.
   TypeExpr type;
-  // Whether to build a `ref` pattern.
-  bool want_ref_pattern;
+  ParamPatternKind kind;
 };
 }  // namespace
 
@@ -1066,29 +1279,33 @@ struct ParameterTypeInfo {
 // as the C++ type.
 static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type) -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None, .want_ref_pattern = false};
+  ParameterTypeInfo info = {.type = TypeExpr::None,
+                            .kind = ParamPatternKind::Value};
 
   // Perform some custom mapping for parameters of reference type:
   //
   //   * `T& x` -> `ref x: T`.
+  //   * `T&& x` -> `var x: T`.
   //   * `const T& x` -> `x: T`.
-  //   * `T&& x` -> `x: T`.
-  //
-  // TODO: For the `&&` mapping, we allow an rvalue reference to bind to a
-  // durable reference expression. This should not be allowed.
+  //   * `const T&& x` -> `x: T`.
   if (param_type->isReferenceType()) {
     clang::QualType pointee_type = param_type->getPointeeType();
-    if (param_type->isLValueReferenceType()) {
-      if (pointee_type.isConstQualified()) {
-        // TODO: Consider only doing this if `const` is the only qualifier. For
-        // now, any other qualifier will fail when mapping the type.
-        auto split_type = pointee_type.getSplitUnqualifiedType();
-        split_type.Quals.removeConst();
-        pointee_type = context.ast_context().getQualifiedType(split_type);
-      } else {
-        // The reference will map to a `ref` pattern.
-        info.want_ref_pattern = true;
-      }
+    if (pointee_type.isConstQualified()) {
+      // TODO: Consider only doing this if `const` is the only qualifier. For
+      // now, any other qualifier will fail when mapping the type.
+      auto split_type = pointee_type.getSplitUnqualifiedType();
+      split_type.Quals.removeConst();
+      pointee_type = context.ast_context().getQualifiedType(split_type);
+    } else if (param_type->isLValueReferenceType()) {
+      // Lvalue references map to a `ref` pattern.
+      info.kind = ParamPatternKind::Ref;
+    } else {
+      // Rvalue references map to a `var` pattern. When given a value expression
+      // as an argument, this will result in a copy. However, if the argument is
+      // of class type, we will map its type to `const T`, which means overload
+      // resolution won't allow the call anyway, so this only permits passing
+      // value expressions of non-class type to a `T&&` parameter.
+      info.kind = ParamPatternKind::Var;
     }
     param_type = pointee_type;
   }
@@ -1103,6 +1320,7 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 // returns None.
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
@@ -1129,10 +1347,11 @@ static auto MakeImplicitParamPatternsBlockId(
     return SemIR::InstBlockId::None;
   }
 
-  // TODO: Fill in a location once available.
-  auto pattern_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
-                                    type_expr_region_id, type_id,
-                                    param_info.want_ref_pattern);
+  // TODO: Use a location associated with the object parameter instead of the
+  // location of the function as a whole.
+  auto pattern_id =
+      AddParamPattern(context, import_ir_inst_id, SemIR::NameId::SelfValue,
+                      type_expr_region_id, type_id, param_info.kind);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1145,6 +1364,7 @@ static auto MakeImplicitParamPatternsBlockId(
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
+                                     SemIR::ImportIRInstId import_ir_inst_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclKey::Signature signature)
     -> SemIR::InstBlockId {
@@ -1201,7 +1421,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: Add template support.
     SemIR::InstId pattern_id =
         AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                        type_id, param_info.want_ref_pattern);
+                        type_id, param_info.kind);
     param_ids.push_back(pattern_id);
     param_type_ids.push_back(type_inst_id);
   }
@@ -1220,7 +1440,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddInst(
           context, SemIR::LocIdAndInst::RuntimeVerified(
-                       context.sem_ir(), loc_id,
+                       context.sem_ir(), import_ir_inst_id,
                        SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
                                            .elements_id = param_block_id}));
       param_ids = {pattern_id};
@@ -1374,19 +1594,20 @@ struct FunctionSignatureInsts {
 // parameter type. `signature` specifies how to convert the C++ function
 // signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
-    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclKey::Signature signature)
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartImplicitParamList();
-  auto implicit_param_patterns_id =
-      MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
+  auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndImplicitParamList();
   context.full_pattern_stack().StartExplicitParamList();
-  auto param_patterns_id =
-      MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature);
+  auto param_patterns_id = MakeParamPatternsBlockId(
+      context, loc_id, import_ir_inst_id, *clang_decl, signature);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
@@ -1455,8 +1676,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     -> std::optional<SemIR::FunctionId> {
   StartFunctionSignature(context);
 
-  auto function_params_insts =
-      CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
+  auto function_params_insts = CreateFunctionSignatureInsts(
+      context, loc_id, import_ir_inst_id, clang_decl, signature);
 
   auto [pattern_block_id, decl_block_id] =
       FinishFunctionSignature(context, /*check_unused=*/false);

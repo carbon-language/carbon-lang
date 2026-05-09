@@ -6,8 +6,10 @@
 
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl.h"
@@ -15,6 +17,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -113,6 +116,17 @@ static auto BuildCopyWitness(
     return SemIR::InstId::None;
   }
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+    auto class_type_id = SemIR::TypeId::ForTypeConstant(query_self_const_id);
+    if (!Check::RequireCompleteType(
+            context, class_type_id, SemIR::LocId::None, [&](auto& builder) {
+              CARBON_DIAGNOSTIC(IncompleteTypeInCopyWitness, Context,
+                                "argument to C++ call has incomplete type {0}",
+                                SemIR::TypeId);
+              builder.Context(loc_id, IncompleteTypeInCopyWitness,
+                              class_type_id);
+            })) {
+      return SemIR::ErrorInst::InstId;
+    }
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature = {.num_params = 1}};
@@ -219,8 +233,76 @@ static auto BuildDestroyWitness(
                             query_specific_interface_id, {fn_id});
 }
 
+// Attempts to build a witness table entry for a C++ unary operator.
+static auto BuildCppUnaryOperatorWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
+    bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto fn_id = LookupCppOperator(
+      context, loc_id, {.interface_name = AsCoreIdentifier(core_interface)},
+      {self_type_id});
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+
+  if (has_associated_result_type) {
+    auto result_type_id =
+        context.functions()
+            .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+            .return_type_inst_id;
+    if (result_type_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              {result_type_id, fn_id});
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
+// Attempts to build a witness table entry for a C++ binary operator.
+static auto BuildCppBinaryOperatorWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
+    bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto args =
+      context.inst_blocks().Get(context.specifics()
+                                    .Get(context.specific_interfaces()
+                                             .Get(query_specific_interface_id)
+                                             .specific_id)
+                                    .args_id);
+  CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
+  auto arg_type_id = context.types().GetTypeIdForTypeInstId(args.front());
+  auto fn_id = LookupCppOperator(
+      context, loc_id, {.interface_name = AsCoreIdentifier(core_interface)},
+      {self_type_id, arg_type_id});
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  if (has_associated_result_type) {
+    auto result_type_id =
+        context.functions()
+            .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+            .return_type_inst_id;
+    if (result_type_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+    return BuildCustomWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              {result_type_id, fn_id});
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   CoreInterface core_interface,
+                   SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
@@ -231,24 +313,52 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_loc_id);
 
   switch (core_interface) {
-    case CoreInterface::Copy:
+    case SemIR::CoreInterface::Inc:
+    case SemIR::CoreInterface::Dec:
+      return BuildCppUnaryOperatorWitness(context, loc_id, core_interface,
+                                          /*has_associated_result_type=*/false,
+                                          query_self_const_id,
+                                          query_specific_interface_id);
+    case SemIR::CoreInterface::Negate:
+      return BuildCppUnaryOperatorWitness(
+          context, loc_id, core_interface, /*has_associated_result_type=*/true,
+          query_self_const_id, query_specific_interface_id);
+    case SemIR::CoreInterface::AddWith:
+    case SemIR::CoreInterface::SubWith:
+    case SemIR::CoreInterface::MulWith:
+    case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::ModWith:
+      return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
+                                           /*has_associated_result_type=*/true,
+                                           query_self_const_id,
+                                           query_specific_interface_id);
+    case SemIR::CoreInterface::AddAssignWith:
+    case SemIR::CoreInterface::SubAssignWith:
+    case SemIR::CoreInterface::MulAssignWith:
+    case SemIR::CoreInterface::DivAssignWith:
+    case SemIR::CoreInterface::ModAssignWith:
+      return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
+                                           /*has_associated_result_type=*/false,
+                                           query_self_const_id,
+                                           query_specific_interface_id);
+    case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id);
-    case CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::CppUnsafeDeref:
       return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
                                         query_specific_interface_id);
-    case CoreInterface::Default:
+    case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
 
     // IntFitsIn is for Carbon integer types only.
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return SemIR::InstId::None;
 
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
 }

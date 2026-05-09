@@ -17,6 +17,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -54,7 +55,7 @@ static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
                                  .self_type_id = self_type_id,
-                                 .self_is_ref = false,
+                                 .self_kind = ParamPatternKind::Value,
                                  .return_type_id = self_type_id});
 
   auto& function = context.functions().Get(function_id);
@@ -341,7 +342,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
       MakeGeneratedFunctionDecl(context, loc_id,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
-                                 .self_type_id = self_type_id});
+                                 .self_type_id = self_type_id,
+                                 .self_kind = ParamPatternKind::Ref});
 
   auto& function = context.functions().Get(function_id);
 
@@ -439,27 +441,58 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // The values that will go in the witness table.
   llvm::SmallVector<SemIR::InstId> entries;
 
+  auto interface_with_self_specific_id = SemIR::SpecificId::None;
+
+  enum class AssociatedEntityState {
+    None,
+    AssociatedConstant,
+    AssociatedFunction
+  };
+  auto associated_entity_state = AssociatedEntityState::None;
+  // Build a witness with the current contents of the witness table. Each
+  // specific interface has at most two witness tables: an optional table
+  // for associated constants and a table for associated functions.
+  //
+  // We need to separate associated constants and associated functions since
+  // associated entities can't depend on other entities in their own witness
+  // table. To ensure that we don't end up with n^2 witness tables, and so
+  // that we don't need to loop over the associated entities more than once,
+  // we require that interfaces with a custom witness specify all of their
+  // associated constants before their associated functions. Interfaces with
+  // custom witness tables are hardcoded in the compiler, so this
+  // restriction doesn't impact whether or not a type is definable.
+  auto update_interface_with_self_specific_id =
+      [&](SemIR::InstId assoc_entity_id) {
+        auto decl_id =
+            context.constant_values().GetConstantInstId(assoc_entity_id);
+        CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+        auto decl = context.insts().Get(decl_id);
+        auto new_associated_entity_state =
+            decl.kind() == SemIR::AssociatedConstantDecl::Kind
+                ? AssociatedEntityState::AssociatedConstant
+                : AssociatedEntityState::AssociatedFunction;
+        CARBON_CHECK(new_associated_entity_state >= associated_entity_state,
+                     "Implementation restriction: associated constants must be "
+                     "defined before associated functions");
+        if (associated_entity_state < new_associated_entity_state) {
+          auto self_facet = MakeSelfFacetWithCustomWitness(
+              context, loc_id, query_types_for_self_facet,
+              query_specific_interface_id, context.inst_blocks().Add(entries));
+          interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+              context, loc_id, interface.generic_id,
+              interface.generic_with_self_id,
+              query_specific_interface.specific_id, self_facet);
+          associated_entity_state = new_associated_entity_state;
+        }
+      };
+
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
-
-    // Build a witness with the current contents of the witness table. This will
-    // grow as we progress through the impl. In theory this will build O(n^2)
-    // table entries, but in practice n <= 2, so that's OK.
-    //
-    // This is necessary because later associated entities may refer to earlier
-    // associated entities in their signatures. In particular, an associated
-    // result type may be used as the return type of an associated function.
-    auto self_facet = MakeSelfFacetWithCustomWitness(
-        context, loc_id, query_types_for_self_facet,
-        query_specific_interface_id, context.inst_blocks().Add(entries));
-    auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-        context, loc_id, interface.generic_id, interface.generic_with_self_id,
-        query_specific_interface.specific_id, self_facet);
+    update_interface_with_self_specific_id(assoc_entity_id);
     CARBON_CHECK(
         !context.specifics().Get(interface_with_self_specific_id).HasError());
-
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_with_self_specific_id,
@@ -512,43 +545,33 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // TODO: Consider building one witness after all associated constants, and
-  // then a second after all associated functions, rather than building one in
-  // each `StructValue`. Right now the code is written assuming at most one
-  // function, though this CHECK can be removed as a temporary workaround.
-  auto associated_functions = llvm::count_if(entries, [&](SemIR::InstId id) {
-    return context.insts().Get(id).kind() == SemIR::InstKind::FunctionDecl;
-  });
-  CARBON_CHECK(associated_functions <= 1,
-               "TODO: Support multiple associated functions");
-
   return MakeCustomWitnessConstantInst(context, loc_id,
                                        query_specific_interface_id,
                                        context.inst_blocks().Add(entries));
 }
 
+auto AsCoreIdentifier(SemIR::CoreInterface core_interface) -> CoreIdentifier {
+  switch (core_interface) {
+#define CARBON_SEM_IR_CORE_INTERFACE_EXCLUDE_UNKNOWN
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  case SemIR::CoreInterface::Name:              \
+    return CoreIdentifier::Name;
+#include "toolchain/sem_ir/core_interface_kind.def"
+    case SemIR::CoreInterface::Unknown:
+      CARBON_FATAL("{0} doesn't have a `CoreIdentifier` mapping",
+                   core_interface);
+  }
+}
+
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
-    -> CoreInterface {
+    -> SemIR::CoreInterface {
   const auto& interface = context.interfaces().Get(interface_id);
   if (!context.name_scopes().IsCorePackage(interface.parent_scope_id) ||
       !interface.name_id.AsIdentifierId().has_value()) {
-    return CoreInterface::Unknown;
+    return SemIR::CoreInterface::Unknown;
   }
 
-  constexpr auto CoreIdentifiersToInterfaces = std::array{
-      std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
-      std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref},
-      std::pair{CoreIdentifier::Default, CoreInterface::Default},
-      std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
-      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}};
-
-  for (auto [core_identifier, core_interface] : CoreIdentifiersToInterfaces) {
-    if (interface.name_id ==
-        context.core_identifiers().AddNameId(core_identifier)) {
-      return core_interface;
-    }
-  }
-  return CoreInterface::Unknown;
+  return interface.core_interface;
 }
 
 auto BuildPrimitiveCopyWitness(
@@ -667,21 +690,34 @@ static auto MakeIntFitsInWitness(
 }
 
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
-                         CoreInterface core_interface,
+                         SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
-    case CoreInterface::Destroy:
+    case SemIR::CoreInterface::Destroy:
       return MakeDestroyWitness(context, loc_id, query_self_const_id,
                                 query_specific_interface_id, build_witness);
-    case CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
-    case CoreInterface::Copy:
-    case CoreInterface::CppUnsafeDeref:
-    case CoreInterface::Default:
-    case CoreInterface::Unknown:
+    case SemIR::CoreInterface::AddAssignWith:
+    case SemIR::CoreInterface::AddWith:
+    case SemIR::CoreInterface::Copy:
+    case SemIR::CoreInterface::CppUnsafeDeref:
+    case SemIR::CoreInterface::Dec:
+    case SemIR::CoreInterface::Default:
+    case SemIR::CoreInterface::DivAssignWith:
+    case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::Inc:
+    case SemIR::CoreInterface::ModAssignWith:
+    case SemIR::CoreInterface::ModWith:
+    case SemIR::CoreInterface::MulAssignWith:
+    case SemIR::CoreInterface::MulWith:
+    case SemIR::CoreInterface::Negate:
+    case SemIR::CoreInterface::SubAssignWith:
+    case SemIR::CoreInterface::SubWith:
+    case SemIR::CoreInterface::Unknown:
       // TODO: Handle more interfaces, particularly copy, move, and conversion.
       return std::nullopt;
   }

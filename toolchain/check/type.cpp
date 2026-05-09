@@ -282,12 +282,6 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     return access->facet_value_inst_id;
   }
 
-  if (auto access =
-          context.insts().TryGetAs<SemIR::SymbolicBindingType>(const_inst_id)) {
-    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
-    return access->facet_value_inst_id;
-  }
-
   return const_inst_id;
 }
 

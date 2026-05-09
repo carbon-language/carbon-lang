@@ -87,7 +87,7 @@ class Worklist {
 
 // Pushes the specified operand onto the worklist.
 static auto PushOperand(Context& context, Worklist& worklist,
-                        SemIR::Inst::ArgAndKind arg) -> void {
+                        SemIR::IdAndKind arg) -> void {
   auto push_block = [&](SemIR::InstBlockId block_id) {
     for (auto inst_id :
          context.inst_blocks().Get(SemIR::InstBlockId(block_id))) {
@@ -182,7 +182,7 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
 
 // Pops the specified operand from the worklist and returns it.
 static auto PopOperand(Context& context, Worklist& worklist,
-                       SemIR::Inst::ArgAndKind arg) -> int32_t {
+                       SemIR::IdAndKind arg) -> int32_t {
   auto pop_block_id = [&](SemIR::InstBlockId old_inst_block_id) {
     auto size = context.inst_blocks().Get(old_inst_block_id).size();
     SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),
@@ -488,27 +488,6 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
       return SubstResult::FullySubstituted;
-    }
-
-    // A symbolic binding `as type` contains the EntityNameId of that symbolic
-    // binding. If it matches a substitution, then we want to point the
-    // EntityNameId to the substitution facet value.
-    if (auto bind =
-            context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
-      auto& entity_name = context().entity_names().Get(bind->entity_name_id);
-
-      for (auto [bind_index, replacement_id] : substitutions_) {
-        if (entity_name.bind_index() == bind_index) {
-          auto replacement_inst_id =
-              context().constant_values().GetInstId(replacement_id);
-          inst_id = RebuildNewInst<SemIR::FacetAccessType>(
-              loc_id_, {
-                           .type_id = SemIR::TypeType::TypeId,
-                           .facet_value_inst_id = replacement_inst_id,
-                       });
-          return SubstResult::FullySubstituted;
-        }
-      }
     }
 
     auto entity_name_id = SemIR::EntityNameId::None;

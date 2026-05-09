@@ -1009,6 +1009,52 @@ fn G1() {
   }
 }
 
+// --- rewrite_rhs_satisfies_lhs_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+interface J(T:! type) {
+  let J1:! I(T);
+}
+
+class C;
+constraint L {
+  // J(.Self).J1 requires that its RHS impls I(.Self), which is provided for
+  // here.
+  //
+  // We look for this witness in `L` because the assignment is to `J(.Self).J1`
+  // so we look in the facet type of `.Self` which is `L & J(.Self)`.
+  require C impls I(Self);
+}
+
+fn F(unused T:! L & J(.Self) where .J1 = C) {}
+
+fn G(T:! L & J(.Self) where .J1 = C) {
+  F(T);
+}
+
+// --- todo_fail_rewrite_rhs_does_not_satisfy_lhs_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+interface J(T:! type) {
+  let J1:! I(T);
+}
+
+class C;
+constraint L {
+  // Without this, C does not impl I(T), which is required by J(T).J1.
+  // require C impls I(Self);
+}
+
+// TODO: This should be an error that C does not impl I(.Self). We don't yet try
+// convert the RHS of a rewrite to the type of the LHS when the LHS is symbolic.
+fn F(unused T:! L & J(.Self) where .J1 = C) {}
+
+fn G(T:! L & J(.Self) where .J1 = C) {
+  F(T);
+}
+
 // --- rewrite_requires_subst_in_nested_access_of_self.carbon
 library "[[@TEST_NAME]]";
 
@@ -1085,7 +1131,7 @@ fn G3(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
   F(T);
 }
 
-// --- fail_todo_rewrite_requires_subst_in_nested_access_of_other.carbon
+// --- rewrite_requires_subst_in_nested_access_of_other.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1107,13 +1153,6 @@ interface K {
 fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
 
 fn G(U:! I where .I1 = (), T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
-  // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_access_of_other.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(J.J2) = () and .(K.K1) = .Self as J and .(J.J1) = U as I` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(U, T);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_access_of_other.carbon:[[@LINE-6]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   F(U, T);
 }
 
@@ -1308,4 +1347,69 @@ fn F(T:! I where .X = (I where .Y = {}), unused U:! T.X) {}
 
 fn G(T:! I where .X = (I where .Y = {}), U:! I where .Y = {}) {
   F(T, U);
+}
+
+// --- period_self_in_rewrite_values.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+  let I3:! type;
+  let I4:! type;
+}
+
+class E(T:! type) {}
+
+// * The LHS of `.I1` contains a `.Self` which is replaced by `C` to form
+//   `C.(I.I1)` and resolves to `()`.
+// * The RHS of `.I1` is `()` which then compares equal.
+fn F1(_:! I where .I1 = ()) {}
+
+// * The LHS of `.I2` contains a `.Self` which is replaced by `C` to form
+//   `C.(I.I1)` and resolves to `C`.
+// * The RHS of `.I2` is `.Self` which is replaced by `C` and then compares
+//   equal.
+fn F2(_:! I where .I2 = .Self) {}
+
+// * The LHS of `.I3` contains a `.Self` which is replaced by `C` to form
+//   `C.(I.I1)` and resolves to `E(C)`.
+// * The RHS of `.I3` contains a `.Self` which is replaced by `C` to form
+//   `E(C)`, and then compares equal.
+fn F3(_:! I where .I3 = E(.Self)) {}
+
+// * The LHS of `.I4` contains a `.Self` which is replaced by `C` to form
+//   `C.(I.I4)` and resolves to `.Self`. That `.Self` then is replaced by `C` so
+//   the LHS untimately resolves to `C`.
+// * The RHS of `.I4` is `.Self` which is replaced by `C` and then compares
+//   equal.
+fn F4(_:! I where .I4 = .Self) {}
+
+fn G() {
+  class C;
+  impl C as I where .I1 = () and .I2 = C and .I3 = E(C) and .I4 = .Self {}
+
+  F1(C);
+  F2(C);
+  F3(C);
+  F4(C);
+}
+
+// --- convert_to_period_self_preserves_self_facet_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface J {}
+interface I {
+  let I1:! type;
+}
+
+fn F(unused U:! I & J where .I1 = {}) {}
+
+impl forall [T:! type] T as J {}
+
+fn G(T:! I where .I1 = {}) {
+  // Replaces `.Self` with `T`, which converts `T` to `I & J`. Doing so has to
+  // invent a witness for `J`, and this tests we do so without losing the
+  // information that `.I1 = {}`.
+  F(T);
 }

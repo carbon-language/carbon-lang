@@ -189,6 +189,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
+CARBON_DIAGNOSTIC_KIND(AmbiguousPeriodSelf)
 
 // ============================================================================
 // Semantics diagnostics
@@ -351,6 +352,7 @@ CARBON_DIAGNOSTIC_KIND(ImplAsIncompleteFacetTypeDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
+CARBON_DIAGNOSTIC_KIND(ImplDeclInInvalidScope)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
 CARBON_DIAGNOSTIC_KIND(ImplIsOrphan)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
@@ -454,6 +456,7 @@ CARBON_DIAGNOSTIC_KIND(IncompleteTypeInAdaptDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBindingDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
+CARBON_DIAGNOSTIC_KIND(IncompleteTypeInCopyWitness)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFieldDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionReturnType)

@@ -212,12 +212,11 @@ struct Function : public EntityWithParamsBase,
                : BuiltinFunctionKind::None;
   }
 
-  // Returns the declaration that this is a non C++ thunk for, or None if this
-  // function is not a thunk.
-  auto thunk_decl_id() const -> InstId {
+  // Returns the ThunkId for this thunk function, or None if it's not a thunk.
+  auto thunk_id() const -> ThunkId {
     return special_function_kind == SpecialFunctionKind::Thunk
-               ? InstId(special_function_kind_data.index)
-               : InstId::None;
+               ? ThunkId(special_function_kind_data.index)
+               : ThunkId::None;
   }
 
   // Returns the declaration of the thunk that should be called to call this
@@ -252,6 +251,18 @@ struct Function : public EntityWithParamsBase,
                              SpecificId specific_id = SpecificId::None) const
       -> InstId;
 
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const Function& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    call_param_patterns_id = definition.call_param_patterns_id;
+    call_params_id = definition.call_params_id;
+    return_type_inst_id = definition.return_type_inst_id;
+    return_form_inst_id = definition.return_form_inst_id;
+    return_pattern_id = definition.return_pattern_id;
+    self_param_id = definition.self_param_id;
+  }
+
   // Sets that this function is a builtin function.
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
@@ -270,10 +281,10 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Sets that this function is a thunk.
-  auto SetThunk(InstId decl_id) -> void {
+  auto SetThunk(ThunkId thunk_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Thunk;
-    special_function_kind_data = AnyRawId(decl_id.index);
+    special_function_kind_data = AnyRawId(thunk_id.index);
   }
 
   // Sets that this function is a C++ thunk.

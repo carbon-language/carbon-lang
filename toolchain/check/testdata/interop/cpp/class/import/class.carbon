@@ -224,6 +224,34 @@ import Cpp library "template.h";
 fn MyF(bar: Cpp.Bar(Cpp.X)*);
 //@dump-sem-ir-end
 
+// --- fail_copy_witness_of_incomplete_class.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class Class1;
+''';
+
+class Generic(x:! Core.Copy) {
+}
+
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+14]]:19: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]
+// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:7: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class Class1;
+// CHECK:STDERR:       ^
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:15: note: initializing generic parameter `x` declared here [InitializingGenericParam]
+// CHECK:STDERR: class Generic(x:! Core.Copy) {
+// CHECK:STDERR:               ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+4]]:15: warning: binding `p2` unused [UnusedBinding]
+// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
+// CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn GenericUse(p2: Generic(Cpp.Class1)) {
+}
+
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -452,15 +480,14 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: --- call_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %pattern_type.07b: type = pattern_type %Bar [concrete]
 // CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
 // CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -473,11 +500,9 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.07b = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.07b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %Bar = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %Bar = ref_binding self, %self.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -510,8 +535,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Bar [concrete]
 // CHECK:STDOUT:   %struct_type.base.36d: type = struct_type {.base: %Bar} [concrete]
 // CHECK:STDOUT:   %complete_type.fff: <witness> = complete_type_witness %struct_type.base.36d [concrete]

@@ -19,6 +19,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -81,31 +82,94 @@ auto CheckAssociatedFunctionImplementation(
                     defer_thunk_definition);
 }
 
-// Returns true if impl redeclaration parameters match.
-static auto CheckImplRedeclParamsMatch(Context& context,
-                                       const SemIR::Impl& new_impl,
-                                       SemIR::ImplId prev_impl_id) -> bool {
-  auto& prev_impl = context.impls().Get(prev_impl_id);
+static auto GetScopeInstId(Context& context, SemIR::InstId scope_inst_id)
+    -> SemIR::InstId {
+  if (!scope_inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+  auto inst_id = context.constant_values().GetConstantInstId(scope_inst_id);
+  if (auto struct_val = context.insts().TryGetAs<SemIR::StructValue>(inst_id)) {
+    inst_id = context.types().GetTypeInstId(struct_val->type_id);
+  }
+  return inst_id;
+}
 
+enum class ImplRedeclType {
+  ValidRedecl,
+  Mismatch,
+  DiagnosedInvalidRedecl,
+};
+
+// Returns whether the scope of the `new_impl` is the same as the scope of the
+// `prev_impl`. If the `new_impl` is in an invalid scope for a redecl, that is
+// diagnosed.
+static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
+                        const SemIR::Impl& prev_impl) -> ImplRedeclType {
+  auto new_id = GetScopeInstId(context, new_impl.parent_scope_inst_id);
+  auto prev_id = GetScopeInstId(context, prev_impl.parent_scope_inst_id);
+  if (new_id.has_value()) {
+    auto new_scope_inst = context.insts().Get(new_id);
+    CARBON_KIND_SWITCH(new_scope_inst) {
+      case CARBON_KIND(SemIR::ClassType new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::ClassType>(prev_id)) {
+          if (new_scope.class_id == prev_scope->class_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      case CARBON_KIND(SemIR::GenericClassType new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::GenericClassType>(prev_id)) {
+          if (new_scope.class_id == prev_scope->class_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      case CARBON_KIND(SemIR::Namespace new_scope): {
+        if (auto prev_scope =
+                context.insts().TryGetAs<SemIR::Namespace>(prev_id)) {
+          if (new_scope.name_scope_id == prev_scope->name_scope_id) {
+            return ImplRedeclType::ValidRedecl;
+          }
+        }
+        return ImplRedeclType::Mismatch;
+      }
+      default:
+        break;
+    }
+  }
+
+  // The redecl is is an invalid scope.
+  CARBON_DIAGNOSTIC(ImplDeclInInvalidScope, Error,
+                    "impl redeclation not in a declarative scope; "
+                    "redeclaration is allowed only in a class or namespace");
+  context.emitter().Emit(new_impl.latest_decl_id(), ImplDeclInInvalidScope);
+  return ImplRedeclType::DiagnosedInvalidRedecl;
+}
+
+// Returns true if impl redeclaration parameters and scopes match.
+//
+// TODO: Generalize things to validate re-declarations of other entity types,
+// which also have some similar rules such as sharing scopes.
+static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
+                             const SemIR::Impl& prev_impl) -> ImplRedeclType {
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::None,
                               /*diagnose=*/false, /*check_syntax=*/true,
                               /*check_self=*/true)) {
-    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
-    return false;
+    return ImplRedeclType::Mismatch;
   }
-  return true;
-}
 
-// Returns whether an impl can be redeclared. For example, defined impls
-// cannot be redeclared.
-static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
-                              SemIR::ImplId prev_impl_id) -> bool {
-  auto& prev_impl = context.impls().Get(prev_impl_id);
-
-  // TODO: Following #3763, disallow redeclarations in different scopes.
+  // If the scopes are different, it is not treated as a redeclaration.
+  if (auto scope_result = ScopesMatch(context, new_impl, prev_impl);
+      scope_result != ImplRedeclType::ValidRedecl) {
+    return scope_result;
+  }
 
   // Following #4672, disallowing defining non-extern declarations in another
   // file.
@@ -116,7 +180,7 @@ static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
                       "redeclaration of imported impl");
     // TODO: Note imported declaration
     context.emitter().Emit(new_impl.latest_decl_id(), RedeclImportedImpl);
-    return false;
+    return ImplRedeclType::DiagnosedInvalidRedecl;
   }
 
   if (prev_impl.has_definition_started()) {
@@ -132,12 +196,10 @@ static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
                new_impl.constraint_id)
         .Note(prev_impl.definition_id, ImplPreviousDefinition)
         .Emit();
-    return false;
+    return ImplRedeclType::DiagnosedInvalidRedecl;
   }
 
-  // TODO: Only allow redeclaration in a match_first/impl_priority block.
-
-  return true;
+  return ImplRedeclType::ValidRedecl;
 }
 
 // Looks for any unused generic bindings. If one is found, it is diagnosed and
@@ -257,16 +319,21 @@ auto FindImplId(Context& context, const SemIR::Impl& query_impl)
   // TODO: Detect two impl declarations with the same self type and interface,
   // and issue an error if they don't match.
   for (auto prev_impl_id : lookup_bucket_ref) {
-    if (CheckImplRedeclParamsMatch(context, query_impl, prev_impl_id)) {
-      if (IsValidImplRedecl(context, query_impl, prev_impl_id)) {
+    auto& prev_impl = context.impls().Get(prev_impl_id);
+
+    auto redecl_type = VerifyImplRedecl(context, query_impl, prev_impl);
+    switch (redecl_type) {
+      case ImplRedeclType::ValidRedecl:
+        // Found a valid redecl.
         return RedeclaredImpl{.prev_impl_id = prev_impl_id};
-      } else {
-        // IsValidImplRedecl() has issued a diagnostic, take care to avoid
-        // generating more diagnostics for this declaration.
+      case ImplRedeclType::Mismatch:
+        // Did not match as a redecl, try again.
+        break;
+      case ImplRedeclType::DiagnosedInvalidRedecl:
+        // Found an invalid redecl, which has been diagnosed as such. Treat it
+        // as a new decl, with an error.
         return NewImpl{.lookup_bucket = lookup_bucket_ref,
                        .find_had_error = true};
-      }
-      break;
     }
   }
 
@@ -325,11 +392,24 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 
 // Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.
 static auto WitnessQueryMatchesInterface(
-    Context& context, SemIR::InstId witness_id,
-    const SemIR::SpecificInterface& interface) -> bool {
-  auto lookup = context.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
-  return interface ==
-         context.specific_interfaces().Get(lookup.query_specific_interface_id);
+    Context& context, SemIR::LocId loc_id, SemIR::InstId impl_self,
+    SemIR::InstId access_witness_id,
+    const SemIR::SpecificInterface& impl_interface) -> bool {
+  auto lookup =
+      context.insts().GetAs<SemIR::LookupImplWitness>(access_witness_id);
+  auto access_interface =
+      context.specific_interfaces().Get(lookup.query_specific_interface_id);
+
+  // The `impl_interface` comes from an IdentifiedFacetType so it has `.Self`
+  // replaced. The access comes from a rewrite constraint, which do not have
+  // `.Self` replaced, so we need to do that here.
+  //
+  // TODO: Do this more eagerly as soon as we know the full decl before we
+  // construct the witness table from it?
+  SubstPeriodSelfCallbacks callbacks(&context, loc_id,
+                                     context.constant_values().Get(impl_self));
+  access_interface = SubstPeriodSelf(context, callbacks, access_interface);
+  return access_interface == impl_interface;
 }
 
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
@@ -351,8 +431,8 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
         auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return WitnessQueryMatchesInterface(context, access.witness_id,
-                                            impl.interface);
+        return WitnessQueryMatchesInterface(context, loc_id, impl.self_id,
+                                            access.witness_id, impl.interface);
       });
 
   if (rewrites_into_interface_to_witness.empty()) {

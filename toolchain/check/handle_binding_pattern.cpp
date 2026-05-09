@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
@@ -13,6 +14,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -43,8 +45,6 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
                     : SemIR::InstKind::ValueBindingPattern;
     case Parse::NodeKind::VarBindingPattern:
       return SemIR::InstKind::RefBindingPattern;
-    case Parse::NodeKind::FormBindingPattern:
-      return SemIR::InstKind::FormBindingPattern;
     default:
       CARBON_FATAL("Unexpected node kind: {0}", node_kind);
   }
@@ -301,15 +301,25 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
-            param_pattern_id =
-                AddInst<SemIR::FormParamPattern>(context, node_id,
-                                                 {.type_id = pattern_type_id,
-                                                  .pretty_name_id = name_id,
-                                                  .form_id = form_id});
+            auto pattern_type_inst_id =
+                context.types().GetTypeInstId(pattern_type_id);
+            param_pattern_id = HandleAction<SemIR::FormParamPatternAction>(
+                context,
+                context.parse_tree()
+                    .As<Parse::NodeIdForKind<
+                        Parse::NodeKind::FormBindingPattern>>(node_id),
+                pattern_type_inst_id,
+                {.type_id = SemIR::InstType::TypeId,
+                 .form_id = form_id,
+                 .pretty_name_id = name_id});
           } else {
             param_pattern_id = AddInst<SemIR::ValueParamPattern>(
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
+          }
+          if (param_pattern_id == SemIR::ErrorInst::InstId) {
+            result_inst_id = SemIR::ErrorInst::InstId;
+            break;
           }
           result_inst_id = make_binding_pattern(
               SemIR::WrapperBindingPattern::Kind, param_pattern_id);
@@ -330,6 +340,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     case FullPatternStack::Kind::NameBindingDecl: {
+      if (node_kind == Parse::NodeKind::FormBindingPattern) {
+        return context.TODO(node_id, "support local form bindings");
+      }
       auto incomplete_diagnostic_context = [&](auto& builder) {
         CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Context,
                           "binding pattern has incomplete type {0} in name "
@@ -398,13 +411,12 @@ auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
-    -> bool {
+                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-  MakePeriodSelfFacetValue(context, GetEmptyFacetType(context));
+  MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
   return true;
 }
 

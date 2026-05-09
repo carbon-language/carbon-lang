@@ -16,6 +16,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/interface.h"
@@ -87,6 +88,18 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     // Create a new interface if this isn't a valid redeclaration.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
+
+    if (context.sem_ir().package_id() == PackageNameId::Core) {
+      auto name = context.names().GetIRBaseName(interface_info.name_id);
+      // This is awful for readability, but it's the only viable way to ensure
+      // adding new core interfaces are automatically picked up.
+      interface_info.core_interface =
+          llvm::StringSwitch<SemIR::CoreInterface>(name)
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  .Case(#Name, SemIR::CoreInterface::Name)
+#include "toolchain/sem_ir/core_interface_kind.def"
+              .Default(SemIR::CoreInterface::Unknown);
+    }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id =

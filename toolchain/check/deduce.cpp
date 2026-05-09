@@ -110,7 +110,7 @@ class DeductionWorklist {
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
-  auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg) -> void {
+  auto AddInstArg(SemIR::IdAndKind param, int32_t arg) -> void {
     CARBON_KIND_SWITCH(param) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:

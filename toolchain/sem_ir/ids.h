@@ -307,19 +307,21 @@ struct FunctionId : public IdBase<FunctionId> {
   using IdBase::IdBase;
 };
 
+// The ID of a thunk info record.
+struct ThunkId : public IdBase<ThunkId> {
+  static constexpr llvm::StringLiteral Label = "thunk";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
-  // Used when referring to the imported C++.
-  static const CheckIRId Cpp;
-
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void;
 };
-
-inline constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
@@ -993,6 +995,29 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of a bundle of arguments with type `BundleT`.
+template <typename BundleT>
+struct BundleId : public IdBase<BundleId<BundleT>> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  using IdBase<BundleId<BundleT>>::IdBase;
+};
+
+// The ID of a bundle of arguments with an unspecified type.
+struct RawBundleId : public IdBase<RawBundleId> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  template <typename BundleT>
+  explicit(false) RawBundleId(BundleId<BundleT> bundle_id)
+      : IdBase(bundle_id.index) {}
+  using IdBase::IdBase;
+
+  template <typename BundleT>
+  explicit operator BundleId<BundleT>() const {
+    return BundleId<BundleT>(index);
+  }
+};
+
 // A SemIR location used as the location of instructions. This contains either a
 // InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
 // indicate the source of an instruction, and also be used to associate a line
@@ -1125,12 +1150,18 @@ struct LocId : public IdBase<LocId> {
 // - In the case the specific instruction has no field in the same position, the
 //   `Any[...]` type will hold a default constructed `AnyRawId` with a `None`
 //   value.
-struct AnyRawId : public AnyIdBase {
+struct AnyRawId : public AnyIdBase, Printable<AnyRawId> {
   // For IdKind.
   static constexpr llvm::StringLiteral Label = "any_raw";
 
   constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::NoneIndex) {}
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  friend auto operator==(AnyRawId lhs, AnyRawId rhs) -> bool {
+    return lhs.index == rhs.index;
+  }
 };
 
 }  // namespace Carbon::SemIR
