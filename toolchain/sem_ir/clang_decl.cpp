@@ -22,30 +22,9 @@ auto Signature::Print(llvm::raw_ostream& out) const -> void {
       break;
   }
   out << ", num_params: " << num_params;
-  if (!passing_modes.empty() && llvm::any_of(passing_modes, [](auto mode) {
-        return mode != PassingMode::ByVar;
-      })) {
-    out << ", modes: [";
-    llvm::ListSeparator sep;
-    for (auto mode : passing_modes) {
-      out << sep;
-      switch (mode) {
-        case PassingMode::ByValue:
-          out << "value";
-          break;
-        case PassingMode::ByVar:
-          out << "var";
-          break;
-        case PassingMode::ByRef:
-          out << "ref";
-          break;
-      }
-    }
-    out << "]";
-  }
-  if (self_passing_mode != PassingMode::ByRef) {
-    out << ", self_mode: ";
-    switch (self_passing_mode) {
+
+  auto print_mode = [&](PassingMode mode) {
+    switch (mode) {
       case PassingMode::ByValue:
         out << "value";
         break;
@@ -56,6 +35,22 @@ auto Signature::Print(llvm::raw_ostream& out) const -> void {
         out << "ref";
         break;
     }
+  };
+
+  if (!passing_modes.empty() && llvm::any_of(passing_modes, [](auto mode) {
+        return mode != PassingMode::ByVar;
+      })) {
+    out << ", modes: [";
+    llvm::ListSeparator sep;
+    for (auto mode : passing_modes) {
+      out << sep;
+      print_mode(mode);
+    }
+    out << "]";
+  }
+  if (self_passing_mode != PassingMode::ByRef) {
+    out << ", self_mode: ";
+    print_mode(self_passing_mode);
   }
   out << "}";
 }

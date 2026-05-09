@@ -327,8 +327,6 @@ static auto GetConversionSignatureToImport(
   // constructor:
   //
   //   fn Class.Class(a: A) -> Class;
-  //
-  // TODO: Determine the best passing mode.
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
     return context.signatures().Add(SemIR::Signature::Make({passing_mode}));
   }

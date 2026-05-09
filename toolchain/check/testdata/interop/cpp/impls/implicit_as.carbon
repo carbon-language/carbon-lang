@@ -594,18 +594,17 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonConstConversion.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%NonConstConversion.cpp_operator.decl
 // CHECK:STDOUT:   %.loc14_21.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %.loc14_21.2: %NonConstConversion.480 = acquire_value %s.ref
 // CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc14_21.1
-// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.2(%.loc14_21.2, %addr)
-// CHECK:STDOUT:   %.loc14_21.3: init %Dest to %.loc14_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc14_21.4: init %Dest = converted %s.ref, %.loc14_21.3
-// CHECK:STDOUT:   %.loc14_21.5: ref %Dest = temporary %.loc14_21.1, %.loc14_21.4
-// CHECK:STDOUT:   %.loc14_21.6: %Dest = acquire_value %.loc14_21.5
-// CHECK:STDOUT:   %_: %Dest = value_binding _, %.loc14_21.6
-// CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc14_21.5, constants.%Dest.Op
+// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.2(%s.ref, %addr)
+// CHECK:STDOUT:   %.loc14_21.2: init %Dest to %.loc14_21.1 = mark_in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14_21.3: init %Dest = converted %s.ref, %.loc14_21.2
+// CHECK:STDOUT:   %.loc14_21.4: ref %Dest = temporary %.loc14_21.1, %.loc14_21.3
+// CHECK:STDOUT:   %.loc14_21.5: %Dest = acquire_value %.loc14_21.4
+// CHECK:STDOUT:   %_: %Dest = value_binding _, %.loc14_21.5
+// CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc14_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]
-// CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc14_21.5, %Op.ref
-// CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc14_21.5)
+// CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc14_21.4, %Op.ref
+// CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc14_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

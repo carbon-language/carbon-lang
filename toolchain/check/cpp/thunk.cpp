@@ -764,10 +764,6 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
            .lvalue_id = arg_id});
       arg_id =
           ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
-    } else if (context.insts().Is<SemIR::RefParam>(callee_param_inst_id) &&
-               context.insts().Is<SemIR::ValueParam>(thunk_param_inst_id)) {
-      arg_id =
-          ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
     }
     thunk_arg_ids.push_back(arg_id);
   }

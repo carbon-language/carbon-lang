@@ -783,9 +783,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc11_19.1: init %i32 = converted %int_1.loc11, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.2: ref %i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_19.3: ref %i32 = temporary %.loc11_19.2, %.loc11_19.1 [concrete = constants.%.a7f]
-// CHECK:STDOUT:   %.loc11_7.3: %X = acquire_value %.loc11_7.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc11_19.4: %i32 = acquire_value %.loc11_19.3 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc11_7.3, %.loc11_19.4)
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc11_7.2, %.loc11_19.3)
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
