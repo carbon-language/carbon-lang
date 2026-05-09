@@ -45,7 +45,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
     -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
-    -   [Associated non-instance member functions](#associated-non-instance-member-functions)
+    -   [Associated functions](#associated-functions)
 -   [Associated facets](#associated-facets)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Parameterized named constraints](#parameterized-named-constraints)
@@ -2236,12 +2236,16 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Aside:** The use of `:!` here means these `let` declarations will only have
 compile-time and not runtime storage associated with them.
 
-### Associated non-instance member functions
+### Associated functions
 
-To be consistent with normal
-[non-instance member function](/docs/design/classes.md#non-instance-member-functions)
-declaration syntax, associated non-instance member functions are written using a
-`fn` declaration:
+Associated constants can also be _functions_. These are called _associated
+functions_, and include functions that are
+[methods](/docs/design/classes.md#methods).
+
+To be consistent with
+[class member function](/docs/design/classes.md#member-functions) declaration
+syntax, associated functions are written using a `fn` declaration within the
+`interface` definition:
 
 ```carbon
 interface DeserializeFromString {
@@ -2268,11 +2272,6 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 
 This is instead of declaring an associated constant using `let` with a function
 type.
-
-Together associated methods and associated non-instance member functions are
-called _associated functions_, much like together methods and non-instance
-member functions are called
-[member functions](/docs/design/classes.md#member-functions).
 
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in

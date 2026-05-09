@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
-        -   [Non-instance member functions](#non-instance-member-functions)
+        -   [Non-methods](#non-methods)
         -   [Methods](#methods)
         -   [Deferred member function definitions](#deferred-member-function-definitions)
         -   [Name lookup in classes](#name-lookup-in-classes)
@@ -73,7 +73,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Discussion](#discussion)
     -   [Inheritance](#inheritance-1)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
-        -   [Overloaded methods](#overloaded-methods)
+        -   [Overloaded member functions](#overloaded-member-functions)
         -   [Interop with C++ inheritance](#interop-with-c-inheritance)
             -   [Virtual base classes](#virtual-base-classes)
     -   [Mixins](#mixins-1)
@@ -716,6 +716,11 @@ Non-instance member variables, or _static member variables_, are declared with
 `static var`. They are associated with the type itself rather than instances of
 the type, and have static storage duration.
 
+**Future work:** We should have a specific design for _storage duration_ in
+Carbon, and that should clarify what _static storage duration_ means. The intent
+is that it matches the general definition of
+[static variables](https://en.wikipedia.org/wiki/Static_variable).
+
 ```carbon
 class TextLabel {
   var x: i32;
@@ -728,25 +733,46 @@ class TextLabel {
 }
 ```
 
+Static member variable declarations are always definitions, similar to the
+current rules for global variables.
+
+**Future work:** We should add support for forward declaring static member
+variables and defining them later, including in an `impl` file. But ideally we
+should do that together with analogous support for global variables and using a
+cohesive set of rules.
+
 #### Initializers
 
 In both field and static member variable declarations, an initializer (such as
-`= "default"` above) specifies the default or initial value. For example fields,
-it will be ignored if another value is supplied for that field when constructing
-an instance of the class, and the default must be constants whose value can be
-determined at compile time. For static member variables, the initializer has the
-same behavior as an initializer of a global variable.
-`= "default"` above) specifies the default or initial value. For a field,
-it will be ignored if another value is supplied for that field when constructing
-an instance of the class, and the default must be a constant whose value can be
-determined at compile time. For a static member variable, the initializer has the
-same behavior as an initializer of a global variable.
+`= "default"` above) specifies the default or initial value. For a field, it
+will be ignored if another value is supplied for that field when constructing an
+instance of the class, and the default must be a constant whose value can be
+determined at compile time. For a static member variable, the initializer has
+the same behavior as an initializer of a global variable.
+
+In all cases, the initializer expression is deferred and processed as-if it
+appeared immediately after the end of the outermost enclosing class, similar to
+[member function definitions](#deferred-member-function-definitions).
+
+**Open question:** For a generic class, we will need to decide the rules for
+whether a static member variable's initializer is evaluated and storage created
+for it. That could occur for any specific of the class we monomorphize? Or only
+specifics of the static member variable that are referenced? Answering this is
+left as future work.
+
 #### Syntax
 
-The pattern in a variable declaration must be a run-time binding pattern, so the
+The pattern in a field declaration must be a run-time binding pattern, so the
 full syntax is:
 
-_variable-declaration_ ::= [ `static` ] `var` _identifier_ `:` _expression_ [
+_field-declaration_ ::= [ `static` ] `var` _identifier_ `:` _expression_ [
+`=` _expression_ ] `;`
+
+Static member variable declarations provide the more general
+[_variable pattern_ syntax](values.md#binding-patterns-and-local-variables-with-let-and-var)
+based on the [`var` pattern modifier](pattern_matching.md#var):
+
+_static-member-variable-declaration_ ::= `static` `var` _pattern_ [
 `=` _expression_ ] `;`
 
 ### Forward declaration
@@ -877,51 +903,54 @@ tl = {.x = 5, .y = 6};
 ### Member functions
 
 We consider all functions declared within a class, interface, or `impl` to be
-_member functions_. Member functions can either be instance _methods_ or
-_non-instance member functions_.
+_member functions_. They are declared using `fn` and in the same way as normal
+functions, but within a class body. Member functions can also be instance
+_methods_ when their first explicit parameter is `self` as
+[described below](#methods).
 
-#### Non-instance member functions
+Member functions are members of the type, and may be accessed using dot `.`
+member access on the type. The behavior of member access on an instance depends
+on whether the function is a method as described below.
 
-Non-instance member functions don't use any special syntax. They don't take a
-`self` parameter and so are regular functions, and work similarly to
+Member functions may be defined lexically inline, or may be forward declared
+within the class and defined after the class definition. The body of a lexically
+inline member function is
+[processed in a deferred manner](#deferred-member-function-definitions).
+
+#### Non-methods
+
+Member functions that aren't methods don't use any special syntax. They don't
+take a `self` parameter and so are regular functions, and work similarly to
 [C++ static member functions](https://en.cppreference.com/w/cpp/language/static#Static_member_functions).
 A common use is for constructor functions (sometimes called factory functions).
 
 ```carbon
 class Point {
   // No `self` parameter, so it's a regular, non-instance function.
-  fn Origin() -> Self {
-    return {.x = 0, .y = 0};
-  }
-  fn CreateCentered() -> Self;
-
-  var x: i32;
-  var y: i32;
-}
-
-fn Point.CreateCentered() -> Self {
-  return {.x = ScreenWidth() / 2, .y = ScreenHeight() / 2};
+ fn Origin() -> Self {
+   return {.x = 0, .y = 0};
+ }
 }
 ```
 
-Non-instance member functions are members of the type, and may be accessed using
-dot `.` member access on either the type or any instance.
+Member access naming these functions on an instance of a type behaves the same
+as member access on the type itself.
 
 ```carbon
-var p1: Point = Point.Origin();
-var p2: Point = p1.CreateCentered();
+var a: Point = Point.CreateCentered();
+// OK, `a` is evaluated and its value is discarded.
+var b: Point = a.CreateCentered();
 ```
 
 #### Methods
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declarations are distinguished from
-[non-instance member functions](#non-instance-member-functions) declarations by
-having a `self` parameter as the first parameter in the parameter list in parens
-`(`...`)`. The type in the binding syntax for the `self` parameter, typically
-`: Self`, is optional and the type defaults to `Self`. There is no implicit
-member access in methods, so inside the method body members are accessed through
-the `self` parameter.
+declarations are member functions distinguished by having a `self` parameter as
+the first parameter in the explicit parameter list using parens `(`...`)`. The
+type in the binding syntax for the `self` parameter, typically `: Self`, is
+optional and if omitted defaults to `Self`. There is no implicit member access
+in methods, so inside the method body members are accessed through the `self`
+parameter.
 
 ```carbon
 class Circle {
@@ -1231,20 +1260,16 @@ A base class may define
 methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
-Only methods declared in the scope of the class definition may be virtual, not
-any declared in
 [out-of-line interface `impl` declarations](/docs/design/generics/details.md#out-of-line-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is inline](/docs/design/generics/details.md#inline-impl), and calls to
 those methods by way of the interface will do virtual dispatch just like a
 direct call to the method does.
 
-[Non-instance member functions](#non-instance-member-functions) may not be
-declared virtual. Neither may functions with
-[compile-time parameters](/docs/design/generics/overview.md), whether those are
-`template` or checked, explicit or deduced. Compile-time parameters on the
-enclosing scope are allowed, though, so generic classes may have virtual
-methods.
+Functions with [compile-time parameters](/docs/design/generics/overview.md) may
+not be virtual, whether those are `template` or checked, explicit or deduced.
+Compile-time parameters on the enclosing scope are allowed, though, so generic
+classes may have virtual methods.
 
 ##### Virtual modifier keywords
 
@@ -2040,13 +2065,12 @@ different type than `DynPtr(MyInterface)` since the receiver input to the
 function members of the vtable for the former does not match those in the
 witness table for the latter.
 
-#### Overloaded methods
+#### Overloaded member functions
 
-We allow a derived class to define a
-[non-instance member function](#non-instance-member-functions) with the same
-name as a non-instance member function in the base class. For example, we expect
-it to be common to have a constructor function named `Make` at all levels of the
-type hierarchy.
+We allow a derived class to define a member function with the same name as a
+member function in the base class when neither are methods. For example, we
+expect it to be common to have a constructor function named `Make` at all levels
+of the type hierarchy.
 
 Beyond that, we may want some rules or restrictions about defining methods in a
 derived class with the same name as a base class method without overriding it.
