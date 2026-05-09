@@ -500,7 +500,6 @@ struct SignatureId : public IdBase<SignatureId> {
   using IdBase::IdBase;
 };
 
-
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.

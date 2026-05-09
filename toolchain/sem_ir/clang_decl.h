@@ -76,9 +76,8 @@ struct Signature : public Printable<Signature> {
 
   // Returns the passing mode for the i-th parameter.
   auto GetPassingMode(int32_t i) const -> PassingMode {
-    return i < static_cast<int32_t>(passing_modes.size())
-               ? passing_modes[i]
-               : PassingMode::ByVar;
+    return i < static_cast<int32_t>(passing_modes.size()) ? passing_modes[i]
+                                                          : PassingMode::ByVar;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -92,10 +91,10 @@ struct Signature : public Printable<Signature> {
   // Hashing for Signature.
   friend auto CarbonHashValue(const Signature& value, uint64_t seed)
       -> HashCode {
-    HashCode code = HashValue(
-        std::tuple{value.kind, value.num_params,
-                   static_cast<int8_t>(value.self_passing_mode)},
-        seed);
+    HashCode code =
+        HashValue(std::tuple{value.kind, value.num_params,
+                             static_cast<int8_t>(value.self_passing_mode)},
+                  seed);
     for (auto mode : value.passing_modes) {
       code = HashValue(static_cast<int8_t>(mode), static_cast<uint64_t>(code));
     }
@@ -123,8 +122,8 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
-  static auto ForFunctionDecl(clang::FunctionDecl* decl, SignatureId signature_id)
-      -> ClangDeclKey {
+  static auto ForFunctionDecl(clang::FunctionDecl* decl,
+                              SignatureId signature_id) -> ClangDeclKey {
     return ClangDeclKey(decl, signature_id, UncheckedTag());
   }
 

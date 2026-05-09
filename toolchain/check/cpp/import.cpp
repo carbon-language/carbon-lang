@@ -1307,8 +1307,8 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
     SemIR::ImportIRInstId import_ir_inst_id,
-    const clang::FunctionDecl& clang_decl,
-    SemIR::SignatureId signature_id) -> SemIR::InstBlockId {
+    const clang::FunctionDecl& clang_decl, SemIR::SignatureId signature_id)
+    -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
       isa<clang::CXXConstructorDecl>(clang_decl)) {
@@ -1322,8 +1322,7 @@ static auto MakeImplicitParamPatternsBlockId(
       method_decl->getFunctionObjectParameterReferenceType();
   const auto& signature = context.signatures().Get(signature_id);
   SemIR::Signature::PassingMode passing_mode = signature.self_passing_mode;
-  auto param_info = MapParameterType(context, loc_id, param_type,
-                                     passing_mode);
+  auto param_info = MapParameterType(context, loc_id, param_type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeSubpatternExpr(context, type_inst_id);

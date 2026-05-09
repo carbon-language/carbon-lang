@@ -74,15 +74,15 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
 // non-static member function that is not a constructor).
 static auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool {
   const auto* method = dyn_cast<clang::CXXMethodDecl>(&decl);
-  return method && !method->isStatic() && !isa<clang::CXXConstructorDecl>(&decl);
+  return method && !method->isStatic() &&
+         !isa<clang::CXXConstructorDecl>(&decl);
 }
 
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
     const clang::FunctionDecl& callee_function_decl,
-    const SemIR::Signature& signature)
-    -> std::string {
+    const SemIR::Signature& signature) -> std::string {
   RawStringOstream mangled_name_stream;
   mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
@@ -259,8 +259,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   const auto& signature = context.signatures().Get(decl_info.key.signature_id);
   auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
   if (signature.kind != SemIR::Signature::Normal ||
-      signature.num_params !=
-          static_cast<int>(decl->getNumNonObjectParams())) {
+      signature.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
     // calling a varargs function.
@@ -467,9 +466,8 @@ static auto CreateThunkFunctionDecl(
   // Set asm("<callee function mangled name>.carbon_thunk").
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
-      GenerateThunkMangledName(
-          context.cpp_context()->clang_mangle_context(), *callee_info.decl,
-          *callee_info.signature),
+      GenerateThunkMangledName(context.cpp_context()->clang_mangle_context(),
+                               *callee_info.decl, *callee_info.signature),
       clang_loc));
 
   // Set function declaration type source info.

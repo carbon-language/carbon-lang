@@ -111,8 +111,7 @@ static auto MakeSignature(
     Context& context,
     std::initializer_list<SemIR::Signature::PassingMode> modes,
     SemIR::Signature::PassingMode self_passing_mode =
-        SemIR::Signature::PassingMode::ByRef)
-    -> SemIR::SignatureId {
+        SemIR::Signature::PassingMode::ByRef) -> SemIR::SignatureId {
   return context.signatures().Add(SemIR::Signature::Make(
       modes, SemIR::Signature::Normal, self_passing_mode));
 }
