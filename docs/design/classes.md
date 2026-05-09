@@ -736,7 +736,11 @@ it will be ignored if another value is supplied for that field when constructing
 an instance of the class, and the default must be constants whose value can be
 determined at compile time. For static member variables, the initializer has the
 same behavior as an initializer of a global variable.
-
+`= "default"` above) specifies the default or initial value. For a field,
+it will be ignored if another value is supplied for that field when constructing
+an instance of the class, and the default must be a constant whose value can be
+determined at compile time. For a static member variable, the initializer has the
+same behavior as an initializer of a global variable.
 #### Syntax
 
 The pattern in a variable declaration must be a run-time binding pattern, so the
@@ -917,8 +921,7 @@ having a `self` parameter as the first parameter in the parameter list in parens
 `(`...`)`. The type in the binding syntax for the `self` parameter, typically
 `: Self`, is optional and the type defaults to `Self`. There is no implicit
 member access in methods, so inside the method body members are accessed through
-the `self` parameter. Methods may be written lexically inline or after the class
-declaration.
+the `self` parameter.
 
 ```carbon
 class Circle {
@@ -1228,7 +1231,8 @@ A base class may define
 methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
-any defined in
+Only methods declared in the scope of the class definition may be virtual, not
+any declared in
 [out-of-line interface `impl` declarations](/docs/design/generics/details.md#out-of-line-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is inline](/docs/design/generics/details.md#inline-impl), and calls to
@@ -2041,8 +2045,8 @@ witness table for the latter.
 We allow a derived class to define a
 [non-instance member function](#non-instance-member-functions) with the same
 name as a non-instance member function in the base class. For example, we expect
-it to be pretty common to have a constructor function named `Create` at all
-levels of the type hierarchy.
+it to be common to have a constructor function named `Make` at all levels of the
+type hierarchy.
 
 Beyond that, we may want some rules or restrictions about defining methods in a
 derived class with the same name as a base class method without overriding it.
