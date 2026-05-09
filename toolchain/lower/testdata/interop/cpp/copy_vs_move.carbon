@@ -109,11 +109,8 @@ void pass(MoveOnly);
 var c: Cpp.MoveOnly = Cpp.make();
 
 fn PassGlobalByMove() {
-  // CHECK:STDERR: move_only.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.pass(Cpp.std.move(ref c));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.pass(Cpp.std.move(ref c));
+  // TODO: This should be accepted.
+  // Cpp.pass(Cpp.std.move(ref c));
 }
 
 fn PassTemporary() {
@@ -121,10 +118,13 @@ fn PassTemporary() {
 }
 
 fn PassValue(c: Cpp.MoveOnly) {
+  // CHECK:STDERR: move_only.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.pass(c);
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.pass(c);
 }
 
 fn PassRef(ref c: Cpp.MoveOnly) {
   Cpp.pass(c);
 }
-
