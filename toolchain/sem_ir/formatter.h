@@ -279,15 +279,19 @@ class Formatter {
   auto FormatArg(StringLiteralValueId id) -> void;
   auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
 
-  // A `FormatArg` wrapper for `FormatInstArgAndKind`.
-  using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;
+  template <typename BundleT>
+  auto FormatArg(BundleId<BundleT> bundle_id) -> void {
+    llvm::ListSeparator sep;
+    auto format_with_sep = [&](auto id) {
+      out() << sep;
+      FormatArg(id);
+    };
+    std::apply([&](auto... id) -> void { (..., format_with_sep(id)); },
+               sem_ir_->bundles().GetAsTuple(bundle_id));
+  }
 
-  // Returns the `FormatArgFnT` for the given `IdKind`.
-  template <typename... Types>
-  static auto GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT*;
-
-  // Calls `FormatArg` from an `ArgAndKind`.
-  auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
+  // Calls `FormatArg` from an `IdAndKind`.
+  auto FormatInstArgAndKind(IdAndKind arg_and_kind) -> void;
 
   auto FormatReturnSlotArg(InstId dest_id) -> void;
 
@@ -408,24 +412,6 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
   FormatEntityStart(entity_kind, entity.generic_id, entity_id);
-}
-
-template <typename... Types>
-auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
-  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
-      [](Formatter& formatter, int32_t arg) -> void {
-        auto typed_arg = Inst::FromRaw<Types>(arg);
-        if constexpr (requires { formatter.FormatArg(typed_arg); }) {
-          formatter.FormatArg(typed_arg);
-        } else {
-          CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
-        }
-      }...,
-      // Invalid and None handling (ordering-sensitive).
-      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
-      [](auto...) -> void {},
-  };
-  return Table[id_kind.ToIndex()];
 }
 
 }  // namespace Carbon::SemIR

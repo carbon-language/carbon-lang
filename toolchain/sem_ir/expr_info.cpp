@@ -15,7 +15,7 @@
 namespace Carbon::SemIR {
 
 // Returns the InstId represented by an instruction operand.
-static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
+static auto AsAnyInstId(IdAndKind arg) -> InstId {
   if (auto inst_id = arg.TryAs<SemIR::InstId>()) {
     return *inst_id;
   }

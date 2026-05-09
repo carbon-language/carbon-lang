@@ -392,6 +392,16 @@ struct Worklist {
               ir_inst.inst_id());
   }
 
+  template <typename BundleT>
+  auto Add(BundleId<BundleT> bundle_id) -> void {
+    std::apply([&](auto... ids) { (..., Add(ids)); },
+               sem_ir->bundles().GetAsTuple(bundle_id));
+  }
+
+  auto Add(RawBundleId bundle_id) -> void {
+    CARBON_FATAL("Can't fingerprint untyped bundle ID {}", bundle_id);
+  }
+
   template <typename T>
     requires(SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex,
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)
@@ -406,25 +416,15 @@ struct Worklist {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }
 
-  using AddFnT = auto(Worklist& worklist, int32_t arg) -> void;
-
-  // Returns the arg handler for an `IdKind`.
-  template <typename... Types>
-  static auto GetAddFn(TypeEnum<Types...> id_kind) -> AddFnT* {
-    static constexpr std::array<AddFnT*, IdKind::NumValues> Table = {
-        [](Worklist& worklist, int32_t arg) {
-          worklist.Add(Inst::FromRaw<Types>(arg));
-        }...,
-        // Invalid and None handling (ordering-sensitive).
-        [](auto...) { CARBON_FATAL("Unexpected invalid IdKind"); },
-        [](auto...) {},
-    };
-    return Table[id_kind.ToIndex()];
+  auto Add(IdAndKind::InvalidType /*invalid*/) -> void {
+    CARBON_FATAL("Unexpected invalid IdKind");
   }
 
+  auto Add(IdAndKind::NoneType /*none*/) -> void {}
+
   // Add an instruction argument to the contents of the current instruction.
-  auto AddWithKind(Inst::ArgAndKind arg) -> void {
-    GetAddFn(arg.kind())(*this, arg.value());
+  auto AddWithKind(IdAndKind arg) -> void {
+    arg.Dispatch<void>([this](auto id) { Add(id); });
   }
 
   // Ensure all the instructions on the todo list have fingerprints. To avoid a

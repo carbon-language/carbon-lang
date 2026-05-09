@@ -396,9 +396,16 @@ struct CalleePatternMatchAction {
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
+  // TODO: Inline these args back into the inst. They are only factored out as
+  // a bundle to validate `BundleStore` until a followup PR introduces a
+  // "real" use case.
+  struct Args {
+    MetaInstId pattern_id;
+    CallParamIndex parent_index;
+  };
+
   TypeId type_id;
-  MetaInstId pattern_id;
-  CallParamIndex parent_index;
+  BundleId<Args> args_id;
 };
 
 // A unicode code point character literal. This type only provides compile-time

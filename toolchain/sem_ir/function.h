@@ -150,7 +150,6 @@ struct FunctionFields {
   // access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
-
   // The following members are accumulated throughout the function definition.
 
   // A list of the statically reachable code blocks in the body of the
