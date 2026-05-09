@@ -13,6 +13,6 @@ template class ValueStore<SemIR::RequireImplsId, SemIR::RequireImpls,
 template class ValueStore<SemIR::RequireImplsBlockId,
                           llvm::MutableArrayRef<SemIR::RequireImplsId>,
                           Tag<SemIR::CheckIRId>>;
-template class BlockValueStore<SemIR::RequireImplsBlockId, SemIR::RequireImplsId,
-                               Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::RequireImplsBlockId,
+                               SemIR::RequireImplsId, Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

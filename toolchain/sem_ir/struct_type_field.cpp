@@ -11,6 +11,6 @@ namespace Carbon {
 template class ValueStore<SemIR::StructTypeFieldsId,
                           llvm::MutableArrayRef<SemIR::StructTypeField>,
                           Tag<SemIR::CheckIRId>>;
-template class BlockValueStore<SemIR::StructTypeFieldsId, SemIR::StructTypeField,
-                               Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::StructTypeFieldsId,
+                               SemIR::StructTypeField, Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
