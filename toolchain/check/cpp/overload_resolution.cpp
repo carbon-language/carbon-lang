@@ -242,9 +242,10 @@ auto GetDefaultPassingModeForCppParameterType(clang::QualType param_type)
 // performed on the arguments.
 auto ComputeClangDeclSignatureFromBestViableFunction(
     Context& context, clang::OverloadCandidateSet::iterator candidate,
-    llvm::ArrayRef<clang::Expr*> arg_exprs) -> SemIR::SignatureId {
+    clang::Expr* self_expr, llvm::ArrayRef<clang::Expr*> arg_exprs,
+    SemIR::Signature::Kind kind) -> SemIR::SignatureId {
   SemIR::Signature signature;
-  signature.kind = SemIR::Signature::Normal;
+  signature.kind = kind;
   signature.num_params = static_cast<int32_t>(arg_exprs.size());
   signature.passing_modes.reserve(signature.num_params);
 
@@ -266,8 +267,8 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
 
   if (auto* method = dyn_cast<clang::CXXMethodDecl>(candidate->Function)) {
     if (!method->isStatic() && !isa<clang::CXXConstructorDecl>(method)) {
-      signature.self_passing_mode = GetDefaultPassingModeForCppParameterType(
-          method->getFunctionObjectParameterReferenceType());
+      signature.self_passing_mode =
+          GetPassingModeForCppParameter(candidate->Conversions[0], self_expr);
     }
   }
 
@@ -325,7 +326,7 @@ auto PerformCppOverloadResolution(
       CARBON_CHECK(!best_viable_fn->RewriteKind);
       SemIR::SignatureId signature_id =
           ComputeClangDeclSignatureFromBestViableFunction(
-              context, best_viable_fn, arg_exprs);
+              context, best_viable_fn, self_expr, arg_exprs);
 
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, signature_id);

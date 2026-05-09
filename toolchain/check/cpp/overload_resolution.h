@@ -35,7 +35,9 @@ auto GetDefaultPassingModeForCppParameterType(clang::QualType param_type)
 
 auto ComputeClangDeclSignatureFromBestViableFunction(
     Context& context, clang::OverloadCandidateSet::iterator candidate,
-    llvm::ArrayRef<clang::Expr*> arg_exprs) -> SemIR::SignatureId;
+    clang::Expr* self_expr, llvm::ArrayRef<clang::Expr*> arg_exprs,
+    SemIR::Signature::Kind kind = SemIR::Signature::Normal)
+    -> SemIR::SignatureId;
 
 // Resolves which function to call using Clang overload resolution. Returns an
 // instruction referring to that function, or an error instruction if overload

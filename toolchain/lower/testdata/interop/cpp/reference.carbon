@@ -323,21 +323,21 @@ fn GetRefs() {
 // CHECK:STDOUT: %class.ForceThunk = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @C.val.loc24_20.3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc20_20.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   %.loc24_18.2.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 8, !dbg !15
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !17
-// CHECK:STDOUT:   %.loc34_23.2.temp = alloca i32, align 4, !dbg !18
+// CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b"(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk.r(ptr %c.var), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_18.2.temp), !dbg !15
-// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk._(ptr @C.val.loc24_20.3), !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.2.temp), !dbg !15
+// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk._(ptr @C.val.loc20_20.3), !dbg !20
 // CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk._(ptr %c.var), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !16
@@ -345,11 +345,11 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !17
 // CHECK:STDOUT:   store i32 42, ptr %_.var, align 4, !dbg !17
 // CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk.v(ptr %_.var), !dbg !23
-// CHECK:STDOUT:   %.loc34_23.1 = load i32, ptr %n.var, align 4, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_23.2.temp), !dbg !18
-// CHECK:STDOUT:   store i32 %.loc34_23.1, ptr %.loc34_23.2.temp, align 4, !dbg !18
-// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr %.loc34_23.2.temp), !dbg !24
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %.loc34_23.2.temp), !dbg !18
+// CHECK:STDOUT:   %.loc26_23.1 = load i32, ptr %n.var, align 4, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_23.2.temp), !dbg !18
+// CHECK:STDOUT:   store i32 %.loc26_23.1, ptr %.loc26_23.2.temp, align 4, !dbg !18
+// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr %.loc26_23.2.temp), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %.loc26_23.2.temp), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %n.var), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !25
@@ -494,16 +494,16 @@ fn GetRefs() {
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 24, column: 17, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 20, column: 17, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 23, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 13, column: 23, scope: !11)
-// CHECK:STDOUT: !18 = !DILocation(line: 34, column: 23, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 3, scope: !11)
-// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 3, scope: !11)
-// CHECK:STDOUT: !21 = !DILocation(line: 25, column: 3, scope: !11)
-// CHECK:STDOUT: !22 = !DILocation(line: 32, column: 3, scope: !11)
-// CHECK:STDOUT: !23 = !DILocation(line: 33, column: 3, scope: !11)
-// CHECK:STDOUT: !24 = !DILocation(line: 34, column: 3, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 26, column: 23, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 19, column: 3, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 20, column: 3, scope: !11)
+// CHECK:STDOUT: !21 = !DILocation(line: 21, column: 3, scope: !11)
+// CHECK:STDOUT: !22 = !DILocation(line: 24, column: 3, scope: !11)
+// CHECK:STDOUT: !23 = !DILocation(line: 25, column: 3, scope: !11)
+// CHECK:STDOUT: !24 = !DILocation(line: 26, column: 3, scope: !11)
 // CHECK:STDOUT: !25 = !DILocation(line: 17, column: 1, scope: !11)
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"p1 _ZTS1C", !28, i64 0}
@@ -517,13 +517,13 @@ fn GetRefs() {
 // CHECK:STDOUT: !35 = !{!36, !36, i64 0}
 // CHECK:STDOUT: !36 = !{!"p1 int", !28, i64 0}
 // CHECK:STDOUT: !37 = !{i64 4}
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 34, type: !39, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 26, type: !39, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !40)
 // CHECK:STDOUT: !40 = !{null, !41}
 // CHECK:STDOUT: !41 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !38, type: !41)
-// CHECK:STDOUT: !44 = !DILocation(line: 34, column: 23, scope: !38)
+// CHECK:STDOUT: !44 = !DILocation(line: 26, column: 23, scope: !38)
 // CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d288d62be0e5d791:DefaultOrUnformed.Core.93349b0fe912a29b", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !46 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !45)

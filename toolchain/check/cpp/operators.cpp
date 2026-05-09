@@ -19,6 +19,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -286,61 +287,66 @@ static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
     clang::FunctionDecl* function_decl, clang::DeclAccessPair found_decl,
-    SemIR::Signature::PassingMode passing_mode, const clang::Expr* arg_expr)
-    -> SemIR::SignatureId {
+    clang::Expr* arg_expr) -> SemIR::SignatureId {
+  auto signature_kind = SemIR::Signature::Normal;
+  clang::Expr* self_expr = nullptr;
+  llvm::ArrayRef<clang::Expr*> arg_exprs(arg_expr);
+
   // If we're performing a constructor initialization from a list, form a
   // function signature that takes a single tuple or struct pattern
   // instead of a function signature with one parameter per C++ parameter.
   if (step_kind ==
       clang::InitializationSequence::SK_ConstructorInitializationFromList) {
-    // The source type should always be a tuple type, because we don't support
-    // C++ initialization from struct types.
-    auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(
-        context.insts().Get(source_id).type_id());
-    CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
-
     // Initialization from a tuple `(a, b, c)` results in a constructor
     // function that takes a tuple pattern:
     //
     //   fn Class.Class((a: A, b: B, c: C)) -> Class;
     //
-    // In order to determine how to map the parameters, we need to build the
-    // conversion sequences again. Clang already threw them away.
-    clang::OverloadCandidateSet candidates(
-        function_decl->getLocation(),
-        clang::OverloadCandidateSet::CSK_InitByUserDefinedConversion);
-    auto arg_exprs = cast<clang::InitListExpr>(arg_expr)->inits();
-    context.clang_sema().AddOverloadCandidate(
-        function_decl, found_decl, arg_exprs, candidates,
-        /*SuppressUserConversions=*/false, /*PartialOverloading=*/false,
-        /*AllowExplicit=*/false);
-    clang::OverloadCandidateSet::iterator best;
-    auto result = candidates.BestViableFunction(
-        context.clang_sema(), function_decl->getLocation(), best);
-    CARBON_CHECK(result == clang::OverloadingResult::OR_Success);
-
-    return ComputeClangDeclSignatureFromBestViableFunction(context, best,
-                                                           arg_exprs);
+    // The source type should always be a tuple type, because we don't support
+    // C++ initialization from struct types.
+    auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(
+        context.insts().Get(source_id).type_id());
+    CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
+    arg_exprs = cast<clang::InitListExpr>(arg_expr)->inits();
+    signature_kind = SemIR::Signature::TuplePattern;
   }
 
-  // Any other initialization using a constructor is calling a converting
-  // constructor:
-  //
-  //   fn Class.Class(a: A) -> Class;
+  // In order to determine how to map the parameters, we need to build the
+  // conversion sequence(s) again. Clang already threw them away. The only way
+  // to do this is to "redo" overload resolution with our single candidate.
+  clang::OverloadCandidateSet candidates(
+      function_decl->getLocation(),
+      clang::OverloadCandidateSet::CSK_InitByUserDefinedConversion);
+
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
-    return context.signatures().Add(SemIR::Signature::Make({passing_mode}));
+    // This is either tuple list initialization as described above or a
+    // constructor call:
+    //
+    //   fn Class.Class(a: A) -> Class;
+    context.clang_sema().AddOverloadCandidate(function_decl, found_decl,
+                                              arg_exprs, candidates);
+  } else {
+    // Otherwise, the initialization is calling a conversion function
+    // `Source::operator Dest`:
+    //
+    //   fn Source.<conversion function>[self: Source]() -> Dest;
+    auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
+    self_expr = arg_expr;
+    arg_exprs = {};
+    context.clang_sema().AddMethodCandidate(
+        conversion_decl, found_decl, conversion_decl->getParent(),
+        self_expr->getType(), self_expr->Classify(context.ast_context()),
+        arg_exprs, candidates);
   }
 
-  // Otherwise, the initialization is calling a conversion function
-  // `Source::operator Dest`:
-  //
-  //   fn Source.<conversion function>[self: Source]() -> Dest;
-  auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
-  SemIR::Signature::PassingMode self_passing_mode =
-      GetDefaultPassingModeForCppParameterType(
-          conversion_decl->getFunctionObjectParameterReferenceType());
-  return context.signatures().Add(
-      SemIR::Signature::Make({}, SemIR::Signature::Normal, self_passing_mode));
+  clang::OverloadCandidateSet::iterator best;
+  auto result = candidates.BestViableFunction(
+      context.clang_sema(), function_decl->getLocation(), best);
+  CARBON_CHECK(result == clang::OverloadingResult::OR_Success ||
+               result == clang::OverloadingResult::OR_Deleted);
+
+  return ComputeClangDeclSignatureFromBestViableFunction(
+      context, best, self_expr, arg_exprs, signature_kind);
 }
 
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
@@ -393,9 +399,6 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  SemIR::Signature::PassingMode passing_mode =
-      SemIR::Signature::PassingMode::ByValue;
-
   // Scan the steps looking for user-defined conversions. For now we just find
   // and return the first such conversion function. We skip over standard
   // conversions; we'll perform those using the Carbon rules as part of calling
@@ -425,7 +428,7 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         SemIR::SignatureId signature_id = GetConversionSignatureToImport(
             context, source_id, step.Kind, step.Function.Function,
-            step.Function.FoundDecl, passing_mode, arg_expr);
+            step.Function.FoundDecl, arg_expr);
         auto result_id = ImportCppFunctionDecl(
             context, loc_id, step.Function.Function, signature_id);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
@@ -458,9 +461,7 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
       case clang::InitializationSequence::SK_ConversionSequence:
       case clang::InitializationSequence::SK_ConversionSequenceNoNarrowing: {
         // Implicit conversions are handled by the normal Carbon conversion
-        // logic, so we ignore them here other than to determine how to pass the
-        // value to a converting constructor.
-        passing_mode = GetPassingModeForCppParameter(*step.ICS, arg_expr);
+        // logic, so we ignore them here.
         continue;
       }
 
@@ -661,14 +662,15 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
 
       // If this is an operator method, the first arg will be used as self.
+      clang::Expr* self_expr = nullptr;
       auto arg_exprs_for_signature = arg_exprs;
       if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
-        arg_exprs_for_signature.consume_front();
+        self_expr = arg_exprs_for_signature.consume_front();
       }
 
       SemIR::SignatureId signature_id =
           ComputeClangDeclSignatureFromBestViableFunction(
-              context, best_viable_fn, arg_exprs_for_signature);
+              context, best_viable_fn, self_expr, arg_exprs_for_signature);
 
       auto result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, signature_id);
