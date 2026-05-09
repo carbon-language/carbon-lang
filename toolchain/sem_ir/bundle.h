@@ -307,4 +307,9 @@ class BundleStore {
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_BUNDLE_H_

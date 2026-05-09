@@ -233,4 +233,6 @@ template class ValueStore<SemIR::CustomLayoutId,
                           Tag<SemIR::CheckIRId>>;
 template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
                                Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
+                               Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
