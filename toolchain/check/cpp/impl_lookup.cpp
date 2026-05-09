@@ -179,14 +179,11 @@ static auto BuildCppUnsafeDerefWitness(
     context.TODO(loc_id, "operator* overload sets not implemented yet");
     return SemIR::ErrorInst::InstId;
   }
-  auto* cpp_method = dyn_cast<clang::CXXMethodDecl>(*candidates.begin());
-  SemIR::Signature::PassingMode self_passing_mode =
-      SemIR::Signature::PassingMode::ByRef;
-  if (cpp_method && !cpp_method->isStatic()) {
-    self_passing_mode = GetDefaultPassingModeForCppParameterType(
-        cpp_method->getFunctionObjectParameterReferenceType());
-  }
-  SemIR::SignatureId signature_id = MakeSignature(context, {}, self_passing_mode);
+
+  // TODO: Parameterize the interface by the form of the operand and compute the
+  // appropriate passing mode here.
+  SemIR::SignatureId signature_id =
+      MakeSignature(context, {}, SemIR::Signature::PassingMode::ByRef);
 
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};

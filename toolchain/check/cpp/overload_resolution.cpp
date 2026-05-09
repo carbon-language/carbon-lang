@@ -225,19 +225,6 @@ auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
   CARBON_FATAL("Unexpected kind of implicit conversion sequence");
 }
 
-auto GetDefaultPassingModeForCppParameterType(clang::QualType param_type)
-    -> SemIR::Signature::PassingMode {
-  if (param_type->isReferenceType()) {
-    clang::QualType pointee_type = param_type->getPointeeType();
-    if (pointee_type.isConstQualified()) {
-      return SemIR::Signature::PassingMode::ByValue;
-    } else if (param_type->isLValueReferenceType()) {
-      return SemIR::Signature::PassingMode::ByRef;
-    }
-  }
-  return SemIR::Signature::PassingMode::ByValue;
-}
-
 // Computes the signature for a C++ function candidate based on the conversions
 // performed on the arguments.
 auto ComputeClangDeclSignatureFromBestViableFunction(

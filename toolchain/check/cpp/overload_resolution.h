@@ -26,13 +26,6 @@ auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
                                    const clang::Expr* arg_expr)
     -> SemIR::Signature::PassingMode;
 
-// Returns the default passing mode to use for a C++ parameter or object
-// parameter of the given type, when we don't know what the corresponding
-// argument is.
-// TODO: Stop using this once we have form-parameterized impls.
-auto GetDefaultPassingModeForCppParameterType(clang::QualType param_type)
-    -> SemIR::Signature::PassingMode;
-
 auto ComputeClangDeclSignatureFromBestViableFunction(
     Context& context, clang::OverloadCandidateSet::iterator candidate,
     clang::Expr* self_expr, llvm::ArrayRef<clang::Expr*> arg_exprs,
