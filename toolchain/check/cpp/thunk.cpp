@@ -502,8 +502,10 @@ static auto BuildThunkParamRef(clang::Sema& sema,
     call_arg = deref_result.get();
   }
 
-  // Cast to an xvalue when using pass-by-`var`.
-  if (passing_mode == SemIR::Signature::PassingMode::ByVar) {
+  // Cast to an xvalue when using pass-by-`var` or when initializing an rvalue
+  // reference (which might be passed by value if it's const-qualified).
+  if (passing_mode == SemIR::Signature::PassingMode::ByVar ||
+      thunk_param->getType()->isRValueReferenceType()) {
     call_arg = clang::ImplicitCastExpr::Create(
         sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
         nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
