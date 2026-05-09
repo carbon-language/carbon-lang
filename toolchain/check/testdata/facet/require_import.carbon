@@ -137,12 +137,12 @@ fn F(B:! Y) {
 // CHECK:STDOUT:     %B.patt: %pattern_type.95b = symbolic_binding_pattern B, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %X.ref [concrete = constants.%X.type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc4_7.2: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_7.1 (constants.%A)]
 // CHECK:STDOUT:     %.loc4_24: type = splice_block %Y.ref [concrete = constants.%Y.type] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Y.ref: type = name_ref Y, imports.%Main.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.loc4_21.2: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_21.1 (constants.%B)]

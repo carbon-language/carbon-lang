@@ -210,12 +210,12 @@ fn F() {
 // CHECK:STDOUT:     %ElementType.patt: %pattern_type.98f = symbolic_binding_pattern ElementType, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_37.1: type = splice_block %.loc4_37.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_34: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_37.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %SubscriptType.loc4_34.2: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType.loc4_34.1 (constants.%SubscriptType)]
 // CHECK:STDOUT:     %.loc4_57.1: type = splice_block %.loc4_57.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc4_54: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_57.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ElementType.loc4_54.2: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_54.1 (constants.%ElementType)]
@@ -313,8 +313,8 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.504: type = generic_interface_type @IndexWith [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.504 = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic]

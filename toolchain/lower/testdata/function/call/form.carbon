@@ -116,17 +116,16 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'var_form_param.carbon'
 // CHECK:STDOUT: source_filename = "var_form_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @int_0.6a9 = internal constant i32 0
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc3_7.1.temp = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc3_7.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CF.Main(ptr @int_0.6a9), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_0.6a9), !dbg !7
+// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %x.var, align 4, !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(ptr %x.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %x.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

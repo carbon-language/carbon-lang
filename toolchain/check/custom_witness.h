@@ -30,6 +30,9 @@ auto BuildPrimitiveCopyWitness(
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     -> SemIR::CoreInterface;
 
+// Maps a `CoreInterface` to its `CoreIdentifier` equivalent.
+auto AsCoreIdentifier(SemIR::CoreInterface core_interface) -> CoreIdentifier;
+
 // Returns a witness for a `CoreInterface` `CustomWitness`. A return value of
 // `None` indicates a non-final witness should be produced, while `std::nullopt`
 // indicates the query is final and no witness can be produced.

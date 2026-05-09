@@ -33,6 +33,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
@@ -64,7 +66,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.b83: <witness> = lookup_impl_witness %ptr.de9, @Copy [symbolic]
-// CHECK:STDOUT:   %.e85: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.as_type) [symbolic]
+// CHECK:STDOUT:   %.85c: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.de9, (%Copy.lookup_impl_witness.b83) [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.eb1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic]
 // CHECK:STDOUT:   %.113: type = fn_type_with_self_type %Copy.WithSelf.Op.type.eb1, %Copy.facet [symbolic]
@@ -88,7 +90,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %T.patt: %pattern_type.ce2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:     }
@@ -98,7 +100,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_23.1: type = splice_block %.loc17_23.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc17_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc17_20.2: type = symbolic_binding T, 0 [symbolic = %T.loc17_20.1 (constants.%T.67d)]
@@ -193,9 +195,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6_22: <witness> = require_complete_type %Class [symbolic = %require_complete.loc6_22 (constants.%require_complete.904)]
-// CHECK:STDOUT:   %require_complete.loc6_36: <witness> = require_complete_type %ptr.loc6_36.1 [symbolic = %require_complete.loc6_36 (constants.%require_complete.b60)]
+// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %ptr.loc6_36.1 [symbolic = %require_complete.loc6_32 (constants.%require_complete.b60)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc6_36.1 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %.loc7_12.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.as_type.loc6_36.1) [symbolic = %.loc7_12.1 (constants.%.e85)]
+// CHECK:STDOUT:   %.loc7_12.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.as_type.loc6_36.1) [symbolic = %.loc7_12.1 (constants.%.85c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc6_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.b83)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc6_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.eb1)]

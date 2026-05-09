@@ -169,12 +169,6 @@ static auto MergeFunctionRedecl(Context& context,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
-    prev_function.call_param_patterns_id = new_function.call_param_patterns_id;
-    prev_function.call_params_id = new_function.call_params_id;
-    prev_function.return_type_inst_id = new_function.return_type_inst_id;
-    prev_function.return_form_inst_id = new_function.return_form_inst_id;
-    prev_function.return_pattern_id = new_function.return_pattern_id;
-    prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,

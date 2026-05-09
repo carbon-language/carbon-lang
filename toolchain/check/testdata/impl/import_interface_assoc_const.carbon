@@ -350,8 +350,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_26.2: type = converted %.loc5_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc5_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -438,32 +438,32 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   impl_decl @C2.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C2.ref.loc5: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self.2: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc5: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc5: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc5: %I.type = name_ref .Self, %.Self.loc5 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type.loc5: type = facet_access_type %.Self.ref.loc5 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc5_20: type = converted %.Self.ref.loc5, %.Self.as_type.loc5 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %T.ref.loc5: %I.assoc_type = name_ref T, imports.%Main.import_ref.8ef [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_26.2: type = converted %.loc5_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc5_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref.loc5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc5, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C2.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C2.ref.loc6: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self.1: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc6: %I.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.loc6: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc6: %I.type = name_ref .Self, %.Self.loc6 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type.loc6: type = facet_access_type %.Self.ref.loc6 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc6_20: type = converted %.Self.ref.loc6, %.Self.as_type.loc6 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %T.ref.loc6: %I.assoc_type = name_ref T, imports.%Main.import_ref.8ef [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc6: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc6_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_26.2: type = converted %.loc6_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc6_14: type = where_expr %.Self.1 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref.loc6
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6, %.loc6_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -562,8 +562,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -618,13 +618,13 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.9c9 [concrete]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I_where.type.1c0: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type.0f9: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
@@ -663,8 +663,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc9_26.2: type = converted %.loc9_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc9_14: type = where_expr %.Self [concrete = constants.%I_where.type.1c0] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc9_14: type = where_expr [concrete = constants.%I_where.type.1c0] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc9_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -679,8 +679,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = constants.%I_where.type.0f9] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = constants.%I_where.type.0f9] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -805,8 +805,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %T3.ref: %I3.assoc_type = name_ref T3, imports.%Main.import_ref.4cd [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %impl.elem2: type = impl_witness_access constants.%I3.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
 // CHECK:STDOUT:     %BAD2.ref: <error> = name_ref BAD2, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc17_15: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I3.type
+// CHECK:STDOUT:     %.loc17_15: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I3.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, <error>
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1, %struct_type.a
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, <error>
@@ -836,8 +836,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %T3.ref: %I3.assoc_type = name_ref T3, imports.%Main.import_ref.4cd [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %impl.elem2: type = impl_witness_access constants.%I3.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
 // CHECK:STDOUT:     %BAD4.ref: <error> = name_ref BAD4, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc27_15: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I3.type
+// CHECK:STDOUT:     %.loc27_15: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I3.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %struct_type.b
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1, <error>
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, <error>
@@ -930,8 +930,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_26.2: type = converted %.loc5_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc5_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -989,13 +989,13 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.9c9 [concrete]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1038,8 +1038,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc10_32, %.loc10_26.2 [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc10_38.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_38.2: type = converted %.loc10_38.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20, %.loc10_26.2
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst, %.loc10_38.2
 // CHECK:STDOUT:     }
@@ -1085,12 +1085,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.9c9 [concrete]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1133,8 +1133,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc10_34, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc10_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_40.2: type = converted %.loc10_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20, <error>
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst, %.loc10_40.2
 // CHECK:STDOUT:     }
@@ -1227,8 +1227,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.loc10_32: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc10_32, %.loc10_26.2 [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %BAD6.ref: <error> = name_ref BAD6, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20, %.loc10_26.2
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst, <error>
 // CHECK:STDOUT:     }
@@ -1320,8 +1320,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.loc14_34: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc14_34, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD8.ref: <error> = name_ref BAD8, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc14_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc14_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc14_20, <error>
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst, <error>
 // CHECK:STDOUT:     }
@@ -1417,8 +1417,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc6_32, %.loc6_26.2 [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc6_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_38.2: type = converted %.loc6_38.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc6_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
+// CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %I.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6_20, %.loc6_26.2
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst, %.loc6_38.2
 // CHECK:STDOUT:     }
@@ -1520,8 +1520,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.loc6_39.2: %empty_struct_type = converted %.loc6_38, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %struct: %struct_type.a.225 = struct_value (%.loc6_39.2) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc6_39.3: %struct_type.a.225 = converted %.loc6_39.1, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:     %.loc6_20: type = where_expr %.Self [concrete = constants.%NonType_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%NonType.type
+// CHECK:STDOUT:     %.loc6_20: type = where_expr [concrete = constants.%NonType_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %NonType.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc6_39.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -1662,8 +1662,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %F.ref: %IF.assoc_type = name_ref F, imports.%Main.import_ref.82a [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0: %.8a4 = impl_witness_access constants.%IF.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc10_15: type = where_expr %.Self [concrete = constants.%IF_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%IF.type
+// CHECK:STDOUT:     %.loc10_15: type = where_expr [concrete = constants.%IF_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %IF.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %int_0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

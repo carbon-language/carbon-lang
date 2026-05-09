@@ -118,9 +118,38 @@ struct ClangDecl : public Printable<ClangDecl> {
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
-// Use the AST node pointer directly when doing `Lookup` to find an ID.
-using ClangDeclStore =
-    CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>;
+// Canonical storage for `ClangDecl`s. Provides bidirectional mapping
+// between `ClangDeclId`s and `InstId`s.
+class ClangDeclStore {
+ public:
+  explicit ClangDeclStore(CheckIRId check_ir_id);
+
+  // Adds a `ClangDecl`, returning an ID to reference it.
+  auto Add(ClangDecl value) -> ClangDeclId;
+
+  // Looks up a `ClangDecl` by `ClangDeclId`.
+  auto Get(ClangDeclId id) const -> const ClangDecl& { return values_.Get(id); }
+
+  // Looks up a `ClangDeclId` by `ClangDeclKey`.
+  auto Lookup(ClangDeclKey key) const -> ClangDeclId;
+
+  // Looks up a `ClangDeclId` by `InstId`.
+  auto Lookup(InstId inst_id) const -> ClangDeclId;
+
+  auto OutputYaml() const -> Yaml::OutputMapping;
+
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
+ private:
+  // Canonical storage for `ClangDecl`s. Allows mapping from a
+  // `ClangDeclId` to an `InstId`.
+  CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>
+      values_;
+
+  // Map from `InstId` to `ClangDeclId`.
+  Map<InstId, ClangDeclId> inst_id_to_clang_decl_id_;
+};
 
 }  // namespace Carbon::SemIR
 

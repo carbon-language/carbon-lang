@@ -17,6 +17,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_ref.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
@@ -28,6 +29,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -63,7 +65,6 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-  CARBON_CHECK(pattern.kind != SemIR::FormBindingPattern::Kind);
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -80,8 +81,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
         pattern.subpattern_id);
-    if (subpattern.kind == SemIR::FormParamPattern::Kind) {
-      context.TODO(pattern_id, "Support for cloning form bindings");
+    if (subpattern.kind == SemIR::FormParamPatternAction::Kind) {
+      context.TODO(pattern_id, "Support for cloning generic form bindings");
       return SemIR::ErrorInst::InstId;
     }
     pattern.subpattern_id = RebuildPatternInst<SemIR::AnyLeafParamPattern>(
@@ -297,7 +298,10 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                                             args.consume_front(), callee_id);
   }
 
-  return PerformCall(context, loc_id, callee_id, args);
+  // We treat this as an operator call because it's a call that's synthesized
+  // by the toolchain, not written by the user.
+  return PerformCall(context, loc_id, callee_id, args,
+                     /*is_desugared=*/true);
 }
 
 // Build a call to a function that forwards the arguments of the enclosing
@@ -407,27 +411,6 @@ auto BuildThunkDefinitionForExport(Context& context,
     call_param_ids.pop_back();
   }
 
-  auto callee_param_ids =
-      context.inst_blocks().Get(callee_function.call_param_patterns_id);
-
-  // If any explicit parameters of the callee are `ref` parameters,
-  // modify the corresponding call arguments to be `ref` tagged.
-  for (auto index = thunk_function.call_param_ranges.explicit_begin().index;
-       index < thunk_function.call_param_ranges.explicit_end().index; index++) {
-    if (context.insts().Is<SemIR::RefParamPattern>(callee_param_ids[index])) {
-      auto& call_param_id = call_param_ids[index];
-      auto type = context.insts().Get(call_param_id).type_id();
-      SemIR::LocId loc_id(thunk_id);
-      call_param_id =
-          AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                               context.sem_ir(), SemIR::LocId(call_param_id),
-                               SemIR::RefTagExpr{
-                                   .type_id = type,
-                                   .expr_id = call_param_id,
-                               }));
-    }
-  }
-
   auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,
                                 param_pattern_ids, call_param_ids);
   if (thunk_has_return_param) {
@@ -435,8 +418,8 @@ auto BuildThunkDefinitionForExport(Context& context,
         context.inst_blocks().Get(thunk_function.call_params_id).back();
 
     SemIR::LocId loc_id(out_param_id);
-    auto init_id =
-        Initialize(context, loc_id, out_param_id, call_id, /*for_return=*/true);
+    auto init_id = InitializeExisting(context, loc_id, out_param_id, call_id,
+                                      /*for_return=*/true);
     AddInst(context, loc_id,
             SemIR::Assign{
                 .lhs_id = out_param_id,
@@ -472,7 +455,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
-  if (CheckFunctionTypeMatches(
+  if (context.functions().Get(callee.function_id).special_function_kind !=
+          SemIR::Function::SpecialFunctionKind::HasCppThunk &&
+      CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
@@ -489,7 +474,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // thunk, and always convert the result of the wrapped call to the return type
   // of the thunk.
   if (!HasDeclaredReturnType(context, signature_id) &&
-      HasDeclaredReturnType(context, callee.function_id)) {
+      HasDeclaredReturnType(context, callee.function_id) &&
+      context.functions().Get(callee.function_id).name_id !=
+          SemIR::NameId::CppOperator) {
     bool success = CheckFunctionReturnTypeMatches(
         context, context.functions().Get(callee.function_id),
         context.functions().Get(signature_id), signature_specific_id);
@@ -503,12 +490,17 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] =
+  auto [function_id, thunk_inst_id] =
       CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
                         signature_specific_id, callee.function_id);
 
+  auto thunk_id =
+      context.sem_ir().thunks().Add({.callee_id = callee_id,
+                                     .signature_id = signature_id,
+                                     .specific_id = signature_specific_id});
+
   // Track that this function is a thunk.
-  context.functions().Get(function_id).SetThunk(callee_id);
+  context.functions().Get(function_id).SetThunk(thunk_id);
 
   if (defer_definition) {
     // Register the thunk to be defined when we reach the end of the enclosing
@@ -518,16 +510,50 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
         context, {
                      .signature_id = signature_id,
                      .function_id = function_id,
-                     .decl_id = thunk_id,
+                     .decl_id = thunk_inst_id,
                      .callee_id = callee_id,
                  });
   } else {
-    BuildThunkDefinition(context, signature_id, function_id, thunk_id,
+    BuildThunkDefinition(context, signature_id, function_id, thunk_inst_id,
                          callee_id);
     context.scope_stack().Pop();
   }
 
-  return thunk_id;
+  return thunk_inst_id;
+}
+
+auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
+                       const SemIR::Class& class_info) -> SemIR::FunctionId {
+  // Create a new function declaration.
+  auto thunk_name_id = SemIR::NameId::ForIdentifier(
+      context.identifiers().Add("__destroy_thunk"));
+  auto [thunk_inst_id, thunk_function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = class_info.scope_id,
+                                 .name_id = thunk_name_id,
+                                 .self_type_id = class_info.self_type_id});
+
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  thunk_function.SetThunk(SemIR::ThunkId::None);
+
+  context.scope_stack().PushForDeclName();
+  StartFunctionDefinition(context, thunk_inst_id, thunk_function_id);
+
+  // Get `self` arg.
+  auto params = context.inst_blocks().Get(thunk_function.call_params_id);
+  auto self_inst_id = params[0];
+
+  // Build the function body. This calls the `Destroy` operator on `self`.
+  auto destroy_inst_id = BuildUnaryOperator(
+      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
+      self_inst_id);
+  DiscardExpr(context, destroy_inst_id);
+  BuildReturnWithNoExpr(context, loc_id);
+
+  FinishFunctionDefinition(context, thunk_function_id);
+  context.scope_stack().Pop();
+
+  return thunk_function_id;
 }
 
 }  // namespace Carbon::Check

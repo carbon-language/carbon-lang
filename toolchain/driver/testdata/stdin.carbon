@@ -62,6 +62,11 @@
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(InstType))}
+// CHECK:STDOUT:       object_layout:
+// CHECK:STDOUT:         size:            0
+// CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:       object_layout:
@@ -70,6 +75,7 @@
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

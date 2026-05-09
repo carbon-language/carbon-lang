@@ -426,7 +426,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.Self: %L.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc13_20: %L.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type.loc13_20: type = facet_access_type %.Self.ref.loc13_20 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc13_20: type = converted %.Self.ref.loc13_20, %.Self.as_type.loc13_20 [symbolic_self = constants.%.Self.as_type]
@@ -482,8 +482,8 @@ fn G() {
 // CHECK:STDOUT:     %.loc13_102.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc13_102.4: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_102.5: type = converted %.loc13_102.1, constants.%tuple.type.bd8 [concrete = constants.%tuple.type.bd8]
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%L.type
+// CHECK:STDOUT:     %.loc13_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %L.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %.loc13_36.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst.loc13_42, %.loc13_58.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst.loc13_64, %.loc13_80.5
@@ -520,7 +520,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.Self: %M.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc13_20: %M.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type.loc13_20: type = facet_access_type %.Self.ref.loc13_20 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc13_20: type = converted %.Self.ref.loc13_20, %.Self.as_type.loc13_20 [symbolic_self = constants.%.Self.as_type]
@@ -549,8 +549,8 @@ fn G() {
 // CHECK:STDOUT:     %impl.elem2: type = impl_witness_access constants.%M.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
 // CHECK:STDOUT:     %.loc13_50.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_50.2: type = converted %.loc13_50.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%M.type
+// CHECK:STDOUT:     %.loc13_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type %M.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %impl.elem1.loc13_25
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc13_32, %impl.elem0.subst
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, %.loc13_50.2

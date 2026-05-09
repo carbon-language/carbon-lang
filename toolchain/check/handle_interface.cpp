@@ -16,6 +16,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/interface.h"
@@ -92,11 +93,24 @@ static auto BuildInterfaceDecl(Context& context,
       auto name = context.names().GetIRBaseName(interface_info.name_id);
       interface_info.core_interface =
           llvm::StringSwitch<SemIR::CoreInterface>(name)
+              .Case("AddAssignWith", SemIR::CoreInterface::AddAssignWith)
+              .Case("AddWith", SemIR::CoreInterface::AddWith)
               .Case("Copy", SemIR::CoreInterface::Copy)
               .Case("CppUnsafeDeref", SemIR::CoreInterface::CppUnsafeDeref)
+              .Case("Dec", SemIR::CoreInterface::Dec)
               .Case("Default", SemIR::CoreInterface::Default)
               .Case("Destroy", SemIR::CoreInterface::Destroy)
+              .Case("DivAssignWith", SemIR::CoreInterface::DivAssignWith)
+              .Case("DivWith", SemIR::CoreInterface::DivWith)
+              .Case("Inc", SemIR::CoreInterface::Inc)
               .Case("IntFitsIn", SemIR::CoreInterface::IntFitsIn)
+              .Case("ModAssignWith", SemIR::CoreInterface::ModAssignWith)
+              .Case("ModWith", SemIR::CoreInterface::ModWith)
+              .Case("MulAssignWith", SemIR::CoreInterface::MulAssignWith)
+              .Case("MulWith", SemIR::CoreInterface::MulWith)
+              .Case("Negate", SemIR::CoreInterface::Negate)
+              .Case("SubAssignWith", SemIR::CoreInterface::SubAssignWith)
+              .Case("SubWith", SemIR::CoreInterface::SubWith)
               .Default(SemIR::CoreInterface::Unknown);
     }
     interface_decl.interface_id = context.interfaces().Add(interface_info);

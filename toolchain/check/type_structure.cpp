@@ -229,6 +229,10 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
         AppendStructuralSymbolic();
         break;
       }
+      case CARBON_KIND(Step::FacetValue _): {
+        // Ignored, as it may be concrete or symbolic. We will recurse into it.
+        break;
+      }
       case CARBON_KIND(Step::TemplateType _): {
         AppendStructuralSymbolic();
         break;
@@ -278,6 +282,15 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
       }
       case CARBON_KIND(Step::InterfaceStart interface_start): {
         AppendStructuralConcreteOpenParen(interface_start.interface_id);
+        break;
+      }
+      case CARBON_KIND(Step::NamedConstraintStartOnly named_constraint_start): {
+        AppendStructuralConcrete(named_constraint_start.named_constraint_id);
+        break;
+      }
+      case CARBON_KIND(Step::NamedConstraintStart named_constraint_start): {
+        AppendStructuralConcreteOpenParen(
+            named_constraint_start.named_constraint_id);
         break;
       }
       case CARBON_KIND(Step::IntStart int_start): {

@@ -684,10 +684,10 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.c59 [symbolic]
 // CHECK:STDOUT:   %.Self: %Y.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @Y [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT: }
@@ -706,7 +706,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc7_11.1: type = facet_access_type @Z.%Self [symbolic = %Self.as_type.loc7_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.Self: %Y.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %Y.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc7_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
@@ -714,8 +714,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc7_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_32.2: type = converted %.loc7_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_19: type = where_expr %.Self [concrete = constants.%Y_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type
+// CHECK:STDOUT:     %.loc7_19: type = where_expr [concrete = constants.%Y_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type %Y.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc7_32.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -747,6 +747,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_impls_self_specific.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.352: type = generic_interface_type @Z [concrete]
@@ -762,7 +764,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
@@ -864,7 +866,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc10_11.1: type = facet_access_type @Z.%Self [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.Self: %Y.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %Y.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc10_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
@@ -873,8 +875,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:     %Self.as_type.loc10_31: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc10_31: type = converted %Self.ref, %Self.as_type.loc10_31 [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc10_19: type = where_expr %.Self [symbolic = %Y_where.type (constants.%Y_where.type)] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type
+// CHECK:STDOUT:     %.loc10_19: type = where_expr [symbolic = %Y_where.type (constants.%Y_where.type)] {
+// CHECK:STDOUT:       requirement_base_facet_type %Y.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_31
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -908,6 +910,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_same.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.352: type = generic_interface_type @Z [concrete]
@@ -922,7 +926,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_17.1: type = splice_block %.loc8_17.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]

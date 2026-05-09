@@ -179,12 +179,12 @@ fn F() {
 // CHECK:STDOUT:     %.loc26_49: type = converted %U.ref, %U.as_type.loc26_49.1 [symbolic = %U.as_type.loc26_49.2 (constants.%U.as_type)]
 // CHECK:STDOUT:     %Eats.type.loc26_49.1: type = facet_type <@Eats, @Eats(constants.%U.as_type)> [symbolic = %Eats.type.loc26_49.2 (constants.%Eats.type.5eeba5.1)]
 // CHECK:STDOUT:     %.loc26_18: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc26_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc26_15.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc26_15.2 (constants.%T.998)]
 // CHECK:STDOUT:     %.loc26_30: type = splice_block %Edible.ref [concrete = constants.%Edible.type] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc26_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Edible.ref: type = name_ref Edible, file.%Edible.decl [concrete = constants.%Edible.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc26_27.1: %Edible.type = symbolic_binding U, 1 [symbolic = %U.loc26_27.2 (constants.%U)]
@@ -203,12 +203,12 @@ fn F() {
 // CHECK:STDOUT:     %food.patt: @Feed.%pattern_type.loc31_64 (%pattern_type.a11) = at_binding_pattern food, %food.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc31_16: type = splice_block %Edible.ref [concrete = constants.%Edible.type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc31_13: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Edible.ref: type = name_ref Edible, file.%Edible.decl [concrete = constants.%Edible.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Food.loc31_13.2: %Edible.type = symbolic_binding Food, 0 [symbolic = %Food.loc31_13.1 (constants.%Food.d1c)]
 // CHECK:STDOUT:     %.loc31_37.1: type = splice_block %Eats.type.loc31_37.2 [symbolic = %Eats.type.loc31_37.1 (constants.%Eats.type.3ac)] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc31_25: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Eats.ref: %Eats.type.321 = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.generic]
 // CHECK:STDOUT:       %Food.ref.loc31_33: %Edible.type = name_ref Food, %Food.loc31_13.2 [symbolic = %Food.loc31_13.1 (constants.%Food.d1c)]
 // CHECK:STDOUT:       %Food.as_type.loc31_37.2: type = facet_access_type %Food.ref.loc31_33 [symbolic = %Food.as_type.loc31_37.1 (constants.%Food.as_type.098)]
@@ -240,12 +240,12 @@ fn F() {
 // CHECK:STDOUT:     %food.patt: @HandleAnimal.%pattern_type.loc32_54 (%pattern_type.725) = at_binding_pattern food, %food.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc32_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc32_18: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc32_18.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc32_18.1 (constants.%A)]
 // CHECK:STDOUT:     %.loc32_36: type = splice_block %Edible.ref [concrete = constants.%Edible.type] {
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc32_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Edible.ref: type = name_ref Edible, file.%Edible.decl [concrete = constants.%Edible.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Food.loc32_33.2: %Edible.type = symbolic_binding Food, 1 [symbolic = %Food.loc32_33.1 (constants.%Food.2fc)]

@@ -137,7 +137,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc6 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
@@ -150,11 +150,12 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr @C.val), !dbg !15
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @C.val.loc6, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr @C.val), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,8 +168,12 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

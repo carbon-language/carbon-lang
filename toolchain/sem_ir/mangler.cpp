@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -25,8 +26,9 @@ auto Mangler::MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id)
 }
 
 auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
-                                              SemIR::NameScopeId name_scope_id)
-    -> void {
+                                              SemIR::NameScopeId name_scope_id,
+                                              SemIR::SpecificId specific_id,
+                                              char initial_prefix) -> void {
   // Maintain a stack of names for delayed rendering of interface impls.
   struct NameEntry {
     SemIR::NameScopeId name_scope_id;
@@ -40,8 +42,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   };
   llvm::SmallVector<NameEntry> names_to_render;
   names_to_render.push_back({.name_scope_id = name_scope_id,
-                             .specific_id = SemIR::SpecificId::None,
-                             .prefix = '.'});
+                             .specific_id = specific_id,
+                             .prefix = initial_prefix});
   while (!names_to_render.empty()) {
     auto [name_scope_id, specific_id, prefix] = names_to_render.pop_back_val();
     if (!name_scope_id.has_value()) {
@@ -67,6 +69,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
+    auto next_scope_id = name_scope.parent_scope_id();
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
@@ -107,7 +110,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                  .specific_id = class_type.specific_id,
                  .prefix = '.'});
 
-            MangleUnqualifiedClass(os, class_info, class_type.specific_id);
+            MangleUnqualifiedName(os, class_info, class_type.specific_id);
             break;
           }
           case SemIR::AutoType::Kind:
@@ -148,14 +151,24 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         continue;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        MangleUnqualifiedClass(os, sem_ir().classes().Get(class_decl.class_id),
-                               specific_id);
+        MangleUnqualifiedName(os, sem_ir().classes().Get(class_decl.class_id),
+                              specific_id);
         break;
       }
       case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-        MangleNameId(
-            os, sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
-        MangleSpecificId(os, specific_id);
+        MangleUnqualifiedName(
+            os, sem_ir().interfaces().Get(interface_decl.interface_id),
+            specific_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface_with_self_decl): {
+        MangleUnqualifiedName(
+            os,
+            sem_ir().interfaces().Get(interface_with_self_decl.interface_id),
+            specific_id);
+        // Skip the enclosing `InterfaceDecl` as we already mangled its name.
+        next_scope_id =
+            sem_ir().name_scopes().Get(next_scope_id).parent_scope_id();
         break;
       }
       case SemIR::Namespace::Kind: {
@@ -167,7 +180,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
     }
     if (!name_scope.is_imported_package()) {
-      names_to_render.push_back({.name_scope_id = name_scope.parent_scope_id(),
+      names_to_render.push_back({.name_scope_id = next_scope_id,
                                  .specific_id = SemIR::SpecificId::None,
                                  .prefix = '.'});
     }
@@ -190,6 +203,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   os << "_C";
 
   MangleNameId(os, function.name_id);
+  char separator = '.';
 
   // For a special function, add a marker to disambiguate.
   switch (function.special_function_kind) {
@@ -206,6 +220,20 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
       break;
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
+      if (function.thunk_id().has_value()) {
+        const auto& thunk_info = sem_ir().thunks().Get(function.thunk_id());
+        if (thunk_info.signature_id.has_value()) {
+          const auto& sig_fn =
+              sem_ir().functions().Get(thunk_info.signature_id);
+          // If this ever becomes possible, we'll need to include the signature
+          // name in the mangling too.
+          CARBON_CHECK(sig_fn.name_id == function.name_id,
+                       "Thunk name mismatches signature name");
+          MangleInverseQualifiedNameScope(os, sig_fn.parent_scope_id,
+                                          thunk_info.specific_id, ':');
+          separator = ':';
+        }
+      }
       break;
 
     case SemIR::Function::SpecialFunctionKind::Builtin:
@@ -217,7 +245,8 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 
   // TODO: If the function is private, also include the library name as part of
   // the mangling.
-  MangleInverseQualifiedNameScope(os, function.parent_scope_id);
+  MangleInverseQualifiedNameScope(os, function.parent_scope_id,
+                                  SemIR::SpecificId::None, separator);
 
   MangleSpecificId(os, specific_id);
 
@@ -281,10 +310,10 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
   return os.TakeStr();
 }
 
-auto Mangler::MangleUnqualifiedClass(llvm::raw_ostream& os,
-                                     const SemIR::Class& class_info,
-                                     SemIR::SpecificId specific_id) -> void {
-  MangleNameId(os, class_info.name_id);
+auto Mangler::MangleUnqualifiedName(llvm::raw_ostream& os,
+                                    const SemIR::EntityWithParamsBase& entity,
+                                    SemIR::SpecificId specific_id) -> void {
+  MangleNameId(os, entity.name_id);
   MangleSpecificId(os, specific_id);
 }
 }  // namespace Carbon::SemIR

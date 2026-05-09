@@ -51,6 +51,14 @@ class TypeIterator {
   // The iterator will visit things in the reverse order that they are added.
   auto Add(SpecificInterface interface) -> void { Push(interface); }
 
+  // Add a facet type to be iterated over. Normally a facet type is not recursed
+  // into and is just returned as a single step. This will recurse into the
+  // facet type and iterate through each extend and impls constraint. Rewrite
+  // and equality constraints are ignored.
+  //
+  // The iterator will visit things in the reverse order that they are added.
+  auto Add(FacetType facet_type) -> void { Push(facet_type); }
+
   // Iterates and returns the next `Step`. Returns `Step::Done` when complete.
   auto Next() -> Step;
 
@@ -60,7 +68,11 @@ class TypeIterator {
   // A work item to mark a symbolic type.
   struct SymbolicType {
     EntityNameId entity_name_id;
-    TypeId facet_type_id;
+    InstId facet;
+  };
+  // A work item to mark a FacetValue instruction.
+  struct FacetValueItem {
+    InstId facet_value_inst_id;
   };
   // A work item to mark a concrete non-type value.
   struct ConcreteNonTypeValue {
@@ -75,9 +87,10 @@ class TypeIterator {
     NameId name_id;
   };
 
-  using WorkItem = std::variant<TypeId, SymbolicType, ConcreteNonTypeValue,
-                                SymbolicNonTypeValue, StructFieldName,
-                                SpecificInterface, EndType>;
+  using WorkItem =
+      std::variant<TypeId, SymbolicType, FacetValueItem, ConcreteNonTypeValue,
+                   SymbolicNonTypeValue, StructFieldName, SpecificInterface,
+                   SpecificNamedConstraint, FacetType, EndType>;
 
   // Processes `next` when it's a `TypeId`.
   auto ProcessTypeId(TypeId type_id) -> std::optional<Step>;
@@ -131,6 +144,10 @@ class TypeIterator::Step {
   struct InterfaceStart {
     InterfaceId interface_id;
   };
+  // Followed by generic parameters.
+  struct NamedConstraintStart {
+    NamedConstraintId named_constraint_id;
+  };
   // Followed by the bit width.
   struct IntStart {
     TypeId type_id;
@@ -154,6 +171,7 @@ class TypeIterator::Step {
   struct StructStartOnly : public StructStart {};
   struct TupleStartOnly : public TupleStart {};
   struct InterfaceStartOnly : public InterfaceStart {};
+  struct NamedConstraintStartOnly : public NamedConstraintStart {};
 
   // ===========================================================================
   // Individual result values, which appear on their own or inside some scope
@@ -168,8 +186,16 @@ class TypeIterator::Step {
     // If the symbolic type is simply a reference to a symbolic binding, this is
     // the entity name of that binding. Otherwise, it is None.
     EntityNameId entity_name_id;
-    // Either a FacetType or the TypeType singleton.
-    TypeId facet_type_id;
+    // The facet, whose type is either a FacetType or the TypeType singleton.
+    InstId facet;
+  };
+  // A FacetValue, representing the conversion of a type to a facet type, which
+  // may be symbolic or concrete depending on the type inside. The iterator will
+  // iterate into the FacetValue, so it's reasonable to ignore this step, unless
+  // the consumer wants to specifically collect FacetValues.
+  struct FacetValue {
+    // The FacetValue instruction.
+    InstId facet_value_inst_id;
   };
   // A symbolic template type value.
   struct TemplateType {};
@@ -201,13 +227,13 @@ class TypeIterator::Step {
   struct Error {};
 
   // Each step is one of these.
-  using Any =
-      std::variant<ConcreteType, SymbolicType, TemplateType, ConcreteValue,
-                   SymbolicValue, StructFieldName, ClassStartOnly,
-                   StructStartOnly, TupleStartOnly, InterfaceStartOnly,
-                   ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
-                   PartialStart, PointerStart, End, Done, Error>;
+  using Any = std::variant<
+      ConcreteType, SymbolicType, FacetValue, TemplateType, ConcreteValue,
+      SymbolicValue, StructFieldName, ClassStartOnly, StructStartOnly,
+      TupleStartOnly, InterfaceStartOnly, NamedConstraintStartOnly, ClassStart,
+      StructStart, TupleStart, InterfaceStart, NamedConstraintStart, IntStart,
+      ArrayStart, ConstStart, MaybeUnformedStart, PartialStart, PointerStart,
+      End, Done, Error>;
 
   template <typename T>
   auto Is() const -> bool {

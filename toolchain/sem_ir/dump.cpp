@@ -178,6 +178,16 @@ static auto DumpRequireImplsSummary(const File& file,
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, RawBundleId bundle_id)
+    -> std::string {
+  for (auto inst : file.insts().values()) {
+    inst.CacheBundleDebugKinds(file.bundles());
+  }
+  RawStringOstream out;
+  Print(out, file.bundles().OutputBundleYaml(bundle_id));
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;
@@ -309,7 +319,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
        llvm::enumerate(identified_facet_type.required_impls())) {
     auto [self, req_interface] = req_impl;
     out << "\n  - self: " << DumpConstantSummary(file, self);
-    out << "\n    impls "
+    out << "\n    impls: "
         << DumpInterfaceSummary(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
@@ -563,6 +573,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
 
 // Functions that can be used instead of the corresponding constructor, which is
 // unavailable during debugging.
+LLVM_DUMP_METHOD static auto MakeBundleId(int id) -> RawBundleId {
+  return RawBundleId(id);
+}
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);
 }

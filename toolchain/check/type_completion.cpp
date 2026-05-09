@@ -12,6 +12,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"

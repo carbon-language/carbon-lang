@@ -64,8 +64,8 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
 
 // Emits the pattern-match IR for matching the given arguments with the given
 // parameter patterns, and returns an inst block of the arguments that should
-// be passed to the `Call` inst. `is_operator_syntax` indicates that this call
-// was generated from an operator rather than from function call syntax, so
+// be passed to the `Call` inst. `is_desugared` indicates that this call
+// was produced by desugaring, not written as a function call in user code, so
 // arguments to `ref` parameters aren't required to have `ref` tags.
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
@@ -73,7 +73,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId return_pattern_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_operator_syntax)
+                        SemIR::InstId return_arg_id, bool is_desugared)
     -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the

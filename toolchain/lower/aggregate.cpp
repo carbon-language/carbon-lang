@@ -7,6 +7,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
