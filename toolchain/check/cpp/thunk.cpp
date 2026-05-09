@@ -485,9 +485,8 @@ static auto CreateThunkFunctionDecl(
 static auto BuildThunkParamRef(clang::Sema& sema,
                                clang::FunctionDecl* thunk_function_decl,
                                unsigned thunk_index,
-                               clang::QualType type = clang::QualType(),
-                               SemIR::Signature::PassingMode passing_mode =
-                                   SemIR::Signature::PassingMode::ByValue)
+                               SemIR::Signature::PassingMode passing_mode,
+                               clang::QualType type = clang::QualType())
     -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
@@ -521,8 +520,8 @@ static auto BuildParamRefForCalleeArg(clang::Sema& sema,
   unsigned thunk_index = callee_info.GetThunkParamIndex(callee_index);
   return BuildThunkParamRef(
       sema, thunk_function_decl, thunk_index,
-      callee_info.decl->getParamDecl(callee_index)->getType(),
-      callee_info.signature->GetPassingMode(callee_index));
+      callee_info.signature->GetPassingMode(callee_index),
+      callee_info.decl->getParamDecl(callee_index)->getType());
 }
 
 // Builds an argument list for the callee function by creating suitable uses of
@@ -563,9 +562,9 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
     clang::QualType object_param_type =
         cast<clang::CXXMethodDecl>(callee_info.decl)
             ->getFunctionObjectParameterReferenceType();
-    auto* object_param_ref =
-        BuildThunkParamRef(sema, thunk_function_decl, 0, object_param_type,
-                           callee_info.signature->self_passing_mode);
+    auto* object_param_ref = BuildThunkParamRef(
+        sema, thunk_function_decl, 0, callee_info.signature->self_passing_mode,
+        object_param_type);
     constexpr bool IsArrow = false;
     auto object =
         sema.PerformMemberExprBaseConversion(object_param_ref, IsArrow);
@@ -623,7 +622,8 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
   }
 
   auto* return_object_addr = BuildThunkParamRef(
-      sema, thunk_function_decl, callee_info.GetThunkReturnParamIndex());
+      sema, thunk_function_decl, callee_info.GetThunkReturnParamIndex(),
+      SemIR::Signature::PassingMode::ByValue);
   auto return_type = callee_info.effective_return_type.getNonReferenceType();
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
