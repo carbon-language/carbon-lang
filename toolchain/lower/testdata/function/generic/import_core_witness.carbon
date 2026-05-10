@@ -57,19 +57,19 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "main.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.ea4dcbbefe9f139a(), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main.ea4dcbbefe9f139a(), !dbg !8
+// CHECK:STDOUT:   ret i32 0, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.ea4dcbbefe9f139a() #0 !dbg !9 {
-// CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !11
-// CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !11
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %1), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.ea4dcbbefe9f139a() #0 !dbg !10 {
+// CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !14
+// CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !14
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %1), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr)
@@ -89,10 +89,13 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "main.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 4, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.ea4dcbbefe9f139a", scope: null, file: !10, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DIFile(filename: "lib.carbon", directory: "")
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 4, column: 1, scope: !9)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.ea4dcbbefe9f139a", scope: null, file: !11, line: 4, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DIFile(filename: "lib.carbon", directory: "")
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !10)
+// CHECK:STDOUT: !15 = !DILocation(line: 4, column: 1, scope: !10)
