@@ -84,41 +84,13 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
                         .query_specific_interface_id =
                             witness->query_specific_interface_id,
                     });
-
-        // The new ImplWitnessAccess may evaluate to some type that includes
-        // `.Self`, or just `.Self` on its own, and we need to replace that too,
-        // so generally want to return SubstAgain here.
-        //
-        // However we must take care to not recurse infinitely here if the
-        // `.Self` replacement is another designator access instruction. For
-        // example, if `.Self` in `.(Y.Y1)` is replaced by `.(X.X1)`, we get
-        // `.(X.X1).(Y.Y1)` here. When we repeat, we recurse into `.(X.X1)` and
-        // replace `.Self` with `.(X.X1)` again, which gives us
-        // `.(X.X1).(X.X1).(Y.Y1)`. Then this repeats forever.
-        //
-        // We detect this loop if the new access self (after running eval, to
-        // get the canonical self value from the witness) is the same as
-        // `inst_id`. This catches when `inst_id` was a `.Self` that we already
-        // replaced with `.(X.X1)` and we are now replacing `.Self` with the
-        // same again.
-        //
-        // Note that LookupImplWitness can resolve to a final witness, so we
-        // need to check the inst kind here.
-        if (auto new_lookup_impl_witness =
-                context().insts().TryGetAs<SemIR::LookupImplWitness>(
-                    new_witness)) {
-          if (new_lookup_impl_witness->query_self_inst_id == inst_id) {
-            return FullySubstituted;
-          }
-        }
-
         auto new_access = Rebuild(inst_id, SemIR::ImplWitnessAccess{
                                                .type_id = access->type_id,
                                                .witness_id = new_witness,
                                                .index = access->index,
                                            });
         inst_id = new_access;
-        return SubstAgain;
+        return FullySubstituted;
       }
     }
   }
