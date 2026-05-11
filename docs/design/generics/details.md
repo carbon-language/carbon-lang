@@ -4614,6 +4614,13 @@ fn F(T:! type) {
   class E {
     // ❌ Rejected, no anchor name.
     impl B as Z {};
+
+    class G {
+      // ❌ Rejected, no anchor name. The `impl` is in the scope of `G`. But
+      // the scope of `G` is not the defining owning declaration of `E` nor
+      // does it contain the owning declaration of `E` .
+      impl E as Z {}
+    }
   }
 
   if (true) {
@@ -4621,7 +4628,7 @@ fn F(T:! type) {
     impl B as Z {}
   }
 
-  fn G() {
+  fn H() {
     // ❌ Rejected, no anchor name.
     impl B as Z {}
   }
