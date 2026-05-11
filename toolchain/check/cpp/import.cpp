@@ -70,6 +70,12 @@
 
 namespace Carbon::Check {
 
+auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool {
+  const auto* method = dyn_cast<clang::CXXMethodDecl>(&decl);
+  return method && !method->isStatic() &&
+         !isa<clang::CXXConstructorDecl>(&decl);
+}
+
 // Adds the name to the scope with the given `access_kind` and `inst_id`.
 // `inst_id` must have a value.
 static auto AddNameToScope(Context& context, SemIR::NameScopeId scope_id,
@@ -1315,11 +1321,10 @@ static auto MakeImplicitParamPatternsBlockId(
     SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl,
     SemIR::ClangDeclSignatureId signature_id) -> SemIR::InstBlockId {
-  const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
-  if (!method_decl || method_decl->isStatic() ||
-      isa<clang::CXXConstructorDecl>(clang_decl)) {
+  if (!IsObjectMemberFunction(clang_decl)) {
     return SemIR::InstBlockId::Empty;
   }
+  const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
 
   // Build a `self` parameter from the object parameter.
   BeginSubpattern(context);

@@ -665,7 +665,7 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
       // If this is an operator method, the first arg will be used as self.
       clang::Expr* self_expr = nullptr;
       auto arg_exprs_for_signature = arg_exprs;
-      if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
+      if (IsObjectMemberFunction(*best_viable_fn->Function)) {
         self_expr = arg_exprs_for_signature.consume_front();
       }
 

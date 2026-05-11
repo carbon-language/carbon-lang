@@ -18,6 +18,12 @@
 
 namespace Carbon::Check {
 
+// Returns whether the given function is an object member function. This is true
+// if it's a non-static member function and not a constructor. Object member
+// functions correspond to Carbon functions with a `self` parameter.
+// TODO: Find a better home for this function.
+auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
+
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
 // and warnings. If successful, adds a `Cpp` namespace.

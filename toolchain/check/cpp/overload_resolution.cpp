@@ -69,9 +69,8 @@ static auto AddOverloadCandidates(
 
     auto* fn_decl = template_decl ? template_decl->getTemplatedDecl()
                                   : cast<clang::FunctionDecl>(decl);
-    auto* method_decl = dyn_cast<clang::CXXMethodDecl>(fn_decl);
-    if (method_decl && !method_decl->isStatic() &&
-        !isa<clang::CXXConstructorDecl>(fn_decl)) {
+    if (IsObjectMemberFunction(*fn_decl)) {
+      auto* method_decl = cast<clang::CXXMethodDecl>(fn_decl);
       clang::QualType self_type;
       clang::Expr::Classification self_classification;
       if (self_arg) {
@@ -256,11 +255,9 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
         candidate->Conversions[conversion_index], arg_expr));
   }
 
-  if (auto* method = dyn_cast<clang::CXXMethodDecl>(candidate->Function)) {
-    if (!method->isStatic() && !isa<clang::CXXConstructorDecl>(method)) {
-      signature.self_passing_mode =
-          GetPassingModeForCppParameter(candidate->Conversions[0], self_expr);
-    }
+  if (IsObjectMemberFunction(*candidate->Function)) {
+    signature.self_passing_mode =
+        GetPassingModeForCppParameter(candidate->Conversions[0], self_expr);
   }
 
   return context.clang_decl_signatures().Add(std::move(signature));

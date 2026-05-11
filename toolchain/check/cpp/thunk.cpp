@@ -15,6 +15,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/context.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -68,14 +69,6 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
     return clang::GlobalDecl(dtor, clang::CXXDtorType::Dtor_Complete);
   }
   return clang::GlobalDecl(decl);
-}
-
-// Returns whether the given function is an object member function (i.e., a
-// non-static member function that is not a constructor).
-static auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool {
-  const auto* method = dyn_cast<clang::CXXMethodDecl>(&decl);
-  return method && !method->isStatic() &&
-         !isa<clang::CXXConstructorDecl>(&decl);
 }
 
 // Returns the C++ thunk mangled name given the callee function.
