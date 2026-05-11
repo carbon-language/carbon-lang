@@ -226,8 +226,8 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
   }
 
   // Otherwise, find the existing C++ declaration or create a new one.
-  auto* tag_decl = ExportClassToCpp(context, SemIR::LocId(class_inst_id),
-                                    class_inst_id, class_type);
+  auto* tag_decl =
+      ExportClassToCpp(context, SemIR::LocId(class_inst_id), class_type);
   if (!tag_decl) {
     return clang::QualType();
   }

@@ -840,6 +840,75 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                        .layout_id = context.custom_layouts().Add(layout)}));
 }
 
+// Returns the passing mode to use for a given virtual function's object
+// parameter.
+static auto GetVirtualFunctionSelfPassingMode(
+    const clang::CXXMethodDecl* method_decl)
+    -> SemIR::ClangDeclSignature::PassingMode {
+  if (method_decl->getMethodQualifiers().hasConst()) {
+    // Map these signatures to pass-by-value:
+    //
+    //   virtual void f() const;
+    //   virtual void f() const&;
+    //   virtual void f() const&&;
+    //
+    // In each case, we expect `self` to not be modified.
+    return SemIR::ClangDeclSignature::PassingMode::ByValue;
+  }
+
+  // Map anything else to pass-by-reference. This includes `&&`-qualified
+  // functions, which we can't map to pass-by-var since that would perform a
+  // slicing copy at the call site, which would be disastrous for a virtual
+  // function call.
+  // TODO: Find a better way to handle such cases, perhaps with a library type
+  // representing a `&&` parameter.
+  return SemIR::ClangDeclSignature::PassingMode::ByRef;
+}
+
+// Returns the passing mode to use for a virtual function parameter of the given
+// type.
+static auto GetVirtualFunctionParamPassingMode(clang::QualType type)
+    -> SemIR::ClangDeclSignature::PassingMode {
+  if (type->isReferenceType() &&
+      type.getNonReferenceType().isConstQualified()) {
+    // For `const &`, `const &&`, use pass by value.
+    return SemIR::ClangDeclSignature::PassingMode::ByValue;
+  }
+
+  if (type->isLValueReferenceType()) {
+    // For non-const `&`, use pass by reference.
+    return SemIR::ClangDeclSignature::PassingMode::ByRef;
+  }
+
+  // Map everything else to pass by var. That's the closest match we have to C++
+  // parameter semantics, and is necessary to support parameters that are passed
+  // by move.
+  return SemIR::ClangDeclSignature::PassingMode::ByVar;
+}
+
+// Computes the signature to use for the given imported virtual function. Unlike
+// with regular imported functions, we can only use a single signature here, so
+// we pick one conservatively.
+static auto MakeVirtualFunctionSignature(
+    Context& context, const clang::CXXMethodDecl* method_decl)
+    -> SemIR::ClangDeclSignatureId {
+  SemIR::ClangDeclSignature signature = {
+      .kind = SemIR::ClangDeclSignature::Normal,
+      // Include all parameters. Virtual calls do not support using default
+      // arguments.
+      .num_params = static_cast<int32_t>(method_decl->getNumNonObjectParams()),
+      .self_passing_mode = GetVirtualFunctionSelfPassingMode(method_decl),
+  };
+  signature.passing_modes.reserve(signature.num_params);
+  for (auto i : llvm::seq(signature.num_params)) {
+    const auto* param = method_decl->getNonObjectParameter(i);
+    signature.passing_modes.push_back(
+        GetVirtualFunctionParamPassingMode(param->getType()));
+  }
+
+  return context.clang_decl_signatures().Add(signature);
+}
+
 // Creates a Carbon class definition based on the information in the given Clang
 // class declaration, which is assumed to be for a class definition.
 static auto BuildClassDefinition(Context& context,
@@ -867,6 +936,39 @@ static auto BuildClassDefinition(Context& context,
                                .type_id = GetSingletonType(
                                    context, SemIR::WitnessType::TypeInstId),
                                .object_repr_type_inst_id = object_repr_id}));
+
+  if (class_info.is_dynamic) {
+    llvm::SmallVector<SemIR::InstId> vtable;
+    const auto& vtable_layout = dyn_cast<clang::ItaniumVTableContext>(
+                                    context.ast_context().getVTableContext())
+                                    ->getVTableLayout(clang_def);
+    auto vtable_components = vtable_layout.vtable_components();
+    vtable.reserve(vtable_components.size());
+    auto num_components = 0;
+    for (const auto& vtable_component : vtable_components) {
+      if (vtable_component.getKind() !=
+          clang::VTableComponent::CK_FunctionPointer) {
+        continue;
+      }
+      ++num_components;
+      const auto* method_decl = vtable_component.getFunctionDecl();
+      vtable.push_back(ImportCppFunctionDecl(
+          context, SemIR::LocId(import_ir_inst_id),
+          const_cast<clang::CXXMethodDecl*>(method_decl),
+          MakeVirtualFunctionSignature(context, method_decl)));
+    }
+    vtable.truncate(num_components);
+    auto vtable_id = context.vtables().Add(
+        {{.class_id = class_id,
+          .virtual_functions_id = context.inst_blocks().Add(vtable),
+          .carbon_native_vtable = false}});
+    auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
+    class_info.vtable_decl_id =
+        AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                             context.sem_ir(), import_ir_inst_id,
+                             SemIR::VtableDecl{.type_id = vptr_type_id,
+                                               .vtable_id = vtable_id}));
+  }
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }

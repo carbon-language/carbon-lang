@@ -229,12 +229,12 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
         AppendStructuralSymbolic();
         break;
       }
-      case CARBON_KIND(Step::FacetValue _): {
-        // Ignored, as it may be concrete or symbolic. We will recurse into it.
-        break;
-      }
       case CARBON_KIND(Step::TemplateType _): {
         AppendStructuralSymbolic();
+        break;
+      }
+      case CARBON_KIND(Step::TypeWrapper _): {
+        // Ignored, as it may be concrete or symbolic. We will recurse into it.
         break;
       }
       case CARBON_KIND(Step::ConcreteValue value): {

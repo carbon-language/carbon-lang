@@ -709,12 +709,14 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Default:
     case SemIR::CoreInterface::DivAssignWith:
     case SemIR::CoreInterface::DivWith:
+    case SemIR::CoreInterface::EqWith:
     case SemIR::CoreInterface::Inc:
     case SemIR::CoreInterface::ModAssignWith:
     case SemIR::CoreInterface::ModWith:
     case SemIR::CoreInterface::MulAssignWith:
     case SemIR::CoreInterface::MulWith:
     case SemIR::CoreInterface::Negate:
+    case SemIR::CoreInterface::OrderedWith:
     case SemIR::CoreInterface::SubAssignWith:
     case SemIR::CoreInterface::SubWith:
     case SemIR::CoreInterface::Unknown:
