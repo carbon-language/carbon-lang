@@ -42,24 +42,26 @@ struct Signature : public Printable<Signature> {
     // list initialization from a Carbon tuple.
     TuplePattern,
   };
+
   // The kind of function signature being imported.
   Kind kind = Normal;
+
   // The number of parameters to import. This can be less than the number of
   // parameters in the Clang declaration if the Clang declaration has default
   // arguments. Excludes the (implicit or explicit) object parameter, if there
   // is one.
-  // TODO: Once we always compute `passing_modes`, remove this and use
-  // `passing_modes.size()`.
+  // TODO: Remove in favor of `passing_modes`.
   int32_t num_params = -1;
-
-  // The passing mode for each parameter. Excludes the (implicit or explicit)
-  // object parameter, if there is one.
-  // TODO: Generalize this to be parameter info, not just passing mode.
-  llvm::SmallVector<PassingMode, 4> passing_modes;
 
   // The passing mode for the (implicit or explicit) object parameter, if there
   // is one. Otherwise PassingMode::ByRef.
   PassingMode self_passing_mode = PassingMode::ByRef;
+
+  // The passing mode for each parameter. Excludes the (implicit or explicit)
+  // object parameter, if there is one. This must be the same size as
+  // `num_params`.
+  // TODO: Generalize this to be parameter info, not just passing mode.
+  llvm::SmallVector<PassingMode, 4> passing_modes;
 
   // Convenience function to make a fixed signature.
   static auto Make(std::initializer_list<SemIR::Signature::PassingMode> modes,
@@ -69,8 +71,8 @@ struct Signature : public Printable<Signature> {
     Signature signature;
     signature.kind = kind;
     signature.num_params = static_cast<int32_t>(modes.size());
-    signature.passing_modes.assign(modes.begin(), modes.end());
     signature.self_passing_mode = self_passing_mode;
+    signature.passing_modes.assign(modes.begin(), modes.end());
     return signature;
   }
 
