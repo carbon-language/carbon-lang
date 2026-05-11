@@ -90,13 +90,6 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
-auto HandleParseNode(Context& context, Parse::FieldIntroducerId node_id)
-    -> bool {
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
-  context.node_stack().Push(node_id);
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = context.node_stack().PopPattern();
@@ -211,12 +204,6 @@ auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
   }
 
   return HandleInitializer(context, node_id);
-}
-
-auto HandleParseNode(Context& context, Parse::FieldInitializerId node_id)
-    -> bool {
-  context.node_stack().Push(node_id);
-  return true;
 }
 
 // Make a default initialization expression for a `var` declaration.
@@ -414,29 +401,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
-  if (context.node_stack().PeekNextIs(Parse::NodeKind::FieldInitializer)) {
-    // TODO: In a class scope, we should instead save the initializer
-    // somewhere so that we can use it as a default.
-    context.TODO(node_id, "Field initializer");
-    context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldInitializer>();
-  }
-
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldIntroducer>();
-  auto parent_scope_inst =
-      context.name_scopes()
-          .GetInstIfValid(context.scope_stack().PeekNameScopeId())
-          .second;
-  auto introducer =
-      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   return true;
 }
 
