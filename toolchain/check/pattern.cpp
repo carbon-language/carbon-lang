@@ -138,30 +138,26 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 
   // Handle `var` decls in a class by creating a `FieldDecl`.
   if (auto class_decl = GetClassDeclForVar(context)) {
-    const DeclIntroducerState& introducer =
-        context.decl_introducer_state_stack().innermost();
-    if (introducer.kind == Lex::TokenKind::Var) {
-      auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
-      auto& class_info = context.classes().Get(class_decl->class_id);
-      auto field_type_id = GetUnboundElementType(
-          context, context.types().GetTypeInstId(class_info.self_type_id),
-          context.types().GetTypeInstId(type_id));
+    auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    auto field_type_id = GetUnboundElementType(
+        context, context.types().GetTypeInstId(class_info.self_type_id),
+        context.types().GetTypeInstId(type_id));
 
-      if (name_id == SemIR::NameId::Underscore) {
-        CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
-                          "expected identifier in field declaration");
-        context.emitter().Emit(name_loc, FieldNamedUnderscore);
-      }
-
-      auto field_id =
-          AddInst<SemIR::FieldDecl>(context, name_loc,
-                                    {.type_id = field_type_id,
-                                     .name_id = name_id,
-                                     .index = SemIR::ElementIndex::None});
-      context.field_decls_stack().AppendToTop(field_id);
-
-      return {.pattern_id = field_id, .bind_id = field_id};
+    if (name_id == SemIR::NameId::Underscore) {
+      CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
+                        "expected identifier in field declaration");
+      context.emitter().Emit(name_loc, FieldNamedUnderscore);
     }
+
+    auto field_id =
+        AddInst<SemIR::FieldDecl>(context, name_loc,
+                                  {.type_id = field_type_id,
+                                   .name_id = name_id,
+                                   .index = SemIR::ElementIndex::None});
+    context.field_decls_stack().AppendToTop(field_id);
+
+    return {.pattern_id = field_id, .bind_id = field_id};
   }
 
   auto bind_id = AddInstInNoBlock(
