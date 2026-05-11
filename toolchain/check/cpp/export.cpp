@@ -11,10 +11,14 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
+#include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::Check {
 
@@ -183,6 +187,9 @@ static auto GetStructTypeFields(Context& context,
 
   auto object_repr_type_id =
       class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
+    return {};
+  }
   auto struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_type_id);
   return context.struct_type_fields().Get(struct_type.fields_id);
@@ -771,11 +778,44 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                carbon_function_decl);
 }
 
+// Returns whether the given class has any abstract methods.
+static auto HasAnyAbstractMethods(Context& context,
+                                  const SemIR::Class& class_info,
+                                  SemIR::SpecificId class_specific_id) -> bool {
+  if (class_info.vtable_decl_id == SemIR::InstId::None) {
+    return false;
+  }
+
+  LoadImportRef(context, class_info.vtable_decl_id);
+  auto vtable_decl_const_id = GetConstantValueInSpecific(
+      context.sem_ir(), class_specific_id, class_info.vtable_decl_id);
+  if (vtable_decl_const_id == SemIR::ErrorInst::ConstantId) {
+    return false;
+  }
+  auto vtable_id = context.constant_values()
+                       .GetInstAs<SemIR::VtableDecl>(vtable_decl_const_id)
+                       .vtable_id;
+  const auto& vtable = context.vtables().Get(vtable_id);
+  for (auto virtual_fn_id :
+       context.inst_blocks().Get(vtable.virtual_functions_id)) {
+    auto virtual_fn = DecomposeVirtualFunction(context.sem_ir(), virtual_fn_id,
+                                               class_specific_id);
+    if (context.functions().Get(virtual_fn.function_id).virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl* {
   SemIR::LocId loc_id(class_info.first_decl_id());
   auto clang_loc = record_decl->getLocation();
+
+  // TODO: Add support for exporting specific classes.
+  const auto specific_id = SemIR::SpecificId::None;
 
   // Create C++ destructor decl.
   auto class_type = context.ast_context().getCanonicalTagType(record_decl);
@@ -784,7 +824,8 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   clang::DeclarationNameInfo name_info(name, clang_loc);
   clang::QualType type = context.ast_context().getFunctionType(
       context.ast_context().VoidTy, llvm::ArrayRef<clang::QualType>(),
-      clang::FunctionProtoType::ExtProtoInfo());
+      clang::FunctionProtoType::ExtProtoInfo().withExceptionSpec(
+          clang::EST_BasicNoexcept));
   auto* cpp_destructor_decl = clang::CXXDestructorDecl::Create(
       context.ast_context(), record_decl,
       /*StartLoc=*/clang_loc, name_info, type, /*TInfo=*/nullptr,
@@ -792,13 +833,32 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
       clang::ConstexprSpecKind::Unspecified);
   cpp_destructor_decl->setAccess(clang::AS_public);
 
+  clang::Sema& sema = context.clang_sema();
+
+  // Find and register any base class virtual destructors that this destructor
+  // overrides. This marks the destructor as implicitly virtual if needed.
+  sema.AddOverriddenMethods(record_decl, cpp_destructor_decl);
+
+  // If the class is abstract and has no abstract methods, we need to mark the
+  // destructor as pure virtual.
+  if (class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract &&
+      !HasAnyAbstractMethods(context, class_info, specific_id)) {
+    if (cpp_destructor_decl->isVirtual()) {
+      cpp_destructor_decl->setIsPureVirtual(true);
+    } else {
+      context.TODO(class_info.definition_id,
+                   "exporting abstract class with no abstract methods and "
+                   "non-virtual destructor to C++");
+    }
+  }
+
   // Create Carbon thunk that destroys the object, and get a C++
   // function decl for calling it.
+  // TODO: Once we support exporting specific classes, export the specific
+  // destructor here rather than a generic one.
   auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
   auto* cpp_function_decl =
       BuildCppFunctionDeclForCarbonFn(context, loc_id, thunk_function_id);
-
-  clang::Sema& sema = context.clang_sema();
 
   // Build the destructor body.
   clang::Sema::ContextRAII context_raii(sema, cpp_destructor_decl);

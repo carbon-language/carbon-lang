@@ -1729,9 +1729,16 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     }
     if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
       // TODO: Add support for Microsoft/non-Itanium vtables.
+      clang::GlobalDecl decl;
+      if (auto* dtor_decl = dyn_cast<clang::CXXDestructorDecl>(method_decl)) {
+        // TODO: Do we want the index of the complete or base destructor?
+        decl = clang::GlobalDecl(dtor_decl, clang::Dtor_Complete);
+      } else {
+        decl = clang::GlobalDecl(method_decl);
+      }
       virtual_index = dyn_cast<clang::ItaniumVTableContext>(
                           context.ast_context().getVTableContext())
-                          ->getMethodVTableIndex(method_decl);
+                          ->getMethodVTableIndex(decl);
     }
   }
 

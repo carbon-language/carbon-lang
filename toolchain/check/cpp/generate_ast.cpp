@@ -616,6 +616,15 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->startDefinition();
   CARBON_CHECK(class_decl->hasDefinition());
 
+  // If the Carbon class is final, mark the C++ class as also being `final`.
+  // Abstract classes are handled when generating the destructor declaration.
+  if (class_info.inheritance_kind == SemIR::Class::InheritanceKind::Final) {
+    // TODO: Find the location of the `final` modifier and use it here.
+    class_decl->addAttr(clang::FinalAttr::Create(
+        context_->ast_context(),
+        GetCppLocation(*context_, SemIR::LocId(class_info.definition_id))));
+  }
+
   // If the Carbon class has a base class that we can map into C++, add that as
   // a C++ base class.
   auto base_type_id =

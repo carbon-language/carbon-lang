@@ -169,7 +169,7 @@ fn G() {
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::A", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #5
 // CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %a)
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a)
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -205,7 +205,7 @@ fn G() {
 // CHECK:STDOUT:   %b = alloca %"class.Carbon::B", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #5
 // CHECK:STDOUT:   call void @_ZN6CarbonL5CallBEPNS_1BE(ptr noundef %b)
-// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b)
+// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -227,7 +227,7 @@ fn G() {
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.B.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::B", ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a)
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #5
 // CHECK:STDOUT:   call void @_ZN6CarbonL5CallCEPNS_1CE(ptr noundef %c)
 // CHECK:STDOUT:   call void @_ZN6CarbonL5CallAEPNS_1AE(ptr noundef %c)
-// CHECK:STDOUT:   call void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c)
+// CHECK:STDOUT:   call void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -259,7 +259,7 @@ fn G() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.C.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1)
+// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
