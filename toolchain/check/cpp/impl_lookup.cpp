@@ -13,6 +13,7 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
@@ -355,93 +356,99 @@ static auto BuildCppComparisonWitness(
                             query_specific_interface_id, operators);
 }
 
-namespace {
-struct CppBeginEndEntries {
-  SemIR::InstId iterator_type = SemIR::InstId::None;
-  SemIR::InstId sentinel_type = SemIR::InstId::None;
-  SemIR::InstId begin_fn = SemIR::InstId::None;
-  SemIR::InstId end_fn = SemIR::InstId::None;
-
-  auto BeginAndEndBothFound() const -> bool {
-    CARBON_CHECK(iterator_type != SemIR::ErrorInst::InstId);
-    CARBON_CHECK(sentinel_type != SemIR::ErrorInst::InstId);
-    CARBON_CHECK(begin_fn != SemIR::ErrorInst::InstId);
-    CARBON_CHECK(end_fn != SemIR::ErrorInst::InstId);
-    return iterator_type.has_value() && sentinel_type.has_value() &&
-           begin_fn.has_value() && end_fn.has_value();
+static auto LookupCppMethod(
+    Context& context, clang::Sema& clang_sema, SemIR::LocId loc_id,
+    const clang::DeclarationNameInfo& name_info,
+    clang::CXXRecordDecl* class_decl,
+    [[maybe_unused]] SemIR::ConstantId query_self_const_id) -> SemIR::InstId {
+  constexpr auto LookupKind = clang::Sema::LookupMemberName;
+  auto lookup_info = clang::LookupResult(clang_sema, name_info, LookupKind);
+  clang_sema.LookupQualifiedName(lookup_info, class_decl);
+  if (lookup_info.empty()) {
+    return SemIR::InstId::None;
   }
-};
-}  // namespace
 
-[[maybe_unused]] static auto LookupCppBeginEndMethods(
-    Context& context, SemIR::LocId loc_id, clang::CXXRecordDecl* class_decl,
-    clang::Sema::LookupNameKind lookup_type) -> ErrorOr<CppBeginEndEntries> {
-  auto& clang_sema = context.clang_sema();
-  auto lookup_method =
-      [&](llvm::StringLiteral method_name) -> ErrorOr<DeclInfo> {
-    auto lookup_info = clang::LookupResult(
-        clang_sema, &clang_sema.getASTContext().Idents.get(method_name),
-        clang::SourceLocation(), lookup_type);
-    clang_sema.LookupQualifiedName(lookup_info, class_decl);
+  if (!lookup_info.isSingleResult()) {
+    context.TODO(loc_id, "{method_name} overload sets unsupported");
+    return SemIR::ErrorInst::InstId;
+  }
 
-    if (lookup_info.isAmbiguous()) {
-      return Error("ambiguous lookup");
-    }
-
-    if (!lookup_info.isSingleResult()) {
-      context.TODO(loc_id, "overload sets not implemented yet");
-      return Error("overload sets not implemented yet");
-    }
-
-    if (lookup_info.empty()) {
-      return DeclInfo{
-          .decl = nullptr,
-          .signature = {.num_params = 0},
-      };
-    }
-
-    return DeclInfo{
-        .decl = *lookup_info.begin(),
-        .signature = {.num_params = 0},
-    };
+  auto decl_info = DeclInfo{
+      .decl = *lookup_info.begin(),
+      .signature = {.num_params = 0},
   };
+  return GetFunctionId(context, loc_id, decl_info);
+}
 
-  auto begin_fn = lookup_method("begin");
-  if (!begin_fn.ok()) {
-    return std::move(begin_fn).error();
+static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
+                                 SemIR::LocId loc_id,
+                                 const clang::DeclarationNameInfo& name_info,
+                                 clang::CXXRecordDecl* class_decl,
+                                 SemIR::ConstantId query_self_const_id)
+    -> SemIR::InstId {
+  (void)clang_sema;
+  (void)name_info;
+  (void)class_decl;
+  (void)query_self_const_id;
+  context.TODO(loc_id, "support ADL begin/end");
+  return SemIR::ErrorInst::InstId;
+}
+
+using LookupBeginEndCallees = auto(Context&, clang::Sema&, SemIR::LocId,
+                                   const clang::DeclarationNameInfo&,
+                                   clang::CXXRecordDecl*, SemIR::ConstantId)
+    -> SemIR::InstId;
+
+static auto BuildCppRangeForIterateWitnessImpl(
+    Context& context, SemIR::LocId loc_id,
+    LookupBeginEndCallees range_for_lookup, clang::CXXRecordDecl* class_decl,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto& clang_sema = context.clang_sema();
+  auto begin_name_info = clang::DeclarationNameInfo(
+      &clang_sema.PP.getIdentifierTable().get("begin"),
+      clang::SourceLocation());
+  auto begin_fn_id =
+      range_for_lookup(context, clang_sema, loc_id, begin_name_info, class_decl,
+                       query_self_const_id);
+  if (begin_fn_id == SemIR::InstId::None ||
+      begin_fn_id == SemIR::ErrorInst::InstId) {
+    return begin_fn_id;
   }
 
-  auto end_fn = lookup_method("end");
-  if (!end_fn.ok()) {
-    return std::move(end_fn).error();
+  auto begin_result_type_id =
+      context.functions()
+          .Get(context.insts()
+                   .GetAs<SemIR::FunctionDecl>(begin_fn_id)
+                   .function_id)
+          .return_type_inst_id;
+  if (begin_result_type_id == SemIR::ErrorInst::InstId ||
+      begin_result_type_id == SemIR::InstId::None) {
+    return SemIR::ErrorInst::InstId;
   }
 
-  auto begin_fn_id = GetFunctionId(context, loc_id, *begin_fn);
-  auto end_fn_id = GetFunctionId(context, loc_id, *end_fn);
-  auto iterator_type_id = context.functions()
-                              .Get(context.insts()
-                                       .GetAs<SemIR::FunctionDecl>(begin_fn_id)
-                                       .function_id)
-                              .return_type_inst_id;
-  if (iterator_type_id == SemIR::ErrorInst::InstId) {
-    return Error("couldn't find return type for begin");
+  auto end_name_info = clang::DeclarationNameInfo(
+      &clang_sema.PP.getIdentifierTable().get("end"), clang::SourceLocation());
+  auto end_fn_id = range_for_lookup(context, clang_sema, loc_id, end_name_info,
+                                    class_decl, query_self_const_id);
+  if (end_fn_id == SemIR::InstId::None ||
+      end_fn_id == SemIR::ErrorInst::InstId) {
+    return end_fn_id;
   }
 
-  auto sentinel_type_id =
+  auto end_result_type_id =
       context.functions()
           .Get(
               context.insts().GetAs<SemIR::FunctionDecl>(end_fn_id).function_id)
           .return_type_inst_id;
-  if (sentinel_type_id == SemIR::ErrorInst::InstId) {
-    return Error("couldn't find return type for end");
+  if (end_result_type_id == SemIR::ErrorInst::InstId ||
+      end_result_type_id == SemIR::InstId::None) {
+    return SemIR::ErrorInst::InstId;
   }
 
-  return CppBeginEndEntries{
-      .iterator_type = iterator_type_id,
-      .sentinel_type = sentinel_type_id,
-      .begin_fn = begin_fn_id,
-      .end_fn = end_fn_id,
-  };
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {begin_result_type_id, end_result_type_id, begin_fn_id, end_fn_id});
 }
 
 static auto BuildCppRangeForIterateWitness(
@@ -449,19 +456,16 @@ static auto BuildCppRangeForIterateWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  auto range_for_witness = LookupCppBeginEndMethods(
-      context, loc_id, class_decl, clang::Sema::LookupMemberName);
-  if (!range_for_witness.ok()) {
-    return SemIR::ErrorInst::InstId;
+  if (auto with_members = BuildCppRangeForIterateWitnessImpl(
+          context, loc_id, LookupCppMethod, class_decl, query_self_const_id,
+          query_specific_interface_id);
+      with_members != SemIR::InstId::None) {
+    return with_members;
   }
 
-  if (range_for_witness->BeginAndEndBothFound()) {
-    return BuildCustomWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id,
-                              {&range_for_witness->iterator_type, 4});
-  }
-
-  return SemIR::InstId::None;
+  return BuildCppRangeForIterateWitnessImpl(
+      context, loc_id, LookupCppUnqualified, class_decl, query_self_const_id,
+      query_specific_interface_id);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
