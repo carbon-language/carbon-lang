@@ -268,85 +268,6 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
   return ValidateRequireResult{.identified_facet_type = &identified};
 }
 
-// Replace all `.Self` references with the self-type.
-static auto SubstPeriodSelfInConstraint(Context& context, SemIR::LocId loc_id,
-                                        SemIR::TypeInstId self_type_inst_id,
-                                        SemIR::TypeInstId constraint_inst_id)
-    -> SemIR::TypeInstId {
-  auto orig_facet_type = context.insts().GetAs<SemIR::FacetType>(
-      context.constant_values().GetConstantInstId(constraint_inst_id));
-  const auto& orig_info =
-      context.facet_types().Get(orig_facet_type.facet_type_id);
-
-  SubstPeriodSelfCallbacks callbacks(
-      &context, loc_id, context.constant_values().Get(self_type_inst_id));
-
-  auto replace_interface = [&](SemIR::SpecificInterface si) {
-    return SubstPeriodSelf(context, callbacks, si);
-  };
-  auto replace_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-    return SubstPeriodSelf(context, callbacks, sc);
-  };
-  auto replace_type_impls_interface =
-      [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
-      -> SemIR::FacetTypeInfo::TypeImplsInterface {
-    auto self = SubstPeriodSelf(context, callbacks,
-                                context.constant_values().Get(impls.self_type));
-    auto interface =
-        SubstPeriodSelf(context, callbacks, impls.specific_interface);
-    return {context.constant_values().GetInstId(self), interface};
-  };
-  auto replace_type_impls_constraint =
-      [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
-      -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
-    auto self = SubstPeriodSelf(context, callbacks,
-                                context.constant_values().Get(impls.self_type));
-    auto constraint =
-        SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
-    return {context.constant_values().GetInstId(self), constraint};
-  };
-
-  SemIR::FacetTypeInfo info;
-  llvm::append_range(
-      info.extend_constraints,
-      llvm::map_range(orig_info.extend_constraints, replace_interface));
-  llvm::append_range(
-      info.extend_named_constraints,
-      llvm::map_range(orig_info.extend_named_constraints, replace_constraint));
-  llvm::append_range(
-      info.self_impls_constraints,
-      llvm::map_range(orig_info.self_impls_constraints, replace_interface));
-  llvm::append_range(info.self_impls_named_constraints,
-                     llvm::map_range(orig_info.self_impls_named_constraints,
-                                     replace_constraint));
-  llvm::append_range(info.type_impls_interfaces,
-                     llvm::map_range(orig_info.type_impls_interfaces,
-                                     replace_type_impls_interface));
-  llvm::append_range(info.type_impls_named_constraints,
-                     llvm::map_range(orig_info.type_impls_named_constraints,
-                                     replace_type_impls_constraint));
-  // TODO: Replace .Self in rewrites too. We need to actually validate rewrite
-  // constraints from named constraints in impl lookup (see
-  // todo_fail_require_with_mismatching_rewrite_constraint.carbon).
-  llvm::append_range(info.rewrite_constraints, orig_info.rewrite_constraints);
-
-  info.Canonicalize();
-  if (info == orig_info) {
-    // Nothing was substituted, keep the original instruction.
-    //
-    // It is noteworthy that we keep the non-canonical instruction here, since
-    // it may have a symbolic value (which is attached to a generic, and can be
-    // updated by specifics). Returning the canonical constraint instruction
-    // would lose the attachment to the generic which would be incorrect.
-    return constraint_inst_id;
-  }
-
-  return AddTypeInst<SemIR::FacetType>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .facet_type_id = context.facet_types().Add(info)});
-}
-
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto [constraint_node_id, constraint_inst_id] =
       context.node_stack().PopExprWithNodeId();
@@ -391,7 +312,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   // replace `.Self` references explicitly here in the canonical constraint. We
   // do this after `ValidateRequire()` which has ensured the constraint is in
   // fact a FacetType.
-  auto constraint_type_inst_id = SubstPeriodSelfInConstraint(
+  auto constraint_type_inst_id = SubstPeriodSelfInFacetType(
       context, constraint_node_id, self_inst_id,
       context.types().GetAsTypeInstId(constraint_inst_id));
   // The replacement of `.Self` can create a new FacetType instruction which we

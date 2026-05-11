@@ -291,6 +291,101 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
   return constraint;
 }
 
+auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::TypeInstId self_type_inst_id,
+                                SemIR::TypeInstId facet_type_inst_id)
+    -> SemIR::TypeInstId {
+  auto orig_facet_type = context.insts().GetAs<SemIR::FacetType>(
+      context.constant_values().GetConstantInstId(facet_type_inst_id));
+  const auto& orig_info =
+      context.facet_types().Get(orig_facet_type.facet_type_id);
+
+  SubstPeriodSelfCallbacks callbacks(
+      &context, loc_id, context.constant_values().Get(self_type_inst_id));
+
+  auto replace_interface = [&](SemIR::SpecificInterface si) {
+    return SubstPeriodSelf(context, callbacks, si);
+  };
+  auto replace_constraint = [&](SemIR::SpecificNamedConstraint sc) {
+    return SubstPeriodSelf(context, callbacks, sc);
+  };
+  auto replace_type_impls_interface =
+      [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
+      -> SemIR::FacetTypeInfo::TypeImplsInterface {
+    auto self = SubstPeriodSelf(context, callbacks,
+                                context.constant_values().Get(impls.self_type));
+    auto interface =
+        SubstPeriodSelf(context, callbacks, impls.specific_interface);
+    return {context.constant_values().GetInstId(self), interface};
+  };
+  auto replace_type_impls_constraint =
+      [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
+      -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+    auto self = SubstPeriodSelf(context, callbacks,
+                                context.constant_values().Get(impls.self_type));
+    auto constraint =
+        SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
+    return {context.constant_values().GetInstId(self), constraint};
+  };
+  auto replace_rewrite = [&](SemIR::FacetTypeInfo::RewriteConstraint r)
+      -> SemIR::FacetTypeInfo::RewriteConstraint {
+    // Replace `.Self` only on the RHS, and only if's not a simple designator.
+    // The LHS is always a simple designator since only that is allowed.
+    if (auto access =
+            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(r.rhs_id)) {
+      if (auto lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+              access->witness_id)) {
+        if (IsPeriodSelf(context, lookup->query_self_inst_id)) {
+          // Found a simple designator. Leave it alone.
+          return r;
+        }
+      }
+    }
+    auto rhs = SubstPeriodSelf(context, callbacks,
+                               context.constant_values().Get(r.rhs_id));
+    return {r.lhs_id, context.constant_values().GetInstId(rhs)};
+  };
+
+  SemIR::FacetTypeInfo info;
+  llvm::append_range(
+      info.extend_constraints,
+      llvm::map_range(orig_info.extend_constraints, replace_interface));
+  llvm::append_range(
+      info.extend_named_constraints,
+      llvm::map_range(orig_info.extend_named_constraints, replace_constraint));
+  llvm::append_range(
+      info.self_impls_constraints,
+      llvm::map_range(orig_info.self_impls_constraints, replace_interface));
+  llvm::append_range(info.self_impls_named_constraints,
+                     llvm::map_range(orig_info.self_impls_named_constraints,
+                                     replace_constraint));
+  llvm::append_range(info.type_impls_interfaces,
+                     llvm::map_range(orig_info.type_impls_interfaces,
+                                     replace_type_impls_interface));
+  llvm::append_range(info.type_impls_named_constraints,
+                     llvm::map_range(orig_info.type_impls_named_constraints,
+                                     replace_type_impls_constraint));
+  llvm::append_range(
+      info.rewrite_constraints,
+      llvm::map_range(orig_info.rewrite_constraints, replace_rewrite));
+
+  info.Canonicalize();
+  if (info == orig_info) {
+    // Nothing was substituted, keep the original instruction.
+    //
+    // It is noteworthy that we keep the non-canonical instruction here, since
+    // it may have a symbolic value (which is attached to a generic, and can be
+    // updated by specifics). Returning the canonical facet type instruction
+    // would lose the attachment to the generic which would be incorrect.
+    return facet_type_inst_id;
+  }
+
+  return AddTypeInst<SemIR::FacetType>(
+      context, loc_id,
+      {.type_id = SemIR::TypeType::TypeId,
+       .facet_type_id = context.facet_types().Add(info)});
+}
+
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
     -> bool {
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
