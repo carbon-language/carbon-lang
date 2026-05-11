@@ -238,8 +238,12 @@ class File : public Printable<File> {
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
-  auto signatures() -> SignatureStore& { return signatures_; }
-  auto signatures() const -> const SignatureStore& { return signatures_; }
+  auto clang_decl_signatures() -> ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
+  auto clang_decl_signatures() const -> const ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -396,7 +400,7 @@ class File : public Printable<File> {
   ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
 
   // Storage for function signatures used in C++ interop.
-  SignatureStore signatures_;
+  ClangDeclSignatureStore clang_decl_signatures_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.

@@ -82,15 +82,15 @@ static auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool {
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
     const clang::FunctionDecl& callee_function_decl,
-    const SemIR::Signature& signature) -> std::string {
+    const SemIR::ClangDeclSignature& signature) -> std::string {
   RawStringOstream mangled_name_stream;
   mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
   switch (signature.kind) {
-    case SemIR::Signature::Normal:
+    case SemIR::ClangDeclSignature::Normal:
       mangled_name_stream << ".carbon_thunk";
       break;
-    case SemIR::Signature::TuplePattern:
+    case SemIR::ClangDeclSignature::TuplePattern:
       mangled_name_stream << ".carbon_thunk_tuple";
       break;
   }
@@ -99,15 +99,15 @@ static auto GenerateThunkMangledName(
   // TODO: Pick one "likely" set of passing modes for the function and omit the
   // suffix for that signature.
   mangled_name_stream << ".";
-  auto append_mode = [&](SemIR::Signature::PassingMode mode) {
+  auto append_mode = [&](SemIR::ClangDeclSignature::PassingMode mode) {
     switch (mode) {
-      case SemIR::Signature::PassingMode::ByValue:
+      case SemIR::ClangDeclSignature::PassingMode::ByValue:
         mangled_name_stream << "_";
         break;
-      case SemIR::Signature::PassingMode::ByVar:
+      case SemIR::ClangDeclSignature::PassingMode::ByVar:
         mangled_name_stream << "v";
         break;
-      case SemIR::Signature::PassingMode::ByRef:
+      case SemIR::ClangDeclSignature::PassingMode::ByRef:
         mangled_name_stream << "r";
         break;
     }
@@ -170,7 +170,7 @@ namespace {
 // Information about the callee of a thunk.
 struct CalleeFunctionInfo {
   explicit CalleeFunctionInfo(clang::FunctionDecl* decl,
-                              const SemIR::Signature* signature)
+                              const SemIR::ClangDeclSignature* signature)
       : decl(decl),
         signature(signature),
         num_params(signature->num_params +
@@ -223,7 +223,7 @@ struct CalleeFunctionInfo {
   clang::FunctionDecl* decl;
 
   // The signature of the function being imported.
-  const SemIR::Signature* signature;
+  const SemIR::ClangDeclSignature* signature;
 
   // The number of explicit parameters to import. This may be less than the
   // number of parameters that the function has if default arguments are being
@@ -256,9 +256,10 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   }
 
   const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
-  const auto& signature = context.signatures().Get(decl_info.key.signature_id);
+  const auto& signature =
+      context.clang_decl_signatures().Get(decl_info.key.signature_id);
   auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
-  if (signature.kind != SemIR::Signature::Normal ||
+  if (signature.kind != SemIR::ClangDeclSignature::Normal ||
       signature.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
@@ -275,7 +276,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   if (callee_info.has_implicit_object_parameter() &&
       (!IsSimpleAbiType(ast_context, callee_info.implicit_object_parameter_type,
                         /*for_parameter=*/true) ||
-       signature.self_passing_mode == SemIR::Signature::PassingMode::ByVar)) {
+       signature.self_passing_mode ==
+           SemIR::ClangDeclSignature::PassingMode::ByVar)) {
     return true;
   }
 
@@ -284,7 +286,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   for (int i : llvm::seq(decl->getNumParams())) {
     if (!IsSimpleAbiType(ast_context, function_type->getParamType(i),
                          /*for_parameter=*/true) ||
-        signature.GetPassingMode(i) == SemIR::Signature::PassingMode::ByVar) {
+        signature.GetPassingMode(i) ==
+            SemIR::ClangDeclSignature::PassingMode::ByVar) {
       return true;
     }
   }
@@ -480,12 +483,10 @@ static auto CreateThunkFunctionDecl(
 // Builds a reference to the given parameter thunk. If `type` is specified, that
 // is the callee parameter type that's being held by the parameter, and
 // conversions will be performed as necessary to recover a value of that type.
-static auto BuildThunkParamRef(clang::Sema& sema,
-                               clang::FunctionDecl* thunk_function_decl,
-                               unsigned thunk_index,
-                               SemIR::Signature::PassingMode passing_mode,
-                               clang::QualType type = clang::QualType())
-    -> clang::Expr* {
+static auto BuildThunkParamRef(
+    clang::Sema& sema, clang::FunctionDecl* thunk_function_decl,
+    unsigned thunk_index, SemIR::ClangDeclSignature::PassingMode passing_mode,
+    clang::QualType type = clang::QualType()) -> clang::Expr* {
   clang::ParmVarDecl* thunk_param =
       thunk_function_decl->getParamDecl(thunk_index);
   clang::SourceLocation clang_loc = thunk_param->getLocation();
@@ -502,7 +503,7 @@ static auto BuildThunkParamRef(clang::Sema& sema,
 
   // Cast to an xvalue when using pass-by-`var` or when initializing an rvalue
   // reference (which might be passed by value if it's const-qualified).
-  if (passing_mode == SemIR::Signature::PassingMode::ByVar ||
+  if (passing_mode == SemIR::ClangDeclSignature::PassingMode::ByVar ||
       thunk_param->getType()->isRValueReferenceType()) {
     call_arg = clang::ImplicitCastExpr::Create(
         sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
@@ -623,7 +624,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
 
   auto* return_object_addr = BuildThunkParamRef(
       sema, thunk_function_decl, callee_info.GetThunkReturnParamIndex(),
-      SemIR::Signature::PassingMode::ByValue);
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
   auto return_type = callee_info.effective_return_type.getNonReferenceType();
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
@@ -661,7 +662,8 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   // shouldn't consider it here. However, to do that, we would need to cache the
   // thunks we build so that we don't build the same thunk multiple times if
   // it's used with multiple different signature kinds.
-  const auto& signature = context.signatures().Get(clang_decl_key.signature_id);
+  const auto& signature =
+      context.clang_decl_signatures().Get(clang_decl_key.signature_id);
   CalleeFunctionInfo callee_info(callee_function_decl, &signature);
 
   // Build the thunk function declaration.

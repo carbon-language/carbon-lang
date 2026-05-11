@@ -24,13 +24,13 @@ auto CheckCppOverloadAccess(
 // conversion sequence and the argument expression.
 auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
                                    const clang::Expr* arg_expr)
-    -> SemIR::Signature::PassingMode;
+    -> SemIR::ClangDeclSignature::PassingMode;
 
 auto ComputeClangDeclSignatureFromBestViableFunction(
     Context& context, clang::OverloadCandidateSet::iterator candidate,
     clang::Expr* self_expr, llvm::ArrayRef<clang::Expr*> arg_exprs,
-    SemIR::Signature::Kind kind = SemIR::Signature::Normal)
-    -> SemIR::SignatureId;
+    SemIR::ClangDeclSignature::Kind kind = SemIR::ClangDeclSignature::Normal)
+    -> SemIR::ClangDeclSignatureId;
 
 // Resolves which function to call using Clang overload resolution. Returns an
 // instruction referring to that function, or an error instruction if overload

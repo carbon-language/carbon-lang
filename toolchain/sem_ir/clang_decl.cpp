@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-auto Signature::Print(llvm::raw_ostream& out) const -> void {
+auto ClangDeclSignature::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: ";
   switch (kind) {
     case Normal:
@@ -66,8 +66,8 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
   }
 
   out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
-  if (signature_id != SignatureId::None) {
-    out << ", signature_id: " << signature_id;
+  if (signature_id != ClangDeclSignatureId::None) {
+    out << ", clang_decl_signature_id: " << signature_id;
   }
   out << "}";
 }

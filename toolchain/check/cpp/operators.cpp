@@ -287,8 +287,8 @@ static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
     clang::FunctionDecl* function_decl, clang::DeclAccessPair found_decl,
-    clang::Expr* arg_expr) -> SemIR::SignatureId {
-  auto signature_kind = SemIR::Signature::Normal;
+    clang::Expr* arg_expr) -> SemIR::ClangDeclSignatureId {
+  auto signature_kind = SemIR::ClangDeclSignature::Normal;
   clang::Expr* self_expr = nullptr;
   llvm::ArrayRef<clang::Expr*> arg_exprs(arg_expr);
 
@@ -308,7 +308,7 @@ static auto GetConversionSignatureToImport(
         context.insts().Get(source_id).type_id());
     CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
     arg_exprs = cast<clang::InitListExpr>(arg_expr)->inits();
-    signature_kind = SemIR::Signature::TuplePattern;
+    signature_kind = SemIR::ClangDeclSignature::TuplePattern;
   }
 
   // In order to determine how to map the parameters, we need to build the
@@ -426,9 +426,10 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         sema.MarkFunctionReferenced(loc, step.Function.Function);
 
-        SemIR::SignatureId signature_id = GetConversionSignatureToImport(
-            context, source_id, step.Kind, step.Function.Function,
-            step.Function.FoundDecl, arg_expr);
+        SemIR::ClangDeclSignatureId signature_id =
+            GetConversionSignatureToImport(context, source_id, step.Kind,
+                                           step.Function.Function,
+                                           step.Function.FoundDecl, arg_expr);
         auto result_id = ImportCppFunctionDecl(
             context, loc_id, step.Function.Function, signature_id);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
@@ -668,7 +669,7 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
         self_expr = arg_exprs_for_signature.consume_front();
       }
 
-      SemIR::SignatureId signature_id =
+      SemIR::ClangDeclSignatureId signature_id =
           ComputeClangDeclSignatureFromBestViableFunction(
               context, best_viable_fn, self_expr, arg_exprs_for_signature);
 

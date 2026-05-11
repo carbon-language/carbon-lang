@@ -72,7 +72,7 @@ namespace {
 struct DeclInfo {
   // If null, no C++ decl was found and no witness can be created.
   clang::NamedDecl* decl = nullptr;
-  SemIR::SignatureId signature_id;
+  SemIR::ClangDeclSignatureId signature_id;
 };
 }  // namespace
 
@@ -109,11 +109,12 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
 // modes, and adds it to the value store.
 static auto MakeSignature(
     Context& context,
-    std::initializer_list<SemIR::Signature::PassingMode> modes,
-    SemIR::Signature::PassingMode self_passing_mode =
-        SemIR::Signature::PassingMode::ByRef) -> SemIR::SignatureId {
-  return context.signatures().Add(SemIR::Signature::Make(
-      modes, SemIR::Signature::Normal, self_passing_mode));
+    std::initializer_list<SemIR::ClangDeclSignature::PassingMode> modes,
+    SemIR::ClangDeclSignature::PassingMode self_passing_mode =
+        SemIR::ClangDeclSignature::PassingMode::ByRef)
+    -> SemIR::ClangDeclSignatureId {
+  return context.clang_decl_signatures().Add(SemIR::ClangDeclSignature::Make(
+      modes, SemIR::ClangDeclSignature::Normal, self_passing_mode));
 }
 
 static auto BuildCopyWitness(
@@ -139,8 +140,8 @@ static auto BuildCopyWitness(
       return SemIR::ErrorInst::InstId;
     }
 
-    SemIR::SignatureId signature_id =
-        MakeSignature(context, {SemIR::Signature::PassingMode::ByValue});
+    SemIR::ClangDeclSignatureId signature_id = MakeSignature(
+        context, {SemIR::ClangDeclSignature::PassingMode::ByValue});
     auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                   class_decl, clang::Qualifiers::Const),
                               .signature_id = signature_id};
@@ -181,8 +182,8 @@ static auto BuildCppUnsafeDerefWitness(
 
   // TODO: Parameterize the interface by the form of the operand and compute the
   // appropriate passing mode here.
-  SemIR::SignatureId signature_id =
-      MakeSignature(context, {}, SemIR::Signature::PassingMode::ByRef);
+  SemIR::ClangDeclSignatureId signature_id =
+      MakeSignature(context, {}, SemIR::ClangDeclSignature::PassingMode::ByRef);
 
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};
@@ -220,7 +221,7 @@ static auto BuildDefaultWitness(
   // That happens if class_decl->hasUninitializedExplicitInitFields() is true.
   //
   // TODO: Consider treating such types as not implementing `Default`.
-  SemIR::SignatureId signature_id = MakeSignature(context, {});
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
   auto decl_info =
       DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
@@ -245,7 +246,7 @@ static auto BuildDestroyWitness(
   if (!class_decl) {
     return SemIR::InstId::None;
   }
-  SemIR::SignatureId signature_id = MakeSignature(context, {});
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
   auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
                             .signature_id = signature_id};

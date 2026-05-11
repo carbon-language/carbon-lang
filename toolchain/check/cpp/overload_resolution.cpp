@@ -134,7 +134,7 @@ auto CheckCppOverloadAccess(
 // Computes the passing mode for a C++ function parameter that is a reference.
 static auto ComputePassingModeForReferenceBinding(
     const clang::StandardConversionSequence& scs)
-    -> SemIR::Signature::PassingMode {
+    -> SemIR::ClangDeclSignature::PassingMode {
   CARBON_CHECK(scs.ReferenceBinding);
   auto pointee_type = scs.getToType(2);
   if (pointee_type.isConstQualified() ||
@@ -143,12 +143,12 @@ static auto ComputePassingModeForReferenceBinding(
     // lvalue reference bound to an rvalue only happens when initializing an
     // object parameter with no ref-qualifier from an rvalue, which we also
     // model as pass-by-value.
-    return SemIR::Signature::PassingMode::ByValue;
+    return SemIR::ClangDeclSignature::PassingMode::ByValue;
   }
   // Rvalue reference to non-const is passed as a `var` to force a copy or move
   // in the caller. Lvalue reference to non-const is passed by reference.
-  return scs.IsLvalueReference ? SemIR::Signature::PassingMode::ByRef
-                               : SemIR::Signature::PassingMode::ByVar;
+  return scs.IsLvalueReference ? SemIR::ClangDeclSignature::PassingMode::ByRef
+                               : SemIR::ClangDeclSignature::PassingMode::ByVar;
 }
 
 // Returns whether move-construction of type `type` is known to be equivalent to
@@ -186,7 +186,7 @@ static auto IsMoveEquivalentToCopy(clang::QualType type) {
 
 auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
                                    const clang::Expr* arg_expr)
-    -> SemIR::Signature::PassingMode {
+    -> SemIR::ClangDeclSignature::PassingMode {
   if (ics.isStandard()) {
     const auto& scs = ics.Standard;
     if (scs.ReferenceBinding) {
@@ -197,10 +197,10 @@ auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
     // exception is where the source is an initializing expression of record
     // type, which we map to pass by var, unless a copy would do the same thing.
     if (arg_expr->isXValue() && !IsMoveEquivalentToCopy(arg_expr->getType())) {
-      return SemIR::Signature::PassingMode::ByVar;
+      return SemIR::ClangDeclSignature::PassingMode::ByVar;
     }
 
-    return SemIR::Signature::PassingMode::ByValue;
+    return SemIR::ClangDeclSignature::PassingMode::ByValue;
   }
 
   if (ics.isUserDefined()) {
@@ -214,15 +214,15 @@ auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
     if (ctor && ctor->isCopyConstructor()) {
       // Overload resolution wanted to call a copy constructor to initialize
       // this parameter. Pass by value instead; we'll copy in the thunk.
-      return SemIR::Signature::PassingMode::ByValue;
+      return SemIR::ClangDeclSignature::PassingMode::ByValue;
     }
 
     // We're calling a user-defined conversion, so we're performing
     // initialization. Pass by move unless the type being initialized doesn't
     // distinguish moves and copies.
     return IsMoveEquivalentToCopy(ucs.After.getToType(2))
-               ? SemIR::Signature::PassingMode::ByValue
-               : SemIR::Signature::PassingMode::ByVar;
+               ? SemIR::ClangDeclSignature::PassingMode::ByValue
+               : SemIR::ClangDeclSignature::PassingMode::ByVar;
   }
 
   // TODO: Support ellipsis conversion sequences.
@@ -234,8 +234,8 @@ auto GetPassingModeForCppParameter(const clang::ImplicitConversionSequence& ics,
 auto ComputeClangDeclSignatureFromBestViableFunction(
     Context& context, clang::OverloadCandidateSet::iterator candidate,
     clang::Expr* self_expr, llvm::ArrayRef<clang::Expr*> arg_exprs,
-    SemIR::Signature::Kind kind) -> SemIR::SignatureId {
-  SemIR::Signature signature;
+    SemIR::ClangDeclSignature::Kind kind) -> SemIR::ClangDeclSignatureId {
+  SemIR::ClangDeclSignature signature;
   signature.kind = kind;
   signature.num_params = static_cast<int32_t>(arg_exprs.size());
   signature.passing_modes.reserve(signature.num_params);
@@ -263,7 +263,7 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
     }
   }
 
-  return context.signatures().Add(std::move(signature));
+  return context.clang_decl_signatures().Add(std::move(signature));
 }
 
 auto PerformCppOverloadResolution(
@@ -315,7 +315,7 @@ auto PerformCppOverloadResolution(
     case clang::OverloadingResult::OR_Success: {
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
-      SemIR::SignatureId signature_id =
+      SemIR::ClangDeclSignatureId signature_id =
           ComputeClangDeclSignatureFromBestViableFunction(
               context, best_viable_fn, self_expr, arg_exprs);
 
