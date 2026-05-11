@@ -343,7 +343,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, %Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %A: %Class.F.type = alias_binding A, %Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %A: %Class.F.type = alias_binding A, %F.ref [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc21: %Class.elem = field_decl k, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.0bf [concrete = constants.%complete_type.954]

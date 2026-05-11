@@ -85,7 +85,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref.loc17: <namespace> = name_ref NS, %NS [concrete = %NS]
-// CHECK:STDOUT:   %ns: <namespace> = alias_binding ns, %NS [concrete = %NS]
+// CHECK:STDOUT:   %ns: <namespace> = alias_binding ns, %NS.ref.loc17 [concrete = %NS]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
@@ -106,7 +106,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref.loc23: <namespace> = name_ref NS, %NS [concrete = %NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %C: %A.type = alias_binding C, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %C: %A.type = alias_binding C, %A.ref [concrete = constants.%A]
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [concrete = constants.%D] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]

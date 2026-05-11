@@ -105,7 +105,7 @@ interface C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I2.ref: type = name_ref I2, file.%I2.decl [concrete = constants.%I2.type]
 // CHECK:STDOUT:   %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.7c1]
-// CHECK:STDOUT:   %U2: %I2.assoc_type = alias_binding U2, @T2.%assoc0 [concrete = constants.%assoc0.7c1]
+// CHECK:STDOUT:   %U2: %I2.assoc_type = alias_binding U2, %T2.ref [concrete = constants.%assoc0.7c1]
 // CHECK:STDOUT:   %J2.WithSelf.F2.decl: @J2.WithSelf.%J2.WithSelf.F2.type (%J2.WithSelf.F2.type) = fn_decl @J2.WithSelf.F2 [symbolic = @J2.WithSelf.%J2.WithSelf.F2 (constants.%J2.WithSelf.F2)] {
 // CHECK:STDOUT:     %return.param_patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = return_slot_pattern %return.param_patt, %U2.ref [concrete]

@@ -51,9 +51,9 @@ impl AC as AI {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %AI: type = alias_binding AI, %I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %AI: type = alias_binding AI, %I.ref [concrete = constants.%I.type]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %AC: type = alias_binding AC, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %AC: type = alias_binding AC, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.I.impl.e47215.1 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]

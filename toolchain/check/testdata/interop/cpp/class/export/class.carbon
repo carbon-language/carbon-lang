@@ -84,13 +84,13 @@ class B(N:! i32) {
 
 // TODO: Once we allow this, we should produce an "invalid array bound" error
 // during monomorphization triggered by the C++ code.
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
-// CHECK:STDERR: alias T = B(-1);
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR:
 alias T = B(-1);
 
 inline Cpp '''
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+8]]:1: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
+// CHECK:STDERR: Carbon::T t;
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
 // CHECK:STDERR:    22 | Carbon::T t;
 // CHECK:STDERR:       | ~~~~~~~~^
