@@ -17,6 +17,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
@@ -232,6 +233,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // error was diagnosed.
   auto specific_interface = CheckConstraintIsInterface(
       context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
+  if (!specific_interface.interface_id.has_value()) {
+    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // The identified facet type also replaced `.Self` references in the specific
+  // interface, but we want to store the full facet type not just the identified
+  // one. So we have to replace `.Self` references explicitly here in the
+  // canonical constraint. We do this after `CheckConstraintIsInterface()` which
+  // has ensured the constraint is in fact a FacetType.
+  constraint_type_inst_id = SubstPeriodSelfInFacetType(
+      context, constraint_node, self_type_inst_id, constraint_type_inst_id);
 
   // The impl decl has a scope stack entry for the DeclNameStack, so we look at
   // the parent scope of that.
@@ -256,8 +268,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         context.types().GetTypeIdForTypeInstId(impl.self_id) ==
             SemIR::ErrorInst::TypeId ||
         context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
-            SemIR::ErrorInst::TypeId ||
-        !impl.interface.interface_id.has_value();
+            SemIR::ErrorInst::TypeId;
 
     CARBON_KIND_SWITCH(FindImplId(context, impl)) {
       case CARBON_KIND(RedeclaredImpl redeclared_impl): {

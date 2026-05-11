@@ -73,7 +73,7 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
     -> SemIR::SpecificNamedConstraint;
 
 // Replace all `.Self` references with the self-type. The `facet_type_inst_id`
-// must be a `FacetType` instruction.
+// must be a `FacetType` instruction (or error).
 //
 // Unlike SubstPeriodSelf, which works with constant values and thus canonical
 // instructions, this operation can be done for non-canonical facet types. A new

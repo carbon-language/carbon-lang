@@ -295,6 +295,10 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::TypeInstId self_type_inst_id,
                                 SemIR::TypeInstId facet_type_inst_id)
     -> SemIR::TypeInstId {
+  if (facet_type_inst_id == SemIR::ErrorInst::TypeInstId) {
+    return facet_type_inst_id;
+  }
+
   auto orig_facet_type = context.insts().GetAs<SemIR::FacetType>(
       context.constant_values().GetConstantInstId(facet_type_inst_id));
   const auto& orig_info =

@@ -387,7 +387,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.<error>.impl: %C.ref.loc13 as %.loc13_13 {
+// CHECK:STDOUT: impl @C.as.<error>.impl: %C.ref.loc13 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -756,7 +756,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @X;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.<error>.impl: %C.ref as %X.ref;
+// CHECK:STDOUT: impl @C.as.<error>.impl: %C.ref as <error>;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
