@@ -64,11 +64,9 @@ rejected during [constraint resolution](#rewrite-constraint-resolution).
 
 ## Combining constraints with `and`
 
-It's possible for one `=` constraint in a `where` to refer to another. When this
-happens, the facet type `C where A and B` is interpreted as
-`(C where A) where B`, so rewrites in `A` are applied immediately to names in
-`B`, but rewrites in `B` are not applied to names in `A` until the facet type is
-[resolved](#rewrite-constraint-resolution):
+It's possible for one `=` constraint in a `where` to refer other constraints
+written to the left of it. During [resolution](#rewrite-constraint-resolution),
+rewrites are applied to each other in left-to-right order.
 
 ```carbon
 interface C {
