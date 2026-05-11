@@ -217,7 +217,6 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc10: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -406,7 +405,6 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc10: %D.elem = field_decl m, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.m [concrete = constants.%complete_type.218]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -589,7 +587,6 @@ fn Test(e: E) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %F.decl: type = class_decl @F.loc10 [concrete = constants.%F.c40] {} {}
-// CHECK:STDOUT:   %F.ref: type = name_ref F, %F.decl [concrete = constants.%F.c40]
 // CHECK:STDOUT:   %.loc11: %E.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.cae [concrete = constants.%complete_type.7a8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

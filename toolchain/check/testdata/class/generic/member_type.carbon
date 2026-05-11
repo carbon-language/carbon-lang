@@ -71,10 +71,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.bcf: type = class_type @Inner, @Inner(%T.035) [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.035 [symbolic]
 // CHECK:STDOUT:   %require_complete.89e: <witness> = require_complete_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.3b9bb5.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %Inner.elem.841: type = unbound_element_type %Inner.bcf, %T.as_type [symbolic]
 // CHECK:STDOUT:   %struct_type.n.50e: type = struct_type {.n: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %complete_type.06d: <witness> = complete_type_witness %struct_type.n.50e [symbolic]
-// CHECK:STDOUT:   %pattern_type.3b9bb5.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %.d79: Core.Form = init_form %Inner.bcf [symbolic]
 // CHECK:STDOUT:   %pattern_type.611: type = pattern_type %Inner.bcf [symbolic]
 // CHECK:STDOUT:   %Outer.F.type.2fb: type = fn_type @Outer.F, @Outer(%T.035) [symbolic]
@@ -233,25 +233,22 @@ fn Test() -> i32 {
 // CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_14.2: %Copy.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.035)]
-// CHECK:STDOUT:   %T.as_type.loc6_12.2: type = facet_access_type %T [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc6_12.2 [symbolic = %require_complete (constants.%require_complete.89e)]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic = %T.as_type (constants.%T.as_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic = %require_complete (constants.%require_complete.89e)]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%T) [symbolic = %Inner (constants.%Inner.bcf)]
-// CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %T.as_type.loc6_12.2 [symbolic = %Inner.elem (constants.%Inner.elem.841)]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Inner.%T.as_type.loc6_12.2 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.50e)]
+// CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %T.as_type [symbolic = %Inner.elem (constants.%Inner.elem.841)]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Inner.%T.as_type (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.50e)]
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.06d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_14.2 [symbolic = %T (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc6_12.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc6_12: type = converted %T.ref, %T.as_type.loc6_12.1 [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc6_10: @Inner.%Inner.elem (%Inner.elem.841) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:     %.loc6: @Inner.%Inner.elem (%Inner.elem.841) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.n.50e [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.06d)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.bcf
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .n = %.loc6_10
+// CHECK:STDOUT:     .n = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -329,7 +326,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Inner.350 = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Inner.350 = name_ref c, %c
-// CHECK:STDOUT:   %n.ref: %Inner.elem.117 = name_ref n, @Inner.%.loc6_10 [concrete = @Inner.%.loc6_10]
+// CHECK:STDOUT:   %n.ref: %Inner.elem.117 = name_ref n, @Inner.%.loc6 [concrete = @Inner.%.loc6]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
 // CHECK:STDOUT:   %impl.elem0.loc14: %.348 = impl_witness_access constants.%Copy.impl_witness.30d, element0 [concrete = constants.%Int.as.Copy.impl.Op.44b]
@@ -371,7 +368,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: specific @Inner(constants.%T.035) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T.035
-// CHECK:STDOUT:   %T.as_type.loc6_12.2 => constants.%T.as_type
+// CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.89e
 // CHECK:STDOUT:   %Inner => constants.%Inner.bcf
 // CHECK:STDOUT:   %Inner.elem => constants.%Inner.elem.841
@@ -400,7 +397,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: specific @Inner(constants.%Copy.facet.d1a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%Copy.facet.d1a
-// CHECK:STDOUT:   %T.as_type.loc6_12.2 => constants.%i32
+// CHECK:STDOUT:   %T.as_type => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Inner => constants.%Inner.350
 // CHECK:STDOUT:   %Inner.elem => constants.%Inner.elem.117

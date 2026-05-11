@@ -72,13 +72,9 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+8]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
+  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:20: error: found tuple pattern in class `var` decl [FieldWithTuplePattern]
   // CHECK:STDERR:   var (x: {}, y: {});
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var (x: {}, y: {});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                    ^
   // CHECK:STDERR:
   var (x: {}, y: {});
 }

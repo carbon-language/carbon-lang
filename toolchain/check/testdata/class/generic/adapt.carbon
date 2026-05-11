@@ -226,7 +226,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_10.2 [symbolic = %T.loc4_10.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.bd3) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -524,7 +523,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_10.2 [symbolic = %T.loc4_10.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.bd3) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -641,7 +639,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_10.2 [symbolic = %T.loc7_10.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8: @C.%C.elem (%C.elem.bd3) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
@@ -1068,7 +1065,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc11: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

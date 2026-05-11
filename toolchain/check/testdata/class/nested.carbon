@@ -62,8 +62,10 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.F: %Outer.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [concrete]
 // CHECK:STDOUT:   %ptr.78a: type = ptr_type %Inner [concrete]
+// CHECK:STDOUT:   %pattern_type.565: type = pattern_type %ptr.78a [concrete]
 // CHECK:STDOUT:   %Inner.elem.9c1: type = unbound_element_type %Inner, %ptr.78a [concrete]
 // CHECK:STDOUT:   %ptr.56b: type = ptr_type %Outer [concrete]
+// CHECK:STDOUT:   %pattern_type.cd9: type = pattern_type %ptr.56b [concrete]
 // CHECK:STDOUT:   %Inner.elem.9e0: type = unbound_element_type %Inner, %ptr.56b [concrete]
 // CHECK:STDOUT:   %Inner.G.type: type = fn_type @Inner.G [concrete]
 // CHECK:STDOUT:   %Inner.G: %Inner.G.type = struct_value () [concrete]
@@ -92,8 +94,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.e55: %DefaultOrUnformed.type = facet_value %Inner, (%DefaultOrUnformed.impl_witness.ae9) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.76c: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.83d, @T.as.DefaultOrUnformed.impl.Op(%Inner) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.565: type = pattern_type %ptr.78a [concrete]
-// CHECK:STDOUT:   %pattern_type.cd9: type = pattern_type %ptr.56b [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc19_5.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.6: type = fn_type @Destroy.Op.loc18_5.2 [concrete]
@@ -161,14 +161,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.F.decl: %Outer.F.type = fn_decl @Outer.F [concrete = constants.%Outer.F] {} {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %Outer.H.decl: %Outer.H.type = fn_decl @Outer.H [concrete = constants.%Outer.H] {} {}
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc40: type = ptr_type %Self.ref [concrete = constants.%ptr.56b]
 // CHECK:STDOUT:   %.loc40: %Outer.elem.1e5 = field_decl po, element0 [concrete]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc41: type = ptr_type %Outer.ref [concrete = constants.%ptr.56b]
 // CHECK:STDOUT:   %.loc41: %Outer.elem.1e5 = field_decl qo, element1 [concrete]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc42: type = ptr_type %Inner.ref [concrete = constants.%ptr.78a]
 // CHECK:STDOUT:   %.loc42: %Outer.elem.6db = field_decl pi, element2 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.po.qo.pi [concrete = constants.%complete_type.c34]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -185,14 +179,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %Self.ref [concrete = constants.%ptr.78a]
 // CHECK:STDOUT:   %.loc23: %Inner.elem.9c1 = field_decl pi, element0 [concrete]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %Outer.ref [concrete = constants.%ptr.56b]
 // CHECK:STDOUT:   %.loc24: %Inner.elem.9e0 = field_decl po, element1 [concrete]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc25: type = ptr_type %Inner.ref [concrete = constants.%ptr.78a]
 // CHECK:STDOUT:   %.loc25: %Inner.elem.9c1 = field_decl qi, element2 [concrete]
 // CHECK:STDOUT:   %Inner.G.decl: %Inner.G.type = fn_decl @Inner.G [concrete = constants.%Inner.G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.pi.po.qi [concrete = constants.%complete_type.486]

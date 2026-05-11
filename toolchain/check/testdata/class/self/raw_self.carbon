@@ -154,7 +154,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %return.param.loc17: ref %tuple.type.d07 = out_param call_param2
 // CHECK:STDOUT:     %return.loc17: ref %tuple.type.d07 = return_slot %return.param.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc18: %Class.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

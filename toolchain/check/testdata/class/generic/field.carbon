@@ -223,7 +223,6 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc7_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_14.2 [symbolic = %T.loc5_14.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc6: @Class.%Class.elem (%Class.elem.fdf) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc7_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc7_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_1.1

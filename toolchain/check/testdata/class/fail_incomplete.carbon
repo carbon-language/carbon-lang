@@ -147,7 +147,7 @@ fn CallReturnIncomplete() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+7]]:10: error: field has incomplete type `C` [IncompleteTypeInFieldDecl]
+  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var c: C;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_in_definition.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]

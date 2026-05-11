@@ -131,8 +131,6 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   %.loc22: %Class.elem = field_decl p, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.p [concrete = constants.%complete_type.141]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

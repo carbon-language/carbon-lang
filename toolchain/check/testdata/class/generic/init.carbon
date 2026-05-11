@@ -254,7 +254,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.46c) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.46c) = name_ref v, %v
-// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.ef9) = name_ref k, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
+// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.ef9) = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:     %.loc11_11.1: ref @InitFromStructGeneric.%T.as_type.loc9_59.1 (%T.as_type.db4) = class_element_access %v.ref, element0
 // CHECK:STDOUT:     %.loc11_11.2: @InitFromStructGeneric.%T.as_type.loc9_59.1 (%T.as_type.db4) = acquire_value %.loc11_11.1
 // CHECK:STDOUT:     %impl.elem0.loc11: @InitFromStructGeneric.%.loc10_27 (%.e56) = impl_witness_access constants.%Copy.lookup_impl_witness.322, element0 [symbolic = %impl.elem0.loc10_27.2 (constants.%impl.elem0.bab)]
@@ -300,7 +300,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %Class.02d = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %Class.02d = name_ref v, %v
-// CHECK:STDOUT:   %k.ref: %Class.elem.2a7 = name_ref k, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
+// CHECK:STDOUT:   %k.ref: %Class.elem.2a7 = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc16_11.2: %i32 = acquire_value %.loc16_11.1
 // CHECK:STDOUT:   %impl.elem0.loc16: %.348 = impl_witness_access constants.%Copy.impl_witness.30d, element0 [concrete = constants.%Int.as.Copy.impl.Op.44b]

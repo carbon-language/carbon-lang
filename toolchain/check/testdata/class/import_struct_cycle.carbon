@@ -90,9 +90,6 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl.loc4 [concrete = constants.%Cycle]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
-// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c [concrete = constants.%complete_type.3fc]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

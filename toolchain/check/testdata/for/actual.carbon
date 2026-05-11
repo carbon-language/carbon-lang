@@ -267,7 +267,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_36.1: type = splice_block %.loc4_36.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
-// CHECK:STDOUT:       %Core.ref.loc4: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_36.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
@@ -387,11 +387,11 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type: type = fn_type @IntRange.Make, @IntRange(%N.loc4_17.1) [symbolic = %IntRange.Make.type (constants.%IntRange.Make.type.1df)]
 // CHECK:STDOUT:   %IntRange.Make: @IntRange.%IntRange.Make.type (%IntRange.Make.type.1df) = struct_value () [symbolic = %IntRange.Make (constants.%IntRange.Make.8a9)]
-// CHECK:STDOUT:   %Int.loc22_32.2: type = class_type @Int, @Int(%N.loc4_17.1) [symbolic = %Int.loc22_32.2 (constants.%Int.fc6021.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc22_32.2 [symbolic = %require_complete (constants.%require_complete.9019d7.1)]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N.loc4_17.1) [symbolic = %Int (constants.%Int.fc6021.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int [symbolic = %require_complete (constants.%require_complete.9019d7.1)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N.loc4_17.1) [symbolic = %IntRange (constants.%IntRange.265)]
-// CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int.loc22_32.2 [symbolic = %IntRange.elem (constants.%IntRange.elem.541)]
-// CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.%Int.loc22_32.2 (%Int.fc6021.1), .end: @IntRange.%Int.loc22_32.2 (%Int.fc6021.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.ff1)]
+// CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int [symbolic = %IntRange.elem (constants.%IntRange.elem.541)]
+// CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.%Int (%Int.fc6021.1), .end: @IntRange.%Int (%Int.fc6021.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.ff1)]
 // CHECK:STDOUT:   %complete_type.loc24_1.2: <witness> = complete_type_witness %struct_type.start.end [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.427)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -456,15 +456,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_85.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %Int.ref.loc22: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:     %N.ref.loc22: Core.IntLiteral = name_ref N, %N.loc4_17.2 [symbolic = %N.loc4_17.1 (constants.%N)]
-// CHECK:STDOUT:     %Int.loc22_32.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc22_32.2 (constants.%Int.fc6021.1)]
 // CHECK:STDOUT:     %.loc22: @IntRange.%IntRange.elem (%IntRange.elem.541) = field_decl start, element0 [concrete]
-// CHECK:STDOUT:     %Core.ref.loc23: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %Int.ref.loc23: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:     %N.ref.loc23: Core.IntLiteral = name_ref N, %N.loc4_17.2 [symbolic = %N.loc4_17.1 (constants.%N)]
-// CHECK:STDOUT:     %Int.loc23: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc22_32.2 (constants.%Int.fc6021.1)]
 // CHECK:STDOUT:     %.loc23: @IntRange.%IntRange.elem (%IntRange.elem.541) = field_decl end, element1 [concrete]
 // CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness constants.%struct_type.start.end.ff1 [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.427)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc24_1.1
@@ -745,7 +737,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type => constants.%IntRange.Make.type.1df
 // CHECK:STDOUT:   %IntRange.Make => constants.%IntRange.Make.8a9
-// CHECK:STDOUT:   %Int.loc22_32.2 => constants.%Int.fc6021.1
+// CHECK:STDOUT:   %Int => constants.%Int.fc6021.1
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.9019d7.1
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.265
 // CHECK:STDOUT:   %IntRange.elem => constants.%IntRange.elem.541
@@ -814,7 +806,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type => constants.%IntRange.Make.type.045
 // CHECK:STDOUT:   %IntRange.Make => constants.%IntRange.Make.3e9
-// CHECK:STDOUT:   %Int.loc22_32.2 => constants.%i32
+// CHECK:STDOUT:   %Int => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.a89
 // CHECK:STDOUT:   %IntRange.elem => constants.%IntRange.elem.a58

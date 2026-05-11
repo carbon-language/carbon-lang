@@ -106,11 +106,11 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.loc5_14.1) [symbolic = %Class.G.type (constants.%Class.G.type)]
 // CHECK:STDOUT:   %Class.G: @Class.%Class.G.type (%Class.G.type) = struct_value () [symbolic = %Class.G (constants.%Class.G)]
-// CHECK:STDOUT:   %T.as_type.loc14_10.2: type = facet_access_type %T.loc5_14.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc14_10.2 [symbolic = %require_complete (constants.%require_complete.89e)]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc5_14.1 [symbolic = %T.as_type (constants.%T.as_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic = %require_complete (constants.%require_complete.89e)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_14.1) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc14_10.2 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.as_type.loc14_10.2 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.as_type (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n)]
 // CHECK:STDOUT:   %complete_type.loc15_1.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc15_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -153,10 +153,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return.param: ref @Class.G.%T.as_type.loc10_25.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.G.%T.as_type.loc10_25.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.ref: %Copy.type = name_ref T, %T.loc5_14.2 [symbolic = %T.loc5_14.1 (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc14_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc14_10: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc14_8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:     %.loc14: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc15_1.1: <witness> = complete_type_witness constants.%struct_type.n [symbolic = %complete_type.loc15_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc15_1.1
 // CHECK:STDOUT:
@@ -165,7 +162,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %Class.F.decl
 // CHECK:STDOUT:     .G = %Class.G.decl
-// CHECK:STDOUT:     .n = %.loc14_8
+// CHECK:STDOUT:     .n = %.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,7 +214,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   fn(%self.param: @Class.G.%Class (%Class)) -> out %return.param: @Class.G.%T.as_type.loc10_25.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
+// CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc14 [concrete = @Class.%.loc14]
 // CHECK:STDOUT:     %.loc11_16.1: ref @Class.G.%T.as_type.loc10_25.1 (%T.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc11_16.2: @Class.G.%T.as_type.loc10_25.1 (%T.as_type) = acquire_value %.loc11_16.1
 // CHECK:STDOUT:     %impl.elem0.loc11_16.1: @Class.G.%.loc11_16.3 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.594)]
@@ -238,7 +235,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %Class.F => constants.%Class.F
 // CHECK:STDOUT:   %Class.G.type => constants.%Class.G.type
 // CHECK:STDOUT:   %Class.G => constants.%Class.G
-// CHECK:STDOUT:   %T.as_type.loc14_10.2 => constants.%T.as_type
+// CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.89e
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
@@ -276,7 +273,6 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%T) [symbolic]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %struct_type.data: type = struct_type {.data: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.data [concrete]
@@ -315,16 +311,14 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.F.decl: @C.%C.F.type (%C.F.type) = fn_decl @C.F [symbolic = @C.%C.F (constants.%C.F)] {} {}
-// CHECK:STDOUT:     %.loc13_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc13_11: @C.%C.elem (%C.elem) = field_decl data, element0 [concrete]
+// CHECK:STDOUT:     %.loc13: @C.%C.elem (%C.elem) = field_decl data, element0 [concrete]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .F = %C.F.decl
-// CHECK:STDOUT:     .data = %.loc13_11
+// CHECK:STDOUT:     .data = %.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +330,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%.loc13_11 [concrete = @C.%.loc13_11]
+// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%.loc13 [concrete = @C.%.loc13]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -36,10 +36,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.Member: %C.Member.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %ptr.31e [concrete]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.31e} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete]
-// CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -81,8 +81,6 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   %.loc17: %C.elem = field_decl field, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.field [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

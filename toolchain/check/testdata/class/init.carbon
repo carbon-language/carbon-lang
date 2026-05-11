@@ -34,13 +34,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Class.elem.762: type = unbound_element_type %Class, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.8e5: type = ptr_type %Class [concrete]
+// CHECK:STDOUT:   %pattern_type.018: type = pattern_type %ptr.8e5 [concrete]
 // CHECK:STDOUT:   %Class.elem.f74: type = unbound_element_type %Class, %ptr.8e5 [concrete]
 // CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %ptr.8e5} [concrete]
 // CHECK:STDOUT:   %complete_type.bf0: <witness> = complete_type_witness %struct_type.n.next [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.018: type = pattern_type %ptr.8e5 [concrete]
 // CHECK:STDOUT:   %.cff: Core.Form = init_form %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.904: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
@@ -141,10 +141,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc16: %Class.elem.762 = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   %.loc17: %Class.elem.f74 = field_decl next, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.next [concrete = constants.%complete_type.bf0]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

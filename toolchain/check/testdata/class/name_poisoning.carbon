@@ -242,7 +242,7 @@ class C2 {
   // Failure: `C2.C1` declared after it was poisoned.
   // CHECK:STDERR: fail_declare_data_member_after_poison.carbon:[[@LINE+4]]:7: note: declared here [NameUseBeforeDeclNote]
   // CHECK:STDERR:   var C1: C2;
-  // CHECK:STDERR:       ^~~~~~
+  // CHECK:STDERR:       ^~
   // CHECK:STDERR:
   var C1: C2;
 }

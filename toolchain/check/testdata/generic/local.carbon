@@ -135,7 +135,6 @@ class C(C:! type) {
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_12.2 [symbolic = %T.loc5_12.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6: @C.%C.elem (%C.elem.d15) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1

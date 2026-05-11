@@ -547,9 +547,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %i32.loc5_18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc5_16: %D.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %i32.loc5_30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc5_28: %D.elem = field_decl m, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.m.de8 [concrete = constants.%complete_type.ea0]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

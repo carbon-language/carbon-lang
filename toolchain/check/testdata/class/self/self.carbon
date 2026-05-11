@@ -156,7 +156,6 @@ class Class {
 // CHECK:STDOUT:     %return.param.loc6: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc6: ref %i32 = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %Class.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
