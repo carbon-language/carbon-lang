@@ -363,7 +363,7 @@ fn G() {
   F(C);
 }
 
-// --- fail_todo_convert_to_period_self_preserves_self_facet_impls.carbon
+// --- convert_to_period_self_preserves_self_facet_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface K {}
@@ -380,18 +380,75 @@ fn G(T:! I where .I1 impls K) {
   // Replaces `.Self` with `T`, which converts `T` to `I & J`. Doing so has to
   // invent a witness for `J`, and this tests we do so without losing the
   // information that `.I1 impls K`.
-  //
-  // TODO: When converting T to the type of U, the identified facet type
-  // includes `.Self.I1 impls K`, which is replaced with `T.I1 impls K`. The
-  // identified facet type of `T` also contains `T.I1 impls K` so we should find
-  // a witness for that.
-  //
-  // CHECK:STDERR: fail_todo_convert_to_period_self_preserves_self_facet_impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.I1) impls K` into type implementing `J & I where .(I.I1) impls K` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_convert_to_period_self_preserves_self_facet_impls.carbon:[[@LINE-17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(unused U:! I & J where .I1 impls K) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   F(T);
+}
+
+// --- find_witness_from_facet_in_lookup_target_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+class D(T:! type) {}
+class E {}
+interface X(T:! type) {}
+interface V(T:! type) {}
+
+constraint W(T:! type) {
+  require Self impls X(T);
+}
+
+fn F(B:! W(E), C:! type where E impls V(.Self)) {
+  // These find a witness for `E as X(E)` from the facet `B`.
+  E as (V(C) where B impls X(.Self));
+  E as (V(C) where B impls X(E));
+}
+
+// --- find_witness_from_facet_in_specific_in_lookup_target_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+class D(T:! type) {}
+class E {}
+interface X(T:! type) {}
+interface V(T:! type) {}
+
+constraint W(T:! type) {
+  require D(Self) impls X(T);
+}
+
+fn F(B:! W(E), C:! type where E impls V(.Self)) {
+  // These find a witness for `E as X(E)` from the facet `B`.
+  E as (V(C) where D(B) impls X(.Self));
+  E as (V(C) where D(B) impls X(E));
+}
+
+// --- facet_has_witness_for_impl_witness_access.carbon
+library "[[@TEST_NAME]]";
+
+interface X {}
+interface Y {}
+interface Z {
+  // A type type, which has no witnesses.
+  let Z1:! type;
+  // A facet type, but not one that provides a witness for `.Z2 as Y`.
+  let Z2:! type where .Self impls X;
+}
+fn F(T:! Z where .Z1 impls Y and .Z2 impls Y) {
+  // `T.Z1` is a `type` so this query self is ImplWitnessAccess(Z1).
+  T.Z1 as Y;
+  // `T.Z2` has a facet type so this query self is FacetAccessType(ImplWitnessAccess(Z2)).
+  T.Z2 as Y;
+}
+
+// --- impl_witness_access_has_access.carbon
+library "[[@TEST_NAME]]";
+
+class C(T:! type) {}
+
+interface Y {}
+interface Z {
+  // Note that the facet type is not an exact type match for `Y` so that we
+  // cause an actual impl lookup to happen when we convert `.Z1` to `Y`.
+  let Z1:! type where .Self impls Y and C(.Self) impls Y;
+}
+fn F(T:! Z) {
+  T.Z1 as Y;
+  C(T.Z1) as Y;
 }

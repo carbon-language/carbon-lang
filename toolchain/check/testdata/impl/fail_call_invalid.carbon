@@ -152,7 +152,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.1(%self.param: <error>);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.2(%self.param: %i32) [thunk @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1] {
+// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.2(%self.param: %i32) [thunk @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1 for @Simple.WithSelf.%Simple.WithSelf.G.decl, @Simple.WithSelf.G(constants.%Simple.facet)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %self.param, %G.ref

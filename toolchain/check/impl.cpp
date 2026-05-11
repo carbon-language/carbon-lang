@@ -151,6 +151,9 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
 }
 
 // Returns true if impl redeclaration parameters and scopes match.
+//
+// TODO: Generalize things to validate re-declarations of other entity types,
+// which also have some similar rules such as sharing scopes.
 static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
                              const SemIR::Impl& prev_impl) -> ImplRedeclType {
   // If the parameters aren't the same, then this is not a redeclaration of this

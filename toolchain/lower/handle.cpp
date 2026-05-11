@@ -13,6 +13,7 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
@@ -261,6 +262,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Return /*inst*/) -> void {
+  // The 'Run()' entry point does not need to specify a return type, but
+  // the C runtime and system ABI expects the entry point to return an `int`.
+  // In this situation we modify the lowered IR to return `0`
+  // with the expected LLVM type that corresponds to the `int` type.
+  if (SemIR::IsEntryPoint(context.specific_sem_ir(),
+                          context.specific_sem_ir_function_id())) {
+    context.builder().CreateRet(context.builder().getInt32(0));
+    return;
+  }
   context.builder().CreateRetVoid();
 }
 

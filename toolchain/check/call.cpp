@@ -263,11 +263,13 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
-      LoadImportRef(context, callee.thunk_decl_id());
+      auto callee_inst_id =
+          context.sem_ir().thunks().Get(callee.thunk_id()).callee_id;
+      LoadImportRef(context, callee_inst_id);
 
       // Name the thunk target within the enclosing scope of the thunk.
       auto thunk_ref_id =
-          BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
+          BuildNameRef(context, loc_id, callee.name_id, callee_inst_id,
                        callee_function.enclosing_specific_id);
 
       auto param_pattern_ids =

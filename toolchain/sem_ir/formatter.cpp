@@ -569,9 +569,20 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                            /*use_hex_escapes=*/true)
           << "\"";
   }
-  if (fn.thunk_decl_id().has_value()) {
+  if (fn.thunk_id().has_value()) {
     out() << " [thunk ";
-    FormatArg(fn.thunk_decl_id());
+    const auto& thunk_info = sem_ir_->thunks().Get(fn.thunk_id());
+    FormatArg(thunk_info.callee_id);
+    if (thunk_info.signature_id.has_value()) {
+      out() << " for ";
+      FormatName(sem_ir_->functions()
+                     .Get(thunk_info.signature_id)
+                     .first_owning_decl_id);
+      if (thunk_info.specific_id.has_value()) {
+        out() << ", ";
+        FormatName(thunk_info.specific_id);
+      }
+    }
     out() << "]";
   }
 
@@ -1052,8 +1063,16 @@ auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   }
 }
 
-auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
-  GetFormatArgFn(arg_and_kind.kind())(*this, arg_and_kind.value());
+auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
+  arg_and_kind.Dispatch<void>([this]<typename IdT>(IdT arg) {
+    if constexpr (requires { FormatArg(arg); }) {
+      FormatArg(arg);
+    } else if constexpr (std::is_same_v<IdT, IdAndKind::NoneType>) {
+      // Do nothing
+    } else {
+      CARBON_FATAL("Missing FormatArg for {0}", typeid(IdT).name());
+    }
+  });
 }
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {

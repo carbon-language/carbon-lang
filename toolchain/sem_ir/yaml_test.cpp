@@ -96,6 +96,7 @@ TEST(SemIRTest, Yaml) {
                                                      "function[0-9A-F]+"))),
                                     Pair("arg1", "inst_block_empty"),
                                     Pair("type", type_id)))))))),
+      Pair("bundles", Yaml::Mapping(IsEmpty())),
       Pair("constant_values",
            Yaml::Mapping(ElementsAre(
                Pair("values",

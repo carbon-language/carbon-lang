@@ -158,6 +158,9 @@ class ImportContext {
 
   // Returns the file we are importing from.
   auto import_ir() -> const SemIR::File& { return import_ir_; }
+  auto import_thunks() -> const SemIR::ThunkStore& {
+    return import_ir().thunks();
+  }
 
   // Accessors into value stores of the file we are importing from.
   auto import_associated_constants() -> const SemIR::AssociatedConstantStore& {
@@ -2323,6 +2326,25 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalConstantInstId(resolver, import_function.self_param_id);
   auto return_pattern_id =
       GetLocalConstantInstId(resolver, import_function.return_pattern_id);
+
+  const SemIR::ThunkInfo* import_thunk_info = nullptr;
+  if (import_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::Thunk &&
+      import_function.thunk_id().has_value()) {
+    import_thunk_info =
+        &resolver.import_thunks().Get(import_function.thunk_id());
+  }
+  auto thunk_signature_inst_id =
+      import_thunk_info
+          ? GetLocalConstantInstId(resolver,
+                                   resolver.import_functions()
+                                       .Get(import_thunk_info->signature_id)
+                                       .first_decl_id())
+          : SemIR::InstId::None;
+  auto thunk_specific_data = GetLocalSpecificData(
+      resolver, import_thunk_info ? import_thunk_info->specific_id
+                                  : SemIR::SpecificId::None);
+
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
@@ -2369,11 +2391,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {
+      auto thunk_signature_type_id =
+          resolver.local_insts().Get(thunk_signature_inst_id).type_id();
       auto entity_name_id = resolver.local_entity_names().AddCanonical(
           {.name_id = new_function.name_id,
            .parent_scope_id = new_function.parent_scope_id});
-      new_function.SetThunk(AddImportRef(
-          resolver, import_function.thunk_decl_id(), entity_name_id));
+      SemIR::ThunkInfo local_thunk_info = {
+          .callee_id = AddImportRef(resolver, import_thunk_info->callee_id,
+                                    entity_name_id),
+          .signature_id =
+              resolver.local_types()
+                  .GetAs<SemIR::FunctionType>(thunk_signature_type_id)
+                  .function_id};
+      if (import_thunk_info->specific_id.has_value()) {
+        local_thunk_info.specific_id = GetOrAddLocalSpecific(
+            resolver, import_thunk_info->specific_id, thunk_specific_data);
+      }
+      new_function.SetThunk(resolver.local_ir().thunks().Add(local_thunk_info));
       break;
     }
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
@@ -2487,7 +2521,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.import_functions().Get(inst.function_id).first_decl_id());
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
-  if (resolver.HasNewWork()) {
+  if (resolver.HasNewWork() || !fn_val_id.has_value()) {
     return ResolveResult::Retry();
   }
   auto fn_type_id = resolver.local_insts().Get(fn_val_id).type_id();
@@ -4116,11 +4150,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   CARBON_CHECK(!const_id.has_value());
 
   auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
-  if (!inst_constant_id.is_constant()) {
+  if (!inst_constant_id.has_value() || !inst_constant_id.is_constant()) {
     // TODO: Import of non-constant BindNames happens when importing `let`
     // declarations.
-    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBinding>(inst_id),
-                 "TryResolveInst on non-constant instruction {0}", inst_id);
     return ResolveResult::Done(SemIR::ConstantId::NotConstant);
   }
 

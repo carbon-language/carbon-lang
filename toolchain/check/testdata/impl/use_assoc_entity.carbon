@@ -2727,7 +2727,7 @@ fn F() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.as.J.impl.F.loc27_21.2(%u.param: %i32) -> out %return.param: %i32 [thunk @E.as.J.impl.%E.as.J.impl.F.decl.loc27_21.1] {
+// CHECK:STDOUT: fn @E.as.J.impl.F.loc27_21.2(%u.param: %i32) -> out %return.param: %i32 [thunk @E.as.J.impl.%E.as.J.impl.F.decl.loc27_21.1 for @J.WithSelf.%J.WithSelf.F.decl, @J.WithSelf.F(constants.%J.facet)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %E.as.J.impl.F.type.4b5c2a.1 = name_ref F, @E.as.J.impl.%E.as.J.impl.F.decl.loc27_21.1 [concrete = constants.%E.as.J.impl.F.b4e6ab.1]
 // CHECK:STDOUT:   %E.as.J.impl.F.call: <error> = call %F.ref(<error>)
@@ -3455,7 +3455,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc23_50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @empty_tuple.type.as.J2.impl.F.loc23_40.2(%self.param: %empty_tuple.type) -> <error> [thunk @empty_tuple.type.as.J2.impl.%empty_tuple.type.as.J2.impl.F.decl.loc23_40.1] {
+// CHECK:STDOUT: fn @empty_tuple.type.as.J2.impl.F.loc23_40.2(%self.param: %empty_tuple.type) -> <error> [thunk @empty_tuple.type.as.J2.impl.%empty_tuple.type.as.J2.impl.F.decl.loc23_40.1 for @J2.WithSelf.%J2.WithSelf.F.decl, @J2.WithSelf.F(constants.%J2.facet.6c9)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %empty_tuple.type.as.J2.impl.F.type.56bdaf.1 = name_ref F, @empty_tuple.type.as.J2.impl.%empty_tuple.type.as.J2.impl.F.decl.loc23_40.1 [concrete = constants.%empty_tuple.type.as.J2.impl.F.7b8679.1]
 // CHECK:STDOUT:   %empty_tuple.type.as.J2.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
@@ -3473,7 +3473,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc32_53.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C2.as.J2.impl.F.loc32_40.2(%self.param: %C2) -> <error> [thunk @C2.as.J2.impl.%C2.as.J2.impl.F.decl.loc32_40.1] {
+// CHECK:STDOUT: fn @C2.as.J2.impl.F.loc32_40.2(%self.param: %C2) -> <error> [thunk @C2.as.J2.impl.%C2.as.J2.impl.F.decl.loc32_40.1 for @J2.WithSelf.%J2.WithSelf.F.decl, @J2.WithSelf.F(constants.%J2.facet.f19)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %C2.as.J2.impl.F.type.d2a210.1 = name_ref F, @C2.as.J2.impl.%C2.as.J2.impl.F.decl.loc32_40.1 [concrete = constants.%C2.as.J2.impl.F.720bb2.1]
 // CHECK:STDOUT:   %C2.as.J2.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
@@ -3730,7 +3730,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc26_62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @empty_tuple.type.as.K.impl.F.loc26_52.2(%self.param: %empty_tuple.type, %v.param: %struct_type.a) -> out %return.param: %struct_type.a [thunk @empty_tuple.type.as.K.impl.%empty_tuple.type.as.K.impl.F.decl.loc26_52.1] {
+// CHECK:STDOUT: fn @empty_tuple.type.as.K.impl.F.loc26_52.2(%self.param: %empty_tuple.type, %v.param: %struct_type.a) -> out %return.param: %struct_type.a [thunk @empty_tuple.type.as.K.impl.%empty_tuple.type.as.K.impl.F.decl.loc26_52.1 for @K.WithSelf.%K.WithSelf.F.decl, @K.WithSelf.F(constants.%K.facet)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %empty_tuple.type.as.K.impl.F.type.1710d5.1 = name_ref F, @empty_tuple.type.as.K.impl.%empty_tuple.type.as.K.impl.F.decl.loc26_52.1 [concrete = constants.%empty_tuple.type.as.K.impl.F.907e52.1]
 // CHECK:STDOUT:   %empty_tuple.type.as.K.impl.F.bound: <bound method> = bound_method %self.param, %F.ref

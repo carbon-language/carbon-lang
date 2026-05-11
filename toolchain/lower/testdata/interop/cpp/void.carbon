@@ -182,7 +182,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.81a1ecd9155a3498:OptionalAs.f58b2ba767714873.Core.030cb6453373b89b"(ptr %self) #0 !dbg !83 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !86
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self), !dbg !86
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert:thunk:ImplicitAs.a2a0c15925bee468.Core:e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self), !dbg !86
 // CHECK:STDOUT:   store ptr %1, ptr %temp, align 8, !dbg !86
 // CHECK:STDOUT:   %2 = load ptr, ptr %temp, align 8, !dbg !86
 // CHECK:STDOUT:   %3 = call ptr @_CSome.Optional.Core.f238af349d589061(ptr %2), !dbg !87
@@ -196,7 +196,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #3 !dbg !94 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk:ImplicitAs.a2a0c15925bee468.Core:e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #3 !dbg !94 {
 // CHECK:STDOUT:   ret ptr %self, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +336,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !89, type: !14)
 // CHECK:STDOUT: !92 = !DILocation(line: 31, column: 12, scope: !89)
 // CHECK:STDOUT: !93 = !DILocation(line: 31, column: 5, scope: !89)
-// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4", scope: null, file: !95, line: 40, type: !56, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !96)
+// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert:thunk:ImplicitAs.a2a0c15925bee468.Core:e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4", scope: null, file: !95, line: 40, type: !56, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !96)
 // CHECK:STDOUT: !95 = !DIFile(filename: "{{.*}}/prelude/types/cpp/void.carbon", directory: "")
 // CHECK:STDOUT: !96 = !{!97}
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !94, type: !14)

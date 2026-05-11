@@ -100,7 +100,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.5ae44f439e6b6107.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !28
 // CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !29
@@ -171,7 +171,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !22 = !DILocation(line: 20, column: 34, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 20, column: 28, scope: !19)
 // CHECK:STDOUT: !24 = !DILocation(line: 20, column: 21, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.61ea2aba74ab3bf1:I.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.5ae44f439e6b6107.Main:61ea2aba74ab3bf1:I.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 3, scope: !25)
@@ -213,7 +213,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CF:thunk:I.1ede6ff4110118d7.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
@@ -296,7 +296,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk.X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.e55c78367db83a6b.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 8, !dbg !16
 // CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 8
@@ -359,7 +359,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 34, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 9, column: 28, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 21, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.X.Main:I.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.e55c78367db83a6b.Main:X.Main:I.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !13)
@@ -401,7 +401,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF:thunk.X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CF:thunk:I.9d1db36de5cccc48.Main:X.Main:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.X.Main:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
