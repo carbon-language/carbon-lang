@@ -19,6 +19,7 @@ enum class ModifierOrder : int8_t {
   Extern,
   Extend,
   Decl,
+  Static,
   Evaluation,
   Last = Evaluation
 };
@@ -48,6 +49,9 @@ enum class ModifierOrder : int8_t {
   X(Override)                                                                \
   X(Returned)                                                                \
   X(Virtual)                                                                 \
+                                                                             \
+  /* Static is standalone. */                                                \
+  X(Static)                                                                  \
                                                                              \
   /* Eval and MustEval are mutually exclusive. */                            \
   X(Eval)                                                                    \
@@ -158,11 +162,11 @@ static_assert(
              .HasAnyOf(KeywordModifierSet::Evaluation),
     "Order-related sets must not overlap");
 
-#define CARBON_KEYWORD_MODIFIER_SET_IN_GROUP(Modifier)                     \
-  static_assert((KeywordModifierSet::Access | KeywordModifierSet::Extern | \
-                 KeywordModifierSet::Extend | KeywordModifierSet::Decl |   \
-                 KeywordModifierSet::Evaluation)                           \
-                    .HasAnyOf(KeywordModifierSet::Modifier),               \
+#define CARBON_KEYWORD_MODIFIER_SET_IN_GROUP(Modifier)                        \
+  static_assert((KeywordModifierSet::Access | KeywordModifierSet::Extern |    \
+                 KeywordModifierSet::Extend | KeywordModifierSet::Decl |      \
+                 KeywordModifierSet::Evaluation | KeywordModifierSet::Static) \
+                    .HasAnyOf(KeywordModifierSet::Modifier),                  \
                 "Modifier missing from all modifier sets: " #Modifier);
 CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_IN_GROUP)
 #undef CARBON_KEYWORD_MODIFIER_SET_IN_GROUP
