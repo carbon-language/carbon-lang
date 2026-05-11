@@ -178,6 +178,16 @@ static auto DumpRequireImplsSummary(const File& file,
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, RawBundleId bundle_id)
+    -> std::string {
+  for (auto inst : file.insts().values()) {
+    inst.CacheBundleDebugKinds(file.bundles());
+  }
+  RawStringOstream out;
+  Print(out, file.bundles().OutputBundleYaml(bundle_id));
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;
@@ -600,6 +610,9 @@ static LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& scope)
 
 // Functions that can be used instead of the corresponding constructor, which is
 // unavailable during debugging.
+LLVM_DUMP_METHOD static auto MakeBundleId(int id) -> RawBundleId {
+  return RawBundleId(id);
+}
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);
 }

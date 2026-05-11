@@ -848,6 +848,23 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
+// Returns the constant value of `id` if it has a `GetConstantValue` overload,
+// and otherwise returns `id` itself.
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT;
+
+template <typename BundleT>
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::BundleId<BundleT> bundle_id, Phase* phase)
+    -> SemIR::BundleId<BundleT> {
+  return eval_context.context().bundles().AddCanonical(std::apply(
+      [&]<typename... Ids>(Ids... ids) -> BundleT {
+        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id)));
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -877,31 +894,14 @@ static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
 };
 
-using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
-    -> int32_t;
-
-// Returns the arg handler for an `IdKind`.
-template <typename... Types>
-static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
-  static constexpr std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> Table =
-      {
-          [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-            auto id = SemIR::Inst::FromRaw<Types>(arg);
-            if constexpr (HasGetConstantValueOverload<Types>) {
-              // If we have a custom `GetConstantValue` overload, call it.
-              return SemIR::Inst::ToRaw(
-                  GetConstantValue(eval_context, id, phase));
-            } else {
-              // Otherwise, we assume the value is already constant.
-              return arg;
-            }
-          }...,
-          // Invalid and None handling (ordering-sensitive).
-          [](auto...) -> int32_t { CARBON_FATAL("Unexpected invalid IdKind"); },
-          [](EvalContext& /*context*/, int32_t arg,
-             Phase* /*phase*/) -> int32_t { return arg; },
-      };
-  return Table[id_kind.ToIndex()];
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    return GetConstantValue(eval_context, id, phase);
+  } else {
+    return id;
+  }
 }
 
 // Given the stored value `arg` of an instruction field and its corresponding
@@ -910,10 +910,11 @@ static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
 // the resulting phase is not constant, the returned value is not useful and
 // will typically be `NoneIndex`.
 static auto GetConstantValueForArg(EvalContext& eval_context,
-                                   SemIR::Inst::ArgAndKind arg_and_kind,
-                                   Phase* phase) -> int32_t {
-  return GetArgHandlerFn(arg_and_kind.kind())(eval_context,
-                                              arg_and_kind.value(), phase);
+                                   SemIR::IdAndKind arg_and_kind, Phase* phase)
+    -> int32_t {
+  return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
+    return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
+  });
 }
 
 // Given an instruction, replaces its operands with their constant values from
@@ -985,76 +986,86 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                       specific_id);
 }
 
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::FacetTypeId facet_type_id)
+    -> void {
+  const auto& info = eval_context.context().facet_types().Get(facet_type_id);
+  for (const auto& interface : info.extend_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& interface : info.self_impls_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& constraint : info.extend_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& constraint : info.self_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_interfaces) {
+    ResolveSpecificDeclForSpecificId(eval_context,
+                                     type_impls.specific_interface.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(
+        eval_context, type_impls.specific_named_constraint.specific_id);
+  }
+}
+
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::SpecificId specific_id) -> void {
+  ResolveSpecificDeclForSpecificId(eval_context, specific_id);
+}
+
+static auto ResolveSpecificDeclForArg(
+    EvalContext& eval_context, SemIR::SpecificInterfaceId specific_interface_id)
+    -> void {
+  ResolveSpecificDeclForSpecificId(eval_context,
+                                   eval_context.specific_interfaces()
+                                       .Get(specific_interface_id)
+                                       .specific_id);
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT> &&
+           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::DestInstId,
+                       SemIR::EntityNameId, SemIR::InstBlockId, SemIR::InstId,
+                       SemIR::MetaInstId, SemIR::StructTypeFieldsId,
+                       SemIR::TypeInstId>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  // These id types have a GetConstantValue() overload but that overload
+  // does not canonicalize any SpecificId in the value type.
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    CARBON_FATAL("Missing case for {0} which has a GetConstantValue() overload",
+                 IdT::Label);
+  }
+}
+
+template <typename BundleT>
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::BundleId<BundleT> bundle_id)
+    -> void {
+  std::apply(
+      [&](auto... ids) -> void {
+        (..., ResolveSpecificDeclForArg(eval_context, ids));
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id));
+}
+
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-    // This switch must handle any field type that has a GetConstantValue()
-    // overload which canonicalizes a specific (and thus potentially forms a new
-    // specific) as part of forming its constant value.
-    CARBON_KIND_SWITCH(arg_and_kind) {
-      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-        const auto& info =
-            eval_context.context().facet_types().Get(facet_type_id);
-        for (const auto& interface : info.extend_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& interface : info.self_impls_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& constraint : info.extend_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& constraint : info.self_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& type_impls : info.type_impls_interfaces) {
-          ResolveSpecificDeclForSpecificId(
-              eval_context, type_impls.specific_interface.specific_id);
-        }
-        for (const auto& type_impls : info.type_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(
-              eval_context, type_impls.specific_named_constraint.specific_id);
-        }
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificId specific_id): {
-        ResolveSpecificDeclForSpecificId(eval_context, specific_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificInterfaceId specific_interface_id): {
-        ResolveSpecificDeclForSpecificId(eval_context,
-                                         eval_context.specific_interfaces()
-                                             .Get(specific_interface_id)
-                                             .specific_id);
-        break;
-      }
-
-        // These id types have a GetConstantValue() overload but that overload
-        // does not canonicalize any SpecificId in the value type.
-      case SemIR::IdKind::For<SemIR::DestInstId>:
-      case SemIR::IdKind::For<SemIR::EntityNameId>:
-      case SemIR::IdKind::For<SemIR::InstBlockId>:
-      case SemIR::IdKind::For<SemIR::InstId>:
-      case SemIR::IdKind::For<SemIR::MetaInstId>:
-      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-      case SemIR::IdKind::For<SemIR::TypeInstId>:
-        break;
-
-      case SemIR::IdKind::None:
-        // No arg.
-        break;
-
-      default:
-        CARBON_CHECK(
-            !KindHasGetConstantValueOverload(arg_and_kind.kind()),
-            "Missing case for {0} which has a GetConstantValue() overload",
-            arg_and_kind.kind());
-        break;
-    }
+    arg_and_kind.Dispatch<void>(
+        [&](auto id) { ResolveSpecificDeclForArg(eval_context, id); });
   }
 }
 

@@ -17,6 +17,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_ref.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
@@ -28,6 +29,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -488,12 +490,17 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] =
+  auto [function_id, thunk_inst_id] =
       CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
                         signature_specific_id, callee.function_id);
 
+  auto thunk_id =
+      context.sem_ir().thunks().Add({.callee_id = callee_id,
+                                     .signature_id = signature_id,
+                                     .specific_id = signature_specific_id});
+
   // Track that this function is a thunk.
-  context.functions().Get(function_id).SetThunk(callee_id);
+  context.functions().Get(function_id).SetThunk(thunk_id);
 
   if (defer_definition) {
     // Register the thunk to be defined when we reach the end of the enclosing
@@ -503,16 +510,50 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
         context, {
                      .signature_id = signature_id,
                      .function_id = function_id,
-                     .decl_id = thunk_id,
+                     .decl_id = thunk_inst_id,
                      .callee_id = callee_id,
                  });
   } else {
-    BuildThunkDefinition(context, signature_id, function_id, thunk_id,
+    BuildThunkDefinition(context, signature_id, function_id, thunk_inst_id,
                          callee_id);
     context.scope_stack().Pop();
   }
 
-  return thunk_id;
+  return thunk_inst_id;
+}
+
+auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
+                       const SemIR::Class& class_info) -> SemIR::FunctionId {
+  // Create a new function declaration.
+  auto thunk_name_id = SemIR::NameId::ForIdentifier(
+      context.identifiers().Add("__destroy_thunk"));
+  auto [thunk_inst_id, thunk_function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = class_info.scope_id,
+                                 .name_id = thunk_name_id,
+                                 .self_type_id = class_info.self_type_id});
+
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  thunk_function.SetThunk(SemIR::ThunkId::None);
+
+  context.scope_stack().PushForDeclName();
+  StartFunctionDefinition(context, thunk_inst_id, thunk_function_id);
+
+  // Get `self` arg.
+  auto params = context.inst_blocks().Get(thunk_function.call_params_id);
+  auto self_inst_id = params[0];
+
+  // Build the function body. This calls the `Destroy` operator on `self`.
+  auto destroy_inst_id = BuildUnaryOperator(
+      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
+      self_inst_id);
+  DiscardExpr(context, destroy_inst_id);
+  BuildReturnWithNoExpr(context, loc_id);
+
+  FinishFunctionDefinition(context, thunk_function_id);
+  context.scope_stack().Pop();
+
+  return thunk_function_id;
 }
 
 }  // namespace Carbon::Check

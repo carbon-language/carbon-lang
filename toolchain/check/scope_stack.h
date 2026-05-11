@@ -88,6 +88,12 @@ class ScopeStack {
   // there is no such instruction, such as for a block scope.
   auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
 
+  // Returns the instruction associated with the parent scope, or `None` if
+  // there is no such instruction, such as for a block scope.
+  auto PeekParentInstId() const -> SemIR::InstId {
+    return Peek(1).scope_inst_id;
+  }
+
   // Returns the specific associated with the innermost enclosing scope that is
   // associated with a specific. This will generally be the self specific of the
   // innermost enclosing generic, as there is no way to enter any other specific
@@ -280,7 +286,10 @@ class ScopeStack {
             SemIR::SpecificId specific_id, bool lexical_lookup_has_load_error)
       -> void;
 
-  auto Peek() const -> const ScopeStackEntry& { return scope_stack_.back(); }
+  auto Peek(int drop = 0) const -> const ScopeStackEntry& {
+    CARBON_DCHECK(drop < static_cast<int>(scope_stack_.size()));
+    return scope_stack_[scope_stack_.size() - 1 - drop];
+  }
 
   // Returns whether lexical lookup currently has any load errors.
   auto LexicalLookupHasLoadError() const -> bool {

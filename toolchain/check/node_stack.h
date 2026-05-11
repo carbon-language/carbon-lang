@@ -459,8 +459,8 @@ class NodeStack {
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
-      case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::ImplIntroducer:
+      case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LambdaIntroducer:
       case Parse::NodeKind::LetInitializer:

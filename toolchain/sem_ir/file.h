@@ -18,6 +18,7 @@
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/associated_constant.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
@@ -40,6 +41,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
@@ -173,6 +175,8 @@ class File : public Printable<File> {
   auto cpp_overload_sets() const -> const CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
+  auto thunks() -> ThunkStore& { return thunks_; }
+  auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
@@ -276,6 +280,9 @@ class File : public Printable<File> {
     return clang_source_locs_;
   }
 
+  auto bundles() -> BundleStore& { return bundles_; }
+  auto bundles() const -> const BundleStore& { return bundles_; }
+
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
@@ -329,6 +336,9 @@ class File : public Printable<File> {
 
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
+
+  // Storage for thunk info records.
+  ThunkStore thunks_;
 
   // Storage for classes.
   ClassStore classes_;
@@ -424,6 +434,9 @@ class File : public Printable<File> {
 
   // C++ source locations for C++ interop.
   ClangSourceLocStore clang_source_locs_;
+
+  // Storage for instruction argument bundles.
+  BundleStore bundles_;
 };
 
 }  // namespace Carbon::SemIR

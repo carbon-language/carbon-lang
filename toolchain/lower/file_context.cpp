@@ -548,9 +548,9 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
   auto* subprogram = BuildDISubprogram(declaration_function, *function_info);
   FunctionContext function_lowering(
-      definition_context, function_info->llvm_function, *this, specific_id,
-      coalescer_.InitializeFingerprintForSpecific(specific_id), subprogram,
-      vlog_stream_);
+      definition_context, function_info->llvm_function, *this, function_id,
+      specific_id, coalescer_.InitializeFingerprintForSpecific(specific_id),
+      subprogram, vlog_stream_);
 
   auto call_param_ids = definition_ir.inst_blocks().GetOrEmpty(
       definition_function.call_params_id);

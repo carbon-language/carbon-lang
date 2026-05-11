@@ -87,7 +87,7 @@ class Worklist {
 
 // Pushes the specified operand onto the worklist.
 static auto PushOperand(Context& context, Worklist& worklist,
-                        SemIR::Inst::ArgAndKind arg) -> void {
+                        SemIR::IdAndKind arg) -> void {
   auto push_block = [&](SemIR::InstBlockId block_id) {
     for (auto inst_id :
          context.inst_blocks().Get(SemIR::InstBlockId(block_id))) {
@@ -182,7 +182,7 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
 
 // Pops the specified operand from the worklist and returns it.
 static auto PopOperand(Context& context, Worklist& worklist,
-                       SemIR::Inst::ArgAndKind arg) -> int32_t {
+                       SemIR::IdAndKind arg) -> int32_t {
   auto pop_block_id = [&](SemIR::InstBlockId old_inst_block_id) {
     auto size = context.inst_blocks().Get(old_inst_block_id).size();
     SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),

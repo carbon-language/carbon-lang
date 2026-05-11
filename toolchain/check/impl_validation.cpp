@@ -35,6 +35,7 @@ struct ImplInfo {
   bool is_local;
   // If imported, the IR from which the `impl` decl was imported.
   SemIR::ImportIRId ir_id;
+  SemIR::LibraryNameId library_id;
   std::optional<TypeStructure> type_structure;
 };
 
@@ -80,6 +81,9 @@ static auto IsSameLibrary(Context& context, SemIR::InstId owning_inst_id)
 static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
   const auto& impl = context.impls().Get(impl_id);
   auto ir_id = GetIRId(context, impl.first_owning_decl_id);
+  auto library_id = ir_id.has_value()
+                        ? context.import_irs().Get(ir_id).sem_ir->library_id()
+                        : context.sem_ir().library_id();
   return {.impl_id = impl_id,
           .is_final = impl.is_final,
           .witness_id = impl.witness_id,
@@ -88,6 +92,7 @@ static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
           .interface = impl.interface,
           .is_local = !ir_id.has_value(),
           .ir_id = ir_id,
+          .library_id = library_id,
           .type_structure =
               BuildTypeStructure(context, impl.self_id, impl.interface)};
 }
@@ -406,10 +411,12 @@ static auto ValidateImplsForInterface(Context& context,
         // Rules between two non-final impls.
         // =====================================================================
         if (!did_diagnose_non_final_impls_with_same_type_structure) {
-          // Two impls in separate files will need to have some different
+          // Two impls in separate libraries will need to have some different
           // concrete element in their type structure, as enforced by the orphan
-          // rule. So we don't need to check against non-local impls.
-          if (impl_a.is_local && impl_b.is_local) {
+          // rule. So we only need to check when they are in the same library,
+          // but possibly different files, if one is in the api and one in the
+          // impl file.
+          if (impl_a.library_id == impl_b.library_id) {
             if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
                                                            impl_b)) {
               // The same final `impl_a` may overlap with multiple `impl_b`s,

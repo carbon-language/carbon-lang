@@ -13,6 +13,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -135,6 +136,15 @@ class FunctionTypeInfoBuilder {
     auto lowered_return_types = GetLoweredTypes(func_ctx, return_type_id);
     return_type_ = lowered_return_types.llvm_ir_type;
     param_di_types_.push_back(lowered_return_types.llvm_di_type);
+    return true;
+  }
+
+  // Modifies the lowered return type of the entry point function to return
+  // an int32, to conform with expectations from calling programs.
+  auto SetEntryPointReturnInt32(const FunctionInContext& func_ctx) -> bool {
+    return_type_ = llvm::Type::getInt32Ty(func_ctx.context->llvm_context());
+    param_di_types_.push_back(context_->di_builder().createBasicType(
+        "int", 32, llvm::dwarf::DW_ATE_signed));
     return true;
   }
 
@@ -269,9 +279,6 @@ class FunctionTypeInfoBuilder {
 };
 
 auto FunctionTypeInfoBuilder::Build() && -> FunctionTypeInfo {
-  // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
-  // return a value.
-
   // Determine how the parameters are numbered in SemIR, and make sure it's the
   // same for all versions of the function.
   auto semir_info = GetSemIRIndexInfo(functions_.front());
@@ -325,6 +332,12 @@ auto FunctionTypeInfoBuilder::TryHandleReturnForm(
       func_ctx.context->sem_ir().functions().Get(func_ctx.function_id);
   auto return_form_inst_id = function.return_form_inst_id;
   if (!return_form_inst_id.has_value()) {
+    // If this is the entry point 'Run()` function, and it doesn't specify a
+    // return type, we modify the lowered return type to be an int32 and emit IR
+    // to return 0i32.
+    if (SemIR::IsEntryPoint(func_ctx.context->sem_ir(), func_ctx.function_id)) {
+      return SetEntryPointReturnInt32(func_ctx);
+    }
     return SetReturnByCopy(func_ctx, SemIR::TypeId::None);
   }
 

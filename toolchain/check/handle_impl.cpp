@@ -164,7 +164,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
                  SemIR::InstBlockId::Empty);
   }
 
-  Parse::NodeId first_param_node_id =
+  auto first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
@@ -233,12 +233,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   auto specific_interface = CheckConstraintIsInterface(
       context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
 
+  // The impl decl has a scope stack entry for the DeclNameStack, so we look at
+  // the parent scope of that.
+  auto parent_scope_inst_id = context.scope_stack().PeekParentInstId();
+
   auto impl_id = SemIR::ImplId::None;
   {
     SemIR::Impl impl = {name_context.MakeEntityWithParamsBase(
                             name, impl_decl_id,
                             /*is_extern=*/false, SemIR::LibraryNameId::None),
-                        {.self_id = self_type_inst_id,
+                        {.parent_scope_inst_id = parent_scope_inst_id,
+                         .self_id = self_type_inst_id,
                          .constraint_id = constraint_type_inst_id,
                          .interface = specific_interface,
                          .is_final = is_final}};

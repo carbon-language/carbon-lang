@@ -388,7 +388,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.X.Cpp"(ptr sret([12 x i8]) %return) #2 !dbg !23 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.17a84649916546b3.Core:X.Cpp"(ptr sret([12 x i8]) %return) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk(ptr %return), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
@@ -417,7 +417,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #0 !dbg !30 {
-// CHECK:STDOUT:   call void @"_COp:thunk.X.Cpp"(ptr %return), !dbg !32
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.17a84649916546b3.Core:X.Cpp"(ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -464,7 +464,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS1X", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.X.Cpp", scope: null, file: !24, line: 2, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.17a84649916546b3.Core:X.Cpp", scope: null, file: !24, line: 2, type: !25, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !24 = !DIFile(filename: "./struct.h", directory: "")
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{!27}

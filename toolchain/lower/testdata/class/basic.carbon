@@ -28,20 +28,20 @@ fn Run() {
 // CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
-// CHECK:STDOUT:   %_.var = alloca { i32, ptr }, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %_.var, ptr %c.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %_.var), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca { i32, ptr }, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %_.var, ptr %c.var), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %_.var), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -77,18 +77,18 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 14, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null, !14}
-// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 14, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 20, column: 1, scope: !4)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 22, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null, !7}
 // CHECK:STDOUT: !15 = !{!16}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 22, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !12, type: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 22, column: 3, scope: !12)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e7e7253cfbad8551:core.Destroy.Core", scope: null, file: !3, line: 22, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{null, !21}

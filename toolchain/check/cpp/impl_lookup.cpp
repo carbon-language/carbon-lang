@@ -19,6 +19,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -301,6 +302,57 @@ static auto BuildCppBinaryOperatorWitness(
                             query_specific_interface_id, {fn_id});
 }
 
+static auto BuildCppComparisonWitness(
+    Context& context, SemIR::LocId loc_id, CoreIdentifier interface,
+    llvm::ArrayRef<CoreIdentifier> operator_names,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto args =
+      context.inst_blocks().Get(context.specifics()
+                                    .Get(context.specific_interfaces()
+                                             .Get(query_specific_interface_id)
+                                             .specific_id)
+                                    .args_id);
+  CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
+
+  auto arg_type_id = context.types().GetTypeIdForTypeInstId(args[0]);
+  auto operators = llvm::SmallVector<SemIR::InstId, 4>();
+  for (auto operator_name : operator_names) {
+    auto lookup_id = LookupCppOperator(
+        context, loc_id,
+        {.interface_name = interface, .op_name = operator_name},
+        {self_type_id, arg_type_id});
+    if (lookup_id == SemIR::ErrorInst::InstId ||
+        lookup_id == SemIR::InstId::None) {
+      // `T.(Core.EqWith(U))` is only valid if both `t == u` and `t != u` are
+      // valid expressions. Looking for `t != u` is pointless if we're unable to
+      // find a valid `t == u`, because `t != u` won't provide further useful
+      // information at this point.
+      //
+      // The behavior is dependent on which expression is checked first: no
+      // diagnostic will be emitted for an erroneous `operator!=` if lookup for
+      // `operator==` produces `SemIR::InstId::None`.
+      return lookup_id;
+    }
+
+    auto return_type_id = context.functions()
+                              .Get(context.insts()
+                                       .GetAs<SemIR::FunctionDecl>(lookup_id)
+                                       .function_id)
+                              .return_type_inst_id;
+    if (!return_type_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    operators.push_back(lookup_id);
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, operators);
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
@@ -341,6 +393,17 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                                            /*has_associated_result_type=*/false,
                                            query_self_const_id,
                                            query_specific_interface_id);
+    case SemIR::CoreInterface::EqWith:
+      return BuildCppComparisonWitness(
+          context, loc_id, CoreIdentifier::EqWith,
+          {CoreIdentifier::Equal, CoreIdentifier::NotEqual},
+          query_self_const_id, query_specific_interface_id);
+    case SemIR::CoreInterface::OrderedWith:
+      return BuildCppComparisonWitness(
+          context, loc_id, CoreIdentifier::OrderedWith,
+          {CoreIdentifier::Less, CoreIdentifier::LessOrEquivalent,
+           CoreIdentifier::Greater, CoreIdentifier::GreaterOrEquivalent},
+          query_self_const_id, query_specific_interface_id);
     case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id);

@@ -46,6 +46,10 @@ auto BuildThunkDefinitionForExport(Context& context,
                                    SemIR::InstId thunk_id,
                                    SemIR::InstId callee_id) -> void;
 
+// Build a function that destroys an object of the given class.
+auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
+                       const SemIR::Class& class_info) -> SemIR::FunctionId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_THUNK_H_
