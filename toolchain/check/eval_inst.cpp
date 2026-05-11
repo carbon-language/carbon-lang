@@ -348,7 +348,7 @@ static auto TryFindValueInRewriteConstraints(
     // The LHS of the rewrite might be `.Self` or it could be one or more nested
     // ImplWitnessAccess instructions that eventually bottom out in `.Self`.
     // Rewrite constraints must modify `.Self` so we know the target of the
-    // rewrite is untimately always `.Self` which refers to the `search_facet`.
+    // rewrite is ultimately always `.Self` which refers to the `search_facet`.
     // So we don't have to substitute the `.Self` and do any comparison.
 
     auto rewrite_lhs_interface =
