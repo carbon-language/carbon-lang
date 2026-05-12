@@ -115,28 +115,13 @@ auto FileContext::LowerDefinitions() -> void {
   // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
   // map is redundant.
-  for (auto inst_id :
-       sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
-    // Only `VarStorage` indicates a global variable declaration in the
-    // top instruction block.
-    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      // Get the global variable declaration. We created this when lowering the
-      // constant unless the variable is unnamed, in which case we need to
-      // create it now.
-      llvm::GlobalVariable* llvm_var = nullptr;
-      if (auto const_id = sem_ir().constant_values().Get(inst_id);
-          const_id.is_constant()) {
-        llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
-      } else {
-        // We should never be emitting a definition for a C++ global variable.
-        llvm_var = BuildNonCppGlobalVariableDecl(*var);
-      }
+  LowerGlobalVariables(sem_ir().top_inst_block_id());
 
-      // Convert the declaration of this variable into a definition by adding an
-      // initializer.
-      global_variables_.Insert(inst_id, llvm_var);
-      llvm_var->setInitializer(
-          llvm::Constant::getNullValue(llvm_var->getValueType()));
+  // Lower static class variable definitions.
+  for (auto class_info : sem_ir().classes().values()) {
+    auto inst_block_id = class_info.body_block_id;
+    if (inst_block_id.has_value()) {
+      LowerGlobalVariables(inst_block_id);
     }
   }
 
@@ -262,6 +247,33 @@ auto FileContext::GetOrCreateFunctionInfo(
                                fallback_function_id, fallback_specific_id);
   }
   return result;
+}
+
+auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
+    -> void {
+  for (auto inst_id : sem_ir().inst_blocks().Get(inst_block_id)) {
+    // Only `VarStorage` indicates a global variable declaration in the
+    // top instruction block.
+    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+      // Get the global variable declaration. We created this when lowering the
+      // constant unless the variable is unnamed, in which case we need to
+      // create it now.
+      llvm::GlobalVariable* llvm_var = nullptr;
+      if (auto const_id = sem_ir().constant_values().Get(inst_id);
+          const_id.is_constant()) {
+        llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
+      } else {
+        // We should never be emitting a definition for a C++ global variable.
+        llvm_var = BuildNonCppGlobalVariableDecl(*var);
+      }
+
+      // Convert the declaration of this variable into a definition by adding an
+      // initializer.
+      global_variables_.Insert(inst_id, llvm_var);
+      llvm_var->setInitializer(
+          llvm::Constant::getNullValue(llvm_var->getValueType()));
+    }
+  }
 }
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)

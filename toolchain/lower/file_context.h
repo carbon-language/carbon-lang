@@ -190,6 +190,9 @@ class FileContext {
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
  private:
+  // Lower global variables defined in `inst_block_id`.
+  auto LowerGlobalVariables(SemIR::InstBlockId inst_block_id) -> void;
+
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
