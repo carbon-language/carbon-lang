@@ -18,6 +18,10 @@ var a: () = ();
 
 fn F() -> () {
   //@dump-sem-ir-begin
+  // TODO: Decide if this should be allowed, and if so, whether it should be
+  // spelled as
+  //
+  //   alias b = ref a;
   alias b = a;
   //@dump-sem-ir-end
   return b;
