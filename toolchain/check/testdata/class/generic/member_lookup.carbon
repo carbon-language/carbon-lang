@@ -133,8 +133,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.as_type.loc19_42.1) [symbolic = %Base (constants.%Base.7da)]
-// CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21_11 (constants.%require_complete.692)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.as_type.loc19_42.1 [symbolic = %Base.elem (constants.%Base.elem.90f)]
+// CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21_11 (constants.%require_complete.692)]
 // CHECK:STDOUT:   %require_complete.loc21_13: <witness> = require_complete_type %T.as_type.loc19_42.1 [symbolic = %require_complete.loc21_13 (constants.%require_complete.89e)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc19_16.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
 // CHECK:STDOUT:   %.loc21_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc19_16.1 [symbolic = %.loc21_11.5 (constants.%.023)]

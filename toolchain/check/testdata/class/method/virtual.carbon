@@ -1393,12 +1393,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_30.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = value_binding self, %self.param
-// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc10_46 (%ptr.e8f) = value_param call_param1
-// CHECK:STDOUT:       %.loc10_47: type = splice_block %ptr.loc10_47 [symbolic = %ptr.loc10_46 (constants.%ptr.e8f)] {
+// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f) = value_param call_param1
+// CHECK:STDOUT:       %.loc10_47: type = splice_block %ptr.loc10_47.2 [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)] {
 // CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:         %ptr.loc10_47: type = ptr_type %T.ref [symbolic = %ptr.loc10_46 (constants.%ptr.e8f)]
+// CHECK:STDOUT:         %ptr.loc10_47.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc10_46 (%ptr.e8f) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc12_1.1
@@ -1426,16 +1426,14 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:   %pattern_type.loc10_28: type = pattern_type %Derived [symbolic = %pattern_type.loc10_28 (constants.%pattern_type.b9d)]
-// CHECK:STDOUT:   %ptr.loc10_46: type = ptr_type %T [symbolic = %ptr.loc10_46 (constants.%ptr.e8f)]
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%ptr.loc10_46) [symbolic = %Base (constants.%Base.f29)]
-// CHECK:STDOUT:   %require_complete.loc10_46: <witness> = require_complete_type %Base [symbolic = %require_complete.loc10_46 (constants.%require_complete.b3c)]
-// CHECK:STDOUT:   %pattern_type.loc10_44: type = pattern_type %ptr.loc10_46 [symbolic = %pattern_type.loc10_44 (constants.%pattern_type.4f4)]
+// CHECK:STDOUT:   %ptr.loc10_47.1: type = ptr_type %T [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:   %pattern_type.loc10_44: type = pattern_type %ptr.loc10_47.1 [symbolic = %pattern_type.loc10_44 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc10_28: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc10_28 (constants.%require_complete.a43)]
-// CHECK:STDOUT:   %require_complete.loc10_44: <witness> = require_complete_type %ptr.loc10_46 [symbolic = %require_complete.loc10_44 (constants.%require_complete.ef1)]
+// CHECK:STDOUT:   %require_complete.loc10_44: <witness> = require_complete_type %ptr.loc10_47.1 [symbolic = %require_complete.loc10_44 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc10_46 (%ptr.e8f)) {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1461,9 +1459,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Derived => constants.%Derived
 // CHECK:STDOUT:   %pattern_type.loc10_28 => constants.%pattern_type.b9d
-// CHECK:STDOUT:   %ptr.loc10_46 => constants.%ptr.e8f
-// CHECK:STDOUT:   %Base => constants.%Base.f29
-// CHECK:STDOUT:   %require_complete.loc10_46 => constants.%require_complete.b3c
+// CHECK:STDOUT:   %ptr.loc10_47.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type.loc10_44 => constants.%pattern_type.4f4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

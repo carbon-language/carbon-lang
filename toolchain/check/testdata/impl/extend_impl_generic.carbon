@@ -623,8 +623,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %pattern_type.loc10_21: type = pattern_type %X [symbolic = %pattern_type.loc10_21 (constants.%pattern_type.e07)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U)> [symbolic = %I.type (constants.%I.type.1ab3e4.2)]
-// CHECK:STDOUT:   %require_complete.loc10_39: <witness> = require_complete_type %I.type [symbolic = %require_complete.loc10_39 (constants.%require_complete.e36)]
 // CHECK:STDOUT:   %pattern_type.loc10_37: type = pattern_type %U [symbolic = %pattern_type.loc10_37 (constants.%pattern_type.51d1c4.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -695,8 +693,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %pattern_type.loc10_21 => constants.%pattern_type.e07
-// CHECK:STDOUT:   %I.type => constants.%I.type.1ab3e4.2
-// CHECK:STDOUT:   %require_complete.loc10_39 => constants.%require_complete.e36
 // CHECK:STDOUT:   %pattern_type.loc10_37 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

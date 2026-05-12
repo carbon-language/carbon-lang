@@ -892,16 +892,16 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Y.type.loc15: type = facet_type <@Y, @Y(%T.as_type.loc13_16.1)> [symbolic = %Y.type.loc15 (constants.%Y.type.229)]
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %Y.type.loc15 [symbolic = %require_complete.loc15 (constants.%require_complete.db1)]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%T.as_type.loc13_16.1) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.44d)]
 // CHECK:STDOUT:   %assoc0: @F.%Y.assoc_type (%Y.assoc_type.44d) = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YY.decl [symbolic = %assoc0 (constants.%assoc0.e5b)]
+// CHECK:STDOUT:   %Y.type.loc15: type = facet_type <@Y, @Y(%T.as_type.loc13_16.1)> [symbolic = %Y.type.loc15 (constants.%Y.type.229)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Y, @Y(%T.as_type.loc13_16.1) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
 // CHECK:STDOUT:   %Y.facet.loc15: @F.%Y.type.loc15 (%Y.type.229) = facet_value %T.as_type.loc13_16.1, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc15 (constants.%Y.facet)]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%T.as_type.loc13_16.1, %Y.facet.loc15) [symbolic = %Y.WithSelf.YY.type (constants.%Y.WithSelf.YY.type.4a6)]
 // CHECK:STDOUT:   %.loc15_4.3: type = fn_type_with_self_type %Y.WithSelf.YY.type, %Y.facet.loc15 [symbolic = %.loc15_4.3 (constants.%.52c)]
 // CHECK:STDOUT:   %impl.elem0.loc15_4.2: @F.%.loc15_4.3 (%.52c) = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc15_4.2: <specific function> = specific_impl_function %impl.elem0.loc15_4.2, @Y.WithSelf.YY(%T.as_type.loc13_16.1, %Y.facet.loc15) [symbolic = %specific_impl_fn.loc15_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %require_complete.loc16: <witness> = require_complete_type %Y.type.loc15 [symbolic = %require_complete.loc16 (constants.%require_complete.db1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @F.%T.as_type.loc13_16.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:

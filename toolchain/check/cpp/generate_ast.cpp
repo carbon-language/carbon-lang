@@ -491,7 +491,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
           context_->constant_values().Get(decl_context_inst_id),
-          SemIR::ConstantId::None, &lookup_scopes)) {
+          SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
 
