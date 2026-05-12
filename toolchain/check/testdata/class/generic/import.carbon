@@ -58,7 +58,6 @@ library "[[@TEST_NAME]]";
 import library "foo";
 
 fn Use() {
-  // TODO: Include the generic arguments in the formatted type name.
   // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `CompleteClass(i32)` to `CompleteClass(i32*)` [ConversionFailure]
   // CHECK:STDERR:   var unused v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -730,7 +729,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc14_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc13_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -796,11 +795,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.582 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc14_41: ref %CompleteClass.667 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %CompleteClass.667 to %.loc14_41 = call %F.ref()
-// CHECK:STDOUT:   %.loc14_3: %CompleteClass.582 = converted %F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_41: ref %CompleteClass.667 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %CompleteClass.667 to %.loc13_41 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_3: %CompleteClass.582 = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   %.loc14_35: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.582] {
+// CHECK:STDOUT:   %.loc13_35: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.582] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.9e1]
@@ -820,19 +819,19 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_3.3(%self.param: ref %struct_type.n) {
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.3(%self.param: ref %struct_type.n) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_3.4(%self.param: ref %CompleteClass.582) {
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.4(%self.param: ref %CompleteClass.582) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
