@@ -32,6 +32,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
       Context* context, SemIR::LocId loc_id,
       SemIR::ConstantId period_self_replacement_id,
       Behaviour behaviour = Behaviour::All);
+  virtual ~SubstPeriodSelfCallbacks();
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override;
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override;

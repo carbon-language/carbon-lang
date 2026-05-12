@@ -49,6 +49,10 @@ SubstPeriodSelfCallbacks::SubstPeriodSelfCallbacks(
       period_self_replacement_id_(period_self_replacement_id),
       behaviour_(behaviour) {}
 
+SubstPeriodSelfCallbacks::~SubstPeriodSelfCallbacks() {
+  CARBON_CHECK(designator_states_.empty());
+}
+
 auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
   // FacetTypes are concrete even if they have `.Self` inside them, but we
   // don't recurse into FacetTypes, so we can use this as a base case. This
