@@ -122,20 +122,49 @@ class CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::KeyContext
   const ValueStore<IdT, ValueType, TagIdT>* values_;
 };
 
+// The definition of `Add` needs to be outside the class body as it relies on
+// the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Add(ValueType value)
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Add(ValueType value)
     -> IdT {
   auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
   return set_.Insert(GetAsKey(value), make_key, KeyContext(&values_)).key();
 }
 
+// The definition of `Lookup` needs to be outside the class body as it relies on
+// the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Lookup(KeyType key) const
-    -> IdT {
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Lookup(
+    KeyType key) const -> IdT {
   if (auto result = set_.Lookup(key, KeyContext(&values_))) {
     return result.key();
   }
   return IdT::None;
+}
+
+// The definition of `Reserve` needs to be outside the class body as it relies
+// on the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
+template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Reserve(size_t size)
+    -> void {
+  // Compute the resulting new insert count using the size of values -- the
+  // set doesn't have a fast to compute current size.
+  if (size > values_.size()) {
+    set_.GrowForInsertCount(size - values_.size(), KeyContext(&values_));
+  }
+  values_.Reserve(size);
 }
 
 }  // namespace Carbon

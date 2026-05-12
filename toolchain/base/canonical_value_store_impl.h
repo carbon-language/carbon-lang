@@ -33,17 +33,6 @@ auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::operator=(
     CanonicalValueStore&&) noexcept -> CanonicalValueStore& = default;
 
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Reserve(size_t size)
-    -> void {
-  // Compute the resulting new insert count using the size of values -- the
-  // set doesn't have a fast to compute current size.
-  if (size > values_.size()) {
-    set_.GrowForInsertCount(size - values_.size(), KeyContext(&values_));
-  }
-  values_.Reserve(size);
-}
-
-template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
 auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::OutputYaml() const
     -> Yaml::OutputMapping {
   return values_.OutputYaml();

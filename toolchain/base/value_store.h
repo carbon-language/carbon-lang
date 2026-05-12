@@ -149,8 +149,15 @@ class ValueStore
     return chunks_[chunk_index].Get(pos);
   }
 
-  // Reserves space.
-  auto Reserve(int32_t size) -> void;
+  // Reserves space. Note that this method has surprising performance impact on
+  // the lexer unless available for inlining.
+  auto Reserve(int32_t size) -> void {
+    if (size <= size_) {
+      return;
+    }
+    auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
+    chunks_.resize(final_chunk_index + 1);
+  }
 
   // Grows the ValueStore to `size`. Fills entries with `default_value`.
   auto Resize(int32_t size, ConstRefType default_value) -> void

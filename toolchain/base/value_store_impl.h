@@ -37,15 +37,6 @@ auto ValueStore<IdT, ValueT, TagIdT>::operator=(ValueStore&&) noexcept
     -> ValueStore& = default;
 
 template <typename IdT, typename ValueT, typename TagIdT>
-auto ValueStore<IdT, ValueT, TagIdT>::Reserve(int32_t size) -> void {
-  if (size <= size_) {
-    return;
-  }
-  auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
-  chunks_.resize(final_chunk_index + 1);
-}
-
-template <typename IdT, typename ValueT, typename TagIdT>
 auto ValueStore<IdT, ValueT, TagIdT>::Resize(int32_t size,
                                              ConstRefType default_value) -> void
   requires(std::is_copy_constructible_v<ValueT>)
