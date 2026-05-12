@@ -290,67 +290,67 @@ fn TestDriver(no_begin_end: Cpp.NoBeginEnd,
               begin_method_end_adl: Cpp.BeginMethodEndADL,
               begin_adl_end_method: Cpp.BeginADLEndMethod)
 {
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(no_begin_end);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_end);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(no_begin_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-22]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_method);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+10]]:21: error: function 'begin' with deduced return type cannot be used before it is defined [CppInteropParseError]
-  // CHECK:STDERR:    46 |   Test(no_end_method);
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+10]]:21: error: function 'begin' with deduced return type cannot be used before it is defined [CppInteropParseError]
+  // CHECK:STDERR:    74 |   Test(no_end_method);
   // CHECK:STDERR:       |                     ^
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-51]]:8: note: 'begin' declared here [CppInteropParseNote]
-  // CHECK:STDERR:    12 |   auto begin();
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-53]]:8: note: 'begin' declared here [CppInteropParseNote]
+  // CHECK:STDERR:    14 |   auto begin();
   // CHECK:STDERR:       |        ^
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-32]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-34]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_end_method);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(no_begin_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-40]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-43]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_adl);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(no_end_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-48]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-52]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_end_adl);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(begin_method_end_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-56]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-61]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_method_end_adl);
 
-  // CHECK:STDERR: never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE+7]]:3: error: semantics TODO: `support ADL begin/end` [SemanticsTodo]
   // CHECK:STDERR:   Test(begin_adl_end_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: never_valid.carbon:[[@LINE-64]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_never_valid.carbon:[[@LINE-70]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
