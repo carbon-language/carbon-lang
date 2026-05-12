@@ -72,31 +72,35 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
       // canonicalized.
       if (IsPeriodSelf(context(), witness->query_self_inst_id,
                        /*canonicalize=*/false)) {
-        auto replacement_id = GetReplacement(witness->query_self_inst_id);
-        auto new_witness =
-            Rebuild(access->witness_id,
-                    SemIR::LookupImplWitness{
-                        .type_id = witness->type_id,
-                        .query_self_inst_id = replacement_id,
-                        // Don't replace `.Self` in the interface specific
-                        // here. That is an explicit `.Self` use. We'll
-                        // revisit the instruction for that.
-                        .query_specific_interface_id =
-                            witness->query_specific_interface_id,
-                    });
-        auto new_access = Rebuild(inst_id, SemIR::ImplWitnessAccess{
-                                               .type_id = access->type_id,
-                                               .witness_id = new_witness,
-                                               .index = access->index,
-                                           });
-        inst_id = new_access;
-        return FullySubstituted;
+        designator_states_.push_back(WitnessNext);
       }
     }
   }
 
-  // Look for explicit use of `.Self`.
-  if (behaviour_ == Behaviour::All) {
+  if (!designator_states_.empty() && designator_states_.back() == WitnessNext) {
+    if (auto witness =
+            context().insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
+      // The query self comes next, before the specific interface.
+      designator_states_.back() = WitnessSelfNext;
+    }
+  }
+
+  // An implicit use of `.Self` in a designator.
+  if (!designator_states_.empty() &&
+      designator_states_.back() == WitnessSelfNext) {
+    // Canonicalization not necessary; We are working with the constant
+    // value already, and the query self in a witness is already
+    // canonicalized.
+    if (IsPeriodSelf(context(), inst_id,
+                     /*canonicalize=*/false)) {
+      inst_id = GetReplacement(inst_id);
+      designator_states_.back() = Exiting;
+      return FullySubstituted;
+    }
+  }
+
+  // Look for explicit use of `.Self` only if the client requested it.
+  if (behaviour_ != Behaviour::ImplicitOnly) {
     // Canonicalization not necessary; Subst will recurse anyway, so avoid
     // extra work for non-matches.
     if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
@@ -110,7 +114,33 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
 
 auto SubstPeriodSelfCallbacks::Rebuild(SemIR::InstId orig_inst_id,
                                        SemIR::Inst new_inst) -> SemIR::InstId {
+  TryPopDesignatorState(orig_inst_id);
   return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+}
+
+auto SubstPeriodSelfCallbacks::ReuseUnchanged(SemIR::InstId orig_inst_id)
+    -> SemIR::InstId {
+  TryPopDesignatorState(orig_inst_id);
+  return orig_inst_id;
+}
+
+auto SubstPeriodSelfCallbacks::TryPopDesignatorState(SemIR::InstId orig_inst_id)
+    -> void {
+  if (!designator_states_.empty() && designator_states_.back() == Exiting) {
+    if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
+            orig_inst_id)) {
+      if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+              access->witness_id)) {
+        // Canonicalization not necessary; We are working with the constant
+        // value already, and the query self in a witness is already
+        // canonicalized.
+        if (IsPeriodSelf(context(), witness->query_self_inst_id,
+                         /*canonicalize=*/false)) {
+          designator_states_.pop_back();
+        }
+      }
+    }
+  }
 }
 
 auto SubstPeriodSelfCallbacks::GetReplacement(SemIR::InstId period_self)

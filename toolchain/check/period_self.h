@@ -35,6 +35,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override;
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override;
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override;
 
   auto loc_id() const -> SemIR::LocId { return loc_id_; }
   auto period_self_replacement_id() const -> SemIR::ConstantId {
@@ -42,6 +43,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   }
 
  private:
+  auto TryPopDesignatorState(SemIR::InstId orig_inst_id) -> void;
   auto GetReplacement(SemIR::InstId period_self) -> SemIR::InstId;
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
                           SemIR::TypeId replacement_type_id,
@@ -56,6 +58,13 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   // The type of the last output of GetReplacement(). If the type of `.Self`
   // matches, we can reuse the `cached_replacement_id_`.
   SemIR::TypeId cached_replacement_type_id_ = SemIR::TypeId::None;
+
+  enum DesignatorState {
+    WitnessNext,
+    WitnessSelfNext,
+    Exiting,
+  };
+  llvm::SmallVector<DesignatorState> designator_states_;
 };
 
 // Replace all `.Self` references in `const_id`. The `callbacks` specifies the
