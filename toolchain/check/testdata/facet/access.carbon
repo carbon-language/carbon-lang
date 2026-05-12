@@ -357,17 +357,17 @@ interface X {
 interface Y(U:! type) {
   let Y1:! X where .X1 = U;
 }
-interface Z {
+interface Z(T:! type) {
   let Z1:! type;
 }
 
-fn F(U:! W, V:! Z where .Z1 impls Y(U)) {
+fn F(U:! W, V:! Z(.Self) where .Z1 impls Y(U)) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, where
   // it finds the rewrite of `.X1 = U`.
   //
   // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z.Z1).(Y(U).Y1).(X.X1) as W;
+  V.(Z(V).Z1).(Y(U).Y1).(X.X1) as W;
 }
 
 // --- find_access_value_in_second_nested_access.carbon
@@ -377,23 +377,23 @@ interface W {}
 interface X {
   let X1:! type;
 }
-interface Y {
+interface Y(T:! type) {
   let Y1:! type;
 }
-interface Z(U:! type) {
-  let Z1:! Y where .Y1 impls (X where .X1 = U);
+interface Z(U:! type, PeriodSelf:! type) {
+  let Z1:! Y(PeriodSelf) where .Y1 impls (X where .X1 = U);
 }
 
-fn F(U:! W, V:! Z(U)) {
+fn F(U:! W, V:! Z(U, .Self)) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, where
   // it finds the rewrite of `.X1 = U`.
   //
   // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z(U).Z1).(Y.Y1).(X.X1) as W;
+  V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
 }
 
-// --- find_access_value_in_nested_accesses.carbon
+// --- find_access_value_in_third_nested_access.carbon
 library "[[@TEST_NAME]]";
 
 interface W {}
@@ -403,17 +403,17 @@ interface X {
 interface Y {
   let Y1:! type;
 }
-interface Z {
+interface Z(T:! type) {
   let Z1:! type;
 }
 
-fn F(U:! W, V:! Z where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) {
+fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
   // `V` where it finds the rewrite of `.X1 = U`.
   //
   // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z.Z1).(Y.Y1).(X.X1) as W;
+  V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
 }
 
 // CHECK:STDOUT: --- access_assoc_fn.carbon
