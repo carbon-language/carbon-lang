@@ -78,8 +78,9 @@ auto CheckAssociatedFunctionImplementation(
           enclosing_specific_id);
 
   return BuildThunk(context, interface_function_type.function_id,
-                    interface_function_specific_id, impl_decl_id,
-                    defer_thunk_definition);
+                    interface_function_specific_id,
+                    /*signature_self_type_override_id=*/SemIR::TypeId::None,
+                    impl_decl_id, defer_thunk_definition);
 }
 
 static auto GetScopeInstId(Context& context, SemIR::InstId scope_inst_id)
@@ -160,8 +161,7 @@ static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::None,
-                              /*diagnose=*/false, /*check_syntax=*/true,
-                              /*check_self=*/true)) {
+                              /*diagnose=*/false, /*check_syntax=*/true)) {
     return ImplRedeclType::Mismatch;
   }
 

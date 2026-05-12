@@ -852,6 +852,9 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
       case AccessKind::Private:
         out() << " [private]";
         break;
+      case AccessKind::Hidden:
+        out() << " [hidden]";
+        break;
     }
     out() << " = ";
     if (result.is_poisoned()) {

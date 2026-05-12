@@ -100,8 +100,10 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
 // Makes a copy of the given pattern instruction, substituting values from a
 // specific as needed. The resulting pattern behaves like a newly-created
 // pattern, so is suitable for running `CalleePatternMatch` against.
-static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
-                         SemIR::InstId pattern_id) -> SemIR::InstId {
+static auto ClonePattern(
+    Context& context, SemIR::SpecificId specific_id, SemIR::InstId pattern_id,
+    SemIR::TypeId self_type_override_id = SemIR::TypeId::None)
+    -> SemIR::InstId {
   if (!pattern_id.has_value()) {
     return SemIR::InstId::None;
   }
@@ -123,8 +125,14 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   // Finally, either a binding pattern or a return slot pattern.
   auto new_pattern_id = SemIR::InstId::None;
   if (auto binding = pattern.TryAs<SemIR::AnyBindingPattern>()) {
-    new_pattern_id = CloneBindingPattern(context, pattern_id, *binding,
-                                         get_type(pattern_id));
+    auto type_id = get_type(pattern_id);
+    if (self_type_override_id.has_value() &&
+        context.entity_names().Get(binding->entity_name_id).name_id ==
+            SemIR::NameId::SelfValue) {
+      type_id = GetPatternType(context, self_type_override_id);
+    }
+    new_pattern_id =
+        CloneBindingPattern(context, pattern_id, *binding, type_id);
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
     auto new_subpattern_id = SemIR::InstId::None;
     auto subpattern = context.insts().Get(return_slot->subpattern_id);
@@ -162,21 +170,24 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   if (var_param && new_pattern_id != SemIR::ErrorInst::InstId) {
     new_pattern_id = RebuildPatternInst<SemIR::VarParamPattern>(
         context, var_param_id,
-        {.type_id = get_type(var_param_id), .subpattern_id = new_pattern_id});
+        {.type_id = context.insts().Get(new_pattern_id).type_id(),
+         .subpattern_id = new_pattern_id});
   }
 
   return new_pattern_id;
 }
 
 static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
-                              SemIR::InstBlockId inst_block_id)
-    -> SemIR::InstBlockId {
+                              SemIR::InstBlockId inst_block_id,
+                              SemIR::TypeId self_type_override_id =
+                                  SemIR::TypeId::None) -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
   return context.inst_blocks().Transform(
       inst_block_id, [&](SemIR::InstId inst_id) {
-        return ClonePattern(context, specific_id, inst_id);
+        return ClonePattern(context, specific_id, inst_id,
+                            self_type_override_id);
       });
 }
 
@@ -206,6 +217,7 @@ static auto CloneTypeInstId(Context& context, SemIR::SpecificId specific_id,
 static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId signature_id,
                               SemIR::SpecificId signature_specific_id,
+                              SemIR::TypeId signature_self_type_override_id,
                               SemIR::FunctionId callee_id)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   StartGenericDecl(context);
@@ -215,7 +227,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   // Clone the signature.
   context.pattern_block_stack().Push();
   auto implicit_param_patterns_id = ClonePatternBlock(
-      context, signature_specific_id, signature.implicit_param_patterns_id);
+      context, signature_specific_id, signature.implicit_param_patterns_id,
+      signature_self_type_override_id);
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
                                              signature.param_patterns_id);
   auto return_pattern_id =
@@ -447,12 +460,12 @@ auto BuildThunkDefinition(Context& context,
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
+                SemIR::TypeId signature_self_type_override_id,
                 SemIR::InstId callee_id, bool defer_definition)
     -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
   // Check whether we can use the given function without a thunk.
-  // TODO: For virtual functions, we want different rules for checking `self`.
   // TODO: This is too strict; for example, we should not compare parameter
   // names here.
   if (context.functions().Get(callee.function_id).special_function_kind !=
@@ -460,7 +473,8 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
       CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
-          /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
+          /*check_syntax=*/false, signature_self_type_override_id,
+          /*diagnose=*/false)) {
     return callee_id;
   }
 
@@ -490,9 +504,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_inst_id] =
-      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
-                        signature_specific_id, callee.function_id);
+  auto [function_id, thunk_inst_id] = CloneFunctionDecl(
+      context, SemIR::LocId(callee_id), signature_id, signature_specific_id,
+      signature_self_type_override_id, callee.function_id);
 
   auto thunk_id =
       context.sem_ir().thunks().Add({.callee_id = callee_id,

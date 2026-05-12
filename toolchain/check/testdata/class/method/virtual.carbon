@@ -202,17 +202,20 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+10]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   override fn F[self: Self](v: i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:   override fn F[self: Self](v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   override fn F[self: Self](v: i32);
 }
 
-// --- fail_todo_impl_conversion.carbon
+// --- impl_conversion.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -235,13 +238,6 @@ base class Base {
 class Derived {
   extend base: Base;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE+7]]:3: error: function redeclaration differs because return type is `T2` [FunctionRedeclReturnTypeDiffers]
-  // CHECK:STDERR:   override fn F[self: Self]() -> T2;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE-9]]:3: note: previously declared with return type `T1` [FunctionRedeclReturnTypePrevious]
-  // CHECK:STDERR:   virtual fn F[self: Self]() -> T1;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   override fn F[self: Self]() -> T2;
   //@dump-sem-ir-end
 }
@@ -309,17 +305,20 @@ class T2 {
 library "[[@TEST_NAME]]";
 
 base class T1 {
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+3]]:17: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR:   virtual fn F1[self: Self]();
+  // CHECK:STDERR:                 ^~~~~~~~~~
   virtual fn F1[self: Self]();
 }
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F1[ref self: Self]();
   // CHECK:STDERR:                  ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-8]]:17: note: previous declaration's corresponding implicit parameter here [RedeclParamPrevious]
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F1[self: Self]();
-  // CHECK:STDERR:                 ^~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   override fn F1[ref self: Self]();
 }
@@ -431,17 +430,23 @@ class T1;
 class T2;
 
 base class Base(T:! type) {
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
+  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
+  // CHECK:STDERR:                                          ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:42: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
+  // CHECK:STDERR:                                          ^~~~~~
   virtual fn F[unused self: Self](unused t: T1*) { }
 }
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:43: error: type `<pattern for T2*>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T1*>` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F[unused self: Self](unused t: T2*) { }
   // CHECK:STDERR:                                           ^~~~~~
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:42: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   override fn F[unused self: Self](unused t: T2*) { }
 }
@@ -451,16 +456,22 @@ class D1 {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
+  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
+  // CHECK:STDERR:                                          ^~~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:42: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
+  // CHECK:STDERR:                                          ^~~~~
   virtual fn F[unused self: Self](unused t: T*) { }
 }
 class Derived(T:! type) {
   extend base: Base(T);
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:43: error: type `<pattern for T>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T*>` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F[unused self: Self](unused t: T) { }
   // CHECK:STDERR:                                           ^~~~
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:42: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   override fn F[unused self: Self](unused t: T) { }
 }
@@ -688,7 +699,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Modifiers = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .H = %Derived.H.decl
+// CHECK:STDOUT:   .H [hidden] = %Derived.H.decl
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1005,7 +1016,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .AbstractIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1052,7 +1063,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .VirtualIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl
 // CHECK:STDOUT:   extend %VirtualIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1070,33 +1081,53 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
+// CHECK:STDOUT: --- impl_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.8c9: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @T2.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %T2 [concrete]
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.type: type = fn_type @T2.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert: %T2.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.8c9 = facet_value %T2, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.597: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T1, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %.c13: Core.Form = init_form %T2 [concrete]
-// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F [concrete]
-// CHECK:STDOUT:   %Derived.F: %Derived.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.F.type.5bfd52.1: type = fn_type @Derived.F.loc23_36.1 [concrete]
+// CHECK:STDOUT:   %Derived.F.f9b6d2.1: %Derived.F.type.5bfd52.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.F.type.5bfd52.2: type = fn_type @Derived.F.loc23_36.2 [concrete]
+// CHECK:STDOUT:   %Derived.F.f9b6d2.2: %Derived.F.type.5bfd52.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %.968: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.597, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc23_36.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl: %Derived.F.type = fn_decl @Derived.F [concrete = constants.%Derived.F] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_36.1: %Derived.F.type.5bfd52.1 = fn_decl @Derived.F.loc23_36.1 [concrete = constants.%Derived.F.f9b6d2.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.9f6 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.9f6 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.b8b = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.b8b = return_slot_pattern %return.param_patt, %T2.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
-// CHECK:STDOUT:     %.loc30: Core.Form = init_form %T2.ref [concrete = constants.%.c13]
+// CHECK:STDOUT:     %.loc23: Core.Form = init_form %T2.ref [concrete = constants.%.c13]
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %T2 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Derived.F.decl.loc23_36.2: %Derived.F.type.5bfd52.2 = fn_decl @Derived.F.loc23_36.2 [concrete = constants.%Derived.F.f9b6d2.2] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1107,7 +1138,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .T2 = <poisoned>
-// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc23_36.1
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1116,10 +1147,35 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.F.decl
+// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_36.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived) -> out %return.param: %T2;
+// CHECK:STDOUT: override fn @Derived.F.loc23_36.1(%self.param: %Derived) -> out %return.param: %T2;
+// CHECK:STDOUT:
+// CHECK:STDOUT: override fn @Derived.F.loc23_36.2(%self.param: %Derived) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_36.1 for @Base.%Base.F.decl] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %Derived.F.type.5bfd52.1 = name_ref F, @Derived.%Derived.F.decl.loc23_36.1 [concrete = constants.%Derived.F.f9b6d2.1]
+// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %self.param, %F.ref
+// CHECK:STDOUT:   %.loc23_36.1: ref %T2 = temporary_storage
+// CHECK:STDOUT:   %Derived.F.call: init %T2 to %.loc23_36.1 = call %Derived.F.bound(%self.param)
+// CHECK:STDOUT:   %impl.elem0: %.968 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%T2.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Derived.F.call, %impl.elem0
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc23_36.2: ref %T2 = temporary %.loc23_36.1, %Derived.F.call
+// CHECK:STDOUT:   %.loc23_36.3: %T2 = acquire_value %.loc23_36.2
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.loc17 = call %bound_method(%.loc23_36.3)
+// CHECK:STDOUT:   %.loc23_36.4: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_36.2, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_36.2)
+// CHECK:STDOUT:   return %.loc23_36.4 to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_36.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_36.2(%self.param: ref %T2) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_with_virtual.carbon
 // CHECK:STDOUT:
@@ -1333,7 +1389,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F = %D1.F.decl
+// CHECK:STDOUT:   .F [hidden] = %D1.F.decl
 // CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1409,7 +1465,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     .Base = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc8
-// CHECK:STDOUT:     .F = %Derived.F.decl
+// CHECK:STDOUT:     .F [hidden] = %Derived.F.decl
 // CHECK:STDOUT:     extend %Base.loc8_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

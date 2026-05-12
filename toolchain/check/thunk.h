@@ -16,6 +16,7 @@ namespace Carbon::Check {
 // unchanged if it can be used directly.
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
+                SemIR::TypeId signature_self_type_override_id,
                 SemIR::InstId callee_id, bool defer_definition)
     -> SemIR::InstId;
 

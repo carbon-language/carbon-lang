@@ -134,7 +134,8 @@ struct FunctionFields {
   VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
-  // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
+  // is not in the vtable. A function with `virtual_modifier != None` may still
+  // have `virtual_index == -1` if the corresponding vtable entry is a thunk.
   int32_t virtual_index = -1;
 
   // Which, if any, evaluation modifier (eval or musteval) is applied to this

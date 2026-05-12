@@ -460,6 +460,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& name_scope)
         case AccessKind::Private:
           out << "private ";
           break;
+        case AccessKind::Hidden:
+          out << "hidden ";
+          break;
       }
       out << DumpInstSummary(file, entry.result.target_inst_id());
     } else {

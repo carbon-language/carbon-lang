@@ -15,9 +15,14 @@ namespace Carbon::SemIR {
 
 // Access control for an entity.
 enum class AccessKind : int8_t {
+  // Accessible to all code.
   Public,
+  // Accessible to the enclosing class and derived classes.
   Protected,
+  // Only accessible to the enclosing class and friends.
   Private,
+  // Not accessible to any code, but can still be redeclared.
+  Hidden,
 };
 
 // Represents the result of a name lookup.

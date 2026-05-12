@@ -268,6 +268,8 @@ static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
       return access_info->highest_allowed_access !=
                  SemIR::AccessKind::Private ||
              is_parent_access;
+    case SemIR::AccessKind::Hidden:
+      return true;
   }
 }
 
