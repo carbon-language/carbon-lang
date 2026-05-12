@@ -36,17 +36,7 @@
 namespace Carbon {
 
 auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  b.AddStringPositionalArg(
-      {
-          .name = "FILE",
-          .help = R"""(
-The input Carbon source file to compile.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Required(true);
-        arg_b.Append(&input_filenames);
-      });
+  shared.Build(b);
 
   b.AddOneOfOption(
       {
@@ -70,30 +60,6 @@ compile to machine code.
             &phase);
       });
 
-  b.AddStringOption(
-      {
-          .name = "clang-arg",
-          .value_name = "CLANG-ARG",
-          .help = R"""(
-An argument to pass to the Clang compiler for use when compiling imported C++
-code.
-
-All flags that are accepted by the Clang driver are supported. However, you
-cannot specify arguments that would result in additional compilations being
-performed. Use `carbon clang` instead to compile additional source files.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&clang_args); });
-
-  b.AddStringPositionalArg(
-      {
-          .name = "CLANG-ARG",
-          .help = R"""(
-Additional Clang arguments. See help for `--clang-arg` for details.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&clang_args); });
-
   // TODO: Rearrange the code setting this option and two related ones to
   // allow them to reference each other instead of hard-coding their names.
   b.AddStringOption(
@@ -113,39 +79,6 @@ object output can be forced by enabling `--force-obj-output`.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
-
-  b.AddOneOfOption(
-      {
-          .name = "optimize",
-          .help = R"""(
-Selects the amount of optimization to perform.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                // We intentionally don't expose O2 and Os. The difference
-                // between these levels tends to reflect what achieves the
-                // best speed for a specific application, as they all
-                // largely optimize for speed as the primary factor.
-                //
-                // Instead of controlling this with more nuanced flags, we
-                // plan to support profile and in-source hints to the
-                // optimizer to adjust its strategy in the specific places
-                // where the default doesn't have the desired results.
-                arg_b.OneOfValue("none", Lower::OptimizationLevel::None),
-                arg_b.OneOfValue("debug", Lower::OptimizationLevel::Debug),
-                arg_b.OneOfValue("speed", Lower::OptimizationLevel::Speed),
-                arg_b.OneOfValue("size", Lower::OptimizationLevel::Size),
-            },
-            &opt_level);
-      });
-
-  // Include the common code generation options at this point to render it
-  // after the more common options above, but before the more unusual options
-  // below.
-  codegen_options.Build(b);
-
   b.AddFlag(
       {
           .name = "asm-output",
@@ -350,17 +283,6 @@ Excludes files with the given prefix from dumps.
       [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
   b.AddFlag(
       {
-          .name = "debug-info",
-          .help = R"""(
-Whether to emit DWARF debug information.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&include_debug_info);
-      });
-  b.AddFlag(
-      {
           .name = "output-last-input-only",
           .help = R"""(
 Only write output for the last input file, ignoring all others.
@@ -370,17 +292,6 @@ compilation is better implemented.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
-  b.AddFlag(
-      {
-          .name = "verify-llvm-ir",
-          .help = R"""(
-Whether to run the LLVM verifier on modules.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&run_llvm_verifier);
-      });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",
@@ -824,11 +735,12 @@ auto CompilationUnit::RunLower() -> void {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
     }
     Lower::LowerToLLVMOptions options;
-    options.llvm_verifier_stream =
-        options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
-    options.want_debug_info = options_->include_debug_info;
+    options.llvm_verifier_stream = options_->shared.run_llvm_verifier
+                                       ? driver_env_->error_stream
+                                       : nullptr;
+    options.want_debug_info = options_->shared.include_debug_info;
     options.vlog_stream = vlog_stream_;
-    options.opt_level = options_->opt_level;
+    options.opt_level = options_->shared.opt_level;
     options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
@@ -844,7 +756,7 @@ auto CompilationUnit::MakeTargetMachine(
   // Set the target on the module.
   // TODO: We should do this earlier. Lower should be passed the target triple
   // so it can create the module with this already set.
-  llvm::Triple target_triple(options_->codegen_options.target);
+  llvm::Triple target_triple(options_->shared.codegen_options.target);
   module_->setTargetTriple(target_triple);
 
   // TODO: Provide flags to control these.
@@ -865,36 +777,6 @@ auto CompilationUnit::MakeTargetMachine(
       target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
 }
 
-// Get the LLVM optimization level corresponding to a Carbon optimization level.
-static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
-    -> llvm::OptimizationLevel {
-  switch (opt_level) {
-    case Lower::OptimizationLevel::None:
-      return llvm::OptimizationLevel::O0;
-    case Lower::OptimizationLevel::Debug:
-      return llvm::OptimizationLevel::O1;
-    case Lower::OptimizationLevel::Size:
-      return llvm::OptimizationLevel::O2;
-    case Lower::OptimizationLevel::Speed:
-      return llvm::OptimizationLevel::O3;
-  }
-}
-
-// Get the `-O` flag corresponding to an optimization level.
-static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
-    -> llvm::StringLiteral {
-  switch (opt_level) {
-    case Lower::OptimizationLevel::None:
-      return "-O0";
-    case Lower::OptimizationLevel::Debug:
-      return "-O1";
-    case Lower::OptimizationLevel::Size:
-      return "-O2";
-    case Lower::OptimizationLevel::Speed:
-      return "-O3";
-  }
-}
-
 auto CompilationUnit::RunOptimize(
     const clang::CompilerInvocation& clang_invocation) -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
@@ -912,9 +794,11 @@ auto CompilationUnit::RunOptimize(
   // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
   // here. For now we reconstruct what Clang does by default.
   llvm::PipelineTuningOptions pto;
-  bool opt_for_speed = options_->opt_level == Lower::OptimizationLevel::Speed;
+  bool opt_for_speed =
+      options_->shared.opt_level == Lower::OptimizationLevel::Speed;
   bool opt_for_size_or_speed =
-      opt_for_speed || options_->opt_level == Lower::OptimizationLevel::Size;
+      opt_for_speed ||
+      options_->shared.opt_level == Lower::OptimizationLevel::Size;
   // Loop unrolling is enabled by `--optimize=size` but isn't actually performed
   // because we add `optsize` attributes to the function definitions we emit.
   pto.LoopUnrolling = opt_for_size_or_speed;
@@ -952,7 +836,8 @@ auto CompilationUnit::RunOptimize(
   builder.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
-      GetLLVMOptimizationLevel(options_->opt_level));
+      SharedCompileOptions::GetLLVMOptimizationLevel(
+          options_->shared.opt_level));
 
   if (vlog_stream_) {
     CARBON_VLOG("*** Running pass pipeline: ");
@@ -1107,51 +992,27 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Validate the target before passing it to Clang.
-  std::string target_error;
-  const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
-      llvm::Triple(options_.codegen_options.target), target_error);
-  if (!target) {
-    CARBON_DIAGNOSTIC(CompileTargetInvalid, Error, "invalid target: {0}",
-                      std::string);
-    driver_env.emitter.Emit(CompileTargetInvalid, target_error);
+  const llvm::Target* target;
+  if (auto t = options_.shared.ValidateTarget(driver_env.emitter); t.ok()) {
+    target = *t;
+  } else {
     return {.success = false};
   }
 
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
-  // Build a clang invocation. We do this regardless of whether we're running
-  // check, because this is essentially performing further option validation,
-  // and we generally validate all options even if we're not using them for the
-  // selected phases of compilation. We also use Clang's target option handling
-  // to configure our target, to ensure that we are using the same ABI for both
-  // the C++ and Carbon parts of the compilation.
-  // TODO: Share any arguments we specify here with the `carbon clang`
-  // subcommand.
   {
-    if (driver_env.fuzzing && !options_.clang_args.empty()) {
+    if (driver_env.fuzzing && !options_.shared.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
       TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
 
-    // TODO: Move this into `BuildClangInvocation` when it can accept an
-    // optimization level.
-    llvm::SmallVector<llvm::StringRef> clang_args = {
-        // Propagate our optimization level to Clang as a default. This can be
-        // overridden by Clang arguments, but doing so will only have an effect
-        // if those arguments affect Clang's IR, not its pass pipeline.
-        GetClangOptimizationFlag(options_.opt_level),
-    };
-    clang_args.append(options_.clang_args);
-    clang_invocation = BuildClangInvocation(
-        driver_env.consumer, driver_env.fs, *driver_env.installation,
-        options_.codegen_options.target, clang_args);
-    if (!clang_invocation) {
+    if (auto i = options_.shared.BuildClangInvocation(driver_env); i.ok()) {
+      clang_invocation = *i;
+    } else {
       return {.success = false};
     }
-    // We will run our own pass pipeline over the IR in the `Optimize` phase, so
-    // disable Clang's pipeline to avoid optimizing C++ code twice.
-    clang_invocation->getCodeGenOpts().DisableLLVMPasses = true;
   }
 
   // Find the files comprising the prelude if we are importing it.
@@ -1174,7 +1035,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   int unit_index = -1;
-  int total_unit_count = prelude.size() + options_.input_filenames.size();
+  int total_unit_count =
+      prelude.size() + options_.shared.input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -1182,8 +1044,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         &driver_env.consumer, filename, target);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
-  llvm::append_range(units,
-                     llvm::map_range(options_.input_filenames, unit_builder));
+  llvm::append_range(
+      units, llvm::map_range(options_.shared.input_filenames, unit_builder));
   CARBON_CHECK(units.size() == static_cast<size_t>(total_unit_count));
 
   // Add the cache to all units. This must be done after all units are created.

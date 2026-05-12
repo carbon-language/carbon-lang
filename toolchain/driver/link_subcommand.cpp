@@ -62,7 +62,6 @@ Link Carbon executables.
 This subcommand links Carbon executables by combining object files.
 
 TODO: Support linking binary libraries, both archives and shared libraries.
-TODO: Support linking against binary libraries.
 )""",
 };
 

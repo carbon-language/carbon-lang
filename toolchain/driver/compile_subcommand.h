@@ -9,11 +9,10 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "toolchain/check/check.h"
-#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
+#include "toolchain/driver/shared_compile_options.h"
 #include "toolchain/lower/options.h"
 
 namespace Carbon {
@@ -36,15 +35,11 @@ struct CompileOptions {
 
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
-  CodegenOptions codegen_options;
-
   Phase phase;
+  SharedCompileOptions shared;
   Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges;
 
   llvm::StringRef output_filename;
-  llvm::SmallVector<llvm::StringRef> input_filenames;
-  llvm::SmallVector<llvm::StringRef> clang_args;
 
   bool asm_output = false;
   bool force_obj_output = false;
@@ -64,9 +59,7 @@ struct CompileOptions {
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
   bool prelude_import = false;
-  bool include_debug_info = true;
   bool output_last_input_only = false;
-  bool run_llvm_verifier = true;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 

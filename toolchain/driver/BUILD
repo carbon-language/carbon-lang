@@ -131,6 +131,8 @@ cc_library(
     srcs = [
         "build_runtimes_subcommand.cpp",
         "build_runtimes_subcommand.h",
+        "build_subcommand.cpp",
+        "build_subcommand.h",
         "clang_subcommand.cpp",
         "clang_subcommand.h",
         "compile_subcommand.cpp",
@@ -150,6 +152,8 @@ cc_library(
         "lld_subcommand.h",
         "llvm_subcommand.cpp",
         "llvm_subcommand.h",
+        "shared_compile_options.cpp",
+        "shared_compile_options.h",
     ],
     hdrs = [
         "driver.h",
@@ -201,6 +205,7 @@ cc_library(
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:Target",
         "@llvm-project//llvm:TargetParser",
     ],
 )

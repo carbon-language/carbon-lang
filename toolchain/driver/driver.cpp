@@ -9,10 +9,10 @@
 #include <memory>
 #include <optional>
 
-#include "common/command_line.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"
+#include "toolchain/driver/build_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/config_subcommand.h"
@@ -40,6 +40,7 @@ struct Options {
   llvm::StringRef prebuilt_runtimes_path;
 
   BuildRuntimesSubcommand runtimes;
+  BuildSubcommand build;
   ClangSubcommand clang;
   CompileSubcommand compile;
   ConfigSubcommand config;
@@ -169,6 +170,7 @@ when there are errors or other output.
       });
 
   runtimes.AddTo(b, &selected_subcommand);
+  build.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
   config.AddTo(b, &selected_subcommand);

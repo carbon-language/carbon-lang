@@ -16,7 +16,7 @@ namespace Carbon {
 
 // Options for the link subcommand.
 //
-// See the implementation of `Build` for documentation on members.
+// See the implementation of `link` for documentation on members.
 struct LinkOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
