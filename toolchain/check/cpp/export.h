@@ -28,8 +28,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 // Otherwise, creates a new C++ class and returns it. Returns nullptr if the
 // class could not be exported and an error was diagnosed.
 auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
-                      SemIR::InstId class_inst_id, SemIR::ClassType class_type)
-    -> clang::TagDecl*;
+                      SemIR::ClassType class_type) -> clang::TagDecl*;
 
 // Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
 auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;

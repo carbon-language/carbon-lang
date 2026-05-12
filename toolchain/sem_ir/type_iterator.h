@@ -65,14 +65,9 @@ class TypeIterator {
  private:
   // A work item to mark the end of an aggregate type's scope.
   struct EndType {};
-  // A work item to mark a symbolic type.
-  struct SymbolicType {
-    EntityNameId entity_name_id;
-    InstId facet;
-  };
-  // A work item to mark a FacetValue instruction.
-  struct FacetValueItem {
-    InstId facet_value_inst_id;
+  // A work item to mark a concrete or symbolic type.
+  struct TypeValue {
+    InstId inst_id;
   };
   // A work item to mark a concrete non-type value.
   struct ConcreteNonTypeValue {
@@ -88,21 +83,12 @@ class TypeIterator {
   };
 
   using WorkItem =
-      std::variant<TypeId, SymbolicType, FacetValueItem, ConcreteNonTypeValue,
-                   SymbolicNonTypeValue, StructFieldName, SpecificInterface,
-                   SpecificNamedConstraint, FacetType, EndType>;
+      std::variant<TypeValue, ConcreteNonTypeValue, SymbolicNonTypeValue,
+                   StructFieldName, SpecificInterface, SpecificNamedConstraint,
+                   FacetType, EndType>;
 
-  // Processes `next` when it's a `TypeId`.
-  auto ProcessTypeId(TypeId type_id) -> std::optional<Step>;
-
-  // Get the TypeId for an instruction that is not a facet value, otherwise
-  // return SymbolicType to indicate the instruction is a symbolic facet value.
-  //
-  // If the instruction is not a type value, the return is TypeId::None.
-  //
-  // We reuse the `SymbolicType` work item here to give a nice return type.
-  auto TryGetInstIdAsTypeId(InstId inst_id) const
-      -> std::variant<TypeId, SymbolicType>;
+  // Processes `next` when it's a type value (concrete or symbolic).
+  auto ProcessType(InstId inst_id) -> std::optional<Step>;
 
   // Get the instructions in the specific's instruction block as an ArrayRef.
   auto GetSpecificArgs(SpecificId specific_id) const -> llvm::ArrayRef<InstId>;
@@ -110,9 +96,10 @@ class TypeIterator {
   // Push all arguments from the array into the work queue.
   auto PushArgs(llvm::ArrayRef<InstId> args) -> void;
 
-  // Push an instruction's type value into the work queue, or a marker if the
-  // instruction has a symbolic value.
+  // Push an instruction into the work queue.
   auto PushInstId(InstId inst_id) -> void;
+  // Push a type id into the work queue.
+  auto PushTypeId(TypeId type_id) -> void;
 
   // Push the next step into the work queue.
   auto Push(WorkItem item) -> void;
@@ -177,7 +164,7 @@ class TypeIterator::Step {
   // Individual result values, which appear on their own or inside some scope
   // that begin with `StartWithEnd`.
 
-  // A type value.
+  // A concrete type value.
   struct ConcreteType {
     TypeId type_id;
   };
@@ -189,16 +176,25 @@ class TypeIterator::Step {
     // The facet, whose type is either a FacetType or the TypeType singleton.
     InstId facet;
   };
-  // A FacetValue, representing the conversion of a type to a facet type, which
-  // may be symbolic or concrete depending on the type inside. The iterator will
-  // iterate into the FacetValue, so it's reasonable to ignore this step, unless
-  // the consumer wants to specifically collect FacetValues.
-  struct FacetValue {
-    // The FacetValue instruction.
-    InstId facet_value_inst_id;
-  };
   // A symbolic template type value.
   struct TemplateType {};
+
+  // A wrapper instruction around a type, which may be concrete, symbolic, or
+  // template depending on the type inside. The iterator will iterate into the
+  // wrapper instruction, so it's reasonable to ignore this step, unless the
+  // consumer wants to specifically collect them.
+  struct TypeWrapper {
+    enum Kind {
+      // A FacetValue, representing the conversion of a type to a facet type.
+      FacetValue,
+      // An access of an associated constant in a facet.
+      ImplWitnessAccess,
+    };
+    Kind kind;
+    // The wrapper instruction.
+    InstId inst_id;
+  };
+
   // A concrete non-type value, which can be found as a generic parameter for a
   // type.
   struct ConcreteValue {
@@ -228,7 +224,7 @@ class TypeIterator::Step {
 
   // Each step is one of these.
   using Any = std::variant<
-      ConcreteType, SymbolicType, FacetValue, TemplateType, ConcreteValue,
+      ConcreteType, SymbolicType, TemplateType, TypeWrapper, ConcreteValue,
       SymbolicValue, StructFieldName, ClassStartOnly, StructStartOnly,
       TupleStartOnly, InterfaceStartOnly, NamedConstraintStartOnly, ClassStart,
       StructStart, TupleStart, InterfaceStart, NamedConstraintStart, IntStart,

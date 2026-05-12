@@ -418,3 +418,37 @@ fn F(B:! W(E), C:! type where E impls V(.Self)) {
   E as (V(C) where D(B) impls X(.Self));
   E as (V(C) where D(B) impls X(E));
 }
+
+// --- facet_has_witness_for_impl_witness_access.carbon
+library "[[@TEST_NAME]]";
+
+interface X {}
+interface Y {}
+interface Z {
+  // A type type, which has no witnesses.
+  let Z1:! type;
+  // A facet type, but not one that provides a witness for `.Z2 as Y`.
+  let Z2:! type where .Self impls X;
+}
+fn F(T:! Z where .Z1 impls Y and .Z2 impls Y) {
+  // `T.Z1` is a `type` so this query self is ImplWitnessAccess(Z1).
+  T.Z1 as Y;
+  // `T.Z2` has a facet type so this query self is FacetAccessType(ImplWitnessAccess(Z2)).
+  T.Z2 as Y;
+}
+
+// --- impl_witness_access_has_access.carbon
+library "[[@TEST_NAME]]";
+
+class C(T:! type) {}
+
+interface Y {}
+interface Z {
+  // Note that the facet type is not an exact type match for `Y` so that we
+  // cause an actual impl lookup to happen when we convert `.Z1` to `Y`.
+  let Z1:! type where .Self impls Y and C(.Self) impls Y;
+}
+fn F(T:! Z) {
+  T.Z1 as Y;
+  C(T.Z1) as Y;
+}

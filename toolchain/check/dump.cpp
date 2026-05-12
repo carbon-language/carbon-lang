@@ -28,6 +28,10 @@
 
 namespace Carbon::Check {
 
+LLVM_DUMP_METHOD static auto Dump(const Context& context) -> std::string {
+  return SemIR::Dump(context.sem_ir());
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context, Lex::TokenIndex token)
     -> std::string {
   return Parse::Dump(context.parse_tree(), token);
@@ -88,6 +92,11 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  const SemIR::Inst& inst) -> std::string {
+  return SemIR::Dump(context.sem_ir(), inst);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::InstBlockId inst_block_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), inst_block_id);
@@ -112,6 +121,12 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::NameId name_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), name_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  const SemIR::NameScope& name_scope)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), name_scope);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

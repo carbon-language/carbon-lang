@@ -486,10 +486,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
 // CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -498,12 +498,12 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -519,6 +519,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.f68 = value_binding bar, %bar.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @Bar.vtable {
+// CHECK:STDOUT:   imports.%Bar.f.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {

@@ -20,6 +20,7 @@
 
 namespace Carbon::SemIR {
 
+auto Dump(const File& file) -> std::string;
 auto Dump(const File& file, RawBundleId bundle_id) -> std::string;
 auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
@@ -30,11 +31,13 @@ auto Dump(const File& file, GenericId generic_id) -> std::string;
 auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)
     -> std::string;
 auto Dump(const File& file, ImplId impl_id) -> std::string;
+auto Dump(const File& file, const Inst& inst) -> std::string;
 auto Dump(const File& file, InstBlockId inst_block_id) -> std::string;
 auto Dump(const File& file, InstId inst_id) -> std::string;
 auto Dump(const File& file, InterfaceId interface_id) -> std::string;
 auto Dump(const File& file, LocId loc_id) -> std::string;
 auto Dump(const File& file, NameId name_id) -> std::string;
+auto Dump(const File& file, const NameScope& name_scope) -> std::string;
 auto Dump(const File& file, NameScopeId name_scope_id) -> std::string;
 auto Dump(const File& file, NamedConstraintId named_constraint_id)
     -> std::string;
