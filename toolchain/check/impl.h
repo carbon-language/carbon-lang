@@ -84,10 +84,15 @@ auto CheckAssociatedFunctionImplementation(
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
     bool defer_thunk_definition) -> SemIR::InstId;
 
-// Checks that the constraint specified for the impl is valid and identified.
-// Returns the interface that the impl implements. On error, issues a diagnostic
-// and returns `None`.
-auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
+// Checks that the constraint specified for the impl is a facet type. Returns
+// false if an error was diagnosed.
+auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::TypeInstId constraint_id) -> bool;
+
+// Checks that the constraint specified for the impl is a valid, identified
+// facet type that extends a single interface. Returns the interface that the
+// impl implements. On error, issues a diagnostic and returns `None`.
+auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
