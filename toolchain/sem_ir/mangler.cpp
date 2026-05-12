@@ -73,28 +73,14 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
-
-        auto facet_type = insts().GetAs<SemIR::FacetType>(
-            constant_values().GetConstantInstId(impl.constraint_id));
-
-        auto identified_facet_type_id =
-            sem_ir().identified_facet_types().Lookup(
-                {.facet_type_id = facet_type.facet_type_id,
-                 .self_const_id =
-                     sem_ir().constant_values().Get(impl.self_id)});
-        CARBON_CHECK(identified_facet_type_id.has_value(),
-                     "ImplDecl with unidentified facet type constraint");
-        const auto& identified =
-            sem_ir().identified_facet_types().Get(identified_facet_type_id);
-        auto impl_target = identified.impl_as_target_interface();
         const auto& interface =
-            sem_ir().interfaces().Get(impl_target.interface_id);
+            sem_ir().interfaces().Get(impl.interface.interface_id);
         names_to_render.push_back(
             // We mangle names in an interface without `Self` in the specific
             // since it would just add noise and `Self` is not part of how you
             // name the entities syntactically.
             {.name_scope_id = interface.scope_without_self_id,
-             .specific_id = impl_target.specific_id,
+             .specific_id = impl.interface.specific_id,
              .prefix = ':'});
 
         auto self_const_inst_id =
