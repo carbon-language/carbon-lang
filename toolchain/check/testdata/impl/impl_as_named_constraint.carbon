@@ -284,6 +284,26 @@ fn G() {
 //   F(C);
 }
 
+// --- fail_no_require_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+class C;
+
+constraint Y {
+  // `Self` must appear somewhere in the require decl, so it's in the interface
+  // specific because we want to test a different self-type.
+  require C impls Z(Self);
+}
+
+// Y does not have any extend require on `Self`.
+// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y {}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

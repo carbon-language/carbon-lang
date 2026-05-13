@@ -220,7 +220,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
@@ -480,7 +480,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
@@ -596,7 +596,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.47530a.1 = fn_decl @Foo.loc7 [concrete = constants.%Foo.9ec12f.1] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
@@ -651,7 +651,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.47530a.1 = fn_decl @Foo.loc7 [concrete = constants.%Foo.9ec12f.1] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
@@ -710,7 +710,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.47530a.1 = fn_decl @Foo.loc7 [concrete = constants.%Foo.9ec12f.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -788,7 +788,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %D.ref [concrete]
@@ -888,7 +888,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %default.import.loc2_30.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]

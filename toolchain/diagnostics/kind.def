@@ -547,7 +547,7 @@ CARBON_DIAGNOSTIC_KIND(ClassMemberDeclaration)
 CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 
 // Alias diagnostics.
-CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
+CARBON_DIAGNOSTIC_KIND(AliasRequiresConstantValue)
 
 // Where operator and its requirements.
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)

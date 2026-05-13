@@ -335,7 +335,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.ref [concrete = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

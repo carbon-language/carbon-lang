@@ -17,7 +17,7 @@
 
 namespace Carbon::SemIR {
 
-static LLVM_DUMP_METHOD auto Dump(const File& file) -> std::string {
+LLVM_DUMP_METHOD auto Dump(const File& file) -> std::string {
   return PrintToString(file);
 }
 
@@ -356,6 +356,27 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpInstCommonDetails(const File& file, const Inst& inst,
+                                  RawStringOstream& out) -> void {
+  if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
+    auto entity_name_id = EntityNameId(inst.arg0());
+    out << "\n  - name:"
+        << DumpNameIfValid(file,
+                           file.entity_names().Get(entity_name_id).name_id);
+  }
+
+  if (inst.type_id().has_value()) {
+    out << "\n  - type: " << DumpTypeSummary(file, inst.type_id());
+  }
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, const Inst& inst) -> std::string {
+  RawStringOstream out;
+  out << inst;
+  DumpInstCommonDetails(file, inst, out);
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
     -> std::string {
   RawStringOstream out;
@@ -378,17 +399,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
   }
 
   Inst inst = file.insts().GetWithAttachedType(inst_id);
-
-  if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
-    auto entity_name_id = EntityNameId(inst.arg0());
-    out << "\n  - name:"
-        << DumpNameIfValid(file,
-                           file.entity_names().Get(entity_name_id).name_id);
-  }
-
-  if (inst.type_id().has_value()) {
-    out << "\n  - type: " << DumpTypeSummary(file, inst.type_id());
-  }
+  DumpInstCommonDetails(file, inst, out);
   ConstantId const_id = file.constant_values().GetAttached(inst_id);
   if (const_id.has_value()) {
     InstId const_inst_id = file.constant_values().GetInstId(const_id);
@@ -424,20 +435,15 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
+LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& name_scope)
     -> std::string {
   RawStringOstream out;
-  out << name_scope_id;
-  if (!name_scope_id.has_value()) {
-    return out.TakeStr();
-  }
-
-  const auto& name_scope = file.name_scopes().Get(name_scope_id);
-  out << ": " << name_scope;
+  out << name_scope;
   if (name_scope.inst_id().has_value()) {
-    out << " " << file.insts().Get(name_scope.inst_id());
+    out << ": " << DumpInstSummary(file, name_scope.inst_id());
   }
-  out << DumpNameIfValid(file, name_scope.name_id());
+  out << "\n  - name: " << name_scope.name_id()
+      << DumpNameIfValid(file, name_scope.name_id());
   for (const auto& entry : name_scope.entries()) {
     out << "\n  - " << entry.name_id << DumpNameIfValid(file, entry.name_id)
         << ": ";
@@ -459,6 +465,16 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     } else {
       out << "<not-found>";
     }
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
+    -> std::string {
+  RawStringOstream out;
+  out << name_scope_id;
+  if (name_scope_id.has_value()) {
+    out << ": " << Dump(file, file.name_scopes().Get(name_scope_id));
   }
   return out.TakeStr();
 }
@@ -554,58 +570,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   return DumpTypeSummary(file, type_id);
-}
-
-static LLVM_DUMP_METHOD auto Dump(const File& file, const Inst& inst)
-    -> std::string {
-  RawStringOstream out;
-  out << inst;
-
-  if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
-    auto entity_name_id = EntityNameId(inst.arg0());
-    out << "\n  - name:"
-        << DumpNameIfValid(file,
-                           file.entity_names().Get(entity_name_id).name_id);
-  }
-
-  if (inst.type_id().has_value()) {
-    out << "\n  - type: " << DumpTypeSummary(file, inst.type_id());
-  }
-
-  return out.TakeStr();
-}
-
-static LLVM_DUMP_METHOD auto Dump(const File& file, const NameScope& scope)
-    -> std::string {
-  RawStringOstream out;
-  out << scope;
-  if (scope.inst_id().has_value()) {
-    out << " " << file.insts().Get(scope.inst_id());
-  }
-  out << DumpNameIfValid(file, scope.name_id());
-  for (const auto& entry : scope.entries()) {
-    out << "\n  - " << entry.name_id << DumpNameIfValid(file, entry.name_id)
-        << ": ";
-    if (entry.result.is_poisoned()) {
-      out << "<poisoned>";
-    } else if (entry.result.is_found()) {
-      switch (entry.result.access_kind()) {
-        case AccessKind::Public:
-          out << "public ";
-          break;
-        case AccessKind::Protected:
-          out << "protected ";
-          break;
-        case AccessKind::Private:
-          out << "private ";
-          break;
-      }
-      out << DumpInstSummary(file, entry.result.target_inst_id());
-    } else {
-      out << "<not-found>";
-    }
-  }
-  return out.TakeStr();
 }
 
 // Functions that can be used instead of the corresponding constructor, which is
