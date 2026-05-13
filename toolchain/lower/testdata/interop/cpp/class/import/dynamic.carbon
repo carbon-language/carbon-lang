@@ -102,7 +102,6 @@ auto DoThing() -> int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTV11FurtherBase = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [3 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_ZN11FurtherBase17further_base_funcEv to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32), i32 trunc (i64 sub (i64 ptrtoint (ptr @_ZN4Base4funcEv to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32), i32 trunc (i64 sub (i64 ptrtoint (ptr @_Cother_func.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local unnamed_addr constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZN4Base4funcEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
@@ -275,8 +274,8 @@ auto DoThing() -> int {
 // CHECK:STDOUT: uselistorder ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon7DerivedC2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon7DerivedD2Ev, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN4Base4funcEv, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN4Base4funcEv, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

@@ -522,6 +522,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Bar.vtable {
+// CHECK:STDOUT:   invalid
+// CHECK:STDOUT:   invalid
 // CHECK:STDOUT:   imports.%Bar.f.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

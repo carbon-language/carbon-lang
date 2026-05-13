@@ -939,25 +939,26 @@ static auto BuildClassDefinition(Context& context,
 
   if (class_info.is_dynamic) {
     llvm::SmallVector<SemIR::InstId> vtable;
-    const auto& vtable_layout = dyn_cast<clang::ItaniumVTableContext>(
-                                    context.ast_context().getVTableContext())
-                                    ->getVTableLayout(clang_def);
+    auto& vtable_context = *cast<clang::ItaniumVTableContext>(
+        context.ast_context().getVTableContext());
+    const auto& vtable_layout = vtable_context.getVTableLayout(clang_def);
     auto vtable_components = vtable_layout.vtable_components();
     vtable.reserve(vtable_components.size());
-    auto num_components = 0;
     for (const auto& vtable_component : vtable_components) {
       if (vtable_component.getKind() !=
           clang::VTableComponent::CK_FunctionPointer) {
         continue;
       }
-      ++num_components;
       const auto* method_decl = vtable_component.getFunctionDecl();
-      vtable.push_back(ImportCppFunctionDecl(
+      auto virtual_index = vtable_context.getMethodVTableIndex(method_decl);
+      if (virtual_index >= vtable.size()) {
+        vtable.resize(virtual_index + 1, SemIR::InstId::None);
+      }
+      vtable[virtual_index] = ImportCppFunctionDecl(
           context, SemIR::LocId(import_ir_inst_id),
           const_cast<clang::CXXMethodDecl*>(method_decl),
-          MakeVirtualFunctionSignature(context, method_decl)));
+          MakeVirtualFunctionSignature(context, method_decl));
     }
-    vtable.truncate(num_components);
     auto vtable_id = context.vtables().Add(
         {{.class_id = class_id,
           .virtual_functions_id = context.inst_blocks().Add(vtable),

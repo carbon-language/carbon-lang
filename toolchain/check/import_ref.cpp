@@ -2454,6 +2454,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   for (auto [import_vtable_entry_inst_id, local_vtable_entry_inst_id] :
        llvm::zip_equal(virtual_functions, lazy_virtual_functions)) {
+    if (!local_vtable_entry_inst_id.has_value()) {
+      continue;
+    }
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.

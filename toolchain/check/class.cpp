@@ -183,12 +183,24 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
 
   llvm::SmallVector<SemIR::InstId> vtable;
   Set<SemIR::FunctionId> implemented_impls;
+  bool carbon_native_vtable = true;
   if (base_vtable_id.has_value()) {
-    auto base_vtable_inst_block = context.inst_blocks().Get(
-        context.vtables().Get(base_vtable_id).virtual_functions_id);
+    const auto& base_vtable = context.vtables().Get(base_vtable_id);
+    carbon_native_vtable = base_vtable.carbon_native_vtable;
+    auto base_vtable_inst_block =
+        context.inst_blocks().Get(base_vtable.virtual_functions_id);
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
+      if (!base_vtable_entry_id.has_value()) {
+        // Foreign vtables may have holes in them for information that we don't
+        // use. Just skip those entries.
+        CARBON_CHECK(
+            !context.vtables().Get(base_vtable_id).carbon_native_vtable);
+        vtable.push_back(SemIR::InstId::None);
+        continue;
+      }
+
       auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
             specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
@@ -265,7 +277,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
 
   return context.vtables().Add(
       {{.class_id = class_id,
-        .virtual_functions_id = context.inst_blocks().Add(vtable)}});
+        .virtual_functions_id = context.inst_blocks().Add(vtable),
+        .carbon_native_vtable = carbon_native_vtable}});
 }
 
 // Checks that the specified finished class definition is valid and builds and
