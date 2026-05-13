@@ -1660,7 +1660,7 @@ Classes may have other kinds of members beyond fields declared in its scope:
 -   [`alias`](#aliases)
 -   [`let`](#constant-let-declarations) to define class constants. **TODO:**
     Another syntax to define constants associated with the class like
-    `class let` or `static let`?
+    `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
