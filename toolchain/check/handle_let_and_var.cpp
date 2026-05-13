@@ -121,6 +121,8 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::FieldDecl:
+      // For class fields, a `FieldDecl` has already been created; do
+      // not create a var pattern.
       return true;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
