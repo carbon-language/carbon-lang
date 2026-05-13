@@ -41,7 +41,7 @@ class FullPatternStack {
     NameBindingDecl,
 
     // A non-static `var` field declaration inside a class.
-    NonStaticClassVarDecl,
+    FieldDecl,
 
     // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
@@ -67,8 +67,8 @@ class FullPatternStack {
 
   // Whether the kind of the current full-pattern is a non-static class
   // `var` decl.
-  auto IsCurrentKindNonStaticClassVarDecl() -> bool {
-    return !empty() && CurrentKind() == Kind::NonStaticClassVarDecl;
+  auto IsCurrentKindFieldDecl() -> bool {
+    return !empty() && CurrentKind() == Kind::FieldDecl;
   }
 
   // Marks the start of a new full-pattern for a parameterized entity
@@ -87,8 +87,8 @@ class FullPatternStack {
 
   // Marks the start of a new full-pattern for a non-staitc `var` field
   // declaration.
-  auto PushNonStaticClassVarDecl() -> void {
-    kind_stack_.push_back(Kind::NonStaticClassVarDecl);
+  auto PushFieldDecl() -> void {
+    kind_stack_.push_back(Kind::FieldDecl);
     bind_name_stack_.PushArray();
   }
 

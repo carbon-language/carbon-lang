@@ -70,7 +70,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   context.pattern_block_stack().Push();
   if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
       Kind == Lex::TokenKind::Var) {
-    context.full_pattern_stack().PushNonStaticClassVarDecl();
+    context.full_pattern_stack().PushFieldDecl();
   } else {
     context.full_pattern_stack().PushNameBindingDecl();
   }
@@ -120,7 +120,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
-    case FullPatternStack::Kind::NonStaticClassVarDecl:
+    case FullPatternStack::Kind::FieldDecl:
       return true;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
@@ -146,7 +146,7 @@ static auto EndFullPattern(Context& context) -> void {
 
   // For class fields, a `FieldDecl` has been created; skip creating a
   // name binding and var storage.
-  if (context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl()) {
+  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
     return;
   }
 
@@ -200,7 +200,7 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
-  if (context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl()) {
+  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
     context.TODO(node_id, "Field initializer");
     return false;
   }
@@ -258,7 +258,7 @@ template <const Lex::TokenKind& IntroducerTokenKind,
 static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
   bool is_non_static_class_var =
-      context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl();
+      context.full_pattern_stack().IsCurrentKindFieldDecl();
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
