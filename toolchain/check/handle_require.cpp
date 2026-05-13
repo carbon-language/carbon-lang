@@ -245,13 +245,13 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
   auto identified_facet_type_id = RequireIdentifiedFacetType(
       context, constraint_loc_id, self_type_id.AsConstantId(),
       *constraint_facet_type, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(
-            RequireImplsUnidentifiedFacetType, Context,
-            "facet type {0} cannot be identified in `require` declaration",
-            SemIR::TypeId);
-        builder.Context(constraint_loc_id, RequireImplsUnidentifiedFacetType,
-                        constraint_type_id);
-      });
+    CARBON_DIAGNOSTIC(
+        RequireImplsUnidentifiedFacetType, Context,
+        "facet type {0} cannot be identified in `require` declaration",
+        SemIR::TypeId);
+    builder.Context(constraint_loc_id, RequireImplsUnidentifiedFacetType,
+                    constraint_type_id);
+  });
   if (!identified_facet_type_id.has_value()) {
     // The constraint can't be used. A diagnostic was emitted by
     // RequireIdentifiedFacetType().
@@ -350,13 +350,12 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             context,
             context.types().GetTypeIdForTypeInstId(constraint_type_inst_id),
             constraint_node_id, [&](auto& builder) {
-              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Context,
-                                "`extend require` of incomplete facet type {0}",
-                                InstIdAsType);
-              builder.Context(constraint_node_id,
-                              RequireImplsIncompleteFacetType,
-                              constraint_type_inst_id);
-            })) {
+      CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Context,
+                        "`extend require` of incomplete facet type {0}",
+                        InstIdAsType);
+      builder.Context(constraint_node_id, RequireImplsIncompleteFacetType,
+                      constraint_type_inst_id);
+    })) {
       return true;
     }
 

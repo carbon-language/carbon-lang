@@ -246,8 +246,8 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
   auto* first_non_lexical_scope = llvm::lower_bound(
       non_lexical_scope_stack_, lexical_results.back().scope_index,
       [](const NonLexicalScope& scope, ScopeIndex index) {
-        return scope.scope_index < index;
-      });
+    return scope.scope_index < index;
+  });
   return {
       lexical_results.back().inst_id,
       llvm::ArrayRef(first_non_lexical_scope, non_lexical_scope_stack_.end())};
@@ -267,9 +267,8 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
     scope_depth =
         llvm::lower_bound(scope_stack_, scope_index,
                           [](const ScopeStackEntry& entry, ScopeIndex index) {
-                            return entry.index < index;
-                          }) -
-        scope_stack_.begin();
+      return entry.index < index;
+    }) - scope_stack_.begin();
     CARBON_CHECK(scope_stack_[scope_depth].index == scope_index,
                  "Declaring name in scope that has already ended");
   } else {

@@ -64,8 +64,8 @@ TEST(SourceGenTest, Identifiers) {
     });
     for (int long_size : llvm::seq_inclusive(5, 64)) {
       EXPECT_THAT(short_count, Gt(llvm::count_if(idents, [&](auto ident) {
-                    return static_cast<int>(ident.size()) == long_size;
-                  })));
+        return static_cast<int>(ident.size()) == long_size;
+      })));
     }
   }
 

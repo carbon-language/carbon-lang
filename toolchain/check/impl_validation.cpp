@@ -558,14 +558,14 @@ auto ValidateImplsInFile(Context& context) -> void {
       llvm::make_filter_range(
           context.impls().enumerate(),
           [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
-            return pair.second.witness_id != SemIR::ErrorInst::InstId &&
-                   pair.second.interface.interface_id.has_value();
-          }),
+    return pair.second.witness_id != SemIR::ErrorInst::InstId &&
+           pair.second.interface.interface_id.has_value();
+  }),
       [&](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
-        return GetImplInfo(context, pair.first);
-      }));
-  llvm::stable_sort(impl_ids_by_interface, [](const ImplInfo& lhs,
-                                              const ImplInfo& rhs) {
+    return GetImplInfo(context, pair.first);
+  }));
+  llvm::stable_sort(impl_ids_by_interface,
+                    [](const ImplInfo& lhs, const ImplInfo& rhs) {
     return lhs.interface.interface_id.index < rhs.interface.interface_id.index;
   });
 

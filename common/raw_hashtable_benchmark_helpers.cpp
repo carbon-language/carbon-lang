@@ -59,17 +59,17 @@ static auto MakeFourCharStrs(llvm::ArrayRef<char> characters, absl::BitGen& gen)
   constexpr ssize_t NumCharsShift = llvm::ConstantLog2<NumChars>();
   llvm::SmallVector<std::array<char, 4>> four_char_strs(
       llvm::map_range(llvm::seq(NumFourCharStrs), [&](auto i) {
-        std::array<char, 4> str;
-        str[0] = characters[i & NumCharsMask];
-        i >>= NumCharsShift;
-        str[1] = characters[i & NumCharsMask];
-        i >>= NumCharsShift;
-        str[2] = characters[i & NumCharsMask];
-        i >>= NumCharsShift;
-        CARBON_CHECK((i & ~NumCharsMask) == 0);
-        str[3] = characters[i];
-        return str;
-      }));
+    std::array<char, 4> str;
+    str[0] = characters[i & NumCharsMask];
+    i >>= NumCharsShift;
+    str[1] = characters[i & NumCharsMask];
+    i >>= NumCharsShift;
+    str[2] = characters[i & NumCharsMask];
+    i >>= NumCharsShift;
+    CARBON_CHECK((i & ~NumCharsMask) == 0);
+    str[3] = characters[i];
+    return str;
+  }));
   Shuffle<std::array<char, 4>>(four_char_strs, gen);
   return four_char_strs;
 }
@@ -84,8 +84,8 @@ static auto MakeRandomChars(llvm::ArrayRef<char> characters, int max_length,
                             absl::BitGen& gen) -> llvm::SmallVector<char> {
   return llvm::SmallVector<char>(
       llvm::map_range(llvm::seq(NumRandomChars + max_length), [&](auto /*i*/) {
-        return characters[absl::Uniform<ssize_t>(gen, 0, NumChars)];
-      }));
+    return characters[absl::Uniform<ssize_t>(gen, 0, NumChars)];
+  }));
 }
 
 // Make a small vector of pointers into a single allocation of raw strings. The
@@ -262,11 +262,10 @@ auto GetShuffledLookupKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
       (*lookup_keys_storage<T>)[{table_keys_size, lookup_keys_size}];
   if (lookup_keys.empty()) {
     auto raw_keys = GetRawKeys<T>();
-    llvm::append_range(
-        lookup_keys,
-        llvm::map_range(llvm::seq(lookup_keys_size), [&](int index) {
-          return raw_keys[index % table_keys_size];
-        }));
+    llvm::append_range(lookup_keys, llvm::map_range(llvm::seq(lookup_keys_size),
+                                                    [&](int index) {
+      return raw_keys[index % table_keys_size];
+    }));
     absl::BitGen gen;
     Shuffle<T>(lookup_keys, gen);
   }
@@ -371,9 +370,8 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   ssize_t max_group_index =
       llvm::max_element(grouped_key_indices,
                         [](const auto& lhs, const auto& rhs) {
-                          return lhs.size() < rhs.size();
-                        }) -
-      grouped_key_indices.begin();
+    return lhs.size() < rhs.size();
+  }) - grouped_key_indices.begin();
 
   // If the max number of collisions on the index is less than or equal to the
   // group size, there shouldn't be any necessary probing (outside of deletion)

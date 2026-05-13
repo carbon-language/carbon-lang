@@ -104,12 +104,11 @@ TEST_F(ClangRunnerTest, DashC) {
   ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_THAT(Testing::CallWithCapturedOutput(
-                  out, err,
-                  [&] {
-                    return runner.RunWithNoRuntimes(
-                        {"-c", test_file.string(), "-o", test_output.string()});
-                  }),
+  EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return runner.RunWithNoRuntimes(
+        {"-c", test_file.string(), "-o", test_output.string()});
+  }),
               IsSuccess(true))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
@@ -134,12 +133,11 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_THAT(Testing::CallWithCapturedOutput(
-                  out, err,
-                  [&] {
-                    return runner.RunWithNoRuntimes(
-                        {"-c", test_file.string(), "-o", test_output.string()});
-                  }),
+  EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return runner.RunWithNoRuntimes(
+        {"-c", test_file.string(), "-o", test_output.string()});
+  }),
               IsSuccess(true))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
@@ -162,12 +160,11 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     ClangRunner runner(&install_paths_, vfs_, &verbose_out);
     std::string out;
     std::string err;
-    EXPECT_THAT(Testing::CallWithCapturedOutput(
-                    out, err,
-                    [&] {
-                      return runner.RunWithNoRuntimes(
-                          {"-c", file.string(), "-o", output.string()});
-                    }),
+    EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                                [&] {
+      return runner.RunWithNoRuntimes(
+          {"-c", file.string(), "-o", output.string()});
+    }),
                 IsSuccess(true))
         << "Verbose output from runner:\n"
         << verbose_out.TakeStr() << "\n";
@@ -198,18 +195,16 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
   ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_THAT(
-      Testing::CallWithCapturedOutput(
-          out, err,
-          [&] {
-            // Note that we use the target independent run command here because
-            // we're just getting the echo-ed output back. For this to actually
-            // link, we'd need to have the target-dependent resources, but those
-            // are expensive to build so we only want to test them once (above).
-            return runner.RunWithNoRuntimes(
-                {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
-          }),
-      IsSuccess(true))
+  EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    // Note that we use the target independent run command here because
+    // we're just getting the echo-ed output back. For this to actually
+    // link, we'd need to have the target-dependent resources, but those
+    // are expensive to build so we only want to test them once (above).
+    return runner.RunWithNoRuntimes(
+        {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
+  }),
+              IsSuccess(true))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
@@ -245,13 +240,11 @@ TEST_F(ClangRunnerTest, ParamsFile) {
 
   std::string out;
   std::string err;
-  EXPECT_THAT(
-      Testing::CallWithCapturedOutput(out, err,
-                                      [&] {
-                                        return runner.RunWithNoRuntimes(
-                                            {"@" + params_path.native()});
-                                      }),
-      IsSuccess(true))
+  EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return runner.RunWithNoRuntimes({"@" + params_path.native()});
+  }),
+              IsSuccess(true))
       << "Verbose output:\n"
       << verbose_out.TakeStr();
   verbose_out.clear();
@@ -284,15 +277,13 @@ _Z4testv:
   ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
-  EXPECT_THAT(
-      Testing::CallWithCapturedOutput(
-          out, err,
-          [&] {
-            return runner.RunWithNoRuntimes(
-                {"-c", test_file.string(), "--target=aarch64-unknown-linux-gnu",
-                 "-o", test_output.string()});
-          }),
-      IsSuccess(true))
+  EXPECT_THAT(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return runner.RunWithNoRuntimes({"-c", test_file.string(),
+                                     "--target=aarch64-unknown-linux-gnu", "-o",
+                                     test_output.string()});
+  }),
+              IsSuccess(true))
       << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();

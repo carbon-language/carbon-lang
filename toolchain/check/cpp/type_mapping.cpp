@@ -209,8 +209,8 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
               .inner_type_id = context.types().GetTypeIdForTypeInstId(
                   pointer_type->pointee_id),
               .wrap_fn = [](Context& context, clang::QualType inner_type) {
-                return context.ast_context().getPointerType(inner_type);
-              }};
+            return context.ast_context().getPointerType(inner_type);
+          }};
         }
       }
       break;
@@ -259,8 +259,8 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
           .inner_type_id =
               context.types().GetTypeIdForTypeInstId(const_type.inner_id),
           .wrap_fn = [](Context& /*context*/, clang::QualType inner_type) {
-            return inner_type.withConst();
-          }};
+        return inner_type.withConst();
+      }};
     }
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
@@ -270,11 +270,10 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
           .inner_type_id =
               context.types().GetTypeIdForTypeInstId(pointer_type.pointee_id),
           .wrap_fn = [](Context& context, clang::QualType inner_type) {
-            auto pointer_type =
-                context.ast_context().getPointerType(inner_type);
-            return context.ast_context().getAttributedType(
-                clang::attr::TypeNonNull, pointer_type, pointer_type);
-          }};
+        auto pointer_type = context.ast_context().getPointerType(inner_type);
+        return context.ast_context().getAttributedType(
+            clang::attr::TypeNonNull, pointer_type, pointer_type);
+      }};
     }
 
     default: {

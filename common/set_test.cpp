@@ -108,13 +108,13 @@ TYPED_TEST(SetTest, FactoryApi) {
   using SetT = TypeParam;
   SetT s;
   EXPECT_TRUE(s.Insert(1, [](int k, void* key_storage) {
-                 return new (key_storage) int(k);
-               }).is_inserted());
+    return new (key_storage) int(k);
+  }).is_inserted());
   ASSERT_TRUE(s.Contains(1));
   // Reinsertion doesn't invoke the callback.
   EXPECT_FALSE(s.Insert(1, [](int, void*) -> int* {
-                  llvm_unreachable("Should never be called!");
-                }).is_inserted());
+    llvm_unreachable("Should never be called!");
+  }).is_inserted());
 }
 
 TYPED_TEST(SetTest, Copy) {

@@ -20,9 +20,9 @@ https://clang.llvm.org/docs/CrossCompilation.html#target-triple
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(host);
-        arg_b.Set(&target);
-      });
+    arg_b.Default(host);
+    arg_b.Set(&target);
+  });
 }
 
 }  // namespace Carbon

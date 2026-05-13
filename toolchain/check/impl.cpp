@@ -284,12 +284,12 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   if (!RequireCompleteType(
           context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
           SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Context,
-                              "`extend impl as` incomplete facet type {0}",
-                              InstIdAsType);
-            builder.Context(impl.latest_decl_id(), ExtendImplAsIncomplete,
-                            impl.constraint_id);
-          })) {
+    CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Context,
+                      "`extend impl as` incomplete facet type {0}",
+                      InstIdAsType);
+    builder.Context(impl.latest_decl_id(), ExtendImplAsIncomplete,
+                    impl.constraint_id);
+  })) {
     parent_scope.set_has_error();
     return false;
   }
@@ -429,11 +429,11 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
   auto rewrites_into_interface_to_witness = llvm::make_filter_range(
       facet_type_info.rewrite_constraints,
       [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
-        auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
-            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return WitnessQueryMatchesInterface(context, loc_id, impl.self_id,
-                                            access.witness_id, impl.interface);
-      });
+    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+    return WitnessQueryMatchesInterface(context, loc_id, impl.self_id,
+                                        access.witness_id, impl.interface);
+  });
 
   if (rewrites_into_interface_to_witness.empty()) {
     // The witness table is not needed until the definition. Make a placeholder
@@ -596,14 +596,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     if (!RequireCompleteType(
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
             SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(
-                  ImplAsIncompleteFacetTypeDefinition, Context,
-                  "definition of impl as incomplete facet type {0}",
-                  InstIdAsType);
-              builder.Context(SemIR::LocId(impl.latest_decl_id()),
-                              ImplAsIncompleteFacetTypeDefinition,
-                              impl.constraint_id);
-            })) {
+      CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Context,
+                        "definition of impl as incomplete facet type {0}",
+                        InstIdAsType);
+      builder.Context(SemIR::LocId(impl.latest_decl_id()),
+                      ImplAsIncompleteFacetTypeDefinition, impl.constraint_id);
+    })) {
       FillImplWitnessWithErrors(context, impl);
       return;
     }
@@ -883,11 +881,11 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(constraint_id),
       context.constant_values().Get(self_id), facet_type, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
-                          "facet type {0} cannot be identified in `impl as`",
-                          InstIdAsType);
-        builder.Context(loc_id, ImplOfUnidentifiedFacetType, constraint_id);
-      });
+    CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
+                      "facet type {0} cannot be identified in `impl as`",
+                      InstIdAsType);
+    builder.Context(loc_id, ImplOfUnidentifiedFacetType, constraint_id);
+  });
   if (!identified_id.has_value()) {
     return SemIR::SpecificInterface::None;
   }

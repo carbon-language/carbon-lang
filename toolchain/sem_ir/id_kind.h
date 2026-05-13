@@ -145,14 +145,14 @@ class IdAndKind {
     static constexpr std::array<DispatchFnT<R, F>*, TypeEnum<Ids...>::NumValues>
         Table = {
             [](F&& f, int32_t id) -> R {
-              return std::forward<F>(f)(SemIR::FromRaw<Ids>(id));
-            }...,
+      return std::forward<F>(f)(SemIR::FromRaw<Ids>(id));
+    }...,
             [](F&& f, int32_t /*id*/) -> R {
-              return std::forward<F>(f)(InvalidType{});
-            },
+      return std::forward<F>(f)(InvalidType{});
+    },
             [](F&& f, int32_t /*id*/) -> R {
-              return std::forward<F>(f)(NoneType{});
-            },
+      return std::forward<F>(f)(NoneType{});
+    },
         };
     return Table[id_kind.ToIndex()];
   }

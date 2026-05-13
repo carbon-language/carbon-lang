@@ -858,11 +858,10 @@ template <typename BundleT>
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::BundleId<BundleT> bundle_id, Phase* phase)
     -> SemIR::BundleId<BundleT> {
-  return eval_context.context().bundles().AddCanonical(std::apply(
-      [&]<typename... Ids>(Ids... ids) -> BundleT {
-        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
-      },
-      eval_context.context().bundles().GetAsTuple(bundle_id)));
+  return eval_context.context().bundles().AddCanonical(
+      std::apply([&]<typename... Ids>(Ids... ids) -> BundleT {
+    return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+  }, eval_context.context().bundles().GetAsTuple(bundle_id)));
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -1052,11 +1051,9 @@ template <typename BundleT>
 static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
                                       SemIR::BundleId<BundleT> bundle_id)
     -> void {
-  std::apply(
-      [&](auto... ids) -> void {
-        (..., ResolveSpecificDeclForArg(eval_context, ids));
-      },
-      eval_context.context().bundles().GetAsTuple(bundle_id));
+  std::apply([&](auto... ids) -> void {
+    (..., ResolveSpecificDeclForArg(eval_context, ids));
+  }, eval_context.context().bundles().GetAsTuple(bundle_id));
 }
 
 // Resolves the specific declarations for a specific id in any field of the
@@ -2803,13 +2800,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                                .values = result,
                            });
 
-  Diagnostics::ContextScope diagnostic_context(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
-                          "unable to monomorphize specific {0}",
-                          SemIR::SpecificId);
-        builder.Context(loc_id, ResolvingSpecificHere, specific_id);
-      });
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [&](auto& builder) {
+    CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
+                      "unable to monomorphize specific {0}", SemIR::SpecificId);
+    builder.Context(loc_id, ResolvingSpecificHere, specific_id);
+  });
 
   bool has_error = false;
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
@@ -3167,12 +3163,12 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   FunctionExecContext eval_context(&outer_eval_context.context(), loc_id,
                                    specific_id, &locals, args_id);
 
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &eval_context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
-                          SemIR::NameId);
-        builder.Note(loc_id, InCallToEvalFn, function.name_id);
-      });
+  Diagnostics::AnnotationScope annotate_diagnostics(&eval_context.emitter(),
+                                                    [&](auto& builder) {
+    CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
+                      SemIR::NameId);
+    builder.Note(loc_id, InCallToEvalFn, function.name_id);
+  });
 
   // Execute the function decl block followed by the body.
   eval_context.PushBlock(function.body_block_ids.front());

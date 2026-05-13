@@ -296,10 +296,9 @@ TEST_F(DriverTest, LinkWithFlagLikeFiles) {
   std::string out;
   std::string err;
   EXPECT_FALSE(CallWithCapturedOutput(out, err, [&] {
-                 return driver_.RunCommand({"--no-build-runtimes", "link",
-                                            "--output=test", "--", "--test.o",
-                                            "--", "-lc", "-lm", "-Wl,--"});
-               }).success);
+    return driver_.RunCommand({"--no-build-runtimes", "link", "--output=test",
+                               "--", "--test.o", "--", "-lc", "-lm", "-Wl,--"});
+  }).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   EXPECT_THAT(out, StrEq(""));
   // This error seems to stem from incorrectly handling `--` in the LLD command

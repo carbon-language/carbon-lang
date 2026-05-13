@@ -141,46 +141,44 @@ auto File::Verify() const -> ErrorOr<Success> {
 }
 
 auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
-  return Yaml::OutputMapping([this, include_singletons](
-                                 Yaml::OutputMapping::Map map) {
+  return Yaml::OutputMapping(
+      [this, include_singletons](Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add(
-        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-          map.Add("names", names().OutputYaml());
-          map.Add("import_irs", import_irs_.OutputYaml());
-          map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
-          map.Add("clang_decls", clang_decls_.OutputYaml());
-          map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
-          map.Add("name_scopes", name_scopes_.OutputYaml());
-          map.Add("entity_names", entity_names_.OutputYaml());
-          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
-          map.Add("functions", functions_.OutputYaml());
-          map.Add("classes", classes_.OutputYaml());
-          map.Add("interfaces", interfaces_.OutputYaml());
-          map.Add("associated_constants", associated_constants_.OutputYaml());
-          map.Add("impls", impls_.OutputYaml());
-          map.Add("generics", generics_.OutputYaml());
-          map.Add("specifics", specifics_.OutputYaml());
-          map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
-          map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
-          map.Add("types", types_.OutputYaml());
-          map.Add("facet_types", facet_types_.OutputYaml());
-          map.Add("insts",
-                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    for (auto [id, inst] : insts_.enumerate()) {
-                      inst.CacheBundleDebugKinds(bundles_);
-                      if (!include_singletons && IsSingletonInstId(id)) {
-                        continue;
-                      }
-                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
-                    }
-                  }));
-          map.Add("bundles", bundles_.OutputYaml());
-          map.Add("constant_values",
-                  constant_values_.OutputYaml(include_singletons));
-          map.Add("inst_blocks", inst_blocks_.OutputYaml());
-          map.Add("value_stores", value_stores_->OutputYaml());
-        }));
+    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+      map.Add("names", names().OutputYaml());
+      map.Add("import_irs", import_irs_.OutputYaml());
+      map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+      map.Add("clang_decls", clang_decls_.OutputYaml());
+      map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
+      map.Add("name_scopes", name_scopes_.OutputYaml());
+      map.Add("entity_names", entity_names_.OutputYaml());
+      map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
+      map.Add("functions", functions_.OutputYaml());
+      map.Add("classes", classes_.OutputYaml());
+      map.Add("interfaces", interfaces_.OutputYaml());
+      map.Add("associated_constants", associated_constants_.OutputYaml());
+      map.Add("impls", impls_.OutputYaml());
+      map.Add("generics", generics_.OutputYaml());
+      map.Add("specifics", specifics_.OutputYaml());
+      map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
+      map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
+      map.Add("types", types_.OutputYaml());
+      map.Add("facet_types", facet_types_.OutputYaml());
+      map.Add("insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+        for (auto [id, inst] : insts_.enumerate()) {
+          inst.CacheBundleDebugKinds(bundles_);
+          if (!include_singletons && IsSingletonInstId(id)) {
+            continue;
+          }
+          map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+        }
+      }));
+      map.Add("bundles", bundles_.OutputYaml());
+      map.Add("constant_values",
+              constant_values_.OutputYaml(include_singletons));
+      map.Add("inst_blocks", inst_blocks_.OutputYaml());
+      map.Add("value_stores", value_stores_->OutputYaml());
+    }));
   });
 }
 

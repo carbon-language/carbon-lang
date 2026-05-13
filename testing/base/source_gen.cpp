@@ -391,13 +391,12 @@ auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length,
 auto SourceGen::GetIdentifiers(int number, int min_length, int max_length,
                                bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> idents = GetIdentifiersImpl(
-      number, min_length, max_length, uniform,
-      [this](int length, int length_count,
-             llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-        llvm::append_range(dest,
-                           GetSingleLengthIdentifiers(length, length_count));
-      });
+  llvm::SmallVector<llvm::StringRef> idents =
+      GetIdentifiersImpl(number, min_length, max_length, uniform,
+                         [this](int length, int length_count,
+                                llvm::SmallVectorImpl<llvm::StringRef>& dest) {
+    llvm::append_range(dest, GetSingleLengthIdentifiers(length, length_count));
+  });
 
   return idents;
 }
@@ -412,8 +411,8 @@ auto SourceGen::GetUniqueIdentifiers(int number, int min_length, int max_length,
       GetIdentifiersImpl(number, min_length, max_length, uniform,
                          [this](int length, int length_count,
                                 llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-                           AppendUniqueIdentifiers(length, length_count, dest);
-                         });
+    AppendUniqueIdentifiers(length, length_count, dest);
+  });
 
   return idents;
 }
@@ -866,20 +865,19 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   llvm::ListSeparator line_sep("\n");
   for ([[maybe_unused]] auto _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/false,
-        /*is_method=*/false,
-        state.public_function_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
+                         /*is_method=*/false,
+                         state.public_function_param_counts().pop_back_val(),
+                         /*indent=*/"  ", state.param_names(),
+                         [&] { return state.GetValidTypeName(); }, os);
   }
   for ([[maybe_unused]] auto _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/false,
-        /*is_method=*/true, state.public_method_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
+                         /*is_method=*/true,
+                         state.public_method_param_counts().pop_back_val(),
+                         /*indent=*/"  ", state.param_names(),
+                         [&] { return state.GetValidTypeName(); }, os);
   }
 
   if (IsCpp()) {
@@ -890,20 +888,19 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   for ([[maybe_unused]] auto _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/true,
-        /*is_method=*/false,
-        state.private_function_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
+                         /*is_method=*/false,
+                         state.private_function_param_counts().pop_back_val(),
+                         /*indent=*/"  ", state.param_names(),
+                         [&] { return state.GetValidTypeName(); }, os);
   }
   for ([[maybe_unused]] auto _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/true,
-        /*is_method=*/true, state.private_method_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
+                         /*is_method=*/true,
+                         state.private_method_param_counts().pop_back_val(),
+                         /*indent=*/"  ", state.param_names(),
+                         [&] { return state.GetValidTypeName(); }, os);
   }
   os << line_sep;
   for (llvm::StringRef type_name : field_type_names) {

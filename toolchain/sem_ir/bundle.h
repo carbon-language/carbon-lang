@@ -171,11 +171,10 @@ class BundleStore {
   auto BundleToArray(const BundleT& bundle) -> auto {
     static_assert(std::is_aggregate_v<BundleT>,
                   "Only aggregates are supported");
-    return std::apply(
-        [](auto... ids)->std::array<AnyRawId, sizeof...(ids)> {
-          return {AnyRawId(ToRaw(ids))...};
-        },
-        StructReflection::AsTuple(bundle));
+    return std::apply([](auto... ids)->std::array<AnyRawId, sizeof...(ids)> {
+      return {AnyRawId(ToRaw(ids))...};
+    },
+                      StructReflection::AsTuple(bundle));
   }
 
   // Helper class for converting an array of `AnyRawId`s back to typed IDs.
@@ -227,9 +226,9 @@ class BundleStore {
     llvm::ListSeparator sep;
     size_t i = 0;
     out << "{";
-    std::apply(
-        [&](auto... ids) { (..., PrintBundleField(out, sep, i++, ids)); },
-        GetAsTuple(bundle_id));
+    std::apply([&](auto... ids) {
+      (..., PrintBundleField(out, sep, i++, ids));
+    }, GetAsTuple(bundle_id));
     out << "}";
     return out.TakeStr();
   }

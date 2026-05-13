@@ -292,20 +292,18 @@ auto FileTestBaseTest::Run(
           .Case("unattached_multi_file.carbon", &TestUnattachedMultiFile)
           .Case("fail_multi_success_overall_fail.carbon",
                 [&](TestParams&) {
-                  return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
-                                                 /*b=*/true);
-                })
+    return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
+                                   /*b=*/true);
+  })
           .Case("multi_success.carbon",
                 [&](TestParams&) {
-                  return HandleMultiSuccessTests(/*overall=*/true, /*a=*/true,
-                                                 /*b=*/true);
-                })
-          .Case("multi_success_and_fail.carbon",
-                [&](TestParams&) {
-                  return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
-                                                 /*b=*/false);
-                })
-          .Default(&EchoFileContent);
+    return HandleMultiSuccessTests(/*overall=*/true, /*a=*/true,
+                                   /*b=*/true);
+  })
+          .Case("multi_success_and_fail.carbon", [&](TestParams&) {
+    return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
+                                   /*b=*/false);
+  }).Default(&EchoFileContent);
 
   // Call the appropriate test function for the file.
   TestParams params = {.fs = *fs,

@@ -374,26 +374,26 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
   auto deref_base_id = PerformPointerDereference(
       context, node_id, base_id,
       [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
-        // TODO: Pass in the expression we're trying to dereference to produce a
-        // better diagnostic.
-        CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
-                          "cannot dereference operand of non-pointer type {0}",
-                          SemIR::TypeId);
+    // TODO: Pass in the expression we're trying to dereference to produce a
+    // better diagnostic.
+    CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
+                      "cannot dereference operand of non-pointer type {0}",
+                      SemIR::TypeId);
 
-        auto builder =
-            context.emitter().Build(LocIdForDiagnostics::TokenOnly(node_id),
-                                    DerefOfNonPointer, not_pointer_type_id);
+    auto builder =
+        context.emitter().Build(LocIdForDiagnostics::TokenOnly(node_id),
+                                DerefOfNonPointer, not_pointer_type_id);
 
-        // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeType::TypeId) {
-          CARBON_DIAGNOSTIC(
-              DerefOfType, Note,
-              "to form a pointer type, write the `*` after the pointee type");
-          builder.Note(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
-        }
+    // TODO: Check for any facet here, rather than only a type.
+    if (not_pointer_type_id == SemIR::TypeType::TypeId) {
+      CARBON_DIAGNOSTIC(
+          DerefOfType, Note,
+          "to form a pointer type, write the `*` after the pointee type");
+      builder.Note(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
+    }
 
-        builder.Emit();
-      });
+    builder.Emit();
+  });
 
   context.node_stack().Push(node_id, deref_base_id);
   return true;

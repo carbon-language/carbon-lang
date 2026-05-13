@@ -34,13 +34,10 @@ auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
     -> SpecificId {
   CARBON_CHECK(generic_id.has_value());
   return lookup_table_
-      .Insert(
-          KeyContext::Key{.generic_id = generic_id, .args_id = args_id},
-          [&] {
-            return specifics_.Add(
-                {.generic_id = generic_id, .args_id = args_id});
-          },
-          KeyContext(&specifics_))
+      .Insert(KeyContext::Key{.generic_id = generic_id, .args_id = args_id},
+              [&] {
+    return specifics_.Add({.generic_id = generic_id, .args_id = args_id});
+  }, KeyContext(&specifics_))
       .key();
 }
 

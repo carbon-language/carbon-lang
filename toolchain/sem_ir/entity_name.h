@@ -121,8 +121,7 @@ class EntityNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
 
 inline auto EntityNameStore::AddCanonical(EntityName name) -> EntityNameId {
   return canonical_ids_
-      .Insert(
-          name, [&] { return Add(name); }, KeyContext(this))
+      .Insert(name, [&] { return Add(name); }, KeyContext(this))
       .key();
 }
 

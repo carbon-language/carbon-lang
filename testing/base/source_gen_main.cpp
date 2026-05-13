@@ -57,25 +57,24 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   int lines = 10'000;
   SourceGen::Language language;
 
-  auto parse_result = CommandLine::Parse(
-      args, llvm::outs(), Info, [&](CommandLine::CommandBuilder& b) {
-        b.AddStringOption(OutputArgInfo,
-                          [&](auto& arg_b) { arg_b.Set(&output_filename); });
-        b.AddIntegerOption(LinesArgInfo,
-                           [&](auto& arg_b) { arg_b.Set(&lines); });
-        b.AddOneOfOption(LanguageArgInfo, [&](auto& arg_b) {
-          arg_b.SetOneOf(
-              {
-                  arg_b.OneOfValue("carbon", SourceGen::Language::Carbon)
-                      .Default(true),
-                  arg_b.OneOfValue("cpp", SourceGen::Language::Cpp),
-              },
-              &language);
-        });
+  auto parse_result = CommandLine::Parse(args, llvm::outs(), Info,
+                                         [&](CommandLine::CommandBuilder& b) {
+    b.AddStringOption(OutputArgInfo,
+                      [&](auto& arg_b) { arg_b.Set(&output_filename); });
+    b.AddIntegerOption(LinesArgInfo, [&](auto& arg_b) { arg_b.Set(&lines); });
+    b.AddOneOfOption(LanguageArgInfo, [&](auto& arg_b) {
+      arg_b.SetOneOf(
+          {
+              arg_b.OneOfValue("carbon", SourceGen::Language::Carbon)
+                  .Default(true),
+              arg_b.OneOfValue("cpp", SourceGen::Language::Cpp),
+          },
+          &language);
+    });
 
-        // No-op action as there is only one operation for this command.
-        b.Do([] {});
-      });
+    // No-op action as there is only one operation for this command.
+    b.Do([] {});
+  });
   if (!parse_result.ok()) {
     llvm::errs() << "error: " << *parse_result << "\n";
     return false;

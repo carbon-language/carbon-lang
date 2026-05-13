@@ -323,14 +323,12 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
 TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
   llvm::StringLiteral input = "0x1.000001p-9223372036854775800";
   error_tracker.Reset();
-  EXPECT_THAT(
-      Parse(input),
-      HasRealValue({.radix = 2,
-                    .mantissa = IsUnsignedInt(0x1000001),
-                    .exponent = Truly([](llvm::APInt exponent) {
-                      return (exponent + 9223372036854775800).getSExtValue() ==
-                             -24;
-                    })}));
+  EXPECT_THAT(Parse(input),
+              HasRealValue({.radix = 2,
+                            .mantissa = IsUnsignedInt(0x1000001),
+                            .exponent = Truly([](llvm::APInt exponent) {
+    return (exponent + 9223372036854775800).getSExtValue() == -24;
+  })}));
   EXPECT_FALSE(error_tracker.seen_error());
 }
 

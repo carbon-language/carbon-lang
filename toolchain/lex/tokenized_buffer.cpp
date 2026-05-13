@@ -333,8 +333,8 @@ auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
   auto line_range = line_infos_.values();
   auto line_it =
       llvm::partition_point(line_range, [byte_offset](LineInfo line_info) {
-        return line_info.start <= byte_offset;
-      });
+    return line_info.start <= byte_offset;
+  });
   --line_it;
 
   // If this isn't the first line but it starts past the end of the source, then

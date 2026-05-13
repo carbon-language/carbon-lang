@@ -222,15 +222,14 @@ static auto GetRequiredImplsFromConstraint(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
 
-  auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id, facet_type_inst,
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
-                          "facet type {0} can not be identified", InstIdAsType);
-        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
-                        facet_type_inst_id);
-      },
-      diagnose);
+  auto identified_id =
+      RequireIdentifiedFacetType(context, loc_id, query_self_const_id,
+                                 facet_type_inst, [&](auto& builder) {
+    CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
+                      "facet type {0} can not be identified", InstIdAsType);
+    builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
+                    facet_type_inst_id);
+  }, diagnose);
   if (!identified_id.has_value()) {
     return std::nullopt;
   }

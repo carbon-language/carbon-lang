@@ -347,12 +347,9 @@ template <typename LookupKeyT>
 auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
                                                   KeyContextT key_context)
     -> InsertResult {
-  return Insert(
-      lookup_key,
-      [](LookupKeyT lookup_key, void* key_storage) {
-        new (key_storage) KeyT(std::move(lookup_key));
-      },
-      key_context);
+  return Insert(lookup_key, [](LookupKeyT lookup_key, void* key_storage) {
+    new (key_storage) KeyT(std::move(lookup_key));
+  }, key_context);
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
@@ -364,12 +361,10 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
   requires(!std::same_as<KeyT, KeyCallbackT> &&
            std::convertible_to<decltype(std::declval<KeyCallbackT>()()), KeyT>)
 {
-  return Insert(
-      lookup_key,
-      [&key_cb](LookupKeyT /*lookup_key*/, void* key_storage) {
-        new (key_storage) KeyT(key_cb());
-      },
-      key_context);
+  return Insert(lookup_key,
+                [&key_cb](LookupKeyT /*lookup_key*/, void* key_storage) {
+    new (key_storage) KeyT(key_cb());
+  }, key_context);
 }
 
 template <typename InputKeyT, typename InputKeyContextT>

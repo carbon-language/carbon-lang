@@ -128,9 +128,9 @@ the installation tree in the default searched locations.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&build_runtimes_on_demand);
-      });
+    arg_b.Default(true);
+    arg_b.Set(&build_runtimes_on_demand);
+  });
 
   b.AddFlag(
       {
@@ -164,9 +164,9 @@ when there are errors or other output.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&threads);
-      });
+    arg_b.Default(true);
+    arg_b.Set(&threads);
+  });
 
   runtimes.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);

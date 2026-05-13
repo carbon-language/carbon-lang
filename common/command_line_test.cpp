@@ -165,9 +165,9 @@ TEST(ArgParserTest, ShortArgs) {
                 [&](auto& arg_b) { arg_b.Set(&example); });
       b.AddIntegerOption({.name = "option1", .short_name = "o"},
                          [&](auto& arg_b) {
-                           arg_b.Default(123);
-                           arg_b.Set(&integer_option);
-                         });
+        arg_b.Default(123);
+        arg_b.Set(&integer_option);
+      });
       b.AddIntegerOption({.name = "option2", .short_name = "z"},
                          [&](auto& arg_b) { arg_b.Set(&integer_option); });
       b.Do([] {});
@@ -506,13 +506,13 @@ TEST(ArgParserTest, OneOfOptionWithTwoOptions) {
   RawStringOstream os;
   EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
                                [&](auto& arg_b) {
-                                 arg_b.SetOneOf(
-                                     {
-                                         arg_b.OneOfValue("x", 1),
-                                         arg_b.OneOfValue("y", 2),
-                                     },
-                                     &value);
-                               }),
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("x", 1),
+            arg_b.OneOfValue("y", 2),
+        },
+        &value);
+  }),
               IsError(StrEq("option `--option=z` has an invalid value `z`; "
                             "valid values are: `x` or `y`")));
 }
@@ -522,12 +522,12 @@ TEST(ArgParserTest, OneOfOptionWithOneOption) {
   RawStringOstream os;
   EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
                                [&](auto& arg_b) {
-                                 arg_b.SetOneOf(
-                                     {
-                                         arg_b.OneOfValue("x", 1),
-                                     },
-                                     &value);
-                               }),
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("x", 1),
+        },
+        &value);
+  }),
               IsError(StrEq("option `--option=z` has an invalid value `z`; "
                             "valid values are: `x`")));
 }
@@ -673,103 +673,103 @@ Closing remarks.
 )""",
         },
         [&](auto& b) {
-          b.AddFlag(
-              {
-                  .name = "flag",
-                  .short_name = "f",
-                  .help = R"""(
+      b.AddFlag(
+          {
+              .name = "flag",
+              .short_name = "f",
+              .help = R"""(
 A boolean flag.
 )""",
-              },
-              [&](auto& arg_b) { arg_b.Set(&flag); });
-          b.AddFlag(
-              {
-                  .name = "hidden_flag",
-                  .help = R"""(
+          },
+          [&](auto& arg_b) { arg_b.Set(&flag); });
+      b.AddFlag(
+          {
+              .name = "hidden_flag",
+              .help = R"""(
 A *hidden* boolean flag.
 )""",
-              },
-              [&](auto& arg_b) {
-                arg_b.HelpHidden(true);
-                arg_b.Set(&flag);
-              });
-          b.AddSubcommand(
-              {
-                  .name = "edit",
-                  .help = R"""(
+          },
+          [&](auto& arg_b) {
+        arg_b.HelpHidden(true);
+        arg_b.Set(&flag);
+      });
+      b.AddSubcommand(
+          {
+              .name = "edit",
+              .help = R"""(
 Edit the widget.
 
 This will take the provided widgets and edit them.
 )""",
-                  .help_epilogue = R"""(
+              .help_epilogue = R"""(
 That's all.
 )""",
-              },
-              [&](auto& sub_b) {
-                sub_b.AddIntegerOption(
-                    {
-                        .name = "option",
-                        .short_name = "o",
-                        .help = R"""(
+          },
+          [&](auto& sub_b) {
+        sub_b.AddIntegerOption(
+            {
+                .name = "option",
+                .short_name = "o",
+                .help = R"""(
 An integer option.
 )""",
-                    },
-                    [&](auto& arg_b) { arg_b.Set(&storage); });
-                sub_b.Do([] {});
-              });
-          b.AddSubcommand(
-              {
-                  .name = "run",
-                  .help = R"""(
+            },
+            [&](auto& arg_b) { arg_b.Set(&storage); });
+        sub_b.Do([] {});
+      });
+      b.AddSubcommand(
+          {
+              .name = "run",
+              .help = R"""(
 Run wombats across the screen.
 
 This will cause several wombats to run across your screen.
 )""",
-                  .help_epilogue = R"""(
+              .help_epilogue = R"""(
 Or it won't, who knows.
 )""",
-              },
-              [&](auto& sub_b) {
-                sub_b.AddStringOption(
-                    {
-                        .name = "option",
-                        .short_name = "o",
-                        .help = R"""(
+          },
+          [&](auto& sub_b) {
+        sub_b.AddStringOption(
+            {
+                .name = "option",
+                .short_name = "o",
+                .help = R"""(
 A string option.
 )""",
-                    },
-                    [&](auto& arg_b) { arg_b.Set(&string); });
-                sub_b.AddOneOfOption(
-                    {
-                        .name = "one-of-option",
-                        .help = R"""(
+            },
+            [&](auto& arg_b) { arg_b.Set(&string); });
+        sub_b.AddOneOfOption(
+            {
+                .name = "one-of-option",
+                .help = R"""(
 A one-of option.
 )""",
-                    },
-                    [&](auto& arg_b) {
-                      arg_b.SetOneOf(
-                          {
-                              arg_b.OneOfValue("x", 1),
-                              arg_b.OneOfValue("y", 2),
-                              arg_b.OneOfValue("z", 3),
-                          },
-                          &storage);
-                    });
-                sub_b.Do([] {});
-              });
-          b.AddSubcommand(
+            },
+            [&](auto& arg_b) {
+          arg_b.SetOneOf(
               {
-                  .name = "hidden",
-                  .help = R"""(
+                  arg_b.OneOfValue("x", 1),
+                  arg_b.OneOfValue("y", 2),
+                  arg_b.OneOfValue("z", 3),
+              },
+              &storage);
+        });
+        sub_b.Do([] {});
+      });
+      b.AddSubcommand(
+          {
+              .name = "hidden",
+              .help = R"""(
 A hidden subcommand.
 )""",
-              },
-              [&](auto& sub_b) {
-                sub_b.HelpHidden(true);
-                sub_b.Do([] {});
-              });
-          b.RequiresSubcommand();
-        });
+          },
+          [&](auto& sub_b) {
+        sub_b.HelpHidden(true);
+        sub_b.Do([] {});
+      });
+      b.RequiresSubcommand();
+    });
   };
 
   RawStringOstream os;
@@ -909,10 +909,10 @@ TEST(ArgParserTest, HelpMarkdownLike) {
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return Parse(  // Force line break.
         args, s, {.name = "test"}, [&](auto& b) {
-          b.AddFlag(
-              {
-                  .name = "flag",
-                  .help = R"""(
+      b.AddFlag(
+          {
+              .name = "flag",
+              .help = R"""(
 A boolean flag.
 
     Preformatted
@@ -931,10 +931,10 @@ x
   z
 ```
 )""",
-              },
-              [&](auto& arg_b) { arg_b.Set(&flag); });
-          b.Do([] {});
-        });
+          },
+          [&](auto& arg_b) { arg_b.Set(&flag); });
+      b.Do([] {});
+    });
   };
 
   RawStringOstream os;

@@ -87,8 +87,8 @@ auto IncomingMessages::onCall(llvm::StringRef name, llvm::json::Value params,
   if (auto result = call_handlers_.Lookup(name)) {
     (result.value())(*context_, std::move(params),
                      [&](llvm::Expected<llvm::json::Value> reply) {
-                       transport_->reply(id, std::move(reply));
-                     });
+      transport_->reply(id, std::move(reply));
+    });
   } else {
     transport_->reply(id, llvm::make_error<clang::clangd::LSPError>(
                               llvm::formatv("unsupported call `{0}`", name),

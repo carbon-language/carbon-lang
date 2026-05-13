@@ -362,12 +362,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
         loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
-                            "member access into incomplete class {0}",
-                            InstIdAsType);
-          builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
-                          lookup_inst_id);
-        });
+      CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
+                        "member access into incomplete class {0}",
+                        InstIdAsType);
+      builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
+                      lookup_inst_id);
+    });
     auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
                                   .specific_id = class_ty->specific_id,
@@ -382,12 +382,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
             context,
             context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
             [&](auto& builder) {
-              CARBON_DIAGNOSTIC(
-                  QualifiedExprInIncompleteFacetTypeScope, Context,
-                  "member access into incomplete facet type {0}", InstIdAsType);
-              builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                              lookup_inst_id);
-            })) {
+      CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Context,
+                        "member access into incomplete facet type {0}",
+                        InstIdAsType);
+      builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                      lookup_inst_id);
+    })) {
       auto facet_type_info =
           context.facet_types().Get(facet_type->facet_type_id);
       // Name lookup into "extend" constraints but not "self impls" constraints.

@@ -42,9 +42,9 @@ Render output as a JSON map for easy parsing.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(false);
-        arg_b.Set(&json_output);
-      });
+    arg_b.Default(false);
+    arg_b.Set(&json_output);
+  });
 
   codegen_options.Build(b);
 }

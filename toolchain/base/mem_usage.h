@@ -123,15 +123,15 @@ class MemUsage {
         total_reserved += entry.reserved_bytes;
         map.Add(entry.label,
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map byte_map) {
-                  byte_map.Add("used_bytes", entry.used_bytes);
-                  byte_map.Add("reserved_bytes", entry.reserved_bytes);
-                }));
+          byte_map.Add("used_bytes", entry.used_bytes);
+          byte_map.Add("reserved_bytes", entry.reserved_bytes);
+        }));
       }
       map.Add("Total",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map byte_map) {
-                byte_map.Add("used_bytes", total_used);
-                byte_map.Add("reserved_bytes", total_reserved);
-              }));
+        byte_map.Add("used_bytes", total_used);
+        byte_map.Add("reserved_bytes", total_reserved);
+      }));
     });
   }
 

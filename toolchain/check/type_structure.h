@@ -59,10 +59,10 @@ class TypeStructure : public Printable<TypeStructure> {
         lhs.symbolic_type_indices_.begin(), lhs.symbolic_type_indices_.end(),
         rhs.symbolic_type_indices_.begin(), rhs.symbolic_type_indices_.end(),
         [](int lhs_index, int rhs_index) {
-          // A higher symbolic type index is a better match, so we need to
-          // reverse the order.
-          return rhs_index < lhs_index;
-        });
+      // A higher symbolic type index is a better match, so we need to
+      // reverse the order.
+      return rhs_index < lhs_index;
+    });
   }
 
   // Equality of type structures. This compares that the structures are

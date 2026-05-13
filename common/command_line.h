@@ -769,9 +769,8 @@ auto OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result)
     -> void {
   static_assert(N > 0, "Must include at least one value.");
   arg()->is_append = false;
-  OneOfImpl(
-      values, [result](T value) { *result = value; },
-      std::make_index_sequence<N>{});
+  OneOfImpl(values, [result](T value) { *result = value; },
+            std::make_index_sequence<N>{});
 }
 
 template <typename T, typename U, size_t N>
@@ -779,9 +778,8 @@ auto OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
                                   llvm::SmallVectorImpl<T>* sequence) -> void {
   static_assert(N > 0, "Must include at least one value.");
   arg()->is_append = true;
-  OneOfImpl(
-      values, [sequence](T value) { sequence->push_back(value); },
-      std::make_index_sequence<N>{});
+  OneOfImpl(values, [sequence](T value) { sequence->push_back(value); },
+            std::make_index_sequence<N>{});
 }
 
 // An implementation tool for the one-of value candidate handling. Delegating to
@@ -810,15 +808,15 @@ auto OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
   // by index.
   new (&arg()->value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
-        for (auto [value, arg_value_string] :
-             llvm::zip_equal(values, arg.value_strings)) {
-          if (value_string == arg_value_string) {
-            match(value);
-            return true;
-          }
-        }
-        return false;
-      });
+    for (auto [value, arg_value_string] :
+         llvm::zip_equal(values, arg.value_strings)) {
+      if (value_string == arg_value_string) {
+        match(value);
+        return true;
+      }
+    }
+    return false;
+  });
 
   // Fold over all the input values to see if there is a default.
   if ((input_values[Indices].is_default || ...)) {

@@ -118,11 +118,9 @@ template <typename BundleT>
 static auto OperandDependence(Context& context,
                               SemIR::BundleId<BundleT> bundle_id)
     -> SemIR::ConstantDependence {
-  return std::apply(
-      [&](auto... ids) {
-        return std::max({OperandDependence(context, ids)...});
-      },
-      context.bundles().GetAsTuple(bundle_id));
+  return std::apply([&](auto... ids) {
+    return std::max({OperandDependence(context, ids)...});
+  }, context.bundles().GetAsTuple(bundle_id));
 }
 
 template <typename IdT>

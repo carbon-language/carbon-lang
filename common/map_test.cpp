@@ -135,9 +135,9 @@ TYPED_TEST(MapTest, Basic) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
-  ExpectMapElementsAre(
-      m, MakeKeyValues([](int k) { return k * 100 + static_cast<int>(k == 1); },
-                       llvm::seq(1, 512)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + static_cast<int>(k == 1);
+  }, llvm::seq(1, 512)));
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_FALSE(m.Insert(i, i * 100 + 1).is_inserted());
@@ -159,8 +159,8 @@ TYPED_TEST(MapTest, FactoryApi) {
   EXPECT_EQ(100, *m[1]);
   // Reinsertion doesn't invoke the callback.
   EXPECT_FALSE(m.Insert(1, []() -> int {
-                  llvm_unreachable("Should never be called!");
-                }).is_inserted());
+    llvm_unreachable("Should never be called!");
+  }).is_inserted());
   // Update does invoke the callback.
   auto i_result = m.Update(1, [] { return 101; });
   EXPECT_FALSE(i_result.is_inserted());
@@ -645,9 +645,9 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   EXPECT_TRUE(m.Insert(73, 73 * 100 + 3).is_inserted());
   EXPECT_EQ(73 * 100 + 3, *m[73]);
 
-  ExpectMapElementsAre(
-      m, MakeKeyValues([](int k) { return k * 100 + 2 + (k == 73); },
-                       llvm::seq(50, 102), llvm::seq(136, 150)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + 2 + (k == 73);
+  }, llvm::seq(50, 102), llvm::seq(136, 150)));
 
   // Reset back to empty and small.
   m.Reset();
@@ -700,9 +700,9 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   EXPECT_TRUE(m.Insert(93, 93 * 100 + 3).is_inserted());
   EXPECT_EQ(93 * 100 + 3, *m[93]);
 
-  ExpectMapElementsAre(
-      m, MakeKeyValues([](int k) { return k * 100 + 2 + (k == 93); },
-                       llvm::seq(75, 102), llvm::seq(136, 175)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + 2 + (k == 93);
+  }, llvm::seq(75, 102), llvm::seq(136, 175)));
 }
 
 template <typename MapT>
@@ -745,25 +745,25 @@ TYPED_TEST(MapCollisionTest, Basic) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100 + 1).is_inserted());
   }
-  ExpectMapElementsAre(m,
-                       MakeKeyValues([](int k) { return k * 100 + (k >= 192); },
-                                     llvm::seq(1, 256)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + (k >= 192);
+  }, llvm::seq(1, 256)));
 
   // Erase and re-fill from the front.
   for (int i : llvm::seq(1, 64)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Erase(i));
   }
-  ExpectMapElementsAre(m,
-                       MakeKeyValues([](int k) { return k * 100 + (k >= 192); },
-                                     llvm::seq(64, 256)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + (k >= 192);
+  }, llvm::seq(64, 256)));
   for (int i : llvm::seq(1, 64)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100 + 1).is_inserted());
   }
-  ExpectMapElementsAre(
-      m, MakeKeyValues([](int k) { return k * 100 + (k < 64) + (k >= 192); },
-                       llvm::seq(1, 256)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + (k < 64) + (k >= 192);
+  }, llvm::seq(1, 256)));
 
   // Erase and re-fill from the middle.
   for (int i : llvm::seq(64, 192)) {
@@ -794,10 +794,9 @@ TYPED_TEST(MapCollisionTest, Basic) {
       EXPECT_TRUE(m.Insert(i, i * 100 + 2).is_inserted());
     }
   }
-  ExpectMapElementsAre(
-      m,
-      MakeKeyValues([](int k) { return k * 100 + 1 + (k < 64) + (k >= 192); },
-                    llvm::seq(1, 256)));
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) {
+    return k * 100 + 1 + (k < 64) + (k >= 192);
+  }, llvm::seq(1, 256)));
 
   // And update the middle elements in place.
   for (int i : llvm::seq(64, 192)) {
