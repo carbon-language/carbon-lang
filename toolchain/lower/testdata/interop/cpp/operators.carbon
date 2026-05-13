@@ -93,7 +93,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zeq1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zeq1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -119,7 +119,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zne1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zne1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -149,7 +149,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zeq1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
+// CHECK:STDOUT:   call void @_Zeq1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
 // CHECK:STDOUT:   ret i1 %0, !dbg !34
 // CHECK:STDOUT: }
@@ -159,7 +159,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zne1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
+// CHECK:STDOUT:   call void @_Zne1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
 // CHECK:STDOUT:   ret i1 %0, !dbg !39
 // CHECK:STDOUT: }
@@ -304,7 +304,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zlt1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zlt1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -330,7 +330,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zle1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zle1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -356,7 +356,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zgt1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zgt1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -382,7 +382,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zge1AS_.carbon_thunk(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zge1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
@@ -412,7 +412,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zlt1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
+// CHECK:STDOUT:   call void @_Zlt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
 // CHECK:STDOUT:   ret i1 %0, !dbg !34
 // CHECK:STDOUT: }
@@ -422,7 +422,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zle1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
+// CHECK:STDOUT:   call void @_Zle1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
 // CHECK:STDOUT:   ret i1 %0, !dbg !39
 // CHECK:STDOUT: }
@@ -432,7 +432,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !44
-// CHECK:STDOUT:   call void @_Zgt1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !44
+// CHECK:STDOUT:   call void @_Zgt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !44
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !44
 // CHECK:STDOUT:   ret i1 %0, !dbg !44
 // CHECK:STDOUT: }
@@ -442,7 +442,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !49
-// CHECK:STDOUT:   call void @_Zge1AS_.carbon_thunk(ptr %self, ptr %other, ptr %.3.temp), !dbg !49
+// CHECK:STDOUT:   call void @_Zge1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !49
 // CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !49
 // CHECK:STDOUT:   ret i1 %0, !dbg !49
 // CHECK:STDOUT: }

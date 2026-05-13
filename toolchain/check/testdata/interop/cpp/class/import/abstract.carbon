@@ -38,7 +38,7 @@ class C {
   extend base: Cpp.A;
 }
 
-// --- fail_todo_impl_abstract_member.carbon
+// --- impl_abstract_member.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -46,11 +46,22 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn f[unused ref self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   override fn f[unused ref self: Self]() {}
+}
+
+// --- fail_impl_mismatch_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "abstract.h";
+
+class C {
+  extend base: Cpp.A;
+  // CHECK:STDERR: fail_impl_mismatch_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:   override fn invalid[unused ref self: Self]() {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  override fn invalid[unused ref self: Self]() {}
 }
 
 // --- abstract_final.h
@@ -98,6 +109,8 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AbstractFinal.f.type: type = fn_type @AbstractFinal.f [concrete]
+// CHECK:STDOUT:   %AbstractFinal.f: %AbstractFinal.f.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -106,6 +119,11 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AbstractFinal.decl: type = class_decl @AbstractFinal [concrete = constants.%AbstractFinal] {} {}
+// CHECK:STDOUT:   %AbstractFinal.f.decl: %AbstractFinal.f.type = fn_decl @AbstractFinal.f [concrete = constants.%AbstractFinal.f] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,6 +137,10 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:     %return.param: ref %AbstractFinal = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AbstractFinal = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @AbstractFinal.vtable {
+// CHECK:STDOUT:   imports.%AbstractFinal.f.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %AbstractFinal {

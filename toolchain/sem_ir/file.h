@@ -238,6 +238,12 @@ class File : public Printable<File> {
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
+  auto clang_decl_signatures() -> ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
+  auto clang_decl_signatures() const -> const ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -392,6 +398,9 @@ class File : public Printable<File> {
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
   // not add multiple entries with the same `decl` and different `inst_id`.
   ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
+
+  // Storage for function signatures used in C++ interop.
+  ClangDeclSignatureStore clang_decl_signatures_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.

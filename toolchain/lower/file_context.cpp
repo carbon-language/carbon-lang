@@ -709,6 +709,9 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
     -> llvm::GlobalVariable* {
+  if (!vtable.carbon_native_vtable) {
+    return nullptr;
+  }
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
   SemIR::Mangler m(sem_ir(), context().total_ir_count());

@@ -17,6 +17,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
@@ -228,10 +229,31 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                          SemIR::ImplDecl{.impl_id = SemIR::ImplId::None,
                                          .decl_block_id = decl_block_id});
 
-  // This requires that the facet type is identified. It returns None if an
-  // error was diagnosed.
+  if (!CheckConstraintIsFacetType(context, node_id, constraint_type_inst_id)) {
+    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // The identified facet type will also replace `.Self` references in the
+  // specific interface, but we want to store the full facet type not just the
+  // identified one. So we have to replace `.Self` references explicitly here in
+  // the constraint.
+  //
+  // We do this after `CheckConstraintIsFacetType()` which has ensured the
+  // constraint is in fact a FacetType. We do this before identifying the facet
+  // type in `CheckConstraintIsInterface()` so that the identified facet type is
+  // for the substituted facet type instruction that will be stored in the Impl.
+  // This ensures the impl bucket finds the identified facet type.
+  constraint_type_inst_id = SubstPeriodSelfInFacetType(
+      context, constraint_node, self_type_inst_id, constraint_type_inst_id);
+
+  // This requires that the facet type is identified, and returns the single
+  // interface from the identified facet type. It returns None if an error was
+  // diagnosed.
   auto specific_interface = CheckConstraintIsInterface(
-      context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
+      context, node_id, self_type_inst_id, constraint_type_inst_id);
+  if (!specific_interface.interface_id.has_value()) {
+    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
 
   // The impl decl has a scope stack entry for the DeclNameStack, so we look at
   // the parent scope of that.
@@ -256,8 +278,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         context.types().GetTypeIdForTypeInstId(impl.self_id) ==
             SemIR::ErrorInst::TypeId ||
         context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
-            SemIR::ErrorInst::TypeId ||
-        !impl.interface.interface_id.has_value();
+            SemIR::ErrorInst::TypeId;
 
     CARBON_KIND_SWITCH(FindImplId(context, impl)) {
       case CARBON_KIND(RedeclaredImpl redeclared_impl): {

@@ -18,6 +18,12 @@
 
 namespace Carbon::Check {
 
+// Returns whether the given function is an object member function. This is true
+// if it's a non-static member function and not a constructor. Object member
+// functions correspond to Carbon functions with a `self` parameter.
+// TODO: Find a better home for this function.
+auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
+
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
 // and warnings. If successful, adds a `Cpp` namespace.
@@ -59,11 +65,11 @@ auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
 // imported, returns the mapped instruction.
 inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                                   clang::FunctionDecl* clang_decl,
-                                  SemIR::ClangDeclKey::Signature signature)
+                                  SemIR::ClangDeclSignatureId signature_id)
     -> SemIR::InstId {
   return ImportCppDecl(
       context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature));
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns

@@ -347,6 +347,75 @@ fn F2(U:! Z) {
   F1(U.Y1, U.G());
 }
 
+// --- find_access_value_in_first_nested_access.carbon
+library "[[@TEST_NAME]]";
+
+interface W {}
+interface X {
+  let X1:! type;
+}
+interface Y(U:! type) {
+  let Y1:! X where .X1 = U;
+}
+interface Z(T:! type) {
+  let Z1:! type;
+}
+
+fn F(U:! W, V:! Z(.Self) where .Z1 impls Y(U)) {
+  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
+  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, where
+  // it finds the rewrite of `.X1 = U`.
+  //
+  // Only U impls W so we use `as W` to test that the LHS is U.
+  V.(Z(V).Z1).(Y(U).Y1).(X.X1) as W;
+}
+
+// --- find_access_value_in_second_nested_access.carbon
+library "[[@TEST_NAME]]";
+
+interface W {}
+interface X {
+  let X1:! type;
+}
+interface Y(T:! type) {
+  let Y1:! type;
+}
+interface Z(U:! type, PeriodSelf:! type) {
+  let Z1:! Y(PeriodSelf) where .Y1 impls (X where .X1 = U);
+}
+
+fn F(U:! W, V:! Z(U, .Self)) {
+  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
+  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, where
+  // it finds the rewrite of `.X1 = U`.
+  //
+  // Only U impls W so we use `as W` to test that the LHS is U.
+  V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
+}
+
+// --- find_access_value_in_third_nested_access.carbon
+library "[[@TEST_NAME]]";
+
+interface W {}
+interface X {
+  let X1:! type;
+}
+interface Y {
+  let Y1:! type;
+}
+interface Z(T:! type) {
+  let Z1:! type;
+}
+
+fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) {
+  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
+  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
+  // `V` where it finds the rewrite of `.X1 = U`.
+  //
+  // Only U impls W so we use `as W` to test that the LHS is U.
+  V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
+}
+
 // CHECK:STDOUT: --- access_assoc_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -774,11 +843,11 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %AB: %facet_type.82c = symbolic_binding AB, 0 [symbolic]
 // CHECK:STDOUT:   %AB.as_type: type = facet_access_type %AB [symbolic]
 // CHECK:STDOUT:   %A.lookup_impl_witness.1b9: <witness> = lookup_impl_witness %AB, @A [symbolic]
-// CHECK:STDOUT:   %B.lookup_impl_witness.97b: <witness> = lookup_impl_witness %AB, @B [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %B.lookup_impl_witness.97b: <witness> = lookup_impl_witness %AB, @B [symbolic]
 // CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]

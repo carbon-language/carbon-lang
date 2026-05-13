@@ -26,18 +26,13 @@ library "[[@TEST_NAME]]";
 alias b = bool;
 //@dump-sem-ir-end
 
-// --- fail_bool_value.carbon
+// --- bool_value.carbon
 
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
-// CHECK:STDERR: alias a = false;
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR:
 alias a = false;
 
-// This fails silently due to the above diagnostic.
 let a_test: bool = a;
 //@dump-sem-ir-end
 
@@ -50,17 +45,17 @@ let a_test: bool = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: type = alias_binding a, constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %a: type = alias_binding a, %i32 [concrete = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc5: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: type = alias_binding b, bool [concrete = bool]
+// CHECK:STDOUT:   %b: type = alias_binding b, %.loc5 [concrete = bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bool_value.carbon
+// CHECK:STDOUT: --- bool_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
@@ -69,17 +64,17 @@ let a_test: bool = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %a: <error> = alias_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: bool = alias_binding a, %false [concrete = constants.%false]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: %pattern_type.831 = value_binding_pattern a_test [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a_test: bool = value_binding a_test, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a_test: bool = value_binding a_test, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [concrete = <error>]
+// CHECK:STDOUT:   %a.ref: bool = name_ref a, file.%a [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

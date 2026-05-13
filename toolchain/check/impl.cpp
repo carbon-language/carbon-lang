@@ -405,10 +405,10 @@ static auto WitnessQueryMatchesInterface(
   // `.Self` replaced, so we need to do that here.
   //
   // TODO: Do this more eagerly as soon as we know the full decl before we
-  // construct the witness table from it?
-  SubstPeriodSelfCallbacks callbacks(&context, loc_id,
+  // construct the witness table from it? We do replace `.Self` in the facet
+  // type, but we don't replace the designators.
+  access_interface = SubstPeriodSelf(context, loc_id, access_interface,
                                      context.constant_values().Get(impl_self));
-  access_interface = SubstPeriodSelf(context, callbacks, access_interface);
   return access_interface == impl_interface;
 }
 
@@ -854,32 +854,39 @@ auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
           context.constant_values().Get(impl.constraint_id).is_concrete());
 }
 
-auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
+auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::TypeInstId constraint_id) -> bool {
+  auto facet_type_const_inst_id =
+      context.constant_values().GetConstantInstId(constraint_id);
+  auto facet_type =
+      context.insts().TryGetAs<SemIR::FacetType>(facet_type_const_inst_id);
+  if (!facet_type && facet_type_const_inst_id != SemIR::ErrorInst::InstId) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(loc_id, ImplAsNonFacetType, constraint_id);
+    return false;
+  }
+  return true;
+}
+
+auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
-  auto facet_type_as_type_id =
-      context.types().GetTypeIdForTypeInstId(constraint_id);
-  if (facet_type_as_type_id == SemIR::ErrorInst::TypeId) {
+  auto canon_constraint_id =
+      context.constant_values().GetConstantInstId(constraint_id);
+  if (canon_constraint_id == SemIR::ErrorInst::TypeInstId) {
     return SemIR::SpecificInterface::None;
   }
   auto facet_type =
-      context.types().TryGetAs<SemIR::FacetType>(facet_type_as_type_id);
-  if (!facet_type) {
-    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
-                      InstIdAsType);
-    context.emitter().Emit(impl_decl_id, ImplAsNonFacetType, constraint_id);
-    return SemIR::SpecificInterface::None;
-  }
-
+      context.insts().GetAs<SemIR::FacetType>(canon_constraint_id);
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(constraint_id),
-      context.constant_values().Get(self_id), *facet_type, [&](auto& builder) {
+      context.constant_values().Get(self_id), facet_type, [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
                           "facet type {0} cannot be identified in `impl as`",
                           InstIdAsType);
-        builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,
-                        constraint_id);
+        builder.Context(loc_id, ImplOfUnidentifiedFacetType, constraint_id);
       });
   if (!identified_id.has_value()) {
     return SemIR::SpecificInterface::None;
@@ -888,7 +895,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
   if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
-    context.emitter().Emit(impl_decl_id, ImplOfNotOneInterface,
+    context.emitter().Emit(loc_id, ImplOfNotOneInterface,
                            identified.num_interfaces_to_impl());
     return SemIR::SpecificInterface::None;
   }

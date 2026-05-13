@@ -35,6 +35,18 @@ alias c = b;
 let d: c = {};
 //@dump-sem-ir-end
 
+// --- alias_to_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+class A(T:! type) {}
+
+//@dump-sem-ir-begin
+alias a = A({});
+//@dump-sem-ir-end
+
+let v: a = {} as A({});
+
 // --- fail_control_flow.carbon
 
 library "[[@TEST_NAME]]";
@@ -82,7 +94,7 @@ library "[[@TEST_NAME]]";
 var a: () = ();
 var b: ()* = &a;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:11: error: alias refers to a runtime value [AliasRequiresConstantValue]
 // CHECK:STDERR: alias c = *b;
 // CHECK:STDERR:           ^~
 // CHECK:STDERR:
@@ -92,13 +104,9 @@ alias c = *b;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+8]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:21: error: alias initializer must be a name reference [AliasRequiresNameRef]
-// CHECK:STDERR: alias A(T:! type) = T*;
-// CHECK:STDERR:                     ^~
 // CHECK:STDERR:
 alias A(T:! type) = T*;
 
@@ -155,7 +163,7 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = alias_binding c, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -176,11 +184,11 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: type = alias_binding a, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %a: type = alias_binding a, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [concrete = constants.%C]
-// CHECK:STDOUT:   %b: type = alias_binding b, %a [concrete = constants.%C]
+// CHECK:STDOUT:   %b: type = alias_binding b, %a.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = alias_binding c, %b [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %b.ref [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
@@ -196,6 +204,29 @@ extern alias C = Class;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- alias_to_generic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
+// CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.ed7: type = class_type @A, @A(%empty_struct_type) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A.generic]
+// CHECK:STDOUT:   %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.ed7]
+// CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.ed7]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -24,12 +24,12 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
           sem_ir_.types().TryGetAs<FacetType>(facet_type_type_id)) {
     auto identified_id = sem_ir_.identified_facet_types().Lookup(
         {facet_type->facet_type_id, self_const_id});
-    if (identified_id.has_value()) {
-      const auto& identified =
-          sem_ir_.identified_facet_types().Get(identified_id);
-      if (identified.is_valid_impl_as_target()) {
-        impl_as_interface = identified.impl_as_target_interface();
-      }
+    CARBON_CHECK(identified_id.has_value(),
+                 "impl with unidentitied facet type");
+    const auto& identified =
+        sem_ir_.identified_facet_types().Get(identified_id);
+    if (identified.is_valid_impl_as_target()) {
+      impl_as_interface = identified.impl_as_target_interface();
     }
   }
   return LookupBucketRef(

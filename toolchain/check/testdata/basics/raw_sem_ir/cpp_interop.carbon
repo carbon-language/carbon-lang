@@ -53,15 +53,18 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000003}
 // CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000004}
 // CHECK:STDOUT:   clang_decls:
-// CHECK:STDOUT:     clang_decl_id50000000: {key: "namespace Carbon {\n}", inst_id: instF}
-// CHECK:STDOUT:     clang_decl_id50000001: {key: "<translation unit>", inst_id: inst50000011}
-// CHECK:STDOUT:     clang_decl_id50000002: {key: "struct X {}", inst_id: inst50000013}
-// CHECK:STDOUT:     clang_decl_id50000003: {key: "X * _Nonnull p", inst_id: inst50000022}
-// CHECK:STDOUT:     clang_decl_id50000004: {key: {decl: "void f(X x = {})", kind: normal, num_params: 0}, inst_id: inst5000002D}
-// CHECK:STDOUT:     clang_decl_id50000005: {key: {decl: "inline void f__carbon_thunk()", kind: normal, num_params: 0}, inst_id: inst50000030}
-// CHECK:STDOUT:     clang_decl_id50000006: {key: {decl: "void f(X x = {})", kind: normal, num_params: 1}, inst_id: inst5000003B}
-// CHECK:STDOUT:     clang_decl_id50000007: {key: {decl: "inline void f__carbon_thunk(X * _Nonnull x)", kind: normal, num_params: 1}, inst_id: inst50000043}
-// CHECK:STDOUT:     clang_decl_id50000008: {key: "X * _Nonnull global", inst_id: inst5000004E}
+// CHECK:STDOUT:     clang_decl_id50000000: {key: {decl: "namespace Carbon {\n}"}, inst_id: instF}
+// CHECK:STDOUT:     clang_decl_id50000001: {key: {decl: "<translation unit>"}, inst_id: inst50000011}
+// CHECK:STDOUT:     clang_decl_id50000002: {key: {decl: "struct X {}"}, inst_id: inst50000013}
+// CHECK:STDOUT:     clang_decl_id50000003: {key: {decl: "X * _Nonnull p"}, inst_id: inst50000022}
+// CHECK:STDOUT:     clang_decl_id50000004: {key: {decl: "void f(X x = {})", clang_decl_signature_id: clang_decl_signature_id50000000}, inst_id: inst5000002D}
+// CHECK:STDOUT:     clang_decl_id50000005: {key: {decl: "inline void f__carbon_thunk()", clang_decl_signature_id: clang_decl_signature_id50000000}, inst_id: inst50000030}
+// CHECK:STDOUT:     clang_decl_id50000006: {key: {decl: "void f(X x = {})", clang_decl_signature_id: clang_decl_signature_id50000001}, inst_id: inst5000003B}
+// CHECK:STDOUT:     clang_decl_id50000007: {key: {decl: "inline void f__carbon_thunk(X * _Nonnull x)", clang_decl_signature_id: clang_decl_signature_id50000001}, inst_id: inst50000043}
+// CHECK:STDOUT:     clang_decl_id50000008: {key: {decl: "X * _Nonnull global"}, inst_id: inst5000004E}
+// CHECK:STDOUT:   clang_decl_signatures:
+// CHECK:STDOUT:     clang_decl_signature_id50000000: {kind: normal, num_params: 0}
+// CHECK:STDOUT:     clang_decl_signature_id50000001: {kind: normal, num_params: 1, modes: [value]}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Cpp): inst50000011, name0: inst5000001C}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name2: inst50000013, name3: inst5000002A, name4: inst5000004E}}

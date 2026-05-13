@@ -43,12 +43,12 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   %.loc9_34.1.temp = alloca [1 x i8], align 1, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n2.var), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_34.1.temp), !dbg !18
-// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr %n, ptr %n2.var), !dbg !18
+// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %n, ptr %n2.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr noundef %0, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr noundef %0, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -63,7 +63,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Copy.fdeb6dbda014bd1f.Core:NeedThunk.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !29
+// CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

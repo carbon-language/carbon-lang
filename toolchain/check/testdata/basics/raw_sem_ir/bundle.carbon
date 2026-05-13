@@ -34,6 +34,7 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir70000003, inst_id: inst50000010}
 // CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir70000003, inst_id: inst50000011}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst70000011, name0: inst7000003B}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000016}}
