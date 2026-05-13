@@ -259,6 +259,16 @@ class Context {
     return rewrites_stack_;
   }
 
+  // A stack of tracks the impls constraints from a `where` expression being
+  // checked. The back of the stack is the currently checked `where` expression.
+  struct ImplsStackEntry {
+    SemIR::ConstantId self_const_id;
+    SemIR::ConstantId facet_type_const_id;
+  };
+  auto impls_stack() -> llvm::SmallVector<llvm::SmallVector<ImplsStackEntry>>& {
+    return impls_stack_;
+  }
+
   // Data about a form expression.
   //
   // TODO: consider moving this out of Context.
@@ -537,6 +547,11 @@ class Context {
   // value on the RHS. Used during checking of a `where` expression to allow
   // constraints to access values from earlier constraints.
   llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
+
+  // A collection of `A impls B` facts known about the current `where`
+  // expression being checked. Used to allow constraints to know about `impls`
+  // relationships from earlier constraints.
+  llvm::SmallVector<llvm::SmallVector<ImplsStackEntry>> impls_stack_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;
