@@ -5,7 +5,12 @@
 name: pre-commit
 
 on:
-  pull_request:
+  pull_request_target:
+    # It is possible to inject malicious commands into the this workflow by modifying
+    # the .pre-commit-config.yaml file to contain directives for reviewdog. To prevent
+    # this we ignore any workflows that include modifications to this file.
+    paths-ignore:
+      - '.pre-commit-config.yaml'
   merge_group:
   push:
     branches: [trunk]
