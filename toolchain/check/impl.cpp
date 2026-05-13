@@ -406,9 +406,8 @@ static auto WitnessQueryMatchesInterface(
   //
   // TODO: Do this more eagerly as soon as we know the full decl before we
   // construct the witness table from it?
-  SubstPeriodSelfCallbacks callbacks(&context, loc_id,
+  access_interface = SubstPeriodSelf(context, loc_id, access_interface,
                                      context.constant_values().Get(impl_self));
-  access_interface = SubstPeriodSelf(context, callbacks, access_interface);
   return access_interface == impl_interface;
 }
 

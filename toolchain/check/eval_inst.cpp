@@ -343,7 +343,6 @@ static auto TryFindValueInRewriteConstraints(
         rewrite_lhs_access->witness_id);
 
     auto self_const_id = context.constant_values().Get(search_facet);
-    SubstPeriodSelfCallbacks callbacks(&context, loc_id, self_const_id);
 
     // The LHS of the rewrite might be `.Self` or it could be one or more nested
     // ImplWitnessAccess instructions that eventually bottom out in `.Self`.
@@ -352,9 +351,10 @@ static auto TryFindValueInRewriteConstraints(
     // So we don't have to substitute the `.Self` and do any comparison.
 
     auto rewrite_lhs_interface =
-        SubstPeriodSelf(context, callbacks,
+        SubstPeriodSelf(context, loc_id,
                         context.specific_interfaces().Get(
-                            rewrite_lhs_witness.query_specific_interface_id));
+                            rewrite_lhs_witness.query_specific_interface_id),
+                        self_const_id);
 
     if (rewrite_lhs_interface != access_interface) {
       // This rewrite is into a different interface than the access query.
@@ -365,7 +365,8 @@ static auto TryFindValueInRewriteConstraints(
     // value's type. Any `.Self` references in the RHS are also replaced with
     // the self type of the access.
     auto rewrite_rhs = SubstPeriodSelf(
-        context, callbacks, context.constant_values().Get(rewrite.rhs_id));
+        context, loc_id, context.constant_values().Get(rewrite.rhs_id),
+        self_const_id);
     return rewrite_rhs;
   }
 

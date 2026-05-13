@@ -41,98 +41,39 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
   return inst_id;
 }
 
-SubstPeriodSelfCallbacks::SubstPeriodSelfCallbacks(
-    Context* context, SemIR::LocId loc_id,
-    SemIR::ConstantId period_self_replacement_id, Behaviour behaviour)
-    : SubstInstCallbacks(context),
-      loc_id_(loc_id),
-      period_self_replacement_id_(period_self_replacement_id),
-      behaviour_(behaviour) {}
+class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
+ public:
+  explicit SubstPeriodSelfCallbacks(
+      Context* context, SemIR::LocId loc_id,
+      SemIR::ConstantId period_self_replacement_id,
+      SubstPeriodSelfBehaviour behaviour, SubstPeriodSelfRebuildInst rebuild)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        period_self_replacement_id_(period_self_replacement_id),
+        behaviour_(behaviour),
+        rebuild_callback_(rebuild) {}
 
-SubstPeriodSelfCallbacks::~SubstPeriodSelfCallbacks() {
-  CARBON_CHECK(designator_states_.empty());
-}
-
-auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
-  // FacetTypes are concrete even if they have `.Self` inside them, but we
-  // don't recurse into FacetTypes, so we can use this as a base case. This
-  // avoids infinite recursion on TypeType and ErrorInst.
-  if (context().constant_values().Get(inst_id).is_concrete()) {
-    return FullySubstituted;
-  }
-  // Don't recurse into nested facet types, even if they are symbolic. Leave
-  // their `.Self` as is.
-  if (context().insts().Is<SemIR::FacetType>(inst_id)) {
-    return FullySubstituted;
+  virtual ~SubstPeriodSelfCallbacks() {
+    CARBON_CHECK(designator_states_.empty());
   }
 
-  // Look for implicit use of `.Self` in designators: `.X` is really `.Self.X`.
-  if (auto access =
-          context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
-    if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
-            access->witness_id)) {
-      // Canonicalization not necessary; we are working with the constant
-      // value already, and the query self in a witness is already
-      // canonicalized.
-      if (IsPeriodSelf(context(), witness->query_self_inst_id,
-                       /*canonicalize=*/false)) {
-        designator_states_.push_back(WitnessNext);
-      }
-    }
-  }
-
-  if (!designator_states_.empty() && designator_states_.back() == WitnessNext) {
-    if (auto witness =
-            context().insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
-      // The query self comes next, before the specific interface.
-      designator_states_.back() = WitnessSelfNext;
-    }
-  }
-
-  // An implicit use of `.Self` in a designator.
-  if (!designator_states_.empty() &&
-      designator_states_.back() == WitnessSelfNext) {
-    // Canonicalization not necessary; we are working with the constant
-    // value already, and the query self in a witness is already
-    // canonicalized.
-    if (IsPeriodSelf(context(), inst_id,
-                     /*canonicalize=*/false)) {
-      inst_id = GetReplacement(inst_id);
-      designator_states_.back() = Exiting;
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // FacetTypes are concrete even if they have `.Self` inside them, but we
+    // don't recurse into FacetTypes, so we can use this as a base case. This
+    // avoids infinite recursion on TypeType and ErrorInst.
+    if (context().constant_values().Get(inst_id).is_concrete()) {
       return FullySubstituted;
     }
-  }
-
-  // Look for explicit use of `.Self` only if the client requested it.
-  if (behaviour_ != Behaviour::ImplicitOnly) {
-    // Canonicalization not necessary; Subst will recurse anyway, so avoid
-    // extra work for non-matches.
-    if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
-      inst_id = GetReplacement(inst_id);
+    // Don't recurse into nested facet types, even if they are symbolic. Leave
+    // their `.Self` as is.
+    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
       return FullySubstituted;
     }
-  }
 
-  return SubstOperands;
-}
-
-auto SubstPeriodSelfCallbacks::Rebuild(SemIR::InstId orig_inst_id,
-                                       SemIR::Inst new_inst) -> SemIR::InstId {
-  TryPopDesignatorState(orig_inst_id);
-  return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
-}
-
-auto SubstPeriodSelfCallbacks::ReuseUnchanged(SemIR::InstId orig_inst_id)
-    -> SemIR::InstId {
-  TryPopDesignatorState(orig_inst_id);
-  return orig_inst_id;
-}
-
-auto SubstPeriodSelfCallbacks::TryPopDesignatorState(SemIR::InstId orig_inst_id)
-    -> void {
-  if (!designator_states_.empty() && designator_states_.back() == Exiting) {
-    if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
-            orig_inst_id)) {
+    // Look for implicit use of `.Self` in designators: `.X` is really
+    // `.Self.X`.
+    if (auto access =
+            context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
       if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
               access->witness_id)) {
         // Canonicalization not necessary; we are working with the constant
@@ -140,110 +81,202 @@ auto SubstPeriodSelfCallbacks::TryPopDesignatorState(SemIR::InstId orig_inst_id)
         // canonicalized.
         if (IsPeriodSelf(context(), witness->query_self_inst_id,
                          /*canonicalize=*/false)) {
-          designator_states_.pop_back();
+          designator_states_.push_back(WitnessNext);
+        }
+      }
+    }
+
+    if (!designator_states_.empty() &&
+        designator_states_.back() == WitnessNext) {
+      if (auto witness =
+              context().insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
+        // The query self comes next, before the specific interface.
+        designator_states_.back() = WitnessSelfNext;
+      }
+    }
+
+    // An implicit use of `.Self` in a designator.
+    if (!designator_states_.empty() &&
+        designator_states_.back() == WitnessSelfNext) {
+      // Canonicalization not necessary; we are working with the constant
+      // value already, and the query self in a witness is already
+      // canonicalized.
+      if (IsPeriodSelf(context(), inst_id,
+                       /*canonicalize=*/false)) {
+        inst_id = GetReplacement(inst_id);
+        designator_states_.back() = Exiting;
+        return FullySubstituted;
+      }
+    }
+
+    // Look for explicit use of `.Self` only if the client requested it.
+    if (behaviour_ != SubstPeriodSelfBehaviour::ImplicitOnly) {
+      // Canonicalization not necessary; Subst will recurse anyway, so avoid
+      // extra work for non-matches.
+      if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
+        inst_id = GetReplacement(inst_id);
+        return FullySubstituted;
+      }
+    }
+
+    return SubstOperands;
+  }
+
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+      -> SemIR::InstId override {
+    TryPopDesignatorState(orig_inst_id);
+    if (rebuild_callback_) {
+      if (auto inst_id = rebuild_callback_(new_inst); inst_id.has_value()) {
+        return inst_id;
+      }
+    }
+    return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    TryPopDesignatorState(orig_inst_id);
+    return orig_inst_id;
+  }
+
+ private:
+  auto TryPopDesignatorState(SemIR::InstId orig_inst_id) -> void {
+    if (!designator_states_.empty() && designator_states_.back() == Exiting) {
+      if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
+              orig_inst_id)) {
+        if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+                access->witness_id)) {
+          // Canonicalization not necessary; we are working with the constant
+          // value already, and the query self in a witness is already
+          // canonicalized.
+          if (IsPeriodSelf(context(), witness->query_self_inst_id,
+                           /*canonicalize=*/false)) {
+            designator_states_.pop_back();
+          }
         }
       }
     }
   }
-}
 
-auto SubstPeriodSelfCallbacks::GetReplacement(SemIR::InstId period_self)
-    -> SemIR::InstId {
-  auto period_self_type_id = context().insts().Get(period_self).type_id();
-  CARBON_CHECK(context().types().Is<SemIR::FacetType>(period_self_type_id));
+  auto GetReplacement(SemIR::InstId period_self) -> SemIR::InstId {
+    auto period_self_type_id = context().insts().Get(period_self).type_id();
+    CARBON_CHECK(context().types().Is<SemIR::FacetType>(period_self_type_id));
 
-  auto replacement_self_inst_id =
-      context().constant_values().GetInstId(period_self_replacement_id_);
-  auto replacement_type_id =
-      context().insts().Get(replacement_self_inst_id).type_id();
-  CARBON_CHECK(context().types().IsFacetType(replacement_type_id));
+    auto replacement_self_inst_id =
+        context().constant_values().GetInstId(period_self_replacement_id_);
+    auto replacement_type_id =
+        context().insts().Get(replacement_self_inst_id).type_id();
+    CARBON_CHECK(context().types().IsFacetType(replacement_type_id));
 
-  // If the replacement has the same type as `.Self`, use it directly.
-  if (replacement_type_id == period_self_type_id) {
-    return replacement_self_inst_id;
-  }
+    // If the replacement has the same type as `.Self`, use it directly.
+    if (replacement_type_id == period_self_type_id) {
+      return replacement_self_inst_id;
+    }
 
-  // If we have already converted the replacement to the type of `.Self`, use
-  // our previous conversion.
-  if (period_self_type_id == cached_replacement_type_id_) {
+    // If we have already converted the replacement to the type of `.Self`, use
+    // our previous conversion.
+    if (period_self_type_id == cached_replacement_type_id_) {
+      return cached_replacement_id_;
+    }
+
+    // Convert the replacement facet to the type of `.Self`.
+    cached_replacement_id_ = ConvertReplacement(
+        replacement_self_inst_id, replacement_type_id, period_self_type_id);
+    cached_replacement_type_id_ = period_self_type_id;
     return cached_replacement_id_;
   }
 
-  // Convert the replacement facet to the type of `.Self`.
-  cached_replacement_id_ = ConvertReplacement(
-      replacement_self_inst_id, replacement_type_id, period_self_type_id);
-  cached_replacement_type_id_ = period_self_type_id;
-  return cached_replacement_id_;
-}
+  auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
+                          SemIR::TypeId replacement_type_id,
+                          SemIR::TypeId period_self_type_id) -> SemIR::InstId {
+    // TODO: Replace all empty facet types with TypeType.
+    if (period_self_type_id == GetEmptyFacetType(context())) {
+      // Convert to an empty facet type (representing TypeType); we don't need
+      // any witnesses.
+      return ConvertToValueOfType(context(), loc_id_, replacement_self_inst_id,
+                                  period_self_type_id);
+    }
 
-auto SubstPeriodSelfCallbacks::ConvertReplacement(
-    SemIR::InstId replacement_self_inst_id, SemIR::TypeId replacement_type_id,
-    SemIR::TypeId period_self_type_id) -> SemIR::InstId {
-  // TODO: Replace all empty facet types with TypeType.
-  if (period_self_type_id == GetEmptyFacetType(context())) {
-    // Convert to an empty facet type (representing TypeType); we don't need
-    // any witnesses.
-    return ConvertToValueOfType(context(), loc_id_, replacement_self_inst_id,
-                                period_self_type_id);
-  }
+    // We have a facet or a type, but we need more interfaces in the facet type.
+    // We will have to synthesize a symbolic witness for each interface.
+    //
+    // Why is this okay? The type of `.Self` comes from interfaces that are
+    // before it (to the left of it) in the facet type. The replacement for
+    // `.Self` will have to impl those interfaces in order to match the facet
+    // type, so we know that it is valid to construct these witnesses.
 
-  // We have a facet or a type, but we need more interfaces in the facet type.
-  // We will have to synthesize a symbolic witness for each interface.
-  //
-  // Why is this okay? The type of `.Self` comes from interfaces that are
-  // before it (to the left of it) in the facet type. The replacement for
-  // `.Self` will have to impl those interfaces in order to match the facet
-  // type, so we know that it is valid to construct these witnesses.
+    // Make the replacement into a type, which we will need for the FacetValue.
+    if (context().types().Is<SemIR::FacetType>(replacement_type_id)) {
+      replacement_self_inst_id = context().constant_values().GetInstId(
+          EvalOrAddInst<SemIR::FacetAccessType>(
+              context(), loc_id_,
+              {.type_id = SemIR::TypeType::TypeId,
+               .facet_value_inst_id = replacement_self_inst_id}));
+    }
 
-  // Make the replacement into a type, which we will need for the FacetValue.
-  if (context().types().Is<SemIR::FacetType>(replacement_type_id)) {
-    replacement_self_inst_id = context().constant_values().GetInstId(
-        EvalOrAddInst<SemIR::FacetAccessType>(
+    auto period_self_facet_type =
+        context().types().GetAs<SemIR::FacetType>(period_self_type_id);
+    auto identified_period_self_type_id = RequireIdentifiedFacetType(
+        context(), loc_id_,
+        context().constant_values().Get(replacement_self_inst_id),
+        period_self_facet_type, [&](auto& /*builder*/) {
+          // The facet type containing this `.Self` should have already been
+          // identified, which would ensure that the type of `.Self` can be
+          // identified since it can only depend on things to the left of it
+          // inside the same facet type.
+          CARBON_FATAL("could not identify type of `.Self`");
+        });
+    const auto& identified_period_self_type =
+        context().identified_facet_types().Get(identified_period_self_type_id);
+    auto required_impls = identified_period_self_type.required_impls();
+    llvm::SmallVector<SemIR::InstId> witnesses;
+    witnesses.reserve(required_impls.size());
+    for (const auto& req : required_impls) {
+      witnesses.push_back(context().constant_values().GetInstId(
+          EvalOrAddInst<SemIR::LookupImplWitness>(
+              context(), loc_id_,
+              {.type_id =
+                   GetSingletonType(context(), SemIR::WitnessType::TypeInstId),
+               .query_self_inst_id =
+                   context().constant_values().GetInstId(req.self_facet_value),
+               .query_specific_interface_id =
+                   context().specific_interfaces().Add(
+                       req.specific_interface)})));
+    }
+    return context().constant_values().GetInstId(
+        EvalOrAddInst<SemIR::FacetValue>(
             context(), loc_id_,
-            {.type_id = SemIR::TypeType::TypeId,
-             .facet_value_inst_id = replacement_self_inst_id}));
+            {
+                .type_id = period_self_type_id,
+                .type_inst_id =
+                    context().types().GetAsTypeInstId(replacement_self_inst_id),
+                .witnesses_block_id = context().inst_blocks().Add(witnesses),
+            }));
   }
 
-  auto period_self_facet_type =
-      context().types().GetAs<SemIR::FacetType>(period_self_type_id);
-  auto identified_period_self_type_id = RequireIdentifiedFacetType(
-      context(), loc_id_,
-      context().constant_values().Get(replacement_self_inst_id),
-      period_self_facet_type, [&](auto& /*builder*/) {
-        // The facet type containing this `.Self` should have already been
-        // identified, which would ensure that the type of `.Self` can be
-        // identified since it can only depend on things to the left of it
-        // inside the same facet type.
-        CARBON_FATAL("could not identify type of `.Self`");
-      });
-  const auto& identified_period_self_type =
-      context().identified_facet_types().Get(identified_period_self_type_id);
-  auto required_impls = identified_period_self_type.required_impls();
-  llvm::SmallVector<SemIR::InstId> witnesses;
-  witnesses.reserve(required_impls.size());
-  for (const auto& req : required_impls) {
-    witnesses.push_back(context().constant_values().GetInstId(
-        EvalOrAddInst<SemIR::LookupImplWitness>(
-            context(), loc_id_,
-            {.type_id =
-                 GetSingletonType(context(), SemIR::WitnessType::TypeInstId),
-             .query_self_inst_id =
-                 context().constant_values().GetInstId(req.self_facet_value),
-             .query_specific_interface_id = context().specific_interfaces().Add(
-                 req.specific_interface)})));
-  }
-  return context().constant_values().GetInstId(EvalOrAddInst<SemIR::FacetValue>(
-      context(), loc_id_,
-      {
-          .type_id = period_self_type_id,
-          .type_inst_id =
-              context().types().GetAsTypeInstId(replacement_self_inst_id),
-          .witnesses_block_id = context().inst_blocks().Add(witnesses),
-      }));
-}
+  SemIR::LocId loc_id_;
+  SemIR::ConstantId period_self_replacement_id_;
+  SubstPeriodSelfBehaviour behaviour_;
+  SubstPeriodSelfRebuildInst rebuild_callback_;
 
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::ConstantId const_id) -> SemIR::ConstantId {
+  // The last output of GetReplacement().
+  SemIR::InstId cached_replacement_id_ = SemIR::InstId::None;
+  // The type of the last output of GetReplacement(). If the type of `.Self`
+  // matches, we can reuse the `cached_replacement_id_`.
+  SemIR::TypeId cached_replacement_type_id_ = SemIR::TypeId::None;
+
+  enum DesignatorState {
+    WitnessNext,
+    WitnessSelfNext,
+    Exiting,
+  };
+  llvm::SmallVector<DesignatorState> designator_states_;
+};
+
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::ConstantId const_id,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfBehaviour behaviour,
+                     SubstPeriodSelfRebuildInst rebuild) -> SemIR::ConstantId {
   // Don't replace `.Self` with itself; that is cyclical.
   //
   // If the types differ, we would try to convert the replacement to a `.Self`
@@ -251,18 +284,22 @@ auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
   // there's nothing we need to do. But trying to do that conversion recurses
   // when the type of the `.Self` contains a `.Self`.
   if (IsPeriodSelf(context, context.constant_values().GetInstId(
-                                callbacks.period_self_replacement_id()))) {
+                                period_self_replacement_id))) {
     return const_id;
   }
+
+  SubstPeriodSelfCallbacks callbacks(
+      &context, loc_id, period_self_replacement_id, behaviour, rebuild);
 
   auto subst_id = SubstInst(
       context, context.constant_values().GetInstId(const_id), callbacks);
   return context.constant_values().Get(subst_id);
 }
 
-static auto SubstPeriodSelfInSpecific(Context& context,
-                                      SubstPeriodSelfCallbacks& callbacks,
-                                      SemIR::SpecificId specific_id)
+static auto SubstPeriodSelfInSpecific(
+    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
+    SemIR::ConstantId period_self_replacement_id,
+    SubstPeriodSelfBehaviour behaviour, SubstPeriodSelfRebuildInst rebuild)
     -> SemIR::SpecificId {
   if (!specific_id.has_value()) {
     return specific_id;
@@ -276,24 +313,33 @@ static auto SubstPeriodSelfInSpecific(Context& context,
       context.inst_blocks().Get(specific.args_id));
   for (auto& arg_id : args) {
     auto const_id = context.constant_values().Get(arg_id);
-    const_id = SubstPeriodSelf(context, callbacks, const_id);
+    const_id = SubstPeriodSelf(context, loc_id, const_id,
+                               period_self_replacement_id, behaviour, rebuild);
     arg_id = context.constant_values().GetInstId(const_id);
   }
-  return MakeSpecific(context, callbacks.loc_id(), specific.generic_id, args);
+  return MakeSpecific(context, loc_id, specific.generic_id, args);
 }
 
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::SpecificInterface interface)
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificInterface interface,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfBehaviour behaviour,
+                     SubstPeriodSelfRebuildInst rebuild)
     -> SemIR::SpecificInterface {
   interface.specific_id =
-      SubstPeriodSelfInSpecific(context, callbacks, interface.specific_id);
+      SubstPeriodSelfInSpecific(context, loc_id, interface.specific_id,
+                                period_self_replacement_id, behaviour, rebuild);
   return interface;
 }
-auto SubstPeriodSelf(Context& context, SubstPeriodSelfCallbacks& callbacks,
-                     SemIR::SpecificNamedConstraint constraint)
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificNamedConstraint constraint,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfBehaviour behaviour,
+                     SubstPeriodSelfRebuildInst rebuild)
     -> SemIR::SpecificNamedConstraint {
   constraint.specific_id =
-      SubstPeriodSelfInSpecific(context, callbacks, constraint.specific_id);
+      SubstPeriodSelfInSpecific(context, loc_id, constraint.specific_id,
+                                period_self_replacement_id, behaviour, rebuild);
   return constraint;
 }
 
@@ -307,36 +353,42 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::TypeInstId;
   }
 
+  auto period_self_replacement_id =
+      context.constant_values().Get(self_type_inst_id);
+
   auto orig_facet_type =
       context.insts().GetAs<SemIR::FacetType>(canon_facet_type_inst_id);
   const auto& orig_info =
       context.facet_types().Get(orig_facet_type.facet_type_id);
 
-  SubstPeriodSelfCallbacks callbacks(
-      &context, loc_id, context.constant_values().Get(self_type_inst_id));
-
   auto replace_interface = [&](SemIR::SpecificInterface si) {
-    return SubstPeriodSelf(context, callbacks, si);
+    return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id,
+                           SubstPeriodSelfBehaviour::All);
   };
   auto replace_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-    return SubstPeriodSelf(context, callbacks, sc);
+    return SubstPeriodSelf(context, loc_id, sc, period_self_replacement_id,
+                           SubstPeriodSelfBehaviour::All);
   };
   auto replace_type_impls_interface =
       [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
       -> SemIR::FacetTypeInfo::TypeImplsInterface {
-    auto self = SubstPeriodSelf(context, callbacks,
-                                context.constant_values().Get(impls.self_type));
-    auto interface =
-        SubstPeriodSelf(context, callbacks, impls.specific_interface);
+    auto self = SubstPeriodSelf(
+        context, loc_id, context.constant_values().Get(impls.self_type),
+        period_self_replacement_id, SubstPeriodSelfBehaviour::All);
+    auto interface = SubstPeriodSelf(context, loc_id, impls.specific_interface,
+                                     period_self_replacement_id,
+                                     SubstPeriodSelfBehaviour::All);
     return {context.constant_values().GetInstId(self), interface};
   };
   auto replace_type_impls_constraint =
       [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
       -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
-    auto self = SubstPeriodSelf(context, callbacks,
-                                context.constant_values().Get(impls.self_type));
-    auto constraint =
-        SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
+    auto self = SubstPeriodSelf(
+        context, loc_id, context.constant_values().Get(impls.self_type),
+        period_self_replacement_id, SubstPeriodSelfBehaviour::All);
+    auto constraint = SubstPeriodSelf(
+        context, loc_id, impls.specific_named_constraint,
+        period_self_replacement_id, SubstPeriodSelfBehaviour::All);
     return {context.constant_values().GetInstId(self), constraint};
   };
   auto replace_rewrite = [&](SemIR::FacetTypeInfo::RewriteConstraint r)
@@ -353,8 +405,9 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
         }
       }
     }
-    auto rhs = SubstPeriodSelf(context, callbacks,
-                               context.constant_values().Get(r.rhs_id));
+    auto rhs = SubstPeriodSelf(
+        context, loc_id, context.constant_values().Get(r.rhs_id),
+        period_self_replacement_id, SubstPeriodSelfBehaviour::All);
     return {r.lhs_id, context.constant_values().GetInstId(rhs)};
   };
 
