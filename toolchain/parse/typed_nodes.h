@@ -604,6 +604,11 @@ struct LetDecl {
 };
 
 // Associated constant nodes
+//
+// TODO: remove these nodes and parse associated constants as regular
+// `let`s instead. This will make associated constant parsing mirror how
+// class vars are handled; see
+// https://github.com/carbon-language/carbon-lang/pull/7188.
 using AssociatedConstantIntroducer =
     LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
 using AssociatedConstantInitializer =
