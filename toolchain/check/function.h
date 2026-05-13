@@ -71,6 +71,7 @@ auto CheckFunctionReturnTypeMatches(Context& context,
 //
 // `check_syntax` is false if the redeclaration can be called via a thunk with
 // implicit conversions from the original declaration.
+//
 // If `self_type_override_id` is specified, the self type is checked against
 // that type instead of the type from `prev_function`. This is used to check
 // virtual function overrides.
