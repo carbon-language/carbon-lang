@@ -46,85 +46,16 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   explicit SubstPeriodSelfCallbacks(
       Context* context, SemIR::LocId loc_id,
       SemIR::ConstantId period_self_replacement_id,
-      SubstPeriodSelfBehaviour behaviour, SubstPeriodSelfRebuildInst rebuild)
+      SubstPeriodSelfRebuildInst rebuild)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
         period_self_replacement_id_(period_self_replacement_id),
-        behaviour_(behaviour),
         rebuild_callback_(rebuild) {}
 
-  virtual ~SubstPeriodSelfCallbacks() {
-    CARBON_CHECK(designator_states_.empty());
-  }
-
-  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-    // FacetTypes are concrete even if they have `.Self` inside them, but we
-    // don't recurse into FacetTypes, so we can use this as a base case. This
-    // avoids infinite recursion on TypeType and ErrorInst.
-    if (context().constant_values().Get(inst_id).is_concrete()) {
-      return FullySubstituted;
-    }
-    // Don't recurse into nested facet types, even if they are symbolic. Leave
-    // their `.Self` as is.
-    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
-      return FullySubstituted;
-    }
-
-    // Look for implicit use of `.Self` in designators: `.X` is really
-    // `.Self.X`.
-    if (auto access =
-            context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
-      if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
-              access->witness_id)) {
-        // Canonicalization not necessary; we are working with the constant
-        // value already, and the query self in a witness is already
-        // canonicalized.
-        if (IsPeriodSelf(context(), witness->query_self_inst_id,
-                         /*canonicalize=*/false)) {
-          designator_states_.push_back(WitnessNext);
-        }
-      }
-    }
-
-    if (!designator_states_.empty() &&
-        designator_states_.back() == WitnessNext) {
-      if (auto witness =
-              context().insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
-        // The query self comes next, before the specific interface.
-        designator_states_.back() = WitnessSelfNext;
-      }
-    }
-
-    // An implicit use of `.Self` in a designator.
-    if (!designator_states_.empty() &&
-        designator_states_.back() == WitnessSelfNext) {
-      // Canonicalization not necessary; we are working with the constant
-      // value already, and the query self in a witness is already
-      // canonicalized.
-      if (IsPeriodSelf(context(), inst_id,
-                       /*canonicalize=*/false)) {
-        inst_id = GetReplacement(inst_id);
-        designator_states_.back() = Exiting;
-        return FullySubstituted;
-      }
-    }
-
-    // Look for explicit use of `.Self` only if the client requested it.
-    if (behaviour_ != SubstPeriodSelfBehaviour::ImplicitOnly) {
-      // Canonicalization not necessary; Subst will recurse anyway, so avoid
-      // extra work for non-matches.
-      if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
-        inst_id = GetReplacement(inst_id);
-        return FullySubstituted;
-      }
-    }
-
-    return SubstOperands;
-  }
+  virtual ~SubstPeriodSelfCallbacks() = default;
 
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    TryPopDesignatorState(orig_inst_id);
     if (rebuild_callback_) {
       if (auto inst_id = rebuild_callback_(new_inst); inst_id.has_value()) {
         return inst_id;
@@ -133,30 +64,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
   }
 
-  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
-    TryPopDesignatorState(orig_inst_id);
-    return orig_inst_id;
-  }
-
- private:
-  auto TryPopDesignatorState(SemIR::InstId orig_inst_id) -> void {
-    if (!designator_states_.empty() && designator_states_.back() == Exiting) {
-      if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
-              orig_inst_id)) {
-        if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
-                access->witness_id)) {
-          // Canonicalization not necessary; we are working with the constant
-          // value already, and the query self in a witness is already
-          // canonicalized.
-          if (IsPeriodSelf(context(), witness->query_self_inst_id,
-                           /*canonicalize=*/false)) {
-            designator_states_.pop_back();
-          }
-        }
-      }
-    }
-  }
-
+ protected:
   auto GetReplacement(SemIR::InstId period_self) -> SemIR::InstId {
     auto period_self_type_id = context().insts().Get(period_self).type_id();
     CARBON_CHECK(context().types().Is<SemIR::FacetType>(period_self_type_id));
@@ -185,6 +93,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     return cached_replacement_id_;
   }
 
+ private:
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
                           SemIR::TypeId replacement_type_id,
                           SemIR::TypeId period_self_type_id) -> SemIR::InstId {
@@ -255,7 +164,6 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
 
   SemIR::LocId loc_id_;
   SemIR::ConstantId period_self_replacement_id_;
-  SubstPeriodSelfBehaviour behaviour_;
   SubstPeriodSelfRebuildInst rebuild_callback_;
 
   // The last output of GetReplacement().
@@ -263,13 +171,162 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   // The type of the last output of GetReplacement(). If the type of `.Self`
   // matches, we can reuse the `cached_replacement_id_`.
   SemIR::TypeId cached_replacement_type_id_ = SemIR::TypeId::None;
+};
 
+class SubstDesignatorPeriodSelfCallbacks : public SubstPeriodSelfCallbacks {
+ public:
+  explicit SubstDesignatorPeriodSelfCallbacks(
+      Context* context, SemIR::LocId loc_id,
+      SemIR::ConstantId period_self_replacement_id,
+      SubstPeriodSelfRebuildInst rebuild)
+      : SubstPeriodSelfCallbacks(context, loc_id, period_self_replacement_id,
+                                 rebuild) {}
+
+  ~SubstDesignatorPeriodSelfCallbacks() override {
+    CARBON_CHECK(designator_states_.empty());
+  }
+
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // FacetTypes are concrete even if they have `.Self` inside them, but we
+    // don't recurse into FacetTypes, so we can use this as a base case. This
+    // avoids infinite recursion on TypeType and ErrorInst.
+    if (context().constant_values().Get(inst_id).is_concrete()) {
+      return FullySubstituted;
+    }
+    // Don't recurse into nested facet types, even if they are symbolic. Leave
+    // their `.Self` as is.
+    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
+      return FullySubstituted;
+    }
+
+    // Look for implicit use of `.Self` in designators: `.X` is really
+    // `.Self.X`.
+    if (auto access =
+            context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
+      if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+              access->witness_id)) {
+        // Canonicalization not necessary; we are working with the constant
+        // value already, and the query self in a witness is already
+        // canonicalized.
+        if (IsPeriodSelf(context(), witness->query_self_inst_id,
+                         /*canonicalize=*/false)) {
+          // We are entering a designator. We watch for the witness next.
+          designator_states_.push_back(WitnessNext);
+          return SubstOperands;
+        }
+      }
+    }
+
+    if (GetDesignatorState() == WitnessNext) {
+      if (auto witness =
+              context().insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
+        // The query self comes next, before the specific interface. This
+        // deepnds on the order of the operands in the LookupImplWitness, and
+        // that Subst visits them in top to bottom order.
+        designator_states_.back() = WitnessSelfNext;
+        return SubstOperands;
+      }
+    }
+
+    if (GetDesignatorState() == WitnessSelfNext) {
+      // Canonicalization not necessary; we are working with the constant
+      // value already, and the query self in a witness is already
+      // canonicalized.
+      if (IsPeriodSelf(context(), inst_id,
+                       /*canonicalize=*/false)) {
+        // Found the implicit use of `.Self` in a designator.
+        inst_id = GetReplacement(inst_id);
+        designator_states_.back() = RebuildNext;
+        return FullySubstituted;
+      }
+    }
+
+    return SubstOperands;
+  }
+
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+      -> SemIR::InstId override {
+    TryPopDesignatorState(orig_inst_id);
+    return SubstPeriodSelfCallbacks::Rebuild(orig_inst_id, new_inst);
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    TryPopDesignatorState(orig_inst_id);
+    return SubstPeriodSelfCallbacks::ReuseUnchanged(orig_inst_id);
+  }
+
+ private:
   enum DesignatorState {
+    // We are not inside a designator.
+    None,
+    // We are looking for the LookupImplWitness of a designator next.
     WitnessNext,
+    // We are looking for `.Self`, the next one will be the query self of the
+    // LookupImplWitness of a designator. This is the implicit use of `.Self`.
     WitnessSelfNext,
-    Exiting,
+    // We have seen the query self of the designator, and are now looking for
+    // the designator to be rebuilt with the replacement. Any other `.Self` that
+    // we find are explicit uses of `.Self`, such as in the designator's
+    // specific interface.
+    RebuildNext,
   };
+
+  auto GetDesignatorState() const -> DesignatorState {
+    return designator_states_.empty() ? DesignatorState::None
+                                      : designator_states_.back();
+  }
+
+  auto TryPopDesignatorState(SemIR::InstId orig_inst_id) -> void {
+    if (GetDesignatorState() == RebuildNext) {
+      if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
+              orig_inst_id)) {
+        if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+                access->witness_id)) {
+          // Canonicalization not necessary; we are working with the constant
+          // value already, and the query self in a witness is already
+          // canonicalized.
+          if (IsPeriodSelf(context(), witness->query_self_inst_id,
+                           /*canonicalize=*/false)) {
+            designator_states_.pop_back();
+          }
+        }
+      }
+    }
+  }
+
   llvm::SmallVector<DesignatorState> designator_states_;
+};
+
+class SubstAllPeriodSelfCallbacks : public SubstPeriodSelfCallbacks {
+ public:
+  explicit SubstAllPeriodSelfCallbacks(
+      Context* context, SemIR::LocId loc_id,
+      SemIR::ConstantId period_self_replacement_id,
+      SubstPeriodSelfRebuildInst rebuild)
+      : SubstPeriodSelfCallbacks(context, loc_id, period_self_replacement_id,
+                                 rebuild) {}
+
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // FacetTypes are concrete even if they have `.Self` inside them, but we
+    // don't recurse into FacetTypes, so we can use this as a base case. This
+    // avoids infinite recursion on TypeType and ErrorInst.
+    if (context().constant_values().Get(inst_id).is_concrete()) {
+      return FullySubstituted;
+    }
+    // Don't recurse into nested facet types, even if they are symbolic. Leave
+    // their `.Self` as is.
+    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
+      return FullySubstituted;
+    }
+
+    if (IsPeriodSelf(context(), inst_id,
+                     /*canonicalize=*/false)) {
+      inst_id = GetReplacement(inst_id);
+      return FullySubstituted;
+    }
+
+    return SubstOperands;
+  }
 };
 
 auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
@@ -288,12 +345,22 @@ auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
     return const_id;
   }
 
-  SubstPeriodSelfCallbacks callbacks(
-      &context, loc_id, period_self_replacement_id, behaviour, rebuild);
-
-  auto subst_id = SubstInst(
-      context, context.constant_values().GetInstId(const_id), callbacks);
-  return context.constant_values().Get(subst_id);
+  switch (behaviour) {
+    case SubstPeriodSelfBehaviour::All: {
+      SubstAllPeriodSelfCallbacks callbacks(
+          &context, loc_id, period_self_replacement_id, rebuild);
+      auto subst_id = SubstInst(
+          context, context.constant_values().GetInstId(const_id), callbacks);
+      return context.constant_values().Get(subst_id);
+    }
+    case SubstPeriodSelfBehaviour::ImplicitOnly: {
+      SubstDesignatorPeriodSelfCallbacks callbacks(
+          &context, loc_id, period_self_replacement_id, rebuild);
+      auto subst_id = SubstInst(
+          context, context.constant_values().GetInstId(const_id), callbacks);
+      return context.constant_values().Get(subst_id);
+    }
+  }
 }
 
 static auto SubstPeriodSelfInSpecific(
