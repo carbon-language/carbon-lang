@@ -51,15 +51,14 @@ class Timings {
       map.Add("filename", filename);
       map.Add("nanoseconds",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map label_map) {
-                std::chrono::nanoseconds total_nanoseconds(0);
-                for (const auto& entry : timings_) {
-                  total_nanoseconds += entry.nanoseconds;
-                  label_map.Add(entry.label, static_cast<int64_t>(
-                                                 entry.nanoseconds.count()));
-                }
-                label_map.Add("Total",
-                              static_cast<int64_t>(total_nanoseconds.count()));
-              }));
+        std::chrono::nanoseconds total_nanoseconds(0);
+        for (const auto& entry : timings_) {
+          total_nanoseconds += entry.nanoseconds;
+          label_map.Add(entry.label,
+                        static_cast<int64_t>(entry.nanoseconds.count()));
+        }
+        label_map.Add("Total", static_cast<int64_t>(total_nanoseconds.count()));
+      }));
     });
   }
 

@@ -112,15 +112,12 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
              GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
-             /*diagnose_duplicate_namespace=*/false,
-             [&]() {
-               return AddInst<SemIR::ImportCppDecl>(
-                   context,
-                   context.parse_tree().As<Parse::ImportDeclId>(
-                       imports.front().node_id),
-                   {});
-             })
-      .add_result.name_scope_id;
+             /*diagnose_duplicate_namespace=*/false, [&]() {
+    return AddInst<SemIR::ImportCppDecl>(
+        context,
+        context.parse_tree().As<Parse::ImportDeclId>(imports.front().node_id),
+        {});
+  }).add_result.name_scope_id;
 }
 
 auto ImportCpp(Context& context,
@@ -137,8 +134,8 @@ auto ImportCpp(Context& context,
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
       llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
-        return import.package_id == package_id;
-      }));
+    return import.package_id == package_id;
+  }));
 
   auto name_scope_id = AddNamespace(context, package_id, imports);
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
@@ -1903,12 +1900,12 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   SemIR::Function& function_info = context.functions().Get(*function_id);
   if (IsCppThunkRequired(context, function_info)) {
-    Diagnostics::AnnotationScope annotate_diagnostics(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(InCppThunk, Note,
-                            "in thunk for C++ function used here");
-          builder.Note(loc_id, InCppThunk);
-        });
+    Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                      [&](auto& builder) {
+      CARBON_DIAGNOSTIC(InCppThunk, Note,
+                        "in thunk for C++ function used here");
+      builder.Note(loc_id, InCppThunk);
+    });
 
     if (clang::FunctionDecl* thunk_clang_decl =
             BuildCppThunk(context, function_info)) {
@@ -2492,12 +2489,12 @@ auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppNameLookup, Note,
-                          "in `Cpp` name lookup for `{0}`", SemIR::NameId);
-        builder.Note(loc_id, InCppNameLookup, name_id);
-      });
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [&](auto& builder) {
+    CARBON_DIAGNOSTIC(InCppNameLookup, Note, "in `Cpp` name lookup for `{0}`",
+                      SemIR::NameId);
+    builder.Note(loc_id, InCppNameLookup, name_id);
+  });
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
   }

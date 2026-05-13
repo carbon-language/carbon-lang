@@ -515,15 +515,14 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       // lookup on the facet directly instead of the facet type. For now it's
       // here to provide a better diagnostic than what we get when looking for
       // scopes directly on the facet type.
-      if (!RequireCompleteType(
-              context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    IncompleteTypeInMemberAccessOfFacet, Context,
-                    "member access into facet of incomplete type {0}",
-                    SemIR::TypeId);
-                builder.Context(base_id, IncompleteTypeInMemberAccessOfFacet,
-                                base_type_id);
-              })) {
+      if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id),
+                               [&](auto& builder) {
+        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccessOfFacet, Context,
+                          "member access into facet of incomplete type {0}",
+                          SemIR::TypeId);
+        builder.Context(base_id, IncompleteTypeInMemberAccessOfFacet,
+                        base_type_id);
+      })) {
         // If the scope is invalid in AppendLookupScopesForConstant we still
         // return true and proceed with lookup, just ignoring that scope.
         // Match behaviour here for when this moves into
@@ -558,14 +557,13 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   //
   // TODO: ConvertToValueOrRefExpr could take context about the operation being
   // done to give a better error than "invalid use of" an incomplete type?
-  if (!RequireCompleteType(
-          context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                IncompleteTypeInMemberAccess, Context,
-                "member access into object of incomplete type {0}",
-                TypeOfInstId);
-            builder.Context(base_id, IncompleteTypeInMemberAccess, base_id);
-          })) {
+  if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id),
+                           [&](auto& builder) {
+    CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Context,
+                      "member access into object of incomplete type {0}",
+                      TypeOfInstId);
+    builder.Context(base_id, IncompleteTypeInMemberAccess, base_id);
+  })) {
     return SemIR::ErrorInst::InstId;
   }
 

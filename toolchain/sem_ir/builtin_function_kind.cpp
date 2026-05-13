@@ -334,10 +334,10 @@ static auto ValidateSignature(const File& sem_ir,
 
   // Argument types must match.
   if (![&]<size_t... Indexes>(std::index_sequence<Indexes...>) {
-        return ((CheckParam<typename SignatureTraits::template arg_t<Indexes>>(
-                    sem_ir, state, call_params[Indexes])) &&
-                ...);
-      }(std::make_index_sequence<SignatureTraits::num_args>())) {
+    return ((CheckParam<typename SignatureTraits::template arg_t<Indexes>>(
+                sem_ir, state, call_params[Indexes])) &&
+            ...);
+  }(std::make_index_sequence<SignatureTraits::num_args>())) {
     return false;
   }
 

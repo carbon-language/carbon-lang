@@ -89,26 +89,24 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   std::string target_arg = llvm::formatv("--target={0}", target).str();
   std::string out;
   std::string err;
-  CARBON_CHECK(*Testing::CallWithCapturedOutput(
-                   out, err,
-                   [&] {
-                     auto run_result = clang.RunWithNoRuntimes(
-                         {target_arg, "-fPIE", "-c", test_a_file.string(), "-o",
-                          test_a_output.string()});
-                     return run_result;
-                   }),
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(out, err,
+                                                [&] {
+    auto run_result = clang.RunWithNoRuntimes({target_arg, "-fPIE", "-c",
+                                               test_a_file.string(), "-o",
+                                               test_a_output.string()});
+    return run_result;
+  }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);
   verbose_out.clear();
 
-  CARBON_CHECK(*Testing::CallWithCapturedOutput(
-                   out, err,
-                   [&] {
-                     auto run_result = clang.RunWithNoRuntimes(
-                         {target_arg, "-fPIE", "-c", test_b_file.string(), "-o",
-                          test_b_output.string()});
-                     return run_result;
-                   }),
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(out, err,
+                                                [&] {
+    auto run_result = clang.RunWithNoRuntimes({target_arg, "-fPIE", "-c",
+                                               test_b_file.string(), "-o",
+                                               test_b_output.string()});
+    return run_result;
+  }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);
   verbose_out.clear();
@@ -140,14 +138,12 @@ TEST(LldRunnerTest, ElfLinkTest) {
   // C-runtime built artifacts available in the toolchain. We should revisit
   // this once we have those in place. This also prevents us from testing a
   // failed link easily.
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err,
-      [&] {
-        return lld.ElfLink({"-m", "aarch64linux", "--relocatable", "-o",
-                            test_output.string(), test_a_output.string(),
-                            test_b_output.string()});
-      }))
-      << "Verbose output from runner:\n"
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return lld.ElfLink({"-m", "aarch64linux", "--relocatable", "-o",
+                        test_output.string(), test_a_output.string(),
+                        test_b_output.string()});
+  })) << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
 
@@ -177,14 +173,12 @@ TEST(LldRunnerTest, MachOLinkTest) {
   // but seems to succeed currently. The goal isn't to test any *particular*
   // link, but just than an actual link occurs successfully.
   LldRunner lld(&install_paths, &verbose_out);
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err,
-      [&] {
-        return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
-                              "10.4.0", "10.4.0", "-o", test_output.string(),
-                              test_a_output.string(), test_b_output.string()});
-      }))
-      << "Verbose output from runner:\n"
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err,
+                                              [&] {
+    return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
+                          "10.4.0", "10.4.0", "-o", test_output.string(),
+                          test_a_output.string(), test_b_output.string()});
+  })) << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
 
@@ -194,14 +188,12 @@ TEST(LldRunnerTest, MachOLinkTest) {
 
   // Re-do the link, but with only one of the inputs. This should fail due to an
   // unresolved symbol.
-  EXPECT_FALSE(Testing::CallWithCapturedOutput(
-      out, err,
-      [&] {
-        return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
-                              "10.4.0", "10.4.0", "-o", test_output.string(),
-                              test_b_output.string()});
-      }))
-      << "Verbose output from runner:\n"
+  EXPECT_FALSE(Testing::CallWithCapturedOutput(out, err,
+                                               [&] {
+    return lld.MachOLink({"-arch", "arm64", "-platform_version", "macos",
+                          "10.4.0", "10.4.0", "-o", test_output.string(),
+                          test_b_output.string()});
+  })) << "Verbose output from runner:\n"
       << verbose_out.TakeStr() << "\n";
   verbose_out.clear();
 

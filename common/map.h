@@ -429,9 +429,9 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
     CallbackT callback) -> void
   requires(std::invocable<CallbackT, KeyT&, ValueT&>)
 {
-  this->ForEachEntry(
-      [callback](EntryT& entry) { callback(entry.key(), entry.value()); },
-      [](auto...) {});
+  this->ForEachEntry([callback](EntryT& entry) {
+    callback(entry.key(), entry.value());
+  }, [](auto...) {});
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -443,10 +443,9 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
   return Insert(
       lookup_key,
       [&new_v](LookupKeyT lookup_key, void* key_storage, void* value_storage) {
-        new (key_storage) KeyT(lookup_key);
-        new (value_storage) ValueT(std::move(new_v));
-      },
-      key_context);
+    new (key_storage) KeyT(lookup_key);
+    new (value_storage) ValueT(std::move(new_v));
+  }, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -459,14 +458,13 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
       !std::same_as<ValueT, ValueCallbackT> &&
       std::convertible_to<decltype(std::declval<ValueCallbackT>()()), ValueT>)
 {
-  return Insert(
-      lookup_key,
-      [&value_cb](LookupKeyT lookup_key, void* key_storage,
-                  void* value_storage) {
-        new (key_storage) KeyT(lookup_key);
-        new (value_storage) ValueT(value_cb());
-      },
-      key_context);
+  return Insert(lookup_key,
+                [&value_cb](LookupKeyT lookup_key, void* key_storage,
+                            void* value_storage) {
+    new (key_storage) KeyT(lookup_key);
+    new (value_storage) ValueT(value_cb());
+  },
+                key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -499,14 +497,12 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
   return Update(
       lookup_key,
       [&new_v](LookupKeyT lookup_key, void* key_storage, void* value_storage) {
-        new (key_storage) KeyT(lookup_key);
-        new (value_storage) ValueT(std::move(new_v));
-      },
-      [&new_v](KeyT& /*key*/, ValueT& value) {
-        value.~ValueT();
-        new (&value) ValueT(std::move(new_v));
-      },
-      key_context);
+    new (key_storage) KeyT(lookup_key);
+    new (value_storage) ValueT(std::move(new_v));
+  }, [&new_v](KeyT& /*key*/, ValueT& value) {
+    value.~ValueT();
+    new (&value) ValueT(std::move(new_v));
+  }, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -519,18 +515,16 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
       !std::same_as<ValueT, ValueCallbackT> &&
       std::convertible_to<decltype(std::declval<ValueCallbackT>()()), ValueT>)
 {
-  return Update(
-      lookup_key,
-      [&value_cb](LookupKeyT lookup_key, void* key_storage,
-                  void* value_storage) {
-        new (key_storage) KeyT(lookup_key);
-        new (value_storage) ValueT(value_cb());
-      },
-      [&value_cb](KeyT& /*key*/, ValueT& value) {
-        value.~ValueT();
-        new (&value) ValueT(value_cb());
-      },
-      key_context);
+  return Update(lookup_key,
+                [&value_cb](LookupKeyT lookup_key, void* key_storage,
+                            void* value_storage) {
+    new (key_storage) KeyT(lookup_key);
+    new (value_storage) ValueT(value_cb());
+  },
+                [&value_cb](KeyT& /*key*/, ValueT& value) {
+    value.~ValueT();
+    new (&value) ValueT(value_cb());
+  }, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>

@@ -174,10 +174,10 @@ static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
-  return context.inst_blocks().Transform(
-      inst_block_id, [&](SemIR::InstId inst_id) {
-        return ClonePattern(context, specific_id, inst_id);
-      });
+  return context.inst_blocks().Transform(inst_block_id,
+                                         [&](SemIR::InstId inst_id) {
+    return ClonePattern(context, specific_id, inst_id);
+  });
 }
 
 static auto CloneInstId(Context& context, SemIR::SpecificId specific_id,
@@ -330,12 +330,12 @@ static auto StartThunkFunctionDefinition(Context& context,
                                          SemIR::InstId callee_id) {
   // The check below produces diagnostics referring to the signature, so also
   // note the callee.
-  Diagnostics::AnnotationScope annot_scope(
-      &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(ThunkCallee, Note,
-                          "while building thunk calling this function");
-        builder.Note(callee_id, ThunkCallee);
-      });
+  Diagnostics::AnnotationScope annot_scope(&context.emitter(),
+                                           [&](DiagnosticBuilder& builder) {
+    CARBON_DIAGNOSTIC(ThunkCallee, Note,
+                      "while building thunk calling this function");
+    builder.Note(callee_id, ThunkCallee);
+  });
 
   StartFunctionDefinition(context, thunk_id, function_id);
 }
@@ -357,14 +357,14 @@ static auto BuildThunkDefinition(Context& context,
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
-  Diagnostics::AnnotationScope annot_scope(
-      &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(
-            ThunkSignature, Note,
-            "while building thunk to match the signature of this function");
-        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
-                     ThunkSignature);
-      });
+  Diagnostics::AnnotationScope annot_scope(&context.emitter(),
+                                           [&](DiagnosticBuilder& builder) {
+    CARBON_DIAGNOSTIC(
+        ThunkSignature, Note,
+        "while building thunk to match the signature of this function");
+    builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
+                 ThunkSignature);
+  });
 
   const auto& function = context.functions().Get(function_id);
   llvm::ArrayRef<SemIR::InstId> param_pattern_ids;

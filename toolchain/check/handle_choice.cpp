@@ -210,11 +210,10 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
                   .type_id = choice_info.self_struct_type_id,
                   .elements_id =
                       [&] {
-                        context.inst_block_stack().Push();
-                        context.inst_block_stack().AddInstId(
-                            discriminant_value_id);
-                        return context.inst_block_stack().Pop();
-                      }(),
+    context.inst_block_stack().Push();
+    context.inst_block_stack().AddInstId(discriminant_value_id);
+    return context.inst_block_stack().Pop();
+  }(),
               }),
       choice_info.self_type_id);
 

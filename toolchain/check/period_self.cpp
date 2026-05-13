@@ -128,12 +128,12 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
         period_self_facet_type, [&](auto& /*builder*/) {
-          // The facet type containing this `.Self` should have already been
-          // identified, which would ensure that the type of `.Self` can be
-          // identified since it can only depend on things to the left of it
-          // inside the same facet type.
-          CARBON_FATAL("could not identify type of `.Self`");
-        });
+      // The facet type containing this `.Self` should have already been
+      // identified, which would ensure that the type of `.Self` can be
+      // identified since it can only depend on things to the left of it
+      // inside the same facet type.
+      CARBON_FATAL("could not identify type of `.Self`");
+    });
     const auto& identified_period_self_type =
         context().identified_facet_types().Get(identified_period_self_type_id);
     auto required_impls = identified_period_self_type.required_impls();

@@ -35,9 +35,9 @@ auto CheckFailImpl(const char* kind, const char* file, int line,
   // Register another signal handler to print the message. This is because we
   // want it at the bottom of output, after LLVM's builtin stack output, rather
   // than the top.
-  llvm::sys::AddSignalHandler(
-      [](void* str) { llvm::errs() << reinterpret_cast<char*>(str); },
-      const_cast<char*>(message.c_str()));
+  llvm::sys::AddSignalHandler([](void* str) {
+    llvm::errs() << reinterpret_cast<char*>(str);
+  }, const_cast<char*>(message.c_str()));
 
   // It's useful to exit the program with `std::abort()` for integration with
   // debuggers and other tools. We also assume LLVM's exit handling is

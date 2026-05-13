@@ -154,8 +154,8 @@ extern auto GetFileTestFactory() -> FileTestFactory;
 #define CARBON_FILE_TEST_FACTORY(Name)                                       \
   auto GetFileTestFactory() -> FileTestFactory {                             \
     return {#Name, [](llvm::StringRef exe_path, llvm::StringRef test_name) { \
-              return std::make_unique<Name>(exe_path, test_name);            \
-            }};                                                              \
+      return std::make_unique<Name>(exe_path, test_name);                    \
+    }};                                                                      \
   }
 
 }  // namespace Carbon::Testing

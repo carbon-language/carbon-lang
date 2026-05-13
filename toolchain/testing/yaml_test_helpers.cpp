@@ -68,14 +68,12 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
 auto Value::FromText(llvm::StringRef text) -> ErrorOr<SequenceValue> {
   llvm::SourceMgr sm;
   std::optional<std::string> error_message;
-  sm.setDiagHandler(
-      [](const llvm::SMDiagnostic& diag, void* context) -> void {
-        auto* error_message = static_cast<std::optional<std::string>*>(context);
-        RawStringOstream stream;
-        diag.print(/*ProgName=*/nullptr, stream, /*ShowColors=*/false);
-        *error_message = stream.TakeStr();
-      },
-      &error_message);
+  sm.setDiagHandler([](const llvm::SMDiagnostic& diag, void* context) -> void {
+    auto* error_message = static_cast<std::optional<std::string>*>(context);
+    RawStringOstream stream;
+    diag.print(/*ProgName=*/nullptr, stream, /*ShowColors=*/false);
+    *error_message = stream.TakeStr();
+  }, &error_message);
   llvm::yaml::Stream yaml_stream(text, sm);
 
   SequenceValue result;

@@ -647,28 +647,28 @@ constexpr char DispatchSpecializableSymbols[] = {
 // to be exhaustive.
 constexpr std::array<char, 26 * 2 + 10 + sizeof(DispatchSpecializableSymbols)>
     DispatchSpecializableChars = []() {
-      constexpr int Size = sizeof(DispatchSpecializableChars);
-      std::array<char, Size> chars = {};
-      int i = 0;
-      for (char c = '0'; c <= '9'; ++c) {
-        chars[i] = c;
-        ++i;
-      }
-      for (char c = 'A'; c <= 'Z'; ++c) {
-        chars[i] = c;
-        ++i;
-      }
-      for (char c = 'a'; c <= 'z'; ++c) {
-        chars[i] = c;
-        ++i;
-      }
-      for (char c : DispatchSpecializableSymbols) {
-        chars[i] = c;
-        ++i;
-      }
-      CARBON_CHECK(i == Size);
-      return chars;
-    }();
+  constexpr int Size = sizeof(DispatchSpecializableChars);
+  std::array<char, Size> chars = {};
+  int i = 0;
+  for (char c = '0'; c <= '9'; ++c) {
+    chars[i] = c;
+    ++i;
+  }
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    chars[i] = c;
+    ++i;
+  }
+  for (char c = 'a'; c <= 'z'; ++c) {
+    chars[i] = c;
+    ++i;
+  }
+  for (char c : DispatchSpecializableSymbols) {
+    chars[i] = c;
+    ++i;
+  }
+  CARBON_CHECK(i == Size);
+  return chars;
+}();
 
 // Instantiate a number of specialized dispatch functions for characters in the
 // array above, and assign those function addresses to the character's entry in

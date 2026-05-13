@@ -39,20 +39,20 @@ target's platform.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("elf", Platform::Elf),
-                // Some of LLD documentation uses "Unix" or "GNU", so
-                // include an alias here.
-                arg_b.OneOfValue("gnu", Platform::Elf),
-                arg_b.OneOfValue("unix", Platform::Elf),
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("elf", Platform::Elf),
+            // Some of LLD documentation uses "Unix" or "GNU", so
+            // include an alias here.
+            arg_b.OneOfValue("gnu", Platform::Elf),
+            arg_b.OneOfValue("unix", Platform::Elf),
 
-                arg_b.OneOfValue("macho", Platform::MachO),
-                // Darwin is also sometimes used, include it as an alias here.
-                arg_b.OneOfValue("darwin", Platform::MachO),
-            },
-            &platform);
-      });
+            arg_b.OneOfValue("macho", Platform::MachO),
+            // Darwin is also sometimes used, include it as an alias here.
+            arg_b.OneOfValue("darwin", Platform::MachO),
+        },
+        &platform);
+  });
   b.AddStringPositionalArg(
       {
           .name = "ARG",

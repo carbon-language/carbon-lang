@@ -333,22 +333,17 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
   if (!init_repr.is_valid()) {
     // TODO: Consider suppressing the diagnostics if we've already diagnosed a
     // definition or call to this function.
-    if (!RequireConcreteType(
-            context, arg_type_id, SemIR::LocId(return_pattern_id),
-            [&](auto& builder) {
-              CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Context,
-                                "function returns incomplete type {0}",
-                                SemIR::TypeId);
-              builder.Context(loc_id, IncompleteTypeInFunctionReturnType,
-                              arg_type_id);
-            },
-            [&](auto& builder) {
-              CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
-                                "function returns abstract type {0}",
-                                SemIR::TypeId);
-              builder.Context(loc_id, AbstractTypeInFunctionReturnType,
-                              arg_type_id);
-            })) {
+    if (!RequireConcreteType(context, arg_type_id,
+                             SemIR::LocId(return_pattern_id),
+                             [&](auto& builder) {
+      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Context,
+                        "function returns incomplete type {0}", SemIR::TypeId);
+      builder.Context(loc_id, IncompleteTypeInFunctionReturnType, arg_type_id);
+    }, [&](auto& builder) {
+      CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
+                        "function returns abstract type {0}", SemIR::TypeId);
+      builder.Context(loc_id, AbstractTypeInFunctionReturnType, arg_type_id);
+    })) {
       return SemIR::ErrorInst::TypeId;
     }
   }
@@ -380,13 +375,13 @@ auto CheckFunctionDefinitionSignature(Context& context,
     RequireCompleteType(
         context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         SemIR::LocId(param_ref_id), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Context,
-              "parameter has incomplete type {0} in function definition",
-              TypeOfInstId);
-          builder.Context(param_ref_id, IncompleteTypeInFunctionParam,
-                          param_ref_id);
-        });
+      CARBON_DIAGNOSTIC(
+          IncompleteTypeInFunctionParam, Context,
+          "parameter has incomplete type {0} in function definition",
+          TypeOfInstId);
+      builder.Context(param_ref_id, IncompleteTypeInFunctionParam,
+                      param_ref_id);
+    });
   }
 
   // Check the return type is complete.

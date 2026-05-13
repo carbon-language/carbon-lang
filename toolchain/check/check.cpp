@@ -414,9 +414,9 @@ auto CheckParseTrees(
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
-        return UnitAndImports(
-            &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
-      }));
+    return UnitAndImports(
+        &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
+  }));
 
   // Dump the raw SemIR in the event of a crash. We dump it to a separate file
   // to keep the stack trace manageable.

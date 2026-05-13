@@ -34,8 +34,8 @@ class DriverSubcommand {
              DriverSubcommand** selected_subcommand) -> void {
     b.AddSubcommand(
         info_, [this, selected_subcommand](CommandLine::CommandBuilder& sub_b) {
-          BuildOptionsAndSetAction(sub_b, selected_subcommand);
-        });
+      BuildOptionsAndSetAction(sub_b, selected_subcommand);
+    });
   }
 
   // Adds command line options.

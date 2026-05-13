@@ -73,10 +73,10 @@ auto SpecificCoalescer::CoalesceEquivalentSpecifics(
           visited_equivalent_specifics.ForEach(
               [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
                       equivalent_entry) {
-                CARBON_VLOG("Found equivalent specifics: {0}, {1}",
-                            equivalent_entry.first, equivalent_entry.second);
-                ProcessSpecificEquivalence(equivalent_entry);
-              });
+            CARBON_VLOG("Found equivalent specifics: {0}, {1}",
+                        equivalent_entry.first, equivalent_entry.second);
+            ProcessSpecificEquivalence(equivalent_entry);
+          });
 
           // Removed the replaced specific from the list of emitted specifics.
           // Only the top level, since the others are somewhere else in the

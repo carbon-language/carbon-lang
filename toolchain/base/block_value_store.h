@@ -91,8 +91,8 @@ class BlockValueStore
   auto MakeCanonical(IdT id) -> IdT {
     // Get the content first so that we don't have unnecessary translation of
     // the `id` into the content during insertion.
-    auto result = canonical_blocks_.Insert(
-        Get(id), [id] { return id; }, KeyContext(this));
+    auto result = canonical_blocks_.Insert(Get(id), [id] { return id; },
+                                           KeyContext(this));
     return result.key();
   }
 
@@ -101,10 +101,10 @@ class BlockValueStore
       for (auto [block_id, block] : values_.enumerate()) {
         map.Add(PrintToString(block_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                  for (auto [i, elem_id] : llvm::enumerate(block)) {
-                    map.Add(llvm::itostr(i), Yaml::OutputScalar(elem_id));
-                  }
-                }));
+          for (auto [i, elem_id] : llvm::enumerate(block)) {
+            map.Add(llvm::itostr(i), Yaml::OutputScalar(elem_id));
+          }
+        }));
       }
     });
   }

@@ -642,12 +642,12 @@ auto ImportNameFromOtherPackage(
   }
 
   // Annotate diagnostics as occurring during this name lookup.
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InNameLookup, Note, "in name lookup for `{0}`",
-                          SemIR::NameId);
-        builder.Note(loc_id, InNameLookup, name_id);
-      });
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [&](auto& builder) {
+    CARBON_DIAGNOSTIC(InNameLookup, Note, "in name lookup for `{0}`",
+                      SemIR::NameId);
+    builder.Note(loc_id, InNameLookup, name_id);
+  });
 
   // Although we track the result here and look in each IR, we pretty much use
   // the first result.

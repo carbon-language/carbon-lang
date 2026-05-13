@@ -671,13 +671,13 @@ auto MatchContext::DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
   }
   auto add_all_subscrutinees =
       [&](llvm::ArrayRef<SemIR::InstId> subscrutinee_ids) {
-        for (auto [subpattern_id, subscrutinee_id] :
-             llvm::reverse(llvm::zip_equal(subpattern_ids, subscrutinee_ids))) {
-          AddWork({.pattern_id = subpattern_id,
-                   .work = PreWork{.scrutinee_id = subscrutinee_id},
-                   .allow_unmarked_ref = entry.allow_unmarked_ref});
-        }
-      };
+    for (auto [subpattern_id, subscrutinee_id] :
+         llvm::reverse(llvm::zip_equal(subpattern_ids, subscrutinee_ids))) {
+      AddWork({.pattern_id = subpattern_id,
+               .work = PreWork{.scrutinee_id = subscrutinee_id},
+               .allow_unmarked_ref = entry.allow_unmarked_ref});
+    }
+  };
   if (!scrutinee_id.has_value()) {
     CARBON_CHECK(std::holds_alternative<CalleeState*>(state) ||
                  std::holds_alternative<ThunkState*>(state));
@@ -805,14 +805,14 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
     }
     return;
   }
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context_.emitter(), [&](auto& builder) {
-        if (std::holds_alternative<CallerState*>(state)) {
-          CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
-                            "initializing function parameter");
-          builder.Note(entry.pattern_id, InCallToFunctionParam);
-        }
-      });
+  Diagnostics::AnnotationScope annotate_diagnostics(&context_.emitter(),
+                                                    [&](auto& builder) {
+    if (std::holds_alternative<CallerState*>(state)) {
+      CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
+                        "initializing function parameter");
+      builder.Note(entry.pattern_id, InCallToFunctionParam);
+    }
+  });
   auto pattern = context_.insts().Get(entry.pattern_id);
   CARBON_KIND_SWITCH(entry.work) {
     case CARBON_KIND(PreWork work): {

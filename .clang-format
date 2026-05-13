@@ -12,6 +12,7 @@ ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'
 InsertBraces: 'true'
 InsertTrailingCommas: None
+LambdaBodyIndentation: OuterScope
 PointerAlignment: Left
 # We abuse control macros for formatting other kinds of macros.
 SpaceBeforeParens: ControlStatementsExceptControlMacros

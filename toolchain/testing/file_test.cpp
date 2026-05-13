@@ -199,10 +199,10 @@ auto ToolchainFileTest::Run(
   // the prelude. Note this can empty out the list.
   llvm::erase_if(result.per_file_success,
                  [&](std::pair<llvm::StringRef, bool> entry) {
-                   return entry.first == "." || entry.first == "-" ||
-                          entry.first.starts_with("not_file") ||
-                          llvm::is_contained(data_->prelude_files, entry.first);
-                 });
+    return entry.first == "." || entry.first == "-" ||
+           entry.first.starts_with("not_file") ||
+           llvm::is_contained(data_->prelude_files, entry.first);
+  });
 
   if (component_ == "language_server") {
     // The language server doesn't always add a suffix newline, so add one for

@@ -294,9 +294,9 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
   if constexpr (Component == Runtimes::LibUnwind) {
     return llvm::to_vector_of<llvm::StringRef>(llvm::make_filter_range(
         RuntimesBuildInfo::LibunwindSrcs, [](llvm::StringRef src) {
-          return src.ends_with(".c") || src.ends_with(".cpp") ||
-                 src.ends_with(".S");
-        }));
+      return src.ends_with(".c") || src.ends_with(".cpp") ||
+             src.ends_with(".S");
+    }));
   } else if constexpr (Component == Runtimes::Libcxx) {
     auto libcxx_target_srcs =
         target_triple_.isOSWindows()

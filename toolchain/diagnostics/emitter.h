@@ -439,8 +439,8 @@ auto Emitter<LocT>::Builder::AddMessage(
   auto converted = emitter_->ConvertLoc(
       loc,
       [&](Loc context_loc, const DiagnosticBase<>& context_diagnostic_base) {
-        AddMessageWithLoc(context_loc, context_diagnostic_base, {});
-      });
+    AddMessageWithLoc(context_loc, context_diagnostic_base, {});
+  });
   // Use the last byte offset from the first message.
   if (diagnostic_.messages.empty()) {
     diagnostic_.last_byte_offset = converted.last_byte_offset;
@@ -468,9 +468,9 @@ auto Emitter<LocT>::Builder::AddMessageWithLoc(
               .format = diagnostic_base.Format,
               .format_args = std::move(args),
               .format_fn = [](const Message& message) -> std::string {
-                return FormatFn<Args...>(
-                    message, std::make_index_sequence<sizeof...(Args)>());
-              }});
+    return FormatFn<Args...>(message,
+                             std::make_index_sequence<sizeof...(Args)>());
+  }});
 }
 
 template <typename LocT>

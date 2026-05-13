@@ -78,8 +78,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/blob/db0a00d713015436844c55e7ac190a0f95556499/toolchain/check/operator.cpp#L76
   if (HasCppClassType(context, operand_id) ||
       llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
-        return IsCppClassType(context, arg_id);
-      })) {
+    return IsCppClassType(context, arg_id);
+  })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {operand_id});
 
     // If C++ operator lookup found a non-method operator, call it with one call
@@ -130,8 +130,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
   if (HasCppClassType(context, lhs_id) || HasCppClassType(context, rhs_id) ||
       llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
-        return IsCppClassType(context, arg_id);
-      })) {
+    return IsCppClassType(context, arg_id);
+  })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
 
     // If C++ operator lookup found a non-method operator, call it with two call

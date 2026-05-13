@@ -34,9 +34,9 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   }
   return LookupBucketRef(
       *this, lookup_
-                 .Insert(std::pair{self_const_id, impl_as_interface},
-                         [] { return ImplOrLookupBucketId::None; })
-                 .value());
+                 .Insert(std::pair{self_const_id, impl_as_interface}, [] {
+    return ImplOrLookupBucketId::None;
+  }).value());
 }
 
 }  // namespace Carbon::SemIR

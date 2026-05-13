@@ -1114,16 +1114,14 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::EraseImpl(
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::ClearImpl() -> void {
-  view_impl_.ForEachEntry(
-      [](EntryT& entry) {
-        if constexpr (!EntryT::IsTriviallyDestructible) {
-          entry.Destroy();
-        }
-      },
-      [](uint8_t* metadata_group) {
-        // Clear the group.
-        std::memset(metadata_group, 0, GroupSize);
-      });
+  view_impl_.ForEachEntry([](EntryT& entry) {
+    if constexpr (!EntryT::IsTriviallyDestructible) {
+      entry.Destroy();
+    }
+  }, [](uint8_t* metadata_group) {
+    // Clear the group.
+    std::memset(metadata_group, 0, GroupSize);
+  });
   growth_budget_ = GrowthThresholdForAllocSize(alloc_size());
 }
 

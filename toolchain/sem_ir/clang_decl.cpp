@@ -38,8 +38,8 @@ auto ClangDeclSignature::Print(llvm::raw_ostream& out) const -> void {
   };
 
   if (!passing_modes.empty() && llvm::any_of(passing_modes, [](auto mode) {
-        return mode != PassingMode::ByVar;
-      })) {
+    return mode != PassingMode::ByVar;
+  })) {
     out << ", modes: [";
     llvm::ListSeparator sep;
     for (auto mode : passing_modes) {

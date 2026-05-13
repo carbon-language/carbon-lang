@@ -24,9 +24,9 @@ The input Carbon source file(s) to format.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Required(true);
-        arg_b.Append(&input_filenames);
-      });
+    arg_b.Required(true);
+    arg_b.Append(&input_filenames);
+  });
   b.AddStringOption(
       {
           .name = "output",

@@ -195,14 +195,14 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       const auto& fn = context.sem_ir().functions().Get(fn_id);
       const auto* i = llvm::find_if(
           vtable_contents, [&](SemIR::InstId override_fn_decl_id) -> bool {
-            const auto& override_fn = context.functions().Get(
-                context.insts()
-                    .GetAs<SemIR::FunctionDecl>(override_fn_decl_id)
-                    .function_id);
-            return override_fn.virtual_modifier ==
-                       SemIR::FunctionFields::VirtualModifier::Override &&
-                   override_fn.name_id == fn.name_id;
-          });
+        const auto& override_fn = context.functions().Get(
+            context.insts()
+                .GetAs<SemIR::FunctionDecl>(override_fn_decl_id)
+                .function_id);
+        return override_fn.virtual_modifier ==
+                   SemIR::FunctionFields::VirtualModifier::Override &&
+               override_fn.name_id == fn.name_id;
+      });
       if (i != vtable_contents.end()) {
         auto override_fn_id =
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id;

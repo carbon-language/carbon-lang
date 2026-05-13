@@ -463,28 +463,26 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // restriction doesn't impact whether or not a type is definable.
   auto update_interface_with_self_specific_id =
       [&](SemIR::InstId assoc_entity_id) {
-        auto decl_id =
-            context.constant_values().GetConstantInstId(assoc_entity_id);
-        CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-        auto decl = context.insts().Get(decl_id);
-        auto new_associated_entity_state =
-            decl.kind() == SemIR::AssociatedConstantDecl::Kind
-                ? AssociatedEntityState::AssociatedConstant
-                : AssociatedEntityState::AssociatedFunction;
-        CARBON_CHECK(new_associated_entity_state >= associated_entity_state,
-                     "Implementation restriction: associated constants must be "
-                     "defined before associated functions");
-        if (associated_entity_state < new_associated_entity_state) {
-          auto self_facet = MakeSelfFacetWithCustomWitness(
-              context, loc_id, query_types_for_self_facet,
-              query_specific_interface_id, context.inst_blocks().Add(entries));
-          interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-              context, loc_id, interface.generic_id,
-              interface.generic_with_self_id,
-              query_specific_interface.specific_id, self_facet);
-          associated_entity_state = new_associated_entity_state;
-        }
-      };
+    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity_id);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+    auto decl = context.insts().Get(decl_id);
+    auto new_associated_entity_state =
+        decl.kind() == SemIR::AssociatedConstantDecl::Kind
+            ? AssociatedEntityState::AssociatedConstant
+            : AssociatedEntityState::AssociatedFunction;
+    CARBON_CHECK(new_associated_entity_state >= associated_entity_state,
+                 "Implementation restriction: associated constants must be "
+                 "defined before associated functions");
+    if (associated_entity_state < new_associated_entity_state) {
+      auto self_facet = MakeSelfFacetWithCustomWitness(
+          context, loc_id, query_types_for_self_facet,
+          query_specific_interface_id, context.inst_blocks().Add(entries));
+      interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+          context, loc_id, interface.generic_id, interface.generic_with_self_id,
+          query_specific_interface.specific_id, self_facet);
+      associated_entity_state = new_associated_entity_state;
+    }
+  };
 
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :

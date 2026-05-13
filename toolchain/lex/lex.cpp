@@ -1437,22 +1437,22 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   llvm::StringRef error_text =
       source_text.substr(position).take_while([](char c) {
-        if (IsAlnum(c)) {
-          return false;
-        }
-        switch (c) {
-          case '_':
-          case '\t':
-          case '\n':
-            return false;
-          default:
-            break;
-        }
-        return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
+    if (IsAlnum(c)) {
+      return false;
+    }
+    switch (c) {
+      case '_':
+      case '\t':
+      case '\n':
+        return false;
+      default:
+        break;
+    }
+    return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
 #include "toolchain/lex/token_kind.def"
-            .Default(true);
-      });
+        .Default(true);
+  });
   if (error_text.empty()) {
     // TODO: Reimplement this to use the lexer properly. In the meantime,
     // guarantee that we eat at least one byte.
@@ -1679,12 +1679,11 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     }
 
     // Find the innermost matching opening symbol.
-    auto opening_it = llvm::find_if(
-        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
-          return buffer_.token_infos_.Get(opening_token)
-                     .kind()
-                     .closing_symbol() == kind;
-        });
+    auto opening_it = llvm::find_if(llvm::reverse(open_groups_),
+                                    [&](TokenIndex opening_token) {
+      return buffer_.token_infos_.Get(opening_token).kind().closing_symbol() ==
+             kind;
+    });
     if (opening_it == open_groups_.rend()) {
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,

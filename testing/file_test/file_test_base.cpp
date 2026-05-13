@@ -193,12 +193,10 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
              test_base->GetDefaultFileRE(expected_filenames),
              test_base->GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) {
-               test_base->DoExtraCheckReplacements(line);
-             },
-             [&](FileTestBase::CheckLineArray& lines, bool is_stderr) {
-               test_base->FinalizeCheckLines(lines, is_stderr);
-             })
-      .Run(dry_run);
+    test_base->DoExtraCheckReplacements(line);
+  }, [&](FileTestBase::CheckLineArray& lines, bool is_stderr) {
+    test_base->FinalizeCheckLines(lines, is_stderr);
+  }).Run(dry_run);
 }
 
 auto FileTestCase::TestBody() -> void {
@@ -531,8 +529,8 @@ auto FileTestEventListener::OnTestProgramStart(
         llvm::make_pointer_range(tests_));
     llvm::sort(sorted_tests,
                [](const FileTestInfo* lhs, const FileTestInfo* rhs) {
-                 return lhs->elapsed_ms > rhs->elapsed_ms;
-               });
+      return lhs->elapsed_ms > rhs->elapsed_ms;
+    });
 
     llvm::errs() << "  Slowest tests:\n";
     int count = print_slowest_tests > 0 ? print_slowest_tests : run_count;

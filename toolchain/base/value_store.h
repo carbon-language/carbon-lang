@@ -67,8 +67,8 @@ class ValueStore
       // can use llvm::seq to walk all indices in the store.
       return llvm::map_range(llvm::seq(store.size_),
                              [&](int32_t i) -> ConstRefType {
-                               return store.Get(IdType(store.tag_.Apply(i)));
-                             });
+        return store.Get(IdType(store.tag_.Apply(i)));
+      });
     }
 
     using FlattenedRangeType =

@@ -238,12 +238,12 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
   auto return_arg_id = SemIR::InstId::None;
   if (callee.return_pattern_id.has_value()) {
-    Diagnostics::AnnotationScope annotate_diagnostics(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
-                            "return type declared here");
-          builder.Note(callee.return_pattern_id, IncompleteReturnTypeHere);
-        });
+    Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                      [&](auto& builder) {
+      CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
+                        "return type declared here");
+      builder.Note(callee.return_pattern_id, IncompleteReturnTypeHere);
+    });
     auto arg_type_id = CheckFunctionReturnPatternType(
         context, loc_id, callee.return_pattern_id, *callee_specific_id);
     if (arg_type_id == SemIR::ErrorInst::TypeId) {

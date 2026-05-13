@@ -300,12 +300,12 @@ auto DeductionContext::Deduce() -> bool {
       // compile-time value (e.g. TupleType) that we can decompose further.
       // So we do this conversion here, even though we will later try convert
       // again when we have deduced all of the bindings.
-      Diagnostics::AnnotationScope annotate_diagnostics(
-          &context().emitter(), [&](auto& builder) {
-            if (diagnose_) {
-              NoteInitializingParam(param_id, builder);
-            }
-          });
+      Diagnostics::AnnotationScope annotate_diagnostics(&context().emitter(),
+                                                        [&](auto& builder) {
+        if (diagnose_) {
+          NoteInitializingParam(param_id, builder);
+        }
+      });
       // TODO: The call logic should reuse the conversion here (if any) instead
       // of doing the same conversion again. At the moment we throw away the
       // converted arg_id.
@@ -509,12 +509,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       binding_type_id =
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
-      Diagnostics::AnnotationScope annotate_diagnostics(
-          &context().emitter(), [&](auto& builder) {
-            if (diagnose_) {
-              NoteInitializingParam(binding_id, builder);
-            }
-          });
+      Diagnostics::AnnotationScope annotate_diagnostics(&context().emitter(),
+                                                        [&](auto& builder) {
+        if (diagnose_) {
+          NoteInitializingParam(binding_id, builder);
+        }
+      });
       auto converted_arg_id =
           diagnose_ ? ConvertToValueOfType(context(), loc_id_, deduced_arg_id,
                                            binding_type_id)

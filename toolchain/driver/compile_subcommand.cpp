@@ -44,9 +44,9 @@ The input Carbon source file to compile.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Required(true);
-        arg_b.Append(&input_filenames);
-      });
+    arg_b.Required(true);
+    arg_b.Append(&input_filenames);
+  });
 
   b.AddOneOfOption(
       {
@@ -58,17 +58,17 @@ compile to machine code.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("lex", Phase::Lex),
-                arg_b.OneOfValue("parse", Phase::Parse),
-                arg_b.OneOfValue("check", Phase::Check),
-                arg_b.OneOfValue("lower", Phase::Lower),
-                arg_b.OneOfValue("optimize", Phase::Optimize),
-                arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
-            },
-            &phase);
-      });
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("lex", Phase::Lex),
+            arg_b.OneOfValue("parse", Phase::Parse),
+            arg_b.OneOfValue("check", Phase::Check),
+            arg_b.OneOfValue("lower", Phase::Lower),
+            arg_b.OneOfValue("optimize", Phase::Optimize),
+            arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
+        },
+        &phase);
+  });
 
   b.AddStringOption(
       {
@@ -122,24 +122,24 @@ Selects the amount of optimization to perform.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                // We intentionally don't expose O2 and Os. The difference
-                // between these levels tends to reflect what achieves the
-                // best speed for a specific application, as they all
-                // largely optimize for speed as the primary factor.
-                //
-                // Instead of controlling this with more nuanced flags, we
-                // plan to support profile and in-source hints to the
-                // optimizer to adjust its strategy in the specific places
-                // where the default doesn't have the desired results.
-                arg_b.OneOfValue("none", Lower::OptimizationLevel::None),
-                arg_b.OneOfValue("debug", Lower::OptimizationLevel::Debug),
-                arg_b.OneOfValue("speed", Lower::OptimizationLevel::Speed),
-                arg_b.OneOfValue("size", Lower::OptimizationLevel::Size),
-            },
-            &opt_level);
-      });
+    arg_b.SetOneOf(
+        {
+            // We intentionally don't expose O2 and Os. The difference
+            // between these levels tends to reflect what achieves the
+            // best speed for a specific application, as they all
+            // largely optimize for speed as the primary factor.
+            //
+            // Instead of controlling this with more nuanced flags, we
+            // plan to support profile and in-source hints to the
+            // optimizer to adjust its strategy in the specific places
+            // where the default doesn't have the desired results.
+            arg_b.OneOfValue("none", Lower::OptimizationLevel::None),
+            arg_b.OneOfValue("debug", Lower::OptimizationLevel::Debug),
+            arg_b.OneOfValue("speed", Lower::OptimizationLevel::Speed),
+            arg_b.OneOfValue("size", Lower::OptimizationLevel::Size),
+        },
+        &opt_level);
+  });
 
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
@@ -260,16 +260,16 @@ prints full SemIR.
 )""",
       },
       [&](auto& arg_b) {
-        using DumpSemIRRanges = Check::CheckParseTreesOptions::DumpSemIRRanges;
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("if-present", DumpSemIRRanges::IfPresent)
-                    .Default(true),
-                arg_b.OneOfValue("only", DumpSemIRRanges::Only),
-                arg_b.OneOfValue("ignore", DumpSemIRRanges::Ignore),
-            },
-            &dump_sem_ir_ranges);
-      });
+    using DumpSemIRRanges = Check::CheckParseTreesOptions::DumpSemIRRanges;
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("if-present", DumpSemIRRanges::IfPresent)
+                .Default(true),
+            arg_b.OneOfValue("only", DumpSemIRRanges::Only),
+            arg_b.OneOfValue("ignore", DumpSemIRRanges::Ignore),
+        },
+        &dump_sem_ir_ranges);
+  });
 
   b.AddFlag(
       {
@@ -319,9 +319,9 @@ Whether to use the implicit prelude import. Enabled by default.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&prelude_import);
-      });
+    arg_b.Default(true);
+    arg_b.Set(&prelude_import);
+  });
   b.AddFlag(
       {
           .name = "custom-core",
@@ -336,9 +336,9 @@ to be specified in the compile command line.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(false);
-        arg_b.Set(&custom_core);
-      });
+    arg_b.Default(false);
+    arg_b.Set(&custom_core);
+  });
   b.AddStringOption(
       {
           .name = "exclude-dump-file-prefix",
@@ -356,9 +356,9 @@ Whether to emit DWARF debug information.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&include_debug_info);
-      });
+    arg_b.Default(true);
+    arg_b.Set(&include_debug_info);
+  });
   b.AddFlag(
       {
           .name = "output-last-input-only",
@@ -378,9 +378,9 @@ Whether to run the LLVM verifier on modules.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&run_llvm_verifier);
-      });
+    arg_b.Default(true);
+    arg_b.Set(&run_llvm_verifier);
+  });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",
@@ -635,12 +635,11 @@ class MultiUnitCache {
         // If this is first accessed after lexing is complete, we need to apply
         // per-file includes. Otherwise, this is based only on the exclude
         // option.
-        bool include =
-            unit->has_include_in_dumps() ||
-            llvm::none_of(options_->exclude_dump_file_prefixes,
-                          [&](auto prefix) {
-                            return unit->input_filename().starts_with(prefix);
-                          });
+        bool include = unit->has_include_in_dumps() ||
+                       llvm::none_of(options_->exclude_dump_file_prefixes,
+                                     [&](auto prefix) {
+          return unit->input_filename().starts_with(prefix);
+        });
         include_in_dumps_->Set(SemIR::CheckIRId(i), include);
       }
     }
@@ -947,11 +946,11 @@ auto CompilationUnit::RunOptimize(
 
   if (vlog_stream_) {
     CARBON_VLOG("*** Running pass pipeline: ");
-    pass_manager.printPipeline(
-        *vlog_stream_, [&pic](llvm::StringRef class_name) {
-          auto pass_name = pic.getPassNameForClassName(class_name);
-          return pass_name.empty() ? class_name : pass_name;
-        });
+    pass_manager.printPipeline(*vlog_stream_,
+                               [&pic](llvm::StringRef class_name) {
+      auto pass_name = pic.getPassNameForClassName(class_name);
+      return pass_name.empty() ? class_name : pass_name;
+    });
     CARBON_VLOG(" ***\n");
   }
 

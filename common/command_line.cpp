@@ -250,20 +250,19 @@ auto MetaPrinter::RegisterWithCommand(const Command& command,
   // actions, but still silently support using the flags. But we never want to
   // *add* subcommands if they aren't already being used.
   if (has_subcommands) {
-    builder.AddSubcommand(
-        is_subcommand ? SubHelpCommandInfo : HelpCommandInfo,
-        [&](CommandBuilder& sub_b) {
-          sub_b.AddStringPositionalArg(HelpSubcommandArgInfo, [&](auto& arg_b) {
-            arg_b.Set(&help_subcommand_);
-          });
-          sub_b.Meta([this, &command]() {
-            if (help_subcommand_.empty()) {
-              PrintHelp(command);
-            } else {
-              PrintHelpForSubcommandName(command, help_subcommand_);
-            }
-          });
-        });
+    builder.AddSubcommand(is_subcommand ? SubHelpCommandInfo : HelpCommandInfo,
+                          [&](CommandBuilder& sub_b) {
+      sub_b.AddStringPositionalArg(HelpSubcommandArgInfo, [&](auto& arg_b) {
+        arg_b.Set(&help_subcommand_);
+      });
+      sub_b.Meta([this, &command]() {
+        if (help_subcommand_.empty()) {
+          PrintHelp(command);
+        } else {
+          PrintHelpForSubcommandName(command, help_subcommand_);
+        }
+      });
+    });
 
     // Only add version printing support if there is a version string
     // configured for this command.
@@ -273,17 +272,17 @@ auto MetaPrinter::RegisterWithCommand(const Command& command,
       });
     }
   }
-  builder.AddOneOfOption(
-      is_subcommand ? SubHelpArgInfo : HelpArgInfo, [&](auto& arg_b) {
-        arg_b.HelpHidden(has_subcommands);
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("full", false).Default(true),
-                arg_b.OneOfValue("short", true),
-            },
-            &short_help_);
-        arg_b.MetaAction([this, &command]() { PrintHelp(command); });
-      });
+  builder.AddOneOfOption(is_subcommand ? SubHelpArgInfo : HelpArgInfo,
+                         [&](auto& arg_b) {
+    arg_b.HelpHidden(has_subcommands);
+    arg_b.SetOneOf(
+        {
+            arg_b.OneOfValue("full", false).Default(true),
+            arg_b.OneOfValue("short", true),
+        },
+        &short_help_);
+    arg_b.MetaAction([this, &command]() { PrintHelp(command); });
+  });
 
   // Only add version printing support if there is a version string configured
   // for this command.
@@ -361,8 +360,8 @@ auto MetaPrinter::PrintSubcommands(const Command& command) const -> void {
   PrintListOfAlternatives<std::unique_ptr<Command>>(
       *out_, command.subcommands,
       [](const std::unique_ptr<Command>& subcommand) {
-        return subcommand->info.name;
-      });
+    return subcommand->info.name;
+  });
 }
 
 auto MetaPrinter::PrintRawVersion(const Command& command,
