@@ -71,7 +71,7 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
           context().insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id)) {
     if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
             access->witness_id)) {
-      // Canonicalization not necessary; We are working with the constant
+      // Canonicalization not necessary; we are working with the constant
       // value already, and the query self in a witness is already
       // canonicalized.
       if (IsPeriodSelf(context(), witness->query_self_inst_id,
@@ -92,7 +92,7 @@ auto SubstPeriodSelfCallbacks::Subst(SemIR::InstId& inst_id) -> SubstResult {
   // An implicit use of `.Self` in a designator.
   if (!designator_states_.empty() &&
       designator_states_.back() == WitnessSelfNext) {
-    // Canonicalization not necessary; We are working with the constant
+    // Canonicalization not necessary; we are working with the constant
     // value already, and the query self in a witness is already
     // canonicalized.
     if (IsPeriodSelf(context(), inst_id,
@@ -135,7 +135,7 @@ auto SubstPeriodSelfCallbacks::TryPopDesignatorState(SemIR::InstId orig_inst_id)
             orig_inst_id)) {
       if (auto witness = context().insts().TryGetAs<SemIR::LookupImplWitness>(
               access->witness_id)) {
-        // Canonicalization not necessary; We are working with the constant
+        // Canonicalization not necessary; we are working with the constant
         // value already, and the query self in a witness is already
         // canonicalized.
         if (IsPeriodSelf(context(), witness->query_self_inst_id,
@@ -487,7 +487,7 @@ class SearchCanonicalForExplicitPeriodSelf : public SubstInstCallbacks {
             const_inst_id)) {
       if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
               access->witness_id)) {
-        // Canonicalization not necessary; We are working with the constant
+        // Canonicalization not necessary; we are working with the constant
         // value already, and the query self in a witness is already
         // canonicalized.
         if (IsPeriodSelf(context(), lookup->query_self_inst_id,
