@@ -331,16 +331,4 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
   class_info.complete_type_witness_id = complete_type_witness_id;
 }
 
-auto GetClassDeclForVar(Context& context) -> std::optional<SemIR::ClassDecl> {
-  if (auto class_decl =
-          context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
-    const DeclIntroducerState& introducer =
-        context.decl_introducer_state_stack().innermost();
-    if (introducer.kind == Lex::TokenKind::Var) {
-      return class_decl;
-    }
-  }
-  return std::nullopt;
-}
-
 }  // namespace Carbon::Check

@@ -68,7 +68,12 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushNameBindingDecl();
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
+      Kind == Lex::TokenKind::Var) {
+    context.full_pattern_stack().PushNonStaticClassVarDecl();
+  } else {
+    context.full_pattern_stack().PushNameBindingDecl();
+  }
   BeginSubpattern(context);
   return true;
 }
@@ -111,15 +116,12 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
-      // For class fields, a `FieldDecl` has been created; do not create
-      // a `VarPattern`.
-      if (GetClassDeclForVar(context)) {
-        return true;
-      }
       pattern_id = AddInst<SemIR::VarPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
+    case FullPatternStack::Kind::NonStaticClassVarDecl:
+      return true;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
@@ -144,7 +146,7 @@ static auto EndFullPattern(Context& context) -> void {
 
   // For class fields, a `FieldDecl` has been created; skip creating a
   // name binding and var storage.
-  if (GetClassDeclForVar(context)) {
+  if (context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl()) {
     return;
   }
 
@@ -198,7 +200,7 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
-  if (GetClassDeclForVar(context)) {
+  if (context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl()) {
     context.TODO(node_id, "Field initializer");
     return false;
   }
@@ -255,6 +257,8 @@ template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& InitializerNodeKind>
 static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
+  bool is_non_static_class_var =
+      context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl();
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
@@ -276,7 +280,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
 
     // A non-class variable declaration without an explicit initializer
     // is initialized by calling `(T as Core.DefaultOrUnformed).Op()`.
-    if (!GetClassDeclForVar(context)) {
+    if (!is_non_static_class_var) {
       if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
         StartPatternInitializer(context);
         decl_info.init_id = MakeDefaultInit(context, node_id,
@@ -287,7 +291,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   }
   context.full_pattern_stack().PopFullPattern();
 
-  if (!GetClassDeclForVar(context)) {
+  if (!is_non_static_class_var) {
     decl_info.pattern_id = context.node_stack().PopPattern();
   }
 

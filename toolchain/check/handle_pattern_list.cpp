@@ -96,7 +96,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    if (context.full_pattern_stack().IsCurrentKindNonStaticClassVarDecl()) {
       CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
                         "found tuple pattern in class `var` decl");
       context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),

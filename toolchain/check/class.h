@@ -25,10 +25,6 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,
                             llvm::ArrayRef<SemIR::InstId> body) -> void;
 
-// If the current state is in a `var` decl inside a class, returns the
-// corresponding `ClassDecl`. Otherwise returns nullopt.
-auto GetClassDeclForVar(Context& context) -> std::optional<SemIR::ClassDecl>;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CLASS_H_

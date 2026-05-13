@@ -339,7 +339,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       break;
     }
 
-    case FullPatternStack::Kind::NameBindingDecl: {
+    case FullPatternStack::Kind::NameBindingDecl:
+    case FullPatternStack::Kind::NonStaticClassVarDecl: {
       if (node_kind == Parse::NodeKind::FormBindingPattern) {
         return context.TODO(node_id, "support local form bindings");
       }
