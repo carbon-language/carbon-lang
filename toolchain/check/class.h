@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CLASS_H_
 #define CARBON_TOOLCHAIN_CHECK_CLASS_H_
 
-#include <optional>
-
 #include "toolchain/check/context.h"
 
 namespace Carbon::Check {
