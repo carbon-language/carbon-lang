@@ -23,6 +23,7 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
 
 enum class SubstPeriodSelfBehaviour {
   ImplicitOnly,
+  ExplicitOnly,
   All,
 };
 
@@ -30,6 +31,7 @@ using SubstPeriodSelfRebuildInst =
     llvm::function_ref<auto(SemIR::Inst)->SemIR::InstId>;
 
 // Replace `.Self` references in `const_id` with `period_self_replacement_id`.
+//
 // The `behaviour` specifies if all `.Self` are replaced or just implicit use in
 // designators. The `rebuild` callback can optionally be specified to override
 // how an instruction is re-constructed to form an InstId after replacement. It
@@ -41,7 +43,7 @@ auto SubstPeriodSelf(
     SubstPeriodSelfRebuildInst rebuild = nullptr) -> SemIR::ConstantId;
 
 // Replace `.Self` references in the specific of the interface or named
-// constraint.
+// constraint with `period_self_replacement_id`.
 //
 // The `behaviour` specifies if all `.Self` are replaced or just implicit use in
 // designators. The `rebuild` callback can optionally be specified to override
@@ -60,8 +62,12 @@ auto SubstPeriodSelf(
     SubstPeriodSelfRebuildInst rebuild = nullptr)
     -> SemIR::SpecificNamedConstraint;
 
-// Replace all `.Self` references with the self-type. The `facet_type_inst_id`
-// must be a `FacetType` instruction (or error).
+// Replace `.Self` references with the self-type. The `facet_type_inst_id` must
+// be a `FacetType` instruction (or error).
+//
+// The implicit `.Self` in designators is not replaced in rewrite constraints,
+// to allow for rewrite constraint resolution to recognise the designators.
+// Later use of rewrite constraints requires further `.Self` replacement.
 //
 // Unlike SubstPeriodSelf, which works with constant values and thus canonical
 // instructions, this operation can be done for non-canonical facet types. A new
