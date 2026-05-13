@@ -178,6 +178,26 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto PerformImplWitnessAccessAndSubstitute(
+    Context& context, SemIR::LocId loc_id, SemIR::ImplWitnessAccess access)
+    -> SemIR::InstId {
+  auto access_id =
+      GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
+
+  if (!context.rewrites_stack().empty()) {
+    if (auto result = context.rewrites_stack().back().Lookup(
+            context.constant_values().Get(access_id))) {
+      return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
+          context, loc_id,
+          {.type_id = access.type_id,
+           .impl_witness_access_id = access_id,
+           .value_id = result.value()});
+    }
+  }
+
+  return access_id;
+}
+
 static auto AccessMemberOfImplWitness(
     Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
     SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId member_id)
@@ -203,10 +223,11 @@ static auto AccessMemberOfImplWitness(
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
       context, interface_with_self_specific_id, assoc_entity->decl_id);
 
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity->index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity->index});
 }
 
 // For an impl lookup query with a single interface in it, we can convert the
@@ -353,20 +374,6 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       // `F`.
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
                                     *assoc_type, member_id);
-    }
-  }
-
-  if (!context.rewrites_stack().empty()) {
-    if (auto access =
-            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(member_id)) {
-      if (auto result = context.rewrites_stack().back().Lookup(
-              context.constant_values().Get(member_id))) {
-        return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
-            context, loc_id,
-            {.type_id = access->type_id,
-             .impl_witness_access_id = member_id,
-             .value_id = result.value()});
-      }
     }
   }
 
@@ -715,10 +722,11 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context, interface_with_self_specific_id, assoc_entity.decl_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity.index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity.index});
 }
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
