@@ -452,3 +452,41 @@ fn F(T:! Z) {
   T.Z1 as Y;
   C(T.Z1) as Y;
 }
+
+// --- period_self_in_type_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {}
+
+constraint GivesY {
+  require impls Y;
+}
+
+class C(T:! type);
+
+fn F(T:! Z where C(.Self) impls GivesY) {
+  C(T) as Y;
+}
+
+// --- impl_witness_access_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {}
+
+constraint GivesY {
+  require impls Y;
+}
+
+// This type places a `.Self` (in the .Z1) into the identified facet type as
+// `.Self impls Y` through the named constraint. It ensures that the `.Self` is
+// correctly replaced by `T` in order to compare equal with `T.Z1` in impl
+// lookup.
+fn F(T:! Z where .Z1 impls GivesY) {
+  T.Z1 as Y;
+}

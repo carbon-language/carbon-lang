@@ -997,6 +997,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
 
+  auto canonical_initial_self_const_id =
+      GetCanonicalFacetOrTypeValue(context, initial_self_const_id);
   // `.Self` is always replaced with the top-level self type.
   auto period_self_replacement_id = initial_self_const_id;
 
@@ -1007,13 +1009,25 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     const auto& facet_type_info =
         context.facet_types().Get(next_impls.facet_type);
 
-    auto self_and_interface = [&](SemIR::SpecificInterface interface)
+    auto self_and_interface = [&](SemIR::SpecificInterface impls_interface)
         -> SemIR::IdentifiedFacetType::RequiredImpl {
-      // Note that we subst `.Self` in the interface, but we do not in the
-      // self type here, as that would be cyclical, replacing part of the self
-      // type with itself.
-      return {self_const_id, SubstPeriodSelf(context, loc_id, interface,
-                                             period_self_replacement_id)};
+      auto self = SemIR::ConstantId::None;
+      // `self_const_id` is canonicalized, so we need to compare with the
+      // canonicalized initial self type.
+      if (self_const_id == canonical_initial_self_const_id) {
+        // We do not subst `.Self` in the top-level self type, as that would be
+        // cyclical. We replace `.Self` with the top-level self type, so we'd be
+        // replacing part of the self type with itself. This defers replacing
+        // `.Self` in the top-level self until we identify with a self type that
+        // does not itself include a `.Self`.
+        self = self_const_id;
+      } else {
+        self = SubstPeriodSelf(context, loc_id, self_const_id,
+                               period_self_replacement_id);
+      }
+      auto interface = SubstPeriodSelf(context, loc_id, impls_interface,
+                                       period_self_replacement_id);
+      return {self, interface};
     };
     auto type_and_interface =
         [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
