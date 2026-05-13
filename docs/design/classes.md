@@ -765,8 +765,8 @@ left as future work.
 The pattern in a field declaration must be a run-time binding pattern, so the
 full syntax is:
 
-_field-declaration_ ::= `var` _identifier_ `:` _expression_ [
-`=` _expression_ ] `;`
+_field-declaration_ ::= `var` _identifier_ `:` _expression_ [ `=` _expression_
+] `;`
 
 Static member variable declarations provide the more general
 [_variable pattern_ syntax](values.md#binding-patterns-and-local-variables-with-let-and-var)
