@@ -31,14 +31,14 @@ base class Base {
 }
 
 inline Cpp '''
-void f() {
+void delete_new_Final() {
   // vtable should refer to Carbon::Final's dtor.
   auto* p = new Carbon::Final;
   // Perform a devirtualized call to Final destructor.
   delete p;
 }
 
-void g() {
+void delete_new_Base() {
   // vtable should refer to Carbon::Base's dtor.
   auto* p = new Carbon::Base;
   // Perform a virtual call to destructor.
@@ -98,7 +98,7 @@ void g() {
 // CHECK:STDOUT: @_ZTSN6Carbon4BaseE = linkonce_odr dso_local constant [15 x i8] c"N6Carbon4BaseE\00", comdat, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z16delete_new_Finalv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #7
@@ -154,7 +154,7 @@ void g() {
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local void @_Z1gv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z15delete_new_Basev() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #7
