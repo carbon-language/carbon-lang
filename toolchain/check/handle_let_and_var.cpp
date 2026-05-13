@@ -259,8 +259,7 @@ template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& InitializerNodeKind>
 static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
-  bool is_non_static_class_var =
-      context.full_pattern_stack().IsCurrentKindFieldDecl();
+  bool is_field_decl = context.full_pattern_stack().IsCurrentKindFieldDecl();
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
@@ -282,7 +281,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
 
     // A non-class variable declaration without an explicit initializer
     // is initialized by calling `(T as Core.DefaultOrUnformed).Op()`.
-    if (!is_non_static_class_var) {
+    if (!is_field_decl) {
       if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
         StartPatternInitializer(context);
         decl_info.init_id = MakeDefaultInit(context, node_id,
@@ -293,7 +292,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   }
   context.full_pattern_stack().PopFullPattern();
 
-  if (!is_non_static_class_var) {
+  if (!is_field_decl) {
     decl_info.pattern_id = context.node_stack().PopPattern();
   }
 
