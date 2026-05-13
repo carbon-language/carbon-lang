@@ -312,9 +312,9 @@ interoperability will include functions, primitive types, and structs that only
 contain member variables.
 
 Features where interoperability will rely on more advanced C++-specific
-features, such as templates, inheritance, and class functions, need not be
-supported for C. These would require a C-specific interoperability model that
-will not be included.
+features, such as templates, inheritance, and non-instance member functions,
+need not be supported for C. These would require a C-specific interoperability
+model that will not be included.
 
 ## Non-goals
 

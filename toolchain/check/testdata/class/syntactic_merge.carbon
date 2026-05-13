@@ -211,7 +211,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -532,7 +532,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -706,7 +706,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.337be0.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.6e878d.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -788,7 +788,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.337be0.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.6e878d.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -870,7 +870,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.337be0.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.6e878d.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -1007,7 +1007,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %default.import.loc2_30.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {

@@ -181,12 +181,12 @@ fn Four() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %.loc7_26.1.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !16
@@ -200,12 +200,12 @@ fn Four() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 1, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_19.2.temp), !dbg !20
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple(ptr %.loc11_19.2.temp), !dbg !20
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr %.loc11_19.2.temp), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk_tuple(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !16
@@ -286,7 +286,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !16
@@ -298,7 +298,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Default.7b1e6a57c714cdb7.Core:C.Cpp"(ptr sret([8 x i8]) %return) #2 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %return), !dbg !24
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -386,18 +386,18 @@ fn Four() {
 // CHECK:STDOUT:   %.loc12_65.1.temp = alloca [4 x i8], align 1, !dbg !16
 // CHECK:STDOUT:   %_.var.loc13 = alloca [4 x i8], align 1, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_65.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %.loc8_65.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %.loc8_65.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc9), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.22b4681b019423d7"(ptr %_.var.loc9), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_65.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %.loc12_65.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %.loc12_65.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc13), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.d288d62be0e5d791:DefaultOrUnformed.Core.1a27c303748a2360"(ptr %_.var.loc13), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !19
@@ -409,12 +409,12 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Default.2e5fb550c65543cf.Core:ImplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %return), !dbg !27
+// CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %return), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !28
@@ -426,7 +426,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Default.cad83ce9b7db87bf.Core:ExplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk(ptr %return), !dbg !31
+// CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %return), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -534,12 +534,12 @@ fn Four() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_10.1.temp = alloca [4 x i8], align 1, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_10.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %c, ptr %return), !dbg !17
+// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk._(ptr %c, ptr %return), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN4CopyC1ERKS_.carbon_thunk(ptr noundef %0, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN4CopyC1ERKS_.carbon_thunk._(ptr noundef %0, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -554,7 +554,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Copy.692da64e78c7deec.Core:Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !26
+// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -633,12 +633,12 @@ fn Four() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_44.1.temp = alloca [8 x i8], align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_44.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_ZN7DerivedC1Ev.carbon_thunk(ptr %.loc7_44.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_ZN7DerivedC1Ev.carbon_thunk.(ptr %.loc7_44.1.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN7DerivedC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN7DerivedC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !16
@@ -712,14 +712,14 @@ fn Four() {
 // CHECK:STDOUT:   %.loc7_26.1.temp = alloca [1 x i8], align 1, !dbg !14
 // CHECK:STDOUT:   %.loc8_19.2.temp = alloca [1 x i8], align 1, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %.loc7_26.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !15
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple(ptr %.loc8_19.2.temp), !dbg !15
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr %.loc8_19.2.temp), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !17
@@ -729,7 +729,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk_tuple(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !17
@@ -745,16 +745,16 @@ fn Four() {
 // CHECK:STDOUT:   %.loc13_18.1.temp = alloca [1 x i8], align 1, !dbg !22
 // CHECK:STDOUT:   %.loc14_21.2.temp = alloca [1 x i8], align 1, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 1, ptr %.loc12_27.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 1, ptr %.loc12_27.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 2, ptr %.loc13_18.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 2, ptr %.loc13_18.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_21.2.temp), !dbg !23
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 3, ptr %.loc14_21.2.temp), !dbg !23
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple._(i32 3, ptr %.loc14_21.2.temp), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ei.carbon_thunk(i32 noundef %0, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ei.carbon_thunk._(i32 noundef %0, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -767,7 +767,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Ei.carbon_thunk_tuple(i32 noundef %0, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Ei.carbon_thunk_tuple._(i32 noundef %0, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -785,14 +785,14 @@ fn Four() {
 // CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !26
 // CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !26
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !26
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk.__(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !27
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !27
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple.__(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk.__(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -808,7 +808,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk_tuple(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eii.carbon_thunk_tuple.__(i32 noundef %0, i32 noundef %1, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -829,14 +829,14 @@ fn Four() {
 // CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !30
 // CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !31
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk3(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.___(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !30
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !31
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !31
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.___(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk3(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk.___(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -855,7 +855,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk_tuple.___(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -879,14 +879,14 @@ fn Four() {
 // CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !34
 // CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !35
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !34
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.____(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !35
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !35
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.____(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk.____(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -908,7 +908,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1CC1Eiiii.carbon_thunk_tuple.____(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -983,7 +983,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN1CC1Ei.carbon_thunk, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC1Ei.carbon_thunk._, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

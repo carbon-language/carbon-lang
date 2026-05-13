@@ -6,11 +6,11 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/facet/require_satisified.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/require_satisified_in_interface.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/require_satisified.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/require_satisified_in_interface.carbon
 
-// --- fail_missing_require_for_concrete_type.carbon
+// --- fail_missing_extend_require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -23,13 +23,32 @@ interface Y {
 impl () as Y;
 
 // () needs to impl Z at the start of the definition.
+// CHECK:STDERR: fail_missing_extend_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl () as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y {}
+
+// --- fail_missing_require_for_concrete_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+interface Y {
+  require impls Z;
+}
+
+// () does not need to impl Z yet.
+impl () as Y;
+
+// () needs to impl Z at the start of the definition.
 // CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [RequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as Y {}
 
-// --- fail_missing_require_for_symbolic_type.carbon
+// --- fail_missing_extend_require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -42,11 +61,49 @@ interface Y {
 impl forall [T:! type] T as Y;
 
 // T needs to impl Z at the start of the definition.
+// CHECK:STDERR: fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T:! type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl forall [T:! type] T as Y {}
+
+// --- fail_missing_require_for_symbolic_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+interface Y {
+  require impls Z;
+}
+
+// T does not need to impl Z yet.
+impl forall [T:! type] T as Y;
+
+// T needs to impl Z at the start of the definition.
 // CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
 // CHECK:STDERR: impl forall [T:! type] T as Y {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! type] T as Y {}
+
+// --- fail_missing_extend_require_double.carbon
+library "[[@TEST_NAME]]";
+
+interface Z1(T:! type) {}
+interface Z2(T:! type) {}
+
+class A;
+class B;
+
+interface Y(U:! type) {
+  extend require impls Z1(U) & Z2(B);
+}
+
+// CHECK:STDERR: fail_missing_extend_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl () as Y(A) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y(A) {}
 
 // --- fail_missing_require_double.carbon
 library "[[@TEST_NAME]]";
@@ -58,7 +115,7 @@ class A;
 class B;
 
 interface Y(U:! type) {
-  extend require impls Z1(U) & Z2(B);
+  require impls Z1(U) & Z2(B);
 }
 
 // CHECK:STDERR: fail_missing_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [RequireImplsNotImplemented]
@@ -70,54 +127,64 @@ impl () as Y(A) {}
 // --- require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Z {}
+interface Z1 {}
+interface Z2 {}
 
 interface Y {
-  extend require impls Z;
+  extend require impls Z1;
+  require impls Z2;
 }
 
-// () does not need to impl Z yet.
+// () does not need to impl Z1/Z2 yet.
 impl () as Y;
 
-// Now we know () impls Z.
-impl () as Z;
+// Now we know () impls Z1 and Z2.
+impl () as Z1;
+impl () as Z2;
 
 // So no error here.
 impl () as Y {}
 
-impl () as Z {}
+impl () as Z1 {}
+impl () as Z2 {}
 
 // --- require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Z {}
+interface Z1 {}
+interface Z2 {}
 
 interface Y {
-  extend require impls Z;
+  extend require impls Z1;
+  require impls Z2;
 }
 
-// T does not need to impl Z yet.
+// T does not need to impl Z1/Z2 yet.
 impl forall [T:! type] T as Y;
 
-// Now we know T impls Z.
-impl forall [T:! type] T as Z;
+// Now we know T impls Z1 and Z2.
+impl forall [T:! type] T as Z1;
+impl forall [T:! type] T as Z2;
 
 // So no error here.
 impl forall [T:! type] T as Y {}
 
-impl forall [T:! type] T as Z {}
+impl forall [T:! type] T as Z1 {}
+impl forall [T:! type] T as Z2 {}
 
 // --- require_for_symbolic_type_impl_matches_same_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface Z {}
+interface Z1 {}
+interface Z2 {}
 
 interface Y {
-  extend require impls Z;
+  extend require impls Z1;
+  require impls Z2;
 }
 
-// This only matches T that impl Z so no error here.
-impl forall [T:! Z] T as Y {}
+// This only matches T that impl Z1 and Z2 so no error here.
+impl forall [T:! Z1 & Z2] T as Y {}
 
 // --- require_for_generic_interfaces.carbon
 library "[[@TEST_NAME]]";
@@ -129,7 +196,8 @@ class A;
 class B;
 
 interface Y(U:! type) {
-  extend require impls Z1(U) & Z2(B);
+  extend require impls Z1(U);
+  require impls Z2(B);
 }
 
 // () does not need to impl Z1(A) and Z2(B) yet.

@@ -188,7 +188,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref.loc6 [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.7c7 = ref_binding_pattern b_val [concrete]
 // CHECK:STDOUT:     %b_val.var_patt: %pattern_type.7c7 = var_pattern %b_val.patt [concrete]
@@ -284,7 +284,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %E: type = alias_binding E, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %E: type = alias_binding E, %C.ref.loc6 [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c_val.patt: %pattern_type.7c7 = ref_binding_pattern c_val [concrete]
 // CHECK:STDOUT:     %c_val.var_patt: %pattern_type.7c7 = var_pattern %c_val.patt [concrete]

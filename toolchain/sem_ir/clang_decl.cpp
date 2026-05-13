@@ -11,6 +11,50 @@
 
 namespace Carbon::SemIR {
 
+auto ClangDeclSignature::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: ";
+  switch (kind) {
+    case Normal:
+      out << "normal";
+      break;
+    case TuplePattern:
+      out << "tuple";
+      break;
+  }
+  out << ", num_params: " << num_params;
+
+  auto print_mode = [&](PassingMode mode) {
+    switch (mode) {
+      case PassingMode::ByValue:
+        out << "value";
+        break;
+      case PassingMode::ByVar:
+        out << "var";
+        break;
+      case PassingMode::ByRef:
+        out << "ref";
+        break;
+    }
+  };
+
+  if (!passing_modes.empty() && llvm::any_of(passing_modes, [](auto mode) {
+        return mode != PassingMode::ByVar;
+      })) {
+    out << ", modes: [";
+    llvm::ListSeparator sep;
+    for (auto mode : passing_modes) {
+      out << sep;
+      print_mode(mode);
+    }
+    out << "]";
+  }
+  if (self_passing_mode != PassingMode::ByRef) {
+    out << ", self_mode: ";
+    print_mode(self_passing_mode);
+  }
+  out << "}";
+}
+
 auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
   RawStringOstream decl_stream;
   auto policy = decl->getASTContext().getPrintingPolicy();
@@ -21,20 +65,11 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
     decl->print(decl_stream, policy);
   }
 
-  if (signature.num_params != -1) {
-    out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\", kind: ";
-    switch (signature.kind) {
-      case ClangDeclKey::Signature::Normal:
-        out << "normal";
-        break;
-      case ClangDeclKey::Signature::TuplePattern:
-        out << "tuple";
-        break;
-    }
-    out << ", num_params: " << signature.num_params << "}";
-  } else {
-    out << "\"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
+  out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
+  if (signature_id != ClangDeclSignatureId::None) {
+    out << ", clang_decl_signature_id: " << signature_id;
   }
+  out << "}";
 }
 
 auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {

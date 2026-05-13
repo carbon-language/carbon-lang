@@ -905,7 +905,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Other.C [concrete = constants.%C]
-// CHECK:STDOUT:   %C: %C.type = alias_binding C, imports.%Other.C [concrete = constants.%C]
+// CHECK:STDOUT:   %C: %C.type = alias_binding C, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C [from "conflict.carbon"];
@@ -939,7 +939,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
-// CHECK:STDOUT:   %C: type = alias_binding C, imports.%Other.C [concrete = constants.%C]
+// CHECK:STDOUT:   %C: type = alias_binding C, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {

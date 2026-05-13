@@ -357,6 +357,9 @@ class Context {
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }
+  auto clang_decl_signatures() -> SemIR::ClangDeclSignatureStore& {
+    return sem_ir().clang_decl_signatures();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();

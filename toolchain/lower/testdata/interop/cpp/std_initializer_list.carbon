@@ -178,7 +178,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !34
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 8, !dbg !34
 // CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !34
-// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !33
+// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !33
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !35
 // CHECK:STDOUT:   call void @"_COp.bfd302cd235977c4:core.Destroy.Core"(ptr @array), !dbg !34
 // CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !33
@@ -186,7 +186,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr noundef %list, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %list.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -221,11 +221,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.17.temp), !dbg !47
 // CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 0, !dbg !47
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.18.array.index), !dbg !47
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.18.array.index), !dbg !47
 // CHECK:STDOUT:   %.loc23_69.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 1, !dbg !47
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.16.array.index), !dbg !47
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.16.array.index), !dbg !47
 // CHECK:STDOUT:   %.loc23_69.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 2, !dbg !47
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.15.array.index), !dbg !47
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.15.array.index), !dbg !47
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !46
 // CHECK:STDOUT:   store ptr %.loc23_69.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !46
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !46
@@ -237,7 +237,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !50
@@ -291,7 +291,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple., { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -427,7 +427,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !34
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.2.temp, i32 0, i32 8, !dbg !34
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !34
-// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !33
+// CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr %.loc18_36.2.temp, ptr %_.var), !dbg !33
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !35
 // CHECK:STDOUT:   call void @"_COp.bfd302cd235977c4:core.Destroy.Core"(ptr @array), !dbg !34
 // CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !33
@@ -435,7 +435,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk(ptr noundef %list, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr noundef %list, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %list.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -470,11 +470,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.17.temp), !dbg !49
 // CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 0, !dbg !49
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.18.array.index), !dbg !49
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.18.array.index), !dbg !49
 // CHECK:STDOUT:   %.loc23_69.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 1, !dbg !49
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.16.array.index), !dbg !49
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.16.array.index), !dbg !49
 // CHECK:STDOUT:   %.loc23_69.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 2, !dbg !49
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr %.loc23_69.15.array.index), !dbg !49
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.15.array.index), !dbg !49
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !48
 // CHECK:STDOUT:   store ptr %.loc23_69.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !48
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !48
@@ -485,7 +485,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !52
@@ -539,7 +539,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple., { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

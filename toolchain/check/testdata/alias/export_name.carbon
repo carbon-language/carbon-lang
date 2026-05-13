@@ -96,7 +96,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %D: type = alias_binding D, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

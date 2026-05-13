@@ -435,7 +435,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc10_7.2 as %.loc10_14 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc10_7.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

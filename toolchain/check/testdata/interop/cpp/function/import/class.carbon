@@ -143,6 +143,110 @@ fn F(c: Cpp.C) {
 }
 
 // ============================================================================
+// Move-only class as parameter type
+// ============================================================================
+
+// --- move_only_param_type.h
+
+struct C {
+  C(C&&);
+};
+
+auto foo(C) -> void;
+auto make() -> C;
+auto move(C&) -> C&&;
+
+// --- pass_move_only_param_temporary.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "move_only_param_type.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  Cpp.foo(Cpp.make());
+  //@dump-sem-ir-end
+}
+
+// --- fail_pass_move_only_param_value.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
+import Cpp library "move_only_param_type.h";
+
+fn F(c: Cpp.C) {
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(c);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(c);
+}
+
+// --- fail_pass_move_only_param_ref.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
+import Cpp library "move_only_param_type.h";
+
+fn F(ref c: Cpp.C) {
+  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(c);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(c);
+}
+
+// --- fail_todo_pass_move_only_param_ref_by_move.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'C' [CppInteropParseError]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'C' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR:     3 |   C(C&&);
+// CHECK:STDERR:       |   ^
+// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:     6 | auto foo(C) -> void;
+// CHECK:STDERR:       |           ^
+import Cpp library "move_only_param_type.h";
+
+fn F(ref c: Cpp.C) {
+  // CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo(Cpp.move(ref c));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(Cpp.move(ref c));
+}
+
+// ============================================================================
 // Defined class with a single data member as parameter type
 // ============================================================================
 
@@ -562,6 +666,58 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- pass_move_only_param_temporary.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %make.cpp_overload_set.type: type = cpp_overload_set_type @make.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %make.cpp_overload_set.value: %make.cpp_overload_set.type = cpp_overload_set_value @make.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %make__carbon_thunk.type: type = fn_type @make__carbon_thunk [concrete]
+// CHECK:STDOUT:   %make__carbon_thunk: %make__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
+// CHECK:STDOUT:     .make = %make.cpp_overload_set.value
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %make.cpp_overload_set.value: %make.cpp_overload_set.type = cpp_overload_set_value @make.cpp_overload_set [concrete = constants.%make.cpp_overload_set.value]
+// CHECK:STDOUT:   %make__carbon_thunk.decl: %make__carbon_thunk.type = fn_decl @make__carbon_thunk [concrete = constants.%make__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %make.ref: %make.cpp_overload_set.type = name_ref make, imports.%make.cpp_overload_set.value [concrete = constants.%make.cpp_overload_set.value]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %addr.loc8_20: %ptr.d9e = addr_of %_.var
+// CHECK:STDOUT:   %make__carbon_thunk.call: init %empty_tuple.type = call imports.%make__carbon_thunk.decl(%addr.loc8_20)
+// CHECK:STDOUT:   %.loc8: init %C to %_.var = mark_in_place_init %make__carbon_thunk.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %addr.loc8_21: %ptr.d9e = addr_of %_.var
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_21)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

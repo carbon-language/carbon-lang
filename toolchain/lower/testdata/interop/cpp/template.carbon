@@ -126,12 +126,12 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !30
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk._(ptr %a, ptr %return), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr noundef %x, ptr noundef %return) #2 {
+// CHECK:STDOUT: define internal void @_Z8identityI5ClassET_S1_.carbon_thunk._(ptr noundef %x, ptr noundef %return) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -271,12 +271,12 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !14
-// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3), !dbg !15
+// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #1 {
+// CHECK:STDOUT: define internal void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
@@ -291,12 +291,12 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3, i32 2), !dbg !22
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1) #1 {
+// CHECK:STDOUT: define internal void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr noundef %0, i32 noundef %1) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
@@ -314,12 +314,12 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr noundef %0, i32 noundef %1, i32 noundef %2) #1 {
+// CHECK:STDOUT: define internal void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr noundef %0, i32 noundef %1, i32 noundef %2) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4

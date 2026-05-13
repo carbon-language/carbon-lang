@@ -434,8 +434,8 @@ _associated constant_. If the type of the associated constant is a
 which corresponds to what is called an "associated type" in other languages
 ([Swift](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/#Associated-Types),
 [Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-types)).
-Similarly, an interface can have _associated function_, _associated method_, or
-_associated class function_.
+Similarly, an interface can have an _associated function_ (either an instance
+method or a non-instance function).
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the

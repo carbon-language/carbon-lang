@@ -2521,7 +2521,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.import_functions().Get(inst.function_id).first_decl_id());
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
-  if (resolver.HasNewWork() || !fn_val_id.has_value()) {
+  if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
   auto fn_type_id = resolver.local_insts().Get(fn_val_id).type_id();
@@ -4150,9 +4150,11 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   CARBON_CHECK(!const_id.has_value());
 
   auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
-  if (!inst_constant_id.has_value() || !inst_constant_id.is_constant()) {
+  if (!inst_constant_id.is_constant()) {
     // TODO: Import of non-constant BindNames happens when importing `let`
     // declarations.
+    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBinding>(inst_id),
+                 "TryResolveInst on non-constant instruction {0}", inst_id);
     return ResolveResult::Done(SemIR::ConstantId::NotConstant);
   }
 

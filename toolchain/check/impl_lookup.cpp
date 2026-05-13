@@ -450,10 +450,10 @@ static auto TryFindMatchingWitnessFromImplLookup(
   // The `req_impls` come from an IdentifiedFacetType so they have `.Self`
   // replaced. We need to do the same for the self and interface in the
   // `orig_witness` for comparing with them.
-  SubstPeriodSelfCallbacks callbacks(&context, loc_id,
-                                     canonical_query_self_const_id);
-  orig_const_self = SubstPeriodSelf(context, callbacks, orig_const_self);
-  orig_interface = SubstPeriodSelf(context, callbacks, orig_interface);
+  orig_const_self = SubstPeriodSelf(context, loc_id, orig_const_self,
+                                    canonical_query_self_const_id);
+  orig_interface = SubstPeriodSelf(context, loc_id, orig_interface,
+                                   canonical_query_self_const_id);
 
   // Witnesses have a canonicalized self value. Perform the same
   // canonicalization here so that we can compare them.
@@ -470,41 +470,6 @@ static auto TryFindMatchingWitnessFromImplLookup(
   return SemIR::InstId::None;
 }
 
-class SubstPeriodSelfInRewriteCallbacks : public SubstPeriodSelfCallbacks {
- public:
-  explicit SubstPeriodSelfInRewriteCallbacks(
-      Context* context, SemIR::LocId loc_id,
-      SemIR::ConstantId period_self_replacement_id,
-      llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
-      llvm::ArrayRef<SemIR::InstId> witness_inst_ids)
-      : SubstPeriodSelfCallbacks(context, loc_id, period_self_replacement_id),
-        req_impls_(req_impls),
-        witness_inst_ids_(witness_inst_ids) {}
-
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
-      -> SemIR::InstId override {
-    // When rebuilding a witness where `.Self` was replaced, use a witness we
-    // found in impl lookup instead of performing impl lookup again.
-    if (auto lookup = new_inst.TryAs<SemIR::LookupImplWitness>()) {
-      auto witness = TryFindMatchingWitnessFromImplLookup(
-          context(), loc_id(), period_self_replacement_id(), req_impls_,
-          witness_inst_ids_,
-          context().constant_values().Get(lookup->query_self_inst_id),
-          context().specific_interfaces().Get(
-              lookup->query_specific_interface_id));
-      if (witness.has_value()) {
-        return witness;
-      }
-    }
-
-    return SubstPeriodSelfCallbacks::Rebuild(orig_inst_id, new_inst);
-  }
-
- private:
-  llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls_;
-  llvm::ArrayRef<SemIR::InstId> witness_inst_ids_;
-};
-
 static auto VerifyQueryFacetTypeConstraints(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -517,8 +482,22 @@ static auto VerifyQueryFacetTypeConstraints(
           .facet_type_id);
 
   if (!facet_type_info.rewrite_constraints.empty()) {
-    SubstPeriodSelfInRewriteCallbacks callbacks(
-        &context, loc_id, query_self_const_id, req_impls, witness_inst_ids);
+    auto rebuild = [&](SemIR::Inst new_inst) -> SemIR::InstId {
+      // When rebuilding a witness where `.Self` was replaced, use a witness we
+      // found in impl lookup instead of performing impl lookup again.
+      if (auto lookup = new_inst.TryAs<SemIR::LookupImplWitness>()) {
+        auto witness = TryFindMatchingWitnessFromImplLookup(
+            context, loc_id, query_self_const_id, req_impls, witness_inst_ids,
+            context.constant_values().Get(lookup->query_self_inst_id),
+            context.specific_interfaces().Get(
+                lookup->query_specific_interface_id));
+        if (witness.has_value()) {
+          return witness;
+        }
+      }
+
+      return SemIR::InstId::None;
+    };
 
     for (const auto& rewrite : facet_type_info.rewrite_constraints) {
       // Replace `.Self` in rewrite constraints with the query self in order to
@@ -531,9 +510,11 @@ static auto VerifyQueryFacetTypeConstraints(
       // execute another impl lookup.
 
       auto lhs_id = context.constant_values().GetInstId(SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(rewrite.lhs_id)));
+          context, loc_id, context.constant_values().Get(rewrite.lhs_id),
+          query_self_const_id, SubstPeriodSelfBehaviour::All, rebuild));
       auto rhs_id = context.constant_values().GetInstId(SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(rewrite.rhs_id)));
+          context, loc_id, context.constant_values().Get(rewrite.rhs_id),
+          query_self_const_id, SubstPeriodSelfBehaviour::All, rebuild));
 
       if (lhs_id != rhs_id) {
         // TODO: Provide a diagnostic note and location for which rewrite

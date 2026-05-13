@@ -856,9 +856,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.1: %C5.ref as %.loc17_15;
+// CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.1: %C5.ref as <error>;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.2: %C5.ref as %.loc27_15 {
+// CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.2: %C5.ref as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1055,7 +1055,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C7.as.<error>.impl: %C7.ref as %.loc10_14 {
+// CHECK:STDOUT: impl @C7.as.<error>.impl: %C7.ref as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1150,7 +1150,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C8.as.<error>.impl: %C8.ref as %.loc10_14 {
+// CHECK:STDOUT: impl @C8.as.<error>.impl: %C8.ref as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1244,7 +1244,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C9.as.<error>.impl: %C9.ref as %.loc10_14 {
+// CHECK:STDOUT: impl @C9.as.<error>.impl: %C9.ref as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1337,7 +1337,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @CA.as.<error>.impl: %CA.ref as %.loc14_14 {
+// CHECK:STDOUT: impl @CA.as.<error>.impl: %CA.ref as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

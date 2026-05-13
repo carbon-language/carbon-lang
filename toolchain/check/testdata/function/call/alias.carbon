@@ -64,7 +64,7 @@ fn Main() {
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.ref [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

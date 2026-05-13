@@ -128,12 +128,12 @@ fn Convert() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %p) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %p), !dbg !27
+// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk._(ptr %p), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_Z16TakePtrWithThunkP1Ci.carbon_thunk._(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !29
@@ -145,12 +145,12 @@ fn Convert() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !33
+// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk.(), !dbg !33
 // CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef ptr @_Z18ReturnPtrWithThunki.carbon_thunk0() #2 {
+// CHECK:STDOUT: define internal noundef ptr @_Z18ReturnPtrWithThunki.carbon_thunk.() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call noundef ptr @_Z18ReturnPtrWithThunki(i32 noundef 0)
 // CHECK:STDOUT:   ret ptr %call
@@ -264,13 +264,13 @@ fn Convert() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc35_24.2.temp), !dbg !44
 // CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_24.2.temp, align 8, !dbg !44
 // CHECK:STDOUT:   %.loc35_24.4 = load ptr, ptr %.loc35_24.2.temp, align 8, !dbg !44
-// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc35_24.4), !dbg !45
+// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk._(ptr %.loc35_24.4), !dbg !45
 // CHECK:STDOUT:   call void @"_COp.f6ed00b54444c4a3:core.Destroy.Core"(ptr %.loc35_24.2.temp), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_Z16TakePtrWithThunkP1Ci.carbon_thunk._(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !47
@@ -282,12 +282,12 @@ fn Convert() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #0 !dbg !50 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !51
+// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk.(), !dbg !51
 // CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef ptr @_Z18ReturnPtrWithThunki.carbon_thunk0() #2 {
+// CHECK:STDOUT: define internal noundef ptr @_Z18ReturnPtrWithThunki.carbon_thunk.() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call noundef ptr @_Z18ReturnPtrWithThunki(i32 noundef 0)
 // CHECK:STDOUT:   ret ptr %call

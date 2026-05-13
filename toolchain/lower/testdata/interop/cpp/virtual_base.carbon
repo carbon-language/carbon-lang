@@ -113,12 +113,12 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
-// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %_.var), !dbg !15
+// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZN1DC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1DC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !17

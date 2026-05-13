@@ -30,3 +30,10 @@ impl forall [T:! Copy & Destroy, N:! IntLiteral()]
     }
   }
 }
+
+interface CppRangeForIterate {
+  let Iterator:! type;
+  let Sentinel:! type;
+  fn Begin[ref self: Self]() -> Iterator;
+  fn End[ref self: Self]() -> Sentinel;
+}

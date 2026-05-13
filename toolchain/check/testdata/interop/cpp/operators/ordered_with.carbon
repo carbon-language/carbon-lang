@@ -377,23 +377,10 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:
   OrderedWith(no_relevant_members, no_relevant_members);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: cannot convert type `Cpp.LessReturnsVoid` into type implementing `Core.OrderedWith(Cpp.LessReturnsVoid)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.LessReturnsVoid` into type implementing `Core.OrderedWith(Cpp.LessReturnsVoid)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   OrderedWith(less_returns_void, less_returns_void);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-62]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:11: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   fn Less[self: Self](other: Other) -> bool;
-  // CHECK:STDERR:           ^~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-76]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   auto operator<(LessNonConst) -> bool;
-  // CHECK:STDERR:        ^
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Less[self: Self](other: Other) -> bool;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-75]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

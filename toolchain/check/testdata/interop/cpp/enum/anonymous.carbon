@@ -119,7 +119,8 @@ fn G() {
 // CHECK:STDOUT:   %Cpp.ref.loc10_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e.ref: %.bb7 = name_ref e, imports.%int_1.1d6 [concrete = constants.%int_1.1d6]
-// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call imports.%C.F.decl(%.loc10_11.3, %e.ref)
+// CHECK:STDOUT:   %.loc10_11.4: %C = acquire_value %.loc10_11.3
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call imports.%C.F.decl(%.loc10_11.4, %e.ref)
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc10_11.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc10_11.3)
 // CHECK:STDOUT:   return

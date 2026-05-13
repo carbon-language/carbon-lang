@@ -129,10 +129,10 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc9_24.3.temp = alloca i16, align 2, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.3.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_22.3.temp), !dbg !15
-// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk(ptr @int_1.30e, ptr @int_2.305, i32 3, i64 4), !dbg !18
+// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk.____(ptr @int_1.30e, ptr @int_2.305, i32 3, i64 4), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.3.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_24.3.temp), !dbg !17
-// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk(ptr @int_1.e80, ptr @int_2.fb2, i32 3, i64 4), !dbg !19
+// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk.____(ptr @int_1.e80, ptr @int_2.fb2, i32 3, i64 4), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.ecaf8c3e76291eee:core.Destroy.Core"(ptr @int_2.fb2), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.3de38e83520d6bec:core.Destroy.Core"(ptr @int_1.e80), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr @int_2.305), !dbg !15
@@ -141,7 +141,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z11pass_signedasil.carbon_thunk(ptr noundef %0, ptr noundef %1, i32 noundef %2, i64 noundef %3) #1 {
+// CHECK:STDOUT: define internal void @_Z11pass_signedasil.carbon_thunk.____(ptr noundef %0, ptr noundef %1, i32 noundef %2, i64 noundef %3) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
@@ -162,7 +162,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z13pass_unsignedhtjm.carbon_thunk(ptr noundef %0, ptr noundef %1, i32 noundef %2, i64 noundef %3) #1 {
+// CHECK:STDOUT: define internal void @_Z13pass_unsignedhtjm.carbon_thunk.____(ptr noundef %0, ptr noundef %1, i32 noundef %2, i64 noundef %3) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
@@ -217,19 +217,19 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !69
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !66
 // CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !66
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc17_18.1.temp), !dbg !70
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc17_18.1.temp), !dbg !70
 // CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !67
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !67
 // CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !67
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc18_18.3.temp), !dbg !71
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc18_18.3.temp), !dbg !71
 // CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !68
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !68
 // CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !68
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !72
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc19_18.2.temp), !dbg !72
 // CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !69
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !69
 // CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !69
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc20_28.3.temp), !dbg !73
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc20_28.3.temp), !dbg !73
 // CHECK:STDOUT:   call void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %.loc20_28.3.temp), !dbg !69
 // CHECK:STDOUT:   call void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %.loc19_18.2.temp), !dbg !68
 // CHECK:STDOUT:   call void @"_COp.406738f1b62008ed:core.Destroy.Core"(ptr %.loc18_18.3.temp), !dbg !67
@@ -238,7 +238,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z10pass_shorts.carbon_thunk(ptr noundef %0) #1 {
+// CHECK:STDOUT: define internal void @_Z10pass_shorts.carbon_thunk._(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !24
@@ -265,7 +265,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @_Z10pass_shorts(i16 noundef signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_Z10pass_shorts.carbon_thunk, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_Z10pass_shorts.carbon_thunk._, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -374,12 +374,12 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !16
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !17
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !17
-// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk(ptr %x.var), !dbg !18
+// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN1XC1Ev.carbon_thunk(ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZN1XC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !20
@@ -390,12 +390,12 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk:Default.17a84649916546b3.Core:X.Cpp"(ptr sret([12 x i8]) %return) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk(ptr %return), !dbg !28
+// CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %return), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z11pass_struct1X.carbon_thunk(ptr noundef %0) #3 {
+// CHECK:STDOUT: define internal void @_Z11pass_struct1X.carbon_thunk._(ptr noundef %0) #3 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.X, align 4
@@ -493,12 +493,12 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !16
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !17
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !17
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %y.var), !dbg !18
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z11pass_struct1Y.carbon_thunk(ptr noundef %0) #1 {
+// CHECK:STDOUT: define internal void @_Z11pass_struct1Y.carbon_thunk._(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.Y, align 4
@@ -517,14 +517,14 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc17_24.1.temp = alloca [12 x i8], align 1, !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !24
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !24
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %.loc17_24.1.temp), !dbg !25
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %y), !dbg !33
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

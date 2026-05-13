@@ -30,13 +30,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
-    -   [Fields](#fields)
+    -   [Member variables](#member-variables)
+        -   [Fields](#fields)
+        -   [Static member variables](#static-member-variables)
+        -   [Initializers](#initializers)
+        -   [Syntax](#syntax)
     -   [Forward declaration](#forward-declaration)
     -   [`Self`](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
-        -   [Class functions](#class-functions)
+        -   [Non-methods](#non-methods)
         -   [Methods](#methods)
         -   [Deferred member function definitions](#deferred-member-function-definitions)
         -   [Name lookup in classes](#name-lookup-in-classes)
@@ -69,7 +73,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Discussion](#discussion)
     -   [Inheritance](#inheritance-1)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
-        -   [Overloaded methods](#overloaded-methods)
+        -   [Overloaded member functions](#overloaded-member-functions)
         -   [Interop with C++ inheritance](#interop-with-c-inheritance)
             -   [Virtual base classes](#virtual-base-classes)
     -   [Mixins](#mixins-1)
@@ -695,37 +699,81 @@ Declarations within a class should generally have the same syntax as
 declarations that occur in other contexts. For example, member functions are
 introduced with `fn`.
 
-### Fields
+### Member variables
 
-Fields of a nominal class type are declared with `var`:
+_Member variables_ are any `var`s declared within a class context (or in the
+future, potentially an interface or `impl` context).
 
-```
+#### Fields
+
+Instance member variables, or _fields_, are declared with `var`. They are
+associated with instances of the class, and determine the data layout of those
+instances.
+
+#### Static member variables
+
+Non-instance member variables, or _static member variables_, are declared with
+`static var`. They are associated with the type itself rather than instances of
+the type, and have static storage duration.
+
+**Future work:** We should have a specific design for _storage duration_ in
+Carbon, and that should clarify what _static storage duration_ means. The intent
+is that it matches the general definition of
+[static variables](https://en.wikipedia.org/wiki/Static_variable).
+
+```carbon
 class TextLabel {
   var x: i32;
   var y: i32;
+
+  // Static member variable.
+  static var count: i32;
 
   var text: String = "default";
 }
 ```
 
-Notice that this is subtly different from the meaning of `var` in other
-contexts: it declares an
-[instance variable](https://en.wikipedia.org/wiki/Instance_variable), not just a
-variable in the class's scope.
+Static member variable declarations are always definitions, similar to the
+current rules for global variables.
 
-> **Open question:** Is there a way to declare class variables (scoped to the
-> class, not an instance)?
+**Future work:** We should add support for forward declaring static member
+variables and defining them later, including in an `impl` file. But ideally we
+should do that together with analogous support for global variables and using a
+cohesive set of rules.
 
-In a field declaration, an initializer (such as `= "default"` above) specifies
-the default value of the field, and will be ignored if another value is supplied
-for that field when constructing an instance of the class. Defaults must be
-constants whose value can be determined at compile time.
+#### Initializers
+
+In both field and static member variable declarations, an initializer (such as
+`= "default"` above) specifies the default or initial value. For a field, it
+will be ignored if another value is supplied for that field when constructing an
+instance of the class, and the default must be a constant whose value can be
+determined at compile time. For a static member variable, the initializer has
+the same behavior as an initializer of a global variable.
+
+In all cases, the initializer expression is deferred and processed as-if it
+appeared immediately after the end of the outermost enclosing class, similar to
+[member function definitions](#deferred-member-function-definitions).
+
+**Open question:** For a generic class, we will need to decide the rules for
+whether a static member variable's initializer is evaluated and storage created
+for it. That could occur for any specific of the class we monomorphize? Or only
+specifics of the static member variable that are referenced? Answering this is
+left as future work.
+
+#### Syntax
 
 The pattern in a field declaration must be a run-time binding pattern, so the
 full syntax is:
 
 _field-declaration_ ::= `var` _identifier_ `:` _expression_ [ `=` _expression_
 ] `;`
+
+Static member variable declarations provide the more general
+[_variable pattern_ syntax](values.md#binding-patterns-and-local-variables-with-let-and-var)
+based on the [`var` pattern modifier](pattern_matching.md#var):
+
+_static-member-variable-declaration_ ::= `static` `var` _pattern_ [
+`=` _expression_ ] `;`
 
 ### Forward declaration
 
@@ -854,64 +902,68 @@ tl = {.x = 5, .y = 6};
 
 ### Member functions
 
-Member functions can either be class functions or methods. Class functions are
-members of the type, while methods can only be called on instances.
+We consider all functions declared within a class, interface, or `impl` to be
+_member functions_. They are declared using `fn` and in the same way as normal
+functions, but within a class body. Member functions can also be instance
+_methods_ when their first explicit parameter is `self` as
+[described below](#methods).
 
-#### Class functions
+Member functions are members of the type, and may be accessed using dot `.`
+member access on the type. The behavior of member access on an instance depends
+on whether the function is a method as described below.
 
-A class function is like a
-[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
-and is declared like a function at file scope. The declaration can include a
-definition of the function body, or that definition can be provided out of line
-after the class definition is finished. A common use is for constructor
-functions.
+Member functions may be defined lexically inline, or may be forward declared
+within the class and defined after the class definition. The body of a lexically
+inline member function is
+[processed in a deferred manner](#deferred-member-function-definitions).
 
-```
+#### Non-methods
+
+Member functions that aren't methods don't use any special syntax. They don't
+take a `self` parameter and so are regular functions, and work similarly to
+[C++ static member functions](https://en.cppreference.com/w/cpp/language/static#Static_member_functions).
+A common use is for constructor functions (sometimes called factory functions).
+
+```carbon
 class Point {
-  fn Origin() -> Self {
-    return {.x = 0, .y = 0};
-  }
-  fn CreateCentered() -> Self;
-
-  var x: i32;
-  var y: i32;
-}
-
-fn Point.CreateCentered() -> Self {
-  return {.x = ScreenWidth() / 2, .y = ScreenHeight() / 2};
+  // No `self` parameter, so it's a regular, non-instance function.
+ fn Origin() -> Self {
+   return {.x = 0, .y = 0};
+ }
 }
 ```
 
-Class functions are members of the type, and may be accessed as using dot `.`
-member access either the type or any instance.
+Member access naming these functions on an instance of a type behaves the same
+as member access on the type itself.
 
-```
-var p1: Point = Point.Origin();
-var p2: Point = p1.CreateCentered();
+```carbon
+var a: Point = Point.CreateCentered();
+// OK, `a` is evaluated and its value is discarded.
+var b: Point = a.CreateCentered();
 ```
 
 #### Methods
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declarations are distinguished from [class function](#class-functions)
-declarations by having a `self` parameter in square brackets `[`...`]` before
-the explicit parameter list in parens `(`...`)`. There is no implicit member
-access in methods, so inside the method body members are accessed through the
-`self` parameter. Methods may be written lexically inline or after the class
-declaration.
+declarations are member functions distinguished by having a `self` parameter as
+the first parameter in the explicit parameter list using parens `(`...`)`. The
+type in the binding syntax for the `self` parameter, typically `: Self`, is
+optional and if omitted defaults to `Self`. There is no implicit member access
+in methods, so inside the method body members are accessed through the `self`
+parameter.
 
 ```carbon
 class Circle {
-  fn Diameter[self: Self]() -> f32 {
+  fn Diameter(self) -> f32 {
     return self.radius * 2;
   }
-  fn Expand[ref self: Self](distance: f32);
+  fn Expand(ref self, distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[ref self: Self](distance: f32) {
+fn Circle.Expand(ref self, distance: f32) {
   self.radius += distance;
 }
 
@@ -924,20 +976,31 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   Methods are called using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
-    the `Circle` instance. This is signified using `[self: Self]` in the method
+    the `Circle` instance. This is signified using `self` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[ref self: Self]` in the method declaration.
+    `ref self` in the method declaration.
 
-The pattern '`ref self:` _type_' means "the argument must be a
-[reference expression](/docs/design/values.md#reference-expressions), and must
-match the pattern '`self:` _type_'".
+The pattern `ref self` means "the argument must be a
+[reference expression](/docs/design/values.md#reference-expressions)".
+
+Because methods are modeled as functions with an explicit `self` parameter, they
+can also be called directly by way of the type name without using dot-notation:
+
+```carbon
+var d: f32 = Circle.Diameter(c);
+```
 
 If the method declaration also includes
 [deduced compile-time parameters](/docs/design/generics/overview.md#deduced-parameters),
-the `self` parameter must be in the same list in square brackets `[`...`]`. The
-`self` parameter may appear in any position in that list, as long as it appears
-after any names needed to describe its type.
+they appear in square brackets `[`...`]` as usual, while `self` remains the
+first parameter in the parens `(`...`)`:
+
+```carbon
+class Wrapper(T:! type) {
+  fn Print[U:! type](self, x: U);
+}
+```
 
 #### Deferred member function definitions
 
@@ -1197,18 +1260,16 @@ A base class may define
 methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
-any defined in
 [out-of-line interface `impl` declarations](/docs/design/generics/details.md#out-of-line-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is inline](/docs/design/generics/details.md#inline-impl), and calls to
 those methods by way of the interface will do virtual dispatch just like a
 direct call to the method does.
 
-[Class functions](#class-functions) may not be declared virtual. Neither may
-functions with [compile-time parameters](/docs/design/generics/overview.md),
-whether those are `template` or checked, explicit or deduced. Compile-time
-parameters on the enclosing scope are allowed, though, so generic classes may
-have virtual methods.
+Functions with [compile-time parameters](/docs/design/generics/overview.md) may
+not be virtual, whether those are `template` or checked, explicit or deduced.
+Compile-time parameters on the enclosing scope are allowed, though, so generic
+classes may have virtual methods.
 
 ##### Virtual modifier keywords
 
@@ -2004,12 +2065,12 @@ different type than `DynPtr(MyInterface)` since the receiver input to the
 function members of the vtable for the former does not match those in the
 witness table for the latter.
 
-#### Overloaded methods
+#### Overloaded member functions
 
-We allow a derived class to define a [class function](#class-functions) with the
-same name as a class function in the base class. For example, we expect it to be
-pretty common to have a constructor function named `Create` at all levels of the
-type hierarchy.
+We allow a derived class to define a member function with the same name as a
+member function in the base class when neither are methods. For example, we
+expect it to be common to have a constructor function named `Make` at all levels
+of the type hierarchy.
 
 Beyond that, we may want some rules or restrictions about defining methods in a
 derived class with the same name as a base class method without overriding it.
@@ -2304,6 +2365,18 @@ the type of `U.x`."
 
 -   [#6008: Replace `impl fn` with `override fn`](https://github.com/carbon-language/carbon-lang/pull/6008)
 
+-   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
+
+    -   [Don't put `self` in either parameter list](/proposals/p7016.md#dont-put-self-in-either-parameter-list)
+    -   [`self` syntax in the deduced parameter list `[]`](/proposals/p7016.md#self-syntax-in-the-deduced-parameter-list-)
+    -   [`class` modifier for non-instance member variables and functions](/proposals/p7016.md#class-modifier-for-non-instance-member-variables-and-functions)
+    -   [Alternative keywords for non-instance member variables](/proposals/p7016.md#alternative-keywords-for-non-instance-member-variables)
+        -   [`shared`](/proposals/p7016.md#shared)
+        -   [`global`](/proposals/p7016.md#global)
+    -   [`static` for non-instance member functions](/proposals/p7016.md#static-for-non-instance-member-functions)
+    -   [`static` for package- and namespace-scope variables](/proposals/p7016.md#static-for-package--and-namespace-scope-variables)
+    -   [Distinct `method` introducer](/proposals/p7016.md#distinct-method-introducer)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
@@ -2317,3 +2390,4 @@ the type of `U.x`."
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
+-   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)

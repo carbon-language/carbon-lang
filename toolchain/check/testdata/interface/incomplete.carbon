@@ -200,7 +200,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc16_7.2 as %.loc16_14 {
+// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc16_7.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
