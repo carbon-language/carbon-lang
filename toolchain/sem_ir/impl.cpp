@@ -17,11 +17,26 @@ ImplStore::ImplStore(File& sem_ir)
 
 auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   auto self_const_id = sem_ir_.constant_values().Get(impl.self_id);
-  return LookupBucketRef(*this,
-                         lookup_
-                             .Insert(std::pair{self_const_id, impl.interface},
-                                     [] { return ImplOrLookupBucketId::None; })
-                             .value());
+  auto impl_as_interface = SpecificInterface::None;
+  auto facet_type_type_id = TypeId::ForTypeConstant(
+      sem_ir_.constant_values().Get(impl.constraint_id));
+  if (auto facet_type =
+          sem_ir_.types().TryGetAs<FacetType>(facet_type_type_id)) {
+    auto identified_id = sem_ir_.identified_facet_types().Lookup(
+        {facet_type->facet_type_id, self_const_id});
+    CARBON_CHECK(identified_id.has_value(),
+                 "impl with unidentitied facet type");
+    const auto& identified =
+        sem_ir_.identified_facet_types().Get(identified_id);
+    if (identified.is_valid_impl_as_target()) {
+      impl_as_interface = identified.impl_as_target_interface();
+    }
+  }
+  return LookupBucketRef(
+      *this, lookup_
+                 .Insert(std::pair{self_const_id, impl_as_interface},
+                         [] { return ImplOrLookupBucketId::None; })
+                 .value());
 }
 
 }  // namespace Carbon::SemIR
