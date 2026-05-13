@@ -242,6 +242,10 @@ class Derived {
   //@dump-sem-ir-end
 }
 
+fn Derived.F[unused self: Self]() -> T2 {
+  return {};
+}
+
 // --- fail_generic_virtual_decl.carbon
 
 library "[[@TEST_NAME]]";
@@ -1090,17 +1094,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.8c9: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @T2.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
-// CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %T2 [concrete]
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.type: type = fn_type @T2.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert: %T2.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.8c9 = facet_value %T2, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.597: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T1, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %.c13: Core.Form = init_form %T2 [concrete]
-// CHECK:STDOUT:   %Derived.F.type.5bfd52.1: type = fn_type @Derived.F.loc23_36.1 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.5bfd52.1: type = fn_type @Derived.F.loc27 [concrete]
 // CHECK:STDOUT:   %Derived.F.f9b6d2.1: %Derived.F.type.5bfd52.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.F.type.5bfd52.2: type = fn_type @Derived.F.loc23_36.2 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.5bfd52.2: type = fn_type @Derived.F.loc23 [concrete]
 // CHECK:STDOUT:   %Derived.F.f9b6d2.2: %Derived.F.type.5bfd52.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.968: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.597, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc23_36.2 [concrete]
@@ -1109,22 +1111,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.1: %Derived.F.type.5bfd52.1 = fn_decl @Derived.F.loc23_36.1 [concrete = constants.%Derived.F.f9b6d2.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.9f6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9f6 = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.b8b = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.b8b = return_slot_pattern %return.param_patt, %T2.ref [concrete]
+// CHECK:STDOUT:   %Derived.F.decl.loc23_36.1: %Derived.F.type.5bfd52.1 = fn_decl @Derived.F.loc27 [concrete = constants.%Derived.F.f9b6d2.1] {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
-// CHECK:STDOUT:     %.loc23: Core.Form = init_form %T2.ref [concrete = constants.%.c13]
-// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
-// CHECK:STDOUT:     %return.param: ref %T2 = out_param call_param1
-// CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
+// CHECK:STDOUT:     %T2.ref.loc23: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
+// CHECK:STDOUT:     %.loc23: Core.Form = init_form %T2.ref.loc23 [concrete = constants.%.c13]
+// CHECK:STDOUT:     %self.param.loc23: %Derived = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc23: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
+// CHECK:STDOUT:     %self.loc23: %Derived = value_binding self, %self.param.loc23
+// CHECK:STDOUT:     %return.param.loc23: ref %T2 = out_param call_param1
+// CHECK:STDOUT:     %return.loc23: ref %T2 = return_slot %return.param.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.2: %Derived.F.type.5bfd52.2 = fn_decl @Derived.F.loc23_36.2 [concrete = constants.%Derived.F.f9b6d2.2] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_36.2: %Derived.F.type.5bfd52.2 = fn_decl @Derived.F.loc23 [concrete = constants.%Derived.F.f9b6d2.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1150,9 +1149,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_36.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc23_36.1(%self.param: %Derived) -> out %return.param: %T2;
-// CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc23_36.2(%self.param: %Derived) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_36.1 for @Base.%Base.F.decl] {
+// CHECK:STDOUT: override fn @Derived.F.loc23(%self.param: %Derived) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_36.1 for @Base.%Base.F.decl] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %Derived.F.type.5bfd52.1 = name_ref F, @Derived.%Derived.F.decl.loc23_36.1 [concrete = constants.%Derived.F.f9b6d2.1]
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %self.param, %F.ref
