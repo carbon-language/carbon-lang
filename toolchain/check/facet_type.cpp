@@ -177,21 +177,23 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       return SubstResult::SubstOperands;
     }
 
-    // If the access is going through a nested `ImplWitnessAccess`, that
-    // access needs to be resolved to a facet value first. If it can't be
-    // resolved then the outer one can not be either.
-    if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
-            rhs_access->inst.witness_id)) {
-      if (context().insts().Is<SemIR::ImplWitnessAccess>(
-              lookup->query_self_inst_id)) {
-        substs_in_progress_.push_back(rhs_inst_id);
-        return SubstResult::SubstOperandsAndRetry;
-      }
-    }
-
     auto* rewrite_value =
         rewrite_values_->FindRef(context(), rhs_access->inst_id);
     if (!rewrite_value) {
+      // The access is going through a nested `ImplWitnessAccess`, and we could
+      // not find a rewrite to replace the combined access. So we need to try
+      // replace the outer one and then try the combined one again. If the outer
+      // access doesn't get replaced by any rewrite, then the combined access
+      // won't be either.
+      if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+              rhs_access->inst.witness_id)) {
+        if (context().insts().Is<SemIR::ImplWitnessAccess>(
+                lookup->query_self_inst_id)) {
+          substs_in_progress_.push_back(rhs_inst_id);
+          return SubstResult::SubstOperandsAndRetry;
+        }
+      }
+
       // The RHS refers to an associated constant for which there is no rewrite
       // rule.
       return SubstResult::FullySubstituted;
