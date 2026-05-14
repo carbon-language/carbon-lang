@@ -92,6 +92,17 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
   }
 
+  // Changes the kind of the current full-pattern from `FieldDecl` to
+  // `NameBindingDecl`.
+  //
+  // This is used for parsing `static var` fields, since the `static`
+  // modifier is handled after the introducer has already called
+  // `PushFieldDecl`.
+  auto SwitchToNameBindingDecl() -> void {
+    CARBON_CHECK(kind_stack_.back() == Kind::FieldDecl);
+    kind_stack_.back() = Kind::NameBindingDecl;
+  }
+
   // Marks the start of the current parameterized entity's implicit parameter
   // list.
   auto StartImplicitParamList() -> void {

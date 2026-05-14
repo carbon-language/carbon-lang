@@ -397,11 +397,13 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context, node_id);
 
-  LimitModifiersOnDecl(
-      context, decl_info.introducer,
-      KeywordModifierSet::Access | KeywordModifierSet::Returned);
+  LimitModifiersOnDecl(context, decl_info.introducer,
+                       KeywordModifierSet::Access |
+                           KeywordModifierSet::Returned |
+                           KeywordModifierSet::Static);
 
-  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
+      !decl_info.introducer.modifier_set.HasAnyOf(KeywordModifierSet::Static)) {
     return true;
   }
 
