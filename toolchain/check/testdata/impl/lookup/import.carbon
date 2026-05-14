@@ -309,6 +309,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
+// CHECK:STDOUT:   extend %HasF.ref
 // CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -499,6 +500,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %C.as.HasG.impl.G.decl
+// CHECK:STDOUT:   extend %HasG.ref
 // CHECK:STDOUT:   witness = %HasG.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -516,6 +518,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %D.as.HasF.impl.F.decl
+// CHECK:STDOUT:   extend %HasF.ref
 // CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -533,6 +536,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %D.as.HasG.impl.G.decl
+// CHECK:STDOUT:   extend %HasG.ref
 // CHECK:STDOUT:   witness = %HasG.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1343,6 +1347,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .H = %empty_tuple.type.as.Z.impl.H.decl
+// CHECK:STDOUT:   extend %Z.ref
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1777,6 +1782,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %AnyParam.as.Y.impl.K.decl
+// CHECK:STDOUT:   extend %Y.ref
 // CHECK:STDOUT:   witness = %Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2249,6 +2255,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %AnyParam.as.Y.impl.K.decl
+// CHECK:STDOUT:   extend %Y.ref
 // CHECK:STDOUT:   witness = %Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2839,6 +2846,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.I.impl.F.decl
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

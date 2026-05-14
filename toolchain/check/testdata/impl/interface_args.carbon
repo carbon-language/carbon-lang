@@ -351,6 +351,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %A.as.Action.impl.Op.decl
+// CHECK:STDOUT:   extend %Action.type
 // CHECK:STDOUT:   witness = %Action.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,6 +522,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.d04: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.5ad: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %Main.import_ref.018 = import_ref Main//action, loc13_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d79 = import_ref Main//action, loc12_19, unloaded
 // CHECK:STDOUT:   %Main.import_ref.04b = import_ref Main//action, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e8a: %A.as.Action.impl.Op.type = import_ref Main//action, loc13_30, loaded [concrete = constants.%A.as.Action.impl.Op]
 // CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%Main.import_ref.e8a), @A.as.Action.impl [concrete]
@@ -569,6 +571,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: impl @A.as.Action.impl: imports.%Main.import_ref.d04 as imports.%Main.import_ref.5ad [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.018
+// CHECK:STDOUT:   extend imports.%Main.import_ref.d79
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.170
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -713,6 +716,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.d04: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.5ad: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %Main.import_ref.018 = import_ref Main//action, loc13_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d79 = import_ref Main//action, loc12_19, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//action, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.04b = import_ref Main//action, loc5_22, unloaded
@@ -761,6 +765,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: impl @A.as.Action.impl: imports.%Main.import_ref.d04 as imports.%Main.import_ref.5ad [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.018
+// CHECK:STDOUT:   extend imports.%Main.import_ref.d79
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.acc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -980,6 +985,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Make = @Factory.WithSelf.%assoc0.loc6_17.1
 // CHECK:STDOUT:     .Method = @Factory.WithSelf.%assoc1.loc8_31.1
+// CHECK:STDOUT:     .B = <poisoned>
 // CHECK:STDOUT:     witness = (@Factory.WithSelf.%Factory.WithSelf.Make.decl, @Factory.WithSelf.%Factory.WithSelf.Method.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1017,6 +1023,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .Make = %A.as.Factory.impl.Make.decl
 // CHECK:STDOUT:   .Method = %A.as.Factory.impl.Method.decl
+// CHECK:STDOUT:   extend %Factory.type
 // CHECK:STDOUT:   witness = %Factory.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1216,6 +1223,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.511: type = import_ref Main//factory, loc14_20, loaded [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   %Main.import_ref.b40 = import_ref Main//factory, loc15_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9db = import_ref Main//factory, loc16_31, unloaded
+// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//factory, loc14_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c54 = import_ref Main//factory, loc6_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7b0: %A.as.Factory.impl.Make.type = import_ref Main//factory, loc15_17, loaded [concrete = constants.%A.as.Factory.impl.Make]
 // CHECK:STDOUT:   %Main.import_ref.df6: %A.as.Factory.impl.Method.type = import_ref Main//factory, loc16_31, loaded [concrete = constants.%A.as.Factory.impl.Method]
@@ -1282,6 +1290,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.b40
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.9db
+// CHECK:STDOUT:   extend imports.%Main.import_ref.223
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.8a9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1486,6 +1495,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.511: type = import_ref Main//factory, loc14_20, loaded [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   %Main.import_ref.b40 = import_ref Main//factory, loc15_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9db = import_ref Main//factory, loc16_31, unloaded
+// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//factory, loc14_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c54 = import_ref Main//factory, loc6_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.71e = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
@@ -1551,6 +1561,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.b40
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.9db
+// CHECK:STDOUT:   extend imports.%Main.import_ref.223
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.1cd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

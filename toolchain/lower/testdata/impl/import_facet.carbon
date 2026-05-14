@@ -36,9 +36,9 @@ interface I {
 library "[[@TEST_NAME]]";
 export import library "b";
 
-class D(T:! type) {
-  impl as I where .T = T* {
-    fn GetI[unused self: Self]() -> C(T*) {
+class D(U:! type) {
+  impl as I where .T = U* {
+    fn GetI[unused self: Self]() -> C(U*) {
       return {};
     }
   }

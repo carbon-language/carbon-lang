@@ -389,6 +389,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc16_32.1
+// CHECK:STDOUT:     .IntLiteral = <poisoned>
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -420,6 +421,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %i32.builtin.as.AddWith.impl.Op.decl
+// CHECK:STDOUT:   extend %AddWith.type
 // CHECK:STDOUT:   witness = %AddWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -443,6 +445,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Core.IntLiteral.as.As.impl.Convert.decl
+// CHECK:STDOUT:   extend %As.type
 // CHECK:STDOUT:   witness = %As.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -466,6 +469,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Core.IntLiteral.as.ImplicitAs.impl.Convert.decl
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -493,6 +497,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .IntLiteral = <poisoned>
 // CHECK:STDOUT:   .Convert = %i32.builtin.as.ImplicitAs.impl.Convert.decl
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -219,6 +219,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:     %Y.impl_witness.loc5_31.1: <witness> = impl_witness %Y.impl_witness_table, @T.as.Y.impl(constants.%T) [symbolic = %Y.impl_witness.loc5_31.2 (constants.%Y.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Y.ref
 // CHECK:STDOUT:     witness = %Y.impl_witness.loc5_31.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -234,6 +235,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:     %Z.impl_witness.loc9_31.1: <witness> = impl_witness %Z.impl_witness_table, @U.as.Z.impl(constants.%U) [symbolic = %Z.impl_witness.loc9_31.2 (constants.%Z.impl_witness.856)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Z.ref
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc9_31.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -471,6 +473,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .Assoc = imports.%Main.import_ref.414
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.d7f
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = (imports.%Main.Assoc, imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -547,6 +550,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F = %D.as.I.impl.F.decl
+// CHECK:STDOUT:     extend %.loc20_31
 // CHECK:STDOUT:     witness = %I.impl_witness.loc20_49.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

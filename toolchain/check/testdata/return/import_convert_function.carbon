@@ -354,6 +354,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,6 +380,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -404,6 +406,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,6 +432,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,6 +458,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -479,6 +484,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -504,6 +510,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,6 +536,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   .Make = <poisoned>
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -241,6 +241,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Param = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
+// CHECK:STDOUT:   extend %HasF.type
 // CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -577,6 +578,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %X.as.I.impl.F.decl
+// CHECK:STDOUT:     extend %I.type.loc9_21.2
 // CHECK:STDOUT:     witness = %I.impl_witness.loc9_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

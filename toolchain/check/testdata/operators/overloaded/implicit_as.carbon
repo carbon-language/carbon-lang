@@ -200,6 +200,7 @@ fn Test() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %i32.as.ImplicitAs.impl.Convert.decl
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +225,7 @@ fn Test() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %X.as.ImplicitAs.impl.Convert.decl
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

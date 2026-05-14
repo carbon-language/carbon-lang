@@ -210,6 +210,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.17c
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.a96
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -241,6 +242,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %C.as.Add.impl.Op.decl
 // CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   extend %Add.ref
 // CHECK:STDOUT:   witness = %Add.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

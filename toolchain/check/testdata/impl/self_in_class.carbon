@@ -106,6 +106,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %C.as.DefaultConstructible.impl.Make.decl
+// CHECK:STDOUT:   extend %DefaultConstructible.ref
 // CHECK:STDOUT:   witness = %DefaultConstructible.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

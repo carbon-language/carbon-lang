@@ -269,6 +269,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Simple.type
 // CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,6 +289,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.WithAssocFn.impl.F.decl
+// CHECK:STDOUT:   extend %WithAssocFn.type
 // CHECK:STDOUT:   witness = %WithAssocFn.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

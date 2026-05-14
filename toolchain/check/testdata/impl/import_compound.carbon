@@ -213,6 +213,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %struct_type.i.as.NonInstance.impl.F.decl
+// CHECK:STDOUT:   extend %NonInstance.ref
 // CHECK:STDOUT:   witness = %NonInstance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,6 +231,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %struct_type.i.as.Instance.impl.G.decl
+// CHECK:STDOUT:   extend %Instance.ref
 // CHECK:STDOUT:   witness = %Instance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

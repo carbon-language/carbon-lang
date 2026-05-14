@@ -350,6 +350,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %Interface.impl_witness.loc12_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.as_type.as.Interface.impl.ff3(constants.%T.651) [symbolic = %Interface.impl_witness.loc12_35.2 (constants.%Interface.impl_witness.cca)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Interface.ref.loc12
 // CHECK:STDOUT:     witness = %Interface.impl_witness.loc12_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -366,6 +367,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %Interface.impl_witness.loc13_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.as_type.as.Interface.impl.755(constants.%T.612) [symbolic = %Interface.impl_witness.loc13_35.2 (constants.%Interface.impl_witness.885)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Interface.ref.loc13
 // CHECK:STDOUT:     witness = %Interface.impl_witness.loc13_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -382,6 +384,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %Interface.impl_witness.loc14_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.as_type.as.Interface.impl.cd3(constants.%T.9b2) [symbolic = %Interface.impl_witness.loc14_35.2 (constants.%Interface.impl_witness.0f2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Interface.ref.loc14
 // CHECK:STDOUT:     witness = %Interface.impl_witness.loc14_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -398,6 +401,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %Interface.impl_witness.loc15_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.as_type.as.Interface.impl.ba3(constants.%T.0fc) [symbolic = %Interface.impl_witness.loc15_35.2 (constants.%Interface.impl_witness.18f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Interface.ref.loc15
 // CHECK:STDOUT:     witness = %Interface.impl_witness.loc15_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -556,6 +560,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %J.impl_witness.loc7_28.1: <witness> = impl_witness %J.impl_witness_table, @T.as_type.as.J.impl.048579.1(constants.%T) [symbolic = %J.impl_witness.loc7_28.2 (constants.%J.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %J.ref
 // CHECK:STDOUT:     witness = %J.impl_witness.loc7_28.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -568,6 +573,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc15_21 as %J.ref {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %J.ref
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -658,6 +664,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6465e0.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,6 +673,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6465e0.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -773,6 +781,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .A = %T.as.I.impl.A.decl
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc4_31.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -815,6 +824,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     .B = %T.as.I.impl.B.decl
 // CHECK:STDOUT:     .C = %T.as.I.impl.C.decl
 // CHECK:STDOUT:     .D = %T.as.I.impl.D.decl
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

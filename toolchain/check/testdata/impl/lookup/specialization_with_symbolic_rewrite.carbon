@@ -303,6 +303,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc9_44
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc9_58.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -321,6 +322,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%T.67d [symbolic = %T.loc11_21.2 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc11_40
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc11_53.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -710,6 +712,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc10_44
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc10_58.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -728,6 +731,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%T.67d [symbolic = %T.loc12_15.2 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc12_34
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc12_47.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1022,6 +1026,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc7_39
 // CHECK:STDOUT:     witness = %Ptr.impl_witness.loc7_56.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1251,6 +1256,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc7_39
 // CHECK:STDOUT:     witness = %Ptr.impl_witness.loc7_56.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1477,6 +1483,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc7_39
 // CHECK:STDOUT:     witness = %Ptr.impl_witness.loc7_56.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

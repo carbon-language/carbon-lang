@@ -377,6 +377,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .NewCursor = %IntRange.as.Iterate.impl.NewCursor.decl
 // CHECK:STDOUT:     .Next = %IntRange.as.Iterate.impl.Next.decl
+// CHECK:STDOUT:     extend %.loc9_24
 // CHECK:STDOUT:     witness = %Iterate.impl_witness.loc9_87.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -389,7 +389,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
         auto index = static_cast<size_t>(inst.index.index);
         CARBON_CHECK(index < elements.size(), "Access out of bounds.");
         auto element = elements[index];
-        if (element.has_value()) {
+        if (element.has_value() &&
+            element != SemIR::InstId::ImplWitnessTablePlaceholder) {
           LoadImportRef(context, element);
           return ConstantEvalResult::Existing(GetConstantValueInSpecific(
               context.sem_ir(), witness.specific_id, element));

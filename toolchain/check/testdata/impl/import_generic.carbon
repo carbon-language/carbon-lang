@@ -437,6 +437,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %I.type
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,6 +446,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %J.type
 // CHECK:STDOUT:   witness = %J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -774,6 +776,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %J.type
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1031,6 +1034,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.impl_witness.loc8_33.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.431(constants.%T) [symbolic = %I.impl_witness.loc8_33.2 (constants.%I.impl_witness.9f5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc8_32.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc8_33.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1049,6 +1053,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.impl_witness.loc12_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc12_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc12_33.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc12_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1162,11 +1167,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness_table.ee9 = impl_witness_table (), @C.as.I.impl.6f8 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.61cd7d.1: type = import_ref Main//import_generic, loc8_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.3582b1.1: type = import_ref Main//import_generic, loc8_32, loaded [symbolic = @C.as.I.impl.6f8.%I.type (constants.%I.type.1ab)]
+// CHECK:STDOUT:   %Main.import_ref.fd0 = import_ref Main//import_generic, loc8_32, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//import_generic, loc8_15, loaded [symbolic = @C.as.I.impl.6f8.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2c7 = import_ref Main//import_generic, loc12_35, unloaded
 // CHECK:STDOUT:   %I.impl_witness_table.9fc = impl_witness_table (), @C.as.I.impl.856 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.61cd7d.2: type = import_ref Main//import_generic, loc12_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ada: type = import_ref Main//import_generic, loc12_33, loaded [symbolic = @C.as.I.impl.856.%I.type (constants.%I.type.e19)]
+// CHECK:STDOUT:   %Main.import_ref.dc0 = import_ref Main//import_generic, loc12_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic, loc12_15, loaded [symbolic = @C.as.I.impl.856.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.15d = import_ref Main//import_generic, loc15_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//import_generic, loc15_18, loaded [symbolic = @N.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
@@ -1321,6 +1328,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.61cd7d.1 as imports.%Main.import_ref.3582b1.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend imports.%Main.import_ref.fd0
 // CHECK:STDOUT:     witness = imports.%Main.import_ref.e08
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1336,6 +1344,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.61cd7d.2 as imports.%Main.import_ref.ada {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend imports.%Main.import_ref.dc0
 // CHECK:STDOUT:     witness = imports.%Main.import_ref.2c7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1355,6 +1364,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc14_32.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc14_32.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1376,6 +1386,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc26_33.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc26_33.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1657,6 +1668,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.impl_witness.loc7_34.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T) [symbolic = %I.impl_witness.loc7_34.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc7_32.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc7_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1755,6 +1767,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.6f8 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//import_generic_with_different_specific, loc7_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.3582b1.1: type = import_ref Main//import_generic_with_different_specific, loc7_32, loaded [symbolic = @C.as.I.impl.6f8.%I.type (constants.%I.type.1ab)]
+// CHECK:STDOUT:   %Main.import_ref.fd0 = import_ref Main//import_generic_with_different_specific, loc7_32, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//import_generic_with_different_specific, loc7_15, loaded [symbolic = @C.as.I.impl.6f8.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.15d = import_ref Main//import_generic_with_different_specific, loc10_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//import_generic_with_different_specific, loc10_18, loaded [symbolic = @N.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
@@ -1857,6 +1870,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.61c as imports.%Main.import_ref.3582b1.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend imports.%Main.import_ref.fd0
 // CHECK:STDOUT:     witness = imports.%Main.import_ref.e08
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1875,6 +1889,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.impl_witness.loc5_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc5_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc5_33.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc5_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1894,6 +1909,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.impl_witness.loc6_36.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.c93(constants.%T) [symbolic = %I.impl_witness.loc6_36.2 (constants.%I.impl_witness.d57)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %N.type.loc6_34.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc6_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2437,6 +2453,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.ref as %J.type.loc14_32.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %J.type.loc14_32.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2458,6 +2475,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.ref as %J.type.loc26_33.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %J.type.loc26_33.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2470,6 +2488,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.ref as %N.type.loc32_32.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %N.type.loc32_32.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2483,6 +2502,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.ref as %N.type.loc38_33.1 {
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %N.type.loc38_33.1
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

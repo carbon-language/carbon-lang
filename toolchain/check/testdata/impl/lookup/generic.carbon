@@ -255,6 +255,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %T.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.ref
 // CHECK:STDOUT:     witness = %HasF.impl_witness.loc8_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -502,6 +503,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = @HasF.WithSelf.%assoc0
+// CHECK:STDOUT:   .T = <poisoned>
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -538,6 +540,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %ptr.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.ref
 // CHECK:STDOUT:     witness = %HasF.impl_witness.loc8_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -818,6 +821,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %C.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.ref
 // CHECK:STDOUT:     witness = %HasF.impl_witness.loc10_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1108,6 +1112,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %empty_struct_type.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.type.loc8_36.2
 // CHECK:STDOUT:     witness = %HasF.impl_witness.loc8_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1375,6 +1380,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %T.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.ref
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1587,6 +1593,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %T.as.HasF.impl.F.decl
+// CHECK:STDOUT:     extend %HasF.type.loc8_35.2
 // CHECK:STDOUT:     witness = %HasF.impl_witness.loc8_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

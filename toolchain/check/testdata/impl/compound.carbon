@@ -289,6 +289,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F1 = %struct_type.a.as.NonInstance1.impl.F1.decl
+// CHECK:STDOUT:   extend %NonInstance1.ref
 // CHECK:STDOUT:   witness = %NonInstance1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,6 +460,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F2 = %struct_type.b.as.NonInstance2.impl.F2.decl
+// CHECK:STDOUT:   extend %NonInstance2.ref
 // CHECK:STDOUT:   witness = %NonInstance2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -673,6 +675,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F3 = %struct_type.c.as.NonInstance3.impl.F3.decl
+// CHECK:STDOUT:   extend %NonInstance3.ref
 // CHECK:STDOUT:   witness = %NonInstance3.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -872,6 +875,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G1 = %struct_type.d.as.Instance1.impl.G1.decl
+// CHECK:STDOUT:   extend %Instance1.ref
 // CHECK:STDOUT:   witness = %Instance1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1023,6 +1027,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G2 = %struct_type.e.as.Instance2.impl.G2.decl
+// CHECK:STDOUT:   extend %Instance2.ref
 // CHECK:STDOUT:   witness = %Instance2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

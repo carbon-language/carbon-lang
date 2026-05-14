@@ -314,6 +314,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .LessOrEquivalent = %C.as.OrderedWith.impl.LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %C.as.OrderedWith.impl.Greater.decl
 // CHECK:STDOUT:   .GreaterOrEquivalent = %C.as.OrderedWith.impl.GreaterOrEquivalent.decl
+// CHECK:STDOUT:   extend %OrderedWith.type
 // CHECK:STDOUT:   witness = %OrderedWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

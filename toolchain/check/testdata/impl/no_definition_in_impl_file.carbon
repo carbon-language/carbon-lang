@@ -188,6 +188,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.A.impl.276de1.2: %.loc14_7.2 as %A.ref {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

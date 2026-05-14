@@ -166,6 +166,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %ImplsGeneric.as.Generic.impl.F.decl
+// CHECK:STDOUT:   extend %Generic.type
 // CHECK:STDOUT:   witness = %Generic.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

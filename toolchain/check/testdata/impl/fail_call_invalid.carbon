@@ -112,6 +112,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = @Simple.WithSelf.%assoc0
+// CHECK:STDOUT:   .Undeclared = <poisoned>
 // CHECK:STDOUT:   witness = (@Simple.WithSelf.%Simple.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -139,6 +140,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Undeclared = <poisoned>
 // CHECK:STDOUT:   .G = %i32.as.Simple.impl.G.decl.loc24_27.1
+// CHECK:STDOUT:   extend %Simple.ref
 // CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

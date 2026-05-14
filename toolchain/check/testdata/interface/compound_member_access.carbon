@@ -1379,6 +1379,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %C.as.A.impl.G.decl
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1563,6 +1564,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %C.as.A.impl.G.decl
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -270,6 +270,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
+// CHECK:STDOUT:   extend %HasF.ref
 // CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -280,6 +281,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %C.as.HasG.impl.G.decl
+// CHECK:STDOUT:   extend %HasG.ref
 // CHECK:STDOUT:   witness = %HasG.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -495,6 +497,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %D.as.HasA1.impl.A.decl
+// CHECK:STDOUT:   extend %HasA1.ref
 // CHECK:STDOUT:   witness = %HasA1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,6 +508,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %D.as.HasA2.impl.A.decl
+// CHECK:STDOUT:   extend %HasA2.ref
 // CHECK:STDOUT:   witness = %HasA2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -685,6 +689,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .I = %E.as.HasI.impl.I.decl
+// CHECK:STDOUT:   extend %HasI.ref
 // CHECK:STDOUT:   witness = %HasI.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -855,6 +860,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %L.as.HasK.impl.K.decl
+// CHECK:STDOUT:   extend %HasK.ref
 // CHECK:STDOUT:   witness = %HasK.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1043,6 +1049,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %O.as.HasN1.impl.N.decl
+// CHECK:STDOUT:   extend %HasN1.ref
 // CHECK:STDOUT:   witness = %HasN1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1053,6 +1060,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %O.as.HasN2.impl.N.decl
+// CHECK:STDOUT:   extend %HasN2.ref
 // CHECK:STDOUT:   witness = %HasN2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

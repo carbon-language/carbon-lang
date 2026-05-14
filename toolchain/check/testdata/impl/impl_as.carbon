@@ -83,6 +83,7 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = @Simple.WithSelf.%assoc0
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = (@Simple.WithSelf.%Simple.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -96,6 +97,7 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.Simple.impl.F.decl
 // CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   extend %Simple.ref
 // CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

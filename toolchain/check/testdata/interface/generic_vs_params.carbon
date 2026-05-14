@@ -271,6 +271,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %NotGenericNoParams.impl_witness: <witness> = impl_witness %NotGenericNoParams.impl_witness_table [concrete = constants.%NotGenericNoParams.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %NotGenericNoParams.ref
 // CHECK:STDOUT:   witness = %NotGenericNoParams.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -279,6 +280,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %NotGenericButParams.impl_witness: <witness> = impl_witness %NotGenericButParams.impl_witness_table [concrete = constants.%NotGenericButParams.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %NotGenericButParams.type
 // CHECK:STDOUT:   witness = %NotGenericButParams.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -287,6 +289,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.12e]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %GenericAndParams.type
 // CHECK:STDOUT:   witness = %GenericAndParams.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,6 +298,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %GenericNoParams.impl_witness: <witness> = impl_witness %GenericNoParams.impl_witness_table [concrete = constants.%GenericNoParams.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %GenericNoParams.ref
 // CHECK:STDOUT:   witness = %GenericNoParams.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,6 +307,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.e7f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %GenericAndParams.type
 // CHECK:STDOUT:   witness = %GenericAndParams.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

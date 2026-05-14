@@ -407,6 +407,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %B.impl_witness.loc9_64.1: <witness> = impl_witness %B.impl_witness_table, @BB.as_type.as.B.impl(constants.%AA, constants.%BB.0b1) [symbolic = %B.impl_witness.loc9_64.2 (constants.%B.impl_witness.94a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %B.type.loc9_62.1
 // CHECK:STDOUT:     witness = %B.impl_witness.loc9_64.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

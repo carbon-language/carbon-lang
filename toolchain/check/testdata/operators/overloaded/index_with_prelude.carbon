@@ -106,12 +106,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.541: type = pattern_type %SubscriptType.9ec [concrete]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.bbe = facet_value %C, (%IndexWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.cc5: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.9ec, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %.312: Core.Form = init_form %ElementType [concrete]
 // CHECK:STDOUT:   %pattern_type.fde: type = pattern_type %ElementType [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At: %C.as.IndexWith.impl.At.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.bbe = facet_value %C, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.cc5: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.9ec, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType.val: %ElementType = struct_value () [concrete]
 // CHECK:STDOUT:   %SubscriptType.val: %SubscriptType.9ec = struct_value () [concrete]
@@ -205,8 +205,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fde = return_slot_pattern %return.param_patt, %ElementType.ref [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %ElementType.ref [concrete = constants.%.312]
+// CHECK:STDOUT:     %IndexWith.facet: %IndexWith.type.bbe = facet_value @C.as.IndexWith.impl.%C.ref, (constants.%IndexWith.impl_witness) [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %.loc9_64.1: %IndexWith.type.bbe = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, %impl.elem0 [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %.loc9_64.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.312]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -224,6 +227,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
+// CHECK:STDOUT:   extend %.loc8_41
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,6 +424,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .At = %tuple.type.as.IndexWith.impl.At.decl
+// CHECK:STDOUT:   extend %.loc8_50
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -491,6 +496,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.541: type = pattern_type %SubscriptType.9ec [concrete]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.bbe = facet_value %C, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.312: Core.Form = init_form %ElementType [concrete]
 // CHECK:STDOUT:   %pattern_type.fde: type = pattern_type %ElementType [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
@@ -573,8 +579,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fde = return_slot_pattern %return.param_patt, %ElementType.ref [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %ElementType.ref [concrete = constants.%.312]
+// CHECK:STDOUT:     %IndexWith.facet: %IndexWith.type.bbe = facet_value @C.as.IndexWith.impl.%C.ref, (constants.%IndexWith.impl_witness) [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %.loc9_64.1: %IndexWith.type.bbe = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, %impl.elem0 [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %.loc9_64.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.312]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -592,6 +601,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
+// CHECK:STDOUT:   extend %.loc8_41
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

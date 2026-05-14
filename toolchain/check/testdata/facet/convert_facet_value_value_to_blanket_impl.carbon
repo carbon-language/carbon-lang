@@ -159,6 +159,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %Eats.impl_witness.loc18_36.1: <witness> = impl_witness %Eats.impl_witness_table, @A.as_type.as.Eats.impl(constants.%A) [symbolic = %Eats.impl_witness.loc18_36.2 (constants.%Eats.impl_witness.149e03.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Eats.ref
 // CHECK:STDOUT:     witness = %Eats.impl_witness.loc18_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -401,6 +401,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_48.1
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -513,6 +514,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,6 +580,7 @@ impl () as I({}) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc13_26.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,6 +669,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -765,6 +769,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -830,6 +835,7 @@ impl () as I({}) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc13_30.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -886,6 +892,7 @@ impl () as I({}) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc23_14.1
+// CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1009,6 +1016,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_34.1
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1186,6 +1194,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_51.1
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1314,6 +1323,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_29.1
+// CHECK:STDOUT:   extend %I.type
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

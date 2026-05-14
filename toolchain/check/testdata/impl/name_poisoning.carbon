@@ -36,6 +36,14 @@ interface I {
 
 class B {
   impl as I {
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+11]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+    // CHECK:STDERR:     fn A(x: B);
+    // CHECK:STDERR:             ^
+    // CHECK:STDERR:
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+7]]:13: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+    // CHECK:STDERR:     fn A(x: B);
+    // CHECK:STDERR:             ^
+    // CHECK:STDERR:
     // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+3]]:13: error: name `B` used before it was declared [NameUseBeforeDecl]
     // CHECK:STDERR:     fn A(x: B);
     // CHECK:STDERR:             ^
@@ -45,10 +53,10 @@ class B {
     // CHECK:STDERR:     fn B();
     // CHECK:STDERR:        ^
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-10]]:3: error: missing implementation of B in impl of interface I [ImplMissingFunction]
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-18]]:3: error: missing implementation of B in impl of interface I [ImplMissingFunction]
     // CHECK:STDERR:   impl as I {
     // CHECK:STDERR:   ^~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-17]]:3: note: associated function B declared here [AssociatedFunctionHere]
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-25]]:3: note: associated function B declared here [AssociatedFunctionHere]
     // CHECK:STDERR:   fn B();
     // CHECK:STDERR:   ^~~~~~~
     // CHECK:STDERR:

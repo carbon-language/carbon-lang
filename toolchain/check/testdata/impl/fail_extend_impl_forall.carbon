@@ -125,6 +125,7 @@ class C {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %C.as.GenericInterface.impl.F.decl
+// CHECK:STDOUT:     extend %GenericInterface.type.loc24_54.2
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -176,7 +177,16 @@ class C {
 // CHECK:STDOUT:   %T.loc15_29.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface.WithSelf(constants.%T, constants.%Self) {}
+// CHECK:STDOUT: specific @GenericInterface.WithSelf(constants.%T, constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %GenericInterface.type => constants.%GenericInterface.type.8bc
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %GenericInterface.WithSelf.F.type => constants.%GenericInterface.WithSelf.F.type
+// CHECK:STDOUT:   %GenericInterface.WithSelf.F => constants.%GenericInterface.WithSelf.F
+// CHECK:STDOUT:   %GenericInterface.assoc_type => constants.%GenericInterface.assoc_type
+// CHECK:STDOUT:   %assoc0.loc16_13.2 => constants.%assoc0
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface.WithSelf.F(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T

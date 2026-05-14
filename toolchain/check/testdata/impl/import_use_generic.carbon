@@ -141,6 +141,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %C.as.I.impl.F.decl
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc10_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

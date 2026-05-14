@@ -210,6 +210,8 @@ fn G() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.7f4
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -253,6 +255,7 @@ fn G() {
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .Y = <poisoned>
 // CHECK:STDOUT:     .F = %C.as.I.impl.F.decl.loc8_24.1
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc7_32.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

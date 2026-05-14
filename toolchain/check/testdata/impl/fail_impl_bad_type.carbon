@@ -69,6 +69,7 @@ impl true as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<error>.as.I.impl: <error> as %I.ref {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

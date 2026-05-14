@@ -90,6 +90,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %T.as.Simple.impl.F.decl
+// CHECK:STDOUT:     extend %Simple.ref
 // CHECK:STDOUT:     witness = %Simple.impl_witness.loc19_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

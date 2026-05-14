@@ -272,6 +272,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %ImplsGeneric.as.Generic.impl.F.decl
+// CHECK:STDOUT:   extend %Generic.type
 // CHECK:STDOUT:   witness = %Generic.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -633,6 +634,7 @@ fn B() {
 // CHECK:STDOUT:     %I.impl_witness.loc7_38.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T.67d) [symbolic = %I.impl_witness.loc7_38.2 (constants.%I.impl_witness.1cb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc7_36.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc7_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -895,6 +897,7 @@ fn B() {
 // CHECK:STDOUT:     %I.impl_witness.loc7_38.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T.67d) [symbolic = %I.impl_witness.loc7_38.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.type.loc7_36.1
 // CHECK:STDOUT:     witness = %I.impl_witness.loc7_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1107,6 +1110,7 @@ fn B() {
 // CHECK:STDOUT:     %I.impl_witness.loc7_38.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T.67d) [symbolic = %I.impl_witness.loc7_38.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc7_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

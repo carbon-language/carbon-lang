@@ -298,6 +298,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %MyInt.as.Add.impl.Op.decl
+// CHECK:STDOUT:     extend %Add.ref
 // CHECK:STDOUT:     witness = %Add.impl_witness.loc15_48.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

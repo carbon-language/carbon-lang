@@ -226,6 +226,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %C.as.ImplicitAs.impl.Convert.decl
+// CHECK:STDOUT:   extend %ImplicitAs.type
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

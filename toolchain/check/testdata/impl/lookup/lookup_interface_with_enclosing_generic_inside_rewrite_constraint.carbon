@@ -231,6 +231,7 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %.loc58_23
 // CHECK:STDOUT:   witness = %Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -604,6 +605,7 @@ fn F() {
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %.loc14_15
 // CHECK:STDOUT:     witness = %Y.impl_witness.loc14_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -613,6 +615,7 @@ fn F() {
 // CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness %Z1.impl_witness_table [concrete = constants.%Z1.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z1.ref
 // CHECK:STDOUT:   witness = %Z1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -621,6 +624,7 @@ fn F() {
 // CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness %Z2.impl_witness_table [concrete = constants.%Z2.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z2.ref
 // CHECK:STDOUT:   witness = %Z2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

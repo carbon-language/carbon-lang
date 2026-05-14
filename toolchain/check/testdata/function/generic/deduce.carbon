@@ -1785,6 +1785,7 @@ fn F() {
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness.c05]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z.ref
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1800,6 +1801,7 @@ fn F() {
 // CHECK:STDOUT:     %Z.impl_witness.loc9_35.1: <witness> = impl_witness %Z.impl_witness_table, @DD.as.Z.impl(constants.%E) [symbolic = %Z.impl_witness.loc9_35.2 (constants.%Z.impl_witness.437)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Z.ref
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc9_35.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1820,6 +1822,7 @@ fn F() {
 // CHECK:STDOUT:     %Z.impl_witness.loc12_39.1: <witness> = impl_witness %Z.impl_witness_table, @CC.as.Z.impl(constants.%E) [symbolic = %Z.impl_witness.loc12_39.2 (constants.%Z.impl_witness.40e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Z.ref
 // CHECK:STDOUT:     witness = %Z.impl_witness.loc12_39.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

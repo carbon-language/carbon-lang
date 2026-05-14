@@ -176,6 +176,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.AddWith.impl.F.decl
+// CHECK:STDOUT:   extend %AddWith.type
 // CHECK:STDOUT:   witness = %AddWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

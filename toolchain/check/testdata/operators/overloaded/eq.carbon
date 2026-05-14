@@ -224,6 +224,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Equal = %C.as.EqWith.impl.Equal.decl
 // CHECK:STDOUT:   .NotEqual = %C.as.EqWith.impl.NotEqual.decl
+// CHECK:STDOUT:   extend %EqWith.type
 // CHECK:STDOUT:   witness = %EqWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -502,6 +503,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Equal = %C.as.EqWith.impl.Equal.decl
 // CHECK:STDOUT:   .NotEqual = %C.as.EqWith.impl.NotEqual.decl
+// CHECK:STDOUT:   extend %EqWith.type
 // CHECK:STDOUT:   witness = %EqWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -313,6 +313,7 @@ fn F() {
 // CHECK:STDOUT:   %Edible.impl_witness: <witness> = impl_witness %Edible.impl_witness_table [concrete = constants.%Edible.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Edible.ref
 // CHECK:STDOUT:   witness = %Edible.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,6 +333,7 @@ fn F() {
 // CHECK:STDOUT:     %Eats.impl_witness.loc26_51.1: <witness> = impl_witness %Eats.impl_witness_table, @T.as_type.as.Eats.impl(constants.%T.998, constants.%U) [symbolic = %Eats.impl_witness.loc26_51.2 (constants.%Eats.impl_witness.e8df35.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     extend %Eats.type.loc26_49.1
 // CHECK:STDOUT:     witness = %Eats.impl_witness.loc26_51.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -341,6 +343,7 @@ fn F() {
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Animal.ref
 // CHECK:STDOUT:   witness = %Animal.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

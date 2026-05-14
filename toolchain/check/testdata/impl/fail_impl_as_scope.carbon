@@ -147,6 +147,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<error>.as.I.impl: <error> as %I.ref {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -209,6 +210,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<error>.as.J.impl: <error> as %J.ref {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %J.ref
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -360,6 +362,7 @@ class X {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Zero = %<error>.as.Z.impl.Zero.decl
 // CHECK:STDOUT:     .Method = %<error>.as.Z.impl.Method.decl
+// CHECK:STDOUT:     extend %Z.ref
 // CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -380,6 +383,7 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Point.as.Z.impl.Zero.decl
 // CHECK:STDOUT:   .Method = %Point.as.Z.impl.Method.decl
+// CHECK:STDOUT:   extend %Z.ref
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -582,6 +586,8 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .B = @A.WithSelf.%assoc0
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .G = <poisoned>
 // CHECK:STDOUT:   witness = (@A.WithSelf.%A.WithSelf.B.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -610,11 +616,13 @@ class X {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .B = %X.as.A.impl.B.decl
 // CHECK:STDOUT:   .G = <poisoned>
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<error>.as.C.impl: <error> as %C.ref {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %C.ref
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -167,6 +167,7 @@ impl i32 as I {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = @I.WithSelf.%assoc0
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -195,6 +196,7 @@ impl i32 as I {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .F = %bool.as.I.impl.F.decl
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +226,7 @@ impl i32 as I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %i32.as.I.impl.F.decl.loc43_18.1
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

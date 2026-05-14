@@ -81,6 +81,7 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %X.as.A.impl.B.decl
 // CHECK:STDOUT:   .F = %X.as.A.impl.F.decl
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

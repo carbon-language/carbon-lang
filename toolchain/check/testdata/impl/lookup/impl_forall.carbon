@@ -189,6 +189,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .V = <poisoned>
 // CHECK:STDOUT:     .F = %A.as.I.impl.F.decl
+// CHECK:STDOUT:     extend %I.type.loc12_35.2
 // CHECK:STDOUT:     witness = %I.impl_witness.loc12_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

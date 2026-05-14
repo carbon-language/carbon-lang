@@ -359,6 +359,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = @A.WithSelf.%assoc0.loc6_41.1
+// CHECK:STDOUT:     .X = <poisoned>
+// CHECK:STDOUT:     .Y = <poisoned>
 // CHECK:STDOUT:     witness = (@A.WithSelf.%A.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -401,6 +403,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .F = %Y.as.A.impl.F.decl
+// CHECK:STDOUT:   extend %A.type
 // CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1085,6 +1088,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = @A.WithSelf.%assoc0.loc6_39.1
+// CHECK:STDOUT:     .W = <poisoned>
+// CHECK:STDOUT:     .V1 = <poisoned>
+// CHECK:STDOUT:     .V2 = <poisoned>
 // CHECK:STDOUT:     witness = (@A.WithSelf.%A.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1141,6 +1147,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     .V1 = <poisoned>
 // CHECK:STDOUT:     .V2 = <poisoned>
 // CHECK:STDOUT:     .F = %tuple.type.as.A.impl.F.decl
+// CHECK:STDOUT:     extend %A.type.loc14_61.2
 // CHECK:STDOUT:     witness = %A.impl_witness.loc14_63.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

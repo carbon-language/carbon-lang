@@ -145,6 +145,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %C.as.Inc.impl.Op.decl
+// CHECK:STDOUT:   extend %Inc.ref
 // CHECK:STDOUT:   witness = %Inc.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,6 +169,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %C.as.AddAssignWith.impl.Op.decl
+// CHECK:STDOUT:   extend %AddAssignWith.type
 // CHECK:STDOUT:   witness = %AddAssignWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

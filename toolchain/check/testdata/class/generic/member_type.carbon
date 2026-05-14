@@ -587,6 +587,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = @Inner.WithSelf.%assoc0.loc6_28.1
+// CHECK:STDOUT:     .C = <poisoned>
+// CHECK:STDOUT:     .Inner = <poisoned>
+// CHECK:STDOUT:     .D = <poisoned>
 // CHECK:STDOUT:     witness = (@Inner.WithSelf.%Inner.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -630,6 +633,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %C.as.Inner.impl.F.decl
 // CHECK:STDOUT:     .Inner = <poisoned>
+// CHECK:STDOUT:     extend %Inner.ref
 // CHECK:STDOUT:     witness = %Inner.impl_witness.loc10_19.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -655,6 +659,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .F = %D.as.Inner.impl.F.decl
+// CHECK:STDOUT:   extend %Inner.ref
 // CHECK:STDOUT:   witness = %Inner.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

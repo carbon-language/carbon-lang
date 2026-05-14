@@ -182,6 +182,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = @UseSelf.WithSelf.%assoc0
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = (@UseSelf.WithSelf.%UseSelf.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -218,6 +219,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = @SelfNested.WithSelf.%assoc0
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   witness = (@SelfNested.WithSelf.%SelfNested.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -249,6 +251,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.UseSelf.impl.F.decl
+// CHECK:STDOUT:   extend %UseSelf.ref
 // CHECK:STDOUT:   witness = %UseSelf.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -277,6 +280,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %D.as.UseSelf.impl.F.decl
+// CHECK:STDOUT:   extend %UseSelf.ref
 // CHECK:STDOUT:   witness = %UseSelf.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,6 +308,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.SelfNested.impl.F.decl
+// CHECK:STDOUT:   extend %SelfNested.ref
 // CHECK:STDOUT:   witness = %SelfNested.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,6 +335,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %D.as.SelfNested.impl.F.decl
+// CHECK:STDOUT:   extend %SelfNested.ref
 // CHECK:STDOUT:   witness = %SelfNested.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

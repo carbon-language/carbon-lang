@@ -443,6 +443,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
+// CHECK:STDOUT:   extend %IndexWith.type
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
