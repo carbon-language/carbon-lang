@@ -115,4 +115,9 @@ template class CanonicalValueStore<SemIR::ClangDeclId, SemIR::ClangDeclKey,
                                    Tag<SemIR::CheckIRId>, SemIR::ClangDecl>;
 template class ValueStore<SemIR::ClangDeclId, SemIR::ClangDecl,
                           Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<
+    SemIR::ClangDeclSignatureId, SemIR::ClangDeclSignature,
+    Tag<SemIR::CheckIRId>, SemIR::ClangDeclSignature>;
+template class ValueStore<SemIR::ClangDeclSignatureId,
+                          SemIR::ClangDeclSignature, Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
