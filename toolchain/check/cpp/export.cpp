@@ -535,6 +535,9 @@ static auto BuildCppToCarbonThunkDecl(
         constexpr_kind, clang_loc, trailing_requires_clause);
     // TODO: Map Carbon access to C++ access.
     thunk_function_decl->setAccess(clang::AS_public);
+    thunk_function_decl->setVirtualAsWritten(
+        target.function.virtual_modifier !=
+        SemIR::Function::VirtualModifier::None);
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info,
