@@ -57,4 +57,16 @@ auto GlobalInit::Finalize() -> void {
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 
+auto UseGlobalInitStack::Push(bool use_global_init) -> void {
+  stack_.push_back(use_global_init);
+}
+
+auto UseGlobalInitStack::Pop() -> void { stack_.pop_back(); }
+
+auto UseGlobalInitStack::EnableUseGlobalInit() -> void { stack_.back() = true; }
+
+auto UseGlobalInitStack::UseGlobalInit() -> bool {
+  return !stack_.empty() && stack_.back();
+}
+
 }  // namespace Carbon::Check

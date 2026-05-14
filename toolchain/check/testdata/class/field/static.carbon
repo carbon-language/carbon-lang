@@ -109,13 +109,6 @@ fn F() {
 // CHECK:STDOUT:     %static_field.var_patt: %pattern_type.7ce = var_pattern %static_field.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field.var: ref %i32 = var %static_field.var_patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.89f) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc5_31.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc5_31.1 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc5_31.2: type = converted %.loc5_31.1, %as_type [concrete = constants.%i32]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
-// CHECK:STDOUT:   assign %static_field.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %static_field: ref %i32 = ref_binding static_field, %static_field.var [concrete = %static_field.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -123,14 +116,6 @@ fn F() {
 // CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.7ce = var_pattern %static_field_with_init.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field_with_init.var: ref %i32 = var %static_field_with_init.var_patt [concrete]
-// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
-// CHECK:STDOUT:   %impl.elem0: %.9db = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f1a]
-// CHECK:STDOUT:   %bound_method.loc6_10.1: <bound method> = bound_method %int_123, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.e93]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc6_10.2: <bound method> = bound_method %int_123, %specific_fn [concrete = constants.%bound_method.0ac]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc6_10.2(%int_123) [concrete = constants.%int_123.f7f]
-// CHECK:STDOUT:   %.loc6: init %i32 = converted %int_123, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.f7f]
-// CHECK:STDOUT:   assign %static_field_with_init.var, %.loc6
 // CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %static_field_with_init: ref %i32 = ref_binding static_field_with_init, %static_field_with_init.var [concrete = %static_field_with_init.var]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
@@ -155,5 +140,25 @@ fn F() {
 // CHECK:STDOUT:   %.loc10: init %i32 = converted %int_456, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_456.d17]
 // CHECK:STDOUT:   assign %static_field.ref, %.loc10
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.89f) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc5_31.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc5_31.1 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5_31.2: type = converted %.loc5_31.1, %as_type [concrete = constants.%i32]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign @C.%static_field.var, %T.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
+// CHECK:STDOUT:   %impl.elem0: %.9db = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f1a]
+// CHECK:STDOUT:   %bound_method.loc6_10.1: <bound method> = bound_method %int_123, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.e93]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc6_10.2: <bound method> = bound_method %int_123, %specific_fn [concrete = constants.%bound_method.0ac]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc6_10.2(%int_123) [concrete = constants.%int_123.f7f]
+// CHECK:STDOUT:   %.loc6: init %i32 = converted %int_123, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.f7f]
+// CHECK:STDOUT:   assign @C.%static_field_with_init.var, %.loc6
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

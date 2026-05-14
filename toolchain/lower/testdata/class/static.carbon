@@ -28,6 +28,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cstatic_field.C.Main = global i32 0
 // CHECK:STDOUT: @_Cstatic_field_with_init.C.Main = global i32 0
+// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
@@ -35,6 +36,14 @@ fn F() {
 // CHECK:STDOUT:   store i32 456, ptr @_Cstatic_field.C.Main, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 789, ptr @_Cstatic_field_with_init.C.Main, align 4, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !10 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   store i32 poison, ptr @_Cstatic_field.C.Main, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 123, ptr @_Cstatic_field_with_init.C.Main, align 4, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -52,3 +61,7 @@ fn F() {
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 10, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 4, column: 10, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 5, column: 10, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !10)

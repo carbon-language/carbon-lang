@@ -64,6 +64,9 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
 
 template <Lex::TokenKind::RawEnumType Kind>
 static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
+  context.use_global_init_stack().Push(context.scope_stack().PeekIndex() ==
+                                       ScopeIndex::Package);
+
   context.decl_introducer_state_stack().Push<Kind>();
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
@@ -163,7 +166,7 @@ static auto EndFullPattern(Context& context) -> void {
 }
 
 static auto StartPatternInitializer(Context& context) -> bool {
-  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+  if (context.use_global_init_stack().UseGlobalInit()) {
     context.global_init().Resume();
   }
   context.full_pattern_stack().StartPatternInitializer();
@@ -171,7 +174,7 @@ static auto StartPatternInitializer(Context& context) -> bool {
 }
 
 static auto EndPatternInitializer(Context& context) -> void {
-  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+  if (context.use_global_init_stack().UseGlobalInit()) {
     context.global_init().Suspend();
   }
   context.full_pattern_stack().EndPatternInitializer();
@@ -336,6 +339,9 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
+
+  context.use_global_init_stack().Pop();
+
   return true;
 }
 
@@ -389,6 +395,9 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
+
+  context.use_global_init_stack().Pop();
+
   return true;
 }
 
@@ -408,6 +417,9 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+
+  context.use_global_init_stack().Pop();
+
   return true;
 }
 
