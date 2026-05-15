@@ -53,3 +53,31 @@ fn H(U:! type, V:! Z where .Z1 impls (Y where .Y1 = U)) {
   // query's.
   V as X(U);
 }
+
+// --- fail_concrete_impl_witness_access_in_type_structure.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let Z1:! type;
+}
+interface Y {}
+
+class C;
+
+// Converting to this facet type requires a lookup for `C.(Z(C).Z1) as Y`. That
+// has a type structure that contains a fully concrete ImplWitnessAccess. But if
+// the lookup fails because there is no impl for `C as Z(C)`, then the access
+// remains in the type structure as is. This test ensures the type structure can
+// handle this edge case.
+fn F(unused T:! Z(.Self) where C impls (Z(C) where .Z1 impls Y)) {}
+
+fn G(T:! Z(.Self)) {
+  // CHECK:STDERR: fail_concrete_impl_witness_access_in_type_structure.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Z(.Self)` into type implementing `Z(.Self) where C impls Z(C) and C.(Z(C).Z1) impls Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_concrete_impl_witness_access_in_type_structure.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(unused T:! Z(.Self) where C impls (Z(C) where .Z1 impls Y)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(T);
+}
