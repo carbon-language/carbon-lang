@@ -70,6 +70,7 @@ cc_binary(
         "//testing/base:global_exe_path",
         "//toolchain/base:install_paths_test_helpers",
         "//toolchain/driver",
+        "//toolchain/driver:clang_runner",
         "//toolchain/testing:compile_helper",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",

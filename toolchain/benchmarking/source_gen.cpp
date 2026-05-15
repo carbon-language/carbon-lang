@@ -467,8 +467,9 @@ static auto IdentifierChars() -> llvm::ArrayRef<char> {
 }
 
 static constexpr llvm::StringRef NonCarbonCppKeywords[] = {
-    "asm", "do",  "double", "float",    "int", "long", "new", "signed",
-    "std", "try", "unix",   "unsigned", "xor", "NAN",  "M_E", "M_PI",
+    "asm",      "catch",  "do",  "double", "float", "int",  "long",     "new",
+    "operator", "signed", "std", "this",   "throw", "try",  "typename", "unix",
+    "unsigned", "using",  "xor", "M_E",    "M_El",  "M_PI", "NAN",      "NULL",
 };
 
 // Returns a random identifier string of the specified length.
