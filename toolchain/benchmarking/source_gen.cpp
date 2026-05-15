@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/base/source_gen.h"
+#include "toolchain/benchmarking/source_gen.h"
 
 #include <algorithm>
 #include <array>
