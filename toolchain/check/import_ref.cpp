@@ -1925,6 +1925,8 @@ static auto ImportClassDefinition(ImportContext& context,
       context, import_scope, new_scope, new_class.first_owning_decl_id,
       SemIR::NameId::None, new_class.parent_scope_id);
   new_class.body_block_id = context.local_context().inst_block_stack().Pop();
+  new_scope.set_self_type_id(
+      context.local_types().GetTypeInstId(new_class.self_type_id));
 
   if (import_class.base_id.has_value()) {
     new_class.base_id = base_id;

@@ -41,9 +41,13 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
       definition_id, SemIR::NameId::None, class_info.parent_scope_id);
 
   // Introduce `Self`.
+  auto self_type_inst_id =
+      context.types().GetTypeInstId(class_info.self_type_id);
   context.name_scopes().AddRequiredName(
-      class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetTypeInstId(class_info.self_type_id));
+      class_info.scope_id, SemIR::NameId::SelfType, self_type_inst_id);
+  context.name_scopes()
+      .Get(class_info.scope_id)
+      .set_self_type_id(self_type_inst_id);
 }
 
 // Checks that the specified finished adapter definition is valid and builds and

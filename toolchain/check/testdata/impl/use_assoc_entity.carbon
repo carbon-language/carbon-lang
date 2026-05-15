@@ -174,7 +174,7 @@ class E {
   }
 }
 
-// --- fail_todo_call_extend_fn.carbon
+// --- call_extend_fn.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -186,11 +186,11 @@ class E {
     fn F() {}
   }
 
-  // CHECK:STDERR: fail_todo_call_extend_fn.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   fn G() { F(); }
-  // CHECK:STDERR:            ^~~
-  // CHECK:STDERR:
-  fn G() { F(); }
+  fn G() {
+    //@dump-sem-ir-begin
+    F();
+    //@dump-sem-ir-end
+  }
 }
 
 // --- call_extend_method.carbon
@@ -208,7 +208,7 @@ class E {
   fn G[self: Self]() { self.F(); }
 }
 
-// --- fail_todo_use_extend_constant.carbon
+// --- use_extend_constant.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -218,15 +218,9 @@ interface J {
 class E {
   extend impl as J where .X = () {}
 
-  // TODO: `X` should be in scope and directly usable.
-  // CHECK:STDERR: fail_todo_use_extend_constant.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   fn G() -> X { return (); }
-  // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_todo_use_extend_constant.carbon:[[@LINE+4]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   fn G() -> X { return (); }
-  // CHECK:STDERR:             ^
-  // CHECK:STDERR:
+  //@dump-sem-ir-begin
   fn G() -> X { return (); }
+  //@dump-sem-ir-end
 }
 
 // --- associated_entity_scope.carbon
@@ -1073,6 +1067,90 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %u.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_14.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- call_extend_fn.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %E: type = class_type @E [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @E.as.J.impl.%J.impl_witness_table [concrete]
+// CHECK:STDOUT:   %E.as.J.impl.F.type: type = fn_type @E.as.J.impl.F [concrete]
+// CHECK:STDOUT:   %E.as.J.impl.F: %E.as.J.impl.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %E, (%J.impl_witness) [concrete]
+// CHECK:STDOUT:   %J.WithSelf.F.type.59e: type = fn_type @J.WithSelf.F, @J.WithSelf(%J.facet) [concrete]
+// CHECK:STDOUT:   %.8de: type = fn_type_with_self_type %J.WithSelf.F.type.59e, %J.facet [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @E {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%E
+// CHECK:STDOUT:   .J = <poisoned>
+// CHECK:STDOUT:   .G = %E.G.decl
+// CHECK:STDOUT:   .F = <poisoned>
+// CHECK:STDOUT:   extend @E.as.J.impl.%J.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @E.G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value constants.%E, (constants.%J.impl_witness) [concrete = constants.%J.facet]
+// CHECK:STDOUT:   %.loc14: %J.type = converted constants.%E, %J.facet [concrete = constants.%J.facet]
+// CHECK:STDOUT:   %impl.elem0: %.8de = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%E.as.J.impl.F]
+// CHECK:STDOUT:   %F.ref: %.8de = name_ref F, %impl.elem0 [concrete = constants.%E.as.J.impl.F]
+// CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_extend_constant.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
+// CHECK:STDOUT:   %E: type = class_type @E [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @E.as.J.impl.%J.impl_witness_table [concrete]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %E, (%J.impl_witness) [concrete]
+// CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %E.G.type: type = fn_type @E.G [concrete]
+// CHECK:STDOUT:   %E.G: %E.G.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @E {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %E.G.decl: %E.G.type = fn_decl @E.G [concrete = constants.%E.G] {
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %X.ref [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %J.facet: %J.type = facet_value constants.%E, (constants.%J.impl_witness) [concrete = constants.%J.facet]
+// CHECK:STDOUT:     %.loc11_13.1: %J.type = converted constants.%E, %J.facet [concrete = constants.%J.facet]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %X.ref: type = name_ref X, %impl.elem0 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc11_13.2: Core.Form = init_form %X.ref [concrete = constants.%.262]
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
+// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%E
+// CHECK:STDOUT:   .J = <poisoned>
+// CHECK:STDOUT:   .X = <poisoned>
+// CHECK:STDOUT:   .G = %E.G.decl
+// CHECK:STDOUT:   extend @E.as.J.impl.%.loc8_20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @E.G() -> out %return.param: %empty_tuple.type {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_26: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon

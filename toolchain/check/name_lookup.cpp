@@ -119,17 +119,17 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                         .self_const_id = SemIR::ConstantId::None},
             /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
-      // In an interface definition or an impl, replace associated entity `M`
-      // with `Self.M` (where `Self` is the `Self` of the interface or impl).
+      // If the scope has a `Self` type, replace associated entity `M` with
+      // `Self.M` (where `Self` is the `Self` of the interface or impl).
       const auto& scope = context.name_scopes().Get(lookup_scope_id);
-      SemIR::InstId target_inst_id =
-          non_lexical_result.scope_result.target_inst_id();
-      if (auto assoc_type =
-              context.types().TryGetAs<SemIR::AssociatedEntityType>(
-                  SemIR::GetTypeOfInstInSpecific(context.sem_ir(),
-                                                 non_lexical_result.specific_id,
-                                                 target_inst_id))) {
-        if (scope.self_type_id().has_value()) {
+      if (scope.self_type_id().has_value()) {
+        SemIR::InstId target_inst_id =
+            non_lexical_result.scope_result.target_inst_id();
+        if (auto assoc_type =
+                context.types().TryGetAs<SemIR::AssociatedEntityType>(
+                    SemIR::GetTypeOfInstInSpecific(
+                        context.sem_ir(), non_lexical_result.specific_id,
+                        target_inst_id))) {
           SemIR::InstId result_inst_id = GetAssociatedValue(
               context, loc_id, scope.self_type_id(),
               SemIR::GetConstantValueInSpecific(context.sem_ir(),

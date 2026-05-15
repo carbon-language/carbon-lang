@@ -289,10 +289,12 @@ class NameScope : public Printable<NameScope> {
   NameScopeId parent_scope_id_;
 
   // The `Self` value that should be used implicitly for unqualified lookups in
-  // this scope, if any. This is used for lookups in `impl` and `interface`
-  // scopes so that unqualified names of associated entities resolve to their
-  // corresponding values rather than to an unbound associated entity constant.
-  // TODO: Should this apply in class scopes too?
+  // this scope that find associated entities, if any. This is used for lookups
+  // in `interface`, `impl`, and `class` scopes so that unqualified names of
+  // associated entities resolve to their corresponding values rather than to an
+  // unbound associated entity constant.
+  // TODO: Instead of storing this separately, can we look up `SelfType` in the
+  // scope's name lookup table?
   InstId self_type_id_ = InstId::None;
 
   // Whether we have diagnosed an error in a construct that would have added
