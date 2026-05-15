@@ -35,7 +35,7 @@ __attribute__((optnone)) auto Use(Base& b) {
 base class Derived {
   extend base: Cpp.Base;
   // TODO: `other_func` should appear in the vtable (it currently doesn't
-  // maybe because the CXXRecordDecl isn't marked as virtual)
+  // maybe because the CXXMethodDecl isn't marked as virtual)
   virtual fn other_func[unused self: Self]() {
   }
   override fn func[unused ref self: Self]() {
