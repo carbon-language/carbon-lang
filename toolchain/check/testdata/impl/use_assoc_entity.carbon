@@ -256,7 +256,7 @@ impl forall [T:! type] T as J where .T = () {
   }
 }
 
-// --- associated_constant_use_before_value_known.carbon
+// --- fail_todo_associated_constant_use_before_value_known.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -268,31 +268,31 @@ class A {}
 
 // TODO: Make sure this behaves reasonably once we support `where` declarations.
 
-// CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE+14]]:1: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+14]]:1: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:   let T:! type;
 // CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE+7]]:1: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:1: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:   let U:! type;
 // CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:   where .U = T;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   where .U = T;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   where .U = T;
-  // CHECK:STDERR: associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:   where .T = ();
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
