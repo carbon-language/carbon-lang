@@ -228,9 +228,9 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
           context, node_id,
           {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
 
-  if (lhs_as_type.inst_id != SemIR::ErrorInst::InstId &&
-      rhs_as_type.inst_id != SemIR::ErrorInst::InstId &&
-      rhs_as_type.inst_id != SemIR::TypeType::TypeInstId) {
+  if (lhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+      rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+      rhs_as_type.type_id != SemIR::TypeType::TypeId) {
     // Track the impls relationship so further constraints can use it
     // immediately, before they are evaluated. Impl lookup will search the top
     // of the stack.
