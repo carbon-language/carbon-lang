@@ -202,7 +202,7 @@ class NameScope : public Printable<NameScope> {
     inst_id_ = inst_id;
     name_id_ = name_id;
     parent_scope_id_ = parent_scope_id;
-    self_id_ = InstId::None;
+    self_type_id_ = InstId::None;
   }
 
   auto inst_id() const -> InstId { return inst_id_; }
@@ -250,9 +250,11 @@ class NameScope : public Printable<NameScope> {
     import_ir_scopes_.push_back(import_ir_scope);
   }
 
-  auto self_id() const -> InstId { return self_id_; }
+  auto self_type_id() const -> InstId { return self_type_id_; }
 
-  auto set_self_id(InstId self_id) -> void { self_id_ = self_id; }
+  auto set_self_type_id(InstId self_type_id) -> void {
+    self_type_id_ = self_type_id;
+  }
 
  private:
   // Names in the scope, including poisoned names.
@@ -291,7 +293,7 @@ class NameScope : public Printable<NameScope> {
   // scopes so that unqualified names of associated entities resolve to their
   // corresponding values rather than to an unbound associated entity constant.
   // TODO: Should this apply in class scopes too?
-  InstId self_id_ = InstId::None;
+  InstId self_type_id_ = InstId::None;
 
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or

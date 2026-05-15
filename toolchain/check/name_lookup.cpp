@@ -129,9 +129,9 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                   SemIR::GetTypeOfInstInSpecific(context.sem_ir(),
                                                  non_lexical_result.specific_id,
                                                  target_inst_id))) {
-        if (scope.self_id().has_value()) {
+        if (scope.self_type_id().has_value()) {
           SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, scope.self_id(),
+              context, loc_id, scope.self_type_id(),
               SemIR::GetConstantValueInSpecific(context.sem_ir(),
                                                 non_lexical_result.specific_id,
                                                 target_inst_id),

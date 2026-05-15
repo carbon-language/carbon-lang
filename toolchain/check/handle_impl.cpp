@@ -370,7 +370,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   impl.scope_id =
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
-  context.name_scopes().Get(impl.scope_id).set_self_id(impl.self_id);
+  context.name_scopes().Get(impl.scope_id).set_self_type_id(impl.self_id);
   context.name_scopes().Get(impl.scope_id).AddExtendedScope(impl.constraint_id);
 
   context.scope_stack().PushForEntity(
