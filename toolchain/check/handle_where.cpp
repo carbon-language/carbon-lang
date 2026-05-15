@@ -96,10 +96,9 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
           context, SemIR::LocId(node_id),
           {.base_type_inst_id = context.types().GetAsTypeInstId(self_id)}));
 
-  // Add a context stack for tracking rewrite constraints, that will be used to
-  // allow later constraints to read from them eagerly.
-  context.rewrites_stack().emplace_back();
-  context.impls_stack().emplace_back();
+  // Add a context stack for tracking constraints, that will be used to allow
+  // later constraints to read from them eagerly.
+  context.where_stack().emplace_back();
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
@@ -109,7 +108,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
         context.facet_types().Get(self_facet_type->facet_type_id);
     for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
-        context.rewrites_stack().back().Insert(
+        context.where_stack().back().rewrites.Insert(
             context.constant_values().Get(
                 GetImplWitnessAccessWithoutSubstitution(context,
                                                         rewrite.lhs_id)),
@@ -152,7 +151,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // immediately, before they are evaluated. This happens directly where the
     // `ImplWitnessAccess` that refers to the rewrite constraint would have been
     // created, and the value of the constraint will be used instead.
-    context.rewrites_stack().back().Insert(
+    context.where_stack().back().rewrites.Insert(
         context.constant_values().Get(
             GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
         rhs_id);
@@ -174,8 +173,13 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
   return true;
 }
 
+// Returns whether `inst_id` is `.Self` or an access into `.Self`, possibly
+// nested.
 static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
     -> bool {
+  // Walks through nested `ImplWitnessAccess(LookupImplWitness(...))`
+  // instructions until it either finds `.Self` and returns true, or finds
+  // anything else and returns false.
   while (true) {
     if (IsPeriodSelf(context, inst_id)) {
       return true;
@@ -234,7 +238,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     // Track the impls relationship so further constraints can use it
     // immediately, before they are evaluated. Impl lookup will search the top
     // of the stack.
-    context.impls_stack().back().push_back({
+    context.where_stack().back().impls.push_back({
         context.constant_values().Get(lhs_as_type.inst_id),
         context.constant_values().Get(rhs_as_type.inst_id),
     });
@@ -251,7 +255,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
         auto lhs = SubstPeriodSelf(
             context, rhs_node, context.constant_values().Get(rewrite.lhs_id),
             context.constant_values().Get(lhs_as_type.inst_id));
-        context.rewrites_stack().back().Insert(lhs, rewrite.rhs_id);
+        context.where_stack().back().rewrites.Insert(lhs, rewrite.rhs_id);
       }
     }
   }
@@ -408,8 +412,7 @@ static auto FindDesignator(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  context.impls_stack().pop_back();
-  context.rewrites_stack().pop_back();
+  context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop(/*check_unused=*/true);

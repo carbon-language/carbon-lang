@@ -380,8 +380,8 @@ static auto CollectFacetWitnessSources(
       }
     }
 
-    if (!context.impls_stack().empty()) {
-      const auto& impls = context.impls_stack().back();
+    if (!context.where_stack().empty()) {
+      const auto& impls = context.where_stack().back().impls;
       for (auto [self_const_id, facet_type_const_id] : impls) {
         if (self_const_id != facet_const_id) {
           continue;
