@@ -540,10 +540,36 @@ auto MatchContext::DoPostWork(State /*state*/,
                               SemIR::ExprPattern /*expr_pattern*/,
                               WorkItem /*entry*/) -> void {}
 
-auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl /*field_decl*/,
-                             SemIR::InstId /*scrutinee_id*/, WorkItem /*entry*/)
+auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
+                             SemIR::InstId scrutinee_id, WorkItem /*entry*/)
     -> void {
-  // TODO
+  if (!scrutinee_id.has_value()) {
+    return;
+  }
+
+  auto unbound_element_type = context_.insts().GetAs<SemIR::UnboundElementType>(
+      context_.types().GetTypeInstId(field_decl.type_id));
+  auto element_type = context_.types().GetTypeIdForTypeInstId(
+      unbound_element_type.element_type_inst_id);
+
+  // Get the field initializer as a constant.
+  auto converted_id = ConvertToValueOfType(context_, SemIR::LocId(scrutinee_id),
+                                           scrutinee_id, element_type,
+                                           /*diagnose=*/true);
+  if (converted_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+  auto const_id = TryEvalInst(context_, converted_id);
+  if (const_id == SemIR::ConstantId::NotConstant) {
+    context_.TODO(scrutinee_id, "field initializer is not constant");
+    return;
+  }
+
+  // Store a mapping to the field's initializer.
+  auto class_type = context_.insts().GetAs<SemIR::ClassType>(
+      unbound_element_type.class_type_inst_id);
+  auto key = std::make_pair(class_type.class_id, field_decl.name_id);
+  context_.field_initializers().Insert(key, const_id);
 }
 
 auto MatchContext::DoPreWork(State state,

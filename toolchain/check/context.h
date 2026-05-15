@@ -201,6 +201,12 @@ class Context {
     return var_storage_map_;
   }
 
+  using FieldInitializerMap =
+      Map<std::pair<SemIR::ClassId, SemIR::NameId>, SemIR::ConstantId>;
+  auto field_initializers() -> FieldInitializerMap& {
+    return field_initializers_;
+  }
+
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
   // known. This represents each binding to be done at the end of checking the
@@ -526,6 +532,10 @@ class Context {
   // VarStorage insts are allocated, emitted, and stored in the map after
   // processing the enclosing full-pattern.
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
+
+  // Map containing initializers for class fields. The map keys are pairs
+  // of `ClassId` and `NameId`. The map values are `ConstantId`s.
+  FieldInitializerMap field_initializers_;
 
   // Each alternative in a Choice gets an entry here, they are stored in
   // declaration order. The vector is consumed and emptied at the end of the

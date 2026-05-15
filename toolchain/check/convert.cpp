@@ -828,6 +828,74 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
       context, src_type, dest_type, value_id, target);
 }
 
+// Given a source structure that will be used to construct a class, fill
+// any missing fields in the source structure by looking up the
+// corresponding class field's default initializer (if it has one).
+//
+// If any defaults are added, `src_type->fields_id` is updated with the
+// new list of fields, and `value_id` is updated to point at a new
+// `StructValue`.
+static auto AddDefaultsToInitializer(Context& context,
+                                     SemIR::ClassId dest_class_id,
+                                     SemIR::StructType dest_struct_type,
+                                     SemIR::StructType* src_type,
+                                     SemIR::InstId* value_id) {
+  llvm::SmallVector<SemIR::StructTypeField> new_struct_type_fields(
+      context.struct_type_fields().Get(src_type->fields_id));
+
+  llvm::SmallVector<SemIR::InstId> new_elements(context.inst_blocks().Get(
+      context.insts().GetAs<SemIR::StructLiteral>(*value_id).elements_id));
+
+  // Create a map from field `NameId` to the index in the
+  // `new_struct_type_fields` array.
+  Map<SemIR::NameId, int32_t> name_to_index;
+  for (auto [i, field] : llvm::enumerate(new_struct_type_fields)) {
+    auto result = name_to_index.Insert(field.name_id, i);
+    CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
+  }
+
+  // For each field, if it's missing from the source struct, look for a
+  // default initializer. If found, add the type and value to
+  // `new_struct_type_fields` and `new_elements`.
+  bool changed = false;
+  for (auto dest_field :
+       context.struct_type_fields().Get(dest_struct_type.fields_id)) {
+    // Skip the field if it's already in the source, or if it's a
+    // special field.
+    if (name_to_index.Lookup(dest_field.name_id) ||
+        dest_field.name_id == SemIR::NameId::Base ||
+        dest_field.name_id == SemIR::NameId::Vptr) {
+      continue;
+    }
+
+    if (auto lookup = context.field_initializers().Lookup(
+            std::make_pair(dest_class_id, dest_field.name_id))) {
+      auto field_default = context.constant_values().GetInstId(lookup.value());
+      new_struct_type_fields.push_back(
+          {.name_id = dest_field.name_id,
+           .type_inst_id = context.types().GetTypeInstId(
+               context.insts().Get(field_default).type_id())});
+      new_elements.push_back(field_default);
+      changed = true;
+    }
+  }
+
+  // If any default initializers were added above, update `src_type` and
+  // `value_id` to create a new initializer that combines the original
+  // source fields and the field defaults.
+  if (changed) {
+    auto fields_id =
+        context.struct_type_fields().AddCanonical(new_struct_type_fields);
+    src_type->fields_id = fields_id;
+
+    auto elements_id = context.inst_blocks().AddCanonical(new_elements);
+    *value_id = AddInst<SemIR::StructValue>(
+        context, SemIR::LocId(*value_id),
+        {.type_id = GetStructType(context, fields_id),
+         .elements_id = elements_id});
+  }
+}
+
 // Performs a conversion from a struct to a class type. This function only
 // converts the type, and does not perform a final conversion to the requested
 // expression category.
@@ -861,6 +929,11 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     target.storage_access_block = &target_block;
     target.storage_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
+  }
+
+  if (!is_partial && context.insts().Is<SemIR::StructLiteral>(value_id)) {
+    AddDefaultsToInitializer(context, dest_type.class_id, dest_struct_type,
+                             &src_type, &value_id);
   }
 
   return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
