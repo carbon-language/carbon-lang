@@ -136,9 +136,8 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
   EndSubpattern(context, context.node_stack());
-  auto scope_id = context.scope_stack().PeekNameScopeId();
-  if (scope_id.has_value() &&
-      context.name_scopes().Get(scope_id).is_interface_definition()) {
+  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+          context.scope_stack().PeekNameScopeId())) {
     // Don't emit NameBindingDecl for an associated constant, because it will
     // always be empty.
     context.pattern_block_stack().PopAndDiscard();

@@ -129,28 +129,9 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                   SemIR::GetTypeOfInstInSpecific(context.sem_ir(),
                                                  non_lexical_result.specific_id,
                                                  target_inst_id))) {
-        if (scope.is_interface_definition()) {
-          auto interface_decl =
-              context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
-                  scope.inst_id());
-          const auto& interface =
-              context.interfaces().Get(interface_decl.interface_id);
+        if (scope.self_id().has_value()) {
           SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, interface.self_param_id,
-              SemIR::GetConstantValueInSpecific(context.sem_ir(),
-                                                non_lexical_result.specific_id,
-                                                target_inst_id),
-              assoc_type->GetSpecificInterface());
-          non_lexical_result = {
-              .specific_id = SemIR::SpecificId::None,
-              .scope_result = SemIR::ScopeLookupResult::MakeFound(
-                  result_inst_id,
-                  non_lexical_result.scope_result.access_kind())};
-        } else if (auto impl_decl = context.insts().TryGetAs<SemIR::ImplDecl>(
-                       scope.inst_id())) {
-          const auto& impl = context.impls().Get(impl_decl->impl_id);
-          SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, impl.self_id,
+              context, loc_id, scope.self_id(),
               SemIR::GetConstantValueInSpecific(context.sem_ir(),
                                                 non_lexical_result.specific_id,
                                                 target_inst_id),

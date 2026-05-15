@@ -200,8 +200,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
     case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope (see
-      // NameScope::is_interface_definition()).
+      // This is a function in an interface definition scope.
       auto function_decl =
           context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
       prev_function_id = function_decl.function_id;
@@ -269,12 +268,11 @@ static auto MaybeAddToNameLookup(Context& context,
   // function.
   auto lookup_result_id = decl_id;
   if (parent_scope_id.has_value() && !name_context.has_qualifiers) {
-    const auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-    if (parent_scope.is_interface_definition()) {
-      auto interface_decl = context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
-          parent_scope.inst_id());
+    if (auto interface_decl =
+            context.name_scopes().TryGetInstAs<SemIR::InterfaceWithSelfDecl>(
+                parent_scope_id)) {
       lookup_result_id =
-          BuildAssociatedEntity(context, interface_decl.interface_id, decl_id);
+          BuildAssociatedEntity(context, interface_decl->interface_id, decl_id);
     }
   }
 

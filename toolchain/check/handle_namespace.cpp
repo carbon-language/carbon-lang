@@ -29,12 +29,6 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   return true;
 }
 
-static auto IsNamespaceScope(Context& context, SemIR::NameScopeId name_scope_id)
-    -> bool {
-  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
-  return inst && inst->Is<SemIR::Namespace>();
-}
-
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
@@ -100,7 +94,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
         name_context.parent_scope_id);
-    if (!IsNamespaceScope(context, name_context.parent_scope_id)) {
+    if (!context.name_scopes().InstIs<SemIR::Namespace>(
+            name_context.parent_scope_id)) {
       CARBON_DIAGNOSTIC(NamespaceDeclNotAtTopLevel, Error,
                         "`namespace` declaration not at top level");
       context.emitter().Emit(node_id, NamespaceDeclNotAtTopLevel);

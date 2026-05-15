@@ -2648,19 +2648,19 @@ fn F() {
 // CHECK:STDOUT:     %u.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %u.patt: %pattern_type.7ce = at_binding_pattern u, %u.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %U.ref.loc13_19 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %U.ref.loc10_19 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %J.facet.loc13_19: %J.type = facet_value @E.as.J.impl.%Self.ref, (constants.%J.impl_witness) [concrete = constants.%J.facet]
-// CHECK:STDOUT:     %.loc13_19.1: %J.type = converted @E.as.J.impl.%Self.ref, %J.facet.loc13_19 [concrete = constants.%J.facet]
-// CHECK:STDOUT:     %impl.elem0.loc13_19: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%i32]
-// CHECK:STDOUT:     %U.ref.loc13_19: type = name_ref U, %impl.elem0.loc13_19 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13_19.2: Core.Form = init_form %U.ref.loc13_19 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %J.facet.loc10_19: %J.type = facet_value @E.as.J.impl.%Self.ref, (constants.%J.impl_witness) [concrete = constants.%J.facet]
+// CHECK:STDOUT:     %.loc10_19.1: %J.type = converted @E.as.J.impl.%Self.ref, %J.facet.loc10_19 [concrete = constants.%J.facet]
+// CHECK:STDOUT:     %impl.elem0.loc10_19: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%i32]
+// CHECK:STDOUT:     %U.ref.loc10_19: type = name_ref U, %impl.elem0.loc10_19 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc10_19.2: Core.Form = init_form %U.ref.loc10_19 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %u.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc13_13.1: type = splice_block %U.ref.loc13_13 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %J.facet.loc13_13: %J.type = facet_value @E.as.J.impl.%Self.ref, (constants.%J.impl_witness) [concrete = constants.%J.facet]
-// CHECK:STDOUT:       %.loc13_13.2: %J.type = converted @E.as.J.impl.%Self.ref, %J.facet.loc13_13 [concrete = constants.%J.facet]
-// CHECK:STDOUT:       %impl.elem0.loc13_13: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%i32]
-// CHECK:STDOUT:       %U.ref.loc13_13: type = name_ref U, %impl.elem0.loc13_13 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc10_13.1: type = splice_block %U.ref.loc10_13 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %J.facet.loc10_13: %J.type = facet_value @E.as.J.impl.%Self.ref, (constants.%J.impl_witness) [concrete = constants.%J.facet]
+// CHECK:STDOUT:       %.loc10_13.2: %J.type = converted @E.as.J.impl.%Self.ref, %J.facet.loc10_13 [concrete = constants.%J.facet]
+// CHECK:STDOUT:       %impl.elem0.loc10_13: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%i32]
+// CHECK:STDOUT:       %U.ref.loc10_13: type = name_ref U, %impl.elem0.loc10_13 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: %i32 = value_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -2715,11 +2715,11 @@ fn F() {
 // CHECK:STDOUT: fn @E.as.J.impl.F(%u.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %i32 = name_ref u, %u
-// CHECK:STDOUT:   %impl.elem0.loc14: %.348 = impl_witness_access constants.%Copy.impl_witness.30d, element0 [concrete = constants.%Int.as.Copy.impl.Op.44b]
-// CHECK:STDOUT:   %bound_method.loc14_14.1: <bound method> = bound_method %u.ref, %impl.elem0.loc14
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc14, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_14.2: <bound method> = bound_method %u.ref, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_14.2(%u.ref)
+// CHECK:STDOUT:   %impl.elem0.loc11: %.348 = impl_witness_access constants.%Copy.impl_witness.30d, element0 [concrete = constants.%Int.as.Copy.impl.Op.44b]
+// CHECK:STDOUT:   %bound_method.loc11_14.1: <bound method> = bound_method %u.ref, %impl.elem0.loc11
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc11, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc11_14.2: <bound method> = bound_method %u.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc11_14.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
