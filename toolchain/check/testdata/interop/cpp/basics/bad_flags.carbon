@@ -12,7 +12,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/bad_flags.carbon
 // CHECK:STDERR: error: unable to read PCH file does_not_exist.pch: 'No such file or directory' [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: error: PCH file 'does_not_exist.pch' not found: module file not found [CppInteropParseError]
+// CHECK:STDERR: error: PCH file 'does_not_exist.pch' not found [CppInteropParseError]
 // CHECK:STDERR:
 
 // --- fail_bad_args.carbon
