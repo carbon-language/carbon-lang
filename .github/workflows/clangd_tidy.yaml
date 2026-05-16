@@ -48,6 +48,7 @@ jobs:
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             releases.bazel.build:443
@@ -75,13 +76,9 @@ jobs:
         if: steps.filter.outputs.has_cpp == 'true'
         run: ./scripts/create_compdb.py
 
-      - name: Install clangd-tidy
-        if: steps.filter.outputs.has_cpp == 'true'
-        run: pip install clangd-tidy==1.1.0.post2
-
       - name: Run clangd-tidy
         if: steps.filter.outputs.has_cpp == 'true'
         env:
           FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
         run: |
-          clangd-tidy -p . -j 10 $FILTER_FILES
+          uvx --with clangd-tidy==1.1.0.post2 clangd-tidy -p . -j 10 $FILTER_FILES
