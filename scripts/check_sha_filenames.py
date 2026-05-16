@@ -21,8 +21,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import hashlib
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def main() -> None:

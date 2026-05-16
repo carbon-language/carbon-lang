@@ -66,15 +66,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import json
 import math
-import numpy as np  # type: ignore
 import re
-import scipy as sp  # type: ignore
 import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Optional
+
+import numpy as np  # type: ignore
+import scipy as sp  # type: ignore
 from quantiphy import Quantity  # type: ignore
 from rich.console import Console
 from rich.padding import Padding
@@ -82,7 +84,6 @@ from rich.progress import track
 from rich.table import Column, Table
 from rich.text import Text
 from rich.theme import Theme
-from typing import Optional
 
 
 def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:

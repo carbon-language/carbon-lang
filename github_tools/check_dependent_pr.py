@@ -32,8 +32,9 @@ import datetime
 import json
 import re
 import sys
-import requests
 from typing import Any, Optional
+
+import requests
 
 try:
     from github_tools import github_helpers
