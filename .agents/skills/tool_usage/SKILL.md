@@ -19,16 +19,16 @@ We use `bazelisk` for build and test.
 
 **IMPORTANT**: AI assistants use `bazelisk` instead of `bazel`.
 
-## Pre-commit
+## Prek
 
-Running `pre-commit` is mandatory. To run it on all files:
+Running `prek` is mandatory. To run it on all files:
 
 ```bash
-pre-commit run -a
+prek run -a
 ```
 
 To validate a specific list of files:
 
 ```bash
-pre-commit run --files <files>
+prek run --files <files>
 ```

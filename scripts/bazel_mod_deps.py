@@ -5,7 +5,7 @@
 # ///
 
 
-"""Run `bazel mod deps` for pre-commit. Lets pre-commit handle modifications."""
+"""Run `bazel mod deps` for prek. Lets prek handle modifications."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

@@ -5,7 +5,7 @@
 # ///
 
 
-"""Runs buildifier on passed-in BUILD files, mainly for pre-commit."""
+"""Runs buildifier on passed-in BUILD files, mainly for prek."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
