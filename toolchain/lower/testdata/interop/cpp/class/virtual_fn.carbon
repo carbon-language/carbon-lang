@@ -162,7 +162,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   %vtable = load ptr, ptr %0, align 8, !tbaa !14
 // CHECK:STDOUT:   %vfn = getelementptr inbounds ptr, ptr %vtable, i64 1
 // CHECK:STDOUT:   %1 = load ptr, ptr %vfn, align 8
-// CHECK:STDOUT:   call void %1(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
+// CHECK:STDOUT:   call void %1(ptr noundef nonnull align 8 dereferenceable(8) %0) #8
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.end:                                       ; preds = %delete.notnull, %entry
@@ -265,7 +265,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalD0Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
@@ -295,7 +295,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseD0Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
