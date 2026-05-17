@@ -6,6 +6,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/toolchains:cc_toolchain_config_info.bzl", "CcToolchainConfigInfo")
 load(":cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load(":cc_toolchain_cpp_features.bzl", "libcxx_feature")
 load(":cc_toolchain_features.bzl", "clang_cc_toolchain_features")
