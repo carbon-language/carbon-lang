@@ -261,7 +261,7 @@ If you use `jj`, you may find the following configuration snippets (added to
 
 ```sh
 # Clean up untracked or abandoned commits.
-jj config set --user aliases.abandon-untagged '["abandon", "all() & ~ancestors(@ | bookmarks() | remote_bookmarks())"]'
+jj config set --user aliases.abandon-untagged '["abandon", "~ancestors(working_copies() | bookmarks() | remote_bookmarks())"]'
 
 # Use Git-style conflict markers, which VS Code can provide merge support for.
 jj config set --user ui.conflict-marker-style 'git'
