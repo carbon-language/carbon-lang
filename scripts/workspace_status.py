@@ -49,8 +49,8 @@ def jj_commit_sha() -> str:
 
 
 def jj_dirty_suffix() -> str:
-    # This `jj log` template returns "true" if the current working copy is empty,
-    # otherwise "false".
+    # This `jj log` template returns "true" if the current working copy is
+    # empty, otherwise "false".
     status = subprocess.check_output(
         ["jj", "log", "-r", "@", "--no-graph", "-T", "empty"], encoding="utf-8"
     ).strip()
