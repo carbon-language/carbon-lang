@@ -52,6 +52,9 @@ class CompileBenchmark {
     }
   }
 
+  // Setup a set of source files in the VFS for the driver. Each string input is
+  // materialized into a virtual file and a list of the virtual filenames is
+  // returned
   auto SetUpFiles(llvm::ArrayRef<std::string> sources)
       -> llvm::SmallVector<std::string> {
     llvm::SmallVector<std::string> file_names;
