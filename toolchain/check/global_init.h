@@ -42,26 +42,6 @@ class GlobalInit {
   llvm::SmallVector<SemIR::InstId> block_;
 };
 
-// Stack that keeps track of whether to use global initialization for
-// the initializer of a declaration.
-class UseGlobalInitStack {
- public:
-  // Pushes `use_global_init` onto the stack for a new declaration.
-  auto Push(bool use_global_init) -> void;
-
-  // Pops the stack.
-  auto Pop() -> void;
-
-  // Changes the value on the top of the stack to enabled.
-  auto EnableUseGlobalInit() -> void;
-
-  // Peeks the current value on the top of the stack.
-  auto UseGlobalInit() -> bool;
-
- private:
-  llvm::SmallVector<bool> stack_;
-};
-
 // Whether to use global initialization for the initializer of a declaration.
 //
 // This returns true for a declaration in package scope, or for a static

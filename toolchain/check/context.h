@@ -179,10 +179,6 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  auto use_global_init_stack() -> UseGlobalInitStack& {
-    return use_global_init_stack_;
-  }
-
   auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
   auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
@@ -485,10 +481,6 @@ class Context {
 
   // State for global initialization.
   GlobalInit global_init_;
-
-  // Stack that keeps track of whether to use the `global_init` for the
-  // initializer of a declaration.
-  UseGlobalInitStack use_global_init_stack_;
 
   // Instructions which are generated as a result of imports; both `ImportRef`s
   // and instructions they generate. For example, when a name reference resolves

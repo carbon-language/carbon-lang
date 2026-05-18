@@ -64,9 +64,6 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
 
 template <Lex::TokenKind::RawEnumType Kind>
 static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
-  context.use_global_init_stack().Push(context.scope_stack().PeekIndex() ==
-                                       ScopeIndex::Package);
-
   context.decl_introducer_state_stack().Push<Kind>();
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
@@ -349,9 +346,6 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
-
-  context.use_global_init_stack().Pop();
-
   return true;
 }
 
@@ -407,9 +401,6 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
-
-  context.use_global_init_stack().Pop();
-
   return true;
 }
 
@@ -429,7 +420,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
 
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-  context.use_global_init_stack().Pop();
 
   return true;
 }
