@@ -293,7 +293,6 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
       }
     }
   }
-  context.full_pattern_stack().PopFullPattern();
 
   if (!is_field_decl) {
     decl_info.pattern_id = context.node_stack().PopPattern();
@@ -318,6 +317,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
+  context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
@@ -351,6 +351,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
                               Parse::NodeKind::AssociatedConstantIntroducer,
                               Parse::NodeKind::AssociatedConstantInitializer>(
       context, node_id);
+  context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
@@ -419,6 +420,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   }
 
+  context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   context.use_global_init_stack().Pop();
 
