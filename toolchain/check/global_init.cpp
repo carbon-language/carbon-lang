@@ -69,4 +69,8 @@ auto UseGlobalInitStack::UseGlobalInit() -> bool {
   return !stack_.empty() && stack_.back();
 }
 
+auto UseGlobalInit(Context& context) -> bool {
+  return context.use_global_init_stack().UseGlobalInit();
+}
+
 }  // namespace Carbon::Check

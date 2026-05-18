@@ -62,6 +62,9 @@ class UseGlobalInitStack {
   llvm::SmallVector<bool> stack_;
 };
 
+// Whether to use global initialization for the initializer of a declaration.
+auto UseGlobalInit(Context& context) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GLOBAL_INIT_H_

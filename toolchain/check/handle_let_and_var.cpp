@@ -166,7 +166,7 @@ static auto EndFullPattern(Context& context) -> void {
 }
 
 static auto StartPatternInitializer(Context& context) -> bool {
-  if (context.use_global_init_stack().UseGlobalInit()) {
+  if (UseGlobalInit(context)) {
     context.global_init().Resume();
   }
   context.full_pattern_stack().StartPatternInitializer();
@@ -174,7 +174,7 @@ static auto StartPatternInitializer(Context& context) -> bool {
 }
 
 static auto EndPatternInitializer(Context& context) -> void {
-  if (context.use_global_init_stack().UseGlobalInit()) {
+  if (UseGlobalInit(context)) {
     context.global_init().Suspend();
   }
   context.full_pattern_stack().EndPatternInitializer();

@@ -603,7 +603,7 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
       // TODO: Find a more efficient way to put these insts in the global_init
       // block (or drop the distinction between the global_init block and the
       // file scope?)
-      if (context_.use_global_init_stack().UseGlobalInit()) {
+      if (UseGlobalInit(context_)) {
         context_.global_init().Resume();
       }
 
@@ -623,7 +623,7 @@ auto MatchContext::DoVarPreWorkImpl(State state, SemIR::TypeId pattern_type_id,
                                {.lhs_id = storage_id, .rhs_id = init_id});
       }
 
-      if (context_.use_global_init_stack().UseGlobalInit()) {
+      if (UseGlobalInit(context_)) {
         context_.global_init().Suspend();
       }
       return storage_id;
