@@ -3719,8 +3719,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                             SemIR::NamespaceType::TypeInstId);
   auto namespace_decl =
       SemIR::Namespace{.type_id = namespace_type_id,
-                       .name_scope_id = SemIR::NameScopeId::None,
-                       .import_id = SemIR::AbsoluteInstId::None};
+                       .name_scope_id = SemIR::NameScopeId::None};
   auto inst_id =
       AddPlaceholderImportedInst(resolver, import_inst_id, namespace_decl);
 

@@ -35,12 +35,12 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT:   store i32 12, ptr %a.var, align 4, !dbg !8
 // CHECK:STDOUT:   store i32 9, ptr %a.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc16 = load i32, ptr %a.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %a.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.f824c603b6d5cf0b:core.Destroy.Core"(ptr %a.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %.loc16, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f824c603b6d5cf0b:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -61,12 +61,12 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc22_10.3 = load i32, ptr %tuple.elem1.loc22_10.1.tuple.elem, align 4, !dbg !25
 // CHECK:STDOUT:   %tuple.elem1.loc22_10.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !25
 // CHECK:STDOUT:   store i32 %.loc22_10.3, ptr %tuple.elem1.loc22_10.2.tuple.elem, align 4, !dbg !25
-// CHECK:STDOUT:   call void @"_COp.8e354c83fe88ab86:core.Destroy.Core"(ptr %b.var), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.0ad49ff1a6ade1cd:core.Destroy.Core"(ptr %b.var), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8e354c83fe88ab86:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
+// CHECK:STDOUT: define weak_odr void @"_COp.0ad49ff1a6ade1cd:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
@@ -98,7 +98,7 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: !9 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 14, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f824c603b6d5cf0b:core.Destroy.Core", scope: null, file: !3, line: 14, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !7}
 // CHECK:STDOUT: !15 = !{!16}
@@ -113,7 +113,7 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: !24 = !DILocation(line: 21, column: 3, scope: !18)
 // CHECK:STDOUT: !25 = !DILocation(line: 22, column: 10, scope: !18)
 // CHECK:STDOUT: !26 = !DILocation(line: 22, column: 3, scope: !18)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8e354c83fe88ab86:core.Destroy.Core", scope: null, file: !3, line: 20, type: !28, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !30)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0ad49ff1a6ade1cd:core.Destroy.Core", scope: null, file: !3, line: 20, type: !28, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !30)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{null, !21}
 // CHECK:STDOUT: !30 = !{!31}

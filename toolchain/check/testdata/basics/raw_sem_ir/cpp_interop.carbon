@@ -199,9 +199,9 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000010:    {kind: ImportCppDecl}
-// CHECK:STDOUT:     inst50000011:    {kind: Namespace, arg0: name_scope50000001, arg1: inst50000010, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst50000011:    {kind: Namespace, arg0: name_scope50000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000012:    {kind: NameRef, arg0: name(Cpp), arg1: inst50000011, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000013:    {kind: ClassDecl, arg0: class50000000, arg1: inst_block<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000014:    {kind: ClassType, arg0: class50000000, arg1: specific<none>, type: type(TypeType)}

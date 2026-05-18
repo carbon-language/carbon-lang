@@ -139,8 +139,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
                         SemIR::InstId import_id) -> AddImportNamespaceResult {
   auto namespace_inst =
       SemIR::Namespace{.type_id = namespace_type_id,
-                       .name_scope_id = SemIR::NameScopeId::None,
-                       .import_id = import_id};
+                       .name_scope_id = SemIR::NameScopeId::None};
   auto namespace_inst_and_loc =
       MakeImportedNamespaceLocIdAndInst(context, import_id, namespace_inst);
   AddImportNamespaceResult result = {
@@ -148,7 +147,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
       .inst_id =
           AddPlaceholderImportedInstInNoBlock(context, namespace_inst_and_loc)};
   namespace_inst.name_scope_id =
-      context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
+      context.name_scopes().Add(result.inst_id, name_id, parent_scope_id, import_id);
   result.name_scope_id = namespace_inst.name_scope_id;
   ReplaceInstBeforeConstantUse(context, result.inst_id, namespace_inst);
   return result;

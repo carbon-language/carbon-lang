@@ -126,6 +126,16 @@ class ScopeLookupResult {
 };
 static_assert(sizeof(ScopeLookupResult) == 8);
 
+// A declarative name scope, such as a namespace, class, or interface.
+//
+// This is used for scopes in which entities can be redeclared, and declared and
+// looked up with qualified names outside the scope. It is not used for
+// sequential scopes such as the bodies of functions or `if` statements, for
+// which we only provide lexical, unqualified name lookup.
+//
+// TODO: Quite a few of the fields on this class are specific to namespaces,
+// which don't have a representation of their own. Consider splitting the
+// namespace-specific parts out of this into a separate class.
 class NameScope : public Printable<NameScope> {
  public:
   struct Entry {
@@ -147,10 +157,12 @@ class NameScope : public Printable<NameScope> {
   auto operator=(NameScope&& other) noexcept -> NameScope& = default;
 
   explicit NameScope(InstId inst_id, NameId name_id,
-                     NameScopeId parent_scope_id)
+                     NameScopeId parent_scope_id,
+                     InstId import_id = InstId::None)
       : inst_id_(inst_id),
         name_id_(name_id),
-        parent_scope_id_(parent_scope_id) {}
+        parent_scope_id_(parent_scope_id),
+        import_id_(import_id) {}
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -198,10 +210,12 @@ class NameScope : public Printable<NameScope> {
     extended_scopes_.push_back(extended_scope);
   }
 
-  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id) {
+  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id,
+           InstId import_id = InstId::None) {
     inst_id_ = inst_id;
     name_id_ = name_id;
     parent_scope_id_ = parent_scope_id;
+    import_id_ = import_id;
     self_type_id_ = InstId::None;
   }
 
@@ -239,6 +253,8 @@ class NameScope : public Printable<NameScope> {
   auto is_imported_package() const -> bool {
     return is_closed_import() && parent_scope_id() == NameScopeId::Package;
   }
+
+  auto import_id() const -> InstId { return import_id_; }
 
   auto import_ir_scopes() const
       -> llvm::ArrayRef<std::pair<ImportIRId, NameScopeId>> {
@@ -316,6 +332,10 @@ class NameScope : public Printable<NameScope> {
   // Otherwise, this is the scope to which this name scope is exported.
   ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
+  // If the namespace was produced by an `import` line, the associated line for
+  // diagnostics.
+  InstId import_id_ = InstId::None;
+
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.
   llvm::SmallVector<std::pair<ImportIRId, NameScopeId>, 0> import_ir_scopes_;
@@ -327,9 +347,9 @@ class NameScopeStore {
   explicit NameScopeStore(const File* file);
 
   // Adds a name scope, returning an ID to reference it.
-  auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
-      -> NameScopeId {
-    return values_.Add(NameScope(inst_id, name_id, parent_scope_id));
+  auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id,
+           AbsoluteInstId import_id = AbsoluteInstId::None) -> NameScopeId {
+    return values_.Add(NameScope(inst_id, name_id, parent_scope_id, import_id));
   }
 
   // Adds a name that is required to exist in a name scope, such as `Self`.

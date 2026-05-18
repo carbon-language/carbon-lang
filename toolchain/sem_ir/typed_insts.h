@@ -1328,9 +1328,6 @@ struct Namespace {
 
   TypeId type_id;
   NameScopeId name_scope_id;
-  // If the namespace was produced by an `import` line, the associated line for
-  // diagnostics.
-  AbsoluteInstId import_id;
 };
 
 // The type of namespace and imported package names.

@@ -368,7 +368,7 @@ struct Worklist {
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
     if (entity.parent_scope_id.has_value()) {
-      Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
+      Add(entity.parent_scope_id);
     }
   }
 
@@ -381,9 +381,7 @@ struct Worklist {
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
     if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(sem_ir->name_scopes()
-              .Get(cpp_overload_set.parent_scope_id)
-              .inst_id());
+      Add(cpp_overload_set.parent_scope_id);
     }
   }
 

@@ -507,9 +507,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     facet_type78000000: {}
 // CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000010:    {kind: ImportDecl, arg0: name(Core)}
-// CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, arg1: inst78000010, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: facet_type78000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000013:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000014:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
