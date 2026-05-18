@@ -246,6 +246,7 @@ repos:
         name: Check build graph
         entry: scripts/check_build_graph.py
         language: python
+        pass_filenames: false
         files: |
           (?x)^(
             .*BUILD.*|
