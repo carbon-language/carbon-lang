@@ -149,9 +149,9 @@ static auto EndFullPattern(Context& context) -> void {
   }
   auto pattern_block_id = context.pattern_block_stack().Pop();
 
-  // For class fields, a `FieldDecl` has been created; skip creating a
-  // name binding and var storage.
-  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
+  // For non-static class fields, a `FieldDecl` has been created; skip
+  // creating a name binding and var storage.
+  if (InNonStaticFieldDecl(context)) {
     return;
   }
 
@@ -205,7 +205,7 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
-  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
+  if (InNonStaticFieldDecl(context)) {
     context.TODO(node_id, "Field initializer");
     return false;
   }
@@ -262,7 +262,7 @@ template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& InitializerNodeKind>
 static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
-  bool is_field_decl = context.full_pattern_stack().IsCurrentKindFieldDecl();
+  bool in_non_static_field_decl = InNonStaticFieldDecl(context);
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
@@ -284,7 +284,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
 
     // A non-class variable declaration without an explicit initializer
     // is initialized by calling `(T as Core.DefaultOrUnformed).Op()`.
-    if (!is_field_decl) {
+    if (!in_non_static_field_decl) {
       if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
         StartPatternInitializer(context);
         decl_info.init_id = MakeDefaultInit(context, node_id,
@@ -294,7 +294,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
     }
   }
 
-  if (!is_field_decl) {
+  if (!in_non_static_field_decl) {
     decl_info.pattern_id = context.node_stack().PopPattern();
   }
 
@@ -404,9 +404,6 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
-  bool in_non_static_field =
-      context.full_pattern_stack().IsCurrentKindFieldDecl();
-
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context, node_id);
@@ -416,7 +413,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
                            KeywordModifierSet::Returned |
                            KeywordModifierSet::Static);
 
-  if (!in_non_static_field) {
+  if (!InNonStaticFieldDecl(context)) {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   }
 
