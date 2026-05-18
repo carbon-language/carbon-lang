@@ -402,6 +402,9 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
+  bool in_non_static_field =
+      context.full_pattern_stack().IsCurrentKindFieldDecl();
+
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context, node_id);
@@ -411,12 +414,9 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
                            KeywordModifierSet::Returned |
                            KeywordModifierSet::Static);
 
-  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
-      !decl_info.introducer.modifier_set.HasAnyOf(KeywordModifierSet::Static)) {
-    return true;
+  if (!in_non_static_field) {
+    LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   }
-
-  LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
 
   context.use_global_init_stack().Pop();
 
