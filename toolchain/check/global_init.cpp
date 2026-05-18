@@ -70,7 +70,11 @@ auto UseGlobalInitStack::UseGlobalInit() -> bool {
 }
 
 auto UseGlobalInit(Context& context) -> bool {
-  return context.use_global_init_stack().UseGlobalInit();
+  return context.scope_stack().PeekIndex() == ScopeIndex::Package ||
+         (context.full_pattern_stack().IsCurrentKindFieldDecl() &&
+          context.decl_introducer_state_stack()
+              .innermost()
+              .modifier_set.HasAnyOf(KeywordModifierSet::Static));
 }
 
 }  // namespace Carbon::Check

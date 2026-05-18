@@ -63,6 +63,9 @@ class UseGlobalInitStack {
 };
 
 // Whether to use global initialization for the initializer of a declaration.
+//
+// This returns true for a declaration in package scope, or for a static
+// class field.
 auto UseGlobalInit(Context& context) -> bool;
 
 }  // namespace Carbon::Check

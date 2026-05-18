@@ -137,7 +137,8 @@ class FullPatternStack {
 
   // Marks the start of the initializer for the current name binding decl.
   auto StartPatternInitializer() -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::NameBindingDecl);
+    CARBON_CHECK(kind_stack_.back() == Kind::FieldDecl ||
+                 kind_stack_.back() == Kind::NameBindingDecl);
     for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
       CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
       auto& lookup_result = lookup_->Get(name_id);

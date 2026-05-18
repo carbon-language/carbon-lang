@@ -62,11 +62,6 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     order = ModifierOrder::Evaluation;
     later_modifiers = KeywordModifierSet::None;
   } else if (keyword.HasAnyOf(KeywordModifierSet::Static)) {
-    if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
-      context.full_pattern_stack().SwitchToNameBindingDecl();
-      context.use_global_init_stack().EnableUseGlobalInit();
-    }
-
     order = ModifierOrder::Static;
     later_modifiers = KeywordModifierSet::None;
   } else {

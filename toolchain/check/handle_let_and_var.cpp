@@ -124,9 +124,19 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::FieldDecl:
-      // For class fields, a `FieldDecl` has already been created; do
-      // not create a var pattern.
-      return true;
+      if (context.decl_introducer_state_stack()
+              .innermost()
+              .modifier_set.HasAnyOf(KeywordModifierSet::Static)) {
+        // Handle static class fields the same as NameBindingDecls.
+        pattern_id = AddInst<SemIR::VarPattern>(
+            context, node_id,
+            {.type_id = type_id, .subpattern_id = subpattern_id});
+        break;
+      } else {
+        // For non-static class fields, a `FieldDecl` has already been
+        // created; do not create a var pattern.
+        return true;
+      }
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
