@@ -35,6 +35,16 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
+//
+// This template class is designed to be explicitly instantiated to improve
+// compile times. Heavy method definitions are in `value_store_impl.h`.
+//
+// To use a new instantiation:
+// 1. Add an `extern template class ValueStore<...>;` declaration in the header
+//    where the instantiation is anchored.
+// 2. Add `template class ValueStore<...>;` definition in the associated `.cpp`
+//    file.
+// 3. Include `toolchain/base/value_store_impl.h` in that `.cpp` file.
 template <typename IdT, typename ValueT, typename TagIdT = Untagged>
 class ValueStore
     : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
@@ -76,21 +86,18 @@ class ValueStore
     FlattenedRangeType flattened_range_;
   };
 
-  // Default constructor, only valid when the IdTag's tag type is Untagged.
   ValueStore()
-    requires(IdTagIsUntagged<IdTagType>)
-  = default;
+    requires(IdTagIsUntagged<IdTagType>);
 
-  // Construct a ValueStore sharing the IdTag from another ValueStore. Useful
-  // for when two ValueStores are sharing the same ID types.
   explicit ValueStore(IdTagType tag)
-    requires(!IdTagIsUntagged<IdTagType>)
-      : tag_(tag) {}
+    requires(!IdTagIsUntagged<IdTagType>);
 
-  // Construct a ValueStore with a given tag and set of untagged (reserved) ids.
   explicit ValueStore(IdTagType::TagIdType id, int32_t initial_reserved_ids = 0)
-    requires(!IdTagIsUntagged<IdTagType>)
-      : tag_(id, initial_reserved_ids) {}
+    requires(!IdTagIsUntagged<IdTagType>);
+
+  ~ValueStore();
+  ValueStore(ValueStore&&) noexcept;
+  auto operator=(ValueStore&&) noexcept -> ValueStore&;
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -142,7 +149,8 @@ class ValueStore
     return chunks_[chunk_index].Get(pos);
   }
 
-  // Reserves space.
+  // Reserves space. Note that this method has surprising performance impact on
+  // the lexer unless available for inlining.
   auto Reserve(int32_t size) -> void {
     if (size <= size_) {
       return;
@@ -152,51 +160,15 @@ class ValueStore
   }
 
   // Grows the ValueStore to `size`. Fills entries with `default_value`.
-  auto Resize(int32_t size, ConstRefType default_value) -> void {
-    if (size <= size_) {
-      return;
-    }
-
-    auto [begin_chunk_index, begin_pos] = RawIndexToChunkIndices(size_);
-    // Use an inclusive range so that if `size` would be the next chunk, we
-    // don't try doing something with it.
-    auto [end_chunk_index, end_pos] = RawIndexToChunkIndices(size - 1);
-    chunks_.resize(end_chunk_index + 1);
-
-    // If the begin and end chunks are the same, we only fill from begin to end.
-    if (begin_chunk_index == end_chunk_index) {
-      chunks_[begin_chunk_index].UninitializedFill(end_pos - begin_pos + 1,
-                                                   default_value);
-    } else {
-      // Otherwise, we do partial fills on the begin and end chunk, and full
-      // fills on intermediate chunks.
-      chunks_[begin_chunk_index].UninitializedFill(
-          Chunk::Capacity() - begin_pos, default_value);
-      for (auto i = begin_chunk_index + 1; i < end_chunk_index; ++i) {
-        chunks_[i].UninitializedFill(Chunk::Capacity(), default_value);
-      }
-      chunks_[end_chunk_index].UninitializedFill(end_pos + 1, default_value);
-    }
-
-    // Update size.
-    size_ = size;
-  }
+  auto Resize(int32_t size, ConstRefType default_value) -> void
+    requires(std::is_copy_constructible_v<ValueT>);
 
   // These are to support printable structures, and are not guaranteed.
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto [id, value] : enumerate()) {
-        map.Add(PrintToString(id), Yaml::OutputScalar(value));
-      }
-    });
-  }
+  auto OutputYaml() const -> Yaml::OutputMapping;
 
   // Collects memory usage of the values.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Add(label.str(), size_ * sizeof(ValueType),
-                  Chunk::CapacityBytes * chunks_.size());
-  }
+      -> void;
 
   auto size() const -> size_t { return size_; }
 
@@ -358,11 +330,8 @@ class ValueStore
     // Fills `fill_count` entries with `default_value`, increasing the size
     // respectively.
     auto UninitializedFill(int32_t fill_count, ConstRefType default_value)
-        -> void {
-      CARBON_DCHECK(num_ + fill_count <= Capacity());
-      std::uninitialized_fill_n(buf_ + num_, fill_count, default_value);
-      num_ += fill_count;
-    }
+        -> void
+      requires(std::is_copy_constructible_v<ValueT>);
 
     auto size() const -> int32_t { return num_; }
 

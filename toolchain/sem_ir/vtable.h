@@ -40,4 +40,9 @@ using VtableStore = ValueStore<VtableId, Vtable, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::VtableId, SemIR::Vtable,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_VTABLE_H_

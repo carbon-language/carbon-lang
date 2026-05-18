@@ -8,8 +8,8 @@
 #include <string>
 
 #include "testing/base/global_exe_path.h"
-#include "testing/base/source_gen.h"
 #include "toolchain/base/install_paths_test_helpers.h"
+#include "toolchain/benchmarking/source_gen.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/compile_helper.h"
 

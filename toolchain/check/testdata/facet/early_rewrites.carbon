@@ -323,6 +323,27 @@ fn G(T:! J where .J1 = D) {
   F(T);
 }
 
+// --- early_rewrite_of_compound_access.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+
+interface Y {}
+class NeedY(T:! Y) {}
+
+impl () as Y {}
+
+// These are written differently but should behave the same.
+
+// Designator access of `.Z1`.
+fn F(_:! Z where .Z1 = () and .Z2 = NeedY(.Z1)) {}
+
+// Compound member access of `.Z1`.
+fn G(_:! Z where .Z1 = () and .Z2 = NeedY(.Self.(Z.Z1))) {}
+
 // --- fail_todo_resolved_constraint_visible_in_type_parameter.carbon
 library "[[@TEST_NAME]]";
 
@@ -361,4 +382,19 @@ impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
 // CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
+}
+
+// --- early_rewrite_from_previous_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+interface Y {
+  let Y1:! type;
+}
+
+fn F(T:! Z where .Z1 impls (Y where .Y1 = ()) and .Z2 = .Z1.(Y.Y1)) -> T.Z2 {
+  return ();
 }

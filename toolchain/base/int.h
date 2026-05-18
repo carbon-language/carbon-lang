@@ -432,6 +432,9 @@ class IntStore {
 inline constexpr IntStore::APIntId IntStore::APIntId::None(
     IntId::None.AsIndex());
 
+extern template class CanonicalValueStore<IntStore::APIntId, llvm::APInt>;
+extern template class ValueStore<IntStore::APIntId, llvm::APInt>;
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_BASE_INT_H_

@@ -16,6 +16,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"
@@ -449,3 +450,9 @@ auto TokenizedBuffer::OverlapsWithDumpSemIRRange(
 }
 
 }  // namespace Carbon::Lex
+
+namespace Carbon {
+template class ValueStore<Lex::TokenIndex, Lex::TokenInfo>;
+template class ValueStore<Lex::LineIndex, Lex::LineInfo>;
+template class ValueStore<Lex::CommentIndex, Lex::CommentData>;
+}  // namespace Carbon

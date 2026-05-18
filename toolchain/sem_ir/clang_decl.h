@@ -223,4 +223,18 @@ using ClangDeclSignatureStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class CanonicalValueStore<
+    SemIR::ClangDeclId, SemIR::ClangDeclKey, Tag<SemIR::CheckIRId>,
+    SemIR::ClangDecl>;
+extern template class ValueStore<SemIR::ClangDeclId, SemIR::ClangDecl,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::ClangDeclSignatureId, SemIR::ClangDeclSignature,
+    Tag<SemIR::CheckIRId>, SemIR::ClangDeclSignature>;
+extern template class ValueStore<SemIR::ClangDeclSignatureId,
+                                 SemIR::ClangDeclSignature,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CLANG_DECL_H_

@@ -372,4 +372,9 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::FunctionId, SemIR::Function,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_

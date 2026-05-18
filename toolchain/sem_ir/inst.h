@@ -708,4 +708,12 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::InstBlockId,
+                                 llvm::MutableArrayRef<SemIR::InstId>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

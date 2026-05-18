@@ -2724,21 +2724,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface, specific_interface_data);
-  // Create a local IdentifiedFacetType for the imported facet type, since impl
-  // declarations always identify the facet type.
-  if (auto facet_type =
-          resolver.local_constant_values().TryGetInstAs<SemIR::FacetType>(
-              constraint_const_id)) {
-    // Lookups later will be with the unattached constant, whereas
-    // GetLocalConstantId gave us an attached constant.
-    auto unattached_self_const_id =
-        resolver.local_constant_values().GetUnattachedConstant(self_const_id);
-    RequireIdentifiedFacetType(
-        resolver.local_context(), SemIR::LocId::None, unattached_self_const_id,
-        *facet_type, []([[maybe_unused]] auto& builder) {
-          CARBON_FATAL("Imported impl constraint can't be identified");
-        });
-  }
   if (import_impl.is_complete()) {
     ImportImplDefinition(resolver, import_impl, new_impl);
   }

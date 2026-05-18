@@ -8,6 +8,7 @@
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -145,3 +146,8 @@ auto Function::GetDeclaredReturnForm(const File& file,
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::FunctionId, SemIR::Function,
+                          Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

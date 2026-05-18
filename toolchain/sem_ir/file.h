@@ -450,4 +450,16 @@ class File : public Printable<File> {
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::CustomLayoutId,
+                                 llvm::MutableArrayRef<SemIR::ObjectSize>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_
