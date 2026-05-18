@@ -362,9 +362,9 @@ class NameScopeStore {
     return inst && inst->Is<InstT>();
   }
 
-  // Returns the instruction owning the requested name scope if it is of the
-  // specified kind, or nullopt if the scope is either `None` or if its
-  // associated instruction is `None` or not of that kind.
+  // Returns the instruction owning the requested name scope if there is one and
+  // it is of the specified kind. Returns `nullopt` otherwise, and for
+  // `NameScopeId::None`.
   template <typename InstT>
   auto TryGetInstAs(NameScopeId scope_id) const -> std::optional<InstT> {
     auto [inst_id, inst] = GetInstIfValid(scope_id);
