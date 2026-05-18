@@ -120,7 +120,7 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
             /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
       // If the scope has a `Self` type, replace associated entity `M` with
-      // `Self.M` (where `Self` is the `Self` of the interface or impl).
+      // `Self.M`.
       const auto& scope = context.name_scopes().Get(lookup_scope_id);
       if (scope.self_type_id().has_value()) {
         SemIR::InstId target_inst_id =
