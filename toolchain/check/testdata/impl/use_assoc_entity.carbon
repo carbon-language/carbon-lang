@@ -349,27 +349,12 @@ interface J {
 
 class A {}
 
-// TODO: We should only produce a single error here!
 impl A as J {
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+7]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+4]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:   fn F() -> G();
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+3]]:13: error: name `G` used before it was declared [NameUseBeforeDecl]
-  // CHECK:STDERR:   fn F() -> G();
-  // CHECK:STDERR:             ^
   fn F() -> G();
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+11]]:11: note: declared here [NameUseBeforeDeclNote]
-  // CHECK:STDERR:   eval fn G() -> type { return A; }
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE-13]]:1: error: missing implementation of G in impl of interface J [ImplMissingFunction]
-  // CHECK:STDERR: impl A as J {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE-22]]:3: note: associated function G declared here [AssociatedFunctionHere]
-  // CHECK:STDERR:   fn G() -> type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   eval fn G() -> type { return A; }
 }
 

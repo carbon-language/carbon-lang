@@ -184,9 +184,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
+  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
+  // impl scope: if the name was referenced before being declared, we will have
+  // produced an error already.
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         name_context.poisoning_loc_id, name_context.loc_id);
+    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
+            name_context.parent_scope_id)) {
+      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                           name_context.poisoning_loc_id, name_context.loc_id);
+    }
     return;
   }
 
@@ -259,7 +265,7 @@ static auto MaybeAddToNameLookup(Context& context,
                                  const KeywordModifierSet& modifier_set,
                                  SemIR::NameScopeId parent_scope_id,
                                  SemIR::InstId decl_id) -> void {
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       name_context.prev_inst_id().has_value()) {
     return;
   }
