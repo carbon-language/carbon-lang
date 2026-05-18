@@ -351,4 +351,11 @@ auto InNonStaticFieldDecl(Context& context) -> bool {
               .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
+auto InStaticClassScopeVar(Context& context) -> bool {
+  return context.full_pattern_stack().IsCurrentKindFieldDecl() &&
+         context.decl_introducer_state_stack()
+             .innermost()
+             .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
 }  // namespace Carbon::Check

@@ -121,9 +121,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::FieldDecl:
-      if (context.decl_introducer_state_stack()
-              .innermost()
-              .modifier_set.HasAnyOf(KeywordModifierSet::Static)) {
+      if (InStaticClassScopeVar(context)) {
         // Handle static class fields the same as NameBindingDecls.
         pattern_id = AddInst<SemIR::VarPattern>(
             context, node_id,

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/global_init.h"
 
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
 
@@ -59,10 +60,7 @@ auto GlobalInit::Finalize() -> void {
 
 auto UseGlobalInit(Context& context) -> bool {
   return context.scope_stack().PeekIndex() == ScopeIndex::Package ||
-         (context.full_pattern_stack().IsCurrentKindFieldDecl() &&
-          context.decl_introducer_state_stack()
-              .innermost()
-              .modifier_set.HasAnyOf(KeywordModifierSet::Static));
+         InStaticClassScopeVar(context);
 }
 
 }  // namespace Carbon::Check

@@ -26,6 +26,9 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
 // Whether a non-static field decl is currently being checked.
 auto InNonStaticFieldDecl(Context& context) -> bool;
 
+// Whether a static class var decl is currently being checked.
+auto InStaticClassScopeVar(Context& context) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CLASS_H_
