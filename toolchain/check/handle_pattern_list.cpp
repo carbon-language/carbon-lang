@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
@@ -96,7 +97,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
+    if (InNonStaticFieldDecl(context)) {
       CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
                         "found tuple pattern in class `var` decl");
       context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
