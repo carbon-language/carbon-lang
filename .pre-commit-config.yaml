@@ -220,7 +220,7 @@ repos:
           - --custom_format
           - '\.lua$'
           - ''
-          - '-- '
+          - '\-- '
           - ''
         exclude: |
           (?x)^(
