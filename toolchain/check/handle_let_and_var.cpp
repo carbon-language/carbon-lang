@@ -70,7 +70,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   context.pattern_block_stack().Push();
   if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
       Kind == Lex::TokenKind::Var) {
-    context.full_pattern_stack().PushFieldDecl();
+    context.full_pattern_stack().PushClassScopeVarDecl();
   } else {
     context.full_pattern_stack().PushNameBindingDecl();
   }
@@ -120,7 +120,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
-    case FullPatternStack::Kind::FieldDecl:
+    case FullPatternStack::Kind::ClassScopeVarDecl:
       if (InStaticClassScopeVar(context)) {
         // Handle static class fields the same as NameBindingDecls.
         pattern_id = AddInst<SemIR::VarPattern>(
