@@ -308,8 +308,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
       context.name_scopes()
           .GetInstIfValid(context.scope_stack().PeekNameScopeId())
           .second;
-  decl_info.introducer =
-      context.decl_introducer_state_stack().Pop<IntroducerTokenKind>();
+  decl_info.introducer = context.decl_introducer_state_stack().innermost();
   CheckAccessModifiersOnDecl(context, decl_info.introducer, parent_scope_inst);
 
   return decl_info;
@@ -319,6 +318,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -351,6 +351,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
                               Parse::NodeKind::AssociatedConstantIntroducer,
                               Parse::NodeKind::AssociatedConstantInitializer>(
       context, node_id);
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -418,6 +419,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   }
 
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   context.use_global_init_stack().Pop();
 
   return true;
