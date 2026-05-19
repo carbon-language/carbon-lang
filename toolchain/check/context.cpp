@@ -17,7 +17,7 @@ namespace Carbon::Check {
 Context::Context(DiagnosticEmitterBase* emitter,
                  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                  SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
-                 llvm::raw_ostream* vlog_stream)
+                 llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint)
     : emitter_(emitter),
       tree_and_subtrees_getter_(tree_and_subtrees_getter),
       sem_ir_(sem_ir),
@@ -39,7 +39,8 @@ Context::Context(DiagnosticEmitterBase* emitter,
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
       }),
-      core_identifiers_(&identifiers()) {
+      core_identifiers_(&identifiers()),
+      mangle_string_fingerprint_(mangle_string_fingerprint) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);

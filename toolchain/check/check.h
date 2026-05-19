@@ -75,6 +75,10 @@ struct CheckParseTreesOptions {
   // If not empty, a raw SemIR dump should be written to this path in the event
   // of a crash.
   llvm::StringRef sem_ir_crash_dump;
+
+  // Whether to use the string form of the fingerprint from mangling instead of
+  // the hash form.
+  bool mangle_string_fingerprint = false;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

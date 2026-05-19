@@ -322,7 +322,8 @@ auto FileContext::GetOrCreateLLVMFunction(
         sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   std::string mangled_name = m.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
@@ -691,7 +692,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
@@ -726,7 +728,8 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   }
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   std::string mangled_name = m.MangleVTable(class_info, specific_id);
 
   if (sem_ir()

@@ -391,6 +391,14 @@ in the check phase. If empty, the dump is not written.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
+  b.AddFlag(
+      {
+          .name = "mangle-string-fingerprint",
+          .help = R"""(
+Use the string form of the fingerprint from mangling instead of the hash form.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -821,6 +829,7 @@ auto CompilationUnit::RunLower() -> void {
     options.want_debug_info = options_->include_debug_info;
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
+    options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
@@ -1260,6 +1269,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   options.prelude_import = options_.prelude_import;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
+  options.mangle_string_fingerprint = options_.mangle_string_fingerprint;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
       options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
