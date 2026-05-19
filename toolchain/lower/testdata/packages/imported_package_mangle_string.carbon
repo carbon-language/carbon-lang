@@ -25,12 +25,20 @@ impl array(C, 1) as I {
   fn F() {}
 }
 
+namespace N;
+class N.D;
+
+impl array(N.D, 1) as I {
+  fn F() {}
+}
+
 // --- b.carbon
 package B;
 import A;
 
 fn G() {
   (array(A.C, 1) as A.I).F();
+  (array(A.N.D, 1) as A.I).F();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
@@ -40,6 +48,12 @@ fn G() {
 // CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,{namespace,{<namespace>},A,!invalid},!invalid}}:I.A"() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,{namespace,{<namespace>},N,{namespace,{<namespace>},A,!invalid},!invalid},!invalid}}:I.A"() #0 !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -55,6 +69,8 @@ fn G() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,{namespace,{<namespace>},N,{namespace,{<namespace>},A,!invalid},!invalid},!invalid}}:I.A", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !8)
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -62,10 +78,13 @@ fn G() {
 // CHECK:STDOUT: define void @_CG.B() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,{namespace,{<namespace>},A,{import,!invalid,A}},!invalid}}:I.A"(), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,{namespace,{<namespace>},N,{namespace,{<namespace>},A,{import,!invalid,A}},!invalid},!invalid}}:I.A"(), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,{namespace,{<namespace>},A,{import,!invalid,A}},!invalid}}:I.A"()
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,{namespace,{<namespace>},N,{namespace,{<namespace>},A,{import,!invalid,A}},!invalid},!invalid}}:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -80,4 +99,5 @@ fn G() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 4, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !4)
