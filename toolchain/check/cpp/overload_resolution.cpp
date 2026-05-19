@@ -243,12 +243,11 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
     // Compute which conversion sequence corresponds to this argument.
     // TODO: Clang should expose a way to compute this.
     int conversion_index = i;
-    if (auto* method = dyn_cast<clang::CXXMethodDecl>(candidate->Function)) {
-      if (method->isStatic()) {
-        // Static methods get an object parameter conversion at index 0, even
-        // though there's no argument.
-        ++conversion_index;
-      }
+    if (isa<clang::CXXMethodDecl>(candidate->Function) &&
+        !isa<clang::CXXConstructorDecl>(candidate->Function)) {
+      // Methods (both static and non-static, but not constructors) get an
+      // object parameter conversion at index 0.
+      ++conversion_index;
     }
 
     signature.passing_modes.push_back(GetPassingModeForCppParameter(

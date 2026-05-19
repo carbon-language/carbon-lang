@@ -31,7 +31,7 @@ struct DeclIntroducerState {
   Parse::NodeId
       ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Last) + 1] =
           {Parse::NodeId::None, Parse::NodeId::None, Parse::NodeId::None,
-           Parse::NodeId::None, Parse::NodeId::None};
+           Parse::NodeId::None, Parse::NodeId::None, Parse::NodeId::None};
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet();

@@ -2,9 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -111,35 +109,6 @@ cc_test(
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
-)
-
-cc_binary(
-    name = "compile_benchmark",
-    testonly = 1,
-    srcs = ["compile_benchmark.cpp"],
-    deps = [
-        ":driver",
-        "//common:all_llvm_targets",
-        "//testing/base:benchmark_main",
-        "//testing/base:global_exe_path",
-        "//testing/base:source_gen_lib",
-        "//toolchain/base:install_paths_test_helpers",
-        "//toolchain/testing:compile_helper",
-        "@google_benchmark//:benchmark",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-sh_test(
-    name = "compile_benchmark_test",
-    size = "small",
-    srcs = [":compile_benchmark"],
-    args = [
-        "--benchmark_dry_run",
-        # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=/256$$",
-    ],
-    env = cc_env(),
 )
 
 cc_library(

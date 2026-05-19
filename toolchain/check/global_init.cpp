@@ -4,6 +4,7 @@
 
 #include "toolchain/check/global_init.h"
 
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
 
@@ -55,6 +56,11 @@ auto GlobalInit::Finalize() -> void {
         .return_form_inst_id = SemIR::InstId::None,
         .return_pattern_id = SemIR::InstId::None,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
+}
+
+auto UseGlobalInit(Context& context) -> bool {
+  return context.scope_stack().PeekIndex() == ScopeIndex::Package ||
+         InStaticClassScopeVar(context);
 }
 
 }  // namespace Carbon::Check

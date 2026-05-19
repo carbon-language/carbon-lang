@@ -47,7 +47,8 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   if (keyword.HasAnyOf(KeywordModifierSet::Access)) {
     order = ModifierOrder::Access;
     later_modifiers = KeywordModifierSet::Extern | KeywordModifierSet::Decl |
-                      KeywordModifierSet::Evaluation;
+                      KeywordModifierSet::Evaluation |
+                      KeywordModifierSet::Static;
   } else if (keyword.HasAnyOf(KeywordModifierSet::Extern)) {
     order = ModifierOrder::Extern;
     later_modifiers = KeywordModifierSet::Decl | KeywordModifierSet::Evaluation;
@@ -59,6 +60,9 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     later_modifiers = KeywordModifierSet::Evaluation;
   } else if (keyword.HasAnyOf(KeywordModifierSet::Evaluation)) {
     order = ModifierOrder::Evaluation;
+    later_modifiers = KeywordModifierSet::None;
+  } else if (keyword.HasAnyOf(KeywordModifierSet::Static)) {
+    order = ModifierOrder::Static;
     later_modifiers = KeywordModifierSet::None;
   } else {
     CARBON_FATAL("Unexpected modifier keyword.");

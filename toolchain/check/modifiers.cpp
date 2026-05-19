@@ -61,6 +61,8 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
+    case ModifierOrder::Static:
+      return KeywordModifierSet::Static;
     case ModifierOrder::Evaluation:
       return KeywordModifierSet::Evaluation;
   }

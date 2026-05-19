@@ -366,18 +366,38 @@ static auto CollectFacetWitnessSources(
   llvm::SmallVector<FacetWitnessSource> witnesses;
 
   auto push_facet = [&](SemIR::InstId facet, bool allow_partially_identified) {
-    auto type_id = context.insts().Get(facet).type_id();
-    if (type_id == SemIR::TypeType::TypeId) {
-      return;
-    }
     auto facet_const_id = context.constant_values().Get(facet);
-    auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-    auto identified_id =
-        TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
-                               allow_partially_identified);
-    if (identified_id.has_value()) {
-      witnesses.push_back({.facet_const_id = facet_const_id,
-                           .identified_facet_type_id = identified_id});
+
+    auto type_id = context.insts().Get(facet).type_id();
+    if (type_id != SemIR::TypeType::TypeId) {
+      auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+      auto identified_id =
+          TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
+                                 allow_partially_identified);
+      if (identified_id.has_value()) {
+        witnesses.push_back({.facet_const_id = facet_const_id,
+                             .identified_facet_type_id = identified_id});
+      }
+    }
+
+    if (!context.where_stack().empty()) {
+      const auto& impls = context.where_stack().back().impls;
+      for (auto [self_const_id, facet_type_const_id] : impls) {
+        if (self_const_id != facet_const_id) {
+          continue;
+        }
+        // TypeType is never stored in the impls stack, so we always have a
+        // FacetType.
+        auto facet_type = context.constant_values().GetInstAs<SemIR::FacetType>(
+            facet_type_const_id);
+        auto identified_id =
+            TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
+                                   allow_partially_identified);
+        if (identified_id.has_value()) {
+          witnesses.push_back({.facet_const_id = facet_const_id,
+                               .identified_facet_type_id = identified_id});
+        }
+      }
     }
   };
 

@@ -1413,3 +1413,24 @@ fn G(T:! I where .I1 = {}) {
   // information that `.I1 = {}`.
   F(T);
 }
+
+// --- resolve_nested_impl_witness_access.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  let Y1:! type;
+}
+interface Z {
+  let Z1:! Y;
+  let Z2:! type;
+}
+
+fn G(_:! Z where .Z2 = ()) {}
+
+// Split the assignment of .Y1 and the use of it into separate facet types so
+// that the early rewrite application doesn't get to see the value of .Y1 where
+// it's used. Then rewrite constraint resolution has to do the replacement of
+// .Z1.Y1 so that we know .Z2 = () as required by G.
+fn F(T:! (Z where .Z1 impls (Y where .Y1 = ())) & (Z where .Z2 = .Z1.Y1)) {
+  G(T);
+}

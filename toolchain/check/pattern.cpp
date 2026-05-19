@@ -136,8 +136,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   }
   auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
 
-  // Handle `var` decls in a class by creating a `FieldDecl`.
-  if (context.full_pattern_stack().IsCurrentKindFieldDecl()) {
+  // Handle non-static `var` decls in a class by creating a `FieldDecl`.
+  if (InNonStaticFieldDecl(context)) {
     auto class_decl =
         context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
     auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;

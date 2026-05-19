@@ -188,7 +188,7 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
     _carbon_binary_internal(
         name = name,
         srcs = srcs,
-        prelude_srcs = ["//core:prelude_files"],
+        prelude_srcs = [Label("//core:prelude_files")],
         deps = deps,
         flags = flags,
         tags = tags,
@@ -198,27 +198,33 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
         # but that isn't `select`-able. Instead, we have both attributes and
         # `select` which one we use.
         internal_exec_toolchain_driver = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
-            "//conditions:default": "//toolchain/install:carbon-busybox",
+            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+            "//conditions:default": Label("//toolchain/install:carbon-busybox"),
         }),
         internal_exec_toolchain_data = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
-            "//conditions:default": "//toolchain/install:install_data",
+            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+            "//conditions:default": Label("//toolchain/install:install_data"),
         }),
         internal_exec_prebuilt_runtimes = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
-            "//conditions:default": "//toolchain/install:built_runtimes",
+            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+            "//conditions:default": Label("//toolchain/install:built_runtimes"),
         }),
         internal_target_toolchain_driver = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:carbon-busybox",
+            Label(
+                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+            ): Label("//toolchain/install:carbon-busybox"),
             "//conditions:default": None,
         }),
         internal_target_toolchain_data = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:install_data",
+            Label(
+                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+            ): Label("//toolchain/install:install_data"),
             "//conditions:default": None,
         }),
         internal_target_prebuilt_runtimes = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:built_runtimes",
+            Label(
+                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+            ): Label("//toolchain/install:built_runtimes"),
             "//conditions:default": None,
         }),
     )

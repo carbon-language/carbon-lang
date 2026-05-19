@@ -383,3 +383,18 @@ impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
 fn G(T:! J where .J1 = D) {
   F(T);
 }
+
+// --- early_rewrite_from_previous_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+interface Y {
+  let Y1:! type;
+}
+
+fn F(T:! Z where .Z1 impls (Y where .Y1 = ()) and .Z2 = .Z1.(Y.Y1)) -> T.Z2 {
+  return ();
+}

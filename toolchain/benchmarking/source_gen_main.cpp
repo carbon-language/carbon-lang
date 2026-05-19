@@ -13,7 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
-#include "testing/base/source_gen.h"
+#include "toolchain/benchmarking/source_gen.h"
 
 namespace Carbon::Testing {
 namespace {

@@ -473,6 +473,7 @@ impl () as I where .N = 2 {
 }
 
 // --- symbolic_associated_type_in_concrete_context.carbon
+library "[[@TEST_NAME]]";
 
 interface Z {
   let X:! type;

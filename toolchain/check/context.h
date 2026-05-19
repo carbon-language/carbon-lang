@@ -252,11 +252,26 @@ class Context {
     return poisoned_concrete_impl_lookup_queries_;
   }
 
-  // A stack that tracks the rewrite constraints from a `where` expression being
-  // checked. The back of the stack is the currently checked `where` expression.
-  auto rewrites_stack()
-      -> llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>>& {
-    return rewrites_stack_;
+  // A stack that tracks constraints from a `where` expression being checked.
+  // The back of the stack is the currently checked `where` expression.
+  struct WhereStackEntry {
+    // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
+    // value on the RHS. Used during checking of a `where` expression to allow
+    // constraints to access values from earlier constraints.
+    Map<SemIR::ConstantId, SemIR::InstId> rewrites;
+
+    // A collection of `A impls B` facts known about the current `where`
+    // expression being checked. Used to allow constraints to know about `impls`
+    // relationships from earlier constraints.
+    struct SelfImplsFacetType {
+      SemIR::ConstantId self_const_id;
+      SemIR::ConstantId facet_type_const_id;
+    };
+    llvm::SmallVector<SelfImplsFacetType> impls;
+  };
+
+  auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
+    return where_stack_;
   }
 
   // Data about a form expression.
@@ -533,10 +548,9 @@ class Context {
   llvm::SmallVector<PoisonedConcreteImplLookupQuery>
       poisoned_concrete_impl_lookup_queries_;
 
-  // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
-  // value on the RHS. Used during checking of a `where` expression to allow
-  // constraints to access values from earlier constraints.
-  llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
+  // Tracks information about constraints in the current `where` expression
+  // being checked so that they can be used by later constraints.
+  llvm::SmallVector<WhereStackEntry> where_stack_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

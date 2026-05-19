@@ -587,7 +587,8 @@ static auto InventCompoundClangArg(Context& context, FormInfo form,
     auto rbrace_loc = compound_loc;
 
     auto* init_list = new (context.ast_context()) clang::InitListExpr(
-        context.ast_context(), lbrace_loc, inits, rbrace_loc);
+        context.ast_context(), lbrace_loc, inits, rbrace_loc,
+        /* isExplicit= */ true);
     init_list->setType(context.ast_context().VoidTy);
     return init_list;
   };

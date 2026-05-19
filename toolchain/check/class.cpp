@@ -361,4 +361,18 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
   class_info.complete_type_witness_id = complete_type_witness_id;
 }
 
+auto InNonStaticFieldDecl(Context& context) -> bool {
+  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+         !context.decl_introducer_state_stack()
+              .innermost()
+              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
+auto InStaticClassScopeVar(Context& context) -> bool {
+  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+         context.decl_introducer_state_stack()
+             .innermost()
+             .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
 }  // namespace Carbon::Check

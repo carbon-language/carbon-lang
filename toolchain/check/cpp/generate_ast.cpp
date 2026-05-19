@@ -355,6 +355,9 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   auto MapInstIdToClangDeclOrType(LookupResult lookup)
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
+  auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
+                                SemIR::FunctionId function_id)
+      -> clang::FunctionDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -426,15 +429,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
         return nullptr;
       }
 
-      const SemIR::Function& function =
-          context_->functions().Get(callee_function->function_id);
-      if (function.clang_decl_id.has_value()) {
-        return cast<clang::NamedDecl>(
-            context_->clang_decls().Get(function.clang_decl_id).key.decl);
-      }
-
-      return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
-                                 callee_function->function_id);
+      return GetOrExportFunctionToCpp(target_inst_id,
+                                      callee_function->function_id);
     }
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);
@@ -442,6 +438,19 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     default:
       return nullptr;
   }
+}
+
+auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
+    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
+    -> clang::FunctionDecl* {
+  const SemIR::Function& function = context_->functions().Get(function_id);
+  if (function.clang_decl_id.has_value()) {
+    return cast<clang::FunctionDecl>(
+        context_->clang_decls().Get(function.clang_decl_id).key.decl);
+  }
+
+  return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
+                             function_id);
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
@@ -653,6 +662,33 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
 
   // TODO: Import any special member functions that affect class properties.
+
+  if (class_info.vtable_decl_id.has_value()) {
+    auto vtable_inst_block = context_->inst_blocks().Get(
+        context_->vtables()
+            .Get(context_->insts()
+                     .GetAs<SemIR::VtableDecl>(class_info.vtable_decl_id)
+                     .vtable_id)
+            .virtual_functions_id);
+    for (auto vtable_entry_id : vtable_inst_block) {
+      if (!vtable_entry_id.has_value()) {
+        continue;
+      }
+
+      auto callee_function =
+          GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function.function_id);
+
+      // If this is a member of a base class, nothing to do here.
+      if (function.parent_scope_id != class_info.scope_id) {
+        continue;
+      }
+      auto* method_decl = cast<clang::CXXMethodDecl>(GetOrExportFunctionToCpp(
+          vtable_entry_id, callee_function.function_id));
+      context_->clang_sema().AddOverriddenMethods(class_decl, method_decl);
+    }
+  }
   class_decl->completeDefinition();
 }
 
