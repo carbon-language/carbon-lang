@@ -517,10 +517,10 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.25a: %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c = struct_value () [symbolic]
 // CHECK:STDOUT:   %unsigned_int.Op.type: type = fn_type @unsigned_int.Op [concrete]
 // CHECK:STDOUT:   %unsigned_int.Op: %unsigned_int.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.740: <witness> = custom_witness (%unsigned_int.Op), @Default [concrete]
-// CHECK:STDOUT:   %Default.facet.d27: %Default.type = facet_value %unsigned_int, (%custom_witness.740) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.ef4: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.b72, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.d27) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %unsigned_int, (%DefaultOrUnformed.impl_witness.ef4) [concrete]
+// CHECK:STDOUT:   %custom_witness.213: <witness> = custom_witness (%unsigned_int.Op), @Default [concrete]
+// CHECK:STDOUT:   %Default.facet.8a1: %Default.type = facet_value %unsigned_int, (%custom_witness.213) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.7fc: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.b72, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.8a1) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %unsigned_int, (%DefaultOrUnformed.impl_witness.7fc) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.632: type = pattern_type %u32 [concrete]
@@ -555,7 +555,7 @@ fn F() {
 // CHECK:STDOUT:     %unsigned_int.var_patt: %pattern_type.1b8 = var_pattern %unsigned_int.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int.var: ref %unsigned_int = var %unsigned_int.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%unsigned_int, (constants.%DefaultOrUnformed.impl_witness.ef4) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%unsigned_int, (constants.%DefaultOrUnformed.impl_witness.7fc) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc12_38.1: %DefaultOrUnformed.type = converted constants.%unsigned_int, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc12_38.1 [concrete = constants.%unsigned_int]
 // CHECK:STDOUT:   %.loc12_38.2: type = converted %.loc12_38.1, %as_type [concrete = constants.%unsigned_int]

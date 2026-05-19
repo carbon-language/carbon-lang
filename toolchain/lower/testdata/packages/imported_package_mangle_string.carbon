@@ -78,13 +78,13 @@ fn G() {
 // CHECK:STDOUT: define void @_CG.B() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,,!invalid}}:I.A"(), !dbg !7
-// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,{namespace,{<namespace>},A,},!invalid}}:I.A"(), !dbg !8
+// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,,!invalid}}:I.A"(), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,,!invalid}}:I.A"()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,{namespace,{<namespace>},A,},!invalid}}:I.A"()
+// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,,!invalid}}:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:

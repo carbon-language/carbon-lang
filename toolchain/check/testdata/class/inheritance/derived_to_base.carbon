@@ -208,9 +208,9 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.a5c: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %.b43: ref %B = class_element_access %.a5c, element0 [concrete]
 // CHECK:STDOUT:   %.ad1: ref %A = class_element_access %.b43, element0 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.60afa5.8: type = fn_type @Destroy.Op.loc32_66.8 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.b63e49.8: %Destroy.Op.type.60afa5.8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.a5c, %Destroy.Op.b63e49.8 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.8: type = fn_type @Destroy.Op.loc32_66.8 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.8: %Destroy.Op.type.af7ec0.8 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.a5c, %Destroy.Op.1dc86d.8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

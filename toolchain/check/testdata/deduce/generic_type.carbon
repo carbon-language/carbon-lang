@@ -805,9 +805,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_0.155) [concrete]
 // CHECK:STDOUT:   %.290: ref %WithNontype.7c8 = temporary invalid, %WithNontype.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.60afa5.2: type = fn_type @Destroy.Op.loc9_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.b63e49.2: %Destroy.Op.type.60afa5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.290, %Destroy.Op.b63e49.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc9_15.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.290, %Destroy.Op.1dc86d.2 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.132: <bound method> = bound_method %int_0.155, %Int.as.Copy.impl.Op.c4a [concrete]
 // CHECK:STDOUT:   %bound_method.f2e: <bound method> = bound_method %int_0.155, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT: }

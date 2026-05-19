@@ -43,13 +43,13 @@ fn F() {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Enum.Op.type: type = fn_type @Enum.Op [concrete]
 // CHECK:STDOUT:   %Enum.Op: %Enum.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.f81: <witness> = custom_witness (%Enum.Op), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.f32: %Copy.type = facet_value %Enum, (%custom_witness.f81) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f71: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.f32) [concrete]
-// CHECK:STDOUT:   %.97a: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f71, %Copy.facet.f32 [concrete]
-// CHECK:STDOUT:   %Enum.Op.bound.874: <bound method> = bound_method %int_0, %Enum.Op [concrete]
+// CHECK:STDOUT:   %custom_witness.b8d: <witness> = custom_witness (%Enum.Op), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.ae7: %Copy.type = facet_value %Enum, (%custom_witness.b8d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.100: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.ae7) [concrete]
+// CHECK:STDOUT:   %.e06: type = fn_type_with_self_type %Copy.WithSelf.Op.type.100, %Copy.facet.ae7 [concrete]
+// CHECK:STDOUT:   %Enum.Op.bound.7be: <bound method> = bound_method %int_0, %Enum.Op [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
-// CHECK:STDOUT:   %Enum.Op.bound.322: <bound method> = bound_method %int_1, %Enum.Op [concrete]
+// CHECK:STDOUT:   %Enum.Op.bound.c35: <bound method> = bound_method %int_1, %Enum.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,8 +76,8 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc12_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc12_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc12: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %impl.elem0.loc12: %.97a = impl_witness_access constants.%custom_witness.f81, element0 [concrete = constants.%Enum.Op]
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12 [concrete = constants.%Enum.Op.bound.874]
+// CHECK:STDOUT:   %impl.elem0.loc12: %.e06 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12 [concrete = constants.%Enum.Op.bound.7be]
 // CHECK:STDOUT:   %Enum.Op.call.loc12: init %Enum = call %bound_method.loc12(%a.ref.loc12) [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign %a.var, %Enum.Op.call.loc12
 // CHECK:STDOUT:   %.loc12: type = splice_block %Enum.ref.loc12_13 [concrete = constants.%Enum] {
@@ -89,8 +89,8 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc14: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc14: %.97a = impl_witness_access constants.%custom_witness.f81, element0 [concrete = constants.%Enum.Op]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %b.ref, %impl.elem0.loc14 [concrete = constants.%Enum.Op.bound.322]
+// CHECK:STDOUT:   %impl.elem0.loc14: %.e06 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %b.ref, %impl.elem0.loc14 [concrete = constants.%Enum.Op.bound.c35]
 // CHECK:STDOUT:   %Enum.Op.call.loc14: init %Enum = call %bound_method.loc14(%b.ref) [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc14, %Enum.Op.call.loc14
 // CHECK:STDOUT:   return

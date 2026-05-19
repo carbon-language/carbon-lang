@@ -57,8 +57,8 @@ fn G() {
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.F.cpp_overload_set.type: type = cpp_overload_set_type @C.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.F.cpp_overload_set.value: %C.F.cpp_overload_set.type = cpp_overload_set_value @C.F.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %.50b: type = class_type @.2 [concrete]
-// CHECK:STDOUT:   %int_1.7b6: %.50b = int_value 1 [concrete]
+// CHECK:STDOUT:   %.fd8: type = class_type @.2 [concrete]
+// CHECK:STDOUT:   %int_1.ea9: %.fd8 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -87,7 +87,7 @@ fn G() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.F.cpp_overload_set.value: %C.F.cpp_overload_set.type = cpp_overload_set_value @C.F.cpp_overload_set [concrete = constants.%C.F.cpp_overload_set.value]
-// CHECK:STDOUT:   %int_1.7b6: %.50b = int_value 1 [concrete = constants.%int_1.7b6]
+// CHECK:STDOUT:   %int_1.ea9: %.fd8 = int_value 1 [concrete = constants.%int_1.ea9]
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -118,7 +118,7 @@ fn G() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_11.3, %F.ref.loc10
 // CHECK:STDOUT:   %Cpp.ref.loc10_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e.ref: %.50b = name_ref e, imports.%int_1.7b6 [concrete = constants.%int_1.7b6]
+// CHECK:STDOUT:   %e.ref: %.fd8 = name_ref e, imports.%int_1.ea9 [concrete = constants.%int_1.ea9]
 // CHECK:STDOUT:   %.loc10_11.4: %C = acquire_value %.loc10_11.3
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call imports.%C.F.decl(%.loc10_11.4, %e.ref)
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc10_11.3, constants.%C.cpp_destructor

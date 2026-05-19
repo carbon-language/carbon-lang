@@ -456,18 +456,18 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %Ordered.Greater: %Ordered.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Ordered.GreaterOrEquivalent.type: type = fn_type @Ordered.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %Ordered.GreaterOrEquivalent: %Ordered.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.9ce: <witness> = custom_witness (%Ordered.Less, %Ordered.LessOrEquivalent, %Ordered.Greater, %Ordered.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%Ordered) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.08b: %OrderedWith.type.e20 = facet_value %Ordered, (%custom_witness.9ce) [concrete]
+// CHECK:STDOUT:   %custom_witness.13d: <witness> = custom_witness (%Ordered.Less, %Ordered.LessOrEquivalent, %Ordered.Greater, %Ordered.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%Ordered) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.8a0: %OrderedWith.type.e20 = facet_value %Ordered, (%custom_witness.13d) [concrete]
 // CHECK:STDOUT:   %pattern_type.a62: type = pattern_type %OrderedWith.type.e20 [concrete]
 // CHECK:STDOUT:   %complete_type.051: <witness> = complete_type_witness %OrderedWith.type.e20 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.b48: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.08b) [concrete]
-// CHECK:STDOUT:   %.f9f: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.b48, %OrderedWith.facet.08b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.c97: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.08b) [concrete]
-// CHECK:STDOUT:   %.7cf: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.c97, %OrderedWith.facet.08b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.f47: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.08b) [concrete]
-// CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.f47, %OrderedWith.facet.08b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.75e: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.08b) [concrete]
-// CHECK:STDOUT:   %.9dc: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.75e, %OrderedWith.facet.08b [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.b67: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.8a0) [concrete]
+// CHECK:STDOUT:   %.0b2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.b67, %OrderedWith.facet.8a0 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.e10: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.8a0) [concrete]
+// CHECK:STDOUT:   %.61a: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.e10, %OrderedWith.facet.8a0 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.c7f: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.8a0) [concrete]
+// CHECK:STDOUT:   %.f88: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.c7f, %OrderedWith.facet.8a0 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.c39: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.8a0) [concrete]
+// CHECK:STDOUT:   %.20a: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.c39, %OrderedWith.facet.8a0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -570,10 +570,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.loc13_58 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc13(constants.%Ordered, constants.%OrderedWith.facet.08b) {
+// CHECK:STDOUT: specific @OrderedWith.loc13(constants.%Ordered, constants.%OrderedWith.facet.8a0) {
 // CHECK:STDOUT:   %U.loc13_17.1 => constants.%Ordered
 // CHECK:STDOUT:   %OrderedWith.type.loc13_48.1 => constants.%OrderedWith.type.e20
-// CHECK:STDOUT:   %T.loc13_27.1 => constants.%OrderedWith.facet.08b
+// CHECK:STDOUT:   %T.loc13_27.1 => constants.%OrderedWith.facet.8a0
 // CHECK:STDOUT:   %pattern_type.loc13_27 => constants.%pattern_type.a62
 // CHECK:STDOUT:   %T.as_type.loc13_54.1 => constants.%Ordered
 // CHECK:STDOUT:   %pattern_type.loc13_52 => constants.%pattern_type.cc8
@@ -585,24 +585,24 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc15 => constants.%complete_type.051
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.78b
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1de
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.b48
-// CHECK:STDOUT:   %.loc15_5.2 => constants.%.f9f
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.9ce
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.b67
+// CHECK:STDOUT:   %.loc15_5.2 => constants.%.0b2
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.13d
 // CHECK:STDOUT:   %impl.elem0.loc15_5.2 => constants.%Ordered.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc15_5.2 => constants.%Ordered.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.117
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.c97
-// CHECK:STDOUT:   %.loc16_5.2 => constants.%.7cf
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.e10
+// CHECK:STDOUT:   %.loc16_5.2 => constants.%.61a
 // CHECK:STDOUT:   %impl.elem1.loc16_5.2 => constants.%Ordered.LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc16_5.2 => constants.%Ordered.LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.4c9
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.f47
-// CHECK:STDOUT:   %.loc17_5.2 => constants.%.0ea
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.c7f
+// CHECK:STDOUT:   %.loc17_5.2 => constants.%.f88
 // CHECK:STDOUT:   %impl.elem2.loc17_5.2 => constants.%Ordered.Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc17_5.2 => constants.%Ordered.Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.210
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.75e
-// CHECK:STDOUT:   %.loc18_5.2 => constants.%.9dc
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.c39
+// CHECK:STDOUT:   %.loc18_5.2 => constants.%.20a
 // CHECK:STDOUT:   %impl.elem3.loc18_5.2 => constants.%Ordered.GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc18_5.2 => constants.%Ordered.GreaterOrEquivalent
 // CHECK:STDOUT: }
@@ -684,8 +684,8 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %A1.Greater: %A1.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A1.GreaterOrEquivalent.type: type = fn_type @A1.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %A1.GreaterOrEquivalent: %A1.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.258: <witness> = custom_witness (%A1.Less, %A1.LessOrEquivalent, %A1.Greater, %A1.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%B1) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.63b: %OrderedWith.type.848 = facet_value %A1, (%custom_witness.258) [concrete]
+// CHECK:STDOUT:   %custom_witness.61b: <witness> = custom_witness (%A1.Less, %A1.LessOrEquivalent, %A1.Greater, %A1.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%B1) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.0b6: %OrderedWith.type.848 = facet_value %A1, (%custom_witness.61b) [concrete]
 // CHECK:STDOUT:   %pattern_type.b8e: type = pattern_type %OrderedWith.type.848 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.3fd: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A1)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.753: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A1) [concrete]
@@ -701,8 +701,8 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %B1.Greater: %B1.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B1.GreaterOrEquivalent.type: type = fn_type @B1.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %B1.GreaterOrEquivalent: %B1.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.401: <witness> = custom_witness (%B1.Less, %B1.LessOrEquivalent, %B1.Greater, %B1.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A1) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.6f3: %OrderedWith.type.3fd = facet_value %B1, (%custom_witness.401) [concrete]
+// CHECK:STDOUT:   %custom_witness.831: <witness> = custom_witness (%B1.Less, %B1.LessOrEquivalent, %B1.Greater, %B1.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A1) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.b58: %OrderedWith.type.3fd = facet_value %B1, (%custom_witness.831) [concrete]
 // CHECK:STDOUT:   %pattern_type.e33: type = pattern_type %OrderedWith.type.3fd [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.077: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A2)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.893: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A2) [concrete]
@@ -718,8 +718,8 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %B2.Greater: %B2.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B2.GreaterOrEquivalent.type: type = fn_type @B2.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %B2.GreaterOrEquivalent: %B2.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.e99: <witness> = custom_witness (%B2.Less, %B2.LessOrEquivalent, %B2.Greater, %B2.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A2) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.f0d: %OrderedWith.type.077 = facet_value %B2, (%custom_witness.e99) [concrete]
+// CHECK:STDOUT:   %custom_witness.601: <witness> = custom_witness (%B2.Less, %B2.LessOrEquivalent, %B2.Greater, %B2.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A2) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.a99: %OrderedWith.type.077 = facet_value %B2, (%custom_witness.601) [concrete]
 // CHECK:STDOUT:   %pattern_type.1fac: type = pattern_type %OrderedWith.type.077 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.bb7: type = facet_type <@OrderedWith.1, @OrderedWith.1(%B3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.8e0: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%B3) [concrete]
@@ -735,8 +735,8 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %A3.Greater: %A3.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type: type = fn_type @GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %GreaterOrEquivalent: %GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.203: <witness> = custom_witness (%A3.Less, %LessOrEquivalent, %A3.Greater, %GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%B3) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.c23: %OrderedWith.type.bb7 = facet_value %A3, (%custom_witness.203) [concrete]
+// CHECK:STDOUT:   %custom_witness.4f9: <witness> = custom_witness (%A3.Less, %LessOrEquivalent, %A3.Greater, %GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%B3) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.e01: %OrderedWith.type.bb7 = facet_value %A3, (%custom_witness.4f9) [concrete]
 // CHECK:STDOUT:   %pattern_type.50d: type = pattern_type %OrderedWith.type.bb7 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.852: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.9b5: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A3) [concrete]
@@ -752,54 +752,54 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %Greater: %Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B3.GreaterOrEquivalent.type: type = fn_type @B3.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %B3.GreaterOrEquivalent: %B3.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.7c7: <witness> = custom_witness (%Less, %B3.LessOrEquivalent, %Greater, %B3.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A3) [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet.d34: %OrderedWith.type.852 = facet_value %B3, (%custom_witness.7c7) [concrete]
+// CHECK:STDOUT:   %custom_witness.858: <witness> = custom_witness (%Less, %B3.LessOrEquivalent, %Greater, %B3.GreaterOrEquivalent), @OrderedWith.1, @OrderedWith.1(%A3) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet.8d9: %OrderedWith.type.852 = facet_value %B3, (%custom_witness.858) [concrete]
 // CHECK:STDOUT:   %pattern_type.1fab: type = pattern_type %OrderedWith.type.852 [concrete]
 // CHECK:STDOUT:   %complete_type.4f4: <witness> = complete_type_witness %OrderedWith.type.848 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.779: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.63b) [concrete]
-// CHECK:STDOUT:   %.690: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.779, %OrderedWith.facet.63b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.7aa: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.63b) [concrete]
-// CHECK:STDOUT:   %.905: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.7aa, %OrderedWith.facet.63b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.21c: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.63b) [concrete]
-// CHECK:STDOUT:   %.0e7: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.21c, %OrderedWith.facet.63b [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.331: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.63b) [concrete]
-// CHECK:STDOUT:   %.ffc: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.331, %OrderedWith.facet.63b [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.12b: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.0b6) [concrete]
+// CHECK:STDOUT:   %.f93: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.12b, %OrderedWith.facet.0b6 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.448: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.0b6) [concrete]
+// CHECK:STDOUT:   %.78f: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.448, %OrderedWith.facet.0b6 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.670: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.0b6) [concrete]
+// CHECK:STDOUT:   %.183: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.670, %OrderedWith.facet.0b6 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.5f2: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.0b6) [concrete]
+// CHECK:STDOUT:   %.846: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.5f2, %OrderedWith.facet.0b6 [concrete]
 // CHECK:STDOUT:   %complete_type.213: <witness> = complete_type_witness %OrderedWith.type.3fd [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.ca1: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.6f3) [concrete]
-// CHECK:STDOUT:   %.b76: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.ca1, %OrderedWith.facet.6f3 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.43d: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.6f3) [concrete]
-// CHECK:STDOUT:   %.9ee: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.43d, %OrderedWith.facet.6f3 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.917: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.6f3) [concrete]
-// CHECK:STDOUT:   %.6d1: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.917, %OrderedWith.facet.6f3 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.bee: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.6f3) [concrete]
-// CHECK:STDOUT:   %.1ce: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.bee, %OrderedWith.facet.6f3 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.d18: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.b58) [concrete]
+// CHECK:STDOUT:   %.343: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.d18, %OrderedWith.facet.b58 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.e77: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.b58) [concrete]
+// CHECK:STDOUT:   %.8cf: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.e77, %OrderedWith.facet.b58 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.dd9: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.b58) [concrete]
+// CHECK:STDOUT:   %.208: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.dd9, %OrderedWith.facet.b58 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.628: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A1, %OrderedWith.facet.b58) [concrete]
+// CHECK:STDOUT:   %.5aa: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.628, %OrderedWith.facet.b58 [concrete]
 // CHECK:STDOUT:   %complete_type.e9c: <witness> = complete_type_witness %OrderedWith.type.077 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.71e: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.f0d) [concrete]
-// CHECK:STDOUT:   %.5d0: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.71e, %OrderedWith.facet.f0d [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.c33: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.f0d) [concrete]
-// CHECK:STDOUT:   %.943: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.c33, %OrderedWith.facet.f0d [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.390: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.f0d) [concrete]
-// CHECK:STDOUT:   %.d25: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.390, %OrderedWith.facet.f0d [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.ef8: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.f0d) [concrete]
-// CHECK:STDOUT:   %.1e1: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.ef8, %OrderedWith.facet.f0d [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.9b6: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.a99) [concrete]
+// CHECK:STDOUT:   %.4c2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.9b6, %OrderedWith.facet.a99 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.920: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.a99) [concrete]
+// CHECK:STDOUT:   %.712: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.920, %OrderedWith.facet.a99 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.f32: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.a99) [concrete]
+// CHECK:STDOUT:   %.358: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.f32, %OrderedWith.facet.a99 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.fc7: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A2, %OrderedWith.facet.a99) [concrete]
+// CHECK:STDOUT:   %.c0e: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.fc7, %OrderedWith.facet.a99 [concrete]
 // CHECK:STDOUT:   %complete_type.c99: <witness> = complete_type_witness %OrderedWith.type.bb7 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.82b: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.c23) [concrete]
-// CHECK:STDOUT:   %.e6a: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.82b, %OrderedWith.facet.c23 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.773: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.c23) [concrete]
-// CHECK:STDOUT:   %.97e: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.773, %OrderedWith.facet.c23 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.773: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.c23) [concrete]
-// CHECK:STDOUT:   %.f38: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.773, %OrderedWith.facet.c23 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.937: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.c23) [concrete]
-// CHECK:STDOUT:   %.b52: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.937, %OrderedWith.facet.c23 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.0dc: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.e01) [concrete]
+// CHECK:STDOUT:   %.894: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.0dc, %OrderedWith.facet.e01 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.713: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.e01) [concrete]
+// CHECK:STDOUT:   %.c8d: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.713, %OrderedWith.facet.e01 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.f35: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.e01) [concrete]
+// CHECK:STDOUT:   %.01d: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.f35, %OrderedWith.facet.e01 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.965: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%B3, %OrderedWith.facet.e01) [concrete]
+// CHECK:STDOUT:   %.672: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.965, %OrderedWith.facet.e01 [concrete]
 // CHECK:STDOUT:   %complete_type.50b: <witness> = complete_type_witness %OrderedWith.type.852 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.a66: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.d34) [concrete]
-// CHECK:STDOUT:   %.a27: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.a66, %OrderedWith.facet.d34 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.a2a: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.d34) [concrete]
-// CHECK:STDOUT:   %.d80: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.a2a, %OrderedWith.facet.d34 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.bcd: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.d34) [concrete]
-// CHECK:STDOUT:   %.4a9: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.bcd, %OrderedWith.facet.d34 [concrete]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.822: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.d34) [concrete]
-// CHECK:STDOUT:   %.f02: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.822, %OrderedWith.facet.d34 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.9da: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.8d9) [concrete]
+// CHECK:STDOUT:   %.393: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.9da, %OrderedWith.facet.8d9 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.34f: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.8d9) [concrete]
+// CHECK:STDOUT:   %.8ce: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.34f, %OrderedWith.facet.8d9 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.87e: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.8d9) [concrete]
+// CHECK:STDOUT:   %.59a: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type.87e, %OrderedWith.facet.8d9 [concrete]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type.d85: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%A3, %OrderedWith.facet.8d9) [concrete]
+// CHECK:STDOUT:   %.e0e: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.d85, %OrderedWith.facet.8d9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -902,10 +902,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B1, constants.%OrderedWith.facet.63b) {
+// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B1, constants.%OrderedWith.facet.0b6) {
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%B1
 // CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.848
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.63b
+// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.0b6
 // CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.b8e
 // CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%A1
 // CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.489
@@ -917,32 +917,32 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.4f4
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.d2f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.5f5
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.779
-// CHECK:STDOUT:   %.loc56_5.2 => constants.%.690
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.258
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.12b
+// CHECK:STDOUT:   %.loc56_5.2 => constants.%.f93
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.61b
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%A1.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%A1.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.dd5
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.7aa
-// CHECK:STDOUT:   %.loc57_5.2 => constants.%.905
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.448
+// CHECK:STDOUT:   %.loc57_5.2 => constants.%.78f
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2 => constants.%A1.LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc57_5.2 => constants.%A1.LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.198
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.21c
-// CHECK:STDOUT:   %.loc58_5.2 => constants.%.0e7
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.670
+// CHECK:STDOUT:   %.loc58_5.2 => constants.%.183
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2 => constants.%A1.Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc58_5.2 => constants.%A1.Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.40e
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.331
-// CHECK:STDOUT:   %.loc59_5.2 => constants.%.ffc
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.5f2
+// CHECK:STDOUT:   %.loc59_5.2 => constants.%.846
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2 => constants.%A1.GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc59_5.2 => constants.%A1.GreaterOrEquivalent
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A1, constants.%OrderedWith.facet.6f3) {
+// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A1, constants.%OrderedWith.facet.b58) {
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A1
 // CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.3fd
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.6f3
+// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.b58
 // CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.e33
 // CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B1
 // CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.278
@@ -954,32 +954,32 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.213
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.753
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.48a
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.ca1
-// CHECK:STDOUT:   %.loc56_5.2 => constants.%.b76
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.401
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.d18
+// CHECK:STDOUT:   %.loc56_5.2 => constants.%.343
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.831
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%B1.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%B1.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.af7
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.43d
-// CHECK:STDOUT:   %.loc57_5.2 => constants.%.9ee
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.e77
+// CHECK:STDOUT:   %.loc57_5.2 => constants.%.8cf
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2 => constants.%B1.LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc57_5.2 => constants.%B1.LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.b59
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.917
-// CHECK:STDOUT:   %.loc58_5.2 => constants.%.6d1
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.dd9
+// CHECK:STDOUT:   %.loc58_5.2 => constants.%.208
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2 => constants.%B1.Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc58_5.2 => constants.%B1.Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.859
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.bee
-// CHECK:STDOUT:   %.loc59_5.2 => constants.%.1ce
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.628
+// CHECK:STDOUT:   %.loc59_5.2 => constants.%.5aa
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2 => constants.%B1.GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc59_5.2 => constants.%B1.GreaterOrEquivalent
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A2, constants.%OrderedWith.facet.f0d) {
+// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A2, constants.%OrderedWith.facet.a99) {
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A2
 // CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.077
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.f0d
+// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.a99
 // CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.1fac
 // CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B2
 // CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.6a4
@@ -991,32 +991,32 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.e9c
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.893
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.c31
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.71e
-// CHECK:STDOUT:   %.loc56_5.2 => constants.%.5d0
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.e99
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.9b6
+// CHECK:STDOUT:   %.loc56_5.2 => constants.%.4c2
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.601
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%B2.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%B2.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.1c3
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.c33
-// CHECK:STDOUT:   %.loc57_5.2 => constants.%.943
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.920
+// CHECK:STDOUT:   %.loc57_5.2 => constants.%.712
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2 => constants.%B2.LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc57_5.2 => constants.%B2.LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.dc0
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.390
-// CHECK:STDOUT:   %.loc58_5.2 => constants.%.d25
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.f32
+// CHECK:STDOUT:   %.loc58_5.2 => constants.%.358
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2 => constants.%B2.Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc58_5.2 => constants.%B2.Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.20d
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.ef8
-// CHECK:STDOUT:   %.loc59_5.2 => constants.%.1e1
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.fc7
+// CHECK:STDOUT:   %.loc59_5.2 => constants.%.c0e
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2 => constants.%B2.GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc59_5.2 => constants.%B2.GreaterOrEquivalent
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B3, constants.%OrderedWith.facet.c23) {
+// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B3, constants.%OrderedWith.facet.e01) {
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%B3
 // CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.bb7
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.c23
+// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.e01
 // CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.50d
 // CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%A3
 // CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.e08
@@ -1028,32 +1028,32 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.c99
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.8e0
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8b3
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.82b
-// CHECK:STDOUT:   %.loc56_5.2 => constants.%.e6a
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.203
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.0dc
+// CHECK:STDOUT:   %.loc56_5.2 => constants.%.894
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.4f9
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%A3.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%A3.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.627
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.773
-// CHECK:STDOUT:   %.loc57_5.2 => constants.%.97e
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.713
+// CHECK:STDOUT:   %.loc57_5.2 => constants.%.c8d
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2 => constants.%LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc57_5.2 => constants.%LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.00e
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.773
-// CHECK:STDOUT:   %.loc58_5.2 => constants.%.f38
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.f35
+// CHECK:STDOUT:   %.loc58_5.2 => constants.%.01d
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2 => constants.%A3.Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc58_5.2 => constants.%A3.Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.b0d
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.937
-// CHECK:STDOUT:   %.loc59_5.2 => constants.%.b52
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.965
+// CHECK:STDOUT:   %.loc59_5.2 => constants.%.672
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2 => constants.%GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc59_5.2 => constants.%GreaterOrEquivalent
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A3, constants.%OrderedWith.facet.d34) {
+// CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A3, constants.%OrderedWith.facet.8d9) {
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A3
 // CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.852
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.d34
+// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.8d9
 // CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.1fab
 // CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B3
 // CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.18a
@@ -1065,24 +1065,24 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.50b
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.9b5
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.5fc
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.a66
-// CHECK:STDOUT:   %.loc56_5.2 => constants.%.a27
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.7c7
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.9da
+// CHECK:STDOUT:   %.loc56_5.2 => constants.%.393
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.858
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.c88
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.a2a
-// CHECK:STDOUT:   %.loc57_5.2 => constants.%.d80
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type => constants.%OrderedWith.WithSelf.LessOrEquivalent.type.34f
+// CHECK:STDOUT:   %.loc57_5.2 => constants.%.8ce
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2 => constants.%B3.LessOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc57_5.2 => constants.%B3.LessOrEquivalent
 // CHECK:STDOUT:   %assoc2 => constants.%assoc2.af5
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.bcd
-// CHECK:STDOUT:   %.loc58_5.2 => constants.%.4a9
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type => constants.%OrderedWith.WithSelf.Greater.type.87e
+// CHECK:STDOUT:   %.loc58_5.2 => constants.%.59a
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2 => constants.%Greater
 // CHECK:STDOUT:   %specific_impl_fn.loc58_5.2 => constants.%Greater
 // CHECK:STDOUT:   %assoc3 => constants.%assoc3.d90
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.822
-// CHECK:STDOUT:   %.loc59_5.2 => constants.%.f02
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type => constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.d85
+// CHECK:STDOUT:   %.loc59_5.2 => constants.%.e0e
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2 => constants.%B3.GreaterOrEquivalent
 // CHECK:STDOUT:   %specific_impl_fn.loc59_5.2 => constants.%B3.GreaterOrEquivalent
 // CHECK:STDOUT: }

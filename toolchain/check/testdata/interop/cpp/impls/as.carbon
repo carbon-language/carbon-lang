@@ -325,18 +325,18 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ptr.d63e0a.1: type = ptr_type %ConditionallyExplicit.6a9921.1 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c43f84.1: type = fn_type @ConditionallyExplicit__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.379b04.1: %ConditionallyExplicit__carbon_thunk.type.c43f84.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.e57157.1: type = fn_type @ConditionallyExplicit.cpp_destructor.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.abdee2.1: %ConditionallyExplicit.cpp_destructor.type.e57157.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.d5d3d3.1: type = fn_type @ConditionallyExplicit.Op.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.ecb1a5.1: %ConditionallyExplicit.Op.type.d5d3d3.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1: type = fn_type @ConditionallyExplicit.cpp_destructor.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ad69a.1: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.43d658.1: type = fn_type @ConditionallyExplicit.Op.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.cc70d5.1: %ConditionallyExplicit.Op.type.43d658.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.6a9921.2: type = class_type @ConditionallyExplicit.2 [concrete]
 // CHECK:STDOUT:   %ptr.d63e0a.2: type = ptr_type %ConditionallyExplicit.6a9921.2 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c43f84.2: type = fn_type @ConditionallyExplicit__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.379b04.2: %ConditionallyExplicit__carbon_thunk.type.c43f84.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.e57157.2: type = fn_type @ConditionallyExplicit.cpp_destructor.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.abdee2.2: %ConditionallyExplicit.cpp_destructor.type.e57157.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.d5d3d3.2: type = fn_type @ConditionallyExplicit.Op.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.ecb1a5.2: %ConditionallyExplicit.Op.type.d5d3d3.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2: type = fn_type @ConditionallyExplicit.cpp_destructor.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ad69a.2: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.43d658.2: type = fn_type @ConditionallyExplicit.Op.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.cc70d5.2: %ConditionallyExplicit.Op.type.43d658.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.a9f: type = pattern_type %Dest [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.type: type = fn_type @ConditionallyExplicit.cpp_operator [concrete]
@@ -365,7 +365,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.f41bb8.1: %ConditionallyExplicit.cpp_destructor.type.e57157.1 = fn_decl @ConditionallyExplicit.cpp_destructor.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.abdee2.1] {
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.6e607d.1: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = fn_decl @ConditionallyExplicit.cpp_destructor.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -376,7 +376,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.f41bb8.2: %ConditionallyExplicit.cpp_destructor.type.e57157.2 = fn_decl @ConditionallyExplicit.cpp_destructor.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.abdee2.2] {
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.6e607d.2: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = fn_decl @ConditionallyExplicit.cpp_destructor.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -431,12 +431,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc9_5.3: init %ConditionallyExplicit.6a9921.1 = converted %s.ref.loc9, %.loc9_5.2
 // CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.6a9921.1 = temporary %.loc9_5.1, %.loc9_5.3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%ConditionallyExplicit.Op.ecb1a5.1
-// CHECK:STDOUT:   %Op.ref.loc9: %ConditionallyExplicit.cpp_destructor.type.e57157.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.f41bb8.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.abdee2.1]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%ConditionallyExplicit.Op.cc70d5.1
+// CHECK:STDOUT:   %Op.ref.loc9: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_5.4, %Op.ref.loc9
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call.loc9: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound.loc9(%.loc9_5.4)
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc8: <bound method> = bound_method %.loc8_43.5, constants.%ConditionallyExplicit.Op.ecb1a5.1
-// CHECK:STDOUT:   %Op.ref.loc8: %ConditionallyExplicit.cpp_destructor.type.e57157.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.f41bb8.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.abdee2.1]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc8: <bound method> = bound_method %.loc8_43.5, constants.%ConditionallyExplicit.Op.cc70d5.1
+// CHECK:STDOUT:   %Op.ref.loc8: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_43.5, %Op.ref.loc8
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call.loc8: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound.loc8(%.loc8_43.5)
 // CHECK:STDOUT:   <elided>
@@ -456,8 +456,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc15_5.3: init %ConditionallyExplicit.6a9921.2 = converted %s.ref, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.6a9921.2 = temporary %.loc15_5.1, %.loc15_5.3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound: <bound method> = bound_method %.loc15_5.4, constants.%ConditionallyExplicit.Op.ecb1a5.2
-// CHECK:STDOUT:   %Op.ref: %ConditionallyExplicit.cpp_destructor.type.e57157.2 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.f41bb8.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.abdee2.2]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound: <bound method> = bound_method %.loc15_5.4, constants.%ConditionallyExplicit.Op.cc70d5.2
+// CHECK:STDOUT:   %Op.ref: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.2]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound: <bound method> = bound_method %.loc15_5.4, %Op.ref
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>

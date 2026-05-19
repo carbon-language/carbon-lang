@@ -352,6 +352,22 @@ struct Worklist {
     }
   }
 
+  auto AddPackage(NameScopeId name_scope_id) -> void {
+    if (name_scope_id == NameScopeId::Package) {
+      AddLibrary(sem_ir);
+      return;
+    }
+
+    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
+    CARBON_CHECK(scope.is_imported_package());
+    if (!scope.import_ir_scopes().empty()) {
+      auto import_ir_id = scope.import_ir_scopes().front().first;
+      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
+    } else {
+      AddInvalid();
+    }
+  }
+
   auto Add(NameScopeId name_scope_id) -> void {
     if (!name_scope_id.has_value()) {
       AddInvalid();
@@ -360,27 +376,18 @@ struct Worklist {
 
     // If this is the current package or an imported package, add the package
     // and library name.
-    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
-    if (name_scope_id == NameScopeId::Package) {
-      AddLibrary(sem_ir);
-      return;
-    }
-    if (scope.is_imported_package()) {
-      if (!scope.import_ir_scopes().empty()) {
-        auto import_ir_id = scope.import_ir_scopes().front().first;
-        AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
-      } else {
-        AddInvalid();
-      }
+    if (sem_ir->name_scopes().IsPackage(name_scope_id)) {
+      AddPackage(name_scope_id);
       return;
     }
 
     // For non-package scopes, add the name and parent scope.
+    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
     Add(scope.name_id());
     if (scope.parent_scope_id().has_value()) {
       auto parent_id = scope.parent_scope_id();
-      if (parent_id == NameScopeId::Package) {
-        Add(NameScopeId::Package);
+      if (sem_ir->name_scopes().IsPackage(parent_id)) {
+        AddPackage(parent_id);
       } else {
         Add(sem_ir->name_scopes().Get(parent_id).inst_id());
       }

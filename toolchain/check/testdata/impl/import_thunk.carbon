@@ -441,13 +441,13 @@ fn G() {
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.c89202.2: <specific function> = specific_function %C.as.I.impl.F.e7ba19.1, @C.as.I.impl.F.2(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.val.f31: %C.552 = struct_value () [concrete]
 // CHECK:STDOUT:   %.33d: ref %C.552 = temporary invalid, %C.val.f31 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.d5d3d3.2: type = fn_type @Destroy.Op.loc7_16.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.ecb1a5.2: %Destroy.Op.type.d5d3d3.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.d53c65.2: <witness> = custom_witness (%Destroy.Op.ecb1a5.2), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.55e: %Destroy.type = facet_value %C.552, (%custom_witness.d53c65.2) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.0f6: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.55e) [concrete]
-// CHECK:STDOUT:   %.58f: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.0f6, %Destroy.facet.55e [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.33d, %Destroy.Op.ecb1a5.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.43d658.2: type = fn_type @Destroy.Op.loc7_16.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.cc70d5.2: %Destroy.Op.type.43d658.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.bf6668.2: <witness> = custom_witness (%Destroy.Op.cc70d5.2), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.731: %Destroy.type = facet_value %C.552, (%custom_witness.bf6668.2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.d96: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.731) [concrete]
+// CHECK:STDOUT:   %.bd9: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.d96, %Destroy.facet.731 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.33d, %Destroy.Op.cc70d5.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -684,13 +684,13 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %C.val => constants.%C.val.f31
 // CHECK:STDOUT:   %.1 => constants.%.33d
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.d53c65.2
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.55e
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.0f6
-// CHECK:STDOUT:   %.2 => constants.%.58f
-// CHECK:STDOUT:   %impl.elem0 => constants.%Destroy.Op.ecb1a5.2
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.bf6668.2
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.731
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.d96
+// CHECK:STDOUT:   %.2 => constants.%.bd9
+// CHECK:STDOUT:   %impl.elem0 => constants.%Destroy.Op.cc70d5.2
 // CHECK:STDOUT:   %bound_method.1 => constants.%Destroy.Op.bound
-// CHECK:STDOUT:   %specific_impl_fn => constants.%Destroy.Op.ecb1a5.2
+// CHECK:STDOUT:   %specific_impl_fn => constants.%Destroy.Op.cc70d5.2
 // CHECK:STDOUT:   %bound_method.2 => constants.%Destroy.Op.bound
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

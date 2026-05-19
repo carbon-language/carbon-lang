@@ -86,7 +86,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF_i32.Main(i32 %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.8240c03a61e2f6d3(i32 %a), !dbg !14
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.165a5d00c312ef9e(i32 %a), !dbg !14
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -113,7 +113,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_X.Main(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.2d5bc9043345ba11(ptr %return, ptr %a), !dbg !35
+// CHECK:STDOUT:   call void @_CF.Main.e4214cdf04e44ea0(ptr %return, ptr %a), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,7 +138,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_empty_tuple.Main() #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.1b24284231075c28(), !dbg !52
+// CHECK:STDOUT:   call void @_CF.Main.6942691454f579cd(), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,7 +159,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_two_tuple.Main(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.6a4b5cdcdd6c6be1(ptr %return, ptr %a), !dbg !62
+// CHECK:STDOUT:   call void @_CF.Main.52eb52f0ffbd1db6(ptr %return, ptr %a), !dbg !62
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,7 +186,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_nested_tuple.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !75 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.e8b33f7dae6adff9(ptr %return, ptr %a), !dbg !78
+// CHECK:STDOUT:   call void @_CF.Main.cbd425227ee9ed4b(ptr %return, ptr %a), !dbg !78
 // CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,7 +197,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.8240c03a61e2f6d3(i32 %a) #0 !dbg !84 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.165a5d00c312ef9e(i32 %a) #0 !dbg !84 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !87
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !87
@@ -209,7 +209,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.2d5bc9043345ba11(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !91 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.e4214cdf04e44ea0(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !94
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !94
@@ -220,7 +220,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.1b24284231075c28() #0 !dbg !98 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6942691454f579cd() #0 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !99
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !99
@@ -230,7 +230,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6a4b5cdcdd6c6be1(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.52eb52f0ffbd1db6(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !103 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !106
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !106
@@ -241,7 +241,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.e8b33f7dae6adff9(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !110 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.cbd425227ee9ed4b(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !110 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !113
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !113
@@ -347,33 +347,33 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !81 = !{!82}
 // CHECK:STDOUT: !82 = !DILocalVariable(arg: 1, scope: !80, type: !25)
 // CHECK:STDOUT: !83 = !DILocation(line: 74, column: 10, scope: !80)
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.8240c03a61e2f6d3", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !85)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.165a5d00c312ef9e", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !85)
 // CHECK:STDOUT: !85 = !{!86}
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !84, type: !7)
 // CHECK:STDOUT: !87 = !DILocation(line: 18, column: 3, scope: !84)
 // CHECK:STDOUT: !88 = !DILocation(line: 18, column: 14, scope: !84)
 // CHECK:STDOUT: !89 = !DILocation(line: 19, column: 10, scope: !84)
 // CHECK:STDOUT: !90 = !DILocation(line: 19, column: 3, scope: !84)
-// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2d5bc9043345ba11", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !92)
+// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e4214cdf04e44ea0", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !92)
 // CHECK:STDOUT: !92 = !{!93}
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !91, type: !25)
 // CHECK:STDOUT: !94 = !DILocation(line: 18, column: 3, scope: !91)
 // CHECK:STDOUT: !95 = !DILocation(line: 18, column: 14, scope: !91)
 // CHECK:STDOUT: !96 = !DILocation(line: 19, column: 10, scope: !91)
 // CHECK:STDOUT: !97 = !DILocation(line: 19, column: 3, scope: !91)
-// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.1b24284231075c28", scope: null, file: !3, line: 17, type: !48, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6942691454f579cd", scope: null, file: !3, line: 17, type: !48, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !99 = !DILocation(line: 18, column: 3, scope: !98)
 // CHECK:STDOUT: !100 = !DILocation(line: 18, column: 14, scope: !98)
 // CHECK:STDOUT: !101 = !DILocation(line: 19, column: 10, scope: !98)
 // CHECK:STDOUT: !102 = !DILocation(line: 19, column: 3, scope: !98)
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6a4b5cdcdd6c6be1", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !104)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.52eb52f0ffbd1db6", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !104)
 // CHECK:STDOUT: !104 = !{!105}
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !103, type: !25)
 // CHECK:STDOUT: !106 = !DILocation(line: 18, column: 3, scope: !103)
 // CHECK:STDOUT: !107 = !DILocation(line: 18, column: 14, scope: !103)
 // CHECK:STDOUT: !108 = !DILocation(line: 19, column: 10, scope: !103)
 // CHECK:STDOUT: !109 = !DILocation(line: 19, column: 3, scope: !103)
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8b33f7dae6adff9", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !111)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.cbd425227ee9ed4b", scope: null, file: !3, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !111)
 // CHECK:STDOUT: !111 = !{!112}
 // CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !110, type: !25)
 // CHECK:STDOUT: !113 = !DILocation(line: 18, column: 3, scope: !110)

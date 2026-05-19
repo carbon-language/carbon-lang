@@ -406,6 +406,12 @@ class NameScopeStore {
            IsCorePackage(Get(scope_id).parent_scope_id());
   }
 
+  // Returns whether the ID is a package scope.
+  auto IsPackage(NameScopeId scope_id) const -> bool {
+    return scope_id == NameScopeId::Package ||
+           (scope_id.has_value() && Get(scope_id).is_imported_package());
+  }
+
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
   }

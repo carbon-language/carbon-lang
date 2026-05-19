@@ -85,7 +85,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: ; ModuleID = 'd.carbon'
 // CHECK:STDOUT: source_filename = "d.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.962.anon = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.544.anon = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !4 {
@@ -93,13 +93,13 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:   %.loc5_21.1.temp = alloca {}, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.c8fd090a2e741f70"(ptr %.loc5_21.1.temp, ptr %d), !dbg !10
-// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.1656ceee0caa4430(ptr %.loc5_21.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_COp.06bf21689ed752b6:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.305e140e9c2d2c5b(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.4c975db34c760aa2:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   ret ptr %C.GetC.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.06bf21689ed752b6:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4c975db34c760aa2:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -109,12 +109,12 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.c8fd090a2e741f70"(ptr sret({}) %return, ptr %self) #0 !dbg !18 {
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.962.anon, i64 0, i1 false), !dbg !22
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.544.anon, i64 0, i1 false), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.1656ceee0caa4430(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.305e140e9c2d2c5b(ptr %self) #0 !dbg !23 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !27
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !27
@@ -143,7 +143,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 5, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.06bf21689ed752b6:core.Destroy.Core", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4c975db34c760aa2:core.Destroy.Core", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !7}
 // CHECK:STDOUT: !15 = !{!16}
@@ -154,7 +154,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 7, column: 7, scope: !18)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.1656ceee0caa4430", scope: null, file: !24, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.305e140e9c2d2c5b", scope: null, file: !24, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
 // CHECK:STDOUT: !24 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !23, type: !7)

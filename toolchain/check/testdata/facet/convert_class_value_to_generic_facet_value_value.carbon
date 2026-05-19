@@ -161,12 +161,12 @@ fn B() {
 // CHECK:STDOUT:   %.20a: ref %ImplsGeneric = temporary invalid, %ImplsGeneric.val [concrete]
 // CHECK:STDOUT:   %.c4c: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.60afa5.2: type = fn_type @Destroy.Op.loc20_44.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.b63e49.2: %Destroy.Op.type.60afa5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound.8ab: <bound method> = bound_method %.c4c, %Destroy.Op.b63e49.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.60afa5.3: type = fn_type @Destroy.Op.loc20_24 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.b63e49.3: %Destroy.Op.type.60afa5.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound.04d: <bound method> = bound_method %.20a, %Destroy.Op.b63e49.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc20_44.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound.c68: <bound method> = bound_method %.c4c, %Destroy.Op.1dc86d.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.3: type = fn_type @Destroy.Op.loc20_24 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound.c80: <bound method> = bound_method %.20a, %Destroy.Op.1dc86d.3 [concrete]
 // CHECK:STDOUT:   %complete_type.058: <witness> = complete_type_witness %Generic.type.f3e [concrete]
 // CHECK:STDOUT:   %.cfd: type = fn_type_with_self_type %Generic.WithSelf.F.type.ac6, %Generic.facet [concrete]
 // CHECK:STDOUT: }
@@ -357,8 +357,8 @@ fn B() {
 // CHECK:STDOUT:   %.loc20_44.2: ref %GenericParam = temporary %.loc20_42.2, %.loc20_44.1 [concrete = constants.%.c4c]
 // CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.3, %.loc20_44.3)
-// CHECK:STDOUT:   %Destroy.Op.call.loc20_44: init %empty_tuple.type = call constants.%Destroy.Op.bound.8ab(constants.%.c4c)
-// CHECK:STDOUT:   %Destroy.Op.call.loc20_24: init %empty_tuple.type = call constants.%Destroy.Op.bound.04d(constants.%.20a)
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_44: init %empty_tuple.type = call constants.%Destroy.Op.bound.c68(constants.%.c4c)
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_24: init %empty_tuple.type = call constants.%Destroy.Op.bound.c80(constants.%.20a)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,9 +521,9 @@ fn B() {
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A, @A(%I.facet.676) [concrete]
 // CHECK:STDOUT:   %.d64: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.60afa5.2: type = fn_type @Destroy.Op.loc12_8.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.b63e49.2: %Destroy.Op.type.60afa5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.d64, %Destroy.Op.b63e49.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc12_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.d64, %Destroy.Op.1dc86d.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

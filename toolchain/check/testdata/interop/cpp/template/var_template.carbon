@@ -50,10 +50,10 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %pattern_type.676: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %addr.dd0: %ptr.13d = addr_of imports.%var.var.c8c [concrete]
 // CHECK:STDOUT:   %Wrap: type = class_type @Wrap [concrete]
-// CHECK:STDOUT:   %var.type.859: type = cpp_type_template_type r#var [concrete]
-// CHECK:STDOUT:   %var.template.c82: %var.type.859 = struct_value () [concrete]
-// CHECK:STDOUT:   %addr.9a8: %ptr.bce = addr_of imports.%var.var.e90 [concrete]
-// CHECK:STDOUT:   %addr.354: %ptr.13d = addr_of imports.%var.var.50b [concrete]
+// CHECK:STDOUT:   %var.type.726: type = cpp_type_template_type r#var [concrete]
+// CHECK:STDOUT:   %var.template.093: %var.type.726 = struct_value () [concrete]
+// CHECK:STDOUT:   %addr.9d1: %ptr.bce = addr_of imports.%var.var.71c [concrete]
+// CHECK:STDOUT:   %addr.03a: %ptr.13d = addr_of imports.%var.var.74b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,13 +74,13 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %var.var_patt.857: %pattern_type.676 = var_pattern %var.patt.d82 [concrete]
 // CHECK:STDOUT:   %var.var.c8c: ref %B = var %var.var_patt.857 [concrete]
 // CHECK:STDOUT:   %Wrap.decl: type = class_decl @Wrap [concrete = constants.%Wrap] {} {}
-// CHECK:STDOUT:   %var.template.c82: %var.type.859 = struct_value () [concrete = constants.%var.template.c82]
-// CHECK:STDOUT:   %var.patt.e39: %pattern_type.b54 = ref_binding_pattern r#var [concrete]
-// CHECK:STDOUT:   %var.var_patt.ec5: %pattern_type.b54 = var_pattern %var.patt.e39 [concrete]
-// CHECK:STDOUT:   %var.var.e90: ref %A = var %var.var_patt.ec5 [concrete]
-// CHECK:STDOUT:   %var.patt.230: %pattern_type.676 = ref_binding_pattern r#var [concrete]
-// CHECK:STDOUT:   %var.var_patt.7a0: %pattern_type.676 = var_pattern %var.patt.230 [concrete]
-// CHECK:STDOUT:   %var.var.50b: ref %B = var %var.var_patt.7a0 [concrete]
+// CHECK:STDOUT:   %var.template.093: %var.type.726 = struct_value () [concrete = constants.%var.template.093]
+// CHECK:STDOUT:   %var.patt.fbd: %pattern_type.b54 = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.4df: %pattern_type.b54 = var_pattern %var.patt.fbd [concrete]
+// CHECK:STDOUT:   %var.var.71c: ref %A = var %var.var_patt.4df [concrete]
+// CHECK:STDOUT:   %var.patt.e9b: %pattern_type.676 = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.0e0: %pattern_type.676 = var_pattern %var.patt.e9b [concrete]
+// CHECK:STDOUT:   %var.var.74b: ref %B = var %var.var_patt.0e0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -136,16 +136,16 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %addr.loc8: %ptr.13d = addr_of imports.%var.var.c8c [concrete = constants.%addr.dd0]
 // CHECK:STDOUT:   %Cpp.ref.loc9_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Wrap.ref.loc9: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
-// CHECK:STDOUT:   %var.ref.loc9: %var.type.859 = name_ref r#var, imports.%var.template.c82 [concrete = constants.%var.template.c82]
+// CHECK:STDOUT:   %var.ref.loc9: %var.type.726 = name_ref r#var, imports.%var.template.093 [concrete = constants.%var.template.093]
 // CHECK:STDOUT:   %Cpp.ref.loc9_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc9: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %addr.loc9: %ptr.bce = addr_of imports.%var.var.e90 [concrete = constants.%addr.9a8]
+// CHECK:STDOUT:   %addr.loc9: %ptr.bce = addr_of imports.%var.var.71c [concrete = constants.%addr.9d1]
 // CHECK:STDOUT:   %Cpp.ref.loc10_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Wrap.ref.loc10: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
-// CHECK:STDOUT:   %var.ref.loc10: %var.type.859 = name_ref r#var, imports.%var.template.c82 [concrete = constants.%var.template.c82]
+// CHECK:STDOUT:   %var.ref.loc10: %var.type.726 = name_ref r#var, imports.%var.template.093 [concrete = constants.%var.template.093]
 // CHECK:STDOUT:   %Cpp.ref.loc10_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc10: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %addr.loc10: %ptr.13d = addr_of imports.%var.var.50b [concrete = constants.%addr.354]
+// CHECK:STDOUT:   %addr.loc10: %ptr.13d = addr_of imports.%var.var.74b [concrete = constants.%addr.03a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

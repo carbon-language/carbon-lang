@@ -367,7 +367,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca [12 x i8], align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !14
-// CHECK:STDOUT:   call void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.c0e7e8d0094b288e"(ptr %x.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.e5c2acf57553d2f2"(ptr %x.var), !dbg !14
 // CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 0, !dbg !15
 // CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !15
 // CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 4, !dbg !16
@@ -416,7 +416,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.c0e7e8d0094b288e"(ptr sret([12 x i8]) %return) #0 !dbg !30 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.e5c2acf57553d2f2"(ptr sret([12 x i8]) %return) #0 !dbg !30 {
 // CHECK:STDOUT:   call void @"_COp:thunk:Default.aebeffbfb3ea6f83.Core:X.Cpp"(ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -470,7 +470,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !DILocation(line: 2, column: 8, scope: !23)
 // CHECK:STDOUT: !29 = !{i64 0, i64 4, !7, i64 4, i64 4, !7, i64 8, i64 4, !7}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.c0e7e8d0094b288e", scope: null, file: !31, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.e5c2acf57553d2f2", scope: null, file: !31, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !32 = !DILocation(line: 9, column: 28, scope: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 9, column: 21, scope: !30)

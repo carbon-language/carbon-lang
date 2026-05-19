@@ -89,10 +89,10 @@ fn CallNegative() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.f50, @T.as.DefaultOrUnformed.impl.Op(%i0) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.275: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.f33: %Destroy.type = facet_value %i0, (%custom_witness.275) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.49c: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.f33) [concrete]
-// CHECK:STDOUT:   %.f13: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.49c, %Destroy.facet.f33 [concrete]
+// CHECK:STDOUT:   %custom_witness.340: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.38c: %Destroy.type = facet_value %i0, (%custom_witness.340) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.e96: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.38c) [concrete]
+// CHECK:STDOUT:   %.a59: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.e96, %Destroy.facet.38c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -219,10 +219,10 @@ fn CallNegative() {
 // CHECK:STDOUT:   %.loc9_28.4 => constants.%.b6d
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.f50
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.275
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.f33
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.49c
-// CHECK:STDOUT:   %.loc9_3 => constants.%.f13
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.340
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.38c
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.e96
+// CHECK:STDOUT:   %.loc9_3 => constants.%.a59
 // CHECK:STDOUT:   %impl.elem0.loc9_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc9_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }

@@ -81,10 +81,10 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array.610: %array_type.c56 = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.275: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.f6b: %Destroy.type = facet_value %array_type.c56, (%custom_witness.275) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.849: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.f6b) [concrete]
-// CHECK:STDOUT:   %.41b: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.849, %Destroy.facet.f6b [concrete]
+// CHECK:STDOUT:   %custom_witness.340: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.a8e: %Destroy.type = facet_value %array_type.c56, (%custom_witness.340) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.6ec: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.a8e) [concrete]
+// CHECK:STDOUT:   %.40c: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.6ec, %Destroy.facet.a8e [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc4_7.2: type) {
@@ -142,10 +142,10 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.152
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.739
 // CHECK:STDOUT:   %array => constants.%array.610
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.275
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.f6b
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.849
-// CHECK:STDOUT:   %.loc7_3.2 => constants.%.41b
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.340
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.a8e
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.6ec
+// CHECK:STDOUT:   %.loc7_3.2 => constants.%.40c
 // CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }
