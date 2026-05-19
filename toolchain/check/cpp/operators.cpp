@@ -745,8 +745,8 @@ auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
   return function_decl && IsCppOperatorMethodDecl(function_decl);
 }
 
-auto IsCppConstructorOrNonMethodOperator(Context& context,
-                                         SemIR::InstId inst_id) -> bool {
+auto IsCppConstructorOrNonMethod(Context& context, SemIR::InstId inst_id)
+    -> bool {
   auto* function_decl = GetAsCppFunctionDecl(context, inst_id);
   if (!function_decl) {
     return false;
@@ -754,8 +754,7 @@ auto IsCppConstructorOrNonMethodOperator(Context& context,
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
     return true;
   }
-  return !isa<clang::CXXMethodDecl>(function_decl) &&
-         function_decl->isOverloadedOperator();
+  return !isa<clang::CXXMethodDecl>(function_decl);
 }
 
 }  // namespace Carbon::Check

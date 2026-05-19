@@ -22,6 +22,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -381,11 +382,12 @@ static auto BuildCppComparisonWitness(
                             query_specific_interface_id, operators);
 }
 
-static auto LookupCppMethod(
-    Context& context, clang::Sema& clang_sema, SemIR::LocId loc_id,
-    const clang::DeclarationNameInfo& name_info,
-    clang::CXXRecordDecl* class_decl,
-    [[maybe_unused]] SemIR::ConstantId query_self_const_id) -> SemIR::InstId {
+static auto LookupCppMethod(Context& context, clang::Sema& clang_sema,
+                            SemIR::LocId loc_id,
+                            const clang::DeclarationNameInfo& name_info,
+                            clang::CXXRecordDecl* class_decl,
+                            SemIR::ConstantId /*query_self_const_id*/)
+    -> SemIR::InstId {
   constexpr auto LookupKind = clang::Sema::LookupMemberName;
   auto lookup_info = clang::LookupResult(clang_sema, name_info, LookupKind);
   clang_sema.LookupQualifiedName(lookup_info, class_decl);
@@ -394,8 +396,12 @@ static auto LookupCppMethod(
   }
 
   if (!lookup_info.isSingleResult()) {
-    context.TODO(loc_id, "{method_name} overload sets unsupported");
+    context.TODO(loc_id, "overload sets unsupported");
     return SemIR::ErrorInst::InstId;
+  }
+
+  if (lookup_info.begin()->getKind() != clang::Decl::CXXMethod) {
+    return SemIR::InstId::None;
   }
 
   auto decl_info = DeclInfo{
@@ -408,15 +414,59 @@ static auto LookupCppMethod(
 static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
                                  SemIR::LocId loc_id,
                                  const clang::DeclarationNameInfo& name_info,
-                                 clang::CXXRecordDecl* class_decl,
+                                 clang::CXXRecordDecl* /*class_decl*/,
                                  SemIR::ConstantId query_self_const_id)
     -> SemIR::InstId {
-  (void)clang_sema;
-  (void)name_info;
-  (void)class_decl;
-  (void)query_self_const_id;
-  context.TODO(loc_id, "support ADL begin/end");
-  return SemIR::ErrorInst::InstId;
+  auto lookup_result = clang_sema.CreateUnresolvedLookupExpr(
+      /*NamingClass=*/nullptr, clang::NestedNameSpecifierLoc(), name_info,
+      clang::UnresolvedSet<0>());
+  if (lookup_result.isInvalid()) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto* function = llvm::cast<clang::UnresolvedLookupExpr>(lookup_result.get());
+
+  auto candidate_set = clang::OverloadCandidateSet(
+      clang::SourceLocation(),
+      clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
+
+  auto self_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_self_const_id);
+  auto type = MapToCppType(context, self_type_id);
+  if (type.isNull()) {
+    return SemIR::InstId::None;
+  }
+
+  auto synthesised_expr =
+      clang::OpaqueValueExpr({}, type, clang::ExprValueKind::VK_LValue);
+  auto* args = static_cast<clang::Expr*>(&synthesised_expr);
+  auto call_expr = clang::ExprResult();
+  auto build_failed = clang_sema.buildOverloadedCallSet(
+      /*Scope=*/nullptr, /*Fn=*/function, /*ULE=*/function, args,
+      clang::SourceLocation(), &candidate_set, &call_expr);
+  if (candidate_set.empty()) {
+    return SemIR::InstId::None;
+  }
+
+  if (build_failed) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto* best_candidate = clang::OverloadCandidateSet::iterator();
+  auto overload_result =
+      candidate_set.BestViableFunction(clang_sema, {}, best_candidate);
+  if (overload_result == clang::OR_No_Viable_Function ||
+      best_candidate == candidate_set.end()) {
+    return SemIR::InstId::None;
+  }
+
+  using enum SemIR::ClangDeclSignature::PassingMode;
+  auto decl_info = DeclInfo{
+      .decl = best_candidate->Function,
+      .signature_id =
+          MakeSignature(context, {type.isConstQualified() ? ByValue : ByRef}),
+  };
+  return GetFunctionId(context, loc_id, decl_info);
 }
 
 using LookupBeginEndCallees = auto(Context&, clang::Sema&, SemIR::LocId,
@@ -447,10 +497,8 @@ static auto BuildCppRangeForIterateWitnessImpl(
                    .GetAs<SemIR::FunctionDecl>(begin_fn_id)
                    .function_id)
           .return_type_inst_id;
-  if (begin_result_type_id == SemIR::ErrorInst::InstId ||
-      begin_result_type_id == SemIR::InstId::None) {
-    return SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(begin_result_type_id != SemIR::ErrorInst::InstId &&
+               begin_result_type_id != SemIR::InstId::None);
 
   auto end_name_info = clang::DeclarationNameInfo(
       &clang_sema.PP.getIdentifierTable().get("end"), clang::SourceLocation());
@@ -466,10 +514,8 @@ static auto BuildCppRangeForIterateWitnessImpl(
           .Get(
               context.insts().GetAs<SemIR::FunctionDecl>(end_fn_id).function_id)
           .return_type_inst_id;
-  if (end_result_type_id == SemIR::ErrorInst::InstId ||
-      end_result_type_id == SemIR::InstId::None) {
-    return SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(end_result_type_id != SemIR::ErrorInst::InstId &&
+               end_result_type_id != SemIR::InstId::None);
 
   return BuildCustomWitness(
       context, loc_id, query_self_const_id, query_specific_interface_id,
