@@ -4,8 +4,6 @@
 
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
-#include <llvm/ADT/STLExtras.h>
-
 #include <array>
 #include <optional>
 #include <utility>

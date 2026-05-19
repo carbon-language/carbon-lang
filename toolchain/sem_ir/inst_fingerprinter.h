@@ -54,7 +54,7 @@ using InstFingerprinter = HashInstFingerprinter;
 
 extern template class InstFingerprinterTemplate<HashFingerprintStore, uint64_t>;
 extern template class InstFingerprinterTemplate<StringFingerprintStore,
-                                                 llvm::StringRef>;
+                                                llvm::StringRef>;
 
 }  // namespace Carbon::SemIR
 
