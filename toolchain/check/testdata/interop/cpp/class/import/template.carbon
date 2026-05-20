@@ -80,6 +80,24 @@ var x: Cpp.XY.r#type = 0;
 var y: Cpp.Xint.r#type = 0;
 //@dump-sem-ir-end
 
+// --- use_indirect_class_template.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+inline Cpp '''
+template<typename T> struct wrap_iter {};
+template<typename T> struct vector {
+  using iterator = wrap_iter<T*>;
+  iterator begin();
+};
+''';
+
+fn F() {
+  var v: Cpp.vector(i32);
+  v.begin();
+}
+
 // CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
