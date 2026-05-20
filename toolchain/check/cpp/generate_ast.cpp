@@ -898,15 +898,13 @@ auto GenerateAst(Context& context,
   auto& ast = clang_instance.getASTContext();
   llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
       llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
-  if (auto* existing_source = llvm::dyn_cast_or_null<clang::ExternalSemaSource>(
+  if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
           ast.getExternalSource())) {
     auto multiplex_source =
         llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>(
             existing_source, std::move(carbon_source));
     ast.setExternalSource(std::move(multiplex_source));
   } else {
-    CARBON_CHECK(!ast.getExternalSource(),
-                 "unexpected external source: not an ExternalSemaSource");
     ast.setExternalSource(std::move(carbon_source));
   }
 
