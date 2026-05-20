@@ -92,12 +92,9 @@ class ToolchainFileTest : public FileTestBase {
   // Sets different default flags based on the component being tested.
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
 
-  // Adds arguments to the `args` vector for the given filename.
   auto AddArgsForFilename(llvm::SmallVectorImpl<std::string>& args,
                           llvm::StringRef filename) const -> void override;
 
-  // Returns a replacement for the given key. Keys are passed without the
-  // surrounding %{}.
   auto GetArgReplacement(llvm::StringRef key) const
       -> std::optional<std::string> override {
     if (key == "core") {
