@@ -126,12 +126,14 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
         pattern_id = AddInst<SemIR::VarPattern>(
             context, node_id,
             {.type_id = type_id, .subpattern_id = subpattern_id});
-        break;
       } else {
         // For non-static class fields, a `FieldDecl` has already been
         // created; do not create a var pattern.
-        return true;
+
+        // TODO: update comment.
+        pattern_id = context.field_decls_stack().PeekArray().back();
       }
+      break;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
@@ -209,11 +211,6 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
-  if (InNonStaticFieldDecl(context)) {
-    context.TODO(node_id, "Field initializer");
-    return false;
-  }
-
   return HandleInitializer(context, node_id);
 }
 
@@ -298,9 +295,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
     }
   }
 
-  if (!in_non_static_field_decl) {
-    decl_info.pattern_id = context.node_stack().PopPattern();
-  }
+  decl_info.pattern_id = context.node_stack().PopPattern();
 
   context.node_stack().PopAndDiscardSoloNodeId<IntroducerNodeKind>();
 
@@ -411,9 +406,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
                            KeywordModifierSet::Returned |
                            KeywordModifierSet::Static);
 
-  if (!InNonStaticFieldDecl(context)) {
-    LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
-  }
+  LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
 
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();

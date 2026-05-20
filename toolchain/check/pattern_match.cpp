@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -176,6 +177,8 @@ class MatchContext {
   auto DoPreWork(State state, SemIR::AnyReturnPattern return_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ExprPattern expr_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::FieldDecl field_decl,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
@@ -537,6 +540,12 @@ auto MatchContext::DoPostWork(State /*state*/,
                               SemIR::ExprPattern /*expr_pattern*/,
                               WorkItem /*entry*/) -> void {}
 
+auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl /*field_decl*/,
+                             SemIR::InstId /*scrutinee_id*/, WorkItem /*entry*/)
+    -> void {
+  // TODO
+}
+
 auto MatchContext::DoPreWork(State state,
                              SemIR::ReturnSlotPattern return_slot_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
@@ -836,6 +845,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
           DoPreWork(state, expr_pattern, work.scrutinee_id, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::FieldDecl field_decl): {
+          DoPreWork(state, field_decl, work.scrutinee_id, entry);
           break;
         }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
