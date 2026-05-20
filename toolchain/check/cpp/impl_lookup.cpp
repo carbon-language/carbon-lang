@@ -444,27 +444,27 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
   auto build_failed = clang_sema.buildOverloadedCallSet(
       /*Scope=*/nullptr, /*Fn=*/function, /*ULE=*/function, args,
       clang::SourceLocation(), &candidate_set, &call_expr);
-  if (candidate_set.empty()) {
-    return SemIR::InstId::None;
-  }
 
   if (build_failed) {
     return SemIR::ErrorInst::InstId;
   }
 
+  if (candidate_set.empty()) {
+    return SemIR::InstId::None;
+  }
+
   auto* best_candidate = clang::OverloadCandidateSet::iterator();
   auto overload_result =
       candidate_set.BestViableFunction(clang_sema, {}, best_candidate);
-  if (overload_result == clang::OR_No_Viable_Function ||
-      best_candidate == candidate_set.end()) {
+  if (overload_result != clang::OR_Success) {
     return SemIR::InstId::None;
   }
 
   using enum SemIR::ClangDeclSignature::PassingMode;
   auto decl_info = DeclInfo{
       .decl = best_candidate->Function,
-      .signature_id =
-          MakeSignature(context, {type.isConstQualified() ? ByValue : ByRef}),
+      .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
+          context, best_candidate, function, args),
   };
   return GetFunctionId(context, loc_id, decl_info);
 }
