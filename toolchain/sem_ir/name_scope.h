@@ -128,10 +128,11 @@ static_assert(sizeof(ScopeLookupResult) == 8);
 
 // A declarative name scope, such as a namespace, class, or interface.
 //
-// This is used for scopes in which entities can be redeclared, and declared and
-// looked up with qualified names outside the scope. It is not used for
-// sequential scopes such as the bodies of functions or `if` statements, for
-// which we only provide lexical, unqualified name lookup.
+// This is used for scopes in which entities can be redeclared, and in which
+// qualified names can be used to declare and look up entities from outside the
+// scope. It is not used for sequential scopes such as the bodies of functions
+// or `if` statements, for which we only provide lexical, unqualified name
+// lookup.
 //
 // TODO: Quite a few of the fields on this class are specific to namespaces,
 // which don't have a representation of their own. Consider splitting the
@@ -157,7 +158,8 @@ class NameScope : public Printable<NameScope> {
   auto operator=(NameScope&& other) noexcept -> NameScope& = default;
 
   explicit NameScope(InstId inst_id, NameId name_id,
-                     NameScopeId parent_scope_id, InstId import_id)
+                     NameScopeId parent_scope_id,
+                     InstId import_id = SemIR::InstId::None)
       : inst_id_(inst_id),
         name_id_(name_id),
         parent_scope_id_(parent_scope_id),
@@ -347,8 +349,7 @@ class NameScopeStore {
   // Adds a name scope, returning an ID to reference it.
   auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
       -> NameScopeId {
-    return values_.Add(NameScope(inst_id, name_id, parent_scope_id,
-                                 /*import_id=*/SemIR::InstId::None));
+    return values_.Add(NameScope(inst_id, name_id, parent_scope_id));
   }
 
   // Adds an imported namespace scope, returning an ID to reference it.
