@@ -157,8 +157,7 @@ class NameScope : public Printable<NameScope> {
   auto operator=(NameScope&& other) noexcept -> NameScope& = default;
 
   explicit NameScope(InstId inst_id, NameId name_id,
-                     NameScopeId parent_scope_id,
-                     InstId import_id = InstId::None)
+                     NameScopeId parent_scope_id, InstId import_id)
       : inst_id_(inst_id),
         name_id_(name_id),
         parent_scope_id_(parent_scope_id),
@@ -210,12 +209,11 @@ class NameScope : public Printable<NameScope> {
     extended_scopes_.push_back(extended_scope);
   }
 
-  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id,
-           InstId import_id = InstId::None) {
+  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id) {
     inst_id_ = inst_id;
     name_id_ = name_id;
     parent_scope_id_ = parent_scope_id;
-    import_id_ = import_id;
+    import_id_ = InstId::None;
     self_type_id_ = InstId::None;
   }
 
@@ -332,8 +330,8 @@ class NameScope : public Printable<NameScope> {
   // Otherwise, this is the scope to which this name scope is exported.
   ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
-  // If the namespace was produced by an `import` line, the associated line for
-  // diagnostics.
+  // If this name scope is a namespace that was produced by an `import` line,
+  // the associated line for diagnostics.
   InstId import_id_ = InstId::None;
 
   // Imported IR scopes that compose this namespace. This will be empty for
@@ -347,8 +345,16 @@ class NameScopeStore {
   explicit NameScopeStore(const File* file);
 
   // Adds a name scope, returning an ID to reference it.
-  auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id,
-           AbsoluteInstId import_id = AbsoluteInstId::None) -> NameScopeId {
+  auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
+      -> NameScopeId {
+    return values_.Add(NameScope(inst_id, name_id, parent_scope_id,
+                                 /*import_id=*/SemIR::InstId::None));
+  }
+
+  // Adds an imported namespace scope, returning an ID to reference it.
+  auto AddImportedNamespace(InstId inst_id, NameId name_id,
+                            NameScopeId parent_scope_id, InstId import_id)
+      -> NameScopeId {
     return values_.Add(NameScope(inst_id, name_id, parent_scope_id, import_id));
   }
 
