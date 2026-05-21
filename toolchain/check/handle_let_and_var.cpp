@@ -127,10 +127,9 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
             context, node_id,
             {.type_id = type_id, .subpattern_id = subpattern_id});
       } else {
-        // For non-static class fields, a `FieldDecl` has already been
-        // created; do not create a var pattern.
-
-        // TODO: update comment.
+        // For non-static class fields, a `FieldDecl` was created in
+        // `AddBindingPattern`. Use that as the `pattern_id` so that
+        // it's available when handling initializers.
         pattern_id = context.field_decls_stack().PeekArray().back();
       }
       break;
