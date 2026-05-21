@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_BUILD_SUBCOMMAND_H_
 #define CARBON_TOOLCHAIN_DRIVER_BUILD_SUBCOMMAND_H_
 
+#include <string>
+
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -21,6 +23,7 @@ struct BuildSubcommandOptions {
   SharedCompileOptions compile;
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> extra_clang_link_args;
+  bool use_temp_dir;
 };
 
 class BuildSubcommand : public DriverSubcommand {

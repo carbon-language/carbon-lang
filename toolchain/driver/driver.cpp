@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 
+#include "common/command_line.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"

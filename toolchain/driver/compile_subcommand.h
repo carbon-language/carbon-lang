@@ -9,6 +9,7 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/check/check.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"

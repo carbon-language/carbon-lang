@@ -4,8 +4,11 @@
 
 #include "toolchain/driver/build_subcommand.h"
 
+#include <filesystem>
+
 #include "common/command_line.h"
 #include "common/filesystem.h"
+#include "common/hashing.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
@@ -55,12 +58,28 @@ system mixes object files and linker flags.
 )""",
       },
       [&](auto& arg_b) { arg_b.Append(&extra_clang_link_args); });
+  b.AddFlag(
+      {
+          .name = "use-temp-dir",
+          .help = R"""(
+Use a temporary directory for intermediate compilation artifacts.
+
+When enabled (the default), carbon will compile all input files and necessary
+dependencies into a temporary directory, before linking them into the final
+output binary. If false, carbon will store the compilation artifacts as hashes
+of the compiled input name in the current working directory.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&use_temp_dir);
+      });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "build",
     .help = R"""(
-Compile and link Carbon and C++ source code into a single executable.
+Compile and then link Carbon and C++ source code into a single executable.
 )""",
 };
 
@@ -87,6 +106,7 @@ class CompilationUnit {
                            const BuildSubcommandOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename,
+                           const std::filesystem::path& output_directory,
                            const llvm::Target* target);
 
   // Sets the multi-unit cache and initializes dependent member state.
@@ -163,8 +183,12 @@ class CompilationUnit {
   // translation. However, logging and some diagnostics use the command line
   // argument.
   std::string input_filename_;
-  // The output filename, computed as the input filename with a `.o` extension.
-  llvm::SmallString<256> output_filename_;
+  // The temporary directory where we will store the compiled output of the
+  // CompilationUnit
+  std::filesystem::path output_directory_;
+  // The output filename, computed as a hash of the input filename with a `.o`
+  // extension.
+  std::string output_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_;
@@ -231,6 +255,7 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
                                  const BuildSubcommandOptions* options,
                                  Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename,
+                                 const std::filesystem::path& output_directory,
                                  const llvm::Target* target)
     : check_ir_id_(check_ir_id),
       total_ir_count_(total_ir_count),
@@ -241,6 +266,15 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
       vlog_stream_(driver_env_->vlog_stream) {
   sorting_consumer_ = Diagnostics::SortingConsumer(*consumer);
   consumer_ = &*sorting_consumer_;
+
+  // All input files are processed into a flat temporary output directory. In
+  // order to avoid name collisions between input files with the same name but
+  // different paths, we hash the entire path of the input file and use the hash
+  // value as the name of the output file.
+  output_filename_ =
+      (output_directory /
+       llvm::formatv("{0:x16}.o", HashValue(input_filename_)).str())
+          .string();
 }
 
 auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
@@ -252,29 +286,15 @@ auto CompilationUnit::RunLex() -> void {
   CARBON_CHECK(cache_, "Must call SetMultiUnitCache first");
   CARBON_CHECK(!tokens_, "Called RunLex twice");
 
-  // The `build` subcommand only supports regular files.
-  LogCall("SourceBuffer::MakeFromFile", "source", [&] {
-    source_ = SourceBuffer::MakeFromFile(*driver_env_->fs, input_filename_,
-                                         *consumer_);
+  LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
+    source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
+                                                input_filename_, *consumer_);
   });
 
   if (!source_) {
     success_ = false;
     return;
   }
-
-  if (!source_->is_regular_file()) {
-    CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
-                      "`{0}` is not a regular file. Inputs to `build` must be "
-                      "regular files.",
-                      std::string);
-    driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
-    success_ = false;
-    return;
-  }
-
-  output_filename_ = input_filename_;
-  llvm::sys::path::replace_extension(output_filename_, ".o");
 
   CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
@@ -441,25 +461,8 @@ auto CompilationUnit::RunOptimize(
       SharedCompileOptions::GetLLVMOptimizationLevel(
           options_->compile.opt_level));
 
-  if (vlog_stream_) {
-    CARBON_VLOG("*** Running pass pipeline: ");
-    pass_manager.printPipeline(
-        *vlog_stream_, [&pic](llvm::StringRef class_name) {
-          auto pass_name = pic.getPassNameForClassName(class_name);
-          return pass_name.empty() ? class_name : pass_name;
-        });
-    CARBON_VLOG(" ***\n");
-  }
-
   LogCall("ModulePassManager::run", "optimize",
           [&] { pass_manager.run(*module_, mam); });
-
-  if (vlog_stream_) {
-    CARBON_VLOG("*** Optimized llvm::Module ***\n");
-    module_->print(*vlog_stream_, /*AAW=*/nullptr,
-                   /*ShouldPreserveUseListOrder=*/false,
-                   /*IsForDebug=*/true);
-  }
 }
 
 auto CompilationUnit::RunCodeGen() -> void {
@@ -478,25 +481,21 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
   CARBON_CHECK(target_machine_, "Must call MakeTargetMachine first");
 
   CodeGen codegen(module_.get(), target_machine_.get(), consumer_);
-  if (vlog_stream_) {
-    CARBON_VLOG("*** Assembly ***\n");
-    codegen.EmitAssembly(*vlog_stream_);
-  }
 
   CARBON_VLOG("Writing output to: {0}\n", output_filename_);
-
   std::error_code ec;
   llvm::raw_fd_ostream output_file(output_filename_, ec,
                                    llvm::sys::fs::OF_None);
   if (ec) {
     // TODO: Consider rephrasing the diagnostic to use the file as the `Emit`
-    CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
+    CARBON_DIAGNOSTIC(BuildOutputFileOpenError, Error,
                       "could not open output file `{0}`: {1}", std::string,
                       std::string);
-    driver_env_->emitter.Emit(CompileOutputFileOpenError,
-                              output_filename_.str().str(), ec.message());
+    driver_env_->emitter.Emit(BuildOutputFileOpenError, output_filename_,
+                              ec.message());
     return false;
   }
+
   if (!codegen.EmitObject(output_file)) {
     return false;
   }
@@ -533,18 +532,20 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
-  if (driver_env.fuzzing && !options_.compile.clang_args.empty()) {
-    // Parsing specific Clang arguments can reach deep into
-    // external libraries that aren't fuzz clean.
-    TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "build");
-    return {.success = false};
-  }
-
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
-  if (auto i = options_.compile.BuildClangInvocation(driver_env); i.ok()) {
-    clang_invocation = *i;
-  } else {
-    return {.success = false};
+  {
+    if (driver_env.fuzzing && !options_.compile.clang_args.empty()) {
+      // Parsing specific Clang arguments can reach deep into
+      // external libraries that aren't fuzz clean.
+      TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "build");
+      return {.success = false};
+    }
+
+    if (auto i = options_.compile.BuildClangInvocation(driver_env); i.ok()) {
+      clang_invocation = *i;
+    } else {
+      return {.success = false};
+    }
   }
 
   // TODO: automatic prelude resolution.
@@ -553,10 +554,23 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     prelude = std::move(*find);
   } else {
     // TODO: Change ReadPreludeManifest to produce diagnostics.
-    CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
-    driver_env.emitter.Emit(CompilePreludeManifestError,
+    CARBON_DIAGNOSTIC(BuildPreludeManifestError, Error, "{0}", std::string);
+    driver_env.emitter.Emit(BuildPreludeManifestError,
                             PrintToString(find.error()));
     return {.success = false};
+  }
+
+  std::optional<Filesystem::RemovingDir> temp_dir = std::nullopt;
+  if (options_.use_temp_dir) {
+    if (auto d = Filesystem::MakeTmpDir(); d.ok()) {
+      temp_dir = std::move(*d);
+    } else {
+      CARBON_DIAGNOSTIC(BuildTempDirectoryCreationError, Error, "{0}",
+                        std::string);
+      driver_env.emitter.Emit(BuildTempDirectoryCreationError,
+                              PrintToString(d.error()));
+      return {.success = false};
+    }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
@@ -568,9 +582,13 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, &options_,
-        &driver_env.consumer, input_filename, target);
+        &driver_env.consumer, input_filename, temp_dir ? temp_dir->path() : "",
+        target);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
+  // Save the unit index of the first input filename, in case we need to compute
+  // the output filename from this.
+  auto input_filenames_index = units.size();
   llvm::append_range(
       units, llvm::map_range(options_.compile.input_filenames, unit_builder));
   CARBON_CHECK(units.size() == static_cast<size_t>(total_unit_count));
@@ -589,12 +607,25 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
+    // Clean up the temporary directory created for compile results.
+    if (temp_dir) {
+      auto remove_result = std::move(*temp_dir).Remove();
+      if (!remove_result.ok()) {
+        CARBON_DIAGNOSTIC(BuildTempDirectoryDeletionError, Error, "{0}",
+                          std::string);
+        driver_env.emitter.Emit(BuildTempDirectoryDeletionError,
+                                PrintToString(remove_result.error()));
+      }
+    }
+
     driver_env.consumer.Flush();
   });
 
-  // Returns a DriverResult object. Called whenever Build returns.
+  // Returns a DriverResult object. Called whenever any of the compilation steps
+  // in Build return.
   auto make_result = [&]() {
     DriverResult result = {.success = true};
+
     for (const auto& unit : units) {
       result.success &= unit->success();
       result.per_file_success.push_back(
@@ -692,11 +723,13 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
           .str();
   clang_link_args.push_back(target_arg);
 
+  llvm::SmallString<256> output_filename;
   if (!options_.output_filename.empty()) {
     clang_link_args.push_back("-o");
     clang_link_args.push_back(options_.output_filename);
   } else {
-    llvm::SmallString<256> output_filename = units.front()->input_filename();
+    output_filename = llvm::sys::path::filename(
+        units[input_filenames_index]->input_filename());
     llvm::sys::path::replace_extension(output_filename, "");
     clang_link_args.push_back("-o");
     clang_link_args.push_back(output_filename);
@@ -715,6 +748,12 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   };
   append_range(clang_link_args, llvm::map_range(units, input_builder));
 
+  CARBON_VLOG_TO(driver_env.vlog_stream,
+                 "*** Build Clang link call with these arguments:\n");
+  for (auto a : clang_link_args) {
+    CARBON_VLOG_TO(driver_env.vlog_stream, "    '{0}',\n", a);
+  }
+
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
@@ -722,6 +761,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
     return {.success = false};
   }
+
   // Question: We're including some runtime stuff during compilation, is this
   // redundant?
   ErrorOr<bool> run_result =
@@ -738,17 +778,15 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.
-    CARBON_DIAGNOSTIC(FailureRunningClangToLink, Error,
+    CARBON_DIAGNOSTIC(BuildFailureRunningClangToLink, Error,
                       "failure running `clang` to perform linking: {0}",
                       std::string);
-    driver_env.emitter.Emit(FailureRunningClangToLink,
+    driver_env.emitter.Emit(BuildFailureRunningClangToLink,
                             run_result.error().message());
-    return {.success = false};
   }
+
   // Successfully ran Clang to perform the link, return its result.
   return {.success = *run_result};
-
-  return make_result();
 }
 
 }  // namespace Carbon

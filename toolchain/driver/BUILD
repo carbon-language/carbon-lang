@@ -173,6 +173,7 @@ cc_library(
         "//common:command_line",
         "//common:error",
         "//common:filesystem",
+        "//common:hashing",
         "//common:ostream",
         "//common:pretty_stack_trace_function",
         "//common:raw_string_ostream",
