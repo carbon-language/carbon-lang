@@ -365,35 +365,6 @@ static auto CollectFacetWitnessSources(
 
   llvm::SmallVector<FacetWitnessSource> witnesses;
 
-  auto push_early_impl = [&](SemIR::InstId facet,
-                             bool allow_partially_identified) {
-    if (context.where_stack().empty()) {
-      return;
-    }
-
-    auto facet_const_id = context.constant_values().Get(facet);
-
-    const auto& impls = context.where_stack().back().impls;
-    for (auto [self_const_id, facet_type_const_id] : impls) {
-      auto canon_self_const_id =
-          GetCanonicalFacetOrTypeValue(context, self_const_id);
-      if (canon_self_const_id != facet_const_id) {
-        continue;
-      }
-      // TypeType is never stored in the impls stack, so we always have a
-      // FacetType.
-      auto facet_type = context.constant_values().GetInstAs<SemIR::FacetType>(
-          facet_type_const_id);
-      auto identified_id =
-          TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
-                                 allow_partially_identified);
-      if (identified_id.has_value()) {
-        witnesses.push_back({.facet_const_id = facet_const_id,
-                             .identified_facet_type_id = identified_id});
-      }
-    }
-  };
-
   auto push_facet = [&](SemIR::InstId facet, bool allow_partially_identified) {
     auto facet_const_id = context.constant_values().Get(facet);
 
@@ -407,21 +378,6 @@ static auto CollectFacetWitnessSources(
         witnesses.push_back({.facet_const_id = facet_const_id,
                              .identified_facet_type_id = identified_id});
       }
-    }
-
-    push_early_impl(facet, allow_partially_identified);
-  };
-
-  auto push_concrete = [&](SemIR::TypeId concrete,
-                           bool allow_partially_identified) {
-    auto concrete_const_id = context.types().GetTypeInstId(concrete);
-
-    // We only look for a witness for a concrete type if it's the root
-    // type of the query. An impls constraint in the current facet type
-    // may provide a witness for query. Other concrete types can't provide
-    // a useful witness for the query.
-    if (concrete_const_id == query_self_inst_id) {
-      push_early_impl(concrete_const_id, allow_partially_identified);
     }
   };
 
@@ -461,30 +417,6 @@ static auto CollectFacetWitnessSources(
           push_facet(symbolic.facet, allow_partially_identified);
           break;
         }
-        case CARBON_KIND(Step::ClassStart start): {
-          push_concrete(start.type_id, allow_partially_identified);
-          break;
-        }
-        case CARBON_KIND(Step::ClassStartOnly start): {
-          push_concrete(start.type_id, allow_partially_identified);
-          break;
-        }
-        case CARBON_KIND(Step::TupleStart start): {
-          push_concrete(start.type_id, allow_partially_identified);
-          break;
-        }
-        case CARBON_KIND(Step::TupleStartOnly start): {
-          push_concrete(start.type_id, allow_partially_identified);
-          break;
-        }
-        case CARBON_KIND(Step::StructStartOnly start): {
-          push_concrete(start.type_id, allow_partially_identified);
-          break;
-        }
-        case CARBON_KIND(Step::ConcreteType concrete): {
-          push_concrete(concrete.type_id, allow_partially_identified);
-          break;
-        }
         default:
           break;
       }
@@ -501,6 +433,25 @@ static auto CollectFacetWitnessSources(
     SemIR::TypeIterator iter(&context.sem_ir());
     iter.Add(context.insts().GetAs<SemIR::FacetType>(query_facet_type_inst_id));
     collect_facets(iter, /*allow_partially_identified=*/false);
+  }
+
+  if (!context.where_stack().empty()) {
+    const auto& impls = context.where_stack().back().impls;
+    for (auto [self_const_id, facet_type_const_id] : impls) {
+      auto canon_self_const_id =
+          GetCanonicalFacetOrTypeValue(context, self_const_id);
+      // TypeType is never stored in the impls stack, so we always have a
+      // FacetType.
+      auto facet_type = context.constant_values().GetInstAs<SemIR::FacetType>(
+          facet_type_const_id);
+      auto identified_id = TryToIdentifyFacetType(
+          context, loc_id, canon_self_const_id, facet_type,
+          /*allow_partially_identified=*/true);
+      if (identified_id.has_value()) {
+        witnesses.push_back({.facet_const_id = canon_self_const_id,
+                             .identified_facet_type_id = identified_id});
+      }
+    }
   }
 
   return witnesses;
