@@ -837,6 +837,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
 // `StructValue`.
 static auto AddDefaultsToInitializer(Context& context,
                                      const SemIR::Class& dest_class_info,
+                                     const SemIR::SpecificId specific_id,
                                      SemIR::StructType dest_struct_type,
                                      SemIR::StructType* src_type,
                                      SemIR::InstId* value_id) {
@@ -881,7 +882,14 @@ static auto AddDefaultsToInitializer(Context& context,
     if (auto lookup = context.field_initializers().Lookup(field_inst_id)) {
       auto initializer_id = lookup.value();
 
-      auto const_id = TryEvalInst(context, initializer_id);
+      SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
+      if (specific_id.has_value()) {
+        const_id = GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                              initializer_id);
+      } else {
+        const_id = TryEvalInst(context, initializer_id);
+      }
+
       if (const_id == SemIR::ConstantId::NotConstant) {
         context.TODO(initializer_id, "field initializer is not constant");
         continue;
@@ -949,8 +957,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   }
 
   if (!is_partial && context.insts().Is<SemIR::StructLiteral>(value_id)) {
-    AddDefaultsToInitializer(context, dest_class_info, dest_struct_type,
-                             &src_type, &value_id);
+    AddDefaultsToInitializer(context, dest_class_info, dest_type.specific_id,
+                             dest_struct_type, &src_type, &value_id);
   }
 
   return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
