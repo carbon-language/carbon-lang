@@ -39,11 +39,10 @@ auto HandleParseNode(Context& context, Parse::InlineCppDeclId node_id) -> bool {
   // If Clang initialization catastrophically failed, skip the inline fragment.
   if (!context.cpp_context()) {
     // We should have already diagnosed an error initializing Clang.
-    CARBON_CHECK(context.name_scopes()
-                     .Get(context.constant_values()
-                              .GetInstAs<SemIR::Namespace>(cpp_id)
-                              .name_scope_id)
-                     .has_error(),
+    auto cpp_scope_id = context.constant_values()
+                            .GetInstAs<SemIR::Namespace>(cpp_id)
+                            .name_scope_id;
+    CARBON_CHECK(context.name_scopes().Get(cpp_scope_id).has_error(),
                  "Have valid `Cpp` scope but no Cpp context");
     return true;
   }
