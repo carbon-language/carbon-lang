@@ -21,6 +21,17 @@ class Class {
 var C: Class = {};
 //@dump-sem-ir-end
 
+// --- fail_todo_field_initializer_import.carbon
+library "[[@TEST_NAME]]";
+
+import library "field_initializer";
+
+// CHECK:STDERR: fail_todo_field_initializer_import.carbon:[[@LINE+4]]:17: error: cannot initialize class with 1 field from struct with 0 fields [StructInitElementCountMismatch]
+// CHECK:STDERR: var C2: Class = {};
+// CHECK:STDERR:                 ^~
+// CHECK:STDERR:
+var C2: Class = {};
+
 // --- fail_field_initializer_invalid_name.carbon
 library "[[@TEST_NAME]]";
 
