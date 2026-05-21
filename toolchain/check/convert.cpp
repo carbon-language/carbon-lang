@@ -609,10 +609,10 @@ static auto ConvertPartialInitializerToNonPartial(
 }
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
-template <typename TargetAccessInstT>
+template <typename TargetAccessInstT, typename GetDefault>
 static auto ConvertStructToStructOrClass(
     Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
-    SemIR::InstId value_id, ConversionTarget target,
+    SemIR::InstId value_id, ConversionTarget target, GetDefault get_default,
     SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
@@ -641,31 +641,32 @@ static auto ConvertStructToStructOrClass(
     value_id = MaterializeIfInitializer(context, value_id);
   }
 
-  // Check that the structs are the same size.
-  // TODO: If not, include the name of the first source field that doesn't
-  // exist in the destination or vice versa in the diagnostic.
-  if (src_elem_fields.size() != dest_elem_fields_size) {
-    if (target.diagnose) {
-      CARBON_DIAGNOSTIC(
-          StructInitElementCountMismatch, Error,
-          "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
-          "with {2} field{2:s}",
-          Diagnostics::BoolAsSelect, Diagnostics::IntAsSelect,
-          Diagnostics::IntAsSelect);
-      context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                             ToClass, dest_elem_fields_size,
-                             src_elem_fields.size());
-    }
-    return SemIR::ErrorInst::InstId;
+  Set<SemIR::NameId> dest_field_names;
+  for (auto field : dest_elem_fields) {
+    dest_field_names.Insert(field.name_id);
   }
 
-  // Prepare to look up fields in the source by index.
+  // Prepare to look up fields in the source by index. Also check for
+  // source fields that don't match any field in the destination.
   Map<SemIR::NameId, int32_t> src_field_indexes;
+  bool any_invalid_src_fields = false;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
+      if (!dest_field_names.Lookup(field.name_id)) {
+        context.TODO(
+            value_loc_id,
+            llvm::formatv("struct initializer provided field '{0}' that is "
+                          "not present in the destination",
+                          context.names().GetFormatted(field.name_id)));
+        any_invalid_src_fields = true;
+      }
+
       auto result = src_field_indexes.Insert(field.name_id, i);
       CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
+  }
+  if (any_invalid_src_fields) {
+    return SemIR::ErrorInst::InstId;
   }
 
   ConversionTarget::Kind inner_kind =
@@ -675,7 +676,8 @@ static auto ConvertStructToStructOrClass(
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.has_value() && !dest_vptr_index.has_value()
+      literal_elems_id.has_value() && !dest_vptr_index.has_value() &&
+              literal_elems.size() == dest_elem_fields_size
           ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
@@ -717,33 +719,14 @@ static auto ConvertStructToStructOrClass(
 
     // Find the matching source field.
     auto src_field_index = i;
+    bool found = true;
     if (src_type.fields_id != dest_type.fields_id) {
       if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
         src_field_index = lookup.value();
       } else {
-        if (target.diagnose) {
-          if (literal_elems_id.has_value()) {
-            CARBON_DIAGNOSTIC(
-                StructInitMissingFieldInLiteral, Error,
-                "missing value for field `{0}` in struct initialization",
-                SemIR::NameId);
-            context.emitter().Emit(value_loc_id,
-                                   StructInitMissingFieldInLiteral,
-                                   dest_field.name_id);
-          } else {
-            CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                              "cannot convert from struct type {0} to {1}: "
-                              "missing field `{2}` in source type",
-                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
-            context.emitter().Emit(value_loc_id,
-                                   StructInitMissingFieldInConversion, value_id,
-                                   target.type_id, dest_field.name_id);
-          }
-        }
-        return SemIR::ErrorInst::InstId;
+        found = false;
       }
     }
-    auto src_field = src_elem_fields[src_field_index];
 
     // When initializing the `.base` field of a class, the destination type is
     // `partial Base`, not `Base`.
@@ -758,20 +741,48 @@ static auto ConvertStructToStructOrClass(
       dest_field_type_inst_id = context.types().GetTypeInstId(partial_type_id);
     }
 
-    // TODO: This call recurses back into conversion. Switch to an iterative
-    // approach.
-    auto dest_field_index = src_field_index;
-    if (dest_vptr_index.has_value() &&
-        static_cast<int32_t>(src_field_index) >= dest_vptr_index.index) {
-      dest_field_index += 1;
+    SemIR::InstId init_id = SemIR::InstId::None;
+    if (found) {
+      auto src_field = src_elem_fields[src_field_index];
+
+      // TODO: This call recurses back into conversion. Switch to an iterative
+      // approach.
+      auto dest_field_index = src_field_index;
+      if (dest_vptr_index.has_value() &&
+          static_cast<int32_t>(src_field_index) >= dest_vptr_index.index) {
+        dest_field_index += 1;
+      }
+      init_id = ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
+          context, value_loc_id, value_id, src_field.type_inst_id,
+          literal_elems, inner_kind, target.storage_id, dest_field_type_inst_id,
+          target.storage_access_block, src_field_index, dest_field_index);
+    } else {
+      init_id = get_default(dest_field.name_id);
     }
-    auto init_id =
-        ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
-            context, value_loc_id, value_id, src_field.type_inst_id,
-            literal_elems, inner_kind, target.storage_id,
-            dest_field_type_inst_id, target.storage_access_block,
-            src_field_index, dest_field_index);
+
     if (init_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    if (!init_id.has_value()) {
+      if (target.diagnose) {
+        if (literal_elems_id.has_value()) {
+          CARBON_DIAGNOSTIC(
+              StructInitMissingFieldInLiteral, Error,
+              "missing value for field `{0}` in struct initialization",
+              SemIR::NameId);
+          context.emitter().Emit(value_loc_id, StructInitMissingFieldInLiteral,
+                                 dest_field.name_id);
+        } else {
+          CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
+                            "cannot convert from struct type {0} to {1}: "
+                            "missing field `{2}` in source type",
+                            TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+          context.emitter().Emit(value_loc_id,
+                                 StructInitMissingFieldInConversion, value_id,
+                                 target.type_id, dest_field.name_id);
+        }
+      }
       return SemIR::ErrorInst::InstId;
     }
 
@@ -825,100 +836,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::InstId value_id,
                                   ConversionTarget target) -> SemIR::InstId {
   return ConvertStructToStructOrClass<SemIR::StructAccess>(
-      context, src_type, dest_type, value_id, target);
-}
-
-// Given a source structure that will be used to construct a class, fill
-// any missing fields in the source structure by looking up the
-// corresponding class field's default initializer (if it has one).
-//
-// If any defaults are added, `src_type->fields_id` is updated with the
-// new list of fields, and `value_id` is updated to point at a new
-// `StructValue`.
-static auto AddDefaultsToInitializer(Context& context,
-                                     const SemIR::Class& dest_class_info,
-                                     const SemIR::SpecificId specific_id,
-                                     SemIR::StructType dest_struct_type,
-                                     SemIR::StructType* src_type,
-                                     SemIR::InstId* value_id) {
-  const auto& dest_class_scope =
-      context.name_scopes().Get(dest_class_info.scope_id);
-
-  llvm::SmallVector<SemIR::StructTypeField> new_struct_type_fields(
-      context.struct_type_fields().Get(src_type->fields_id));
-
-  llvm::SmallVector<SemIR::InstId> new_elements(context.inst_blocks().Get(
-      context.insts().GetAs<SemIR::StructLiteral>(*value_id).elements_id));
-
-  // Create a map from field `NameId` to the index in the
-  // `new_struct_type_fields` array.
-  Map<SemIR::NameId, int32_t> name_to_index;
-  for (auto [i, field] : llvm::enumerate(new_struct_type_fields)) {
-    auto result = name_to_index.Insert(field.name_id, i);
-    CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
-  }
-
-  // For each field, if it's missing from the source struct, look for a
-  // default initializer. If found, add the type and value to
-  // `new_struct_type_fields` and `new_elements`.
-  bool changed = false;
-  for (auto dest_field :
-       context.struct_type_fields().Get(dest_struct_type.fields_id)) {
-    // Skip the field if it's already in the source, or if it's a
-    // special field.
-    if (name_to_index.Lookup(dest_field.name_id) ||
-        dest_field.name_id == SemIR::NameId::Base ||
-        dest_field.name_id == SemIR::NameId::Vptr) {
-      continue;
-    }
-
-    auto entry_id = dest_class_scope.Lookup(dest_field.name_id);
-    if (!entry_id.has_value()) {
-      continue;
-    }
-    auto field_inst_id =
-        dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
-
-    if (auto lookup = context.field_initializers().Lookup(field_inst_id)) {
-      auto initializer_id = lookup.value();
-
-      SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
-      if (specific_id.has_value()) {
-        const_id = GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              initializer_id);
-      } else {
-        const_id = TryEvalInst(context, initializer_id);
-      }
-
-      if (const_id == SemIR::ConstantId::NotConstant) {
-        context.TODO(initializer_id, "field initializer is not constant");
-        continue;
-      }
-
-      auto field_default = context.constant_values().GetInstId(const_id);
-      new_struct_type_fields.push_back(
-          {.name_id = dest_field.name_id,
-           .type_inst_id = context.types().GetTypeInstId(
-               context.insts().Get(field_default).type_id())});
-      new_elements.push_back(field_default);
-      changed = true;
-    }
-  }
-
-  // If any default initializers were added above, update `src_type` and
-  // `value_id` to create a new initializer that combines the original
-  // source fields and the field defaults.
-  if (changed) {
-    auto fields_id =
-        context.struct_type_fields().AddCanonical(new_struct_type_fields);
-    src_type->fields_id = fields_id;
-
-    auto elements_id = context.inst_blocks().AddCanonical(new_elements);
-    *value_id = AddInst<SemIR::StructValue>(
-        context, SemIR::LocId(*value_id),
-        {.type_id = GetStructType(context, fields_id),
-         .elements_id = elements_id});
-  }
+      context, src_type, dest_type, value_id, target,
+      /*get_default=*/[](SemIR::NameId) { return SemIR::InstId::None; });
 }
 
 // Performs a conversion from a struct to a class type. This function only
@@ -956,13 +875,50 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
-  if (!is_partial && context.insts().Is<SemIR::StructLiteral>(value_id)) {
-    AddDefaultsToInitializer(context, dest_class_info, dest_type.specific_id,
-                             dest_struct_type, &src_type, &value_id);
-  }
+  const auto& dest_class_scope =
+      context.name_scopes().Get(dest_class_info.scope_id);
+
+  // Provide the default value for a field. Returns `InstId::None` if no
+  // default is available, or `ErrorInst::InstId` if a diagnosed error
+  // occurs.
+  auto get_default = [&](SemIR::NameId name_id) {
+    if (!context.insts().Is<SemIR::StructLiteral>(value_id)) {
+      return SemIR::InstId::None;
+    }
+
+    // Look up the field name in the class to get the corresponding
+    // `FieldDecl` `InstId`.
+    auto entry_id = dest_class_scope.Lookup(name_id);
+    if (!entry_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    // Look up the initializer `InstId` for the field and eval as a
+    // constant.
+    auto field_inst_id =
+        dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
+    auto lookup = context.field_initializers().Lookup(field_inst_id);
+    if (!lookup) {
+      return SemIR::InstId::None;
+    }
+    auto initializer_id = lookup.value();
+    SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
+    if (dest_type.specific_id.has_value()) {
+      const_id = GetConstantValueInSpecific(
+          context.sem_ir(), dest_type.specific_id, initializer_id);
+    } else {
+      const_id = TryEvalInst(context, initializer_id);
+    }
+    if (const_id == SemIR::ConstantId::NotConstant) {
+      context.TODO(initializer_id, "field initializer is not constant");
+      return SemIR::ErrorInst::InstId;
+    }
+
+    return context.constant_values().GetInstId(const_id);
+  };
 
   return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target,
+      context, src_type, dest_struct_type, value_id, target, get_default,
       is_partial ? nullptr : &dest_type);
 }
 

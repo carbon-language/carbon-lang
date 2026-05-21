@@ -12,13 +12,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: semantics TODO: `struct initializer provided field 'b' that is not present in the destination` [SemanticsTodo]
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: semantics TODO: `struct initializer provided field 'a' that is not present in the destination` [SemanticsTodo]
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
 // CHECK:STDERR:

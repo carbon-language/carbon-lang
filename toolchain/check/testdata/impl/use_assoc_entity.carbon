@@ -398,7 +398,7 @@ library "[[@TEST_NAME]]";
 
 interface K {
   let V:! type;
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: missing field `x` in source type [StructInitMissingFieldInConversion]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:20: error: semantics TODO: `struct initializer provided field 'a' that is not present in the destination` [SemanticsTodo]
   // CHECK:STDERR:   fn F[self: Self](v: V) -> V;
   // CHECK:STDERR:                    ^~~~
   fn F[self: Self](v: V) -> V;
@@ -412,7 +412,7 @@ impl () as K where .V = {.a: ()} {
   // CHECK:STDERR:   fn F[self: Self](v: V) -> V;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3: error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`: missing field `a` in source type [StructInitMissingFieldInConversion]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3: error: semantics TODO: `struct initializer provided field 'x' that is not present in the destination` [SemanticsTodo]
   // CHECK:STDERR:   fn F[unused self: Self](v: {.x: ()}) -> {.x: ()} { return v; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-14]]:3: note: while building thunk to match the signature of this function [ThunkSignature]

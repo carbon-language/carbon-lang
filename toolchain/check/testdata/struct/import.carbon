@@ -34,10 +34,18 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+16]]:14: error: semantics TODO: `struct initializer provided field 'c' that is not present in the destination` [SemanticsTodo]
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:1: in import [InImport]
+// CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
+// CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: semantics TODO: `struct initializer provided field 'd' that is not present in the destination` [SemanticsTodo]
+// CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-12]]:1: in import [InImport]
 // CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~
