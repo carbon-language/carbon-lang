@@ -276,7 +276,8 @@ edit both as necessary to ensure they give the best high-level understanding of
 the proposal possible.
 
 A proposal PR will include a "P-numbered" _proposal document_,
-`proposals/pNNNN.md`, where `NNNN` is the pull request number. This file should
+`proposals/p######-slug.md`, where `######` is the pull request number (padded
+to 6 digits) and `slug` is a robust slugification of the title. This file should
 be based on the [proposal template file](/proposals/scripts/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the

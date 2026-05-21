@@ -17,9 +17,10 @@ This directory contains accepted proposals for the carbon-lang repository. For
 information about declined/deferred proposals, please view the proposal's
 original pull request.
 
-For accepted proposals, where `####` is the corresponding proposal's pull
-request:
+For accepted proposals, where `######` is the corresponding proposal's pull
+request number (padded to 6 digits):
 
--   `p####.md` will contain the main proposal text.
--   `p####` may be present as an optional subdirectory for related files (for
-    example, images).
+-   `p######-slug.md` will contain the main proposal text, where `slug` is a
+    robust slugification of the title of the proposal.
+-   `p######-slug` may be present as an optional subdirectory for related files
+    (for example, images).
