@@ -173,6 +173,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // For example, a closing paren inserted to match an unmatched paren.
   auto IsRecoveryToken(TokenIndex token) const -> bool;
 
+  // Adds and returns the index of an identifier token formed from the spelling
+  // of the given word token. This should only be used for error recovery
+  // purposes, when a phase after the lexer determines that a word token was
+  // intended to represent an identifier rather than its special meaning.
+  auto AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token) -> TokenIndex;
+
   // Returns the 1-based indentation column number.
   auto GetIndentColumnNumber(LineIndex line) const -> int;
 
@@ -219,8 +225,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto has_errors() const -> bool { return has_errors_; }
 
   auto tokens() const -> llvm::iterator_range<TokenIterator> {
-    return llvm::make_range(TokenIterator(TokenIndex(0)),
-                            TokenIterator(TokenIndex(token_infos_.size())));
+    return llvm::make_range(
+        TokenIterator(TokenIndex(0)),
+        TokenIterator(
+            TokenIndex(token_infos_.size() - post_lexing_recovery_tokens_)));
   }
 
   auto size() const -> int { return token_infos_.size(); }
@@ -314,6 +322,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Adds the token and adjusts the expected tree size.
   auto AddToken(TokenInfo info) -> TokenIndex;
 
+  // Adds a post-lexing recovery token and adjusts the buffer state.
+  auto AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex;
+
   auto GetTokenPrintWidths(TokenIndex token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
@@ -353,6 +364,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   int expected_max_parse_tree_size_ = 0;
 
   bool has_errors_ = false;
+
+  // The number of recovery tokens created after lexing finished. These tokens
+  // are included in `token_infos_`, but are excluded from the token sequence
+  // produced by `tokens()`.
+  int32_t post_lexing_recovery_tokens_ = 0;
 
   // A vector of flags for recovery tokens. If empty, there are none. When doing
   // token recovery, this will be extended to be indexable by token indices and

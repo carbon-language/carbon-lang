@@ -133,6 +133,15 @@ class TokenInfo {
     *this = error;
   }
 
+  // Resets the token to be an identifier with the given identifier id at its
+  // original position and with the same whitespace adjacency.
+  auto ResetAsErrorRecoveryIdentifier(IdentifierId id) -> void {
+    CARBON_CHECK(kind().is_word());
+    TokenInfo error(TokenKind::Identifier, has_leading_space(), id.index,
+                    byte_offset());
+    *this = error;
+  }
+
  private:
   friend class Lexer;
 

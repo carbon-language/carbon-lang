@@ -177,6 +177,26 @@ auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return recovery_tokens_[token.index];
 }
 
+auto TokenizedBuffer::AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token)
+    -> TokenIndex {
+  auto kind = GetKind(token);
+  CARBON_CHECK(kind.is_word() && kind != TokenKind::Identifier,
+               "Recovery not required");
+
+  auto identifier_id = value_stores_->identifiers().Add(GetTokenText(token));
+  auto info = token_infos_.Get(token);
+  info.ResetAsErrorRecoveryIdentifier(identifier_id);
+  return AddPostLexingRecoveryToken(info);
+}
+
+auto TokenizedBuffer::AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex {
+  auto token = token_infos_.Add(info);
+  recovery_tokens_.resize(token_infos_.size());
+  recovery_tokens_[token.index] = true;
+  ++post_lexing_recovery_tokens_;
+  return token;
+}
+
 auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
   return line_infos_.Get(line).indent + 1;
 }
