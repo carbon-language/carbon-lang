@@ -836,10 +836,13 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
 // new list of fields, and `value_id` is updated to point at a new
 // `StructValue`.
 static auto AddDefaultsToInitializer(Context& context,
-                                     SemIR::ClassId dest_class_id,
+                                     const SemIR::Class& dest_class_info,
                                      SemIR::StructType dest_struct_type,
                                      SemIR::StructType* src_type,
                                      SemIR::InstId* value_id) {
+  const auto& dest_class_scope =
+      context.name_scopes().Get(dest_class_info.scope_id);
+
   llvm::SmallVector<SemIR::StructTypeField> new_struct_type_fields(
       context.struct_type_fields().Get(src_type->fields_id));
 
@@ -868,8 +871,14 @@ static auto AddDefaultsToInitializer(Context& context,
       continue;
     }
 
-    if (auto lookup = context.field_initializers().Lookup(
-            std::make_pair(dest_class_id, dest_field.name_id))) {
+    auto entry_id = dest_class_scope.Lookup(dest_field.name_id);
+    if (!entry_id.has_value()) {
+      continue;
+    }
+    auto field_inst_id =
+        dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
+
+    if (auto lookup = context.field_initializers().Lookup(field_inst_id)) {
       auto field_default = context.constant_values().GetInstId(lookup.value());
       new_struct_type_fields.push_back(
           {.name_id = dest_field.name_id,
@@ -932,7 +941,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   }
 
   if (!is_partial && context.insts().Is<SemIR::StructLiteral>(value_id)) {
-    AddDefaultsToInitializer(context, dest_type.class_id, dest_struct_type,
+    AddDefaultsToInitializer(context, dest_class_info, dest_struct_type,
                              &src_type, &value_id);
   }
 

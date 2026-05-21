@@ -541,7 +541,7 @@ auto MatchContext::DoPostWork(State /*state*/,
                               WorkItem /*entry*/) -> void {}
 
 auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
-                             SemIR::InstId scrutinee_id, WorkItem /*entry*/)
+                             SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
   if (!scrutinee_id.has_value()) {
     return;
@@ -566,10 +566,8 @@ auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
   }
 
   // Store a mapping to the field's initializer.
-  auto class_type = context_.insts().GetAs<SemIR::ClassType>(
-      unbound_element_type.class_type_inst_id);
-  auto key = std::make_pair(class_type.class_id, field_decl.name_id);
-  context_.field_initializers().Insert(key, const_id);
+  CARBON_CHECK(context_.insts().Is<SemIR::FieldDecl>(entry.pattern_id));
+  context_.field_initializers().Insert(entry.pattern_id, const_id);
 }
 
 auto MatchContext::DoPreWork(State state,
