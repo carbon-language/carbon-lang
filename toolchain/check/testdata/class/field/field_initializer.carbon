@@ -32,6 +32,28 @@ import library "field_initializer";
 // CHECK:STDERR:
 var C2: Class = {};
 
+// --- field_initializer_generic.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let Default:! Self;
+}
+
+impl i32 as I where .Default = 123 {}
+
+class Class(T:! I) {
+  var x: T = T.Default;
+}
+
+// CHECK:STDERR: field_initializer_generic.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `T` to `i32` [ConversionFailure]
+// CHECK:STDERR: var C: Class(i32) = {};
+// CHECK:STDERR:                     ^~
+// CHECK:STDERR: field_initializer_generic.carbon:[[@LINE+4]]:21: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: var C: Class(i32) = {};
+// CHECK:STDERR:                     ^~
+// CHECK:STDERR:
+var C: Class(i32) = {};
+
 // --- fail_field_initializer_invalid_name.carbon
 library "[[@TEST_NAME]]";
 
