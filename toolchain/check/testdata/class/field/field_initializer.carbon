@@ -75,6 +75,12 @@ class Class {
   var field: i32 = x;
 }
 
+// CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+4]]:16: error: cannot initialize class with 1 field from struct with 0 fields [StructInitElementCountMismatch]
+// CHECK:STDERR: var C: Class = {};
+// CHECK:STDERR:                ^~
+// CHECK:STDERR:
+var C: Class = {};
+
 // CHECK:STDOUT: --- field_initializer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

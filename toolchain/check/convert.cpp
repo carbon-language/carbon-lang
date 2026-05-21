@@ -879,7 +879,15 @@ static auto AddDefaultsToInitializer(Context& context,
         dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
 
     if (auto lookup = context.field_initializers().Lookup(field_inst_id)) {
-      auto field_default = context.constant_values().GetInstId(lookup.value());
+      auto initializer_id = lookup.value();
+
+      auto const_id = TryEvalInst(context, initializer_id);
+      if (const_id == SemIR::ConstantId::NotConstant) {
+        context.TODO(initializer_id, "field initializer is not constant");
+        continue;
+      }
+
+      auto field_default = context.constant_values().GetInstId(const_id);
       new_struct_type_fields.push_back(
           {.name_id = dest_field.name_id,
            .type_inst_id = context.types().GetTypeInstId(
