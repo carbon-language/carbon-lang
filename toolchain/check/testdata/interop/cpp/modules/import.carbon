@@ -37,25 +37,13 @@ struct B {};
 
 B *_Nonnull makeB(A *_Nonnull);
 
-// --- fail_todo_use_a_b.carbon
+// --- use_a_b.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "a.h";
 import Cpp library "b.h";
 
-// CHECK:STDERR: fail_todo_use_a_b.carbon:[[@LINE+4]]:12: error: member name `B` not found in `Cpp` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn Go() -> Cpp.B* {
-// CHECK:STDERR:            ^~~~~
-// CHECK:STDERR:
 fn Go() -> Cpp.B* {
-  // CHECK:STDERR: fail_todo_use_a_b.carbon:[[@LINE+8]]:10: error: member name `makeB` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return Cpp.makeB(Cpp.makeA());
-  // CHECK:STDERR:          ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_a_b.carbon:[[@LINE+4]]:20: error: member name `makeA` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return Cpp.makeB(Cpp.makeA());
-  // CHECK:STDERR:                    ^~~~~~~~~
-  // CHECK:STDERR:
   return Cpp.makeB(Cpp.makeA());
 }

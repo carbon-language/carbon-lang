@@ -14,6 +14,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
@@ -351,16 +352,49 @@ struct Worklist {
     }
   }
 
+  auto AddPackage(NameScopeId name_scope_id) -> void {
+    if (name_scope_id == NameScopeId::Package) {
+      AddLibrary(sem_ir);
+      return;
+    }
+
+    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
+    CARBON_CHECK(scope.is_imported_package());
+    if (!scope.import_ir_scopes().empty()) {
+      auto import_ir_id = scope.import_ir_scopes().front().first;
+      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
+    } else {
+      AddInvalid();
+    }
+  }
+
   auto Add(NameScopeId name_scope_id) -> void {
     if (!name_scope_id.has_value()) {
       AddInvalid();
       return;
     }
+
+    // If this is the current package or an imported package, add the package
+    // and library name.
+    if (sem_ir->name_scopes().IsPackage(name_scope_id)) {
+      AddPackage(name_scope_id);
+      return;
+    }
+
+    // For non-package scopes, add the name and parent scope.
     const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
     Add(scope.name_id());
-    // For non-package scopes, add the parent scope.
-    if (!scope.is_imported_package() && scope.parent_scope_id().has_value()) {
-      Add(sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
+    if (scope.parent_scope_id().has_value()) {
+      auto parent_id = scope.parent_scope_id();
+      if (sem_ir->name_scopes().IsPackage(parent_id)) {
+        AddPackage(parent_id);
+      } else {
+        Add(sem_ir->name_scopes().Get(parent_id).inst_id());
+      }
+    } else {
+      // TODO: If the parent has no associated name scope, such as for a
+      // function-local entity, we should still identify it uniquely somehow.
+      AddInvalid();
     }
   }
 
@@ -368,7 +402,7 @@ struct Worklist {
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
     if (entity.parent_scope_id.has_value()) {
-      Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
+      Add(entity.parent_scope_id);
     }
   }
 
@@ -381,9 +415,7 @@ struct Worklist {
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
     if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(sem_ir->name_scopes()
-              .Get(cpp_overload_set.parent_scope_id)
-              .inst_id());
+      Add(cpp_overload_set.parent_scope_id);
     }
   }
 
@@ -531,10 +563,14 @@ struct Worklist {
     }
   }
 
+  auto AddLibrary(const File* file) -> void {
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    Add(file->package_id());
+    Add(file->library_id());
+  }
+
   auto Add(ImportIRId ir_id) -> void {
-    const auto* ir = sem_ir->import_irs().Get(ir_id).sem_ir;
-    Add(ir->package_id());
-    Add(ir->library_id());
+    AddLibrary(sem_ir->import_irs().Get(ir_id).sem_ir);
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {

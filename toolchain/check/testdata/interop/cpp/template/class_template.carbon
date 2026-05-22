@@ -36,7 +36,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.b54: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %X.type: type = cpp_type_template_type X [concrete]
 // CHECK:STDOUT:   %X.template: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
@@ -44,11 +44,11 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %X.f.cpp_overload_set.value: %X.f.cpp_overload_set.type = cpp_overload_set_value @X.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %ptr.270: type = ptr_type %A [concrete]
+// CHECK:STDOUT:   %ptr.13d: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %ptr.bce: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.5ef: ref %B = temporary invalid, %B.val [concrete]
+// CHECK:STDOUT:   %.dae: ref %B = temporary invalid, %B.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -71,8 +71,8 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9de = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.9de = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.b54 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.b54 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %A.ref [concrete = constants.%A] {
@@ -98,11 +98,11 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %.loc7_39.3: init %B to %.loc7_39.2 = class_init () [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_41.1: init %B = converted %.loc7_39.1, %.loc7_39.3 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %.loc7_41.2: ref %B = temporary %.loc7_39.2, %.loc7_41.1 [concrete = constants.%.5ef]
+// CHECK:STDOUT:   %.loc7_41.2: ref %B = temporary %.loc7_39.2, %.loc7_41.1 [concrete = constants.%.dae]
 // CHECK:STDOUT:   %.loc7_41.3: %B = acquire_value %.loc7_41.2 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_41.4: ref %B = value_as_ref %.loc7_41.3
-// CHECK:STDOUT:   %addr.loc7_49.1: %ptr.a04 = addr_of %.loc7_41.4
-// CHECK:STDOUT:   %addr.loc7_49.2: %ptr.270 = addr_of %.loc7_1
+// CHECK:STDOUT:   %addr.loc7_49.1: %ptr.13d = addr_of %.loc7_41.4
+// CHECK:STDOUT:   %addr.loc7_49.2: %ptr.bce = addr_of %.loc7_1
 // CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%addr.loc7_49.1, %addr.loc7_49.2)
 // CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = mark_in_place_init %f__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_49

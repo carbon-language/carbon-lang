@@ -323,7 +323,7 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 };
 
 // Provides clang AST nodes representing Carbon SemIR entities.
-class CarbonExternalASTSource : public clang::ExternalASTSource {
+class CarbonExternalASTSource : public clang::ExternalSemaSource {
  public:
   explicit CarbonExternalASTSource(Context* context) : context_(context) {}
 
@@ -882,6 +882,13 @@ auto GenerateAst(Context& context,
   context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
       std::move(clang_instance_ptr), llvm_context));
 
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
+  // that diagnostics created here don't interleave with later Carbon
+  // diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
   clang_instance.setDiagnostics(diags);
   clang_instance.setVirtualFileSystem(fs);
   clang_instance.createFileManager();
@@ -896,13 +903,17 @@ auto GenerateAst(Context& context,
   }
 
   auto& ast = clang_instance.getASTContext();
-  // TODO: Clang's modules support is implemented as an ExternalASTSource
-  // (ASTReader) and there's no multiplexing support for ExternalASTSources at
-  // the moment - so registering CarbonExternalASTSource breaks Clang modules
-  // support. Implement multiplexing support (possibly in Clang) to restore
-  // modules functionality.
-  ast.setExternalSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
+  llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+  if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
+          ast.getExternalSource())) {
+    auto multiplex_source =
+        llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>(
+            existing_source, std::move(carbon_source));
+    ast.setExternalSource(std::move(multiplex_source));
+  } else {
+    ast.setExternalSource(std::move(carbon_source));
+  }
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
@@ -910,10 +921,6 @@ auto GenerateAst(Context& context,
                                          llvm::toString(std::move(error)));
     return false;
   }
-
-  // Flush any diagnostics. We know we're not part-way through emitting a
-  // diagnostic now.
-  context.emitter().Flush();
 
   return true;
 }

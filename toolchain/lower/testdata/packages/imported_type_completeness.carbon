@@ -105,7 +105,7 @@ fn CallF() {
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.7d0 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.fdb = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CI.Main() #0 !dbg !4 {
@@ -115,7 +115,7 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.30c7a4d8cf1d8b9f:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
+// CHECK:STDOUT: define weak_odr void @"_COp.433e7940bfa1ba90:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -128,8 +128,8 @@ fn CallF() {
 // CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.e43630e9a6c38c3f(), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !19
 // CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.e43630e9a6c38c3f(), !dbg !21
-// CHECK:STDOUT:   call void @"_COp.30c7a4d8cf1d8b9f:core.Destroy.Core"(ptr @C.val.7d0), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.30c7a4d8cf1d8b9f:core.Destroy.Core"(ptr @C.val.7d0), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.433e7940bfa1ba90:core.Destroy.Core"(ptr @C.val.fdb), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.433e7940bfa1ba90:core.Destroy.Core"(ptr @C.val.fdb), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,7 +164,7 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.30c7a4d8cf1d8b9f:core.Destroy.Core", scope: null, file: !10, line: 22, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.433e7940bfa1ba90:core.Destroy.Core", scope: null, file: !10, line: 22, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !10 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
@@ -259,23 +259,23 @@ fn CallF() {
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.4a3 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @"_CC.Main.$vtable.0c4ab795cec6cb27" = external unnamed_addr constant ptr
-// CHECK:STDOUT: @C.val.4a3.loc9_11.3 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @C.val.011.anon = internal constant { ptr } { ptr @"_CC.Main.$vtable.0c4ab795cec6cb27" }
+// CHECK:STDOUT: @C.val.a51 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @"_CC.Main.$vtable.48caacd0cd7b6e0f" = external unnamed_addr constant ptr
+// CHECK:STDOUT: @C.val.a51.loc9_11.3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.26b.anon = internal constant { ptr } { ptr @"_CC.Main.$vtable.48caacd0cd7b6e0f" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_9.2.temp = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_9.2.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CF.Main.0c4ab795cec6cb27(ptr @C.val.4a3.loc9_11.3), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr @C.val.4a3), !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main.48caacd0cd7b6e0f(ptr @C.val.a51.loc9_11.3), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.a2f46f9b7e36af17:core.Destroy.Core"(ptr @C.val.a51), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a2f46f9b7e36af17:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -287,7 +287,7 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.e4f158e1c31bad9e:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
+// CHECK:STDOUT: define weak_odr void @"_COp.c24d236d733efff7:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -296,18 +296,18 @@ fn CallF() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.0c4ab795cec6cb27(ptr %t) #0 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.48caacd0cd7b6e0f(ptr %t) #0 !dbg !26 {
 // CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !29
 // CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %1, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.011.anon, i64 8, i1 false), !dbg !29
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.26b.anon, i64 8, i1 false), !dbg !29
 // CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !31
 // CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !31
 // CHECK:STDOUT:   %3 = call i11 %2(ptr %1), !dbg !31
 // CHECK:STDOUT:   %vtable1 = load ptr, ptr %1, align 8, !dbg !32
 // CHECK:STDOUT:   %4 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !32
 // CHECK:STDOUT:   %5 = call i12 %4(ptr %1, ptr %t), !dbg !32
-// CHECK:STDOUT:   call void @"_COp.e4f158e1c31bad9e:core.Destroy.Core"(ptr %1), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.c24d236d733efff7:core.Destroy.Core"(ptr %1), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +315,7 @@ fn CallF() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i11 @_CF.C.Main.0c4ab795cec6cb27(ptr %self) #0 !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr i11 @_CF.C.Main.48caacd0cd7b6e0f(ptr %self) #0 !dbg !34 {
 // CHECK:STDOUT:   ret i11 11, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn CallF() {
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i12 @_CG.C.Main.0c4ab795cec6cb27(ptr %self, ptr %t) #0 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr i12 @_CG.C.Main.48caacd0cd7b6e0f(ptr %self, ptr %t) #0 !dbg !42 {
 // CHECK:STDOUT:   ret i12 12, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,7 +347,7 @@ fn CallF() {
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 8, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 8, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !3, line: 9, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a2f46f9b7e36af17:core.Destroy.Core", scope: null, file: !3, line: 9, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
 // CHECK:STDOUT: !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -359,11 +359,11 @@ fn CallF() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !17, type: !13)
 // CHECK:STDOUT: !21 = !DILocation(line: 7, column: 3, scope: !17)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e4f158e1c31bad9e:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c24d236d733efff7:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !13)
 // CHECK:STDOUT: !25 = !DILocation(line: 7, column: 3, scope: !22)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.0c4ab795cec6cb27", scope: null, file: !18, line: 6, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !27)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.48caacd0cd7b6e0f", scope: null, file: !18, line: 6, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !27)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !13)
 // CHECK:STDOUT: !29 = !DILocation(line: 7, column: 3, scope: !26)
@@ -371,7 +371,7 @@ fn CallF() {
 // CHECK:STDOUT: !31 = !DILocation(line: 8, column: 3, scope: !26)
 // CHECK:STDOUT: !32 = !DILocation(line: 9, column: 3, scope: !26)
 // CHECK:STDOUT: !33 = !DILocation(line: 6, column: 1, scope: !26)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.0c4ab795cec6cb27", scope: null, file: !35, line: 6, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !39)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.48caacd0cd7b6e0f", scope: null, file: !35, line: 6, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !39)
 // CHECK:STDOUT: !35 = !DIFile(filename: "require_completion_in_vtable.carbon", directory: "")
 // CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !37 = !{!38, !13}
@@ -379,7 +379,7 @@ fn CallF() {
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !34, type: !13)
 // CHECK:STDOUT: !41 = !DILocation(line: 6, column: 55, scope: !34)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.0c4ab795cec6cb27", scope: null, file: !35, line: 7, type: !43, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.48caacd0cd7b6e0f", scope: null, file: !35, line: 7, type: !43, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !44)
 // CHECK:STDOUT: !44 = !{!45, !13, !13}
 // CHECK:STDOUT: !45 = !DIBasicType(name: "int", size: 12, encoding: DW_ATE_signed)

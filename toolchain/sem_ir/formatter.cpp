@@ -1243,8 +1243,9 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(Namespace ns): {
-      if (ns.import_id.has_value()) {
-        FormatArgs(ns.import_id, ns.name_scope_id);
+      auto import_id = sem_ir_->name_scopes().Get(ns.name_scope_id).import_id();
+      if (import_id.has_value()) {
+        FormatArgs(import_id, ns.name_scope_id);
       } else {
         FormatArgs(ns.name_scope_id);
       }

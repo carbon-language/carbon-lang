@@ -16,6 +16,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/context.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -344,10 +345,9 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
 // Returns the thunk parameters using the callee function parameter identifiers.
 static auto BuildThunkParameters(clang::ASTContext& ast_context,
                                  CalleeFunctionInfo callee_info,
+                                 clang::SourceLocation clang_loc,
                                  clang::FunctionDecl* thunk_function_decl)
     -> llvm::SmallVector<clang::ParmVarDecl*> {
-  clang::SourceLocation clang_loc = callee_info.decl->getLocation();
-
   const auto* thunk_function_proto_type =
       thunk_function_decl->getType()->castAs<clang::FunctionProtoType>();
 
@@ -431,9 +431,9 @@ static auto GetDeclNameForThunk(clang::ASTContext& ast_context,
 // thunk parameter types.
 static auto CreateThunkFunctionDecl(
     Context& context, CalleeFunctionInfo callee_info,
+    clang::SourceLocation clang_loc,
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
-  clang::SourceLocation clang_loc = callee_info.decl->getLocation();
   clang::DeclarationName name =
       GetDeclNameForThunk(ast_context, callee_info.decl->getDeclName());
 
@@ -450,8 +450,8 @@ static auto CreateThunkFunctionDecl(
       /*UsesFPIntrin=*/false, /*isInlineSpecified=*/true);
   decl_context->addDecl(thunk_function_decl);
 
-  thunk_function_decl->setParams(
-      BuildThunkParameters(ast_context, callee_info, thunk_function_decl));
+  thunk_function_decl->setParams(BuildThunkParameters(
+      ast_context, callee_info, clang_loc, thunk_function_decl));
 
   // Force the thunk to be inlined and discarded.
   thunk_function_decl->addAttr(
@@ -541,13 +541,12 @@ static auto BuildCalleeArgs(clang::Sema& sema,
 // args and returns the callee function return value. Returns nullptr on
 // failure.
 static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
+                           clang::SourceLocation clang_loc,
                            clang::FunctionDecl* thunk_function_decl,
                            CalleeFunctionInfo callee_info)
     -> clang::StmtResult {
   // TODO: Consider building a CompoundStmt holding our created statement to
   // make our result more closely resemble a real C++ function.
-
-  clang::SourceLocation clang_loc = callee_info.decl->getLocation();
 
   // If the callee has an object parameter, build a member access expression as
   // the callee. Otherwise, build a regular reference to the function.
@@ -569,7 +568,8 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
         object.get(), IsArrow, clang_loc, clang::NestedNameSpecifierLoc(),
         clang::SourceLocation(), callee_info.decl,
         clang::DeclAccessPair::make(callee_info.decl, clang::AS_public),
-        /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),
+        /*HadMultipleCandidates=*/false,
+        clang::DeclarationNameInfo(callee_info.decl->getDeclName(), clang_loc),
         sema.getASTContext().BoundMemberTy, clang::VK_PRValue,
         clang::OK_Ordinary);
   } else if (!isa<clang::CXXConstructorDecl>(callee_info.decl)) {
@@ -659,18 +659,22 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
       context.clang_decl_signatures().Get(clang_decl_key.signature_id);
   CalleeFunctionInfo callee_info(callee_function_decl, &signature);
 
+  clang::SourceLocation clang_loc = callee_function_decl->getLocation();
+  CARBON_CHECK(clang_loc.isValid(), "Missing location for function");
+
   // Build the thunk function declaration.
   auto thunk_param_types =
       BuildThunkParameterTypes(context.ast_context(), callee_info);
-  clang::FunctionDecl* thunk_function_decl =
-      CreateThunkFunctionDecl(context, callee_info, thunk_param_types);
+  clang::FunctionDecl* thunk_function_decl = CreateThunkFunctionDecl(
+      context, callee_info, clang_loc, thunk_param_types);
 
   // Build the thunk function body.
   clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
-  clang::StmtResult body = BuildThunkBody(*context.cpp_context(), sema,
-                                          thunk_function_decl, callee_info);
+  clang::StmtResult body =
+      BuildThunkBody(*context.cpp_context(), sema, clang_loc,
+                     thunk_function_decl, callee_info);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   if (body.isInvalid()) {
     return nullptr;

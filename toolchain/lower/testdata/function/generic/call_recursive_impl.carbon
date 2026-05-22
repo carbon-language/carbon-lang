@@ -63,15 +63,15 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call.loc40 = call i32 @_CG.Main.e55c78367db83a6b(i32 0), !dbg !16
-// CHECK:STDOUT:   %G.call.loc41 = call i32 @_CG.Main.95a632fb0c368a62(i32 0), !dbg !17
+// CHECK:STDOUT:   %G.call.loc40 = call i32 @_CG.Main.3e475381c3e5acc5(i32 0), !dbg !16
+// CHECK:STDOUT:   %G.call.loc41 = call i32 @_CG.Main.c00b4ba37166674e(i32 0), !dbg !17
 // CHECK:STDOUT:   ret i32 0, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.e55c78367db83a6b(i32 %count) #0 !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.3e475381c3e5acc5(i32 %count) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !24
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !25
@@ -82,12 +82,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !28
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.e55c78367db83a6b(i32 %Int.as.AddWith.impl.Op.call), !dbg !29
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.3e475381c3e5acc5(i32 %Int.as.AddWith.impl.Op.call), !dbg !29
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.95a632fb0c368a62(i32 %count) #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.c00b4ba37166674e(i32 %count) #0 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !34
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !35
@@ -98,7 +98,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !38
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.95a632fb0c368a62(i32 %Int.as.AddWith.impl.Op.call), !dbg !39
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.c00b4ba37166674e(i32 %Int.as.AddWith.impl.Op.call), !dbg !39
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn Run() {
 // CHECK:STDOUT: !16 = !DILocation(line: 40, column: 3, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 41, column: 3, scope: !12)
 // CHECK:STDOUT: !18 = !DILocation(line: 39, column: 1, scope: !12)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e55c78367db83a6b", scope: null, file: !3, line: 30, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.3e475381c3e5acc5", scope: null, file: !3, line: 30, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{!15, !15}
 // CHECK:STDOUT: !22 = !{!23}
@@ -141,7 +141,7 @@ fn Run() {
 // CHECK:STDOUT: !28 = !DILocation(line: 36, column: 15, scope: !19)
 // CHECK:STDOUT: !29 = !DILocation(line: 36, column: 10, scope: !19)
 // CHECK:STDOUT: !30 = !DILocation(line: 36, column: 3, scope: !19)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.95a632fb0c368a62", scope: null, file: !3, line: 30, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !32)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c00b4ba37166674e", scope: null, file: !3, line: 30, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !32)
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !15)
 // CHECK:STDOUT: !34 = !DILocation(line: 31, column: 3, scope: !31)

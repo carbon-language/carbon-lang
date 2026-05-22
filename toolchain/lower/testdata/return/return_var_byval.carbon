@@ -25,12 +25,12 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   store i32 0, ptr %x.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc14_17 = load i32, ptr %x.var, align 4, !dbg !9
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %x.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %.loc14_17, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
+// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -55,7 +55,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 12, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 14, column: 16, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 14, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 14, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !7}
 // CHECK:STDOUT: !14 = !{!15}

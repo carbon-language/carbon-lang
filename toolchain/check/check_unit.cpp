@@ -127,8 +127,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto package_inst_id =
       AddInst<SemIR::Namespace>(context_, Parse::NodeId::None,
                                 {.type_id = namespace_type_id,
-                                 .name_scope_id = SemIR::NameScopeId::Package,
-                                 .import_id = SemIR::InstId::None});
+                                 .name_scope_id = SemIR::NameScopeId::Package});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and

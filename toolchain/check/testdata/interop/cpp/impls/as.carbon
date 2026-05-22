@@ -137,17 +137,17 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %Source.cpp_operator.type: type = fn_type @Source.cpp_operator [concrete]
 // CHECK:STDOUT:   %Source.cpp_operator: %Source.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.551: type = ptr_type %Dest [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk.type.2ffc9e.1: type = fn_type @Dest__carbon_thunk.1 [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk.f8fa06.1: %Dest__carbon_thunk.type.2ffc9e.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.7c0: type = ptr_type %Dest [concrete]
+// CHECK:STDOUT:   %Dest__carbon_thunk.type.2ffc11.1: type = fn_type @Dest__carbon_thunk.1 [concrete]
+// CHECK:STDOUT:   %Dest__carbon_thunk.61ac37.1: %Dest__carbon_thunk.type.2ffc11.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor.type: type = fn_type @Dest.cpp_destructor [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor: %Dest.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.Op.type: type = fn_type @Dest.Op [concrete]
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Source2: type = class_type @Source2 [concrete]
 // CHECK:STDOUT:   %Dest2: type = class_type @Dest2 [concrete]
-// CHECK:STDOUT:   %ptr.472: type = ptr_type %Source2 [concrete]
-// CHECK:STDOUT:   %ptr.9ae: type = ptr_type %Dest2 [concrete]
+// CHECK:STDOUT:   %ptr.96f: type = ptr_type %Source2 [concrete]
+// CHECK:STDOUT:   %ptr.129: type = ptr_type %Dest2 [concrete]
 // CHECK:STDOUT:   %Dest2__carbon_thunk.type: type = fn_type @Dest2__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Dest2__carbon_thunk: %Dest2__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest2.cpp_destructor.type: type = fn_type @Dest2.cpp_destructor [concrete]
@@ -155,8 +155,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest2.Op.type: type = fn_type @Dest2.Op [concrete]
 // CHECK:STDOUT:   %Dest2.Op: %Dest2.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor: type = class_type @ExplicitConstructor [concrete]
-// CHECK:STDOUT:   %ptr.1fc: type = ptr_type %Source [concrete]
-// CHECK:STDOUT:   %ptr.5b5: type = ptr_type %ExplicitConstructor [concrete]
+// CHECK:STDOUT:   %ptr.f95: type = ptr_type %Source [concrete]
+// CHECK:STDOUT:   %ptr.5c4: type = ptr_type %ExplicitConstructor [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor__carbon_thunk.type: type = fn_type @ExplicitConstructor__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor__carbon_thunk: %ExplicitConstructor__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor.cpp_destructor.type: type = fn_type @ExplicitConstructor.cpp_destructor [concrete]
@@ -166,8 +166,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConversion: type = class_type @ExplicitConversion [concrete]
 // CHECK:STDOUT:   %ExplicitConversion.cpp_operator.type: type = fn_type @ExplicitConversion.cpp_operator [concrete]
 // CHECK:STDOUT:   %ExplicitConversion.cpp_operator: %ExplicitConversion.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk.type.2ffc9e.2: type = fn_type @Dest__carbon_thunk.2 [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk.f8fa06.2: %Dest__carbon_thunk.type.2ffc9e.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Dest__carbon_thunk.type.2ffc11.2: type = fn_type @Dest__carbon_thunk.2 [concrete]
+// CHECK:STDOUT:   %Dest__carbon_thunk.61ac37.2: %Dest__carbon_thunk.type.2ffc11.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -187,7 +187,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Dest__carbon_thunk.decl.b58ecd.1: %Dest__carbon_thunk.type.2ffc9e.1 = fn_decl @Dest__carbon_thunk.1 [concrete = constants.%Dest__carbon_thunk.f8fa06.1] {
+// CHECK:STDOUT:   %Dest__carbon_thunk.decl.74d7b8.1: %Dest__carbon_thunk.type.2ffc11.1 = fn_decl @Dest__carbon_thunk.1 [concrete = constants.%Dest__carbon_thunk.61ac37.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -226,7 +226,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Dest__carbon_thunk.decl.b58ecd.2: %Dest__carbon_thunk.type.2ffc9e.2 = fn_decl @Dest__carbon_thunk.2 [concrete = constants.%Dest__carbon_thunk.f8fa06.2] {
+// CHECK:STDOUT:   %Dest__carbon_thunk.decl.74d7b8.2: %Dest__carbon_thunk.type.2ffc11.2 = fn_decl @Dest__carbon_thunk.2 [concrete = constants.%Dest__carbon_thunk.61ac37.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -240,8 +240,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   %Source.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%Source.cpp_operator.decl
 // CHECK:STDOUT:   %.loc8_5.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc8_5.1
-// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.1(%s.ref, %addr)
+// CHECK:STDOUT:   %addr: %ptr.7c0 = addr_of %.loc8_5.1
+// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.74d7b8.1(%s.ref, %addr)
 // CHECK:STDOUT:   %.loc8_5.2: init %Dest to %.loc8_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_5.3: init %Dest = converted %s.ref, %.loc8_5.2
 // CHECK:STDOUT:   %.loc8_5.4: ref %Dest = temporary %.loc8_5.1, %.loc8_5.3
@@ -260,8 +260,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest2.ref: type = name_ref Dest2, imports.%Dest2.decl [concrete = constants.%Dest2]
 // CHECK:STDOUT:   %.loc14_5.1: ref %Dest2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_3: ref %Source2 = value_as_ref %s.ref
-// CHECK:STDOUT:   %addr.loc14_5.1: %ptr.472 = addr_of %.loc14_3
-// CHECK:STDOUT:   %addr.loc14_5.2: %ptr.9ae = addr_of %.loc14_5.1
+// CHECK:STDOUT:   %addr.loc14_5.1: %ptr.96f = addr_of %.loc14_3
+// CHECK:STDOUT:   %addr.loc14_5.2: %ptr.129 = addr_of %.loc14_5.1
 // CHECK:STDOUT:   %Dest2__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest2__carbon_thunk.decl(%addr.loc14_5.1, %addr.loc14_5.2)
 // CHECK:STDOUT:   %.loc14_5.2: init %Dest2 to %.loc14_5.1 = mark_in_place_init %Dest2__carbon_thunk.call
 // CHECK:STDOUT:   %.loc14_5.3: init %Dest2 = converted %s.ref, %.loc14_5.2
@@ -281,8 +281,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConstructor.ref: type = name_ref ExplicitConstructor, imports.%ExplicitConstructor.decl [concrete = constants.%ExplicitConstructor]
 // CHECK:STDOUT:   %.loc20_5.1: ref %ExplicitConstructor = temporary_storage
 // CHECK:STDOUT:   %.loc20_3: ref %Source = value_as_ref %s.ref
-// CHECK:STDOUT:   %addr.loc20_5.1: %ptr.1fc = addr_of %.loc20_3
-// CHECK:STDOUT:   %addr.loc20_5.2: %ptr.5b5 = addr_of %.loc20_5.1
+// CHECK:STDOUT:   %addr.loc20_5.1: %ptr.f95 = addr_of %.loc20_3
+// CHECK:STDOUT:   %addr.loc20_5.2: %ptr.5c4 = addr_of %.loc20_5.1
 // CHECK:STDOUT:   %ExplicitConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%ExplicitConstructor__carbon_thunk.decl(%addr.loc20_5.1, %addr.loc20_5.2)
 // CHECK:STDOUT:   %.loc20_5.2: init %ExplicitConstructor to %.loc20_5.1 = mark_in_place_init %ExplicitConstructor__carbon_thunk.call
 // CHECK:STDOUT:   %.loc20_5.3: init %ExplicitConstructor = converted %s.ref, %.loc20_5.2
@@ -302,8 +302,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   %ExplicitConversion.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%ExplicitConversion.cpp_operator.decl
 // CHECK:STDOUT:   %.loc26_5.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc26_5.1
-// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.2(%s.ref, %addr)
+// CHECK:STDOUT:   %addr: %ptr.7c0 = addr_of %.loc26_5.1
+// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.74d7b8.2(%s.ref, %addr)
 // CHECK:STDOUT:   %.loc26_5.2: init %Dest to %.loc26_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc26_5.3: init %Dest = converted %s.ref, %.loc26_5.2
 // CHECK:STDOUT:   %.loc26_5.4: ref %Dest = temporary %.loc26_5.1, %.loc26_5.3
@@ -319,29 +319,29 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.c52b91.1: type = class_type @ConditionallyExplicit.1 [concrete]
-// CHECK:STDOUT:   %pattern_type.285f84.1: type = pattern_type %ConditionallyExplicit.c52b91.1 [concrete]
-// CHECK:STDOUT:   %ptr.1fc: type = ptr_type %Source [concrete]
-// CHECK:STDOUT:   %ptr.ca4178.1: type = ptr_type %ConditionallyExplicit.c52b91.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.805b57.1: type = fn_type @ConditionallyExplicit__carbon_thunk.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.b68c64.1: %ConditionallyExplicit__carbon_thunk.type.805b57.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.a865b6.1: type = fn_type @ConditionallyExplicit.cpp_destructor.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ba031.1: %ConditionallyExplicit.cpp_destructor.type.a865b6.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.6a678d.1: type = fn_type @ConditionallyExplicit.Op.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.c4e51d.1: %ConditionallyExplicit.Op.type.6a678d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.c52b91.2: type = class_type @ConditionallyExplicit.2 [concrete]
-// CHECK:STDOUT:   %ptr.ca4178.2: type = ptr_type %ConditionallyExplicit.c52b91.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.805b57.2: type = fn_type @ConditionallyExplicit__carbon_thunk.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.b68c64.2: %ConditionallyExplicit__carbon_thunk.type.805b57.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.a865b6.2: type = fn_type @ConditionallyExplicit.cpp_destructor.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ba031.2: %ConditionallyExplicit.cpp_destructor.type.a865b6.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.6a678d.2: type = fn_type @ConditionallyExplicit.Op.2 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.c4e51d.2: %ConditionallyExplicit.Op.type.6a678d.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.6a9921.1: type = class_type @ConditionallyExplicit.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.dc5fb9.1: type = pattern_type %ConditionallyExplicit.6a9921.1 [concrete]
+// CHECK:STDOUT:   %ptr.f95: type = ptr_type %Source [concrete]
+// CHECK:STDOUT:   %ptr.d63e0a.1: type = ptr_type %ConditionallyExplicit.6a9921.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c43f84.1: type = fn_type @ConditionallyExplicit__carbon_thunk.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.379b04.1: %ConditionallyExplicit__carbon_thunk.type.c43f84.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1: type = fn_type @ConditionallyExplicit.cpp_destructor.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ad69a.1: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.43d658.1: type = fn_type @ConditionallyExplicit.Op.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.cc70d5.1: %ConditionallyExplicit.Op.type.43d658.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.6a9921.2: type = class_type @ConditionallyExplicit.2 [concrete]
+// CHECK:STDOUT:   %ptr.d63e0a.2: type = ptr_type %ConditionallyExplicit.6a9921.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c43f84.2: type = fn_type @ConditionallyExplicit__carbon_thunk.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.379b04.2: %ConditionallyExplicit__carbon_thunk.type.c43f84.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2: type = fn_type @ConditionallyExplicit.cpp_destructor.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.1ad69a.2: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.type.43d658.2: type = fn_type @ConditionallyExplicit.Op.2 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.cc70d5.2: %ConditionallyExplicit.Op.type.43d658.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
-// CHECK:STDOUT:   %pattern_type.69a: type = pattern_type %Dest [concrete]
+// CHECK:STDOUT:   %pattern_type.a9f: type = pattern_type %Dest [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.type: type = fn_type @ConditionallyExplicit.cpp_operator [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator: %ConditionallyExplicit.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.551: type = ptr_type %Dest [concrete]
+// CHECK:STDOUT:   %ptr.7c0: type = ptr_type %Dest [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.type: type = fn_type @Dest__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk: %Dest__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor.type: type = fn_type @Dest.cpp_destructor [concrete]
@@ -353,30 +353,30 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .Source = %Source.decl
-// CHECK:STDOUT:     .ConditionallyExplicitFalse = %ConditionallyExplicit.decl.7acffe.1
-// CHECK:STDOUT:     .ConditionallyExplicitTrue = %ConditionallyExplicit.decl.7acffe.2
+// CHECK:STDOUT:     .ConditionallyExplicitFalse = %ConditionallyExplicit.decl.7f9e91.1
+// CHECK:STDOUT:     .ConditionallyExplicitTrue = %ConditionallyExplicit.decl.7f9e91.2
 // CHECK:STDOUT:     .Dest = %Dest.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: type = class_decl @Source [concrete = constants.%Source] {} {}
-// CHECK:STDOUT:   %ConditionallyExplicit.decl.7acffe.1: type = class_decl @ConditionallyExplicit.1 [concrete = constants.%ConditionallyExplicit.c52b91.1] {} {}
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.decl.22daaa.1: %ConditionallyExplicit__carbon_thunk.type.805b57.1 = fn_decl @ConditionallyExplicit__carbon_thunk.1 [concrete = constants.%ConditionallyExplicit__carbon_thunk.b68c64.1] {
+// CHECK:STDOUT:   %ConditionallyExplicit.decl.7f9e91.1: type = class_decl @ConditionallyExplicit.1 [concrete = constants.%ConditionallyExplicit.6a9921.1] {} {}
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.decl.3d8900.1: %ConditionallyExplicit__carbon_thunk.type.c43f84.1 = fn_decl @ConditionallyExplicit__carbon_thunk.1 [concrete = constants.%ConditionallyExplicit__carbon_thunk.379b04.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.a8c6bd.1: %ConditionallyExplicit.cpp_destructor.type.a865b6.1 = fn_decl @ConditionallyExplicit.cpp_destructor.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ba031.1] {
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.6e607d.1: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = fn_decl @ConditionallyExplicit.cpp_destructor.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConditionallyExplicit.decl.7acffe.2: type = class_decl @ConditionallyExplicit.2 [concrete = constants.%ConditionallyExplicit.c52b91.2] {} {}
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.decl.22daaa.2: %ConditionallyExplicit__carbon_thunk.type.805b57.2 = fn_decl @ConditionallyExplicit__carbon_thunk.2 [concrete = constants.%ConditionallyExplicit__carbon_thunk.b68c64.2] {
+// CHECK:STDOUT:   %ConditionallyExplicit.decl.7f9e91.2: type = class_decl @ConditionallyExplicit.2 [concrete = constants.%ConditionallyExplicit.6a9921.2] {} {}
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.decl.3d8900.2: %ConditionallyExplicit__carbon_thunk.type.c43f84.2 = fn_decl @ConditionallyExplicit__carbon_thunk.2 [concrete = constants.%ConditionallyExplicit__carbon_thunk.379b04.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.a8c6bd.2: %ConditionallyExplicit.cpp_destructor.type.a865b6.2 = fn_decl @ConditionallyExplicit.cpp_destructor.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ba031.2] {
+// CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.decl.6e607d.2: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = fn_decl @ConditionallyExplicit.cpp_destructor.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -402,41 +402,41 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConstructorNotExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.285f84.1 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.dc5fb9.1 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc8: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc8_13: type = splice_block %ConditionallyExplicitFalse.ref.loc8 [concrete = constants.%ConditionallyExplicit.c52b91.1] {
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %ConditionallyExplicitFalse.ref.loc8 [concrete = constants.%ConditionallyExplicit.6a9921.1] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %ConditionallyExplicitFalse.ref.loc8: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.7acffe.1 [concrete = constants.%ConditionallyExplicit.c52b91.1]
+// CHECK:STDOUT:     %ConditionallyExplicitFalse.ref.loc8: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.7f9e91.1 [concrete = constants.%ConditionallyExplicit.6a9921.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_43.1: ref %ConditionallyExplicit.c52b91.1 = temporary_storage
+// CHECK:STDOUT:   %.loc8_43.1: ref %ConditionallyExplicit.6a9921.1 = temporary_storage
 // CHECK:STDOUT:   %.loc8_43.2: ref %Source = value_as_ref %s.ref.loc8
-// CHECK:STDOUT:   %addr.loc8_43.1: %ptr.1fc = addr_of %.loc8_43.2
-// CHECK:STDOUT:   %addr.loc8_43.2: %ptr.ca4178.1 = addr_of %.loc8_43.1
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.1(%addr.loc8_43.1, %addr.loc8_43.2)
-// CHECK:STDOUT:   %.loc8_43.3: init %ConditionallyExplicit.c52b91.1 to %.loc8_43.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc8
-// CHECK:STDOUT:   %.loc8_43.4: init %ConditionallyExplicit.c52b91.1 = converted %s.ref.loc8, %.loc8_43.3
-// CHECK:STDOUT:   %.loc8_43.5: ref %ConditionallyExplicit.c52b91.1 = temporary %.loc8_43.1, %.loc8_43.4
-// CHECK:STDOUT:   %.loc8_43.6: %ConditionallyExplicit.c52b91.1 = acquire_value %.loc8_43.5
-// CHECK:STDOUT:   %_: %ConditionallyExplicit.c52b91.1 = value_binding _, %.loc8_43.6
+// CHECK:STDOUT:   %addr.loc8_43.1: %ptr.f95 = addr_of %.loc8_43.2
+// CHECK:STDOUT:   %addr.loc8_43.2: %ptr.d63e0a.1 = addr_of %.loc8_43.1
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.3d8900.1(%addr.loc8_43.1, %addr.loc8_43.2)
+// CHECK:STDOUT:   %.loc8_43.3: init %ConditionallyExplicit.6a9921.1 to %.loc8_43.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_43.4: init %ConditionallyExplicit.6a9921.1 = converted %s.ref.loc8, %.loc8_43.3
+// CHECK:STDOUT:   %.loc8_43.5: ref %ConditionallyExplicit.6a9921.1 = temporary %.loc8_43.1, %.loc8_43.4
+// CHECK:STDOUT:   %.loc8_43.6: %ConditionallyExplicit.6a9921.1 = acquire_value %.loc8_43.5
+// CHECK:STDOUT:   %_: %ConditionallyExplicit.6a9921.1 = value_binding _, %.loc8_43.6
 // CHECK:STDOUT:   %s.ref.loc9: %Source = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ConditionallyExplicitFalse.ref.loc9: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.7acffe.1 [concrete = constants.%ConditionallyExplicit.c52b91.1]
-// CHECK:STDOUT:   %.loc9_5.1: ref %ConditionallyExplicit.c52b91.1 = temporary_storage
+// CHECK:STDOUT:   %ConditionallyExplicitFalse.ref.loc9: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.7f9e91.1 [concrete = constants.%ConditionallyExplicit.6a9921.1]
+// CHECK:STDOUT:   %.loc9_5.1: ref %ConditionallyExplicit.6a9921.1 = temporary_storage
 // CHECK:STDOUT:   %.loc9_3: ref %Source = value_as_ref %s.ref.loc9
-// CHECK:STDOUT:   %addr.loc9_5.1: %ptr.1fc = addr_of %.loc9_3
-// CHECK:STDOUT:   %addr.loc9_5.2: %ptr.ca4178.1 = addr_of %.loc9_5.1
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.1(%addr.loc9_5.1, %addr.loc9_5.2)
-// CHECK:STDOUT:   %.loc9_5.2: init %ConditionallyExplicit.c52b91.1 to %.loc9_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc9
-// CHECK:STDOUT:   %.loc9_5.3: init %ConditionallyExplicit.c52b91.1 = converted %s.ref.loc9, %.loc9_5.2
-// CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.c52b91.1 = temporary %.loc9_5.1, %.loc9_5.3
+// CHECK:STDOUT:   %addr.loc9_5.1: %ptr.f95 = addr_of %.loc9_3
+// CHECK:STDOUT:   %addr.loc9_5.2: %ptr.d63e0a.1 = addr_of %.loc9_5.1
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.3d8900.1(%addr.loc9_5.1, %addr.loc9_5.2)
+// CHECK:STDOUT:   %.loc9_5.2: init %ConditionallyExplicit.6a9921.1 to %.loc9_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_5.3: init %ConditionallyExplicit.6a9921.1 = converted %s.ref.loc9, %.loc9_5.2
+// CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.6a9921.1 = temporary %.loc9_5.1, %.loc9_5.3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%ConditionallyExplicit.Op.c4e51d.1
-// CHECK:STDOUT:   %Op.ref.loc9: %ConditionallyExplicit.cpp_destructor.type.a865b6.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.a8c6bd.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ba031.1]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%ConditionallyExplicit.Op.cc70d5.1
+// CHECK:STDOUT:   %Op.ref.loc9: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_5.4, %Op.ref.loc9
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call.loc9: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound.loc9(%.loc9_5.4)
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc8: <bound method> = bound_method %.loc8_43.5, constants.%ConditionallyExplicit.Op.c4e51d.1
-// CHECK:STDOUT:   %Op.ref.loc8: %ConditionallyExplicit.cpp_destructor.type.a865b6.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.a8c6bd.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ba031.1]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound.loc8: <bound method> = bound_method %.loc8_43.5, constants.%ConditionallyExplicit.Op.cc70d5.1
+// CHECK:STDOUT:   %Op.ref.loc8: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.1 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.1 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.1]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_43.5, %Op.ref.loc8
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call.loc8: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound.loc8(%.loc8_43.5)
 // CHECK:STDOUT:   <elided>
@@ -446,48 +446,48 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.7acffe.2 [concrete = constants.%ConditionallyExplicit.c52b91.2]
-// CHECK:STDOUT:   %.loc15_5.1: ref %ConditionallyExplicit.c52b91.2 = temporary_storage
+// CHECK:STDOUT:   %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.7f9e91.2 [concrete = constants.%ConditionallyExplicit.6a9921.2]
+// CHECK:STDOUT:   %.loc15_5.1: ref %ConditionallyExplicit.6a9921.2 = temporary_storage
 // CHECK:STDOUT:   %.loc15_3: ref %Source = value_as_ref %s.ref
-// CHECK:STDOUT:   %addr.loc15_5.1: %ptr.1fc = addr_of %.loc15_3
-// CHECK:STDOUT:   %addr.loc15_5.2: %ptr.ca4178.2 = addr_of %.loc15_5.1
-// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.2(%addr.loc15_5.1, %addr.loc15_5.2)
-// CHECK:STDOUT:   %.loc15_5.2: init %ConditionallyExplicit.c52b91.2 to %.loc15_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call
-// CHECK:STDOUT:   %.loc15_5.3: init %ConditionallyExplicit.c52b91.2 = converted %s.ref, %.loc15_5.2
-// CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.c52b91.2 = temporary %.loc15_5.1, %.loc15_5.3
+// CHECK:STDOUT:   %addr.loc15_5.1: %ptr.f95 = addr_of %.loc15_3
+// CHECK:STDOUT:   %addr.loc15_5.2: %ptr.d63e0a.2 = addr_of %.loc15_5.1
+// CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.3d8900.2(%addr.loc15_5.1, %addr.loc15_5.2)
+// CHECK:STDOUT:   %.loc15_5.2: init %ConditionallyExplicit.6a9921.2 to %.loc15_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_5.3: init %ConditionallyExplicit.6a9921.2 = converted %s.ref, %.loc15_5.2
+// CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.6a9921.2 = temporary %.loc15_5.1, %.loc15_5.3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound: <bound method> = bound_method %.loc15_5.4, constants.%ConditionallyExplicit.Op.c4e51d.2
-// CHECK:STDOUT:   %Op.ref: %ConditionallyExplicit.cpp_destructor.type.a865b6.2 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.a8c6bd.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ba031.2]
+// CHECK:STDOUT:   %ConditionallyExplicit.Op.bound: <bound method> = bound_method %.loc15_5.4, constants.%ConditionallyExplicit.Op.cc70d5.2
+// CHECK:STDOUT:   %Op.ref: %ConditionallyExplicit.cpp_destructor.type.6ce8c4.2 = name_ref Op, imports.%ConditionallyExplicit.cpp_destructor.decl.6e607d.2 [concrete = constants.%ConditionallyExplicit.cpp_destructor.1ad69a.2]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound: <bound method> = bound_method %.loc15_5.4, %Op.ref
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
+// CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.6a9921.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.69a = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.a9f = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.ref.loc21: %ConditionallyExplicit.c52b91.1 = name_ref s, %s
+// CHECK:STDOUT:   %s.ref.loc21: %ConditionallyExplicit.6a9921.1 = name_ref s, %s
 // CHECK:STDOUT:   %.loc21_13: type = splice_block %Dest.ref.loc21 [concrete = constants.%Dest] {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref.loc21: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.bound.loc21: <bound method> = bound_method %s.ref.loc21, imports.%ConditionallyExplicit.cpp_operator.decl
 // CHECK:STDOUT:   %.loc21_21.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr.loc21: %ptr.551 = addr_of %.loc21_21.1
+// CHECK:STDOUT:   %addr.loc21: %ptr.7c0 = addr_of %.loc21_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref.loc21, %addr.loc21)
 // CHECK:STDOUT:   %.loc21_21.2: init %Dest to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call.loc21
 // CHECK:STDOUT:   %.loc21_21.3: init %Dest = converted %s.ref.loc21, %.loc21_21.2
 // CHECK:STDOUT:   %.loc21_21.4: ref %Dest = temporary %.loc21_21.1, %.loc21_21.3
 // CHECK:STDOUT:   %.loc21_21.5: %Dest = acquire_value %.loc21_21.4
 // CHECK:STDOUT:   %_: %Dest = value_binding _, %.loc21_21.5
-// CHECK:STDOUT:   %s.ref.loc22: %ConditionallyExplicit.c52b91.1 = name_ref s, %s
+// CHECK:STDOUT:   %s.ref.loc22: %ConditionallyExplicit.6a9921.1 = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dest.ref.loc22: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.bound.loc22: <bound method> = bound_method %s.ref.loc22, imports.%ConditionallyExplicit.cpp_operator.decl
 // CHECK:STDOUT:   %.loc22_5.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr.loc22: %ptr.551 = addr_of %.loc22_5.1
+// CHECK:STDOUT:   %addr.loc22: %ptr.7c0 = addr_of %.loc22_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref.loc22, %addr.loc22)
 // CHECK:STDOUT:   %.loc22_5.2: init %Dest to %.loc22_5.1 = mark_in_place_init %Dest__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_5.3: init %Dest = converted %s.ref.loc22, %.loc22_5.2
@@ -504,14 +504,14 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
+// CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.6a9921.1) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.c52b91.1 = name_ref s, %s
+// CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.6a9921.1 = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%ConditionallyExplicit.cpp_operator.decl
 // CHECK:STDOUT:   %.loc28_5.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc28_5.1
+// CHECK:STDOUT:   %addr: %ptr.7c0 = addr_of %.loc28_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
 // CHECK:STDOUT:   %.loc28_5.2: init %Dest to %.loc28_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc28_5.3: init %Dest = converted %s.ref, %.loc28_5.2
@@ -528,14 +528,14 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.c52b91.1: type = class_type @ConditionallyExplicit.1 [concrete]
-// CHECK:STDOUT:   %pattern_type.285f84.1: type = pattern_type %ConditionallyExplicit.c52b91.1 [concrete]
-// CHECK:STDOUT:   %ConditionallyExplicit.c52b91.2: type = class_type @ConditionallyExplicit.2 [concrete]
-// CHECK:STDOUT:   %Dest.5e7: type = class_type @Dest [concrete]
-// CHECK:STDOUT:   %pattern_type.69a: type = pattern_type %Dest.5e7 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.6a9921.1: type = class_type @ConditionallyExplicit.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.dc5fb9.1: type = pattern_type %ConditionallyExplicit.6a9921.1 [concrete]
+// CHECK:STDOUT:   %ConditionallyExplicit.6a9921.2: type = class_type @ConditionallyExplicit.2 [concrete]
+// CHECK:STDOUT:   %Dest.058: type = class_type @Dest [concrete]
+// CHECK:STDOUT:   %pattern_type.a9f: type = pattern_type %Dest.058 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.type: type = fn_type @ConditionallyExplicit.cpp_operator [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator: %ConditionallyExplicit.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.551: type = ptr_type %Dest.5e7 [concrete]
+// CHECK:STDOUT:   %ptr.7c0: type = ptr_type %Dest.058 [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.type: type = fn_type @Dest__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk: %Dest__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor.type: type = fn_type @Dest.cpp_destructor [concrete]
@@ -547,15 +547,15 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .Source = %Source.decl
-// CHECK:STDOUT:     .ConditionallyExplicitTrue = %ConditionallyExplicit.decl.7acffe.1
-// CHECK:STDOUT:     .ConditionallyExplicitFalse = %ConditionallyExplicit.decl.7acffe.2
+// CHECK:STDOUT:     .ConditionallyExplicitTrue = %ConditionallyExplicit.decl.7f9e91.1
+// CHECK:STDOUT:     .ConditionallyExplicitFalse = %ConditionallyExplicit.decl.7f9e91.2
 // CHECK:STDOUT:     .Dest = %Dest.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: type = class_decl @Source [concrete = constants.%Source] {} {}
-// CHECK:STDOUT:   %ConditionallyExplicit.decl.7acffe.1: type = class_decl @ConditionallyExplicit.1 [concrete = constants.%ConditionallyExplicit.c52b91.1] {} {}
-// CHECK:STDOUT:   %ConditionallyExplicit.decl.7acffe.2: type = class_decl @ConditionallyExplicit.2 [concrete = constants.%ConditionallyExplicit.c52b91.2] {} {}
-// CHECK:STDOUT:   %Dest.decl: type = class_decl @Dest [concrete = constants.%Dest.5e7] {} {}
+// CHECK:STDOUT:   %ConditionallyExplicit.decl.7f9e91.1: type = class_decl @ConditionallyExplicit.1 [concrete = constants.%ConditionallyExplicit.6a9921.1] {} {}
+// CHECK:STDOUT:   %ConditionallyExplicit.decl.7f9e91.2: type = class_decl @ConditionallyExplicit.2 [concrete = constants.%ConditionallyExplicit.6a9921.2] {} {}
+// CHECK:STDOUT:   %Dest.decl: type = class_decl @Dest [concrete = constants.%Dest.058] {} {}
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.decl: %ConditionallyExplicit.cpp_operator.type = fn_decl @ConditionallyExplicit.cpp_operator [concrete = constants.%ConditionallyExplicit.cpp_operator] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -576,37 +576,37 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.285f84.1 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.dc5fb9.1 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.c52b91.1] {
+// CHECK:STDOUT:   %.loc15_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.6a9921.1] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.7acffe.1 [concrete = constants.%ConditionallyExplicit.c52b91.1]
+// CHECK:STDOUT:     %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.7f9e91.1 [concrete = constants.%ConditionallyExplicit.6a9921.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_42: %ConditionallyExplicit.c52b91.1 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %_: %ConditionallyExplicit.c52b91.1 = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_42: %ConditionallyExplicit.6a9921.1 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_: %ConditionallyExplicit.6a9921.1 = value_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.c52b91.2) {
+// CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.6a9921.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.69a = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.a9f = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.c52b91.2 = name_ref s, %s
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %Dest.ref [concrete = constants.%Dest.5e7] {
+// CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.6a9921.2 = name_ref s, %s
+// CHECK:STDOUT:   %.loc21_13: type = splice_block %Dest.ref [concrete = constants.%Dest.058] {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.5e7]
+// CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.058]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%ConditionallyExplicit.cpp_operator.decl
-// CHECK:STDOUT:   %.loc21_21.1: ref %Dest.5e7 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc21_21.1
+// CHECK:STDOUT:   %.loc21_21.1: ref %Dest.058 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.7c0 = addr_of %.loc21_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc21_21.2: init %Dest.5e7 to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc21_21.3: init %Dest.5e7 = converted %s.ref, %.loc21_21.2
-// CHECK:STDOUT:   %.loc21_21.4: ref %Dest.5e7 = temporary %.loc21_21.1, %.loc21_21.3
-// CHECK:STDOUT:   %.loc21_21.5: %Dest.5e7 = acquire_value %.loc21_21.4
-// CHECK:STDOUT:   %_: %Dest.5e7 = value_binding _, %.loc21_21.5
+// CHECK:STDOUT:   %.loc21_21.2: init %Dest.058 to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_21.3: init %Dest.058 = converted %s.ref, %.loc21_21.2
+// CHECK:STDOUT:   %.loc21_21.4: ref %Dest.058 = temporary %.loc21_21.1, %.loc21_21.3
+// CHECK:STDOUT:   %.loc21_21.5: %Dest.058 = acquire_value %.loc21_21.4
+// CHECK:STDOUT:   %_: %Dest.058 = value_binding _, %.loc21_21.5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc21_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]

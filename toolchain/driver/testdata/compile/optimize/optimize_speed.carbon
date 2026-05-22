@@ -100,7 +100,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !43 {
+// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
@@ -135,7 +135,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 9, scope: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 299, column: 3, scope: !24, inlinedAt: !31)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.808ff30fe61f0791.Core:Int.9452f4c51951679b.Core:AddAssignWith.c820bd8c65a452f9.Core.bb7b2a0b30fd4cda", scope: null, file: !25, line: 299, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.04e8e1f1c1e2bc99.Core:Int.9452f4c51951679b.Core:AddAssignWith.78e744410a40fd74.Core.9c83a169ad974fa6", scope: null, file: !25, line: 299, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{null, !7, !7}
@@ -154,7 +154,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !40 = !{!"llvm.loop.isvectorized", i32 1}
 // CHECK:STDOUT: !41 = !{!"llvm.loop.unroll.runtime.disable"}
 // CHECK:STDOUT: !42 = !DILocation(line: 15, column: 1, scope: !16)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 17, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !44)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 17, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !44)
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !46 = !DILocation(line: 17, column: 3, scope: !43)

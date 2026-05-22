@@ -70,16 +70,16 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.9a0, %b.param: %f64.9a0) -> out %return.param: %f64.9a0 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
-// CHECK:STDOUT:   %Negate.call: init %f64.d77 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %a.ref: %f64.9a0 = name_ref a, %a
+// CHECK:STDOUT:   %Negate.call: init %f64.9a0 = call %Negate.ref(%a.ref)
 // CHECK:STDOUT:   return %Negate.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

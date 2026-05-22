@@ -59,9 +59,9 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %pattern_type.663: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -82,10 +82,10 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {
-// CHECK:STDOUT:     %argc.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
-// CHECK:STDOUT:     %argc.patt: %pattern_type.7ce = at_binding_pattern argc, %argc.param_patt [concrete]
-// CHECK:STDOUT:     %argv.param_patt: %pattern_type.fe8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %argv.patt: %pattern_type.fe8 = at_binding_pattern argv, %argv.param_patt [concrete]
+// CHECK:STDOUT:     %argc.param_patt: %pattern_type.c6b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %argc.patt: %pattern_type.c6b = at_binding_pattern argc, %argc.param_patt [concrete]
+// CHECK:STDOUT:     %argv.param_patt: %pattern_type.663 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %argv.patt: %pattern_type.663 = at_binding_pattern argv, %argv.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_21: type = type_literal constants.%i32 [concrete = constants.%i32]

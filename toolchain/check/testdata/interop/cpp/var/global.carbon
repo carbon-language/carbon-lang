@@ -77,13 +77,13 @@ fn MyF() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
-// CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
-// CHECK:STDOUT:   %pattern_type.8ca: type = pattern_type %const [concrete]
-// CHECK:STDOUT:   %global_ref.var: ref %ptr.d9e = var imports.%global_ref.var_patt [concrete]
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete]
+// CHECK:STDOUT:   %pattern_type.a00: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %ptr.dbb: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %ptr.dbb [concrete]
+// CHECK:STDOUT:   %const: type = const_type %ptr.dbb [concrete]
+// CHECK:STDOUT:   %pattern_type.fde: type = pattern_type %const [concrete]
+// CHECK:STDOUT:   %global_ref.var: ref %ptr.dbb = var imports.%global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %addr: %ptr.dbb = addr_of imports.%global.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -99,14 +99,14 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %global.patt: %pattern_type.217 = ref_binding_pattern global [concrete]
-// CHECK:STDOUT:   %global.var_patt: %pattern_type.217 = var_pattern %global.patt [concrete]
+// CHECK:STDOUT:   %global.patt: %pattern_type.a00 = ref_binding_pattern global [concrete]
+// CHECK:STDOUT:   %global.var_patt: %pattern_type.a00 = var_pattern %global.patt [concrete]
 // CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
-// CHECK:STDOUT:   %global_ptr.patt: %pattern_type.a31 = ref_binding_pattern global_ptr [concrete]
-// CHECK:STDOUT:   %global_ptr.var_patt: %pattern_type.a31 = var_pattern %global_ptr.patt [concrete]
-// CHECK:STDOUT:   %global_ptr.var: ref %ptr.d9e = var %global_ptr.var_patt [concrete]
-// CHECK:STDOUT:   %global_ref.patt: %pattern_type.8ca = ref_binding_pattern global_ref [concrete]
-// CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.8ca = var_pattern %global_ref.patt [concrete]
+// CHECK:STDOUT:   %global_ptr.patt: %pattern_type.8f3 = ref_binding_pattern global_ptr [concrete]
+// CHECK:STDOUT:   %global_ptr.var_patt: %pattern_type.8f3 = var_pattern %global_ptr.patt [concrete]
+// CHECK:STDOUT:   %global_ptr.var: ref %ptr.dbb = var %global_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.patt: %pattern_type.fde = ref_binding_pattern global_ref [concrete]
+// CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.fde = var_pattern %global_ref.patt [concrete]
 // CHECK:STDOUT:   %global_ref.var: ref %const = var %global_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,7 +135,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local.patt: %pattern_type.217 = value_binding_pattern local [concrete]
+// CHECK:STDOUT:     %local.patt: %pattern_type.a00 = value_binding_pattern local [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global.ref: ref %C = name_ref global, imports.%global.var [concrete = imports.%global.var]
@@ -146,32 +146,32 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc7_32: %C = acquire_value %global.ref
 // CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_32
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local_ptr.patt: %pattern_type.a31 = value_binding_pattern local_ptr [concrete]
+// CHECK:STDOUT:     %local_ptr.patt: %pattern_type.8f3 = value_binding_pattern local_ptr [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %global_ptr.ref: ref %ptr.d9e = name_ref global_ptr, imports.%global_ptr.var [concrete = imports.%global_ptr.var]
-// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:   %global_ptr.ref: ref %ptr.dbb = name_ref global_ptr, imports.%global_ptr.var [concrete = imports.%global_ptr.var]
+// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.dbb] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.d9e]
+// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.dbb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37: %ptr.d9e = acquire_value %global_ptr.ref
-// CHECK:STDOUT:   %local_ptr: %ptr.d9e = value_binding local_ptr, %.loc8_37
+// CHECK:STDOUT:   %.loc8_37: %ptr.dbb = acquire_value %global_ptr.ref
+// CHECK:STDOUT:   %local_ptr: %ptr.dbb = value_binding local_ptr, %.loc8_37
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local_ref.patt: %pattern_type.a31 = value_binding_pattern local_ref [concrete]
+// CHECK:STDOUT:     %local_ref.patt: %pattern_type.8f3 = value_binding_pattern local_ref [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ref.ref: ref %const = name_ref global_ref, imports.%global_ref.var [concrete = imports.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_30: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:   %.loc9_30: type = splice_block %ptr.loc9 [concrete = constants.%ptr.dbb] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.d9e]
+// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.dbb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_37.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_37.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_37.1 [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete = constants.%addr]
-// CHECK:STDOUT:   %.loc9_37.3: %ptr.d9e = acquire_value %.loc9_37.2 [concrete = constants.%addr]
-// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   %.loc9_37.1: ref %ptr.dbb = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %.loc9_37.2: ref %ptr.dbb = converted %global_ref.ref, %.loc9_37.1 [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %addr: %ptr.dbb = addr_of imports.%global.var [concrete = constants.%addr]
+// CHECK:STDOUT:   %.loc9_37.3: %ptr.dbb = acquire_value %.loc9_37.2 [concrete = constants.%addr]
+// CHECK:STDOUT:   %local_ref: %ptr.dbb = value_binding local_ref, %.loc9_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
