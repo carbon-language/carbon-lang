@@ -649,7 +649,6 @@ static auto ConvertStructToStructOrClass(
   // Prepare to look up fields in the source by index. Also check for
   // source fields that don't match any field in the destination.
   Map<SemIR::NameId, int32_t> src_field_indexes;
-  bool any_invalid_src_fields = false;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
       if (!dest_field_names.Lookup(field.name_id)) {
@@ -658,15 +657,12 @@ static auto ConvertStructToStructOrClass(
             llvm::formatv("struct initializer provided field '{0}' that is "
                           "not present in the destination",
                           context.names().GetFormatted(field.name_id)));
-        any_invalid_src_fields = true;
+        return SemIR::ErrorInst::InstId;
       }
 
       auto result = src_field_indexes.Insert(field.name_id, i);
       CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
-  }
-  if (any_invalid_src_fields) {
-    return SemIR::ErrorInst::InstId;
   }
 
   ConversionTarget::Kind inner_kind =
