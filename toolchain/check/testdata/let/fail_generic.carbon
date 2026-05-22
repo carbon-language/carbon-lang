@@ -13,7 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_generic.carbon
 
 // TODO: Should this be valid?
-fn F(a: i32) -> i32 {
+fn F(unused a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~

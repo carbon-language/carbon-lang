@@ -104,6 +104,10 @@ auto GetNamedConstraintType(Context& context,
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
     -> SemIR::TypeId;
 
+// Gets the type contained within the given facet value.
+auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::TypeId;
+
 // Returns a pointer type whose pointee type is `pointee_type_id`. The returned
 // type will be complete.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
@@ -119,6 +123,10 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
 
 // Returns a pattern type with the given scrutinee type.
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
+    -> SemIR::TypeId;
+
+// Returns the type component of the given form value.
+auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
     -> SemIR::TypeId;
 
 // Returns an unbound element type.

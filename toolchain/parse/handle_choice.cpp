@@ -67,10 +67,10 @@ auto HandleChoiceAlternative(Context& context) -> void {
   }
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *token);
+    context.AddLeafNode(NodeKind::IdentifierNameMaybeBeforeSignature, *token);
     context.PushState(StateKind::PatternListAsExplicit);
   } else {
-    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *token);
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *token);
   }
 }
 

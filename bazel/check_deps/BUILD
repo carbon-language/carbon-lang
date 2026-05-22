@@ -13,8 +13,8 @@ load("@rules_python//python:defs.bzl", "py_test")
 filegroup(
     name = "non_test_cc_rules",
     data = [
-        "//toolchain/install:carbon_toolchain_tar_gz_rule",
-        "//toolchain/install:carbon_toolchain_tar_rule",
+        "//toolchain/install:carbon_toolchain_tar",
+        "//toolchain/install:carbon_toolchain_tar_gz",
     ],
     tags = ["manual"],
 )

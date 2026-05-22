@@ -10,6 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/include_split.carbon
 
-// CHECK:STDOUT: 4 args: `default_args`, `include_split.carbon`, `a.carbon`, `b.carbon`
+// CHECK:STDOUT: 4 args: `default_args`, `a.carbon`, `b.carbon`, `include_split.carbon`
 // CHECK:STDOUT: a.carbon:2: a
 // CHECK:STDOUT: b.carbon:2: b

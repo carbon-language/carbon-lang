@@ -25,7 +25,7 @@ impl namespace
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'B'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: 'impl', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},

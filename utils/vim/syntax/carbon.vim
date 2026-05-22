@@ -55,6 +55,7 @@ syn keyword carbonKeywordExtends extends nextgroup=carbonNominalType skipwhite
 syn keyword carbonKeywordSelf Self
 syn keyword carbonKeywordAs as
 syn keyword carbonKeywordTemplate template
+syn keyword carbonKeywordStatic static
 syn keyword carbonKeywordExternal external
 syn keyword carbonKeywordForAll forall
 syn keyword carbonKeywordAPI api
@@ -97,6 +98,7 @@ hi def link carbonKeywordExtends carbonKeyword
 hi def link carbonKeywordSelf carbonKeyword
 hi def link carbonKeywordAs carbonKeyword
 hi def link carbonKeywordTemplate carbonKeyword
+hi def link carbonKeywordStatic carbonKeyword
 hi def link carbonKeywordExternal carbonKeyword
 hi def link carbonKeywordForAll carbonKeyword
 hi def link carbonKeywordAPI Structure

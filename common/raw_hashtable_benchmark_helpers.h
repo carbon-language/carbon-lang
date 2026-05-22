@@ -108,7 +108,7 @@ auto ValueToBool(T value) -> bool {
   }
 }
 
-inline auto SizeArgs(benchmark::internal::Benchmark* b) -> void {
+inline auto SizeArgs(benchmark::Benchmark* b) -> void {
   // Benchmarks for "miss" operations only have one parameter -- the size of the
   // table. These benchmarks use a fixed `NumOtherKeys` set of extra keys for
   // each miss operation.
@@ -128,7 +128,7 @@ inline auto SizeArgs(benchmark::internal::Benchmark* b) -> void {
   }
 }
 
-inline auto HitArgs(benchmark::internal::Benchmark* b) -> void {
+inline auto HitArgs(benchmark::Benchmark* b) -> void {
   // There are two parameters for benchmarks of "hit" operations. The first is
   // the size of the hashtable itself. The second is the size of a buffer of
   // random keys actually in the hashtable to use for the operations.

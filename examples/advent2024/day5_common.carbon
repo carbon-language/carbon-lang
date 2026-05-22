@@ -16,6 +16,8 @@ fn PageMask(page: i32) -> Core.UInt(100) {
 }
 
 class Rules {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Rules {
     returned var rules: Rules;
     for (i: i32 in Core.Range(100)) {
@@ -39,6 +41,8 @@ class Rules {
 };
 
 class PageList {
+  impl as Core.UnformedInit {}
+
   fn Empty() -> PageList {
     returned var me: PageList;
     me.num_pages = 0;

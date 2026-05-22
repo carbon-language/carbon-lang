@@ -17,12 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function fingerprints](#function-fingerprints)
     -   [Canonical specific to use](#canonical-specific-to-use)
 -   [Algorithm details](#algorithm-details)
--   [Alternatives considered](#alternatives-considered)
-    -   [Coalescing in the front-end vs back-end?](#coalescing-in-the-front-end-vs-back-end)
-    -   [When to do coalescing in the front-end?](#when-to-do-coalescing-in-the-front-end)
-    -   [Compile-time trade-offs](#compile-time-trade-offs)
-    -   [Coalescing duplicate non-specific functions](#coalescing-duplicate-non-specific-functions)
 -   [Opportunities for further improvement](#opportunities-for-further-improvement)
+-   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
 
@@ -119,7 +115,7 @@ quadratic pass walking all calls instructions and comparing if the `specific_id`
 information is equivalent. These optimizations are not currently implemented.
 
 Note that this does not
-[coalesce non-specifics](#coalescing-duplicate-non-specific-functions).
+[coalesce non-specifics](/proposals/p6716.md#coalescing-duplicate-non-specific-functions).
 
 ### Canonical specific to use
 
@@ -233,42 +229,6 @@ CheckIfEquivalent(two specifics, &assumed equivalent specifics) -> bool {
 }
 ```
 
-## Alternatives considered
-
-### Coalescing in the front-end vs back-end?
-
-An alternative considered was not doing any coalescing in the front-end and
-relying on LLVM to make the analysis and optimization. The current choice was
-made based on the expectation that such an
-[LLVM pass](https://llvm.org/docs/MergeFunctions.html) would be more costly in
-terms of compile-time. The relative cost has not yet been evaluated.
-
-### When to do coalescing in the front-end?
-
-The analysis and coalescing could be done prior to lowering, after
-specialization. The advantage of that choice would be avoiding to lower
-duplicate LLVM functions and then removing the duplicates. The disadvantage of
-that choice would be duplicating much of the lowering logic, currently necessary
-to make the equivalence determination.
-
-### Compile-time trade-offs
-
-Not doing any coalescing is also expected to increase the back-end codegen time
-more than performing the analysis and deduplication. This can be evaluated in
-practice and the feature disabled if found to be too costly.
-
-### Coalescing duplicate non-specific functions
-
-We could coalesce duplicate functions in non-specific cases, similar to lld's
-[Identical Code Folding](https://lld.llvm.org/NewLLD.html#glossary) or LLVM's
-[MergeFunctions pass](https://llvm.org/docs/MergeFunctions.html). This would
-require fingerprinting all instructions in all functions, whereas specific
-coalescing can focus on cases that only Carbon's front-end knows about. Carbon
-would also be restricted to coalescing functions in a single compilation unit,
-which would require replacing function definitions that allow external calls
-with a placeholder that calls the coalesced definition. We don't expect
-sufficient advantages over existing support.
-
 ## Opportunities for further improvement
 
 The current implemented algorithm can be improved with at least the following:
@@ -290,3 +250,10 @@ manner that is translation-unit independent, so this can be used in the mangled
 name, and the same function name emitted. This does not currently occur, as the
 two fingerprints use internal SemIR identifiers (`function_id` and `specific_id`
 respectively).
+
+## Alternatives considered
+
+-   [Coalescing in the front-end vs back-end?](/proposals/p6716.md#coalescing-in-the-front-end-vs-back-end)
+-   [When to do coalescing in the front-end?](/proposals/p6716.md#when-to-do-coalescing-in-the-front-end)
+-   [Compile-time trade-offs](/proposals/p6716.md#compile-time-trade-offs)
+-   [Coalescing duplicate non-specific functions](/proposals/p6716.md#coalescing-duplicate-non-specific-functions)

@@ -132,7 +132,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
@@ -148,7 +148,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'X'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'X'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'ArrayExprKeyword', text: 'array'},
@@ -165,7 +165,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '`', has_error: yes},
@@ -181,7 +181,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: 'array', has_error: yes},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
@@ -197,7 +197,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: 'array', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '(', has_error: yes},
@@ -213,7 +213,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
@@ -229,7 +229,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
@@ -245,7 +245,7 @@ var x: array;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: 'array', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},

@@ -38,7 +38,7 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/runtime_sources.h"
+#include "toolchain/base/runtimes_build_info.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
 
@@ -282,7 +282,7 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
                   "Invalid runtimes component for an archive runtime builder.");
   }
 
-  archive_.emplace(this, archive_path_, installation().runtimes_root(),
+  archive_.emplace(this, archive_path_, installation().root(),
                    CollectSrcFiles(), CollectCflags());
   tasks_.async([this]() mutable { Setup(); });
 }
@@ -293,54 +293,23 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   if constexpr (Component == Runtimes::LibUnwind) {
     return llvm::to_vector_of<llvm::StringRef>(llvm::make_filter_range(
-        RuntimeSources::LibunwindSrcs, [](llvm::StringRef src) {
+        RuntimesBuildInfo::LibunwindSrcs, [](llvm::StringRef src) {
           return src.ends_with(".c") || src.ends_with(".cpp") ||
                  src.ends_with(".S");
         }));
   } else if constexpr (Component == Runtimes::Libcxx) {
+    auto libcxx_target_srcs =
+        target_triple_.isOSWindows()
+            ? llvm::ArrayRef(RuntimesBuildInfo::LibcxxWin32Srcs)
+        : target_triple_.isMacOSX()
+            ? llvm::ArrayRef(RuntimesBuildInfo::LibcxxMacosSrcs)
+            : llvm::ArrayRef(RuntimesBuildInfo::LibcxxLinuxSrcs);
     auto libcxx_srcs = llvm::make_filter_range(
-        RuntimeSources::LibcxxSrcs, [this](llvm::StringRef src) {
-          if (!src.ends_with(".cpp")) {
-            return false;
-          }
+        libcxx_target_srcs,
+        [](llvm::StringRef src) { return src.ends_with(".cpp"); });
 
-          // We include libc++abi and so don't need new/delete definitions.
-          if (src == "libcxx/src/new.cpp") {
-            return false;
-          }
-          // We use compiler-rt for builtins, so we don't need int128 helpers.
-          if (src == "libcxx/src/filesystem/int128_builtins.cpp") {
-            return false;
-          }
-
-          // We don't currently use the libdispatch PSTL backend.
-          // TODO: We should evaluate enabling this on macOS.
-          if (src == "libcxx/src/pstl/libdispatch.cpp") {
-            return false;
-          }
-
-          // Skip platform-specific code for unsupported platforms.
-          // TODO: We should revisit this and include the code for these targets
-          // along with testing to make sure it works.
-          if (src.starts_with("libcxx/src/support/ibm/") ||
-              src.starts_with("libcxx/src/support/win32/")) {
-            return false;
-          }
-
-          // The timezone database is currently only enabled on Linux in
-          // upstream.
-          if (!target_triple_.isOSLinux() &&
-              (src == "libcxx/src/experimental/chrono_exception.cpp" ||
-               src == "libcxx/src/experimental/time_zone.cpp" ||
-               src == "libcxx/src/experimental/tzdb.cpp" ||
-               src == "libcxx/src/experimental/tzdb_list.cpp")) {
-            return false;
-          }
-
-          return true;
-        });
     auto libcxxabi_srcs = llvm::make_filter_range(
-        RuntimeSources::LibcxxabiSrcs,
+        RuntimesBuildInfo::LibcxxabiSrcs,
         [](llvm::StringRef src) { return src.ends_with(".cpp"); });
     return llvm::to_vector(
         llvm::concat<llvm::StringRef>(libcxx_srcs, libcxxabi_srcs));
@@ -354,38 +323,20 @@ template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
     -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> cflags;
-
+  // Start with some hard-coded flags used across any runtime.
+  //
   // TODO: It would be nice to plumb through an option to enable (some) warnings
   // when building runtimes, especially for folks working directly on the Carbon
   // toolchain to validate our builds of runtimes.
+  llvm::SmallVector<llvm::StringRef> cflags = {
+      "-no-canonical-prefixes",
+      "-w",
+  };
 
   if constexpr (Component == Runtimes::LibUnwind) {
-    // TODO: Should libunwind also limit symbol visibility?
-    cflags = {
-        "-no-canonical-prefixes",
-        "-D_LIBUNWIND_IS_NATIVE_ONLY",
-        "-O3",
-        "-fPIC",
-        "-fno-exceptions",
-        "-fno-rtti",
-        "-funwind-tables",
-        "-nostdinc++",
-        "-w",
-    };
+    llvm::append_range(cflags, RuntimesBuildInfo::LibunwindCopts);
   } else if constexpr (Component == Runtimes::Libcxx) {
-    cflags = {
-        "-no-canonical-prefixes",
-        "-DLIBCXX_BUILDING_LIBCXXABI",
-        "-D_LIBCPP_BUILDING_LIBRARY",
-        "-D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
-        "-O3",
-        "-fPIC",
-        "-fvisibility-inlines-hidden",
-        "-fvisibility=hidden",
-        "-nostdinc++",
-        "-w",
-    };
+    llvm::append_range(cflags, RuntimesBuildInfo::LibcxxCopts);
   } else {
     static_assert(false,
                   "Invalid runtimes component for an archive runtime builder.");
@@ -423,6 +374,22 @@ auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
 template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
 template class ClangArchiveRuntimesBuilder<Runtimes::Libcxx>;
 
+auto ClangResourceDirBuilder::GetDarwinOsSuffix(llvm::Triple target_triple)
+    -> llvm::StringRef {
+  switch (target_triple.getOS()) {
+    case llvm::Triple::IOS:
+      return target_triple.isSimulatorEnvironment() ? "iossim" : "ios";
+    case llvm::Triple::WatchOS:
+      return target_triple.isSimulatorEnvironment() ? "watchossim" : "watchos";
+    case llvm::Triple::TvOS:
+      return target_triple.isSimulatorEnvironment() ? "tvossim" : "tvos";
+    case llvm::Triple::XROS:
+      return target_triple.isSimulatorEnvironment() ? "xrossim" : "xros";
+    default:
+      return "osx";
+  }
+}
+
 ClangResourceDirBuilder::ClangResourceDirBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
     llvm::Triple target_triple, Runtimes* runtimes)
@@ -449,66 +416,59 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   }
 
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
-  lib_path_ = std::filesystem::path("lib") / target_triple_.str();
-  archive_.emplace(this, lib_path_ / "libclang_rt.builtins.a",
-                   installation().runtimes_root(),
-                   CollectBuiltinsSrcFiles(), /*cflags=*/
-                   llvm::SmallVector<llvm::StringRef>{
-                       "-no-canonical-prefixes",
-                       "-O3",
-                       "-fPIC",
-                       "-ffreestanding",
-                       "-fno-builtin",
-                       "-fomit-frame-pointer",
-                       "-fvisibility=hidden",
-                       "-w",
-                   });
+  lib_path_ = std::filesystem::path("lib");
+  std::filesystem::path builtins_name = "libclang_rt.builtins.a";
+  if (target_triple.isOSDarwin()) {
+    // Darwin targets don't use the full triple, and don't include the
+    // architecture in the resource directory naming structure.
+    //
+    // TODO: We should add support for embedded Darwin as well which uses a
+    // different layout.
+    lib_path_ /= "darwin";
+
+    // Darwin targets also use a custom naming convention for the builtins
+    // archive.
+    builtins_name =
+        llvm::formatv("libclang_rt.{0}.a", GetDarwinOsSuffix(target_triple_))
+            .str();
+  } else {
+    lib_path_ /= target_triple_.str();
+  }
+
+  // TODO: Currently, we only need a single include path to see headers inside
+  // the `builtins` directory. However, we're anticipating needing more, for
+  // example to support SipHash. If that need doesn't materialize, we should
+  // simplify this to a single path instead of a vector.
+  include_paths_.push_back(installation().runtimes_root() / "builtins");
+
+  llvm::SmallVector<llvm::StringRef> copts = {
+      "-no-canonical-prefixes",
+      "-w",
+  };
+  llvm::append_range(copts, RuntimesBuildInfo::BuiltinsCopts);
+  for (const auto& include_path : include_paths_) {
+    copts.append({"-I", include_path.native()});
+  }
+  archive_.emplace(this, lib_path_ / builtins_name, installation().root(),
+                   CollectBuiltinsSrcFiles(), copts);
   tasks_.async([this]() { Setup(); });
 }
 
 auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> src_files;
-  auto append_src_files =
-      [&](auto input_srcs,
-          llvm::function_ref<bool(llvm::StringRef)> filter_out = {}) {
-        for (llvm::StringRef input_src : input_srcs) {
-          if (!input_src.ends_with(".c") && !input_src.ends_with(".S")) {
-            // Not a compiled file.
-            continue;
-          }
-          if (filter_out && filter_out(input_src)) {
-            // Filtered out.
-            continue;
-          }
-
-          src_files.push_back(input_src);
-        }
-      };
-  append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsGenericSrcs));
-  append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsBf16Srcs));
-  if (target_triple_.isArch64Bit()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsTfSrcs));
-  }
-  auto filter_out_chkstk = [&](llvm::StringRef src) {
-    return !target_triple_.isOSWindows() || !src.ends_with("chkstk.S");
-  };
   if (target_triple_.isAArch64()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsAarch64Srcs),
-                     filter_out_chkstk);
+    llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsAarch64Srcs);
   } else if (target_triple_.isX86()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsX86ArchSrcs));
     if (target_triple_.isArch64Bit()) {
-      append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsX86_64Srcs),
-                       filter_out_chkstk);
+      llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsX86_64Srcs);
     } else {
       // TODO: This should be turned into a nice user-facing diagnostic about an
       // unsupported target.
       CARBON_CHECK(
           target_triple_.isArch32Bit(),
           "The Carbon toolchain doesn't currently support 16-bit x86.");
-      append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsI386Srcs),
-                       filter_out_chkstk);
+      llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsI386Srcs);
     }
   } else {
     // TODO: This should be turned into a nice user-facing diagnostic about an
@@ -516,6 +476,10 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
     CARBON_FATAL("Target architecture is not supported: {0}",
                  target_triple_.str());
   }
+
+  // Only compile source files, not headers.
+  llvm::erase_if(src_files,
+                 [](llvm::StringRef file) { return file.ends_with(".h"); });
   return src_files;
 }
 
@@ -545,10 +509,10 @@ auto ClangResourceDirBuilder::Setup() -> void {
   // provide the CRT begin/end files, and so we need to build them.
   if (target_triple_.isOSLinux()) {
     tasks_.async([this, latch_handle] {
-      crt_begin_result_ = BuildCrtFile(RuntimeSources::CrtBegin);
+      crt_begin_result_ = BuildCrtFile(RuntimesBuildInfo::CrtBegin);
     });
     tasks_.async([this, latch_handle] {
-      crt_end_result_ = BuildCrtFile(RuntimeSources::CrtEnd);
+      crt_end_result_ = BuildCrtFile(RuntimesBuildInfo::CrtEnd);
     });
   }
 
@@ -575,31 +539,30 @@ auto ClangResourceDirBuilder::Finish() -> void {
 
 auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
     -> ErrorOr<Success> {
-  CARBON_CHECK(src_file == RuntimeSources::CrtBegin ||
-               src_file == RuntimeSources::CrtEnd);
+  CARBON_CHECK(src_file == RuntimesBuildInfo::CrtBegin ||
+               src_file == RuntimesBuildInfo::CrtEnd);
   std::filesystem::path out_path =
       runtimes_builder_->path() / lib_path_ /
-      (src_file == RuntimeSources::CrtBegin ? "clang_rt.crtbegin.o"
-                                            : "clang_rt.crtend.o");
+      (src_file == RuntimesBuildInfo::CrtBegin ? "clang_rt.crtbegin.o"
+                                               : "clang_rt.crtend.o");
   std::filesystem::path src_path =
-      installation().runtimes_root() / std::string_view(src_file);
+      installation().root() / std::string_view(src_file);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
-  CARBON_ASSIGN_OR_RETURN(bool success, clang_->RunWithNoRuntimes({
-                                            "-no-canonical-prefixes",
-                                            "-DCRT_HAS_INITFINI_ARRAY",
-                                            "-DEH_USE_FRAME_REGISTRY",
-                                            "-O3",
-                                            "-fPIC",
-                                            "-ffreestanding",
-                                            "-std=c11",
-                                            "-w",
-                                            "-c",
-                                            target_flag_,
-                                            "-o",
-                                            out_path.native(),
-                                            src_path.native(),
-                                        }));
+  llvm::SmallVector<llvm::StringRef> copts = {
+      "-no-canonical-prefixes",
+      "-w",
+      target_flag_,
+  };
+  llvm::append_range(copts, RuntimesBuildInfo::CrtCopts);
+  copts.append({
+      "-c",
+      "-o",
+      out_path.native(),
+      src_path.native(),
+  });
+
+  CARBON_ASSIGN_OR_RETURN(bool success, clang_->RunWithNoRuntimes(copts));
 
   if (success) {
     return Success();

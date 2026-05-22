@@ -37,7 +37,18 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{value_rep: " << value_repr << "}";
+  out << "{value_rep: " << value_repr
+      << ", layout: {size: " << object_layout.size
+      << ", align: " << object_layout.alignment << "}}";
+}
+
+auto ObjectSize::Print(llvm::raw_ostream& out) const -> void {
+  int64_t bytes = bits_ / 8;
+  int64_t bits = bits_ % 8;
+  out << bytes;
+  if (bits != 0) {
+    out << ":" << bits;
+  }
 }
 
 auto ValueRepr::ForType(const File& file, TypeId type_id) -> ValueRepr {
@@ -56,6 +67,8 @@ auto ValueRepr::IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const
 auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
   auto type_info = file.types().GetCompleteTypeInfo(type_id);
   if (type_info.abstract_class_id.has_value()) {
+    CARBON_CHECK(type_info.value_repr.kind == ValueRepr::Pointer, "{0}",
+                 type_info.value_repr.kind);
     return {.kind = InitRepr::Abstract};
   }
   switch (type_info.value_repr.kind) {

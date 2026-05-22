@@ -34,6 +34,7 @@ struct Options {
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
   bool threads = true;
+  bool build_runtimes_on_demand = false;
 
   llvm::StringRef runtimes_cache_path;
   llvm::StringRef prebuilt_runtimes_path;
@@ -109,6 +110,27 @@ will be used instead.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&prebuilt_runtimes_path); });
+  b.AddFlag(
+      {
+          .name = "build-runtimes",
+          .help = R"""(
+Enables on-demand building of target-specific runtimes.
+
+When enabled (the default), any link actions using `clang` will build the
+necessary runtimes on-demand. This build will use any customization it can from
+the link command line flags to build the runtimes for the correct target and
+with any desired features enabled.
+
+Note: this only has an effect when `--prebuilt-runtimes` are not provided. If
+there are no prebuilt runtimes and building runtimes is disabled, then it is
+assumed the installed toolchain has had the necessary target runtimes added to
+the installation tree in the default searched locations.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&build_runtimes_on_demand);
+      });
 
   b.AddFlag(
       {
@@ -159,87 +181,105 @@ when there are errors or other output.
   b.RequiresSubcommand();
 }
 
+static auto HandleRuntimesOptions(const Options& options, DriverEnv& driver_env)
+    -> bool {
+  if (!options.prebuilt_runtimes_path.empty()) {
+    auto result = Runtimes::OpenExisting(options.prebuilt_runtimes_path.str(),
+                                         driver_env.vlog_stream);
+    if (!result.ok()) {
+      // TODO: We should provide a better diagnostic than the raw error.
+      CARBON_DIAGNOSTIC(DriverPrebuiltRuntimesInvalid, Error, "{0}",
+                        std::string);
+      driver_env.emitter.Emit(DriverPrebuiltRuntimesInvalid,
+                              result.error().message());
+      return false;
+    }
+    driver_env.prebuilt_runtimes = *std::move(result);
+    return true;
+  }
+
+  if (!options.build_runtimes_on_demand) {
+    // Nothing else needed if we're not building runtimes on demand.
+    CARBON_CHECK(!driver_env.build_runtimes_on_demand);
+    return true;
+  }
+  driver_env.build_runtimes_on_demand = true;
+
+  // If we don't have prebuilt runtimes and are building them on demand, we need
+  // to configure the runtimes cache.
+  auto cache_result =
+      options.runtimes_cache_path.empty()
+          ? Runtimes::Cache::MakeSystem(*driver_env.installation,
+                                        driver_env.vlog_stream)
+          : Runtimes::Cache::MakeCustom(
+                *driver_env.installation,
+                std::filesystem::absolute(options.runtimes_cache_path.str()),
+                driver_env.vlog_stream);
+  if (!cache_result.ok()) {
+    // TODO: We should provide a better diagnostic than the raw error.
+    CARBON_DIAGNOSTIC(DriverRuntimesCacheInvalid, Error, "{0}", std::string);
+    driver_env.emitter.Emit(DriverRuntimesCacheInvalid,
+                            cache_result.error().message());
+    return false;
+  }
+  driver_env.runtimes_cache = std::move(*cache_result);
+  return true;
+}
+
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   PrettyStackTraceFunction trace_version([&](llvm::raw_ostream& out) {
     out << "Carbon version: " << Version::String << "\n";
   });
 
-  if (driver_env_.installation->error()) {
-    CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
-    driver_env_.emitter.Emit(DriverInstallInvalid,
-                             driver_env_.installation->error()->str());
-    return {.success = false};
-  }
-
   Options options;
+  DriverEnv env(fs_, installation_, input_stream_, output_stream_,
+                error_stream_, fuzzing_, enable_leaking_);
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
-      args, *driver_env_.output_stream, Options::Info,
+      args, *env.output_stream, Options::Info,
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 
   // Regardless of whether the parse succeeded, try to use the diagnostic kind
   // flag.
-  driver_env_.consumer.set_include_diagnostic_kind(
-      options.include_diagnostic_kind);
+  env.consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
+
+  if (env.installation->error()) {
+    CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
+    env.emitter.Emit(DriverInstallInvalid, env.installation->error()->str());
+    return {.success = false};
+  }
 
   if (!result.ok()) {
     CARBON_DIAGNOSTIC(DriverCommandLineParseFailed, Error, "{0}", std::string);
-    driver_env_.emitter.Emit(DriverCommandLineParseFailed,
-                             PrintToString(result.error()));
+    env.emitter.Emit(DriverCommandLineParseFailed,
+                     PrintToString(result.error()));
     return {.success = false};
   } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
   }
 
-  auto cache_result =
-      options.runtimes_cache_path.empty()
-          ? Runtimes::Cache::MakeSystem(*driver_env_.installation,
-                                        driver_env_.vlog_stream)
-          : Runtimes::Cache::MakeCustom(
-                *driver_env_.installation,
-                std::filesystem::absolute(options.runtimes_cache_path.str()),
-                driver_env_.vlog_stream);
-  if (!cache_result.ok()) {
-    // TODO: We should provide a better diagnostic than the raw error.
-    CARBON_DIAGNOSTIC(DriverRuntimesCacheInvalid, Error, "{0}", std::string);
-    driver_env_.emitter.Emit(DriverRuntimesCacheInvalid,
-                             cache_result.error().message());
+  if (!HandleRuntimesOptions(options, env)) {
     return {.success = false};
-  }
-  driver_env_.runtimes_cache = std::move(*cache_result);
-
-  if (!options.prebuilt_runtimes_path.empty()) {
-    auto result = Runtimes::OpenExisting(options.prebuilt_runtimes_path.str(),
-                                         driver_env_.vlog_stream);
-    if (!result.ok()) {
-      // TODO: We should provide a better diagnostic than the raw error.
-      CARBON_DIAGNOSTIC(DriverPrebuiltRuntimesInvalid, Error, "{0}",
-                        std::string);
-      driver_env_.emitter.Emit(DriverPrebuiltRuntimesInvalid,
-                               result.error().message());
-      return {.success = false};
-    }
-    driver_env_.prebuilt_runtimes = *std::move(result);
   }
 
   if (options.verbose) {
     // Note this implies streamed output in order to interleave.
-    driver_env_.vlog_stream = driver_env_.error_stream;
+    env.vlog_stream = env.error_stream;
   }
   if (options.fuzzing) {
-    driver_env_.fuzzing = true;
+    env.fuzzing = true;
   }
 
   llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
   std::optional<llvm::DefaultThreadPool> threads;
-  driver_env_.thread_pool = &single_thread;
+  env.thread_pool = &single_thread;
   if (options.threads) {
     threads.emplace(llvm::optimal_concurrency());
-    driver_env_.thread_pool = &*threads;
+    env.thread_pool = &*threads;
   }
 
   CARBON_CHECK(options.selected_subcommand != nullptr);
-  return options.selected_subcommand->Run(driver_env_);
+  return options.selected_subcommand->Run(env);
 }
 
 }  // namespace Carbon

@@ -49,21 +49,19 @@ auto HandleParenConditionAsMatch(Context& context) -> void {
 auto HandleParenConditionFinishAsIf(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::IfCondition);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::IfCondition);
 }
 
 auto HandleParenConditionFinishAsWhile(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   NodeKind::WhileCondition);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::WhileCondition);
 }
 
 auto HandleParenConditionFinishAsMatch(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   NodeKind::MatchCondition);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::MatchCondition);
 }
 
 }  // namespace Carbon::Parse

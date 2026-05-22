@@ -45,11 +45,15 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [symbolic = constants.%C] {} {}
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [symbolic = @I.WithSelf.%C (constants.%C)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT:   .I = <poisoned>
+// CHECK:STDOUT:   .C = @I.WithSelf.%C.decl
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
@@ -81,6 +85,8 @@ interface I {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:

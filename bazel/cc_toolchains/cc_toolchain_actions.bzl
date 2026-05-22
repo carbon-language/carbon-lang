@@ -4,44 +4,18 @@
 
 """Useful sets of actions for defining `cc_toolchain_config` features."""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 
+# all_c_compile_actions includes actions that compile C or assembly.
 all_c_compile_actions = [
-    ACTION_NAMES.c_compile,
-    ACTION_NAMES.assemble,
-    ACTION_NAMES.preprocess_assemble,
+    x
+    for x in ACTION_NAME_GROUPS.all_cc_compile_actions
+    if x not in ACTION_NAME_GROUPS.all_cpp_compile_actions
 ]
 
-all_cpp_compile_actions = [
-    ACTION_NAMES.cpp_compile,
-    ACTION_NAMES.linkstamp_compile,
-    ACTION_NAMES.cpp_header_parsing,
-    ACTION_NAMES.cpp_module_compile,
-    ACTION_NAMES.cpp_module_codegen,
-]
-
-all_compile_actions = all_c_compile_actions + all_cpp_compile_actions
-
+# preprocessor_compile_actions includes actions that run the preprocessor.
 preprocessor_compile_actions = [
-    ACTION_NAMES.c_compile,
-    ACTION_NAMES.cpp_compile,
-    ACTION_NAMES.linkstamp_compile,
-    ACTION_NAMES.preprocess_assemble,
-    ACTION_NAMES.cpp_header_parsing,
-    ACTION_NAMES.cpp_module_compile,
-]
-
-codegen_compile_actions = [
-    ACTION_NAMES.c_compile,
-    ACTION_NAMES.cpp_compile,
-    ACTION_NAMES.linkstamp_compile,
-    ACTION_NAMES.assemble,
-    ACTION_NAMES.preprocess_assemble,
-    ACTION_NAMES.cpp_module_codegen,
-]
-
-all_link_actions = [
-    ACTION_NAMES.cpp_link_executable,
-    ACTION_NAMES.cpp_link_dynamic_library,
-    ACTION_NAMES.cpp_link_nodeps_dynamic_library,
+    x
+    for x in ACTION_NAME_GROUPS.all_cc_compile_actions
+    if x not in [ACTION_NAMES.assemble, ACTION_NAMES.cpp_module_codegen]
 ]

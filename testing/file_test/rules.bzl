@@ -46,7 +46,7 @@ def file_test(
     cc_test(
         name = name,
         srcs = srcs + [":" + manifest_cpp],
-        deps = deps + ["//testing/file_test:manifest_impl"],
+        deps = deps + [Label("//testing/file_test:manifest_impl")],
         data = tests + data,
         args = args,
         **kwargs

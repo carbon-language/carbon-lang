@@ -78,7 +78,7 @@ this:
     package SongHashArtistAndTitle;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[self: Self]() -> u64 { ... }
+      fn Hash(self) -> u64 { ... }
     }
     ```
 
@@ -105,7 +105,7 @@ this:
     package SongHashAppleMusicURL;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[self: Self]() -> u64 { ... }
+      fn Hash(self) -> u64 { ... }
     }
     ```
 

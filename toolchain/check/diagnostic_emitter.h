@@ -7,7 +7,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 

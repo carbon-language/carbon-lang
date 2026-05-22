@@ -41,7 +41,7 @@ interface Z {
   let U:! type;
 }
 
-fn F(FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
+fn F(unused FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
 
 // --- nested_facet_types_same_two_associated.carbon
 library "[[@TEST_NAME]]";
@@ -52,7 +52,7 @@ interface Z {
   let V:! type;
 }
 
-fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
+fn F(unused FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
 
 // --- nested_facet_types_same_associated_in_generic_parameter.carbon
 library "[[@TEST_NAME]]";
@@ -63,7 +63,7 @@ interface Z {
 }
 class C(T:! type) {}
 
-fn F(FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
+fn F(unused FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
 
 // --- fail_nested_facet_types_different.carbon
 library "[[@TEST_NAME]]";
@@ -72,11 +72,11 @@ interface Z {
   let T:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = ()) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = ()) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (Z where .T = ()) where .T = {}) {}
+fn F(unused FF:! (Z where .T = ()) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated.carbon
 library "[[@TEST_NAME]]";
@@ -86,11 +86,11 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = .U) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (Z where .T = .U) where .T = {}) {}
+fn F(unused FF:! (Z where .T = .U) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon
 library "[[@TEST_NAME]]";
@@ -101,11 +101,11 @@ interface Z {
 }
 class C(T:! type) {}
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = C(.U)) where .T = {}) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
+fn F(unused FF:! (Z where .T = C(.U)) where .T = {}) {}
 
 // --- nested_facet_types_same_with_bitand.carbon
 library "[[@TEST_NAME]]";
@@ -115,7 +115,7 @@ interface Z {
   let U:! type;
 }
 
-fn F(FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = .U)) {}
+fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = .U)) {}
 
 // --- fail_nested_facet_types_different_with_bitand.carbon
 library "[[@TEST_NAME]]";
@@ -125,11 +125,11 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
+fn F(unused FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
 
 // --- fail_nested_facet_type_cycle.carbon
 library "[[@TEST_NAME]]";
@@ -139,11 +139,11 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .U = .T) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:18: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused FF:! (Z where .T = .U) where .U = .T) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (Z where .T = .U) where .U = .T) {}
+fn F(unused FF:! (Z where .T = .U) where .U = .T) {}
 
 // --- fail_nested_facet_types_different_separated_order_one.carbon
 library "[[@TEST_NAME]]";
@@ -158,11 +158,11 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_one.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_one.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.S)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
+fn F(unused FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
 
 // --- fail_nested_facet_types_different_separated_order_two.carbon
 library "[[@TEST_NAME]]";
@@ -178,11 +178,11 @@ interface Z {
 // ids, by producing different orderings to get an id between them. As of today,
 // this is the case where `.T` is sorted between the two `.S` rewrite rules.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_two.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_two.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
+fn F(unused FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
 
 // --- fail_nested_facet_types_different_separated_order_three.carbon
 library "[[@TEST_NAME]]";
@@ -197,11 +197,11 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_three.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_three.carbon:[[@LINE+4]]:18: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
+fn F(unused FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
 
 // --- repeated_with_value_available.carbon
 library "[[@TEST_NAME]]";
@@ -249,7 +249,7 @@ interface Z {
 }
 class C(T:! type) {}
 
-fn F(FF:! ((Y where .Self impls (Z where .T = C(.U)))
+fn F(unused FF:! ((Y where .Self impls (Z where .T = C(.U)))
                 where .Self impls (Z where .T = C(.U)))
                   where .Self impls (Z where .T = C(.U))) {}
 

@@ -21,13 +21,23 @@ inline auto IsRefCategory(ExprCategory cat) -> bool {
   return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef;
 }
 
-// Given a primitive-form initializing expression, find its return slot
-// argument. If `allow_transitive` is true, the result may be an argument to
-// some other inst whose outcome is forwarded by `init_id`; otherwise the result
-// must be an argument to `init_id` itself. Returns `None` if no such return
-// slot is found.
-auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
-                                     bool allow_transitive = true) -> InstId;
+// Returns whether the given expression category is for an initializer
+// (see inst_kind.h for background).
+inline auto IsInitializerCategory(ExprCategory cat) -> bool {
+  return cat == ExprCategory::ReprInitializing ||
+         cat == ExprCategory::InPlaceInitializing;
+}
+
+// If `init_id` is an initializer, find the inst ID that specifies the storage
+// to initialize, if any. If `allow_transitive` is true, the result may be an
+// argument to some other inst whose outcome is forwarded by `init_id`;
+// otherwise the result must be an argument to `init_id` itself. Returns `None`
+// if there is no such storage argument. When `allow_transitive` is true, this
+// can only return `None` if `init_id` is known not to perform in-place
+// initialization; i.e. its type's initializing representation is not in-place,
+// and its category is `Initializing`.
+auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
+                                  bool allow_transitive = true) -> InstId;
 
 }  // namespace Carbon::SemIR
 

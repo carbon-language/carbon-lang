@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Style](#style)
     -   [Google Docs and Markdown](#google-docs-and-markdown)
     -   [Other files](#other-files)
+-   [Testing](#testing)
 -   [License](#license)
     -   [Google Docs](#google-docs)
     -   [Markdown](#markdown)
@@ -98,7 +99,7 @@ early, before even writing a proposal, and the process explains how to do that.
 
 Helping with
 [pull requests](https://github.com/carbon-language/carbon-lang/pulls) review is
-a good way to provide feedback, while getting a acquainted with the code base.
+a good way to provide feedback, while getting acquainted with the code base.
 
 #### Implement Carbon's design
 
@@ -231,6 +232,10 @@ as well as helpful tooling that will ease the contribution process. For example,
 
 #### Using AI-based contribution tools
 
+If you are using an AI assistant to help you contribute, or if you are an AI
+assistant yourself, please consult [AGENTS.md](/AGENTS.md) for high-density
+technical context and tips.
+
 All submissions to Carbon need to follow our
 [Contributor License Agreement (CLA)](#contributor-license-agreements-clas),
 which covers any original work of authorship included in the submission. This
@@ -304,7 +309,6 @@ follow the Carbon documentation and coding styles.
         request.
 
 -   For code:
-
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
         includes modifications to preexisting designs.
@@ -422,6 +426,14 @@ Other style points to be aware of are:
 ### Other files
 
 If you're not sure what style to use, please ask on Discord or GitHub.
+
+## Testing
+
+Most development in the Carbon project is on the [toolchain](toolchain/). The
+toolchain contains some unit tests, but the majority of testing is done through
+`file_test` tests, which test the output of the different phases of the
+toolchain. The toolchain docs include instructions for
+[building and running tests](toolchain/docs/adding_features.md#tests-and-debugging).
 
 ## License
 

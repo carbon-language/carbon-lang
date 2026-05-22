@@ -19,6 +19,16 @@ fn NS.F() {}
 
 fn NS.G(x: i32) -> i32 { return x; }
 
+interface I {
+  fn F();
+}
+
+class C {}
+
+impl C as I {
+  fn F() {}
+}
+
 // --- b.carbon
 
 import A;
@@ -26,6 +36,10 @@ import A;
 fn F() { A.NS.F(); }
 
 fn G() -> i32 { return A.NS.G(1); }
+
+fn CallCAsI() {
+  (A.C as A.I).F();
+}
 
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
@@ -40,6 +54,12 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: define i32 @_CG.NS.A(i32 %x) #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.C.A:I.A"() #0 !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -62,6 +82,8 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: !12 = !{!13}
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !8, type: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 26, scope: !8)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.A:I.A", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 16, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -83,6 +105,15 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CG.NS.A(i32)
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallCAsI.Main() #0 !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_CF.C.A:I.A"(), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.C.A:I.A"()
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -103,3 +134,6 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: !12 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !13 = !DILocation(line: 6, column: 24, scope: !9)
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 17, scope: !9)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallCAsI", linkageName: "_CCallCAsI.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 8, column: 1, scope: !15)

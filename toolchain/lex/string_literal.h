@@ -9,7 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/token_info.h"
 
 namespace Carbon::Lex {

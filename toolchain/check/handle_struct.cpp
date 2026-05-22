@@ -8,6 +8,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
@@ -54,8 +55,8 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
-  auto value_type_inst_id =
-      context.types().GetInstId(context.insts().Get(value_inst_id).type_id());
+  auto value_type_inst_id = context.types().GetTypeInstId(
+      context.insts().Get(value_inst_id).type_id());
   context.struct_type_fields_stack().AppendToTop(
       {.name_id = name_id, .type_inst_id = value_type_inst_id});
 
@@ -109,17 +110,11 @@ static auto PopFieldNameNodes(Context& context, size_t field_count)
     -> llvm::SmallVector<Parse::NodeId> {
   llvm::SmallVector<Parse::NodeId> nodes;
   nodes.reserve(field_count);
-  while (true) {
+  for ([[maybe_unused]] auto i : llvm::seq(field_count)) {
     auto [name_node, _] =
-        context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::MemberName>();
-    if (name_node.has_value()) {
-      nodes.push_back(name_node);
-    } else {
-      break;
-    }
+        context.node_stack().PopWithNodeId<Parse::NodeCategory::MemberName>();
+    nodes.push_back(name_node);
   }
-  CARBON_CHECK(nodes.size() == field_count, "Found {0} names, expected {1}",
-               nodes.size(), field_count);
   return nodes;
 }
 
@@ -137,7 +132,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
   auto elements_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralStart);
 
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructLiteralStart>();
 
@@ -163,7 +158,7 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   llvm::SmallVector<Parse::NodeId> field_name_nodes =
       PopFieldNameNodes(context, fields.size());
 
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 

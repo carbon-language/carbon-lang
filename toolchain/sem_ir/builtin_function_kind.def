@@ -22,6 +22,9 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(None)
 // A no-op function definition; calls should be elided when lowering.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(NoOp)
 
+// A no-op factory function.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(MakeUninitialized)
+
 // A primitive copy for types whose value and initializing representation are
 // the same.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PrimitiveCopy)
@@ -41,6 +44,7 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntMakeTypeUnsigned)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(FloatMakeType)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(BoolMakeType)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(MaybeUnformedMakeType)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(FormMakeType)
 
 // Character conversion.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CharConvertChecked)
@@ -132,5 +136,8 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PointerUnsafeConvert)
 
 // Facet type combination.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAnd)
+
+// C++ interop builtins.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CppStdInitializerListMake)
 
 #undef CARBON_SEM_IR_BUILTIN_FUNCTION_KIND

@@ -192,8 +192,8 @@ For example, this `Vector` interface:
 
 ```carbon
 interface Vector {
-  fn Add[self: Self](b: Self) -> Self;
-  fn Scale[self: Self](v: f64) -> Self;
+  fn Add(self, b: Self) -> Self;
+  fn Scale(self, v: f64) -> Self;
 }
 ```
 
@@ -241,12 +241,12 @@ witness table.
 
 ```
 interface Iterator {
-  fn Advance[ref self: Self]();
+  fn Advance(ref self);
 }
 
 interface Container {
   let IteratorType:! Iterator;
-  fn Begin[ref self: Self]() -> IteratorType;
+  fn Begin(ref self) -> IteratorType;
 }
 ```
 

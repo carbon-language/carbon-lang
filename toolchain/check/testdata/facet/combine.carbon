@@ -49,10 +49,10 @@ interface B {
 class C {}
 impl C as A {}
 impl C as B {
-  fn BB[self: Self]() {}
+  fn BB[unused self: Self]() {}
 }
 
-fn G[T:! A & B](t: T) {}
+fn G[T:! A & B](unused t: T) {}
 
 fn F() {
   ({} as C).((A & B).BB)();
@@ -76,7 +76,7 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-fn G[T:! A(P1) & B](t: T) {}
+fn G[T:! A(P1) & B](unused t: T) {}
 
 fn F() {
   G({} as C);
@@ -95,15 +95,15 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-fn G[T:! A(P2) & B](t: T) {}
+fn G[T:! A(P2) & B](unused t: T) {}
 
 fn F() {
   // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn G[T:! A(P2) & B](unused t: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   G({} as C);
 }
@@ -124,7 +124,7 @@ impl C as Iface {}
 
 impl forall [IfaceType:! Iface] C as GenericIface(GenericClass(IfaceType)) {}
 
-fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
+fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](unused t: T) {}
 
 fn F() {
   G({} as C);
@@ -134,7 +134,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I;
@@ -171,7 +171,7 @@ fn TestComplete() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I {}
@@ -183,8 +183,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I & J), Type(K & I & J));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I & J), Type(K & I & J));
 }
@@ -193,7 +193,7 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I {}
@@ -204,8 +204,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I & J(())), Type(J({}) & I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J({}) & I));
 }
@@ -214,7 +214,7 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I {}
@@ -225,8 +225,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I & J(())), Type(J(()) & J({}) & I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J(()) & J({}) & I));
 }

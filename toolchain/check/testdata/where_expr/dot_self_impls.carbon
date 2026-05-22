@@ -57,7 +57,7 @@ interface J {
 
 fn INotJ(T:! I where .Self impls J) {
   // Gets `T.(I.F)`. Doesn't consider `T.(J.F)`, so no ambiguity.
-  let x: () = T.F();
+  let unused x: () = T.F();
 }
 
 // --- fail_name_lookup_through_where_self_impls.carbon
@@ -72,7 +72,7 @@ interface J {
 }
 
 fn INotJ(T:! I where .Self impls J) {
-  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -101,13 +101,13 @@ interface A {}
 interface B { fn Bfn(); }
 
 fn F(T:! A & B) {
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.((A where .Self impls B).Bfn)();
   // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   T.((A where .Self impls B).Bfn)();
 
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:3: error: member name `Bfn` not found in `A` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:3: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   (A where .Self impls B).Bfn;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -128,13 +128,13 @@ interface J {
 }
 
 fn INotJ[T:! I where .Self impls J](x: T) {
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GNonInstance();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   x.GNonInstance();
 
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GSelf` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GSelf` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GSelf();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -145,7 +145,7 @@ fn INotJ[T:! I where .Self impls J](x: T) {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I;
@@ -178,7 +178,7 @@ interface K {}
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I { let A:! type; }
@@ -201,7 +201,7 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I {}
@@ -212,8 +212,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I where .Self impls J), Type(J where .Self impls I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));
 }

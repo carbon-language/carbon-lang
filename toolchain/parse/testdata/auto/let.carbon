@@ -14,7 +14,7 @@ let x: auto = 1;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:         {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

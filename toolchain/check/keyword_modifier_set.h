@@ -14,7 +14,15 @@ namespace Carbon::Check {
 
 // The order of modifiers. Each of these corresponds to a group on
 // KeywordModifierSet, and can be used as an array index.
-enum class ModifierOrder : int8_t { Access, Extern, Extend, Decl, Last = Decl };
+enum class ModifierOrder : int8_t {
+  Access,
+  Extern,
+  Extend,
+  Decl,
+  Static,
+  Evaluation,
+  Last = Evaluation
+};
 
 // A single X-macro to cover modifier groups. These are split out to make groups
 // clearer.
@@ -40,7 +48,14 @@ enum class ModifierOrder : int8_t { Access, Extern, Extend, Decl, Last = Decl };
   X(Impl)                                                                    \
   X(Override)                                                                \
   X(Returned)                                                                \
-  X(Virtual)
+  X(Virtual)                                                                 \
+                                                                             \
+  /* Static is standalone. */                                                \
+  X(Static)                                                                  \
+                                                                             \
+  /* Eval and MustEval are mutually exclusive. */                            \
+  X(Eval)                                                                    \
+  X(MustEval)
 
 // We expect this to grow, so are using a bigger size than needed.
 CARBON_DEFINE_RAW_ENUM_MASK(KeywordModifierSet, uint32_t) {
@@ -58,6 +73,7 @@ class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
   static const KeywordModifierSet Method;
   static const KeywordModifierSet ImplDecl;
   static const KeywordModifierSet Interface;
+  static const KeywordModifierSet Evaluation;
   static const KeywordModifierSet Decl;
 
   // Return a builder that returns the new enumeration type once a series of
@@ -97,6 +113,12 @@ class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
 
   // Returns the access kind from modifiers.
   auto GetAccessKind() const -> SemIR::AccessKind {
+    if (HasAnyOf(KeywordModifierSet::Override)) {
+      // TODO: Instead of hiding `override fn`s, we should expose them but make
+      // calls that we cannot statically devirtualize call the base class
+      // version (the one whose signature is in the vtable).
+      return SemIR::AccessKind::Hidden;
+    }
     if (HasAnyOf(KeywordModifierSet::Protected)) {
       return SemIR::AccessKind::Protected;
     }
@@ -125,18 +147,26 @@ inline constexpr KeywordModifierSet KeywordModifierSet::Interface(Default |
 inline constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
                                                              Impl | Interface |
                                                              Export | Returned);
+inline constexpr KeywordModifierSet KeywordModifierSet::Evaluation(Eval |
+                                                                   MustEval);
 
+// TODO: This and the ordering checking logic in handle_modifiers.cpp are
+// becoming unwieldy. Find a better representation.
 static_assert(
     !KeywordModifierSet::Access.HasAnyOf(KeywordModifierSet::Extern) &&
         !(KeywordModifierSet::Access | KeywordModifierSet::Extern |
           KeywordModifierSet::Extend)
-             .HasAnyOf(KeywordModifierSet::Decl),
+             .HasAnyOf(KeywordModifierSet::Decl) &&
+        !(KeywordModifierSet::Access | KeywordModifierSet::Extern |
+          KeywordModifierSet::Decl)
+             .HasAnyOf(KeywordModifierSet::Evaluation),
     "Order-related sets must not overlap");
 
-#define CARBON_KEYWORD_MODIFIER_SET_IN_GROUP(Modifier)                     \
-  static_assert((KeywordModifierSet::Access | KeywordModifierSet::Extern | \
-                 KeywordModifierSet::Extend | KeywordModifierSet::Decl)    \
-                    .HasAnyOf(KeywordModifierSet::Modifier),               \
+#define CARBON_KEYWORD_MODIFIER_SET_IN_GROUP(Modifier)                        \
+  static_assert((KeywordModifierSet::Access | KeywordModifierSet::Extern |    \
+                 KeywordModifierSet::Extend | KeywordModifierSet::Decl |      \
+                 KeywordModifierSet::Evaluation | KeywordModifierSet::Static) \
+                    .HasAnyOf(KeywordModifierSet::Modifier),                  \
                 "Modifier missing from all modifier sets: " #Modifier);
 CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_IN_GROUP)
 #undef CARBON_KEYWORD_MODIFIER_SET_IN_GROUP

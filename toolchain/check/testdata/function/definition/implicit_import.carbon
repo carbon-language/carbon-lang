@@ -148,9 +148,6 @@ fn B() {}
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
@@ -188,9 +185,6 @@ fn B() {}
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
@@ -226,9 +220,6 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -271,9 +262,6 @@ fn B() {}
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
@@ -307,14 +295,14 @@ fn B() {}
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.8165c1.1: type = fn_type @A.1 [concrete]
-// CHECK:STDOUT:   %A.8aef9d.1: %A.type.8165c1.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc12 [concrete]
-// CHECK:STDOUT:   %A.8aef9d.2: %A.type.8165c1.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.056701.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.5ca789.1: %A.type.056701.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.056701.2: type = fn_type @A.loc12 [concrete]
+// CHECK:STDOUT:   %A.5ca789.2: %A.type.056701.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.A: %A.type.8165c1.1 = import_ref Main//redef_after_def, A, loaded [concrete = constants.%A.8aef9d.1]
+// CHECK:STDOUT:   %Main.A: %A.type.056701.1 = import_ref Main//redef_after_def, A, loaded [concrete = constants.%A.5ca789.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,7 +311,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.8165c1.2 = fn_decl @A.loc12 [concrete = constants.%A.8aef9d.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.056701.2 = fn_decl @A.loc12 [concrete = constants.%A.5ca789.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
@@ -347,7 +335,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %B: %A.type = alias_binding B, %A.ref [concrete = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

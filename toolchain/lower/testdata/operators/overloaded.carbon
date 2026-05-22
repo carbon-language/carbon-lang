@@ -47,7 +47,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !14 {
+// CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.3dbfed2bcb44ac1d.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !20
 // CHECK:STDOUT:   %.loc24_33.2 = load i8, ptr %.loc24_33.1.is_positive, align 1, !dbg !20
@@ -97,8 +97,21 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !33
-// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.3dbfed2bcb44ac1d.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.78d5830a4b83d551:core.Destroy.Core"(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.86fb9acde14db001:core.Destroy.Core"(ptr %self) #0 !dbg !35 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !40
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.78d5830a4b83d551:core.Destroy.Core"(ptr %self) #0 !dbg !41 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -117,14 +130,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 19, column: 32, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 19, column: 28, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 19, column: 12, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.44027391c5135f93.Core", scope: null, file: !3, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.3dbfed2bcb44ac1d.Core", scope: null, file: !3, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{!7, !7, !7}
 // CHECK:STDOUT: !17 = !{!18, !19}
@@ -145,3 +158,13 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 2, scope: !29, type: !7)
 // CHECK:STDOUT: !33 = !DILocation(line: 30, column: 10, scope: !29)
 // CHECK:STDOUT: !34 = !DILocation(line: 30, column: 3, scope: !29)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp.86fb9acde14db001:core.Destroy.Core", scope: null, file: !3, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !38)
+// CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !37 = !{null, !7}
+// CHECK:STDOUT: !38 = !{!39}
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !35, type: !7)
+// CHECK:STDOUT: !40 = !DILocation(line: 30, column: 10, scope: !35)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Op", linkageName: "_COp.78d5830a4b83d551:core.Destroy.Core", scope: null, file: !3, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !42)
+// CHECK:STDOUT: !42 = !{!43}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !7)
+// CHECK:STDOUT: !44 = !DILocation(line: 30, column: 10, scope: !41)

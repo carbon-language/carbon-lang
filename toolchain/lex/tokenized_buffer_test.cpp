@@ -17,7 +17,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"

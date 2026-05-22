@@ -25,7 +25,7 @@ class N2.N1.C {}
 class N1.C {}
 fn TestNamespaces() {
   var x: N2.N1.C;
-  var y: N2.N3.C* = &x;
+  var unused y: N2.N3.C* = &x;
 }
 
 // --- poison.carbon

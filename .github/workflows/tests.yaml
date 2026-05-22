@@ -22,36 +22,62 @@ concurrency:
 
 jobs:
   test:
+    name:
+      Testing ${{ matrix.config.name != 'Default' && format('({0})',
+      matrix.config.name) || '' }} (${{ matrix.runner }})
     strategy:
       matrix:
         # Test a recent version of each supported OS.
         runner: ['ubuntu-22.04', 'macos-14']
-        build_mode: [fastbuild, opt]
+        # Create a synthetic matrix dimension with the event name for filtering.
+        event: ['${{ github.event_name }}']
+        config:
+          - name: 'Default'
+            flags: ''
+          - name: 'Opt'
+            flags: '-c opt'
+          - name: 'ASan'
+            flags: '--config=asan'
+        exclude:
+          - runner: 'macos-14'
+            config: { name: 'ASan', flags: '--config=asan' }
+          - event: 'pull_request'
+            config: { name: 'ASan', flags: '--config=asan' }
+          - event: 'merge_group'
+            config: { name: 'ASan', flags: '--config=asan' }
     runs-on: ${{ matrix.runner }}
-
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
           # prettier-ignore
           allowed-endpoints: >
-            *.dl.sourceforge.net:443
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
             api.github.com:443
+            api.ipify.org:443
             bcr.bazel.build:443
             downloads.sourceforge.net:443
+            files.pythonhosted.org:443
             github.com:443
+            go.dev:443
+            mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
             pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
             releases.bazel.build:443
-            sourceforge.net:443
             storage.googleapis.com:443
+            uploads.github.com:443
+            www.googleapis.com:443
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - id: test-setup
         uses: ./.github/actions/test-setup
@@ -65,7 +91,7 @@ jobs:
           targets_file: ${{ runner.temp }}/targets
 
       # Build and run just the tests impacted by the PR or merge group.
-      - name: Test (${{ matrix.build_mode }})
+      - name: Test (${{ matrix.config.name }})
         if: steps.test-setup.outputs.has_code == 'true'
         shell: bash
         env:
@@ -76,10 +102,11 @@ jobs:
         run: |
           # Decrease the jobs sharply if we see repeated failures to try to
           # work around transient network errors even if it makes things
-          # slower.
+          # slower. Note that we allow passing targets that are incompatible and
+          # skip thim as-if we were using `//...` style wild card patterns.
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
-            test -c ${{ matrix.build_mode }} \
+            test ${{ matrix.config.flags }} \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build" in `test-setup`.

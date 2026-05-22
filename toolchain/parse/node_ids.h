@@ -7,6 +7,7 @@
 
 #include "toolchain/base/index_base.h"
 #include "toolchain/lex/token_index.h"
+#include "toolchain/parse/node_category.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
@@ -105,17 +106,33 @@ using AnyMemberAccessId =
     NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr |
                      NodeCategory::IntConst>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
-using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
+using AnyPatternId =
+    NodeIdInCategory<NodeCategory::Pattern | NodeCategory::Expr>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
 using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
+using AnyObserveOperatorId = NodeIdInCategory<NodeCategory::ObserveOperator>;
+using AnyObserveOperandId =
+    NodeIdInCategory<NodeCategory::Expr | NodeCategory::ObserveOperator>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
+using AnyReturnDeclId = NodeIdInCategory<NodeCategory::ReturnDecl>;
+
+namespace Internal {
+template <typename T>
+concept IsNodeKind = std::same_as<std::remove_cvref_t<T>, NodeKind> ||
+                     std::same_as<std::remove_cvref_t<T>, NodeKind::Definition>;
+
+template <typename T>
+concept IsTypedNode = requires {
+  { T::Kind } -> IsNodeKind;
+};
+}  // namespace Internal
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>
-  requires(sizeof...(T) >= 2)
+  requires(sizeof...(T) >= 2 && (Internal::IsTypedNode<T> && ...))
 struct NodeIdOneOf : public NodeId {
  private:
   // True if `OtherT` is one of `T`.
@@ -175,8 +192,10 @@ using AnyPackagingDeclId =
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 using AnyRuntimeBindingPatternName =
-    NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
+    NodeIdOneOf<IdentifierNameNotBeforeSignatureId, SelfValueNameId,
                 UnderscoreNameId>;
+using AnyPrimitiveFormIdId =
+    NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

@@ -69,17 +69,30 @@ auto llvm::format_provider<Carbon::Diagnostics::IntAsSelect>::format(
                    style);
       out << output_string;
       return;
-    } else if (comp.consume_front("=")) {
-      // Equality comparison.
+    } else if (auto op = comp.take_while(
+                   [](char c) { return c == '<' || c == '=' || c == '>'; });
+               !op.empty()) {
+      // Comparison.
+      comp = comp.drop_front(op.size());
       int value;
       CARBON_CHECK(to_integer(comp, value),
                    "IntAsSelect has invalid value in comparison: `{0}`", style);
-      if (value == wrapper.value) {
+      auto result = llvm::StringSwitch<std::optional<bool>>(op)
+                        .Case("=", wrapper.value == value)
+                        .Case("<", wrapper.value < value)
+                        .Case("<=", wrapper.value <= value)
+                        .Case(">", wrapper.value > value)
+                        .Case(">=", wrapper.value >= value)
+                        .Default(std::nullopt);
+      if (!result) {
+        CARBON_FATAL("IntAsSelect has unrecognized comparison: `{0}`", style);
+      }
+      if (*result) {
         out << output_string;
         return;
       }
     } else {
-      CARBON_FATAL("IntAsSelect has unrecognized comparison: `{0}`", style);
+      CARBON_FATAL("IntAsSelect has unrecognized syntax: `{0}`", style);
     }
   }
 

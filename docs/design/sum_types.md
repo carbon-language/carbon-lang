@@ -111,7 +111,7 @@ interface Match {
   }
 
   let template Continuation:! type;
-  fn Op[self: Self, C:! Continuation](continuation: C*)
+  fn Op[C:! Continuation](self, continuation: C*)
     -> C.(BaseContinuation.ReturnType);
 }
 ```
@@ -146,11 +146,11 @@ class Optional(T:! type) {
   impl as Match {
     interface Continuation {
       extend Match.BaseContinuation;
-      fn Some[ref self: Self](value: T) -> ReturnType;
-      fn None[ref self: Self]() -> ReturnType;
+      fn Some(ref self, value: T) -> ReturnType;
+      fn None(ref self) -> ReturnType;
     }
 
-    fn Op[self: Self, C:! Continuation](continuation: C*) -> C.ReturnType {
+    fn Op[C:! Continuation](self, continuation: C*) -> C.ReturnType {
       if (self.has_value) {
         return continuation->Some(self.value);
       } else {

@@ -4,6 +4,7 @@
 
 """Definitions of sanitizer-related `cc_toolchain_config` features."""
 
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -12,17 +13,12 @@ load(
     "flag_set",
     "with_feature_set",
 )
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
-    "all_link_actions",
-)
 
 sanitizer_common_flags = feature(
     name = "sanitizer_common_flags",
     implies = ["minimal_debug_info_flags", "preserve_call_stacks"],
     flag_sets = [flag_set(
-        actions = all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = ["-static-libsan"])],
         with_features = [
             with_feature_set(["linux_target"]),
@@ -35,7 +31,7 @@ asan = feature(
     name = "asan",
     implies = ["sanitizer_common_flags"],
     flag_sets = [flag_set(
-        actions = all_compile_actions + all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = [
             "-fsanitize=address,undefined,nullability",
             "-fsanitize-address-use-after-scope",
@@ -65,7 +61,7 @@ asan_min_size = feature(
     name = "asan_min_size",
     requires = [feature_set(["asan"])],
     flag_sets = [flag_set(
-        actions = all_compile_actions + all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = [
             # Force two UBSan checks that have especially large code size
             # cost to use the minimal branch to a trapping instruction model
@@ -78,7 +74,7 @@ asan_min_size = feature(
 fuzzer = feature(
     name = "fuzzer",
     flag_sets = [flag_set(
-        actions = all_compile_actions + all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = [
             "-fsanitize=fuzzer-no-link",
         ])],
@@ -90,7 +86,7 @@ sanitizer_workarounds = feature(
     enabled = True,
     requires = [feature_set(["asan"])],
     flag_sets = [flag_set(
-        actions = all_compile_actions + all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = [
             # Likely due to being unable to use the static-linked and up-to-date
             # sanitizer runtimes, we have to disable this sanitizer on macOS.

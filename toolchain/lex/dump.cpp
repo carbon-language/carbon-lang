@@ -12,6 +12,11 @@
 
 namespace Carbon::Lex {
 
+static LLVM_DUMP_METHOD auto Dump(const TokenizedBuffer& tokens)
+    -> std::string {
+  return PrintToString(tokens);
+}
+
 LLVM_DUMP_METHOD auto Dump(const TokenizedBuffer& tokens, TokenIndex token)
     -> std::string {
   RawStringOstream out;

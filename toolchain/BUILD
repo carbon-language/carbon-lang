@@ -11,7 +11,7 @@ run_tool(
     name = "carbon",
     data = ["//toolchain/install:install_data"],
     env = cc_env(),
-    tool = "//toolchain/install:prefix/bin/carbon",
+    tool = "//toolchain/install:carbon-busybox",
 )
 
 # A convenience target for running the toolchain with the full prelude

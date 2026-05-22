@@ -8,7 +8,7 @@
 
 #include "common/check.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon {
 namespace {

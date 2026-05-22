@@ -2,11 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Check {
 
@@ -21,6 +23,7 @@ static auto HandlePatternListStart(Context& context, Parse::NodeId node_id)
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
+  context.full_pattern_stack().StartImplicitParamList();
   return HandlePatternListStart(context, node_id);
 }
 
@@ -31,7 +34,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
     -> bool {
-  context.full_pattern_stack().EndImplicitParamList();
+  context.full_pattern_stack().StartExplicitParamList();
   return HandlePatternListStart(context, node_id);
 }
 
@@ -42,7 +45,9 @@ static auto HandleParamListEnd(Context& context, Parse::NodeId node_id,
   if (context.node_stack().PeekIs(start_kind)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    EndSubpatternAsNonExpr(context);
+    EndEmptySubpattern(context);
+  } else {
+    EndSubpattern(context, context.node_stack());
   }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
@@ -53,21 +58,35 @@ static auto HandleParamListEnd(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
+  context.full_pattern_stack().EndImplicitParamList();
   return HandleParamListEnd(context, node_id,
                             Parse::NodeKind::ImplicitParamListStart);
 }
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListId node_id)
     -> bool {
+  context.full_pattern_stack().EndExplicitParamList();
   return HandleParamListEnd(context, node_id,
                             Parse::NodeKind::ExplicitParamListStart);
+}
+
+auto HandleParseNode(Context& context, Parse::ParenPatternId node_id) -> bool {
+  EndSubpattern(context, context.node_stack());
+  auto pattern_id = context.node_stack().PopPattern();
+  context.param_and_arg_refs_stack().PopAndDiscard();
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+  context.node_stack().Push(node_id, pattern_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
-    EndSubpatternAsNonExpr(context);
+    EndEmptySubpattern(context);
+  } else {
+    EndSubpattern(context, context.node_stack());
   }
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
@@ -78,21 +97,30 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
+    if (InNonStaticFieldDecl(context)) {
+      CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
+                        "found tuple pattern in class `var` decl");
+      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
+                             FieldWithTuplePattern);
+
+      return false;
+    }
+
     auto type_id = ExtractScrutineeType(context.sem_ir(),
                                         context.insts().Get(inst).type_id());
-    type_inst_ids.push_back(context.types().GetInstId(type_id));
+    type_inst_ids.push_back(context.types().GetTypeInstId(type_id));
   }
   auto type_id = GetPatternType(context, GetTupleType(context, type_inst_ids));
   context.node_stack().Push(
       node_id,
-      AddPatternInst<SemIR::TuplePattern>(
+      AddInst<SemIR::TuplePattern>(
           context, node_id, {.type_id = type_id, .elements_id = refs_id}));
-  EndSubpatternAsNonExpr(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
+  EndSubpattern(context, context.node_stack());
   context.param_and_arg_refs_stack().ApplyComma();
   BeginSubpattern(context);
   return true;

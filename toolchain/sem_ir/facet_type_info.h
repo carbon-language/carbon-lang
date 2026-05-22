@@ -22,11 +22,30 @@ class File;
 using SingleExtendFacetType =
     std::variant<SpecificInterface, SpecificNamedConstraint>;
 
+// The canonical description of a FacetType. Contains the interfaces, named
+// constraints, and any constraints on types that are part of the facet type.
+// All values within are canonical in order for comparison to be used for
+// type equality.
+//
+// The structure keeps separate dependencies on interfaces and named
+// constraints, even though named constraints ultimately just name interfaces,
+// as it provides a canonical but otherwise unprocessed representation of the
+// facet type.
+//
+// The flattening of the named constraints into interfaces is done by forming
+// the IdentifiedFacetType for a specific Self type.
+//
+// TODO: Rename to DeclaredFacetType.
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> FacetTypeInfo;
+
+  // Returns a FacetTypeInfo that only contains constraints that are extended by
+  // the facet type. It is not canonicalized, so that it can be further modified
+  // by the caller if desired.
+  static auto ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo;
 
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
@@ -35,20 +54,39 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Replace these vectors with an array allocated in an
   // `llvm::BumpPtrAllocator`.
 
-  // `ImplsConstraint` holds the interfaces this facet type requires.
-  // TODO: extend this so it can represent named constraint requirements
-  // and requirements on members, not just `.Self`.
-  using ImplsConstraint = SpecificInterface;
   // These are the required interfaces that are lookup contexts.
-  llvm::SmallVector<ImplsConstraint> extend_constraints;
+  llvm::SmallVector<SpecificInterface> extend_constraints;
   // These are the required interfaces that are not lookup contexts.
-  llvm::SmallVector<ImplsConstraint> self_impls_constraints;
+  llvm::SmallVector<SpecificInterface> self_impls_constraints;
 
   // These name constraints add interfaces as lookup contexts, if they are
   // extended in the named constraint.
   llvm::SmallVector<SpecificNamedConstraint> extend_named_constraints;
   // These name constraints don't add interfaces as lookup contexts.
   llvm::SmallVector<SpecificNamedConstraint> self_impls_named_constraints;
+
+  // Requirements on types other than the generic self.
+  struct TypeImplsInterface {
+    // A facet or type value, which is required to implement the interface.
+    // Must be a canonical instruction to ensure comparison works correctly.
+    InstId self_type;
+    SpecificInterface specific_interface;
+
+    friend auto operator==(const TypeImplsInterface& lhs,
+                           const TypeImplsInterface& rhs) -> bool = default;
+  };
+  struct TypeImplsNamedConstraint {
+    // A facet or type value, which is required to implement the constraint.
+    // Must be a canonical instruction to ensure comparison works correctly.
+    InstId self_type;
+    SpecificNamedConstraint specific_named_constraint;
+
+    friend auto operator==(const TypeImplsNamedConstraint& lhs,
+                           const TypeImplsNamedConstraint& rhs)
+        -> bool = default;
+  };
+  llvm::SmallVector<TypeImplsInterface> type_impls_interfaces;
+  llvm::SmallVector<TypeImplsNamedConstraint> type_impls_named_constraints;
 
   // Rewrite constraints of the form `.T = U`.
   //
@@ -84,7 +122,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // has any other requirements.
   auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType> {
     if (!self_impls_constraints.empty() ||
-        !self_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
+        !self_impls_named_constraints.empty() ||
+        !type_impls_interfaces.empty() ||
+        !type_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
         other_requirements) {
       return std::nullopt;
     }
@@ -103,6 +143,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return extend_constraints.empty() && extend_named_constraints.empty() &&
            self_impls_constraints.empty() &&
            self_impls_named_constraints.empty() &&
+           type_impls_interfaces.empty() &&
+           type_impls_named_constraints.empty() &&
            rewrite_constraints.empty() && !other_requirements;
   }
 
@@ -113,6 +155,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
            lhs.extend_named_constraints == rhs.extend_named_constraints &&
            lhs.self_impls_named_constraints ==
                rhs.self_impls_named_constraints &&
+           lhs.type_impls_interfaces == rhs.type_impls_interfaces &&
+           lhs.type_impls_named_constraints ==
+               rhs.type_impls_named_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
            lhs.other_requirements == rhs.other_requirements;
   }
@@ -128,11 +173,21 @@ using FacetTypeInfoStore =
 struct IdentifiedFacetTypeKey {
   FacetTypeId facet_type_id;
   ConstantId self_const_id;
+  // Inside a named constraint, each identification of the `Self` facet type can
+  // be unique, as it can be modified by each require declaration seen so far.
+  // Uses -1 for identifying a facet type with a self-type from outside the
+  // definition of an named constraint.
+  int32_t num_require_impls = -1;
 
   friend auto operator==(const IdentifiedFacetTypeKey& lhs,
                          const IdentifiedFacetTypeKey& rhs) -> bool = default;
 };
 
+// The IdentifiedFacetType represents all of the interfaces required by a facet
+// type against a given Self type, and any other types it constrains. The order
+// of the interfaces is fixed for a given facet type, and can thus be used as a
+// key for storing and finding witnesses or other data associated with a facet
+// type.
 struct IdentifiedFacetType {
   // A requirement that `self_facet_value` implements the `specific_interface`.
   struct RequiredImpl {
@@ -143,7 +198,7 @@ struct IdentifiedFacetType {
         -> bool = default;
   };
 
-  IdentifiedFacetType(IdentifiedFacetTypeKey key,
+  IdentifiedFacetType(IdentifiedFacetTypeKey key, bool partially_identified,
                       llvm::ArrayRef<RequiredImpl> extends,
                       llvm::ArrayRef<RequiredImpl> self_impls);
 
@@ -173,6 +228,10 @@ struct IdentifiedFacetType {
     } else {
       return num_interface_to_impl_;
     }
+  }
+
+  auto partially_identified() const -> bool {
+    return key_.num_require_impls >= 0;
   }
 
   auto GetAsKey() const -> IdentifiedFacetTypeKey { return key_; }
@@ -225,5 +284,18 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
     -> InstBlockId;
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class CanonicalValueStore<
+    SemIR::FacetTypeId, SemIR::FacetTypeInfo, Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
+extern template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
+                                 SemIR::IdentifiedFacetType,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_

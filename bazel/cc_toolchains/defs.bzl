@@ -41,6 +41,6 @@ def cc_env():
     macos_env = {"MallocNanoZone": "0"}
 
     return common_env | select({
-        "//bazel/cc_toolchains:macos_asan": macos_env,
+        Label("//bazel/cc_toolchains:macos_asan"): macos_env,
         "//conditions:default": {},
     })

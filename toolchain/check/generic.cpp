@@ -134,10 +134,9 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
-      // TODO: Is the location we pick here always appropriate for the new
-      // instruction?
       auto inst_id = context().sem_ir().insts().AddInNoBlock(
-          SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
+          SemIR::LocIdAndInst::RuntimeVerified(context().sem_ir(), loc_id_,
+                                               new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
           context(), const_inst_id, inst_id, dependence);
       context().constant_values().Set(inst_id, const_id);
@@ -148,8 +147,21 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
+
+    auto const_id = context().constant_values().Get(orig_inst_id);
+    const auto& symbolic =
+        context().constant_values().GetSymbolicConstant(const_id);
+    // Template actions are inserted into the eval block directly, instead of
+    // adding a new instruction, in `AddTemplateActionToEvalBlock`. This means
+    // any instruction that is symbolic because it contains a template action as
+    // an operand would Rebuild that operand with the same instruction. Then the
+    // dependent instruction would be reused unchanged.
+    bool is_template =
+        symbolic.dependence == SemIR::ConstantDependence::Template;
+
     CARBON_CHECK(
-        (inst.IsOneOf<SemIR::SymbolicBinding, SemIR::SymbolicBindingPattern>()),
+        is_template || (inst.IsOneOf<SemIR::SymbolicBinding,
+                                     SemIR::SymbolicBindingPattern>()),
         "Instruction {0} has symbolic constant value but no symbolic operands",
         inst);
 
@@ -209,7 +221,7 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
   // block.
   auto rebuild_generic_constant_callbacks =
       RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
-  auto type_inst_id = SubstInst(context, context.types().GetInstId(type_id),
+  auto type_inst_id = SubstInst(context, context.types().GetTypeInstId(type_id),
                                 rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));
@@ -424,7 +436,7 @@ auto DiscardGenericDecl(Context& context) -> void {
 
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   auto all_bindings =
-      context.scope_stack().compile_time_bindings_stack().PeekAllValues();
+      context.scope_stack().compile_time_binding_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),
@@ -654,7 +666,7 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
 
-    specific.decl_block_id =
+    std::tie(specific.decl_block_id, specific.decl_block_has_error) =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
   }
@@ -720,8 +732,10 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    specific.definition_block_id = TryEvalBlockForSpecific(
-        context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
+    std::tie(specific.definition_block_id,
+             specific.definition_block_has_error) =
+        TryEvalBlockForSpecific(context, loc_id, specific_id,
+                                SemIR::GenericInstIndex::Definition);
   }
   return true;
 }
@@ -737,6 +751,142 @@ auto DiagnoseIfGenericMissingExplicitParameters(
                     "expected explicit parameters after implicit parameters");
   context.emitter().Emit(entity_base.last_param_node_id,
                          GenericMissingExplicitParameters);
+}
+
+static auto ValidateGenericWithoutAndWithSelfMatch(
+    Context& context, SemIR::GenericId generic_without_self_id,
+    SemIR::GenericId generic_with_self_id,
+    SemIR::SpecificId specific_without_self_id) -> void {
+  CARBON_CHECK(
+      generic_without_self_id.has_value() ==
+          specific_without_self_id.has_value(),
+      "Have a generic-without-self {0} but no specific-without-self {1} or "
+      "vice-versa",
+      generic_without_self_id, specific_without_self_id);
+
+  CARBON_CHECK(
+      generic_with_self_id.has_value(),
+      "Missing a generic ID for generic-with-self that should always exist.");
+  const auto& generic_with_self = context.generics().Get(generic_with_self_id);
+
+  auto generic_with_self_decl = context.insts().Get(generic_with_self.decl_id);
+  CARBON_CHECK(
+      (generic_with_self_decl.IsOneOf<SemIR::InterfaceWithSelfDecl,
+                                      SemIR::NamedConstraintWithSelfDecl>()),
+      "generic-with-self {0} should be a generic for an "
+      "InterfaceWithSelfDecl or NamedConstraintWithSelfDecl, found {1}",
+      generic_with_self, generic_with_self_decl);
+
+  if (!generic_without_self_id.has_value()) {
+    return;
+  }
+
+  const auto& generic_without_self =
+      context.generics().Get(generic_without_self_id);
+  const auto& specific_without_self =
+      context.specifics().Get(specific_without_self_id);
+
+  CARBON_CHECK(specific_without_self.generic_id == generic_without_self_id,
+               "specific-without-self {0} is not a specific for the "
+               "generic-without-self {1}",
+               specific_without_self, generic_without_self);
+
+  auto generic_without_self_decl =
+      context.insts().Get(generic_without_self.decl_id);
+
+  CARBON_KIND_SWITCH(generic_without_self_decl) {
+    case CARBON_KIND(SemIR::InterfaceDecl without_self_decl): {
+      auto with_self_decl =
+          generic_with_self_decl.As<SemIR::InterfaceWithSelfDecl>();
+      CARBON_CHECK(
+          without_self_decl.interface_id == with_self_decl.interface_id,
+          "Found generic-without-self for interface {0}, and generic-with-self "
+          "for interface {1}; expected the same interface for both",
+          context.interfaces().Get(without_self_decl.interface_id),
+          context.interfaces().Get(with_self_decl.interface_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::NamedConstraintDecl without_self_decl): {
+      auto with_self_decl =
+          generic_with_self_decl.As<SemIR::NamedConstraintWithSelfDecl>();
+      CARBON_CHECK(
+          without_self_decl.named_constraint_id ==
+              with_self_decl.named_constraint_id,
+          "Found generic-without-self for constraint {0}, and "
+          "generic-with-self for named constraint {1}; expected the same named "
+          "constraint for both",
+          context.named_constraints().Get(
+              without_self_decl.named_constraint_id),
+          context.named_constraints().Get(with_self_decl.named_constraint_id));
+      break;
+    }
+    default:
+      CARBON_FATAL(
+          "generic-without-self {0} should be a generic for an InterfaceDecl "
+          "or NamedConstraintDecl, found {1}",
+          generic_without_self, generic_without_self_decl);
+  }
+}
+
+auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
+                               SemIR::GenericId generic_without_self_id,
+                               SemIR::GenericId generic_with_self_id,
+                               SemIR::SpecificId specific_without_self_id,
+                               SemIR::ConstantId self_facet)
+    -> SemIR::SpecificId {
+  ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
+                                         generic_with_self_id,
+                                         specific_without_self_id);
+
+  auto outer_args_id =
+      context.specifics().GetArgsOrEmpty(specific_without_self_id);
+  auto outer_args = context.inst_blocks().Get(outer_args_id);
+
+  llvm::SmallVector<SemIR::InstId> args;
+  args.reserve(outer_args.size() + 1);
+  llvm::append_range(args, outer_args);
+
+  if (self_facet == SemIR::ErrorInst::ConstantId) {
+    args.push_back(SemIR::ErrorInst::InstId);
+  } else {
+    auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
+    CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+        context.insts().Get(self_facet_inst_id).type_id()));
+    args.push_back(self_facet_inst_id);
+  }
+
+  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
+  ResolveSpecificDefinition(context, loc_id, specific_id);
+  return specific_id;
+}
+
+auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
+                           SemIR::SpecificId specific_id,
+                           SemIR::GenericId target_generic_id)
+    -> SemIR::SpecificId {
+  if (!specific_id.has_value()) {
+    const auto& target_generic = context.generics().Get(target_generic_id);
+    auto target_bindings =
+        context.inst_blocks().Get(target_generic.bindings_id);
+    CARBON_CHECK(target_bindings.empty());
+    return SemIR::SpecificId::None;
+  }
+
+  const auto& specific = context.specifics().Get(specific_id);
+  auto source_generic_id = specific.generic_id;
+
+  const auto& source_generic = context.generics().Get(source_generic_id);
+  const auto& target_generic = context.generics().Get(target_generic_id);
+  auto source_bindings = context.inst_blocks().Get(source_generic.bindings_id);
+  auto target_bindings = context.inst_blocks().Get(target_generic.bindings_id);
+  for (auto [source, target] :
+       llvm::zip_equal(source_bindings, target_bindings)) {
+    CARBON_CHECK(context.constant_values().Get(source) ==
+                 context.constant_values().Get(target));
+  }
+
+  auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
+  return MakeSpecific(context, loc_id, target_generic_id, args_id);
 }
 
 }  // namespace Carbon::Check

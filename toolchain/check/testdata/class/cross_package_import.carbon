@@ -210,7 +210,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.af5 = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -237,7 +237,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.af5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -321,7 +321,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.af5 = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -348,7 +348,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.af5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -383,7 +383,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.af5 = import_ref Other//other_define, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -410,7 +410,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.af5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

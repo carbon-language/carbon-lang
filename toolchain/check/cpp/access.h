@@ -13,6 +13,10 @@ namespace Carbon::Check {
 // access) pair.
 auto MapCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind;
 
+// Maps a Carbon access kind to a C++ access specifier, suitable for use when
+// declaring a C++ class member with the same access. Never returns AS_none.
+auto MapToCppAccess(SemIR::AccessKind access) -> clang::AccessSpecifier;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_ACCESS_H_

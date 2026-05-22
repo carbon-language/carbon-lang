@@ -12,27 +12,6 @@
 namespace Carbon {
 
 auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  b.AddFlag(
-      {
-          .name = "build-runtimes",
-          .help = R"""(
-Enables on-demand building of target-specific runtimes.
-
-When enabled, any link actions using `clang` will build the necessary runtimes
-on-demand. This build will use any customization it can from the link command
-line flags to build the runtimes for the correct target and with any desired
-features enabled.
-
-Note: this only has an effect when `--prebuilt-runtimes` are not provided. If
-there are no prebuilt runtimes and building runtimes is disabled, then it is
-assumed the installed toolchain has had the necessary target runtimes added to
-the installation tree in the default searched locations.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&build_runtimes_on_demand);
-      });
   b.AddStringPositionalArg(
       {
           .name = "ARG",
@@ -81,7 +60,7 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     run_result = runner.RunWithPrebuiltRuntimes(options_.args,
                                                 *driver_env.prebuilt_runtimes,
                                                 driver_env.enable_leaking);
-  } else if (options_.build_runtimes_on_demand) {
+  } else if (driver_env.build_runtimes_on_demand) {
     run_result = runner.Run(options_.args, driver_env.runtimes_cache,
                             *driver_env.thread_pool, driver_env.enable_leaking);
   } else {

@@ -450,7 +450,7 @@ class Hasher {
   // both more often and have a larger impact relative to the number of keys
   // than the rare cases where some combinations of pointer seeds and pointer
   // keys create minor quality issues with the constant we use.
-  static constexpr uint64_t MulConstant = 0x7924'f9e0'de1e'8cf5U;
+  static constexpr uint64_t MulConstant = 0x79d5'f9e0'de1e'8cf5U;
 
  private:
   uint64_t buffer;

@@ -39,6 +39,7 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "aggregate.cpp",
         "clang_global_decl.cpp",
         "clang_global_decl.h",
         "constant.cpp",
@@ -46,19 +47,20 @@ cc_library(
         "context.cpp",
         "file_context.cpp",
         "function_context.cpp",
-        "mangler.cpp",
-        "mangler.h",
         "specific_coalescer.cpp",
+        "type.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
         "handle*.cpp",
     ]),
     hdrs = [
+        "aggregate.h",
         "context.h",
         "file_context.h",
         "function_context.h",
         "specific_coalescer.h",
+        "type.h",
     ],
     deps = [
         ":options",
@@ -71,13 +73,14 @@ cc_library(
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:absolute_node_id",
+        "//toolchain/sem_ir:absolute_node_ref",
         "//toolchain/sem_ir:clang_decl",
         "//toolchain/sem_ir:diagnostic_loc_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
+        "//toolchain/sem_ir:mangler",
         "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",

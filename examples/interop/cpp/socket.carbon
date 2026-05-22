@@ -40,7 +40,7 @@ fn Run() -> i32 {
     return 1;
   }
 
-  // TODO: Should be able to zero-initialize this with `= ()` or `= {}`.
+  // TODO: We should be able to use `= ()` or `= {}` to perform zero-initialization.
   var address: Cpp.sockaddr_in6;
   Cpp.memset(&address, 0, Cpp.SOCKADDR_IN_SIZE);
   // TODO: Should this be valid without a cast? `AF_INET6` is defined to an

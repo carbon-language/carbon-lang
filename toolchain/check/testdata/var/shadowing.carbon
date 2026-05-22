@@ -20,7 +20,7 @@ fn Main() {
   var NS: () = ();
   NS = ();
 
-  var x: () = ();
+  var unused x: () = ();
   if (true) {
     var x: () = ();
 
@@ -39,8 +39,8 @@ fn Main() {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,13 +89,13 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt.loc8: %pattern_type.cb1 = var_pattern %x.patt.loc8 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var.loc8: ref %empty_tuple.type = var %x.var_patt.loc8
-// CHECK:STDOUT:   %.loc8_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_3: init %empty_tuple.type = converted %.loc8_16.1, %.loc8_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_23.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_23.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_3: init %empty_tuple.type = converted %.loc8_23.1, %.loc8_23.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %x.var.loc8, %.loc8_3
-// CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_18.1: type = splice_block %.loc8_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_18.3: type = converted %.loc8_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc8: ref %empty_tuple.type = ref_binding x, %x.var.loc8
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
@@ -124,14 +124,14 @@ fn Main() {
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %x.var.loc10, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%x.var.loc10)
-// CHECK:STDOUT:   %DestroyOp.bound.loc8: <bound method> = bound_method %x.var.loc8, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc8: init %empty_tuple.type = call %DestroyOp.bound.loc8(%x.var.loc8)
-// CHECK:STDOUT:   %DestroyOp.bound.loc5: <bound method> = bound_method %NS.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc5: init %empty_tuple.type = call %DestroyOp.bound.loc5(%NS.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %x.var.loc10, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%x.var.loc10)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %x.var.loc8, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%x.var.loc8)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc5: <bound method> = bound_method %NS.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc5: init %empty_tuple.type = call %Destroy.Op.bound.loc5(%NS.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

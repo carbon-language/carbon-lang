@@ -169,6 +169,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(StateKind::ArrayExpr);
       break;
     }
+    case Lex::TokenKind::Form: {
+      context.PushState(state);
+      context.PushState(StateKind::FormLiteral);
+      break;
+    }
     case Lex::TokenKind::Package: {
       context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
       if (context.PositionKind() != Lex::TokenKind::Period) {
@@ -206,7 +211,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       auto period = context.Consume();
       if (context.ConsumeAndAddLeafNodeIf(
               Lex::TokenKind::Identifier,
-              NodeKind::IdentifierNameNotBeforeParams)) {
+              NodeKind::IdentifierNameNotBeforeSignature)) {
         // OK, `.` identifier.
       } else if (context.ConsumeAndAddLeafNodeIf(
                      Lex::TokenKind::SelfTypeIdentifier,
@@ -219,7 +224,7 @@ auto HandleExprInPostfix(Context& context) -> void {
                                ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
-          context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
+          context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                               context.Consume(), /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
           context.AddInvalidParse(context.Consume());
@@ -241,7 +246,14 @@ auto HandleExprInPostfix(Context& context) -> void {
       // If not already diagnosed in the lexer, diagnose it here.
       if (token_kind != Lex::TokenKind::Error) {
         CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
-        context.emitter().Emit(*context.position(), ExpectedExpr);
+        CARBON_DIAGNOSTIC(ExpectedPattern, Error, "expected pattern");
+        llvm::SmallVector<StateKind, 2> state_kinds(
+            llvm::map_range(llvm::ArrayRef(context.state_stack()).take_back(2),
+                            [&](const Context::State& s) { return s.kind; }));
+        bool in_pattern = state_kinds == llvm::ArrayRef{StateKind::ExprPattern,
+                                                        StateKind::ExprLoop};
+        context.emitter().Emit(*context.position(),
+                               in_pattern ? ExpectedPattern : ExpectedExpr);
       }
 
       // Add a node to keep the parse tree balanced.

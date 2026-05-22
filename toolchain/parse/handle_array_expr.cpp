@@ -41,8 +41,7 @@ auto HandleArrayExprComma(Context& context) -> void {
 
 auto HandleArrayExprFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.ConsumeAndAddCloseSymbol(*(Lex::TokenIterator(state.token)), state,
-                                   NodeKind::ArrayExpr);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::ArrayExpr);
 }
 
 }  // namespace Carbon::Parse

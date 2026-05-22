@@ -132,9 +132,6 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %And: %And.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %And.ref: %And.type = name_ref And, file.%And.decl [concrete = constants.%And]

@@ -16,7 +16,7 @@
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -51,7 +51,7 @@ class Context {
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       clang::CodeGenerator* code_generator, llvm::StringRef module_name,
       int total_ir_count, Lower::OptimizationLevel opt_level,
-      llvm::raw_ostream* vlog_stream);
+      bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -72,7 +72,7 @@ class Context {
   auto Finalize() && -> std::unique_ptr<llvm::Module>;
 
   // Returns location information for use with DebugInfo.
-  auto GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI;
+  auto GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
@@ -124,6 +124,9 @@ class Context {
     return *tree_and_subtrees_getters_;
   }
   auto total_ir_count() -> int { return total_ir_count_; }
+  auto mangle_string_fingerprint() const -> bool {
+    return mangle_string_fingerprint_;
+  }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -170,6 +173,9 @@ class Context {
 
   // The total number of files.
   int total_ir_count_;
+
+  // Whether to use the string form of the fingerprint for mangling.
+  bool mangle_string_fingerprint_;
 
   // The `FileContext`s for each IR that is involved in this lowering action.
   using FileContextStore =

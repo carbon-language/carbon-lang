@@ -137,20 +137,25 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
   return GetTypeImpl<SemIR::ConstType>(context, inner_type_id);
 }
 
+auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::TypeComponentOf>(context, form_inst_id);
+}
+
 auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
                       SemIR::TypeQualifiers quals) -> SemIR::TypeId {
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
-    type_id = GetConstType(context, context.types().GetInstId(type_id));
+    type_id = GetConstType(context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::Const);
   }
   if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed)) {
     type_id = GetTypeImpl<SemIR::MaybeUnformedType>(
-        context, context.types().GetInstId(type_id));
+        context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::MaybeUnformed);
   }
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Partial)) {
     type_id = GetTypeImpl<SemIR::PartialType>(
-        context, context.types().GetInstId(type_id));
+        context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::Partial);
   }
   CARBON_CHECK(quals == SemIR::TypeQualifiers::None);
@@ -240,6 +245,11 @@ auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
                                        context.facet_types().Add(info));
 }
 
+auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetAccessType>(context, facet_value_inst_id);
+}
+
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
@@ -253,7 +263,7 @@ auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
     return SemIR::ErrorInst::TypeId;
   }
   return GetTypeImpl<SemIR::PatternType>(
-      context, context.types().GetInstId(scrutinee_type_id));
+      context, context.types().GetTypeInstId(scrutinee_type_id));
 }
 
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
@@ -269,12 +279,6 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
 
   if (auto access =
           context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
-    return access->facet_value_inst_id;
-  }
-
-  if (auto access =
-          context.insts().TryGetAs<SemIR::SymbolicBindingType>(const_inst_id)) {
-    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
     return access->facet_value_inst_id;
   }
 

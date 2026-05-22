@@ -29,12 +29,6 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   return true;
 }
 
-static auto IsNamespaceScope(Context& context, SemIR::NameScopeId name_scope_id)
-    -> bool {
-  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
-  return inst && inst->Is<SemIR::Namespace>();
-}
-
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
@@ -47,7 +41,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
 
   auto namespace_inst = SemIR::Namespace{
       GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-      SemIR::NameScopeId::None, SemIR::InstId::None};
+      SemIR::NameScopeId::None};
   auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
   SemIR::ScopeLookupResult lookup_result =
@@ -79,7 +73,10 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
         context.name_scopes()
             .Get(existing->name_scope_id)
             .set_is_closed_import(false);
-      } else if (existing->import_id.has_value() &&
+      } else if (context.name_scopes()
+                     .Get(existing->name_scope_id)
+                     .import_id()
+                     .has_value() &&
                  !context.insts()
                       .GetCanonicalLocId(existing_inst_id)
                       .has_value()) {
@@ -100,7 +97,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
         name_context.parent_scope_id);
-    if (!IsNamespaceScope(context, name_context.parent_scope_id)) {
+    if (!context.name_scopes().InstIs<SemIR::Namespace>(
+            name_context.parent_scope_id)) {
       CARBON_DIAGNOSTIC(NamespaceDeclNotAtTopLevel, Error,
                         "`namespace` declaration not at top level");
       context.emitter().Emit(node_id, NamespaceDeclNotAtTopLevel);

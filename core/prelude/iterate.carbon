@@ -20,7 +20,7 @@ interface Iterate {
 impl forall [T:! Copy & Destroy, N:! IntLiteral()]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
-  fn NewCursor[self: Self]() -> i32 { return 0; }
+  fn NewCursor[unused self: Self]() -> i32 { return 0; }
   fn Next[self: Self](cursor: i32*) -> Optional(T) {
     if (*cursor < N) {
       ++*cursor;
@@ -29,4 +29,11 @@ impl forall [T:! Copy & Destroy, N:! IntLiteral()]
       return Optional(T).None();
     }
   }
+}
+
+interface CppRangeForIterate {
+  let Iterator:! type;
+  let Sentinel:! type;
+  fn Begin[ref self: Self]() -> Iterator;
+  fn End[ref self: Self]() -> Sentinel;
 }

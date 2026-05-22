@@ -4,5 +4,5 @@
 
 [tool.black]
 line-length = 80
-target-version = ['py36', 'py37', 'py38']
+target-version = ['py310']
 include = '\.pyi?$'

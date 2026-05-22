@@ -5,19 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 #define CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 
-#include <compare>
-
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
 // Create a FacetType typed instruction object consisting of a interface. The
 // `specific_id` specifies arguments in the case the interface is generic.
-//
-// The resulting FacetType may contain multiple interfaces if the named
-// interface contains `require` declarations.
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
 
@@ -64,14 +58,6 @@ auto ResolveFacetTypeRewriteConstraints(
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
     -> bool;
 
-// Introduce `.Self` as a symbolic binding into the current scope, and return
-// the `SymbolicBinding` instruction.
-//
-// The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
-// `TypeType`).
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId;
-
 // Get a FacetType instruction for an empty FacetType. This is the facet
 // equivalent to TypeType.
 //
@@ -83,6 +69,11 @@ auto GetEmptyFacetType(Context& context) -> SemIR::TypeId;
 // type. Returns a constant value, whose instruction payload is a FacetValue.
 auto GetConstantFacetValueForType(Context& context,
                                   SemIR::TypeInstId type_inst_id)
+    -> SemIR::ConstantId;
+
+auto GetConstantFacetValueForTypeAndInterface(
+    Context& context, SemIR::TypeInstId type_inst_id,
+    SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check

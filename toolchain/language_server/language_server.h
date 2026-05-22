@@ -7,7 +7,7 @@
 
 #include "common/ostream.h"
 #include "toolchain/base/install_paths.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 
 namespace Carbon::LanguageServer {
 

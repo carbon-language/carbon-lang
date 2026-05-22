@@ -4,17 +4,13 @@
 
 """Definitions of debugging related features used in a `cc_toolchain_config`."""
 
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
     "feature_set",
     "flag_group",
     "flag_set",
-)
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_link_actions",
-    "codegen_compile_actions",
 )
 
 # Handle different levels and forms of debug info emission with individual
@@ -24,7 +20,7 @@ minimal_debug_info_flags = feature(
     name = "minimal_debug_info_flags",
     implies = ["debug_info_compression_flags"],
     flag_sets = [flag_set(
-        actions = codegen_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [flag_group(flags = ["-gmlt"])],
     )],
 )
@@ -32,7 +28,7 @@ debug_info_flags = feature(
     name = "debug_info_flags",
     implies = ["debug_info_compression_flags"],
     flag_sets = [flag_set(
-        actions = codegen_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [
             flag_group(flags = ["-g"]),
             flag_group(
@@ -45,7 +41,7 @@ debug_info_flags = feature(
 debug_info_compression_flags = feature(
     name = "debug_info_compression_flags",
     flag_sets = [flag_set(
-        actions = codegen_compile_actions + all_link_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
         flag_groups = [flag_group(flags = ["-gz"])],
     )],
 )
@@ -60,7 +56,7 @@ lldb_flags = feature(
     requires = [feature_set(features = ["debug_info_flags"])],
     provides = ["debugger_flags"],
     flag_sets = [flag_set(
-        actions = codegen_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [flag_group(flags = [
             "-glldb",
             "-gpubnames",
@@ -75,14 +71,14 @@ gdb_flags = feature(
     provides = ["debugger_flags"],
     flag_sets = [
         flag_set(
-            actions = codegen_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(flags = [
                 "-ggdb",
                 "-ggnu-pubnames",
             ])],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [flag_group(flags = ["-Wl,--gdb-index"])],
         ),
     ],
@@ -93,7 +89,7 @@ gdb_flags = feature(
 preserve_call_stacks = feature(
     name = "preserve_call_stacks",
     flag_sets = [flag_set(
-        actions = codegen_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [flag_group(flags = [
             # Ensure good backtraces by preserving frame pointers and
             # disabling tail call elimination.

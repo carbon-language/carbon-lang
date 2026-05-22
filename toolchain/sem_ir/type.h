@@ -77,13 +77,17 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
   auto GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId;
 
+  // Like GetTypeIdForTypeInstId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
+
   // Converts an `InstId` to a `TypeInstId` of the same id value. This process
   // involves checking that the type of the instruction's value is `TypeType`,
   // and then this check is encoded in the type system via `TypeInstId`.
   auto GetAsTypeInstId(InstId inst_id) const -> TypeInstId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> TypeInstId;
+  auto GetTypeInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
@@ -137,11 +141,21 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return GetAsInst(type_id).TryAs<InstT>();
   }
 
+  // Like TryGetAs() but also handles the case where `type_id` has no value, and
+  // then returns nullopt.
+  template <typename InstT>
+  auto TryGetAsIfValid(TypeId type_id) const -> std::optional<InstT> {
+    if (!type_id.has_value()) {
+      return {};
+    }
+    return GetAsInst(type_id).TryAs<InstT>();
+  }
+
   // Returns whether two type IDs represent the same type. This includes the
   // case where they might be in different generics and thus might have
   // different ConstantIds, but are still symbolically equal.
   auto AreEqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
-    return GetInstId(a) == GetInstId(b);
+    return GetTypeInstId(a) == GetTypeInstId(b);
   }
 
   // Gets the value representation to use for a type. This returns an
@@ -249,6 +263,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
         map.Add(PrintToString(type_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
                   map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+                  map2.Add(
+                      "object_layout",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map3) {
+                        map3.Add("size",
+                                 Yaml::OutputScalar(info.object_layout.size));
+                        map3.Add(
+                            "alignment",
+                            Yaml::OutputScalar(info.object_layout.alignment));
+                      }));
                   if (info.abstract_class_id.has_value()) {
                     map2.Add("abstract_class_id",
                              Yaml::OutputScalar(info.abstract_class_id));

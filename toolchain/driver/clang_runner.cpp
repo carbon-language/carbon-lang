@@ -173,22 +173,30 @@ auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                           prebuilt_runtimes.Get(Runtimes::Libcxx));
   return RunInternal(args, target, prebuilt_resource_dir_path.native(),
                      std::move(libunwind_path), std::move(libcxx_path),
-                     enable_leaking);
+                     /*link_runtime_libs=*/true, enable_leaking);
 }
 
 auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
                       Runtimes::Cache& runtimes_cache,
                       llvm::ThreadPoolInterface& runtimes_build_thread_pool,
                       bool enable_leaking) -> ErrorOr<bool> {
+  std::string target = ComputeClangTarget(args);
+
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
   if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
-    return RunWithNoRuntimes(args, enable_leaking);
+    // Note that we do allow linking default libraries here -- we want to learn
+    // if a command ever goes through this path and Clang thinks it needs to
+    // link a library as the goal here is to correctly detect that this will
+    // _not_ happen. Suppressing the linking of default libraries would hide a
+    // failure in that case.
+    return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
+                       /*libunwind_path=*/std::nullopt,
+                       /*libcxx_path=*/std::nullopt, /*link_runtime_libs=*/true,
+                       enable_leaking);
   }
-
-  std::string target = ComputeClangTarget(args);
 
   Runtimes::Cache::Features features = {.target = target};
   CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache.Lookup(features));
@@ -219,7 +227,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // return.
   return RunInternal(args, target, resource_dir_path.native(),
                      std::move(libunwind_path), std::move(libcxx_path),
-                     enable_leaking);
+                     /*link_runtime_libs=*/true, enable_leaking);
 }
 
 auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
@@ -227,16 +235,42 @@ auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
   std::string target = ComputeClangTarget(args);
   return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
                      /*libunwind_path=*/std::nullopt,
-                     /*libcxx_path=*/std::nullopt, enable_leaking);
+                     /*libcxx_path=*/std::nullopt, /*link_runtime_libs=*/false,
+                     enable_leaking);
+}
+
+auto ClangRunner::RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
+                              bool enable_leaking) -> int {
+  if (cstr_args[1] == llvm::StringRef("-cc1")) {
+    CARBON_VLOG("Dispatching `-cc1` command line in-process...");
+    int exit_code =
+        RunClangCC1Main(*installation_, fs_, cstr_args, enable_leaking);
+    return exit_code;
+  }
+
+  // Other CC1-based invocations need to dispatch into the `clang_main`
+  // routine to work correctly. This means they're not reliable in a library
+  // context but currently there is too much logic to reasonably extract here.
+  // This at least allows simple cases (often when directly used on the
+  // command line) to work correctly.
+  //
+  // TODO: Factor the relevant code paths into a library API or move this into
+  // the busybox dispatch logic.
+  CARBON_VLOG("Calling clang_main for a cc1-based invocation...");
+  // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
+  llvm::ToolContext tool_context = {
+      .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+  int exit_code = clang_main(
+      cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
+  return exit_code;
 }
 
 auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
     std::optional<llvm::StringRef> target_resource_dir_path,
-
     std::optional<std::filesystem::path> libunwind_path,
-    std::optional<std::filesystem::path> libcxx_path, bool enable_leaking)
-    -> ErrorOr<bool> {
+    std::optional<std::filesystem::path> libcxx_path, bool link_runtime_libs,
+    bool enable_leaking) -> ErrorOr<bool> {
   llvm::BumpPtrAllocator alloc;
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
@@ -244,30 +278,8 @@ auto ClangRunner::RunInternal(
   if (!args.empty() && args[0].starts_with("-cc1")) {
     llvm::SmallVector<const char*, 64> cstr_args =
         BuildCStrArgs(clang_path_.native(), args, alloc);
-    if (args[0] == "-cc1") {
-      CARBON_VLOG("Dispatching `-cc1` command line...");
-      int exit_code =
-          RunClangCC1(*installation_, fs_, cstr_args, enable_leaking);
-      // TODO: Should this be forwarding the full exit code?
-      return exit_code == 0;
-    }
-
-    // Other CC1-based invocations need to dispatch into the `clang_main`
-    // routine to work correctly. This means they're not reliable in a library
-    // context but currently there is too much logic to reasonably extract here.
-    // This at least allows simple cases (often when directly used on the
-    // command line) to work correctly.
-    //
-    // TODO: Factor the relevant code paths into a library API or move this into
-    // the busybox dispatch logic.
-    CARBON_VLOG("Calling clang_main for a cc1-based invocation...");
-    // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
-    llvm::ToolContext tool_context = {
-        .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
-    int exit_code = clang_main(
-        cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
     // TODO: Should this be forwarding the full exit code?
-    return exit_code == 0;
+    return RunClangCC1(cstr_args, enable_leaking) == 0;
   }
 
   // We start with a custom prefix of arguments to establish Carbon's default
@@ -278,19 +290,39 @@ auto ClangRunner::RunInternal(
 
   AppendDefaultClangArgs(*installation_, target, prefix_args);
 
-  // We don't have a direct way to configure the linker search paths in the
-  // Clang driver outside of command line flags, so we inject them here with
-  // flags. Note that we only inject these as _search_ paths to allow the normal
-  // linking rules to govern whether or not to link a given library. We also
-  // build our runtimes exclusively as static archives so we don't need to use
-  // command line flags to force static runtime linking to occur.
-  if (libunwind_path) {
-    prefix_args.push_back(
-        llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
-  }
-  if (libcxx_path) {
-    prefix_args.push_back(
-        llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+  if (link_runtime_libs) {
+    // We don't have a direct way to configure the linker search paths in the
+    // Clang driver outside of command line flags, so we inject them here with
+    // flags. Note that we only inject these as _search_ paths to allow the
+    // normal linking rules to govern whether or not to link a given library. We
+    // also build our runtimes exclusively as static archives so we don't need
+    // to use command line flags to force static runtime linking to occur.
+    if (libunwind_path) {
+      prefix_args.push_back(
+          llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
+    }
+    if (libcxx_path) {
+      prefix_args.push_back(
+          llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+    }
+  } else {
+    // If we are suppressing the linking of default libs, ensure we didn't get a
+    // path to add to the link for them, or an override of the resource
+    // directory.
+    CARBON_CHECK(!target_resource_dir_path);
+    CARBON_CHECK(!libunwind_path);
+    CARBON_CHECK(!libcxx_path);
+
+    // Now suppress all the default library linking, as we don't expect to have
+    // any target runtimes on this code path.
+    //
+    // TODO: What we actually want here is something more like `-nostdlib++`,
+    // `-unwindlib=none`, `-rtlib=none`; however, the last of these doesn't
+    // exist in Clang and looks tricky to introduce. This is almost certainly
+    // wrong, as it likely suppresses the linking of the _C_ standard library,
+    // which isn't one of the Clang runtime libraries we're trying to control
+    // here. But the only user of this currently doesn't need to distinguish.
+    prefix_args.push_back("-nostdlib");
   }
   prefix_args.push_back("--end-no-unused-arguments");
 
@@ -311,26 +343,30 @@ auto ClangRunner::RunInternal(
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
+  llvm::SmallVector<std::pair<int, const clang::driver::Command*>>
+      failing_commands;
+  int result = -1;
+
   // Create the diagnostic options and parse arguments controlling them out of
   // our arguments.
   std::unique_ptr<clang::DiagnosticOptions> diagnostic_options =
       clang::CreateAndPopulateDiagOpts(cstr_args);
 
   // TODO: We don't yet support serializing diagnostics the way the actual
-  // `clang` command line does. Unclear if we need to or not, but it would need
-  // a bit more logic here to set up chained consumers.
+  // `clang` command line does. Unclear if we need to or not, but it would
+  // need a bit more logic here to set up chained consumers.
   clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
                                                  *diagnostic_options);
 
-  // Note that the `DiagnosticsEngine` takes ownership (via a ref count) of the
-  // DiagnosticIDs, unlike the other parameters.
+  // Note that the `DiagnosticsEngine` takes ownership (via a ref count) of
+  // the DiagnosticIDs, unlike the other parameters.
   clang::DiagnosticsEngine diagnostics(clang::DiagnosticIDs::create(),
                                        *diagnostic_options, &diagnostic_client,
                                        /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
 
-  // Note that we configure the driver's *default* target here, not the expected
-  // target as that will be parsed out of the command line below.
+  // Note that we configure the driver's *default* target here, not the
+  // expected target as that will be parsed out of the command line below.
   clang::driver::Driver driver(clang_path_.native(),
                                llvm::sys::getDefaultTargetTriple(), diagnostics,
                                "clang LLVM compiler", fs_);
@@ -344,8 +380,8 @@ auto ClangRunner::RunInternal(
   // Currently, we're only targeting macOS support though.
   if (target_triple.isMacOSX()) {
     // This is the default CLT system root, shown by `xcrun --show-sdk-path`.
-    // We hard code it here to avoid the overhead of subprocessing to `xcrun` on
-    // each Clang invocation, but this may need to be updated to search or
+    // We hard code it here to avoid the overhead of subprocessing to `xcrun`
+    // on each Clang invocation, but this may need to be updated to search or
     // reflect macOS versions if this changes in the future.
     driver.SysRoot = "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
   }
@@ -369,15 +405,15 @@ auto ClangRunner::RunInternal(
   // still subprocess. See `InProcess` comment at:
   // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
   //
-  // Note the subprocessing will effectively call `clang -cc1`, which turns into
-  // `carbon-busybox clang -cc1`, which results in an equivalent `clang_main`
-  // call.
+  // Note the subprocessing will effectively call `clang -cc1`, which turns
+  // into `carbon-busybox clang -cc1`, which results in an equivalent
+  // `clang_main` call.
   //
   // Also note that we only do `-disable-free` filtering in the in-process
   // execution here, as subprocesses leaking memory won't impact this process.
   auto cc1_main = [this, enable_leaking](
                       llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
-    return RunClangCC1(*installation_, fs_, cc1_args, enable_leaking);
+    return RunClangCC1(cc1_args, enable_leaking);
   };
   driver.CC1Main = cc1_main;
 
@@ -389,8 +425,8 @@ auto ClangRunner::RunInternal(
     return false;
   }
 
-  // Make sure our target detection matches Clang's. Sadly, we can't just reuse
-  // Clang's as it is available too late.
+  // Make sure our target detection matches Clang's. Sadly, we can't just
+  // reuse Clang's as it is available too late.
   // TODO: Use nice diagnostics here rather than a check failure.
   CARBON_CHECK(llvm::Triple(target) == llvm::Triple(driver.getTargetTriple()),
                "Mismatch between the expected target '{0}' and the one "
@@ -399,13 +435,7 @@ auto ClangRunner::RunInternal(
 
   CARBON_VLOG("Running Clang driver...\n");
 
-  llvm::SmallVector<std::pair<int, const clang::driver::Command*>>
-      failing_commands;
-  int result = driver.ExecuteCompilation(*compilation, failing_commands);
-
-  // Finish diagnosing any failures before we verbosely log the source of those
-  // failures.
-  diagnostic_client.finish();
+  result = driver.ExecuteCompilation(*compilation, failing_commands);
 
   CARBON_VLOG("Execution result code: {0}\n", result);
   for (const auto& [command_result, failing_command] : failing_commands) {

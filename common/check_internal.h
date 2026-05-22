@@ -85,8 +85,7 @@ template <TemplateString Kind, TemplateString File, int Line,
 #ifdef NDEBUG
 [[noreturn]]
 #endif
-[[gnu::cold, clang::noinline]] auto
-CheckFail(Ts&&... values) -> void {
+[[gnu::cold, clang::noinline]] auto CheckFail(Ts&&... values) -> void {
   if constexpr (llvm::StringRef(FormatStr).empty()) {
     // Skip the format string rendering if empty. Note that we don't skip it
     // even if there are no values as we want to have consistent handling of

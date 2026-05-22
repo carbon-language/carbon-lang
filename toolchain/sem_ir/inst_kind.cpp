@@ -29,4 +29,12 @@ auto InstKind::has_type() const -> bool {
   return Table[AsInt()];
 }
 
+auto InstKind::IsAllowedNodeKind(Parse::NodeKind node_kind) const -> bool {
+  const auto& def = definition_info(*this);
+  if (def.internal_allow_all_node_kinds) {
+    return true;
+  }
+  return llvm::is_contained(def.internal_allowed_node_kinds, node_kind);
+}
+
 }  // namespace Carbon::SemIR

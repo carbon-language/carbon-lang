@@ -24,10 +24,10 @@ interface Foo
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'InterfaceDecl', text: '}', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'InterfaceDecl', text: 'Foo', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

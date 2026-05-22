@@ -39,49 +39,17 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::InPlaceInit inst) -> void {
-  auto type = context.GetTypeIdOfInst(inst_id);
-  auto* value = context.GetValue(inst.dest_id);
-
-  // If the initializing representation is by-value, and the value
-  // representation is by-copy, then we need to load from the storage. Otherwise
-  // we want a pointer to the result.
-  switch (context.GetInitRepr(type).kind) {
-    case SemIR::InitRepr::None:
-    case SemIR::InitRepr::InPlace:
-      break;
-    case SemIR::InitRepr::ByCopy:
-      switch (context.GetValueRepr(type).repr.kind) {
-        case SemIR::ValueRepr::Unknown:
-          CARBON_FATAL("Unexpected incomplete type");
-        case SemIR::ValueRepr::Dependent:
-          CARBON_FATAL("Unexpected dependent type");
-        case SemIR::ValueRepr::None:
-        case SemIR::ValueRepr::Pointer:
-          break;
-        case SemIR::ValueRepr::Copy:
-          value = context.builder().CreateLoad(context.GetType(type), value);
-          break;
-        case SemIR::ValueRepr::Custom:
-          CARBON_FATAL(
-              "TODO: Add support for InPlaceInit with custom value rep");
-      }
-      break;
-    case SemIR::InitRepr::Abstract:
-      CARBON_FATAL("Unexpected abstract type");
-    case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL("Unexpected incomplete type");
-    case SemIR::InitRepr::Dependent:
-      CARBON_FATAL("Unexpected dependent type");
-  }
-
-  context.SetLocal(inst_id, value);
+                SemIR::MarkInPlaceInit inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.dest_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst_id), inst.storage_id,
-                     inst.init_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), inst.init_id) !=
+      SemIR::ExprCategory::InPlaceInitializing) {
+    context.InitializeStorage(context.GetTypeIdOfInst(inst_id), inst.storage_id,
+                              inst.init_id);
+  }
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
@@ -104,7 +72,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
-               SemIR::ExprCategory::Initializing);
+               SemIR::ExprCategory::ReprInitializing);
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);
   auto init_repr = context.GetInitRepr(inst_type);

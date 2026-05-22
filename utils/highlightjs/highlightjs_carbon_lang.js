@@ -57,6 +57,7 @@ export default function (hljs) {
       'like',
       'match',
       'self',
+      'static',
       'namespace',
       'not',
       'observe',

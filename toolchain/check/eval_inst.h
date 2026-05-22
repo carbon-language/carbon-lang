@@ -104,6 +104,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     -> bool {
   switch (kind) {
     case SemIR::InstConstantKind::Never:
+    case SemIR::InstConstantKind::ConstantInstAction:
     case SemIR::InstConstantKind::InstAction:
     case SemIR::InstConstantKind::WheneverPossible:
     case SemIR::InstConstantKind::Always:
@@ -124,7 +125,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
 template <typename InstT, bool HasFn, bool HasInstId>
 struct FunctionTypeForEvalConstantInstImpl {
   // By default, we want no `EvalConstantInst` function at all. But we can't
-  // express that, so use the type `auto () -> voic` as a placaeholder.
+  // express that, so use the type `auto () -> void` as a placeholder.
   using Type = auto() -> void;
 };
 template <typename InstT>

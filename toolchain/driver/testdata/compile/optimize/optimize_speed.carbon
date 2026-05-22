@@ -66,7 +66,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
 // CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !23
 // CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %1 = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !38
+// CHECK:STDOUT:   %1 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !38
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !38
 // CHECK:STDOUT:   %wide.load = load <4 x i32>, ptr %1, align 4, !dbg !38
 // CHECK:STDOUT:   %wide.load4 = load <4 x i32>, ptr %2, align 4, !dbg !38
@@ -75,7 +75,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   store <4 x i32> %3, ptr %1, align 4, !dbg !38
 // CHECK:STDOUT:   store <4 x i32> %4, ptr %2, align 4, !dbg !38
 // CHECK:STDOUT:   %5 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %6 = getelementptr inbounds nuw i32, ptr %a, i64 %5, !dbg !38
+// CHECK:STDOUT:   %6 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %5, !dbg !38
 // CHECK:STDOUT:   %7 = getelementptr inbounds nuw i8, ptr %6, i64 32, !dbg !38
 // CHECK:STDOUT:   %8 = getelementptr inbounds nuw i8, ptr %6, i64 48, !dbg !38
 // CHECK:STDOUT:   %wide.load.1 = load <4 x i32>, ptr %7, align 4, !dbg !38
@@ -97,6 +97,12 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   uselistorder ptr %2, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %8, { 1, 0 }
 // CHECK:STDOUT:   uselistorder i32 %index.next.1, { 1, 0 }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !43 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -124,20 +130,20 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !3, line: 15, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{null, !19}
-// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 9, scope: !16)
-// CHECK:STDOUT: !23 = !DILocation(line: 277, column: 3, scope: !24, inlinedAt: !31)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !25, line: 277, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
+// CHECK:STDOUT: !23 = !DILocation(line: 299, column: 3, scope: !24, inlinedAt: !31)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.04e8e1f1c1e2bc99.Core:Int.9452f4c51951679b.Core:AddAssignWith.78e744410a40fd74.Core.9c83a169ad974fa6", scope: null, file: !25, line: 299, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{null, !7, !7}
 // CHECK:STDOUT: !28 = !{!29, !30}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !7)
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !24, type: !7)
-// CHECK:STDOUT: !31 = distinct !DILocation(line: 343, column: 5, scope: !32, inlinedAt: !37)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !25, line: 341, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
+// CHECK:STDOUT: !31 = distinct !DILocation(line: 365, column: 5, scope: !32, inlinedAt: !37)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !25, line: 363, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
 // CHECK:STDOUT: !33 = !DISubroutineType(types: !34)
 // CHECK:STDOUT: !34 = !{null, !7}
 // CHECK:STDOUT: !35 = !{!36}
@@ -148,3 +154,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !40 = !{!"llvm.loop.isvectorized", i32 1}
 // CHECK:STDOUT: !41 = !{!"llvm.loop.unroll.runtime.disable"}
 // CHECK:STDOUT: !42 = !DILocation(line: 15, column: 1, scope: !16)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 17, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !44)
+// CHECK:STDOUT: !44 = !{!45}
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
+// CHECK:STDOUT: !46 = !DILocation(line: 17, column: 3, scope: !43)

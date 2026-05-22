@@ -11,14 +11,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [DiagnosticEmitter](#diagnosticemitter)
--   [DiagnosticConsumers](#diagnosticconsumers)
+-   [Emitters](#emitters)
+-   [Consumers](#consumers)
+    -   [SortingConsumer](#sortingconsumer)
 -   [Producing diagnostics](#producing-diagnostics)
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
 -   [Diagnostic context](#diagnostic-context)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -26,44 +29,65 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The diagnostic code is used by the toolchain to produce output.
 
-## DiagnosticEmitter
+## Emitters
 
-[DiagnosticEmitters](/toolchain/diagnostics/diagnostic_emitter.h) handle the
-main formatting of a message. It's parameterized on a location type, for which a
-DiagnosticLocationTranslator must be provided that can translate the location
-type into a standardized DiagnosticLocation of file, line, and column.
+[`Emitter`s](/toolchain/diagnostics/emitter.h) handle the main formatting of a
+message. It's parameterized on a location type, which `ConvertLoc` translates
+into a standardized DiagnosticLocation of file, line, and column.
 
-When emitting, the resulting formatted message is passed to a
-DiagnosticConsumer.
+When emitting, the resulting formatted message is passed to a `Consumer`.
 
-## DiagnosticConsumers
+## Consumers
 
-DiagnosticConsumers handle output of diagnostic messages after they've been
-formatted by an Emitter. Important consumers are:
+`Consumer`s handle output of diagnostic messages after they've been formatted by
+an Emitter. Important consumers are:
 
--   [ConsoleDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.cpp):
-    prints diagnostics to console.
+-   [ConsoleConsumer](/toolchain/diagnostics/consumer.cpp): prints diagnostics
+    to console.
 
--   [ErrorTrackingDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.h):
-    counts the number of errors produced, particularly so that it can be
-    determined whether any errors were encountered.
+-   [ErrorTrackingConsumer](/toolchain/diagnostics/consumer.h): counts the
+    number of errors produced, particularly so that it can be determined whether
+    any errors were encountered.
 
--   [SortingDiagnosticConsumer](/toolchain/diagnostics/sorting_diagnostic_consumer.h):
-    sorts diagnostics by line so that diagnostics are seen in terminal based on
-    their order in the file rather than the order they were produced.
+-   [SortingConsumer](/toolchain/diagnostics/sorting_consumer.h): buffers and
+    sorts diagnostics to provide a more human-understandable order while
+    maintaining causal consistency.
 
--   [NullDiagnosticConsumer](/toolchain/diagnostics/null_diagnostics.h):
-    suppresses diagnostics, particularly for tests.
+### SortingConsumer
 
-Note that `SortingDiagnosticConsumer` is used by default by `carbon compile`. In
-cases where one error leads to another error at an earlier location, for example
-if an error in a function call argument leads to an error in the function call,
-this can result in confusing diagnostic output where a consequence of the error
-is reported before the cause. Usually this should be handled by tracking that an
-error occurred and suppressing the follow-on diagnostic. During toolchain
-development, it can be useful to disable the sorting so that the diagnostic
-order matches the order in which the file was processed. This can be done using
-`carbon compile –stream-errors`.
+`SortingConsumer` is used by default by `carbon compile`. To see the actual
+emitted order, use `carbon compile --stream-errors`.
+
+The current `SortingConsumer` implementation sorts diagnostics based on the
+`last_byte_offset`, which represents the latest token handled by the phase
+emitting the diagnostic. This maintains the causal order of the toolchain's
+traversal.
+
+We expect cases where multiple diagnostics are emitted at the same offset,
+particularly when they're emitted at the end of a scope. These can have attached
+locations earlier in the scope, such as variable declarations. In these cases,
+we put non-on-scope diagnostics first, and then sort on-scope diagnostics by
+their start position (line and column).
+
+Diagnostic sorting is stable, so that diagnostics from earlier phases are
+printed first if all else is equal.
+
+The sorting approach balances several competing needs:
+
+-   **Causal order**: Developers generally want to fix errors in the order they
+    are printed. If fixing error A could also fix error B, A should be printed
+    first.
+
+-   **Human-understandable order**: A human expects diagnostics to follow the
+    flow of the file. If all parse errors in a file are printed before any
+    semantic check errors, the developer may find it confusing to jump back and
+    forth through the file.
+
+-   **Performance where possible**: On fully correct code with no diagnostics,
+    which is our performance priority, this has negligible overhead. When there
+    are diagnostics, we try to only sort within the `SortingConsumer`. When
+    sorting is not desired (such as tools and IDEs that provide their own
+    ordering), it's easy to disable.
 
 ## Producing diagnostics
 
@@ -94,10 +118,18 @@ of an argument to expect for message formatting. The `invalid_char` argument to
 `Emit` provides the matching value. It's then passed along with the diagnostic
 message format to `llvm::formatv` to produce the final diagnostic message.
 
+An on-scope diagnostic uses `CARBON_DIAGNOSTIC_ON_SCOPE` which is identical
+other than the macro name. For example:
+
+```cpp
+CARBON_DIAGNOSTIC_ON_SCOPE(InvalidInScope, Error, "error inside scope");
+emitter.Emit(location, InvalidInScope);
+```
+
 ## Diagnostic registry
 
-There is a [registry](/toolchain/diagnostics/diagnostic_kind.def) which all
-diagnostics must be added to. Each diagnostic has a line like:
+There is a [registry](/toolchain/diagnostics/kind.def) which all diagnostics
+must be added to. Each diagnostic has a line like:
 
 ```cpp
 CARBON_DIAGNOSTIC_KIND(InvalidCode)
@@ -123,14 +155,14 @@ have their own location information. A diagnostic with a note looks like:
 
 ```cpp
 CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                  "{0} argument(s) passed to function expecting "
-                  "{1} argument(s).",
-                  int, int);
+                  "{0} argument{0:s} passed to `{1}` expecting "
+                  "{2} argument{2:s}",
+                  IntAsSelect, std::string, IntAsSelect);
 CARBON_DIAGNOSTIC(InCallToFunction, Note,
                   "calling function declared here");
 context.emitter()
-    .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
-           param_refs.size())
+    .Build(call_parse_node, CallArgCountMismatch,
+           arg_refs.size(), fn_name, aram_refs.size())
     .Note(param_parse_node, InCallToFunction)
     .Emit();
 ```
@@ -285,3 +317,14 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     only allowed for types?
 
 -   TODO: Lots more things to decide, give examples.
+
+## Alternatives considered
+
+-   [Don't sort diagnostics](/proposals/p6699.md#dont-sort-diagnostics)
+-   [Sort by line and column](/proposals/p6699.md#sort-by-line-and-column)
+-   [Sort by last processed token](/proposals/p6699.md#sort-by-last-processed-token)
+
+## References
+
+-   Proposal
+    [#6699: Sort diagnostics](https://github.com/carbon-language/carbon-lang/pull/6699)

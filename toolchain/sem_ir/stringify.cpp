@@ -46,10 +46,14 @@ namespace {
 // lifetime of `Stringify`.
 class StepStack {
  public:
+  struct StopQualifiedNames {};
+  struct ResumeQualifiedNames {};
+
   // An individual step in the stack, which stringifies some component of a type
   // name.
   using Step =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId>;
+      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId,
+                   StopQualifiedNames, ResumeQualifiedNames>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -78,10 +82,19 @@ class StepStack {
   auto PushFacetType(FacetTypeId facet_type_id) -> void {
     steps_.push_back(facet_type_id);
   }
+  auto PushResumeQualfiedNames() -> void {
+    steps_.push_back(ResumeQualifiedNames{});
+  }
+  auto PushStopQualfiedNames() -> void {
+    steps_.push_back(StopQualifiedNames{});
+  }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
     PushNameId(name_id);
+    if (!qualified_names_) {
+      return;
+    }
     while (name_scope_id.has_value() && name_scope_id != NameScopeId::Package) {
       const auto& name_scope = sem_ir_->name_scopes().Get(name_scope_id);
       // TODO: Decide how to print unnamed scopes.
@@ -110,7 +123,7 @@ class StepStack {
 
   // Pushes an instruction by its TypeId.
   auto PushTypeId(TypeId type_id) -> void {
-    PushInstId(sem_ir_->types().GetInstId(type_id));
+    PushInstId(sem_ir_->types().GetTypeInstId(type_id));
   }
 
   // Pushes a specific interface by the interface's entity name.
@@ -176,7 +189,7 @@ class StepStack {
           PushSpecificNamedConstraint(specific_named_constraint);
           break;
         }
-        case CARBON_KIND(llvm::ListSeparator * sep): {
+        case CARBON_KIND(llvm::ListSeparator* sep): {
           PushString(*sep);
           break;
         }
@@ -192,6 +205,10 @@ class StepStack {
 
   auto empty() const -> bool { return steps_.empty(); }
   auto Pop() -> Step { return steps_.pop_back_val(); }
+
+  auto SetQualifiedNames(bool qualified_names) -> void {
+    qualified_names_ = qualified_names;
+  }
 
  private:
   // Handles the generic portion of a specific entity name, such as `(T)` in
@@ -214,8 +231,22 @@ class StepStack {
       return;
     }
     const auto& specific = sem_ir_->specifics().Get(specific_id);
-    auto args =
-        sem_ir_->inst_blocks().Get(specific.args_id).take_back(num_params);
+
+    auto drop_back_count = 0;
+    const auto& generic = sem_ir_->generics().Get(specific.generic_id);
+    if (sem_ir_->insts()
+            .IsOneOf<InterfaceWithSelfDecl, NamedConstraintWithSelfDecl>(
+                generic.decl_id)) {
+      // The with-self generic contains an additional `Self` parameter beyond
+      // the parameters of the entity, the argument for which we do not include
+      // in the display.
+      drop_back_count = 1;
+    }
+
+    auto args = sem_ir_->inst_blocks()
+                    .Get(specific.args_id)
+                    .drop_back(drop_back_count)
+                    .take_back(num_params);
     bool last = true;
     for (auto arg : llvm::reverse(args)) {
       PushString(last ? ")" : ", ");
@@ -228,6 +259,7 @@ class StepStack {
   const File* sem_ir_;
   // Remaining steps to take.
   llvm::SmallVector<Step> steps_;
+  bool qualified_names_ = true;
 };
 
 // Provides `StringifyInst` overloads for each instruction.
@@ -288,8 +320,7 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, AssociatedEntityType inst) -> void {
     *out_ << "<associated entity in ";
     step_stack_->Push(">");
-    step_stack_->PushSpecificInterface(
-        SpecificInterface{inst.interface_id, inst.interface_specific_id});
+    step_stack_->PushSpecificInterface(inst.GetSpecificInterface());
   }
 
   auto StringifyInst(InstId /*inst_id*/, BoolLiteral inst) -> void {
@@ -455,6 +486,7 @@ class Stringifier {
       CARBON_CHECK(index < entities.size(), "Access out of bounds.");
       auto entity_inst_id = entities[index];
       step_stack_->PushString(")");
+      step_stack_->PushResumeQualfiedNames();
       if (auto associated_const =
               sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
                   entity_inst_id)) {
@@ -469,10 +501,12 @@ class Stringifier {
       } else {
         step_stack_->PushInstId(entity_inst_id);
       }
+      // Don't qualify names after the `.` operator, until the closing `)`.
+      step_stack_->PushStopQualfiedNames();
+      step_stack_->Push(".");
       step_stack_->Push(
-          ".(",
-          StepStack::EntityNameItem{interface, specific_interface.specific_id},
-          ".");
+          StepStack::EntityNameItem{interface, specific_interface.specific_id});
+      step_stack_->Push(".(");
     }
 
     if (auto lookup =
@@ -612,10 +646,6 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(InstId /*inst_id*/, SymbolicBindingType inst) -> void {
-    step_stack_->PushEntityNameId(inst.entity_name_id);
-  }
-
   auto StringifyInst(InstId /*inst_id*/, TupleType inst) -> void {
     auto refs = sem_ir_->inst_blocks().Get(inst.type_elements_id);
     if (refs.empty()) {
@@ -652,6 +682,11 @@ class Stringifier {
     for (auto ref : llvm::reverse(refs)) {
       step_stack_->Push(ref, &sep);
     }
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, TypeComponentOf inst) -> void {
+    *out_ << "<type component of form ";
+    step_stack_->Push(inst.form_inst_id, ">");
   }
 
   auto StringifyInst(InstId inst_id, TypeOfInst /*inst*/) -> void {
@@ -705,7 +740,24 @@ class Stringifier {
       step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
-    // TODO: Other restrictions from facet_type_info.
+    for (const auto& type_impls :
+         llvm::reverse(facet_type_info.type_impls_interfaces)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->Push(" ", type_impls.self_type, " impls ",
+                        type_impls.specific_interface);
+      some_where = true;
+    }
+    for (const auto& type_impls :
+         llvm::reverse(facet_type_info.type_impls_named_constraints)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->Push(" ", type_impls.self_type, " impls ",
+                        type_impls.specific_named_constraint);
+      some_where = true;
+    }
     if (some_where) {
       step_stack_->PushString(" where");
     }
@@ -758,18 +810,30 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         }
         break;
       }
-      case CARBON_KIND(llvm::StringRef string):
+      case CARBON_KIND(llvm::StringRef string): {
         out << string;
         break;
-      case CARBON_KIND(NameId name_id):
+      }
+      case CARBON_KIND(NameId name_id): {
         out << sem_ir.names().GetFormatted(name_id);
         break;
-      case CARBON_KIND(ElementIndex element_index):
+      }
+      case CARBON_KIND(ElementIndex element_index): {
         out << element_index.index;
         break;
-      case CARBON_KIND(FacetTypeId facet_type_id):
+      }
+      case CARBON_KIND(FacetTypeId facet_type_id): {
         stringifier.StringifyFacetType(facet_type_id);
         break;
+      }
+      case CARBON_KIND(StepStack::StopQualifiedNames _): {
+        step_stack.SetQualifiedNames(false);
+        break;
+      }
+      case CARBON_KIND(StepStack::ResumeQualifiedNames _): {
+        step_stack.SetQualifiedNames(true);
+        break;
+      }
     }
   }
 
@@ -823,9 +887,22 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
       break;
     }
+    case CARBON_KIND(InterfaceWithSelfDecl interface_with_self_decl): {
+      step_stack.PushEntityName(
+          sem_ir.interfaces().Get(interface_with_self_decl.interface_id),
+          specific_id);
+      break;
+    }
     case CARBON_KIND(NamedConstraintDecl constraint_decl): {
       step_stack.PushEntityName(
           sem_ir.named_constraints().Get(constraint_decl.named_constraint_id),
+          specific_id);
+      break;
+    }
+    case CARBON_KIND(NamedConstraintWithSelfDecl constraint_with_self_decl): {
+      step_stack.PushEntityName(
+          sem_ir.named_constraints().Get(
+              constraint_with_self_decl.named_constraint_id),
           specific_id);
       break;
     }

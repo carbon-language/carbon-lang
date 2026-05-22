@@ -186,7 +186,7 @@ interface AsPrimitive[implicit_into Self:! Form]
   // FIXME: Need to get the unqualified version
   // of `Dest` without `const`/`partial` here.
   let implicit_from ResultForm:! Form where .type = Dest;
-  fn Convert[self:? Self]()
+  fn Convert(self:? Self)
       ->? ResultForm;
 }
 constraint As(Dest:! type) {

@@ -543,7 +543,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexHash)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-// A set of custom dispatch functions that pre-select the symbol token to lex.
+// A set of custom dispatch functions that preselect the symbol token to lex.
 #define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
   static auto Dispatch##LexMethod##SymbolToken(                              \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
@@ -1111,14 +1111,14 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   position += token_size;
 
   CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue && value): {
+    case CARBON_KIND(NumericLiteral::IntValue&& value): {
       return LexTokenWithPayload(TokenKind::IntLiteral,
                                  buffer_.value_stores_->ints()
                                      .AddUnsigned(std::move(value.value))
                                      .AsTokenPayload(),
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::RealValue && value): {
+    case CARBON_KIND(NumericLiteral::RealValue&& value): {
       auto real_id = buffer_.value_stores_->reals().Add(
           Real{.mantissa = value.mantissa,
                .exponent = value.exponent,

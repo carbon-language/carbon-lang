@@ -16,9 +16,9 @@ fn F(b: bool) -> bool {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},

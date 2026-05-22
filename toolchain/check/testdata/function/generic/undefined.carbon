@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn Defined[T:! type](x: T) {}
+fn Defined[T:! type](unused x: T) {}
 
 fn CallDefined() {
   Defined(0 as i32);
@@ -30,7 +30,7 @@ fn CallDefined() {
   Defined(0 as i32);
 }
 
-fn Defined[T:! type](x: T) {}
+fn Defined[T:! type](unused x: T) {}
 
 // --- fail_call_undefined.carbon
 

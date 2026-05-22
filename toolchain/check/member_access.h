@@ -27,12 +27,18 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
-// the access. If specified, `missing_impl_diagnoser()` is used to build an
-// error diagnostic when impl binding fails due to a missing `impl`.
+// the access. If specified, `missing_impl_diagnostic_context()` is used to
+// provide context for the error diagnostic when impl binding fails due to a
+// missing `impl`.
+//
+// On failure, an ErrorInst is returned and a diagnostic is produced unless
+// `diagnose` is false. It is incorrect to specify `diagnose` as false if the
+// resulting ErrorInst may appear in the produced SemIR.
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
-    SemIR::InstId member_expr_id,
-    MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId;
+    SemIR::InstId member_expr_id, bool diagnose = true,
+    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+    -> SemIR::InstId;
 
 // Finds the value of an associated entity (given by assoc_entity_inst_id, a
 // member of the interface given by interface_type_id) associated with a type or

@@ -5,16 +5,18 @@
 #include "toolchain/sem_ir/entry_point.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
 static constexpr llvm::StringLiteral EntryPointFunction = "Run";
 
 auto IsEntryPoint(const File& file, FunctionId function_id) -> bool {
-  // TODO: Check if `file` is in the `Main` package.
   const auto& function = file.functions().Get(function_id);
-  // TODO: Check if `function` is in a namespace.
-  return function.name_id.has_value() &&
+
+  return function.parent_scope_id == NameScopeId::Package &&
+         file.package_id() == PackageNameId::None &&
+         function.name_id.has_value() &&
          file.names().GetAsStringIfIdentifier(function.name_id) ==
              EntryPointFunction;
 }

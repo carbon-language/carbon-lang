@@ -38,4 +38,13 @@ using SpecificInterfaceStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class CanonicalValueStore<SemIR::SpecificInterfaceId,
+                                          SemIR::SpecificInterface,
+                                          Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::SpecificInterfaceId,
+                                 SemIR::SpecificInterface,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_SPECIFIC_INTERFACE_H_

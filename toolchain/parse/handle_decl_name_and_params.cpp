@@ -38,6 +38,11 @@ static auto HandleName(Context& context, Context::State state,
       context.PushState(StateKind::PatternListAsExplicit);
       break;
 
+    case Lex::TokenKind::MinusGreater:
+    case Lex::TokenKind::MinusGreaterQuestion:
+      context.AddLeafNode(before_params_kind, name_token);
+      break;
+
     default:
       context.AddLeafNode(not_before_params_kind, name_token);
       break;
@@ -49,9 +54,9 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     HandleName(context, state, *identifier,
-               NodeKind::IdentifierNameNotBeforeParams,
+               NodeKind::IdentifierNameNotBeforeSignature,
                NodeKind::IdentifierNameQualifierWithoutParams,
-               NodeKind::IdentifierNameBeforeParams);
+               NodeKind::IdentifierNameMaybeBeforeSignature);
     return;
   }
 
@@ -94,7 +99,7 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
     CARBON_CHECK(context.tree().node_kind(NodeId(state.subtree_start)) ==
-                 NodeKind::IdentifierNameBeforeParams);
+                 NodeKind::IdentifierNameMaybeBeforeSignature);
     context.AddNode(NodeKind::IdentifierNameQualifierWithParams, *period,
                     state.has_error);
     context.PushState(StateKind::DeclNameAndParams);

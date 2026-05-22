@@ -22,6 +22,17 @@ namespace Carbon {
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
 // argument to `Lookup`. In this case, `ValueT` must provide a `GetAsKey` member
 // function that returns the corresponding key.
+//
+// This template class is designed to be explicitly instantiated to improve
+// compile times. Heavy method definitions are in
+// `canonical_value_store_impl.h`.
+//
+// To use a new instantiation:
+// 1. Add an `extern template class CanonicalValueStore<...>;` declaration in
+//    the header where the instantiation is anchored.
+// 2. Add `template class CanonicalValueStore<...>;` definition in the
+//    associated `.cpp` file.
+// 3. Include `toolchain/base/canonical_value_store_impl.h` in that `.cpp` file.
 template <typename IdT, typename KeyT, typename TagIdT = Untagged,
           typename ValueT = KeyT>
 class CanonicalValueStore {
@@ -33,10 +44,15 @@ class CanonicalValueStore {
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
-  CanonicalValueStore() = default;
-  template <typename Id>
-  explicit CanonicalValueStore(Id id, int32_t initial_reserved_ids = 0)
-      : values_(id, initial_reserved_ids) {}
+  CanonicalValueStore()
+    requires(IdTagIsUntagged<IdTag<IdT, TagIdT>>);
+  explicit CanonicalValueStore(IdTagType::TagIdType id,
+                               int32_t initial_reserved_ids = 0)
+    requires(!IdTagIsUntagged<IdTag<IdT, TagIdT>>);
+
+  ~CanonicalValueStore();
+  CanonicalValueStore(CanonicalValueStore&&) noexcept;
+  auto operator=(CanonicalValueStore&&) noexcept -> CanonicalValueStore&;
 
   // Stores a canonical copy of the value and returns an ID to reference it. If
   // the value is already in the store, returns the ID of the existing value.
@@ -53,9 +69,7 @@ class CanonicalValueStore {
   auto Reserve(size_t size) -> void;
 
   // These are to support printable structures, and are not guaranteed.
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return values_.OutputYaml();
-  }
+  auto OutputYaml() const -> Yaml::OutputMapping;
 
   auto values() const [[clang::lifetimebound]]
   -> ValueStore<IdT, ValueType, TagIdT>::Range {
@@ -66,11 +80,7 @@ class CanonicalValueStore {
 
   // Collects memory usage of the values and deduplication set.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    auto bytes = set_.ComputeMetrics(KeyContext(&values_)).storage_bytes;
-    mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
-  }
+      -> void;
 
   auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
 
@@ -112,24 +122,42 @@ class CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::KeyContext
   const ValueStore<IdT, ValueType, TagIdT>* values_;
 };
 
+// The definition of `Add` needs to be outside the class body as it relies on
+// the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Add(ValueType value)
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Add(ValueType value)
     -> IdT {
   auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
   return set_.Insert(GetAsKey(value), make_key, KeyContext(&values_)).key();
 }
 
+// The definition of `Lookup` needs to be outside the class body as it relies on
+// the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Lookup(KeyType key) const
-    -> IdT {
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Lookup(
+    KeyType key) const -> IdT {
   if (auto result = set_.Lookup(key, KeyContext(&values_))) {
     return result.key();
   }
   return IdT::None;
 }
 
+// The definition of `Reserve` needs to be outside the class body as it relies
+// on the definition of `KeyContext` being complete.
+//
+// Note that the `inline` keyword is necessary here even though this is a
+// template because we do explicit instantiations of this template which will
+// make inlining this routine impossible despite it being performance sensitive.
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Reserve(size_t size)
+inline auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Reserve(size_t size)
     -> void {
   // Compute the resulting new insert count using the size of values -- the
   // set doesn't have a fast to compute current size.

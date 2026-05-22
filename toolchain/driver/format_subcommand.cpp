@@ -8,7 +8,7 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/format/format.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/source/source_buffer.h"

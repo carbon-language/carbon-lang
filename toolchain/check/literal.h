@@ -13,6 +13,14 @@
 
 namespace Carbon::Check {
 
+// Forms a TypeType for a `type` literal.
+auto MakeTypeTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::TypeInstId;
+
+// Forms a boolean type for a `bool` literal.
+auto MakeBoolTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::TypeInstId;
+
 // Forms a BoolLiteral instruction with the given value and returns it.
 auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
                      SemIR::BoolValue value) -> SemIR::InstId;
@@ -24,12 +32,12 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
 
 // Forms a char type expression for `char` literal.
 auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
-    -> SemIR::InstId;
+    -> SemIR::TypeInstId;
 
 // Forms an integer type expression for either an `iN` or `uN` literal.
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
                         SemIR::IntKind int_kind, IntId size_id)
-    -> SemIR::InstId;
+    -> SemIR::TypeInstId;
 
 // Forms an integer type of the specified kind and bit-width.
 auto MakeIntType(Context& context, Parse::NodeId node_id,
@@ -37,18 +45,18 @@ auto MakeIntType(Context& context, Parse::NodeId node_id,
 
 // Forms a floating point type expression for `fN` literal.
 auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
-                          IntId size_id) -> SemIR::InstId;
+                          IntId size_id) -> SemIR::TypeInstId;
 
 // Forms a string literal value instruction for a given string literal.
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId;
 
 // Forms a string literal type expression for a `str` literal.
-auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
-    -> SemIR::InstId;
+auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
+    -> SemIR::TypeInstId;
 
 // Forms a string type.
-auto MakeStringType(Context& context, SemIR::LocId) -> TypeExpr;
+auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr;
 
 }  // namespace Carbon::Check
 

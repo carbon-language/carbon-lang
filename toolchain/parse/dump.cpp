@@ -14,6 +14,10 @@
 
 namespace Carbon::Parse {
 
+static LLVM_DUMP_METHOD auto Dump(const Tree& tree) -> std::string {
+  return PrintToString(tree);
+}
+
 LLVM_DUMP_METHOD auto Dump(const Tree& tree, Lex::TokenIndex token)
     -> std::string {
   return Lex::Dump(tree.tokens(), token);

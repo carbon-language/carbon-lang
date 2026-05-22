@@ -12,13 +12,13 @@
 
 // --- fail_virtual_fn_in_invalid_context.carbon
 
-// CHECK:STDERR: fail_virtual_fn_in_invalid_context.carbon:[[@LINE+4]]:10: error: name `error_not_found` not found [NameNotFound]
-// CHECK:STDERR: fn F(N:! error_not_found) {
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_virtual_fn_in_invalid_context.carbon:[[@LINE+4]]:17: error: name `error_not_found` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused N:! error_not_found) {
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(N:! error_not_found) {
+fn F(unused N:! error_not_found) {
   base class C {
-    virtual fn Foo[self: Self]() {}
+    virtual fn Foo[unused self: Self]() {}
   }
 
   base class D {

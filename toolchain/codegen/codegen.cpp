@@ -13,7 +13,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 
 namespace Carbon {
 

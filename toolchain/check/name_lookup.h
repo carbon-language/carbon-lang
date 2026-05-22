@@ -89,11 +89,20 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
 // needs to know the self-type in order to produce a correct specific scope in
 // the result.
 //
+// When `extended_scope` is true, it indicates the scopes are being added from
+// an `extend` relationship to another scope. The extended scopes are required
+// to be complete when that relationship is established, and should not be
+// checked again in this call. This prevents a dependency on a name lookup into
+// an interface/constraint on a nested extended scope being complete, as that
+// introduces a symbolic dependency on `Self` which is incorrect from outside
+// the interface/constraint.
+//
 // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
 // still updates `*scopes` and returns `true`.
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
                                    SemIR::ConstantId self_type_const_id,
+                                   bool extended_scope,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool;
 
