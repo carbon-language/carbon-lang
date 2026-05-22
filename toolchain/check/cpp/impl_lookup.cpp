@@ -440,14 +440,8 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
   auto synthesised_expr =
       clang::OpaqueValueExpr({}, type, clang::ExprValueKind::VK_LValue);
   auto* args = static_cast<clang::Expr*>(&synthesised_expr);
-  auto call_expr = clang::ExprResult();
-  auto build_failed = clang_sema.buildOverloadedCallSet(
-      /*Scope=*/nullptr, /*Fn=*/function, /*ULE=*/function, args,
-      clang::SourceLocation(), &candidate_set, &call_expr);
-
-  if (build_failed) {
-    return SemIR::ErrorInst::InstId;
-  }
+  clang_sema.AddArgumentDependentLookupCandidates(name_info.getName(), {}, args,
+                                                  {}, candidate_set);
 
   if (candidate_set.empty()) {
     return SemIR::InstId::None;
@@ -456,17 +450,27 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
   auto* best_candidate = clang::OverloadCandidateSet::iterator();
   auto overload_result =
       candidate_set.BestViableFunction(clang_sema, {}, best_candidate);
-  if (overload_result != clang::OR_Success) {
-    return SemIR::InstId::None;
+  switch (overload_result) {
+    case clang::OR_No_Viable_Function:
+    case clang::OR_Ambiguous:
+      return SemIR::InstId::None;
+    case clang::OR_Deleted: {
+      auto loc = GetCppLocation(context, loc_id);
+      clang_sema.DiagnoseUseOfDeletedFunction(
+          loc, clang::SourceRange(loc, loc), name_info.getName(), candidate_set,
+          best_candidate->Function, args);
+      return SemIR::ErrorInst::InstId;
+    }
+    case clang::OR_Success: {
+      using enum SemIR::ClangDeclSignature::PassingMode;
+      auto decl_info = DeclInfo{
+          .decl = best_candidate->Function,
+          .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
+              context, best_candidate, function, args),
+      };
+      return GetFunctionId(context, loc_id, decl_info);
+    }
   }
-
-  using enum SemIR::ClangDeclSignature::PassingMode;
-  auto decl_info = DeclInfo{
-      .decl = best_candidate->Function,
-      .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
-          context, best_candidate, function, args),
-  };
-  return GetFunctionId(context, loc_id, decl_info);
 }
 
 using LookupBeginEndCallees = auto(Context&, clang::Sema&, SemIR::LocId,

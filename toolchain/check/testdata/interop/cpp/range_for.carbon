@@ -437,19 +437,25 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:
   Test(end_method_deleted);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginFunctionDeleted` into type implementing `Core.CppRangeForIterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-125]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+10]]:30: error: call to deleted function 'begin' [CppInteropParseError]
+  // CHECK:STDERR:   197 |   Test(begin_function_deleted);
+  // CHECK:STDERR:       |                              ^
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-139]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:    54 |   friend auto begin(const BeginFunctionDeleted&) = delete;
+  // CHECK:STDERR:       |               ^
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-128]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](r: R) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_function_deleted);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.EndFunctionDeleted` into type implementing `Core.CppRangeForIterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(end_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-134]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+10]]:28: error: call to deleted function 'end' [CppInteropParseError]
+  // CHECK:STDERR:   206 |   Test(end_function_deleted);
+  // CHECK:STDERR:       |                            ^
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-145]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:    60 |   friend auto end(const EndFunctionDeleted&) = delete;
+  // CHECK:STDERR:       |               ^
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-140]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](r: R) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
