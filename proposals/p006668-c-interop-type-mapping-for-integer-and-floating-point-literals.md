@@ -212,7 +212,8 @@ Carbon literals have no suffix. The reasons for this are covered in
     function.
 -   **C++ literal to Carbon type**: A C++ literal will be given a C++ type
     following the C++ rules, which will then be mapped to a Carbon type as
-    defined in [primitive types mapping](p005448-carbon-c-interop-primitive-types.md#carbon-primitive-types).
+    defined in
+    [primitive types mapping](p005448-carbon-c-interop-primitive-types.md#carbon-primitive-types).
     -   For example, `1` becomes `int` according to C++ rules, and `int` maps to
         `i32` in Carbon.
 
@@ -272,7 +273,8 @@ which will then be mapped to a Carbon type as defined in
 
 A C++ floating literal will be given a C++ type following the C++ rules, which
 will then be mapped to a Carbon type as defined in
-[primitive types mapping](p005448-carbon-c-interop-primitive-types.md#carbon-primitive-types). That means:
+[primitive types mapping](p005448-carbon-c-interop-primitive-types.md#carbon-primitive-types).
+That means:
 
 | C++ floating-point literal suffix | Carbon floating-point literal type |
 | --------------------------------- | ---------------------------------- |

@@ -28,10 +28,10 @@ suggested that we do not allow ties in floating-point literals. That is, given a
 literal whose value lies exactly half way between two representable values, we
 should reject rather than arbitrarily picking one of the two possibilities.
 
-However, the [statistical argument](p000143-numeric-literals.md#ties) presented in that proposal
-misses an important fact: the distribution of the values that are exactly half
-way between representable values includes several values of the form A x
-10<sup>B</sup>, where A and B are small integers.
+However, the [statistical argument](p000143-numeric-literals.md#ties) presented
+in that proposal misses an important fact: the distribution of the values that
+are exactly half way between representable values includes several values of the
+form A x 10<sup>B</sup>, where A and B are small integers.
 
 For example, the current rule rejects this very reasonable looking code:
 

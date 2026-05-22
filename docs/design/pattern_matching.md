@@ -225,8 +225,10 @@ fn F(n: i32) {
 }
 ```
 
-As specified in [#1084](/proposals/p001084-generics-details-9-forward-declarations.md), function redeclarations may
-replace binding names with `_`s but may not use different names.
+As specified in
+[#1084](/proposals/p001084-generics-details-9-forward-declarations.md), function
+redeclarations may replace binding names with `_`s but may not use different
+names.
 
 ```carbon
 fn G(n: i32);
@@ -350,10 +352,10 @@ bindings in a pattern. Nesting `unused` markers is an error. When an `unused`
 marker applies only to anonymous bindings `_` and is thus redundant, a warning
 is produced. `var` and `unused` may appear in any order in a pattern.
 
-As specified in [#3763](/proposals/p003763-matching-redeclarations.md), `unused` markers may only appear
-on definitions, not on non-defining declarations. Function redeclarations that
-are also definitions may have difference due to `unused` markers, but they may
-not have different names.
+As specified in [#3763](/proposals/p003763-matching-redeclarations.md), `unused`
+markers may only appear on definitions, not on non-defining declarations.
+Function redeclarations that are also definitions may have difference due to
+`unused` markers, but they may not have different names.
 
 ```carbon
 fn J(n: i32);

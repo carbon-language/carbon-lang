@@ -28,7 +28,8 @@ Change terminology away from terms that are ambiguous:
 
 -   Reserve "generic type" for types with (compile-time) parameters, like
     `Vector` in `Vector(T:! type)`. Don't use that term to refer to `T`, as it
-    would with [#2360](/proposals/p002360-types-are-values-of-type-type.md#terminology).
+    would with
+    [#2360](/proposals/p002360-types-are-values-of-type-type.md#terminology).
 -   Use the term "compile-time" instead of "constant" to mean "template or
     symbolic." Expand the term "constant" to include values, such as from `let`
     bindings.
@@ -58,9 +59,10 @@ bindings.
 
 The two meanings of "generic type" come from:
 
--   Proposal [#2360](/proposals/p002360-types-are-values-of-type-type.md#terminology) defines a generic type to
-    be a type or facet introduced by a `:!` binding, such as in a generic
-    parameter or associated constant.
+-   Proposal
+    [#2360](/proposals/p002360-types-are-values-of-type-type.md#terminology)
+    defines a generic type to be a type or facet introduced by a `:!` binding,
+    such as in a generic parameter or associated constant.
 -   Other uses of the term generic, such as in generic function, mean a language
     construct with a compile-time parameter (as in
     [Rust](https://doc.rust-lang.org/rust-by-example/generics.html)). This is

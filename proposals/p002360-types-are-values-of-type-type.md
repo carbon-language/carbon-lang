@@ -94,8 +94,8 @@ This dual meaning has some problematic consequences:
 
 ## Background
 
--   [#989: Member access expressions](/proposals/p000989-member-access-expressions.md) introduced the
-    current compound member access rules.
+-   [#989: Member access expressions](/proposals/p000989-member-access-expressions.md)
+    introduced the current compound member access rules.
 -   [Issue #495](https://github.com/carbon-language/carbon-lang/issues/495)
     suggested adding an implicit conversion from tuples of types to type `Type`.
 -   [Issue #508](https://github.com/carbon-language/carbon-lang/issues/508)

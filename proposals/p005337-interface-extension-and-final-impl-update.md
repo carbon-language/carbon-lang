@@ -986,8 +986,9 @@ final `impl`). In order to detect the subsumption, the query for the final
 The generated `impl` from an `extend impl` in an interface is given a name
 similar to an `impl` defined in a `class` scope, as
 [discussed on 2024-03-11](https://docs.google.com/document/d/1s3mMCupmuSpWOFJGnvjoElcBIe2aoaysTIdyczvKX84/edit?resourcekey=0-G095Wc3sR6pW1hLJbGgE0g&tab=t.0#heading=h.p69b78lovqb7),
-mentioned in [proposal #3763](/proposals/p003763-matching-redeclarations.md#redeclarations), and proposed
-in pending
+mentioned in
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#redeclarations),
+and proposed in pending
 [proposal #5366](https://github.com/carbon-language/carbon-lang/pull/5366).
 
 For example, these names can be used to allow multiple interfaces to extend a

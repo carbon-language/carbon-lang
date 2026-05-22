@@ -26,9 +26,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) added digit separators
-with strict rules for placement. It missed some use-cases. In order to address
-this, remove placement rules for numeric literals.
+[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) added
+digit separators with strict rules for placement. It missed some use-cases. In
+order to address this, remove placement rules for numeric literals.
 
 ## Problem
 
@@ -44,8 +44,8 @@ Digit separator placement rules are too strict:
 
 ## Background
 
-[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) added digit separators
-with strict rules for placement:
+[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) added
+digit separators with strict rules for placement:
 
 -   For decimal integers, the digit separators shall occur every three digits
     starting from the right. For example, `2_147_483_648`.
@@ -113,8 +113,8 @@ Disadvantages:
 Note that any regular grouping rule can present similar issues for Indian digit
 grouping conventions.
 
-[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) chose 3-digit decimal
-groupings.
+[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) chose
+3-digit decimal groupings.
 
 Given there are overall advantages to not enforcing regular digit conventions,
 including for hex digits, it seems unnecessary to conform to the currently
@@ -135,8 +135,8 @@ Hexadecimal digit groupings could be enforced along two axes:
     byte as in `FF_FF_FF_FF`, or irregular as in `FF_FFFFF_FF` which skips one
     placement.
 
-[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) chose 4-digit with
-regular placement.
+[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) chose
+4-digit with regular placement.
 
 Advantages:
 
@@ -162,9 +162,9 @@ best.
 
 ### Disallow digit separators in fractions
 
-[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md) appears to disallow digit
-separators in fractions. That is, in `1.2345`, `1.23_45` is disallowed. This
-proposal changes that.
+[Proposal #143: Numeric literals](/proposals/p000143-numeric-literals.md)
+appears to disallow digit separators in fractions. That is, in `1.2345`,
+`1.23_45` is disallowed. This proposal changes that.
 
 Advantages:
 

@@ -23,7 +23,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-This proposal updates the design of [#157](p000157-design-direction-for-sum-types.md) to reflect subsequent
+This proposal updates the design of
+[#157](p000157-design-direction-for-sum-types.md) to reflect subsequent
 evolution of the language.
 
 ## Problem

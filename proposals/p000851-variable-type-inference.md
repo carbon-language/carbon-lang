@@ -37,9 +37,10 @@ we already make prevalent use in example code.
 
 ## Background
 
-Although [#826: Function return type inference](p000826-function-return-type-inference.md) introduced the `auto`
-keyword for `fn`, the use type inference in `var` should be expected to be more
-prevalent.
+Although
+[#826: Function return type inference](p000826-function-return-type-inference.md)
+introduced the `auto` keyword for `fn`, the use type inference in `var` should
+be expected to be more prevalent.
 
 In C++, `auto` can be used in variables as in:
 
@@ -53,8 +54,8 @@ type, and is likely there as a matter of backwards compatibility.
 
 ### Variable type inference in other languages
 
-[#618: var ordering](p000618-var-ordering.md) chose the ordering of var based on other
-languages. Most of these also provide inferred variable types.
+[#618: var ordering](p000618-var-ordering.md) chose the ordering of var based on
+other languages. Most of these also provide inferred variable types.
 
 Where the `<identifier>: <type>` syntax matches, here are a few example inferred
 types:

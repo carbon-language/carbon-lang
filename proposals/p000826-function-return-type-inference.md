@@ -69,10 +69,10 @@ for declaring functions in order to maintain syntax parity.
 ### `auto` keyword
 
 This is the first proposal to formally include a use of `auto`; although
-[`var` statement #339](p000339-var-statement.md) mentions it in an alternative, the proposal did
-not explicitly propose the keyword. However, the `var x: auto` use-case is
-expected in Carbon, and so uses of `auto` here can be considered in that
-context.
+[`var` statement #339](p000339-var-statement.md) mentions it in an alternative,
+the proposal did not explicitly propose the keyword. However, the `var x: auto`
+use-case is expected in Carbon, and so uses of `auto` here can be considered in
+that context.
 
 Note the `auto` keyword name and behavior can generally be considered consistent
 with C++.

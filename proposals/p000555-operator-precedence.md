@@ -111,8 +111,8 @@ With those precedence rules:
 -   `a + b << c` would be an error, requiring parentheses, because the
     precedence levels of `+` and `<<` are unordered.
 
-A [python script](p000555-operator-precedence/figures.py) to generate these diagrams is included with
-this proposal.
+A [python script](p000555-operator-precedence/figures.py) to generate these
+diagrams is included with this proposal.
 
 ### When to add precedence edges
 

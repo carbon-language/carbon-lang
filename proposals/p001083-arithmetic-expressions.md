@@ -637,7 +637,9 @@ var four_digit_number: Array(Char, 5) = (
 We could use the same precedence rule as other languages, and permit examples
 similar to the above to be written without any parentheses.
 
-However, our [rule for precedence](p000555-operator-precedence.md#when-to-add-precedence-edges) is:
+However, our
+[rule for precedence](p000555-operator-precedence.md#when-to-add-precedence-edges)
+is:
 
 > For every combination of operators, either it should be reasonable to expect
 > most or all developers who regularly use Carbon to reliably remember the

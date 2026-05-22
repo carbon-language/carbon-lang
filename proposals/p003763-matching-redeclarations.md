@@ -60,7 +60,8 @@ know:
 
 [Leads issue #1132](https://github.com/carbon-language/carbon-lang/issues/1132)
 has rules for this, and those rules were partially incorporated into the design
-by [#1084 Generics details 9: forward declarations](/proposals/p001084-generics-details-9-forward-declarations.md).
+by
+[#1084 Generics details 9: forward declarations](/proposals/p001084-generics-details-9-forward-declarations.md).
 However:
 
 -   #1084 only covers generics, not the whole scope of the language, and

@@ -216,7 +216,9 @@ var also_my_string: auto = if cond then my_string else your_string;
 -   Use
     [`cond ? expr1 : expr2`, like in C and C++](/proposals/p000911-conditional-expressions.md#use-c-syntax)
     syntax
--   Use [`if (cond) expr1 else expr2`](/proposals/p000911-conditional-expressions.md#no-then) syntax
+-   Use
+    [`if (cond) expr1 else expr2`](/proposals/p000911-conditional-expressions.md#no-then)
+    syntax
 -   Use
     [`if (cond) then expr1 else expr2`](/proposals/p000911-conditional-expressions.md#require-parentheses-around-the-condition)
     syntax

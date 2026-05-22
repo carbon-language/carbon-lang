@@ -85,15 +85,16 @@ motivation:
     form (in this case, [text](/proposals/p000680-and-or-not.md)).
 -   Where C++ allows hexadecimal numeric literals to be either lowercase
     (`0xaa`) or uppercase (`0xAA`), and with `x` optionally uppercase as well,
-    Carbon will only allow the [`0xAA` casing](/proposals/p000143-numeric-literals.md).
+    Carbon will only allow the
+    [`0xAA` casing](/proposals/p000143-numeric-literals.md).
 -   Where C++ provides both `struct` and `class` with the only difference is
     access control defaults, Carbon will only provide one (`class`, albeit with
     default public visibility diverging from C++).
 
 However, sometimes language tools are the primary motivation. For example, where
 C++ allows braces to be omitted for single-statement control flow blocks, Carbon
-will [require braces](/proposals/p000623-require-braces.md). This offers a syntax simplification
-that should allow for better error detection.
+will [require braces](/proposals/p000623-require-braces.md). This offers a
+syntax simplification that should allow for better error detection.
 
 ## Caveats
 

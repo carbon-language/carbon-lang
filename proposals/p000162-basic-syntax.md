@@ -528,11 +528,11 @@ proposal stage, which will help us avoid wasting time and effort implementing
 designs that turn out to be unworkable.
 
 This can be considered as sort of a counterpart to
-[In-progress design overview #83](p000083-in-progress-design-overview.md), in that the design specifics are
-being approved in order to bootstrap the specification process. We aren't
-necessarily adopting the specific syntax and semantics expressed by this
-proposal, and those choices will need to be presented and justified from scratch
-by future proposals.
+[In-progress design overview #83](p000083-in-progress-design-overview.md), in
+that the design specifics are being approved in order to bootstrap the
+specification process. We aren't necessarily adopting the specific syntax and
+semantics expressed by this proposal, and those choices will need to be
+presented and justified from scratch by future proposals.
 
 This decision is deferring the implementation to code review. The specific
 tooling used to implement the syntax checker, such as Bison, is a detail which

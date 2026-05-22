@@ -2927,11 +2927,12 @@ Note that `T:! C where .R = i32` can result in a type `T.R` whose behavior is
 different from the behavior of `T.R` given `T:! C`. For example, member lookup
 into `T.R` can find different results and operations can therefore have
 different behavior. However, this does not violate
-[coherence](/proposals/p002173-associated-constant-assignment-versus-equality.md#coherence) because the facet types `C` and
-`C where .R = i32` don't differ by merely having more type information; rather,
-they are different facet types that have an isomorphic set of values, somewhat
-like `i32` and `u32`. An `=` constraint is not merely learning a new fact about
-a type, it is requesting different behavior.
+[coherence](/proposals/p002173-associated-constant-assignment-versus-equality.md#coherence)
+because the facet types `C` and `C where .R = i32` don't differ by merely having
+more type information; rather, they are different facet types that have an
+isomorphic set of values, somewhat like `i32` and `u32`. An `=` constraint is
+not merely learning a new fact about a type, it is requesting different
+behavior.
 
 This approach has some good properties that
 [same-type constraints](#same-type-constraints) have problems with:
@@ -2939,8 +2940,8 @@ This approach has some good properties that
 -   [Equal types with different interfaces](/proposals/p002173-associated-constant-assignment-versus-equality.md#equal-types-with-different-interfaces):
     When an associated facet is constrained to be a concrete type, it is
     desirable for the associated facet to behave like that concrete type.
--   [Type canonicalization](/proposals/p002173-associated-constant-assignment-versus-equality.md#type-canonicalization): to
-    enable efficient type equality.
+-   [Type canonicalization](/proposals/p002173-associated-constant-assignment-versus-equality.md#type-canonicalization):
+    to enable efficient type equality.
 -   [Transitivity of equality of types](/proposals/p002173-associated-constant-assignment-versus-equality.md#transitivity-of-equality)
 
 The precise rules governing rewrite constraints are described in
@@ -4094,8 +4095,8 @@ There are four facet types related to
     specific optimizations.
 
 **Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since they do not
-conform to the decision on
+[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
+they do not conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
@@ -5340,8 +5341,9 @@ these rules:
 ### Matching and agreeing
 
 > **TODO:** Update this section to reflect the new terminology and rules adopted
-> in [p3763: Matching redeclarations](/proposals/p003763-matching-redeclarations.md), and the new rules
-> adopted in
+> in
+> [p3763: Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
+> and the new rules adopted in
 > [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 Carbon needs to determine if two declarations match in order to say which
@@ -6636,7 +6638,8 @@ class Optional(T:! Movable) {
 ```
 
 > **Alternative considered:** Direct support for specialization of types was
-> considered in [proposal #1146](/proposals/p001146-generic-details-12-parameterized-types.md#alternatives-considered).
+> considered in
+> [proposal #1146](/proposals/p001146-generic-details-12-parameterized-types.md#alternatives-considered).
 
 ## Future work
 

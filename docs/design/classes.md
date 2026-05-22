@@ -1710,8 +1710,8 @@ the destructor is virtual or non-virtual, determines which
     actually pointing to a derived class.
 
 **Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since they do not
-conform to the decision on
+[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
+they do not conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 | Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |

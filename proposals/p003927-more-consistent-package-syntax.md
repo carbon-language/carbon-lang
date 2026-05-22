@@ -56,8 +56,8 @@ declarations:
 
 ## Background
 
-[Proposal #107: Code and name organization](/proposals/p000107-code-and-name-organization.md) introduced the
-current syntax. It did
+[Proposal #107: Code and name organization](/proposals/p000107-code-and-name-organization.md)
+introduced the current syntax. It did
 [consider the possibility of omitting the `api` keyword](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000107-code-and-name-organization.md#different-file-type-labels):
 
 > We've considered dropping `api` from naming, but that creates a definition
@@ -70,7 +70,8 @@ between the choice made for package declaration and the choices made for other
 declarations, because those inconsistencies were created by later changes:
 
 -   #107 used the `api` keyword as a marker for exporting names from an API
-    file. Later, [proposal #752: api file default public](/proposals/p000752-api-file-default-public.md)
+    file. Later,
+    [proposal #752: api file default public](/proposals/p000752-api-file-default-public.md)
     removed this use of the `api` keyword, with the new rule being that
     declarations are in the public API by default, with an explicit keyword used
     to mark non-public declarations. This removed all uses of the `api` keyword

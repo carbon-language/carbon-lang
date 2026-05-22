@@ -493,10 +493,10 @@ interface Collection {
 ```
 
 One approach we considered is
-[regular equivalence classes](p000818-constraints-for-generics-generics-details-3/regular_equivalence_classes.md), however we
-have not yet been able to figure out how to ensure the algorithm terminates.
-This is an approach we would like to reconsider if we find solutions to this
-problem once can share this problem more widely.
+[regular equivalence classes](p000818-constraints-for-generics-generics-details-3/regular_equivalence_classes.md),
+however we have not yet been able to figure out how to ensure the algorithm
+terminates. This is an approach we would like to reconsider if we find solutions
+to this problem once can share this problem more widely.
 
 Other approaches we considered worked in simple cases but had requirements that
 could not be validated, since for example they were equivalent to solving the

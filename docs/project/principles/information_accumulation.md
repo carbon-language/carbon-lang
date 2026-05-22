@@ -97,7 +97,8 @@ enclosing class, like in C++.
 
 -   Allow information to be used before it is provided
     [globally](/proposals/p000875-principle-information-accumulation.md#strict-global-consistency),
-    [within a file](/proposals/p000875-principle-information-accumulation.md#context-sensitive-local-consistency), or
+    [within a file](/proposals/p000875-principle-information-accumulation.md#context-sensitive-local-consistency),
+    or
     [within a top-level declaration](/proposals/p000875-principle-information-accumulation.md#top-down-with-minimally-deferred-type-checking).
 -   [Do not allow inline method bodies to use members before they are declared](/proposals/p000875-principle-information-accumulation.md#strict-top-down)
 -   [Do not allow separate declaration and definition](/proposals/p000875-principle-information-accumulation.md#disallow-separate-declaration-and-definition)

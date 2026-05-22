@@ -727,10 +727,11 @@ proper.
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
-returns in [proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md). This section could be replaced
-by a statement that initializing returns may be replaced by value returns when
-that is safe and correct, moving much of this content into a description of how
-value returns works.
+returns in
+[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md).
+This section could be replaced by a statement that initializing returns may be
+replaced by value returns when that is safe and correct, moving much of this
+content into a description of how value returns works.
 
 Carbon also makes the evaluation of function calls and return statements tightly
 linked in order to enable more efficiency improvements. It allows the actual

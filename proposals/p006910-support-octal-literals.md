@@ -58,9 +58,9 @@ nor are they very common in code. We also expect these to be the primary use of
 octal numeric literals in Carbon.
 
 Given these issues, proposal #143
-[rejected octal literals](/proposals/p000143-numeric-literals.md#octal-literals). Now, we're
-testing interoperability of POSIX file system calls, and we are considering
-octal literals as a potential solution.
+[rejected octal literals](/proposals/p000143-numeric-literals.md#octal-literals).
+Now, we're testing interoperability of POSIX file system calls, and we are
+considering octal literals as a potential solution.
 
 Proposal #143 [discussed the Carbon-style `0o` versus C++-style `0` prefix for
 octal literals. The same logic still applies, so we will not address it here.
