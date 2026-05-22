@@ -252,7 +252,7 @@ def main() -> None:
         ]
     )
 
-    # Remove the temp file, create p####.md, and fill in PR information.
+    # Remove the temp file, create p######-title.md, and fill in PR information.
     os.remove(temp_path)
     final_path = "proposals/p%06d-%s.md" % (pr_num, slugify(title))
     content = _fill_template(template_path, title, pr_num)
