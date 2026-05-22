@@ -54,7 +54,7 @@ class Class {
   var field: i32 = 123;
 }
 
-// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+4]]:16: error: semantics TODO: `struct initializer provided field 'not_a_field' that is not present in the destination` [SemanticsTodo]
+// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+4]]:16: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR: var C: Class = {.not_a_field = 456};
 // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

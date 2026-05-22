@@ -21,12 +21,12 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   {.a = 1} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: semantics TODO: `struct initializer provided field 'c' that is not present in the destination` [SemanticsTodo]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: semantics TODO: `struct initializer provided field 'c' that is not present in the destination` [SemanticsTodo]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

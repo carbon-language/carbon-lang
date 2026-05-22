@@ -19,13 +19,13 @@ var a: {.a: i32} = {.a = 1 };
 // CHECK:STDERR:
 var b: {.a: i32, .b: i32} = a;
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: semantics TODO: `struct initializer provided field 'b' that is not present in the destination` [SemanticsTodo]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: semantics TODO: `struct initializer provided field 'a' that is not present in the destination` [SemanticsTodo]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
 // CHECK:STDERR:

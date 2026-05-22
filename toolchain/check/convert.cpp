@@ -652,11 +652,24 @@ static auto ConvertStructToStructOrClass(
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
       if (!dest_field_names.Lookup(field.name_id)) {
-        context.TODO(
-            value_loc_id,
-            llvm::formatv("struct initializer provided field '{0}' that is "
-                          "not present in the destination",
-                          context.names().GetFormatted(field.name_id)));
+        if (target.diagnose) {
+          if (literal_elems_id.has_value()) {
+            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInLiteral, Error,
+                              "struct {0} has no field named `{1}`",
+                              SemIR::TypeId, SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitUnexpectedFieldInLiteral,
+                                   target.type_id, field.name_id);
+          } else {
+            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInConversion, Error,
+                              "cannot convert from struct type {0} to {1}: "
+                              "unexpected field `{2}` in source type",
+                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitUnexpectedFieldInConversion,
+                                   value_id, target.type_id, field.name_id);
+          }
+        }
         return SemIR::ErrorInst::InstId;
       }
 
