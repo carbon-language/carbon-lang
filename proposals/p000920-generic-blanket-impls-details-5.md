@@ -94,7 +94,7 @@ conditional conformance options:
 
 -   The `extend` syntax inline in a class definition to establish a more
     specific `Self` type for conditional conformance choice was eliminated along
-    with [the `extend` syntax for external impls](p0553.md#extend-blocks).
+    with [the `extend` syntax for external impls](p000553-generics-details-part-1.md#extend-blocks).
 -   Consistency excluded using deduced arguments in square brackets after the
     `impl` keyword, and an `if` or `where` clause to add constraints:
 

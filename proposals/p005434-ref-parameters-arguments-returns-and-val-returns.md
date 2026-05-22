@@ -121,7 +121,7 @@ won't.
 -   Using
     [the `addr` keyword on mutating methods to get a `self` with a pointer type](/docs/design/classes.md#methods)
     was introduced in
-    [proposal #722: "Nominal classes and methods"](/proposals/p0722.md#keyword-to-indicate-pass-by-address).
+    [proposal #722: "Nominal classes and methods"](/proposals/p000722-nominal-classes-and-methods.md#keyword-to-indicate-pass-by-address).
 -   [Leads issue #5261: "We should add `ref` bindings to Carbon, paralleling reference expressions"](https://github.com/carbon-language/carbon-lang/issues/5261)
     supports adding `ref` bindings to Carbon.
 -   [LLVM's `noalias` attribute](https://llvm.org/docs/LangRef.html#function-attributes)
@@ -1146,7 +1146,7 @@ though, such as temporaries that are reachable transitively through pointers.
 ### `ref` bindings in lambdas
 
 We have already identified
-[future work to support reference captures in lambdas as part of proposal #3848](/proposals/p3848.md#future-work-reference-captures).
+[future work to support reference captures in lambdas as part of proposal #3848](/proposals/p003848-lambdas.md#future-work-reference-captures).
 This might be a reason to support `ref` bindings as fields of objects, with all
 the restrictions that comes with that.
 

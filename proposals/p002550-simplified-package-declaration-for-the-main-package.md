@@ -246,7 +246,7 @@ import Foo library "Bar";
 ```
 
 This would lead to a more uniform syntax and, as noted in
-[a very similar alternative considered by #107](/proposals/p0107.md#optional-package-names),
+[a very similar alternative considered by #107](/proposals/p000107-code-and-name-organization.md#optional-package-names),
 would make it easier to search for all imports of a given library with a simple
 tool.
 

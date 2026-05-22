@@ -203,7 +203,7 @@ class __Binding_C_F {
 These are the types that result from
 [instance binding](/docs/design/expressions/member_access.md#instance-binding)
 an instance of `C` with these member names. They define the bound method value
-and bound method type of [proposal #2875](/proposals/p2875.md#bound-methods).
+and bound method type of [proposal #2875](/proposals/p002875-functions-function-types-and-function-calls.md#bound-methods).
 For example,
 
 ```carbon
@@ -1059,7 +1059,7 @@ Addressing this is [out of scope of the current proposal](#background).
 
 We could instead make `c.Increment` be a value holding `&c`. That would allow
 `Call` to work even when taking `self` by value. This is the solution likely
-implied by the current [proposal #2875](/proposals/p2875.md#bound-methods),
+implied by the current [proposal #2875](/proposals/p002875-functions-function-types-and-function-calls.md#bound-methods),
 though that proposal does not say what the bound method type is at all. It
 leaves two other problems, however:
 

@@ -326,18 +326,18 @@ string in the type system. In such string literals, we should consider rejecting
 
 ## Alternatives considered
 
--   [Block string literals](/proposals/p0199.md#block-string-literals)
-    -   [Leading whitespace removal](/proposals/p0199.md#leading-whitespace-removal)
-    -   [Terminating newline](/proposals/p0199.md#terminating-newline)
--   [Escape sequences](/proposals/p0199.md#escape-sequences-1)
+-   [Block string literals](/proposals/p000199-string-literals.md#block-string-literals)
+    -   [Leading whitespace removal](/proposals/p000199-string-literals.md#leading-whitespace-removal)
+    -   [Terminating newline](/proposals/p000199-string-literals.md#terminating-newline)
+-   [Escape sequences](/proposals/p000199-string-literals.md#escape-sequences-1)
     -   Unicode escape sequences:
-        -   [Allow zero digits](/proposals/p2040.md#allow-zero-digits)
-        -   [Allow any number of hexadecimal characters](/proposals/p2040.md#allow-any-number-of-hexadecimal-characters)
-        -   [Limiting to 6 digits versus 8](/proposals/p2040.md#limiting-to-6-digits-versus-8)
--   [Raw string literals](/proposals/p0199.md#raw-string-literals-1)
-    -   [Trailing whitespace](/proposals/p0199.md#trailing-whitespace)
-    -   [Line separators](/proposals/p0199.md#line-separators)
--   [Internal whitespace](/proposals/p0199.md#internal-whitespace)
+        -   [Allow zero digits](/proposals/p002040-unicode-escape-code-length.md#allow-zero-digits)
+        -   [Allow any number of hexadecimal characters](/proposals/p002040-unicode-escape-code-length.md#allow-any-number-of-hexadecimal-characters)
+        -   [Limiting to 6 digits versus 8](/proposals/p002040-unicode-escape-code-length.md#limiting-to-6-digits-versus-8)
+-   [Raw string literals](/proposals/p000199-string-literals.md#raw-string-literals-1)
+    -   [Trailing whitespace](/proposals/p000199-string-literals.md#trailing-whitespace)
+    -   [Line separators](/proposals/p000199-string-literals.md#line-separators)
+-   [Internal whitespace](/proposals/p000199-string-literals.md#internal-whitespace)
 -   [Different restrictions for file type indicators](https://github.com/carbon-language/carbon-lang/issues/2140)
 
 ## References

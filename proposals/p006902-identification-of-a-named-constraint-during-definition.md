@@ -39,7 +39,7 @@ definition.
 
 ## Problem
 
-Under the rules established in [Proposal #5168](/proposals/p5168.md), a facet
+Under the rules established in [Proposal #5168](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md), a facet
 type is identified only if all its referenced interfaces are declared and all
 its referenced named constraints are complete.
 
@@ -52,7 +52,7 @@ earlier ones.
 
 ## Background
 
--   [Proposal #5168](/proposals/p5168.md): Introduced rules for facet type
+-   [Proposal #5168](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md): Introduced rules for facet type
     identification and completion.
 
 ## Proposal
@@ -76,7 +76,7 @@ The change from previous rules is that a facet type containing a named
 constraint is now partially identified inside the definition of that named
 constraint.
 
-As in [#5168](/proposals/p5168.md), an `impl` declaration and `require`
+As in [#5168](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md), an `impl` declaration and `require`
 statement each requires its constraint to be identified.
 
 We define the rules for facets in impl lookups, which are representable as

@@ -260,7 +260,7 @@ parameters of any kind, implicit or explicit.
 We have generally been happy with `self` being explicit instead of implicit and
 so to an extent we didn't deeply consider (2) as that wasn't part of the problem
 we set out to solve. We're still comfortable with the rationale about this
-aspect of the syntax from [p0722](/proposals/p0722.md#full-receiver-type).
+aspect of the syntax from [p0722](/proposals/p000722-nominal-classes-and-methods.md#full-receiver-type).
 
 We did consider (1) but were unable to find a syntax that felt compelling.
 Taking a new balanced delimiter is an especially difficult and expensive choice

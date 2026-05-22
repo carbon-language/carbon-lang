@@ -96,7 +96,7 @@ left-to-right arrow meaning a left-associative operator.
 For example:
 
 <div align="center">
-<img src="p0555/example.svg" alt="Example operator precedence diagram">
+<img src="p000555-operator-precedence/example.svg" alt="Example operator precedence diagram">
 </div>
 
 ... would depict a higher-precedence `*` operator and a lower-precedence `+`
@@ -111,7 +111,7 @@ With those precedence rules:
 -   `a + b << c` would be an error, requiring parentheses, because the
     precedence levels of `+` and `<<` are unordered.
 
-A [python script](p0555/figures.py) to generate these diagrams is included with
+A [python script](p000555-operator-precedence/figures.py) to generate these diagrams is included with
 this proposal.
 
 ### When to add precedence edges
@@ -228,7 +228,7 @@ this ambiguity by excluding `primary_expression` from `add_expression` and
 systematically for any precedence partial ordering.
 
 A complete example of a yacc parser with operator precedence partial ordering is
-available [alongside this proposal](p0555/yacc-parser).
+available [alongside this proposal](p000555-operator-precedence/yacc-parser).
 
 ## Rationale based on Carbon's goals
 

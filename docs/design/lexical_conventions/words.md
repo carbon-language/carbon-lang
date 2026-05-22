@@ -29,7 +29,7 @@ The exact lexical form of words has not yet been settled. However, Carbon will
 follow lexical conventions for identifiers based on
 [Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
 the precise rules are decided; see the
-[Unicode source files](/proposals/p0142.md#characters-in-identifiers-and-whitespace)
+[Unicode source files](/proposals/p000142-unicode-source-files.md#characters-in-identifiers-and-whitespace)
 proposal.
 
 Carbon source files, including comments and string literals, are required to be
@@ -131,22 +131,22 @@ then `word` and `r#word` have the same meaning.
 
 Overview:
 
--   [Character encoding: We could restrict words to ASCII.](/proposals/p0142.md#character-encoding-1)
--   [Normalization form alternatives considered](/proposals/p0142.md#normalization-forms)
+-   [Character encoding: We could restrict words to ASCII.](/proposals/p000142-unicode-source-files.md#character-encoding-1)
+-   [Normalization form alternatives considered](/proposals/p000142-unicode-source-files.md#normalization-forms)
 
 Type literals:
 
--   [Use C++ type keywords with LP64 convention](/proposals/p2015.md#c-lp64-convention)
--   [Use full type name with length suffix](/proposals/p2015.md#type-name-with-length-suffix)
--   [Use uppercase for type names](/proposals/p2015.md#uppercase-suffixes)
--   [Support additional bit widths](/proposals/p2015.md#additional-bit-sizes)
+-   [Use C++ type keywords with LP64 convention](/proposals/p002015-numeric-type-literal-syntax.md#c-lp64-convention)
+-   [Use full type name with length suffix](/proposals/p002015-numeric-type-literal-syntax.md#type-name-with-length-suffix)
+-   [Use uppercase for type names](/proposals/p002015-numeric-type-literal-syntax.md#uppercase-suffixes)
+-   [Support additional bit widths](/proposals/p002015-numeric-type-literal-syntax.md#additional-bit-sizes)
 
 Raw identifiers:
 
--   [Other raw identifier syntaxes](/proposals/p3797.md#other-raw-identifier-syntaxes)
--   [Restrict raw identifier syntax to current and future keywords](/proposals/p3797.md#restrict-raw-identifier-syntax-to-current-and-future-keywords)
--   [Don't require syntax for references to raw identifiers](/proposals/p3797.md#dont-require-syntax-for-references-to-raw-identifiers)
--   [Don't provide raw identifier syntax](/proposals/p3797.md#dont-provide-raw-identifier-syntax)
+-   [Other raw identifier syntaxes](/proposals/p003797-raw-identifier-syntax.md#other-raw-identifier-syntaxes)
+-   [Restrict raw identifier syntax to current and future keywords](/proposals/p003797-raw-identifier-syntax.md#restrict-raw-identifier-syntax-to-current-and-future-keywords)
+-   [Don't require syntax for references to raw identifiers](/proposals/p003797-raw-identifier-syntax.md#dont-require-syntax-for-references-to-raw-identifiers)
+-   [Don't provide raw identifier syntax](/proposals/p003797-raw-identifier-syntax.md#dont-provide-raw-identifier-syntax)
 
 ## References
 

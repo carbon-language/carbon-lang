@@ -102,13 +102,13 @@ like numeric literals:
 
 -   A character literal is a sequence enclosed with single quotes delimiter ('),
     of UTF-8 code units that must be a valid encoding. This matches
-    [the UTF-8 encoding of Carbon source files](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0142.md#character-encoding).
+    [the UTF-8 encoding of Carbon source files](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000142-unicode-source-files.md#character-encoding).
 -   A character literal must encode exactly one code point.
 -   It supports addition and subtraction, [as described below](#operations).
 -   Character literals will support the relevant subset of the backslash (`\`)
     escape sequences in string literals, including `\t`, `\n`, `\r`, `\"`, `\'`,
     `\\`, `\0`, and `\u{HHHH...}`. See
-    [String Literals: Escape sequence](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0199.md#escape-sequences).
+    [String Literals: Escape sequence](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000199-string-literals.md#escape-sequences).
     -   Escape sequences which would result in non-UTF-8 encodings or more than
         one code point are not included.
     -   The escape of an embedded newline is also excluded as it isn't expected
@@ -230,9 +230,9 @@ information.
 
 Further, this design follows other standards set in place by previous proposals.
 For example following the
-[String Literals: Escaping Sequence](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0199.md#escape-sequences-1)
+[String Literals: Escaping Sequence](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000199-string-literals.md#escape-sequences-1)
 and representing characters as integers with the behaviour inline with
-[Integer Literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0143.md).
+[Integer Literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000143-numeric-literals.md).
 
 This also supports our goal for
 [Interoperability with and migration from existing C++ code](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
@@ -314,7 +314,7 @@ other explicit type checks like in C++; a UTF-16 `u'`, UTF-32 `U'`, and wide
 characters `L'`. This would be more familiar for individuals coming to Carbon
 from a C++ background, and simplify our approach for C++ Interoperability. At
 the cost of diverge from existing standards, for example
-[Proposal 142](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0142.md#character-encoding)
+[Proposal 142](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000142-unicode-source-files.md#character-encoding)
 states all of Carbon source code should be UTF-8 encoded. Prefix declarations
 would detract the readability of the character literals and increase the
 complexity of character literal [Types](#types).

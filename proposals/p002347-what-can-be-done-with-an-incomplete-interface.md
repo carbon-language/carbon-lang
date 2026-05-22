@@ -73,7 +73,7 @@ goal.
 In particular, we considered allowing the declaration of an interface or named
 constraint in an API file and the definition in the impl file of the same
 library. We considered some use cases that might benefit from this in
-[#931](p0931.md#private-interfaces-in-public-api-files) and
+[#931](p000931-generic-impls-access-details-4.md#private-interfaces-in-public-api-files) and
 [#971](https://github.com/carbon-language/carbon-lang/issues/971). In
 [#generics-and-templates on 2022-10-24](https://discord.com/channels/655572317891461132/941071822756143115/1034207895392358431),
 we decided those use cases would be okay including the definition of the private

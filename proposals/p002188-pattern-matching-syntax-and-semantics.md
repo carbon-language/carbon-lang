@@ -211,7 +211,7 @@ fn H(n: i32) {
 ```
 
 As specified in
-[#2022](/proposals/p2022.md#the-behavior-of-unused-name-bindings), the `unused`
+[#2022](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#the-behavior-of-unused-name-bindings), the `unused`
 keyword indicates that the binding is intended to not be used.
 
 #### Wildcard
@@ -221,7 +221,7 @@ ignore part of a value.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
 
-See [#2022](/proposals/p2022.md) for details.
+See [#2022](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md) for details.
 
 The behavior is similar to that of an `unused` binding with a unique name.
 
@@ -236,7 +236,7 @@ fn F(n: i32) {
 }
 ```
 
-As specified in [#1084](/proposals/p1084.md), function redeclarations may
+As specified in [#1084](/proposals/p001084-generics-details-9-forward-declarations.md), function redeclarations may
 replace named bindings with wildcards but may not use different names.
 
 ```
@@ -704,7 +704,7 @@ We will diagnose the following situations:
 ### Shorthand for `auto`
 
 We could provide a shorter syntax for `name: auto`.
-[Proposal #851](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0851.md#elide-the-type-instead-of-using-auto)
+[Proposal #851](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000851-variable-type-inference.md#elide-the-type-instead-of-using-auto)
 considered the following shorthands and decided against using them:
 
 ```
@@ -1115,7 +1115,7 @@ either syntactically or semantically.
 ### User-defined pattern matching
 
 We plan to provide a mechanism for allowing a user-defined type to specify how
-it can be matched by patterns. See [proposal #157](/proposals/p0157.md) for
+it can be matched by patterns. See [proposal #157](/proposals/p000157-design-direction-for-sum-types.md) for
 details.
 
 ### Matching classes with struct patterns

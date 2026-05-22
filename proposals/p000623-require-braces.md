@@ -36,8 +36,8 @@ for (Shape x : shapes)
 ```
 
 Carbon adopted this design choice by default in proposals
-[#285](/proposals/p0285.md), [#340](/proposals/p0340.md), and
-[#353](/proposals/p0353.md). But should we keep it?
+[#285](/proposals/p000285-if-else.md), [#340](/proposals/p000340-while-loops.md), and
+[#353](/proposals/p000353-for-loops.md). But should we keep it?
 
 ## Background
 

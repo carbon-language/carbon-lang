@@ -85,7 +85,7 @@ an associated type.
 
 The decision was to use `let` with `:!` to express that these are compile-time
 values, matching the use in classes described in proposal
-[#772](p0722.md#let-constants).
+[#772](p000722-nominal-classes-and-methods.md#let-constants).
 
 ```
 interface Stack {

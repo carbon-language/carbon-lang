@@ -74,7 +74,7 @@ namespace is never known.
 ## Background
 
 Proposal
-[#3763](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md)
+[#3763](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003763-matching-redeclarations.md)
 introduces a name poisoning rule:
 
 > In a declarative scope, it is an error if a name is first looked up and not

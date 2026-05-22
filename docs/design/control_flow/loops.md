@@ -109,14 +109,14 @@ while (!f.EOF()) {
 
 ## Alternatives considered
 
--   [Non-C++ syntax](/proposals/p0340.md#non-c-syntax)
--   [Initializing variables in the `while`](/proposals/p0340.md#initializing-variables-in-the-while)
+-   [Non-C++ syntax](/proposals/p000340-while-loops.md#non-c-syntax)
+-   [Initializing variables in the `while`](/proposals/p000340-while-loops.md#initializing-variables-in-the-while)
 -   `for`:
-    -   [Include semisemi `for` loops](/proposals/p0353.md#include-semisemi-for-loops)
-    -   [Multi-variable bindings](/proposals/p0353.md#multi-variable-bindings)
-    -   [`:` versus `in`](/proposals/p0618.md#-versus-in)
--   [Optional braces](/proposals/p0623.md#optional-braces)
--   [Optional parentheses](/proposals/p0623.md#optional-parentheses)
+    -   [Include semisemi `for` loops](/proposals/p000353-for-loops.md#include-semisemi-for-loops)
+    -   [Multi-variable bindings](/proposals/p000353-for-loops.md#multi-variable-bindings)
+    -   [`:` versus `in`](/proposals/p000618-var-ordering.md#-versus-in)
+-   [Optional braces](/proposals/p000623-require-braces.md#optional-braces)
+-   [Optional parentheses](/proposals/p000623-require-braces.md#optional-parentheses)
 
 ## References
 

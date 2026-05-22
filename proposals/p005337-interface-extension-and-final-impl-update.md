@@ -986,7 +986,7 @@ final `impl`). In order to detect the subsumption, the query for the final
 The generated `impl` from an `extend impl` in an interface is given a name
 similar to an `impl` defined in a `class` scope, as
 [discussed on 2024-03-11](https://docs.google.com/document/d/1s3mMCupmuSpWOFJGnvjoElcBIe2aoaysTIdyczvKX84/edit?resourcekey=0-G095Wc3sR6pW1hLJbGgE0g&tab=t.0#heading=h.p69b78lovqb7),
-mentioned in [proposal #3763](/proposals/p3763.md#redeclarations), and proposed
+mentioned in [proposal #3763](/proposals/p003763-matching-redeclarations.md#redeclarations), and proposed
 in pending
 [proposal #5366](https://github.com/carbon-language/carbon-lang/pull/5366).
 
@@ -1141,7 +1141,7 @@ rules.
 ### No default `Self` in `require Self impls I`
 
 Shortening of `require Self impls I` to just `require I` was considered in
-[proposal #2760](p2760.md#allow-interfaces-to-require-another-interface-without-writing-self-impls).
+[proposal #2760](p002760-consistent-class-and-interface-syntax.md#allow-interfaces-to-require-another-interface-without-writing-self-impls).
 It was not chosen to be consistent with `where` clauses, but the door was left
 open if it was found to be too verbose. The `require impls I` approach adopted
 by this proposal, though, could be extended to work with `where` as well. The

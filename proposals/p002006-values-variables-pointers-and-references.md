@@ -135,7 +135,7 @@ variables"][p0257] ([#257]), implementing part of [#1993].
 [#257]: https://github.com/carbon-language/carbon-lang/pull/257
 [#523]: https://github.com/carbon-language/carbon-lang/issues/523
 [#1993]: https://github.com/carbon-language/carbon-lang/issues/1993
-[p0257]: /proposals/p0257.md
+[p0257]: /proposals/p000257-initialization-of-memory-and-variables.md
 
 ## Proposal
 

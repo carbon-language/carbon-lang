@@ -62,7 +62,7 @@ changes are necessarily best-effort, because it wasn't feasible for me to fully
 evaluate every proposal against the current state of the docs. In particular, I
 didn't look at proposals numbered below 2000, and I assumed that proposals fully
 updated `/docs/design` if they touched it at all. In addition, I did not add
-"TODO" comments for the terminology changes in [p2964](/proposals/p2964.md),
+"TODO" comments for the terminology changes in [p2964](/proposals/p002964-expression-phase-terminology.md),
 because they would be pervasive, and probably add little value for the reader.
 Instead, I filed issue
 [#5599](https://github.com/carbon-language/carbon-lang/issues/5599) to track the

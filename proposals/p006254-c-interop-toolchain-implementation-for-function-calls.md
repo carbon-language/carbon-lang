@@ -54,7 +54,7 @@ understand. Several challenges arise at the toolchain level:
     to the correct C++ function within an overload set.
 -   C++ types do not always have identical representations or ABIs to their
     Carbon counterparts (see
-    [Carbon <-> C++ Interop: Primitive Types](https://github.com/carbon-language/carbon-lang/blob/44b2f60c90df5c1b0ce86f97bb0ece2a94eb50ea/proposals/p5448.md)).
+    [Carbon <-> C++ Interop: Primitive Types](https://github.com/carbon-language/carbon-lang/blob/44b2f60c90df5c1b0ce86f97bb0ece2a94eb50ea/proposals/p005448-carbon-c-interop-primitive-types.md)).
     For example, parameter passing conventions (by value, by pointer) or return
     value handling (direct return versus return slot) might differ. This may
     require the toolchain to synthesize adapter code.
@@ -117,7 +117,7 @@ be an overload set imported from C++:
     [`clang::OpaqueValueExpr`](https://github.com/llvm/llvm-project/blob/1e99026b45b048a52f8372399ab83d488132842e/clang/include/clang/AST/Expr.h#L1178)).
     The types of these expressions are determined by mapping the Carbon argument
     types to corresponding C++ types
-    ([Carbon <-> C++ Interop: Primitive Types](https://github.com/carbon-language/carbon-lang/blob/44b2f60c90df5c1b0ce86f97bb0ece2a94eb50ea/proposals/p5448.md)).
+    ([Carbon <-> C++ Interop: Primitive Types](https://github.com/carbon-language/carbon-lang/blob/44b2f60c90df5c1b0ce86f97bb0ece2a94eb50ea/proposals/p005448-carbon-c-interop-primitive-types.md)).
 2.  **Invoke Clang Sema:** Carbon invokes Clang's overload resolution logic
     ([`clang::OverloadCandidateSet::BestViableFunction()`](https://github.com/llvm/llvm-project/blob/1e99026b45b048a52f8372399ab83d488132842e/clang/include/clang/Sema/Overload.h#L1456))
     with the mapped C++ name, the candidate functions from the imported overload

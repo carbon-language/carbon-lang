@@ -420,9 +420,9 @@ These are referred to as
 Other expression documents will list more alternatives; this lists alternatives
 not noted elsewhere.
 
--   [Total order](/proposals/p0555.md#total-order)
--   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)
--   [Require less than a partial order](/proposals/p0555.md#require-less-than-a-partial-order)
+-   [Total order](/proposals/p000555-operator-precedence.md#total-order)
+-   [Different precedence for different operands](/proposals/p000555-operator-precedence.md#different-precedence-for-different-operands)
+-   [Require less than a partial order](/proposals/p000555-operator-precedence.md#require-less-than-a-partial-order)
 
 ## References
 

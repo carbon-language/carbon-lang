@@ -100,7 +100,7 @@ function.
 Although the syntax of `fn destroy` looks similar to a regular function, the
 functions are not designed to be directly callable. This does not add support
 for `my_var.destroy()`. See Proposal #1154, alternative
-[Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
+[Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
 for details.
 
 ## Future work

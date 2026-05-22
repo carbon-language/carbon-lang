@@ -99,7 +99,7 @@ Breaking down the specific key results we aimed at for 2023:
 
 [mvp-milestone]:
     /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
-[toolchain-pivot]: /proposals/p3532.md
+[toolchain-pivot]: /proposals/p003532-focus-implementation-effort-on-the-toolchain.md
 
 Overall, 2023 was pretty amazing, and we hit some of the most important
 milestones in the project over the past year.

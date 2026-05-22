@@ -285,7 +285,7 @@ satisfy requirements in more situations. In particular, we make these changes:
         library) as its declaration.
         -   However, the definitions of its member functions may be separate in
             the impl file, out of line, as provided in
-            [proposal #3763](/proposals/p3763.md#out-of-line-definitions-of-associated-functions).
+            [proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions).
 -   An `impl` may be forward declared without the interface being defined.
     -   This is enabled by not needing access to the definition to see other
         interfaces required or extended or to see the associated constants that

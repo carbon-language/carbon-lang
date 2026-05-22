@@ -94,11 +94,11 @@ The need for forward declarations of entities comes from the
 [Leads issue #1132](https://github.com/carbon-language/carbon-lang/issues/1132)
 defined the initial rules for matching forward declarations to their
 definitions. Those rules were partially incorporated into the design by
-[proposal #1084, "Generics details 9: forward declarations"](/proposals/p1084.md).
+[proposal #1084, "Generics details 9: forward declarations"](/proposals/p001084-generics-details-9-forward-declarations.md).
 
 A replacement approach was
 [discussed on 2024-03-11](https://docs.google.com/document/d/1s3mMCupmuSpWOFJGnvjoElcBIe2aoaysTIdyczvKX84/edit?resourcekey=0-G095Wc3sR6pW1hLJbGgE0g&tab=t.0#heading=h.p69b78lovqb7)
-and mentioned in [proposal #3763](/proposals/p3763.md#redeclarations). This is
+and mentioned in [proposal #3763](/proposals/p003763-matching-redeclarations.md#redeclarations). This is
 the approach of syntactic matching and re-entering the same scope. The syntax
 adopted by this proposal was first suggested in those.
 

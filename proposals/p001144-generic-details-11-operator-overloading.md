@@ -51,7 +51,7 @@ by implementing interfaces, as in these proposals:
 Proposal
 [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
 specified
-[using interfaces for overloading the comparison operators](p0702.md#overloading),
+[using interfaces for overloading the comparison operators](p000702-comparison-operators.md#overloading),
 but did not pin down specifically what those interfaces are.
 
 ## Proposal

@@ -149,7 +149,7 @@ Cpp.BUFFER_SIZE.
 
 The type of the imported constant is deduced by Clang by evaluating the constant
 expression and then mapped to a Carbon type following the existing
-[Carbon <-> C++ type mapping rules](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p5448.md).
+[Carbon <-> C++ type mapping rules](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448-carbon-c-interop-primitive-types.md).
 
 ### Constant value
 

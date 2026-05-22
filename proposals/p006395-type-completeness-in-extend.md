@@ -31,7 +31,7 @@ named in the declaration.
 ## Problem
 
 Proposal
-[#5168](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p5168.md)
+[#5168](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
 laid out rules for when a facet type needs to be identified or complete. When
 `require impls X` is written, then `X` must be identified. However it does not
 specify any rule for `extend require impls X`. And we lack completeness rules
@@ -46,13 +46,13 @@ complete to avoid poisoning names in the entity.
 ## Background
 
 -   Proposal
-    [#5168](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p5168.md):
+    [#5168](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md):
     Forward `impl` declaration of an incomplete interface
 -   Proposal
-    [#2760](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2760.md):
+    [#2760](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p002760-consistent-class-and-interface-syntax.md):
     Consistent `class` and `interface` syntax
 -   Proposal
-    [#0777](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0777.md):
+    [#0777](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p000777-inheritance.md):
     Inheritance
 
 ## Proposal

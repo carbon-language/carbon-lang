@@ -229,7 +229,7 @@ supply the missing functionality identified above. These features are largely
 separable, although there are some dependencies between them, so their detailed
 design will be addressed in future proposals, and the details discussed here
 should be considered provisional. This proposal merely establishes the overall
-design direction for sum types, in the same way that [#83](p0083.md) established
+design direction for sum types, in the same way that [#83](p000083-in-progress-design-overview.md) established
 the overall design direction for the language as a whole.
 
 To support manual lifetime control and storage sharing, I propose introducing at
@@ -1012,7 +1012,7 @@ This ensures that a sum type's API is defined using essentially the same syntax,
 regardless of how the type author chooses to implement it.
 
 This approach is described in much more detail in an
-[earlier draft](https://github.com/carbon-language/carbon-lang/blob/4dbd31d71e02895892f97a211df4b5fff8cae5c3/proposals/p0157.md)
+[earlier draft](https://github.com/carbon-language/carbon-lang/blob/4dbd31d71e02895892f97a211df4b5fff8cae5c3/proposals/p000157-design-direction-for-sum-types.md)
 of this document, where it was the primary proposal. It has a number of
 advantages over the primary proposal:
 

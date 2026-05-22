@@ -58,7 +58,7 @@ nor are they very common in code. We also expect these to be the primary use of
 octal numeric literals in Carbon.
 
 Given these issues, proposal #143
-[rejected octal literals](/proposals/p0143.md#octal-literals). Now, we're
+[rejected octal literals](/proposals/p000143-numeric-literals.md#octal-literals). Now, we're
 testing interoperability of POSIX file system calls, and we are considering
 octal literals as a potential solution.
 

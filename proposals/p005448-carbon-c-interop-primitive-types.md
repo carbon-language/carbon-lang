@@ -69,11 +69,11 @@ The following data models are widely accepted:
 [Carbon supported platforms](/docs/project/principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments)
 
 Carbon will prioritize supporting modern OS, 64-bit little endian platforms (for
-example [LLP64](/proposals/p5448.md#data-models),
-[LP64](/proposals/p5448.md#data-models)). Historic platforms like
-[LP32](/proposals/p5448.md#data-models) won't be supported.
+example [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models),
+[LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models)). Historic platforms like
+[LP32](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models) won't be supported.
 
-For clarity, the text below omits [LP32](/proposals/p5448.md#data-models)
+For clarity, the text below omits [LP32](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models)
 relevant information and focuses only on the Carbon supported platforms.
 
 ### Carbon Primitive Types
@@ -160,7 +160,7 @@ not itself a pointer type.
 | `signed char` | 8-bit                                                                                             |
 | `short`       | 16-bit                                                                                            |
 | `int`         | 32-bit                                                                                            |
-| `long`        | [LLP64](/proposals/p5448.md#data-models): 32-bit; [LP64](/proposals/p5448.md#data-models): 64-bit |
+| `long`        | [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): 32-bit; [LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): 64-bit |
 | `long long`   | 64-bit                                                                                            |
 
 **Exact-width integer types**
@@ -172,8 +172,8 @@ Typically aliases of the standard integer types.
 | `std::int8_t`  | 8-bit         | `typedef signed char int8_t`                                                 |
 | `std::int16_t` | 16-bit        | `typedef signed short int16_t`                                               |
 | `std::int32_t` | 32-bit        | `typedef signed int int32_t`                                                 |
-| `std::int64_t` | 64-bit        | [LLP64](/proposals/p5448.md#data-models): `typedef signed long long int64_t` |
-|                |               | [LP64](/proposals/p5448.md#data-models): `typedef signed long int64_t`       |
+| `std::int64_t` | 64-bit        | [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long long int64_t` |
+|                |               | [LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long int64_t`       |
 
 **Fastest minimum-width integer types**
 
@@ -185,8 +185,8 @@ that have the minimum specified width.
 | `std::int_fast8_t`  | >=8-bit       | `typedef signed char int_fast8_t`                                                 |
 | `std::int_fast16_t` | >=16-bit      | implementation dependent                                                          |
 | `std::int_fast32_t` | >=32-bit      | implementation dependent                                                          |
-| `std::int_fast64_t` | >=64-bit      | [LLP64](/proposals/p5448.md#data-models): `typedef signed long long int_fast64_t` |
-|                     |               | [LP64](/proposals/p5448.md#data-models): `typedef signed long int_fast64_t`       |
+| `std::int_fast64_t` | >=64-bit      | [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long long int_fast64_t` |
+|                     |               | [LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long int_fast64_t`       |
 
 **Minimum-width integer types**
 
@@ -197,8 +197,8 @@ Smallest signed integer type with width of at least N-bits.
 | `std::int_least8_t`  | >=8-bit       | `typedef signed char int_least8_t`                                                 |
 | `std::int_least16_t` | >=16-bit      | `typedef short int_least16_t`                                                      |
 | `std::int_least32_t` | >=32-bit      | `typedef int int_least32_t`                                                        |
-| `std::int_least64_t` | >=64-bit      | [LLP64](/proposals/p5448.md#data-models): `typedef signed long long int_least64_t` |
-|                      |               | [LP64](/proposals/p5448.md#data-models): `typedef signed long int_least64_t`       |
+| `std::int_least64_t` | >=64-bit      | [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long long int_least64_t` |
+|                      |               | [LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long int_least64_t`       |
 
 **Greatest-width integer types**
 
@@ -206,8 +206,8 @@ Maximum-width signed integer type.
 
 | Type            | Width in bits | Defined as                                                                    |
 | --------------- | ------------- | ----------------------------------------------------------------------------- |
-| `std::intmax_t` | >=32-bit      | [LLP64](/proposals/p5448.md#data-models): `typedef signed long long intmax_t` |
-|                 |               | [LP64](/proposals/p5448.md#data-models): `typedef signed long intmax_t`       |
+| `std::intmax_t` | >=32-bit      | [LLP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long long intmax_t` |
+|                 |               | [LP64](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models): `typedef signed long intmax_t`       |
 
 **Integer types capable of holding object pointers**
 
@@ -216,7 +216,7 @@ Signed integer type, capable of holding any pointer.
 | Type            | Width in bits | Defined as                                                           |
 | --------------- | ------------- | -------------------------------------------------------------------- |
 | `std::intptr_t` | >=16-bit      | most platforms: `typedef long intptr_t`                              |
-|                 |               | some [ILP32](/proposals/p5448.md#data-models):`typedef int intptr_t` |
+|                 |               | some [ILP32](/proposals/p005448-carbon-c-interop-primitive-types.md#data-models):`typedef int intptr_t` |
 
 **Other signed integer types**
 
@@ -228,7 +228,7 @@ Signed integer type, capable of holding any pointer.
 #### Unsigned integer types
 
 The unsigned integer types have the same sizes as their
-[signed counterparts](/proposals/p5448.md#signed-integer-types).
+[signed counterparts](/proposals/p005448-carbon-c-interop-primitive-types.md#signed-integer-types).
 
 | Type     | Width in bits | Defined as                                 |
 | -------- | ------------- | ------------------------------------------ |

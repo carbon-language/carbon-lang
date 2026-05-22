@@ -493,7 +493,7 @@ interface Collection {
 ```
 
 One approach we considered is
-[regular equivalence classes](p0818/regular_equivalence_classes.md), however we
+[regular equivalence classes](p000818-constraints-for-generics-generics-details-3/regular_equivalence_classes.md), however we
 have not yet been able to figure out how to ensure the algorithm terminates.
 This is an approach we would like to reconsider if we find solutions to this
 problem once can share this problem more widely.

@@ -124,7 +124,7 @@ proposal, just restricted to the associated constants that are declared `final`.
 So we may still add this feature, if it is warranted by demand, but we did not
 yet have that justification. This is essentially the same position as when this
 feature was considered in
-[proposal #983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls).
+[proposal #983](/proposals/p000983-generics-details-7-final-impls.md#final-associated-constants-instead-of-final-impls).
 
 ### Allow type inequality constraints
 

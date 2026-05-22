@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-> **TODO:** [p3720: Member binding operators](/proposals/p3720.md) introduces an
+> **TODO:** [p3720: Member binding operators](/proposals/p003720-member-binding-operators.md) introduces an
 > additional "member binding" step, redefines simple member access in terms of
 > compound member access, and defines compound member access in terms of calls
 > to user-implementable interface methods. This document must be updated to
@@ -945,9 +945,9 @@ var n: i32 = 1 + X.Y;
 
 ## Alternatives considered
 
--   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p0989.md#separate-syntax-for-static-versus-dynamic-access)
--   [Use a different lookup rule for names in templates](/proposals/p0989.md#use-a-different-lookup-rule-in-templates)
--   [Meaning of `Type.Interface`](/proposals/p0989.md#meaning-of-typeinterface)
+-   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p000989-member-access-expressions.md#separate-syntax-for-static-versus-dynamic-access)
+-   [Use a different lookup rule for names in templates](/proposals/p000989-member-access-expressions.md#use-a-different-lookup-rule-in-templates)
+-   [Meaning of `Type.Interface`](/proposals/p000989-member-access-expressions.md#meaning-of-typeinterface)
 
 ## References
 

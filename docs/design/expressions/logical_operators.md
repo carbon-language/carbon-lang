@@ -136,13 +136,13 @@ also customize how `and`, `or`, and `not` treats them.
 
 ## Alternatives considered
 
--   [Use punctuation spelling for all three operators](/proposals/p0680.md#use-punctuation-spelling-for-all-three-operators)
--   [Precedence of AND versus OR](/proposals/p0680.md#precedence-of-and-versus-or)
--   [Precedence of NOT](/proposals/p0680.md#precedence-of-not)
--   [Punctuation form of NOT](/proposals/p0680.md#punctuation-form-of-not)
--   [Two forms of NOT](/proposals/p0680.md#two-forms-of-not)
--   [Repeated NOT](/proposals/p0680.md#repeated-not)
--   [AND and OR produce the decisive value](/proposals/p0680.md#and-and-or-produce-the-decisive-value)
+-   [Use punctuation spelling for all three operators](/proposals/p000680-and-or-not.md#use-punctuation-spelling-for-all-three-operators)
+-   [Precedence of AND versus OR](/proposals/p000680-and-or-not.md#precedence-of-and-versus-or)
+-   [Precedence of NOT](/proposals/p000680-and-or-not.md#precedence-of-not)
+-   [Punctuation form of NOT](/proposals/p000680-and-or-not.md#punctuation-form-of-not)
+-   [Two forms of NOT](/proposals/p000680-and-or-not.md#two-forms-of-not)
+-   [Repeated NOT](/proposals/p000680-and-or-not.md#repeated-not)
+-   [AND and OR produce the decisive value](/proposals/p000680-and-or-not.md#and-and-or-produce-the-decisive-value)
 
 ## References
 

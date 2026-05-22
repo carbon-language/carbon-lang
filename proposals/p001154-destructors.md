@@ -62,7 +62,7 @@ Destructors were discussed in open discussion on these dates:
 As part of
 [proposal 777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777),
 we decided to support extensible classes, that is non-abstract base classes,
-[including with non-virtual destructors](p0777.md#no-extensible-objects-with-non-virtual-destructors).
+[including with non-virtual destructors](p000777-inheritance.md#no-extensible-objects-with-non-virtual-destructors).
 ["Extensible classes" Google doc](https://docs.google.com/document/d/1gbQJN_IMJBnquOUUd2orbHLlAIqZ4pL0Vt7h34DkQjg/edit?resourcekey=0-0lkEvh0umUU206ASFlWc7A#)
 from that time considered options for making deleting extensible classes safer.
 
@@ -266,7 +266,7 @@ both more concise and more clearly the opposite of "abstract."
 There were a few alternatives we considered that were specifically concerned
 about how to handle the unsafe case of deleting a pointer to a base class that
 does not have a virtual destructor, but may be pointing to a derived value. We
-[decided to allow this case](p0777.md#no-extensible-objects-with-non-virtual-destructors)
+[decided to allow this case](p000777-inheritance.md#no-extensible-objects-with-non-virtual-destructors)
 as part of
 [proposal 777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777).
 We decided to go with the proposed approach in

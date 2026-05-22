@@ -250,7 +250,7 @@ significant fraction of developers despite having been present across many
 languages for decades, leading to common recommendations to enable compiler
 warnings for the first form in the above example, suggesting to rewrite it as
 the second form. This therefore fails the test from proposal
-[#555: when to add precedence edges](/proposals/p0555.md#when-to-add-precedence-edges).
+[#555: when to add precedence edges](/proposals/p000555-operator-precedence.md#when-to-add-precedence-edges).
 
 ### Precedence of NOT
 
@@ -328,7 +328,7 @@ Boolean type. However, we hope that a clearer syntax for that will be available,
 such as perhaps `x as Bool`. In the presence of such syntax, `not not x` would
 be an anti-pattern, and may indicate a bug due to an unintentionally repeated
 `not` operator. Per
-[#555: when to add precedence edges](/proposals/p0555.md#when-to-add-precedence-edges),
+[#555: when to add precedence edges](/proposals/p000555-operator-precedence.md#when-to-add-precedence-edges),
 when in doubt, we omit the precedence rule and wait for real-world experience.
 
 ### AND and OR produce the decisive value
