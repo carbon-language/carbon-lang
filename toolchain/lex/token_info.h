@@ -123,23 +123,20 @@ class TokenInfo {
   // token as well.
   auto byte_offset() const -> int32_t { return byte_offset_; }
 
-  // Transforms the token into an error token of the given length but at its
-  // original position and with the same whitespace adjacency.
-  auto ResetAsError(int error_length) -> void {
-    // Construct a fresh token to establish any needed invariants and replace
-    // this token with it.
-    TokenInfo error(TokenKind::Error, has_leading_space(), error_length,
-                    byte_offset());
-    *this = error;
+  // Returns an error token of the given length with this token's position and
+  // whitespace adjacency.
+  [[nodiscard]] auto AsError(int error_length) const -> TokenInfo {
+    return TokenInfo(TokenKind::Error, has_leading_space(), error_length,
+                     byte_offset());
   }
 
-  // Resets the token to be an identifier with the given identifier id at its
-  // original position and with the same whitespace adjacency.
-  auto ResetAsErrorRecoveryIdentifier(IdentifierId id) -> void {
+  // Returns an identifier token with the given identifier id with this
+  // token's position and whitespace adjacency.
+  [[nodiscard]] auto AsErrorRecoveryIdentifier(IdentifierId id) const
+      -> TokenInfo {
     CARBON_CHECK(kind().is_word());
-    TokenInfo error(TokenKind::Identifier, has_leading_space(), id.index,
-                    byte_offset());
-    *this = error;
+    return TokenInfo(TokenKind::Identifier, has_leading_space(), id.index,
+                     byte_offset());
   }
 
  private:

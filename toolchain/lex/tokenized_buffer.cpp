@@ -212,9 +212,8 @@ auto TokenizedBuffer::AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token)
   CARBON_CHECK(kind != TokenKind::Identifier, "Recovery not required");
 
   auto identifier_id = value_stores_->identifiers().Add(GetTokenText(token));
-  auto info = token_infos_.Get(token);
-  info.ResetAsErrorRecoveryIdentifier(identifier_id);
-  return AddPostLexingRecoveryToken(info);
+  return AddPostLexingRecoveryToken(
+      token_infos_.Get(token).AsErrorRecoveryIdentifier(identifier_id));
 }
 
 auto TokenizedBuffer::AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex {
