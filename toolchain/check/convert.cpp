@@ -912,12 +912,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     }
     auto initializer_id = lookup.value();
     SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
-    if (dest_type.specific_id.has_value()) {
-      const_id = GetConstantValueInSpecific(
-          context.sem_ir(), dest_type.specific_id, initializer_id);
-    } else {
-      const_id = TryEvalInst(context, initializer_id);
-    }
+    const_id = GetConstantValueInSpecific(
+        context.sem_ir(), dest_type.specific_id, initializer_id);
     if (const_id == SemIR::ConstantId::NotConstant) {
       context.TODO(initializer_id, "field initializer is not constant");
       return SemIR::ErrorInst::InstId;
