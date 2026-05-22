@@ -118,6 +118,13 @@ auto AppendDefaultClangArgs(const InstallPaths& install_paths,
       // TODO: Decide if we want this.
       "-fPIE",
 
+      // Enable function and data sections by default, and don't waste object
+      // file size on unique section names. Allow these to be overridden by
+      // Clang arguments.
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fno-unique-section-names",
+
       // Override runtime library defaults.
       //
       // TODO: We should consider if there is a reasonable way to build Clang

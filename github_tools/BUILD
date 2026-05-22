@@ -26,9 +26,22 @@ py_test(
 )
 
 py_binary(
+    name = "check_dependent_pr",
+    srcs = ["check_dependent_pr.py"],
+    deps = [":github_helpers"],
+)
+
+py_binary(
     name = "pr_comments",
     srcs = ["pr_comments.py"],
     deps = ["github_helpers"],
+)
+
+py_test(
+    name = "check_dependent_pr_test",
+    size = "small",
+    srcs = ["check_dependent_pr_test.py"],
+    deps = [":check_dependent_pr"],
 )
 
 py_test(

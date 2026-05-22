@@ -17,6 +17,16 @@ namespace Carbon::Check {
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;
 
+// Looks up the given operator in the Clang AST generated when importing C++
+// code using argument dependent lookup (ADL) and return overload set
+// instruction.
+//
+// This overload synthesises objects in an unevaluated context within the Clang
+// AST based on the types it is provided.
+auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                       llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
+    -> SemIR::InstId;
+
 // Returns whether the decl is an operator member function.
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool;
 

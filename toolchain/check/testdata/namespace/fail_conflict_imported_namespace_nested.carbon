@@ -86,7 +86,7 @@ fn Other.Nested.F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [concrete] {
 // CHECK:STDOUT:     .Nested = imports.%Nested
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }

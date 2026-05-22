@@ -10,7 +10,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/diagnostic_emitter.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -75,6 +75,10 @@ struct CheckParseTreesOptions {
   // If not empty, a raw SemIR dump should be written to this path in the event
   // of a crash.
   llvm::StringRef sem_ir_crash_dump;
+
+  // Whether to use the string form of the fingerprint from mangling instead of
+  // the hash form.
+  bool mangle_string_fingerprint = false;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

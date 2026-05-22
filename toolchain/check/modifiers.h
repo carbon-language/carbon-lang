@@ -52,10 +52,11 @@ auto RestrictExternModifierOnDecl(Context& context,
 // declarations where they are not allowed. Right now they are only allowed
 // inside interfaces.
 //
-// `parent_scope_inst` may be nullopt for a declaration in a block scope.
-auto RequireDefaultFinalOnlyInInterfaces(
-    Context& context, DeclIntroducerState& introducer,
-    std::optional<SemIR::Inst> parent_scope_inst) -> void;
+// `parent_scope_id` may be None for a declaration in a block scope.
+auto RequireDefaultFinalOnlyInInterfaces(Context& context,
+                                         DeclIntroducerState& introducer,
+                                         SemIR::NameScopeId parent_scope_id)
+    -> void;
 
 }  // namespace Carbon::Check
 

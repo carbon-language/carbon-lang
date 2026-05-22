@@ -127,16 +127,19 @@ using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
-// A name in a non-expression context, such as a declaration, that is known
-// to be followed by parameters.
-using IdentifierNameBeforeParams =
-    LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
+// A name that may be immediately followed by a signature (i.e. parameter lists
+// and/or a return declaration). There may be false positives, because we make
+// this determination based on the context and a single token of lookahead.
+using IdentifierNameMaybeBeforeSignature =
+    LeafNode<NodeKind::IdentifierNameMaybeBeforeSignature,
+             Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
-// A name in a non-expression context, such as a declaration, that is known
-// to not be followed by parameters.
-using IdentifierNameNotBeforeParams =
-    LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
+// A name that is known not to be immediately followed by a signature (i.e.
+// parameter lists and/or a return declaration).
+using IdentifierNameNotBeforeSignature =
+    LeafNode<NodeKind::IdentifierNameNotBeforeSignature,
+             Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
@@ -171,9 +174,9 @@ using UnderscoreName =
 struct IdentifierNameQualifierWithParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithParams.Define(
-          {.bracketed_by = IdentifierNameBeforeParams::Kind});
+          {.bracketed_by = IdentifierNameMaybeBeforeSignature::Kind});
 
-  IdentifierNameBeforeParamsId name;
+  IdentifierNameMaybeBeforeSignatureId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
@@ -183,9 +186,9 @@ struct IdentifierNameQualifierWithParams {
 struct IdentifierNameQualifierWithoutParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithoutParams.Define(
-          {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
+          {.bracketed_by = IdentifierNameNotBeforeSignature::Kind});
 
-  IdentifierNameNotBeforeParamsId name;
+  IdentifierNameNotBeforeSignatureId name;
   Lex::PeriodTokenIndex token;
 };
 
@@ -246,6 +249,18 @@ struct InlineImportSpecifier {
 
   Lex::InlineTokenIndex token;
   InlineImportBodyId body;
+};
+
+using InlineIntroducer =
+    LeafNode<NodeKind::InlineIntroducer, Lex::InlineTokenIndex>;
+struct InlineCppDecl {
+  static constexpr auto Kind = NodeKind::InlineCppDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = InlineIntroducer::Kind});
+
+  InlineIntroducerId introducer;
+  CppNameExprId cpp_name;
+  InlineImportBodyId body;
+  Lex::SemiTokenIndex token;
 };
 
 // First line of the file, such as:
@@ -348,7 +363,7 @@ struct LetBindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               RefBindingName>
       name;
   Lex::ColonTokenIndex token;
@@ -365,6 +380,16 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A form binding pattern, such as `name:? Form`.
+struct FormBindingPattern {
+  static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A template binding name: `template T`.
 struct TemplateBindingName {
   static constexpr auto Kind =
@@ -378,7 +403,7 @@ struct CompileTimeBindingPatternStart {
   static constexpr auto Kind =
       NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;
   // This is a virtual token. The `:!` token is owned by the
@@ -400,6 +425,18 @@ using TuplePatternStart =
     LeafNode<NodeKind::TuplePatternStart, Lex::OpenParenTokenIndex>;
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
+
+// A parenthesized pattern that isn't an explicit parameter list.
+struct ParenPattern {
+  static constexpr auto Kind =
+      NodeKind::ParenPattern.Define({.category = NodeCategory::Pattern,
+                                     .bracketed_by = TuplePatternStart::Kind,
+                                     .child_count = 2});
+
+  TuplePatternStartId left_paren;
+  AnyPatternId inner;
+  Lex::CloseParenTokenIndex token;
+};
 
 // A tuple pattern that isn't an explicit parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {
@@ -446,9 +483,19 @@ using FunctionIntroducer =
 
 // A return type: `-> i32`.
 struct ReturnType {
-  static constexpr auto Kind = NodeKind::ReturnType.Define({.child_count = 1});
+  static constexpr auto Kind = NodeKind::ReturnType.Define(
+      {.category = NodeCategory::ReturnDecl, .child_count = 1});
 
   Lex::MinusGreaterTokenIndex token;
+  AnyExprId type;
+};
+
+// A return form: `->? form(var i32)`
+struct ReturnForm {
+  static constexpr auto Kind = NodeKind::ReturnForm.Define(
+      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
   AnyExprId type;
 };
 
@@ -462,7 +509,7 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<AnyReturnDeclId> return_type;
   TokenKind token;
 };
 
@@ -557,6 +604,11 @@ struct LetDecl {
 };
 
 // Associated constant nodes
+//
+// TODO: remove these nodes and parse associated constants as regular
+// `let`s instead. This will make associated constant parsing mirror how
+// class vars are handled; see
+// https://github.com/carbon-language/carbon-lang/pull/7188.
 using AssociatedConstantIntroducer =
     LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
 using AssociatedConstantInitializer =
@@ -613,35 +665,6 @@ struct VariableDecl {
 
   struct Initializer {
     VariableInitializerId equals;
-    AnyExprId value;
-  };
-  std::optional<Initializer> initializer;
-  Lex::SemiTokenIndex token;
-};
-
-using FieldIntroducer = LeafNode<NodeKind::FieldIntroducer, Lex::VarTokenIndex>;
-using FieldInitializer =
-    LeafNode<NodeKind::FieldInitializer, Lex::EqualTokenIndex>;
-
-struct FieldNameAndType {
-  static constexpr auto Kind =
-      NodeKind::FieldNameAndType.Define({.child_count = 2});
-
-  IdentifierNameNotBeforeParamsId name;
-  Lex::ColonTokenIndex token;
-  AnyExprId type;
-};
-
-struct FieldDecl {
-  static constexpr auto Kind = NodeKind::FieldDecl.Define(
-      {.category = NodeCategory::Decl, .bracketed_by = FieldIntroducer::Kind});
-
-  FieldIntroducerId introducer;
-  llvm::SmallVector<AnyModifierId> modifiers;
-  FieldNameAndTypeId name_and_type;
-
-  struct Initializer {
-    FieldInitializerId equals;
     AnyExprId value;
   };
   std::optional<Initializer> initializer;
@@ -881,48 +904,40 @@ struct MatchCaseGuard {
   Lex::CloseParenTokenIndex token;
 };
 
-using MatchCaseEqualGreater =
-    LeafNode<NodeKind::MatchCaseEqualGreater, Lex::EqualGreaterTokenIndex>;
-
-struct MatchCaseStart {
-  static constexpr auto Kind = NodeKind::MatchCaseStart.Define(
-      {.bracketed_by = MatchCaseIntroducer::Kind});
+struct MatchCase {
+  static constexpr auto Kind =
+      NodeKind::MatchCase.Define({.bracketed_by = MatchCaseIntroducer::Kind});
 
   MatchCaseIntroducerId introducer;
   AnyPatternId pattern;
   std::optional<MatchCaseGuardId> guard;
-  MatchCaseEqualGreaterId equal_greater_token;
-  Lex::OpenCurlyBraceTokenIndex token;
-};
-
-struct MatchCase {
-  static constexpr auto Kind =
-      NodeKind::MatchCase.Define({.bracketed_by = MatchCaseStart::Kind});
-
-  MatchCaseStartId head;
-  llvm::SmallVector<AnyStatementId> statements;
-  Lex::CloseCurlyBraceTokenIndex token;
+  Lex::EqualGreaterTokenIndex token;
 };
 
 using MatchDefaultIntroducer =
     LeafNode<NodeKind::MatchDefaultIntroducer, Lex::DefaultTokenIndex>;
-using MatchDefaultEqualGreater =
-    LeafNode<NodeKind::MatchDefaultEqualGreater, Lex::EqualGreaterTokenIndex>;
 
-struct MatchDefaultStart {
-  static constexpr auto Kind = NodeKind::MatchDefaultStart.Define(
-      {.bracketed_by = MatchDefaultIntroducer::Kind, .child_count = 2});
+struct MatchDefault {
+  static constexpr auto Kind = NodeKind::MatchDefault.Define(
+      {.bracketed_by = MatchDefaultIntroducer::Kind, .child_count = 1});
 
   MatchDefaultIntroducerId introducer;
-  MatchDefaultEqualGreaterId equal_greater_token;
+  Lex::EqualGreaterTokenIndex token;
+};
+
+struct MatchHandlerStart {
+  static constexpr auto Kind =
+      NodeKind::MatchHandlerStart.Define({.child_count = 1});
+
+  NodeIdOneOf<MatchCase, MatchDefault> label;
   Lex::OpenCurlyBraceTokenIndex token;
 };
 
-struct MatchDefault {
+struct MatchHandler {
   static constexpr auto Kind =
-      NodeKind::MatchDefault.Define({.bracketed_by = MatchDefaultStart::Kind});
+      NodeKind::MatchHandler.Define({.bracketed_by = MatchHandlerStart::Kind});
 
-  MatchDefaultStartId introducer;
+  MatchHandlerStartId head;
   llvm::SmallVector<AnyStatementId> statements;
   Lex::CloseCurlyBraceTokenIndex token;
 };
@@ -935,8 +950,7 @@ struct MatchStatement {
 
   MatchStatementStartId head;
 
-  llvm::SmallVector<MatchCaseId> cases;
-  std::optional<MatchDefaultId> default_case;
+  llvm::SmallVector<MatchHandlerId> handlers;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
@@ -961,6 +975,49 @@ struct ArrayExpr {
   AnyExprId type;
   ArrayExprCommaId comma;
   AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
+};
+
+struct RefPrimitiveForm {
+  static constexpr auto Kind = NodeKind::RefPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId type;
+};
+
+struct VarPrimitiveForm {
+  static constexpr auto Kind = NodeKind::VarPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyExprId type;
+};
+
+struct ValPrimitiveForm {
+  static constexpr auto Kind = NodeKind::ValPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::ValTokenIndex token;
+  AnyExprId type;
+};
+
+using FormLiteralKeyword =
+    LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
+
+using FormLiteralOpenParen =
+    LeafNode<NodeKind::FormLiteralOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `form` literal: `form(ref i32)`
+struct FormLiteral {
+  static constexpr auto Kind = NodeKind::FormLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = NodeKind::FormLiteralKeyword,
+       .child_count = 3});
+
+  FormLiteralKeywordId keyword;
+  FormLiteralOpenParenId start;
+  AnyPrimitiveFormIdId category;
   Lex::CloseParenTokenIndex token;
 };
 
@@ -1228,7 +1285,7 @@ struct DesignatorExpr {
       {.category = NodeCategory::Expr, .child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfTypeName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfTypeName> name;
 };
 
 struct RequirementEqual {
@@ -1332,7 +1389,7 @@ struct StructFieldDesignator {
       NodeKind::StructFieldDesignator.Define({.child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeParams, BaseName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, BaseName> name;
 };
 
 // `.a = 0`
@@ -1522,6 +1579,45 @@ struct RequireDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   AnyRequireImplsId impls;
   AnyExprId facet_type;
+  Lex::SemiTokenIndex token;
+};
+
+// `observe` declarations
+// --------------------------------
+
+// `observe`
+using ObserveIntroducer =
+    LeafNode<NodeKind::ObserveIntroducer, Lex::ObserveTokenIndex>;
+
+// `==`
+struct ObserveEqualEqual {
+  static constexpr auto Kind = NodeKind::ObserveEqualEqual.Define(
+      {.category = NodeCategory::ObserveOperator, .child_count = 2});
+
+  AnyObserveOperandId lhs;
+  Lex::EqualEqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+// `impls`
+struct ObserveImpls {
+  static constexpr auto Kind = NodeKind::ObserveImpls.Define(
+      {.category = NodeCategory::ObserveOperator, .child_count = 2});
+
+  AnyObserveOperandId lhs;
+  Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
+};
+
+// `observe T == U impls I`
+struct ObserveDecl {
+  static constexpr auto Kind =
+      NodeKind::ObserveDecl.Define({.category = NodeCategory::Decl,
+                                    .bracketed_by = ObserveIntroducer::Kind});
+
+  ObserveIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyObserveOperatorId op;
   Lex::SemiTokenIndex token;
 };
 

@@ -85,16 +85,16 @@ abstract protected class WrongOrder { }
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
-  // CHECK:STDERR:   abstract fn F[self: Self]() {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:38: error: definition of `abstract` function [DefinedAbstractFunction]
+  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
+  // CHECK:STDERR:                                      ^
   // CHECK:STDERR:
-  abstract fn F[self: Self]() {}
-  abstract fn G[self: Self]();
+  abstract fn F[unused self: Self]() {}
+  abstract fn G[unused self: Self]();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:43: error: definition of `abstract` function [DefinedAbstractFunction]
-// CHECK:STDERR: fn AbstractWithDefinition.G[self: Self]() {
-// CHECK:STDERR:                                           ^
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:50: error: definition of `abstract` function [DefinedAbstractFunction]
+// CHECK:STDERR: fn AbstractWithDefinition.G[unused self: Self]() {
+// CHECK:STDERR:                                                  ^
 // CHECK:STDERR:
-fn AbstractWithDefinition.G[self: Self]() {
+fn AbstractWithDefinition.G[unused self: Self]() {
 }

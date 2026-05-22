@@ -33,7 +33,7 @@ auto HandleParseNode(Context& context, Parse::TupleLiteralId node_id) -> bool {
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
     type_inst_ids.push_back(
-        context.types().GetInstId(context.insts().Get(inst).type_id()));
+        context.types().GetTypeInstId(context.insts().Get(inst).type_id()));
   }
   auto type_id = GetTupleType(context, type_inst_ids);
 

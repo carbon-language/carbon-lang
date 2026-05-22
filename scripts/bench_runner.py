@@ -454,7 +454,7 @@ def render_fixed_width_float(x: float) -> str:
     if math.isinf(x):
         return f"{x:>4f}{'':<3}"
 
-    (frac, whole) = math.modf(x)
+    frac, whole = math.modf(x)
     frac_str = f"{math.fabs(frac):<4.3f}"[1:]
     return f"{int(whole):> 3}{frac_str}"
 

@@ -10,14 +10,19 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Lex {
 
 // A numeric literal token that has been extracted from a source buffer.
 class NumericLiteral {
  public:
-  enum class Radix : int8_t { Binary = 2, Decimal = 10, Hexadecimal = 16 };
+  enum class Radix : int8_t {
+    Binary = 2,
+    Octal = 8,
+    Decimal = 10,
+    Hexadecimal = 16
+  };
 
   // Value of an integer literal.
   struct IntValue {

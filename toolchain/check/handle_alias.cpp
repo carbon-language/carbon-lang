@@ -46,31 +46,16 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
       {.name_id = name_context.name_id_for_new_inst(),
        .parent_scope_id = name_context.parent_scope_id});
 
-  auto alias_type_id = SemIR::TypeId::None;
-  auto alias_value_id = SemIR::InstId::None;
-  if (SemIR::IsSingletonInstId(expr_id)) {
-    // Type (`bool`) and value (`false`) literals provided by the builtin
-    // structure should be turned into name references.
-    // TODO: Look into handling `false`, this doesn't do it right now because it
-    // sees a value instruction instead of a builtin.
-    alias_type_id = context.insts().Get(expr_id).type_id();
-    alias_value_id = expr_id;
-  } else if (auto inst = context.insts().TryGetAs<SemIR::NameRef>(expr_id)) {
-    // Pass through name references, albeit changing the name in use.
-    alias_type_id = inst->type_id;
-    alias_value_id = inst->value_id;
-  } else {
-    CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
-                      "alias initializer must be a name reference");
-    context.emitter().Emit(expr_node, AliasRequiresNameRef);
-    alias_type_id = SemIR::ErrorInst::TypeId;
-    alias_value_id = SemIR::ErrorInst::InstId;
+  if (!context.constant_values().Get(expr_id).is_constant()) {
+    CARBON_DIAGNOSTIC(AliasRequiresConstantValue, Error,
+                      "alias refers to a runtime value");
+    context.emitter().Emit(expr_node, AliasRequiresConstantValue);
   }
-  auto alias_id =
-      AddInst<SemIR::AliasBinding>(context, name_context.loc_id,
-                                   {.type_id = alias_type_id,
-                                    .entity_name_id = entity_name_id,
-                                    .value_id = alias_value_id});
+  auto alias_id = AddInst<SemIR::AliasBinding>(
+      context, name_context.loc_id,
+      {.type_id = context.insts().Get(expr_id).type_id(),
+       .entity_name_id = entity_name_id,
+       .value_id = expr_id});
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();

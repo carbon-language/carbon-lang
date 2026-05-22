@@ -14,6 +14,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
@@ -106,12 +107,16 @@ class ClangRunner : ToolRunnerBase {
  private:
   friend class ClangRuntimesBuilderBase;
 
+  auto RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
+                   bool enable_leaking) -> int;
+
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path,
                    std::optional<std::filesystem::path> libunwind_path,
                    std::optional<std::filesystem::path> libcxx_path,
-                   bool enable_leaking) -> ErrorOr<bool>;
+                   bool link_runtime_libs, bool enable_leaking)
+      -> ErrorOr<bool>;
 
   // Returns the target-specific source files for the builtins runtime library.
   auto CollectBuiltinsSrcFiles(const llvm::Triple& target_triple)

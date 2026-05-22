@@ -33,7 +33,7 @@ cc_library(
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:value_ids",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/parse:node_kind",
         "@llvm-project//llvm:Support",
     ],
@@ -59,6 +59,7 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:value_store",
         "@llvm-project//clang:ast",
     ],
 )
@@ -82,9 +83,14 @@ cc_library(
 cc_library(
     name = "file",
     srcs = [
+        "associated_constant.cpp",
         "builtin_function_kind.cpp",
         "class.cpp",
         "constant.cpp",
+        "core_interface.cpp",
+        "cpp_global_var.cpp",
+        "cpp_initializer_list.cpp",
+        "cpp_overload_set.cpp",
         "facet_type_info.cpp",
         "file.cpp",
         "function.cpp",
@@ -92,20 +98,29 @@ cc_library(
         "impl.cpp",
         "import_ir.cpp",
         "inst.cpp",
+        "interface.cpp",
         "name.cpp",
         "name_scope.cpp",
+        "named_constraint.cpp",
         "pattern.cpp",
+        "require_impls.cpp",
+        "specific_interface.cpp",
+        "struct_type_field.cpp",
         "type.cpp",
         "type_info.cpp",
         "type_iterator.cpp",
+        "vtable.cpp",
     ],
     hdrs = [
         "associated_constant.h",
         "builtin_function_kind.h",
+        "bundle.h",
         "class.h",
         "constant.h",
         "copy_on_write_block.h",
+        "core_interface.h",
         "cpp_global_var.h",
+        "cpp_initializer_list.h",
         "cpp_overload_set.h",
         "entity_name.h",
         "entity_with_params_base.h",
@@ -124,6 +139,7 @@ cc_library(
         "pattern.h",
         "require_impls.h",
         "struct_type_field.h",
+        "thunk.h",
         "type.h",
         "type_info.h",
         "type_iterator.h",
@@ -131,6 +147,7 @@ cc_library(
     ],
     textual_hdrs = [
         "builtin_function_kind.def",
+        "core_interface_kind.def",
     ],
     deps = [
         ":clang_decl",
@@ -148,6 +165,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
@@ -209,12 +227,23 @@ cc_library(
 )
 
 cc_library(
+    name = "formatter_chunks",
+    srcs = ["formatter_chunks.cpp"],
+    hdrs = ["formatter_chunks.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "formatter",
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
         ":expr_info",
         ":file",
+        ":formatter_chunks",
         ":inst_namer",
         ":typed_insts",
         "//common:concepts",
@@ -234,14 +263,15 @@ cc_library(
     hdrs = ["entry_point.h"],
     deps = [
         ":file",
+        ":typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
-    name = "absolute_node_id",
-    srcs = ["absolute_node_id.cpp"],
-    hdrs = ["absolute_node_id.h"],
+    name = "absolute_node_ref",
+    srcs = ["absolute_node_ref.cpp"],
+    hdrs = ["absolute_node_ref.h"],
     deps = [
         ":file",
         ":typed_insts",
@@ -267,10 +297,10 @@ cc_library(
     srcs = ["diagnostic_loc_converter.cpp"],
     hdrs = ["diagnostic_loc_converter.h"],
     deps = [
-        ":absolute_node_id",
+        ":absolute_node_ref",
         ":file",
         ":typed_insts",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
@@ -329,6 +359,22 @@ cc_test(
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "mangler",
+    srcs = ["mangler.cpp"],
+    hdrs = ["mangler.h"],
+    deps = [
+        ":entry_point",
+        ":file",
+        ":inst_namer",
+        ":typed_insts",
+        "//common:raw_string_ostream",
+        "//toolchain/base:kind_switch",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Support",
     ],
 )

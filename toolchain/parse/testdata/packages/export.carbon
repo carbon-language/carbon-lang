@@ -150,7 +150,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -161,9 +161,9 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -218,7 +218,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: 'Foo', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -229,7 +229,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', has_error: yes, subtree_size: 5},
@@ -253,10 +253,10 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -267,7 +267,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
@@ -277,7 +277,7 @@ export Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -289,7 +289,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

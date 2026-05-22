@@ -108,8 +108,8 @@ class MapView
   // Lookup a key in the map and try to return a pointer to its value. Returns
   // null on a missing key.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const
-      -> ValueT* requires(std::default_initializable<KeyContextT>);
+  auto operator[](LookupKeyT lookup_key) const -> ValueT*
+    requires(std::default_initializable<KeyContextT>);
 
   // Run the provided callback for every key and value in the map.
   template <typename CallbackT>
@@ -221,10 +221,11 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const
-      -> ValueT* requires(std::default_initializable<KeyContextT>) {
-        return ViewT(*this)[lookup_key];
-      }
+  auto operator[](LookupKeyT lookup_key) const -> ValueT*
+    requires(std::default_initializable<KeyContextT>)
+  {
+    return ViewT(*this)[lookup_key];
+  }
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
@@ -415,11 +416,12 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Lookup(
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
-    LookupKeyT lookup_key) const
-    -> ValueT* requires(std::default_initializable<KeyContextT>) {
-      auto result = Lookup(lookup_key, KeyContextT());
-      return result ? &result.value() : nullptr;
-    }
+    LookupKeyT lookup_key) const -> ValueT*
+  requires(std::default_initializable<KeyContextT>)
+{
+  auto result = Lookup(lookup_key, KeyContextT());
+  return result ? &result.value() : nullptr;
+}
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename CallbackT>

@@ -1,9 +1,9 @@
 {
   "name": "carbon-vscode",
   "displayName": "Carbon Language",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "carbon-lang",
-  "description": "Carbon language support for Visual Studio Code.",
+  "description": "Carbon language support for the 'Code - OSS' family of editors.",
   "repository": {
     "url": "https://github.com/carbon-language/carbon-lang"
   },
@@ -27,6 +27,15 @@
           ".carbon"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "semir",
+        "aliases": [
+          "SemIR"
+        ],
+        "extensions": [
+          ".semir"
+        ]
       }
     ],
     "grammars": [
@@ -34,6 +43,18 @@
         "language": "carbon",
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
+      },
+      {
+        "language": "semir",
+        "scopeName": "source.carbon-semir",
+        "path": "./semir.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.carbon-check-test",
+        "path": "./carbon-check-test.tmLanguage.json",
+        "injectTo": [
+          "source.carbon"
+        ]
       }
     ],
     "configuration": {
@@ -80,7 +101,7 @@
     "@stylistic/eslint-plugin": "^2.9.0",
     "@types/node": "^20",
     "@types/vscode": "^1.73.0",
-    "@vscode/vsce": "^2.27.0",
+    "@vscode/vsce": "^3.9.1",
     "esbuild": "^0.25.0",
     "eslint": "^9.13.0",
     "typescript": "^5.7.2",
@@ -88,5 +109,8 @@
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }

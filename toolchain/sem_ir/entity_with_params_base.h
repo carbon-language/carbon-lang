@@ -41,7 +41,7 @@ struct EntityWithParamsBase {
 
   // When merging a declaration and definition, prefer things which would point
   // at the definition for diagnostics.
-  auto MergeDefinition(const EntityWithParamsBase& definition) -> void {
+  auto MergeBaseDefinition(const EntityWithParamsBase& definition) -> void {
     first_param_node_id = definition.first_param_node_id;
     last_param_node_id = definition.last_param_node_id;
     pattern_block_id = definition.pattern_block_id;

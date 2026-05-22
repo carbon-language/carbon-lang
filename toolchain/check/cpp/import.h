@@ -12,10 +12,17 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+// Returns whether the given function is an object member function. This is true
+// if it's a non-static member function and not a constructor. Object member
+// functions correspond to Carbon functions with a `self` parameter.
+// TODO: Find a better home for this function.
+auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
@@ -25,6 +32,27 @@ auto ImportCpp(Context& context,
                llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
+
+// Given a clang declaration ID that was previously imported into another file,
+// returns the corresponding clang declaration key in the current context.
+// Produces an error and returns nullopt on failure.
+auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
+                                   const SemIR::File& file,
+                                   SemIR::ClangDeclId clang_decl_id)
+    -> std::optional<SemIR::ClangDeclKey>;
+
+// Imports a declaration into the current context that was previously imported
+// into another file.
+auto ImportCppDeclFromFile(Context& context, SemIR::LocId loc_id,
+                           const SemIR::File& file,
+                           SemIR::ClangDeclId clang_decl_id)
+    -> SemIR::ConstantId;
+
+// Imports a constant into the current context that was previously imported into
+// another file.
+auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
+                               const SemIR::File& file, SemIR::InstId inst_id)
+    -> SemIR::ConstantId;
 
 // Imports a declaration from Clang to Carbon. If successful, returns the new
 // Carbon declaration `InstId`. If the declaration was already imported, returns
@@ -37,10 +65,11 @@ auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
 // imported, returns the mapped instruction.
 inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                                   clang::FunctionDecl* clang_decl,
-                                  int num_params) -> SemIR::InstId {
+                                  SemIR::ClangDeclSignatureId signature_id)
+    -> SemIR::InstId {
   return ImportCppDecl(
       context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
@@ -69,7 +98,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 // declaration, such as a class or enum, attempt to import a corresponding class
 // definition. Returns true if nothing went wrong (whether or not a definition
 // could be imported), false if a diagnostic was produced.
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
@@ -79,6 +108,14 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo*;
 
+// Maps from a `VarStorage` instruction to a `clang::VarDecl`. Returns
+// null if the instruction is not a `VarStorage`, or if its contents
+// cannot be mapped to a `clang::VarDecl`.
+auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
+    -> clang::VarDecl*;
+
+// Maps a Clang name to a Carbon `NameId`.
+auto AddIdentifierName(Context& context, llvm::StringRef name) -> SemIR::NameId;
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_

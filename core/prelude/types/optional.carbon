@@ -5,6 +5,7 @@
 package Core library "prelude/types/optional";
 
 import library "prelude/copy";
+import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators/as";
 import library "prelude/operators/bitwise";
@@ -39,6 +40,8 @@ class Optional(T:! OptionalStorage) {
   // TODO: Use `private adapt` or `unsafe adapt` once available.
   adapt T.Type;
 }
+
+impl forall [T:! OptionalStorage & UnformedInit] Optional(T) as UnformedInit {}
 
 // Support for converting a `T` to an `Optional(U)` if `T` converts to `U`.
 // Once we have match_first, this can be rewritten more simply as:
@@ -105,17 +108,23 @@ private class DefaultOptionalStorage(T:! Copy & Destroy) {
   var has_value: bool;
 }
 
+private fn MakeUninitializedOptionalStorage(T:! Copy & Destroy)
+    -> DefaultOptionalStorage(T) = "make_uninitialized";
+
 impl forall [T:! Copy & Destroy] T as OptionalStorage
     where .Type = DefaultOptionalStorage(T) {
   fn None() -> DefaultOptionalStorage(T) {
-    returned var me: DefaultOptionalStorage(T);
+    returned var me: DefaultOptionalStorage(T) =
+        MakeUninitializedOptionalStorage(T);
     me.has_value = false;
     return var;
   }
   fn Some[self: Self]() -> DefaultOptionalStorage(T) {
-    returned var me: DefaultOptionalStorage(T);
-    // TODO: Should be:
-    //   me.value = self as MaybeUnformed(T);
+    // TODO: This whole function should be just
+    //   return {.value = self, .has_value = true};
+    // but that requires that `T` implements `ImplicitAs(MaybeUnformed(T))`.
+    returned var me: DefaultOptionalStorage(T) =
+        MakeUninitializedOptionalStorage(T);
     me.value unsafe as T = self;
     me.has_value = true;
     return var;
@@ -130,13 +139,17 @@ impl forall [T:! Copy & Destroy] T as OptionalStorage
 
 private fn PointerIsNull[T:! type](value: MaybeUnformed(T*)) -> bool = "pointer.is_null";
 
+private fn MakeUninitializedOptionalPointer(T:! type)
+    -> MaybeUnformed(T*) = "make_uninitialized";
+
 // For pointers, we use a null pointer value as the "None" value. This allows
 // `Optional(T*)` to be ABI-compatible with a C++ nullable pointer.
 final impl forall [T:! type] T* as OptionalStorage
     where .Type = MaybeUnformed(T*) {
   fn None() -> MaybeUnformed(T*) = "pointer.make_null";
   fn Some[self: Self]() -> MaybeUnformed(T*) {
-    returned var result: MaybeUnformed(T*);
+    returned var result: MaybeUnformed(T*) =
+        MakeUninitializedOptionalPointer(T);
     result unsafe as T* = self;
     return var;
   }

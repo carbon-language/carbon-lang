@@ -18,6 +18,14 @@ impl C as I {
   fn F() {}
 }
 
+constraint N {
+  extend require impls I;
+}
+class D;
+impl D as N {
+  fn F() {}
+}
+
 // CHECK:STDOUT: ; ModuleID = 'mangle_declared_class.carbon'
 // CHECK:STDOUT: source_filename = "mangle_declared_class.carbon"
 // CHECK:STDOUT:
@@ -25,6 +33,12 @@ impl C as I {
 // CHECK:STDOUT: define void @"_CF.C.Main:I.Main"() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.D.Main:I.Main"() #0 !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -40,3 +54,5 @@ impl C as I {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.D.Main:I.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 26, column: 3, scope: !8)

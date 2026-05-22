@@ -11,7 +11,7 @@
 
 #include "common/check.h"
 #include "common/string_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Testing {
 

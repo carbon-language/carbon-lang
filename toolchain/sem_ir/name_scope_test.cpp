@@ -401,19 +401,13 @@ TEST(NameScope, ExtendedScopes) {
   EXPECT_THAT(name_scope.extended_scopes(), ElementsAre());
 
   InstId extended_scope1(++id);
-  InstId innert_self1(++id);
-  name_scope.AddExtendedScope({extended_scope1, innert_self1});
-  EXPECT_THAT(
-      name_scope.extended_scopes(),
-      ElementsAre(NameScope::ExtendedScope{extended_scope1, innert_self1}));
+  name_scope.AddExtendedScope(extended_scope1);
+  EXPECT_THAT(name_scope.extended_scopes(), ElementsAre(extended_scope1));
 
   InstId extended_scope2(++id);
-  InstId innert_self2(++id);
-  name_scope.AddExtendedScope({extended_scope2, innert_self2});
-  EXPECT_THAT(
-      name_scope.extended_scopes(),
-      ElementsAre(NameScope::ExtendedScope{extended_scope1, innert_self1},
-                  NameScope::ExtendedScope{extended_scope2, innert_self2}));
+  name_scope.AddExtendedScope(extended_scope2);
+  EXPECT_THAT(name_scope.extended_scopes(),
+              ElementsAre(extended_scope1, extended_scope2));
 }
 
 TEST(NameScope, HasError) {

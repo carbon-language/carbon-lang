@@ -41,7 +41,7 @@
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 53
 // CHECK:STDERR:
-// CHECK:STDERR: {"jsonrpc":"2.0","method":"baz","multi":0,"line":1}
+// CHECK:STDERR: {"jsonrpc":"2.0","method":"baz","line":1,"multi":0}
 // CHECK:STDERR:
 // CHECK:STDERR: Content-Length: 64
 // CHECK:STDERR:

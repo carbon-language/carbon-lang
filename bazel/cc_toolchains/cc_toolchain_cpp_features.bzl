@@ -4,7 +4,7 @@
 
 """Definitions of general C++ `cc_toolchain_config` features."""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -14,10 +14,6 @@ load(
 )
 load(
     ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
-    "all_cpp_compile_actions",
-    "all_link_actions",
-    "codegen_compile_actions",
     "preprocessor_compile_actions",
 )
 
@@ -26,7 +22,7 @@ clang_feature = feature(
     enabled = True,
     flag_sets = [
         flag_set(
-            actions = all_compile_actions + all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
                 flag_group(flags = [
                     "-no-canonical-prefixes",
@@ -39,7 +35,7 @@ clang_feature = feature(
             ],
         ),
         flag_set(
-            actions = all_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [
                 flag_group(flags = [
                     # Compile actions shouldn't link anything.
@@ -68,20 +64,20 @@ clang_feature = feature(
         ),
         flag_set(
             # Flags specific to compiling C++ sources.
-            actions = all_cpp_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cpp_compile_actions,
             flag_groups = [flag_group(flags = [
                 "-std=c++20",
             ])],
         ),
         flag_set(
-            actions = codegen_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(flags = [
                 "-ffunction-sections",
                 "-fdata-sections",
             ])],
         ),
         flag_set(
-            actions = codegen_compile_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
             flag_groups = [flag_group(
                 expand_if_available = "pic",
                 flags = ["-fPIC"],
@@ -129,7 +125,7 @@ clang_feature = feature(
             flag_groups = [flag_group(flags = ["-shared"])],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
                 flag_group(
                     expand_if_available = "strip_debug_symbols",
@@ -151,7 +147,7 @@ clang_feature = feature(
             ],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
                 flag_group(
                     flags = [
@@ -199,7 +195,7 @@ clang_warnings_feature = feature(
     name = "clang_warnings",
     enabled = True,
     flag_sets = [flag_set(
-        actions = all_compile_actions,
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
         flag_groups = [flag_group(flags = [
             "-Werror",
             "-Wall",
@@ -263,7 +259,7 @@ def libcxx_feature(llvm_bindir = None, clang_bindir = None):
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = all_cpp_compile_actions + all_link_actions,
+                actions = ACTION_NAME_GROUPS.all_cpp_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
                 flag_groups = [flag_group(flags = [
                     "-stdlib=libc++",
                 ])],
@@ -273,17 +269,17 @@ def libcxx_feature(llvm_bindir = None, clang_bindir = None):
                 ],
             ),
             flag_set(
-                actions = all_cpp_compile_actions,
+                actions = ACTION_NAME_GROUPS.all_cpp_compile_actions,
                 flag_groups = [flag_group(flags = _libcpp_debug_flags)],
                 with_features = [with_feature_set(not_features = ["opt"])],
             ),
             flag_set(
-                actions = all_cpp_compile_actions,
+                actions = ACTION_NAME_GROUPS.all_cpp_compile_actions,
                 flag_groups = [flag_group(flags = _libcpp_release_flags)],
                 with_features = [with_feature_set(features = ["opt"])],
             ),
             flag_set(
-                actions = all_link_actions,
+                actions = ACTION_NAME_GROUPS.all_cc_link_actions,
                 flag_groups = [flag_group(flags = [
                     "-unwindlib=libunwind",
                 ])],
@@ -293,7 +289,7 @@ def libcxx_feature(llvm_bindir = None, clang_bindir = None):
                 ],
             ),
             flag_set(
-                actions = all_link_actions,
+                actions = ACTION_NAME_GROUPS.all_cc_link_actions,
                 flag_groups = [flag_group(flags = extra_link_flags + [
                     # Force linking the static libc++abi archive here. This
                     # *should* be linked automatically, but not every release of

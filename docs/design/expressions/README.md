@@ -310,9 +310,9 @@ with parentheses around the member name:
 -   _expression_ `->` `(` _expression_ `)`
 
 ```
-interface I { fn F[self: Self](); }
+interface I { fn F(self); }
 class X {}
-impl X as I { fn F[self: Self]() {} }
+impl X as I { fn F(self) {} }
 
 // `x.I.F()` would mean `(x.I).F()`.
 fn Q(x: X) { x.(I.F)(); }

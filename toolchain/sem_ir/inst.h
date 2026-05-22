@@ -17,6 +17,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -27,6 +28,8 @@ namespace Carbon::SemIR {
 
 template <typename... TypedInsts>
 struct CategoryOf;
+
+class File;
 
 // InstLikeTypeInfo is an implementation detail, and not public API.
 namespace Internal {
@@ -185,36 +188,6 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  // Associates an argument (arg0 or arg1) with its IdKind.
-  class ArgAndKind {
-   public:
-    explicit ArgAndKind(IdKind kind, int32_t value)
-        : kind_(kind), value_(value) {}
-
-    // Converts to `IdT`, validating the `kind` matches.
-    template <typename IdT>
-    auto As() const -> IdT {
-      CARBON_DCHECK(kind_ == IdKind::For<IdT>);
-      return IdT(value_);
-    }
-
-    // Converts to `IdT`, returning nullopt if the kind is incorrect.
-    template <typename IdT>
-    auto TryAs() const -> std::optional<IdT> {
-      if (kind_ != IdKind::For<IdT>) {
-        return std::nullopt;
-      }
-      return IdT(value_);
-    }
-
-    auto kind() const -> IdKind { return kind_; }
-    auto value() const -> int32_t { return value_; }
-
-   private:
-    IdKind kind_;
-    int32_t value_;
-  };
-
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
   static auto MakeSingleton(InstKind kind) -> Inst {
@@ -328,11 +301,11 @@ class Inst : public Printable<Inst> {
   auto arg1() const -> int32_t { return arg1_; }
 
   // Returns arguments with their IdKind.
-  auto arg0_and_kind() const -> ArgAndKind {
-    return ArgAndKind(ArgKindTable[kind_].first, arg0_);
+  auto arg0_and_kind() const -> IdAndKind {
+    return IdAndKind(ArgKindTable[kind_].first, arg0_);
   }
-  auto arg1_and_kind() const -> ArgAndKind {
-    return ArgAndKind(ArgKindTable[kind_].second, arg1_);
+  auto arg1_and_kind() const -> IdAndKind {
+    return IdAndKind(ArgKindTable[kind_].second, arg1_);
   }
 
   // Sets the type of this instruction.
@@ -344,22 +317,9 @@ class Inst : public Printable<Inst> {
     arg1_ = arg1;
   }
 
-  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-
-  // Convert a field from its raw representation.
-  template <typename T>
-    requires IdKind::Contains<T>
-  static constexpr auto FromRaw(int32_t raw) -> T {
-    return T(raw);
-  }
-  template <>
-  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
-    return IntId::MakeRaw(raw);
-  }
-
   auto Print(llvm::raw_ostream& out) const -> void;
+
+  auto CacheBundleDebugKinds(const BundleStore& bundles) const -> void;
 
   friend auto operator==(Inst lhs, Inst rhs) -> bool {
     return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
@@ -417,15 +377,12 @@ struct LocIdAndInst {
     return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
-  // Unsafely form a pair of a location and an instruction. Used in the cases
-  // where we can't statically enforce the type matches. For `ImportIRInstId`,
-  // use `MakeImportedLocIdAndInst` in `import.h`.
-  template <typename LocT>
-    requires(std::convertible_to<LocT, LocId> &&
-             !std::same_as<LocT, ImportIRInstId>)
-  static auto UncheckedLoc(LocT loc_id, Inst inst) -> LocIdAndInst {
-    return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
-  }
+  // Constructs a `LocIdAndInst` with a runtime verification of the location.
+  //
+  // Prefer `LocIdAndInst` constructors with compile-time verification,
+  // or `AddInst` overloads which make use of those constructors.
+  static auto RuntimeVerified(const File& file, LocId loc_id, Inst inst)
+      -> LocIdAndInst;
 
   // Construction for the common case with a typed node.
   template <typename InstT>
@@ -439,7 +396,7 @@ struct LocIdAndInst {
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  // For `ImportIRInstId`, use `MakeImportedLocIdAndInst` in `import.h`.
+  // For `ImportIRInstId`, use `RuntimeVerified`.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
 
@@ -447,6 +404,9 @@ struct LocIdAndInst {
   Inst inst;
 
  private:
+  // For `InstStore::GetWithLocId` to construct unchecked values.
+  friend class InstStore;
+
   // Note `is_unchecked` serves to disambiguate from public constructors.
   explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
@@ -503,7 +463,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(LocId(inst_id), Get(inst_id));
+    return LocIdAndInst(LocId(inst_id), Get(inst_id), /*is_unchecked=*/true);
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -515,7 +475,7 @@ class InstStore {
   // Returns whether the requested instruction is one of the specified types.
   template <typename... InstTs>
   auto IsOneOf(InstId inst_id) const -> bool {
-    return Get(inst_id).Is<InstTs...>();
+    return Get(inst_id).IsOneOf<InstTs...>();
   }
 
   // Returns the requested instruction, which is known to have the specified
@@ -699,15 +659,16 @@ class InstBlockStore
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
-      // 4 reserved ids for the
-      // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
-      : BaseType(allocator, check_ir_id, 4) {
-    auto exports_id = AddPlaceholder();
-    CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto imports_id = AddPlaceholder();
-    CARBON_CHECK(imports_id == InstBlockId::Imports);
-    auto global_init_id = AddPlaceholder();
-    CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
+      : BaseType(allocator, check_ir_id, InstBlockId::ReservedIds.size()) {
+    CARBON_CHECK(size() == 1, "Empty is added by `BlockValueStore`");
+    for (auto reserved_id : InstBlockId::ReservedIds) {
+      if (reserved_id == InstBlockId::Empty) {
+        continue;
+      }
+      auto id = AddPlaceholder();
+      CARBON_CHECK(id == reserved_id);
+    }
+    CARBON_CHECK(size() == InstBlockId::ReservedIds.size());
   }
 
   // Adds an uninitialized block of the given size. The caller is expected to
@@ -746,5 +707,13 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::InstBlockId,
+                                 llvm::MutableArrayRef<SemIR::InstId>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

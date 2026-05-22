@@ -68,6 +68,37 @@ TEST(IntAsSelect, TwoEqualsAndDefault) {
               Eq("default"));
 }
 
+TEST(IntAsSelect, LessAndGreater) {
+  constexpr char Format[] =
+      "{0:<0:negative|>10:huge|=0:zero|<=4:small|>=7:large|:moderate}";
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(-1)).str(),
+              Eq("negative"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(0)).str(),
+              Eq("zero"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(1)).str(),
+              Eq("small"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(2)).str(),
+              Eq("small"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(3)).str(),
+              Eq("small"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(4)).str(),
+              Eq("small"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(5)).str(),
+              Eq("moderate"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(6)).str(),
+              Eq("moderate"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(7)).str(),
+              Eq("large"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(8)).str(),
+              Eq("large"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(9)).str(),
+              Eq("large"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(10)).str(),
+              Eq("large"));
+  EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(11)).str(),
+              Eq("huge"));
+}
+
 TEST(IntAsSelect, Spaces) {
   constexpr char Format[] = "{0:=0: zero |=1: one |: default }";
   EXPECT_THAT(llvm::formatv(Format, Diagnostics::IntAsSelect(0)).str(),

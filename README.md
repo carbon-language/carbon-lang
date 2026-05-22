@@ -365,6 +365,19 @@ Learn more about the Carbon project:
 
 Carbon focused talks from the community:
 
+### 2026
+
+-   Benchmarking and optimizing the Carbon compiler, NDC {Toronto} (May 5-8)
+-   Carbon: graduating from the experiment, NDC {Toronto} (May 5-8)
+
+### 2025
+
+-   Carbon: from C++ to Memory Safety, REBASE - ICFP/SPLASH
+    ([slides](https://chandlerc.blog/slides/2025-rebase-carbon))
+-   Memory safety everywhere with both Carbon and Rust, RustConf
+    ([video](https://youtu.be/FYLuom6gg_s),
+    [slides](https://chandlerc.blog/slides/2025-rustconf-memory-safety-everywhere))
+
 ### 2024
 
 -   Generic implementation strategies in Carbon and Clang, LLVM Developers'

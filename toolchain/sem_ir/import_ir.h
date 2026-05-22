@@ -83,4 +83,10 @@ auto GetCanonicalFileAndInstId(const File* sem_ir, InstId inst_id)
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::ImportIRId, SemIR::ImportIR,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ImportIRInstId, SemIR::ImportIRInst>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IMPORT_IR_H_

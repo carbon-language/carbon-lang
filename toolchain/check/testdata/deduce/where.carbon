@@ -17,9 +17,9 @@ interface Z {
   let Z1:! type;
 }
 
-class C(T:! type) {}
+class C(unused T:! type) {}
 
-fn F[U:! type](T:! Z where .Z1 = C(U)) {}
+fn F[U:! type](unused T:! Z where .Z1 = C(U)) {}
 
 class D {}
 final impl () as Z where .Z1 = C(D) {}
@@ -32,8 +32,8 @@ fn G() {
   // CHECK:STDERR:   F(() as type);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_where.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F[U:! type](T:! Z where .Z1 = C(U)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F[U:! type](unused T:! Z where .Z1 = C(U)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(() as type);
 }

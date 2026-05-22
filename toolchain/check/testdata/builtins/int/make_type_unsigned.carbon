@@ -93,9 +93,6 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %u13.builtin: type = int_type unsigned, %int_13 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.param: %u64.builtin) -> out %return.param: %u64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

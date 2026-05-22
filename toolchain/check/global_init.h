@@ -42,6 +42,12 @@ class GlobalInit {
   llvm::SmallVector<SemIR::InstId> block_;
 };
 
+// Whether to use global initialization for the initializer of a declaration.
+//
+// This returns true for a declaration in package scope, or for a static
+// class field.
+auto UseGlobalInit(Context& context) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GLOBAL_INIT_H_

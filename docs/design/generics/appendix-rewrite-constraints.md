@@ -376,7 +376,7 @@ declared type.
 
 ```carbon
 interface SelfIface {
-  fn Get[self: Self]() -> Self;
+  fn Get(self) -> Self;
 }
 class UsesSelf(T:! type) {
   // Equivalent to `fn Make() -> UsesSelf(T)*;`
@@ -390,7 +390,7 @@ let x: UsesSelf(i32)* = UsesSelf(i32).Make();
 
 // ✅ `Self = UsesSelf(i32)` is substituted into the type
 // of `SelfIface.Get`, so the type of `UsesSelf(i32).(SelfIface.Get)`
-// is `fn [self: UsesSelf(i32)]() -> UsesSelf(i32)`.
+// is `fn (self: UsesSelf(i32)) -> UsesSelf(i32)`.
 let y: UsesSelf(i32) = x->Get();
 ```
 

@@ -226,7 +226,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
             "{CLANG_BINDIR}": str(clang.dirname),
-            "{CLANG_INCLUDE_DIRS_LIST}": str(
+            "{CLANG_INCLUDE_DIRS}": str(
                 [str(path) for path in include_dirs],
             ),
             "{CLANG_RESOURCE_DIR}": resource_dir,
@@ -268,6 +268,7 @@ configure_clang_toolchain = repository_rule(
                 Label("//bazel/cc_toolchains:cc_toolchain_config_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_cpp_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_debugging.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_linking.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_modules.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_optimization.bzl"),

@@ -54,6 +54,7 @@ cc_library(
         "//common:raw_string_ostream",
         "//common:set",
         "//testing/base:file_helpers",
+        "//testing/base:unified_diff_matcher",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/strings",

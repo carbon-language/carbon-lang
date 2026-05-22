@@ -37,6 +37,9 @@ struct LowerToLLVMOptions {
 
   // The optimization level to set on lowered functions by default.
   OptimizationLevel opt_level = OptimizationLevel::Debug;
+
+  // Whether to use the string form of the fingerprint for mangling.
+  bool mangle_string_fingerprint = false;
 };
 
 }  // namespace Carbon::Lower

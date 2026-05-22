@@ -93,9 +93,9 @@ it straightforward to migrate existing uses to `r#` or a different name.
     in Carbon. `{.base = ...}` and `{.r#base = ...}` specify different member
     names.
 -   Words like `self` that are declared by the developer but nonetheless have
-    special language-recognized meaning are keywords in Carbon. `[self:! Self]`
-    introduces a self parameter; `[r#self:! Self]` introduces a deduced
-    parameter.
+    special language-recognized meaning are keywords in Carbon. `(self)`
+    introduces a self parameter; `(r#self: Self)` introduces a parameter with
+    the name `self` as a raw identifier.
 -   Words like `Self` that are implicitly declared by the language in some
     contexts are keywords, even though we could treat them as user-declared
     identifiers that are merely implicitly declared in some cases.

@@ -14,5 +14,5 @@ clang_bindir = "{CLANG_BINDIR}"
 clang_version = {CLANG_VERSION}
 clang_version_for_cache = "{CLANG_VERSION_FOR_CACHE}"
 clang_resource_dir = "{CLANG_RESOURCE_DIR}"
-clang_include_dirs_list = {CLANG_INCLUDE_DIRS_LIST}
+clang_include_dirs = {CLANG_INCLUDE_DIRS}
 sysroot_dir = "{SYSROOT}"

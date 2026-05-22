@@ -24,6 +24,8 @@ fn PopCount(n: u256) -> i32 {
 }
 
 class Reachable {
+  impl as Core.UnformedInit {}
+
   fn Make(terrain: Terrain) -> Reachable {
     returned var me: Reachable;
     var next: u256 = 1;

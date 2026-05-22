@@ -54,6 +54,13 @@ class BusyboxInfoTest : public ::testing::Test {
     return path_ / prefix;
   }
 
+  // Helper function to change the working directory and check for an error.
+  auto ChangeWorkingDir(std::filesystem::path p) -> void {
+    std::error_code ec;
+    std::filesystem::current_path(p, ec);
+    CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  }
+
   // The path to the running binary, `busybox_info_test`. This is provided
   // because `GetExecutablePath` can fall back to it.
   std::string running_binary_;
@@ -193,20 +200,73 @@ TEST_F(BusyboxInfoTest, LayerSymlinksInstallTree) {
 
   auto info = GetBusyboxInfo((prefix / "bin/carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(prefix / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
   info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
   info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang++"));
+}
+
+TEST_F(BusyboxInfoTest, RunWithinInstallTree) {
+  dir_.Symlink("actual-busybox", running_binary_).Check();
+
+  // Create a facsimile of the install prefix with even the busybox as a
+  // symlink. Also include potential relative sibling symlinks like `clang++` to
+  // `clang`.
+  auto prefix = MakeInstallTree("test_prefix", (path_ / "actual-busybox"));
+
+  std::error_code ec;
+  auto orig_cwd = std::filesystem::current_path(ec);
+  CARBON_CHECK(!ec, "Error getting working directory: {0}", ec.message());
+  auto restore_cwd = llvm::scope_exit([&] {
+    std::filesystem::current_path(orig_cwd, ec);
+    CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  });
+
+  // First test using a working-directory relative `./bin/carbon` path.
+  ChangeWorkingDir(prefix);
+
+  auto info = GetBusyboxInfo("./bin/carbon");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("./lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq(std::nullopt));
+
+  // Also test using a working-directory relative `./bin/clang` path.
+  ChangeWorkingDir(prefix / "lib/carbon/llvm");
+
+  info = GetBusyboxInfo("./bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("../carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Include redundant `./` components that should be stripped before we give up
+  // and use `../` components.
+  info = GetBusyboxInfo("./././bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("../carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Also test using a working-directory relative `./llvm/bin/clang` path.
+  ChangeWorkingDir(prefix / "lib/carbon");
+
+  info = GetBusyboxInfo("./llvm/bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("./carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Include redundant `./` components at  multiple levels, only one of which we
+  // end up needing to strip off.
+  info = GetBusyboxInfo("././llvm/././bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("././carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
 }
 
 TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
@@ -229,11 +289,10 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
   // traversing the symlink further.
   auto info = GetBusyboxInfo((path_ / "bin/carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(path_ / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
   info = GetBusyboxInfo((path_ / "lib/carbon/llvm/bin/clang").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(path_ / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
 }
 
 TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
@@ -255,8 +314,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
   // walks the symlink to find the correct installation.
   auto info = GetBusyboxInfo((usr_local / "carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(usr_local / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 
   // Ensure this works even with intervening `.` directory components.
   usr_local_dir.Symlink("carbon2", "bin/././carbon").Check();
@@ -265,8 +323,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
   // walks the symlink to find the correct installation.
   info = GetBusyboxInfo((usr_local / "carbon2").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(usr_local / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 }
 
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {

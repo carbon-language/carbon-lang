@@ -54,16 +54,18 @@ struct IsCarbonMapImpl : std::false_type {};
 template <typename KT, typename VT, int MinSmallSize>
 struct IsCarbonMapImpl<Map<KT, VT, MinSmallSize>> : std::true_type {};
 
-template <typename MapT>
-static constexpr bool IsCarbonMap = IsCarbonMapImpl<MapT>::value;
+template <typename MapWrapperT>
+static constexpr bool IsCarbonMap =
+    IsCarbonMapImpl<typename MapWrapperT::MapT>::value;
 
 // A wrapper around various map types that we specialize to implement a common
 // API used in the benchmarks for various different map data structures that
 // support different APIs. The primary template assumes a roughly
 // `std::unordered_map` API design, and types with a different API design are
 // supported through specializations.
-template <typename MapT>
+template <typename InMapT>
 struct MapWrapperImpl {
+  using MapT = InMapT;
   using KeyT = typename MapT::key_type;
   using ValueT = typename MapT::mapped_type;
 
@@ -171,7 +173,7 @@ template <typename MapT>
 auto ReportMetrics(const MapWrapper<MapT>& m_wrapper, benchmark::State& state)
     -> void {
   // Report some extra statistics about the Carbon type.
-  if constexpr (IsCarbonMap<MapT>) {
+  if constexpr (IsCarbonMap<MapWrapper<MapT>>) {
     ReportTableMetrics(m_wrapper.m, state);
   }
 }
@@ -495,7 +497,7 @@ static void BM_MapInsertSeq(benchmark::State& state) {
       keys.size(), benchmark::Counter::kIsIterationInvariantRate);
 
   // Report some extra statistics about the Carbon type.
-  if constexpr (IsCarbonMap<MapT>) {
+  if constexpr (IsCarbonMap<MapWrapperT>) {
     // Re-build a map outside of the timing loop to look at the statistics
     // rather than the timing.
     MapWrapperT m;

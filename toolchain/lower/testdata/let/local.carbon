@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F(c: C) {}
+fn F(_: C) {}
 
 fn CallF() {
   // TODO: Uncomment this once symbolic locals work in check. It's disabled so
@@ -60,7 +60,7 @@ fn CallF() {
 // CHECK:STDOUT: source_filename = "symbolic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main(ptr %c) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -83,7 +83,7 @@ fn CallF() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 5, column: 1, scope: !4)

@@ -11,11 +11,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
-from alive_progress import alive_bar  # type:ignore
+from alive_progress import alive_bar  # type: ignore
 import math
 from multiprocessing import Pool
 import re
-import termplotlib as tpl  # type:ignore
+import termplotlib as tpl  # type: ignore
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass, field, asdict
@@ -200,8 +200,7 @@ def main() -> None:
                 stats.accumulate(file_stats)
                 bar()
 
-    print(
-        """
+    print("""
 ## Stats ##
 Lines: %(lines)d
 Blank lines: %(blank_lines)d
@@ -215,9 +214,7 @@ Int literals: %(int_literals)d
 Float literals: %(float_literals)d
 Symbols: %(symbols)d
 Keywords: %(keywords)d
-IDs: %(identifiers)d"""
-        % asdict(stats)
-    )
+IDs: %(identifiers)d""" % asdict(stats))
 
     tokens = (
         stats.string_literals
@@ -227,8 +224,7 @@ IDs: %(identifiers)d"""
         + stats.keywords
         + stats.identifiers
     )
-    print(
-        f"""
+    print(f"""
 Fraction of blank lines: {stats.blank_lines / stats.lines}
 Fraction of comment lines: {stats.comment_lines / stats.lines}
 
@@ -239,8 +235,7 @@ Fraction float literals: {stats.float_literals / tokens}
 Fraction symbols: {stats.symbols / tokens}
 Fraction keywords: {stats.keywords / tokens}
 Fraction IDs: {stats.identifiers / tokens}
-    """
-    )
+    """)
 
     def print_histogram(
         title: str, data: dict[int, int], column_format: str

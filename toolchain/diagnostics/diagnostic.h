@@ -13,7 +13,7 @@
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/kind.h"
 
 namespace Carbon::Diagnostics {
 
@@ -25,6 +25,16 @@ enum class Level : int8_t {
   // A note, not indicating an error on its own, but possibly providing
   // additional information for an error or warning.
   Note,
+  // A Context that will be discarded if another Context precedes it in the
+  // diagnostic, as the Context is assumed to provide better information. Used
+  // as a fallback for when no better Context is provided.
+  SoftContext,
+  // Describes the high level operation being performed. If a diagnostic is
+  // issued, the first Context message will steal its level and be displayed as
+  // if it is the top-level diagnostic, and the rest are treated as Note
+  // messages. The diagnostic message also becomes a Note of the first Context
+  // message.
+  Context,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
   // An error diagnostic, indicating that the program is not valid.
@@ -40,11 +50,27 @@ enum class Level : int8_t {
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
 //
 // See `Diagnostics::Emitter::Emit` for comments about argument lifetimes.
-#define CARBON_DIAGNOSTIC(DiagnosticName, LevelValue, Format, ...) \
-  static constexpr auto DiagnosticName =                           \
-      ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(          \
-          ::Carbon::Diagnostics::Kind::DiagnosticName,             \
-          ::Carbon::Diagnostics::Level::LevelValue, Format)
+#define CARBON_DIAGNOSTIC(DiagnosticName, LevelValue, Format, ...)         \
+  static constexpr auto DiagnosticName =                                   \
+      ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(                  \
+          ::Carbon::Diagnostics::Kind::DiagnosticName,                     \
+          ::Carbon::Diagnostics::Level::LevelValue, /*is_on_scope=*/false, \
+          Format)
+
+// Similar to `CARBON_DIAGNOSTIC`, but for diagnostics that are generated on a
+// scope; see `Diagnostic::is_on_scope` for details.
+#define CARBON_DIAGNOSTIC_ON_SCOPE(DiagnosticName, LevelValue, Format, ...) \
+  static_assert(::Carbon::Diagnostics::Level::LevelValue ==                 \
+                        ::Carbon::Diagnostics::Level::Warning ||            \
+                    ::Carbon::Diagnostics::Level::LevelValue ==             \
+                        ::Carbon::Diagnostics::Level::Error,                \
+                "Only use CARBON_DIAGNOSTIC_ON_SCOPE for the main "         \
+                "diagnostic, not notes");                                   \
+  static constexpr auto DiagnosticName =                                    \
+      ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(                   \
+          ::Carbon::Diagnostics::Kind::DiagnosticName,                      \
+          ::Carbon::Diagnostics::Level::LevelValue, /*is_on_scope=*/true,   \
+          Format)
 
 // A location for a diagnostic in a file. The lifetime of a Loc
 // is required to be less than SourceBuffer that it refers to due to the
@@ -89,7 +115,8 @@ struct Message {
   // The diagnostic's kind.
   Kind kind;
 
-  // The diagnostic's level.
+  // The message's level. This may be different from, but should not be more
+  // severe than, the diagnostic's level.
   Level level;
 
   // The calculated location of the diagnostic.
@@ -117,6 +144,12 @@ struct Diagnostic {
   // The diagnostic's level.
   Level level;
 
+  // Whether a diagnostic should only sort by `last_byte_offset` (which is
+  // normal), or if it's generated on a scope and should be sorted based on the
+  // first message's line and column when the `last_byte_offset` is equal.
+  // This is used by `SortingConsumer`.
+  bool is_on_scope;
+
   // The byte offset of the final token which is associated with the diagnostic.
   // This is used by `SortingConsumer`. This is separate from the
   // `Loc` because it must refer to a position in the primary file
@@ -138,9 +171,9 @@ struct Diagnostic {
 // This stores static information about a diagnostic category.
 template <typename... Args>
 struct DiagnosticBase {
-  explicit constexpr DiagnosticBase(Kind kind, Level level,
+  explicit constexpr DiagnosticBase(Kind kind, Level level, bool is_on_scope,
                                     llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {
+      : Kind(kind), Level(level), IsOnScope(is_on_scope), Format(format) {
     static_assert((... && !(std::is_same_v<Args, llvm::StringRef> ||
                             std::is_same_v<Args, llvm::StringLiteral>)),
                   "String type disallowed in diagnostics. See "
@@ -152,6 +185,8 @@ struct DiagnosticBase {
   Kind Kind;
   // The diagnostic's level.
   Level Level;
+  // See `Diagnostic::is_on_scope`.
+  bool IsOnScope;
   // The diagnostic's format for llvm::formatv.
   llvm::StringLiteral Format;
 };

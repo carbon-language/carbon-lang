@@ -61,6 +61,10 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
+    case ModifierOrder::Static:
+      return KeywordModifierSet::Static;
+    case ModifierOrder::Evaluation:
+      return KeywordModifierSet::Evaluation;
   }
 }
 
@@ -219,10 +223,12 @@ auto RestrictExternModifierOnDecl(Context& context,
   }
 }
 
-auto RequireDefaultFinalOnlyInInterfaces(
-    Context& context, DeclIntroducerState& introducer,
-    std::optional<SemIR::Inst> parent_scope_inst) -> void {
-  if (parent_scope_inst && parent_scope_inst->Is<SemIR::InterfaceDecl>()) {
+auto RequireDefaultFinalOnlyInInterfaces(Context& context,
+                                         DeclIntroducerState& introducer,
+                                         SemIR::NameScopeId parent_scope_id)
+    -> void {
+  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+          parent_scope_id)) {
     // Both `default` and `final` allowed in an interface definition.
     return;
   }

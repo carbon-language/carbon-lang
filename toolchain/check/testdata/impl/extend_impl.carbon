@@ -130,6 +130,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
+// CHECK:STDOUT:   extend %HasF.ref
 // CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

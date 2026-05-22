@@ -52,7 +52,7 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Null", linkageName: "_CNull.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Check", linkageName: "_CCheck.Main", scope: null, file: !3, line: 23, type: !10, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
 // CHECK:STDOUT: !10 = !DISubroutineType(types: !11)

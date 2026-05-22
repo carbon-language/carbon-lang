@@ -17,7 +17,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"
@@ -167,6 +167,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto HasLeadingWhitespace(TokenIndex token) const -> bool;
   // Returns whether the given token has trailing whitespace.
   auto HasTrailingWhitespace(TokenIndex token) const -> bool;
+
+  // Returns whether the token was spelled as a raw identifier.
+  auto IsRawIdentifier(TokenIndex token) const -> bool;
 
   // Returns whether the token was created as part of an error recovery effort.
   //
@@ -382,5 +385,11 @@ inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
 }
 
 }  // namespace Carbon::Lex
+
+namespace Carbon {
+extern template class ValueStore<Lex::TokenIndex, Lex::TokenInfo>;
+extern template class ValueStore<Lex::LineIndex, Lex::LineInfo>;
+extern template class ValueStore<Lex::CommentIndex, Lex::CommentData>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_

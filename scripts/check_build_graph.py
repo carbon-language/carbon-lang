@@ -16,7 +16,7 @@ import scripts_utils
 def main() -> None:
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
-    subprocess.check_call([bazel, "build", "--nobuild", "//..."])
+    subprocess.check_call([bazel, "build", "--curses=no", "--nobuild", "//..."])
 
 
 if __name__ == "__main__":

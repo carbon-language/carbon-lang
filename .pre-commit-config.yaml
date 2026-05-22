@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -33,6 +33,11 @@ repos:
     rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
       - id: check-google-doc-style
+        exclude: |
+          (?x)^(
+            .*\.agents/.*|
+            .*AGENTS.md
+          )$
       - id: markdown-toc
   - repo: local
     hooks:
@@ -45,7 +50,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # frozen: 25.1.0
+    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9 # frozen: 26.3.1
     hooks:
       - id: black
   - repo: local
@@ -90,7 +95,7 @@ repos:
         types_or: [c++, def]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==20.1.8']
+        additional_dependencies: ['clang-format==21.1.8']
 
   - repo: local
     hooks:
@@ -134,7 +139,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '850d8bf806620ef89a99381c5cf5ea2c1ea826dd' # frozen: v1.17.0
+    rev: 'fc0f09a29bb495f4a91f00266155d6282d52485d' # frozen: v1.20.2
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -145,19 +150,22 @@ repos:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
           - rich
+          - types-requests
         # Exclusions are:
         # - p#### scripts because they're not tested or maintained.
         # - lit.cfg.py because it has multiple copies, breaking mypy.
+        # - `bazel_test_runner.py` which depends on Bazel-specific imports.
         # - Unit tests because they sometimes violate typing, such as by
         #   assigning a mock to a function.
         exclude: |
           (?x)^(
               proposals/(?!scripts/).*|
               .*/lit\.cfg\.py|
+              examples/bazel_test_runner\.py|
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: 63c8f8312b7559622c0d82815639671ae42132ac # frozen: v2.4.1
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # frozen: v2.4.2
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -212,7 +220,7 @@ repos:
           - --custom_format
           - '\.lua$'
           - ''
-          - '-- '
+          - '\-- '
           - ''
         exclude: |
           (?x)^(
@@ -238,6 +246,7 @@ repos:
         name: Check build graph
         entry: scripts/check_build_graph.py
         language: python
+        pass_filenames: false
         files: |
           (?x)^(
             .*BUILD.*|
@@ -250,6 +259,7 @@ repos:
 exclude: |
   (?x)^(
       MODULE.bazel.lock|
+      .*package-lock\.json|
       bazel/bazel_clang_tidy/.*\.patch|
       bazel/google_benchmark/.*\.patch|
       bazel/libpfm/.*\.patch|

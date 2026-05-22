@@ -16,6 +16,7 @@
 #include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -40,9 +41,13 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
       definition_id, SemIR::NameId::None, class_info.parent_scope_id);
 
   // Introduce `Self`.
+  auto self_type_inst_id =
+      context.types().GetTypeInstId(class_info.self_type_id);
   context.name_scopes().AddRequiredName(
-      class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetInstId(class_info.self_type_id));
+      class_info.scope_id, SemIR::NameId::SelfType, self_type_inst_id);
+  context.name_scopes()
+      .Get(class_info.scope_id)
+      .set_self_type_id(self_type_inst_id);
 }
 
 // Checks that the specified finished adapter definition is valid and builds and
@@ -102,7 +107,8 @@ static auto CheckCompleteAdapterClassType(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        // TODO: Use InstId from the adapt declaration.
-       .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(object_repr_id)});
 }
 
 static auto AddStructTypeFields(
@@ -181,12 +187,24 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
 
   llvm::SmallVector<SemIR::InstId> vtable;
   Set<SemIR::FunctionId> implemented_impls;
+  bool carbon_native_vtable = true;
   if (base_vtable_id.has_value()) {
-    auto base_vtable_inst_block = context.inst_blocks().Get(
-        context.vtables().Get(base_vtable_id).virtual_functions_id);
+    const auto& base_vtable = context.vtables().Get(base_vtable_id);
+    carbon_native_vtable = base_vtable.carbon_native_vtable;
+    auto base_vtable_inst_block =
+        context.inst_blocks().Get(base_vtable.virtual_functions_id);
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
+      if (!base_vtable_entry_id.has_value()) {
+        // Foreign vtables may have holes in them for information that we don't
+        // use. Just skip those entries.
+        CARBON_CHECK(
+            !context.vtables().Get(base_vtable_id).carbon_native_vtable);
+        vtable.push_back(SemIR::InstId::None);
+        continue;
+      }
+
       auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
             specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
@@ -206,13 +224,25 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         auto override_fn_id =
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id;
         implemented_impls.Insert(override_fn_id);
-        auto& override_fn = context.functions().Get(override_fn_id);
-        CheckFunctionTypeMatches(context, override_fn, fn, specific_id,
-                                 /*check_syntax=*/false,
-                                 /*check_self=*/false);
-        derived_vtable_entry_id = build_specific_function(*i);
-        override_fn.virtual_index = vtable.size();
-        CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
+
+        // TODO: When the base class is a C++ class, we could have multiple
+        // potential functions to override. Check against each of them rather
+        // than trying to override them all.
+        auto override_or_thunk_id =
+            BuildThunk(context, fn_id, specific_id, class_info.self_type_id, *i,
+                       /*defer_definition=*/true);
+        if (override_or_thunk_id != SemIR::ErrorInst::InstId) {
+          auto override_or_thunk_fn_id =
+              context.insts()
+                  .GetAs<SemIR::FunctionDecl>(override_or_thunk_id)
+                  .function_id;
+          auto& override_or_thunk_fn =
+              context.functions().Get(override_or_thunk_fn_id);
+          derived_vtable_entry_id =
+              build_specific_function(override_or_thunk_id);
+          override_or_thunk_fn.virtual_index = vtable.size();
+          CARBON_CHECK(override_or_thunk_fn.virtual_index == fn.virtual_index);
+        }
       } else if (auto base_vtable_specific_function =
                      context.insts().TryGetAs<SemIR::SpecificFunction>(
                          derived_vtable_entry_id)) {
@@ -251,7 +281,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
 
   return context.vtables().Add(
       {{.class_id = class_id,
-        .virtual_functions_id = context.inst_blocks().Add(vtable)}});
+        .virtual_functions_id = context.inst_blocks().Add(vtable),
+        .carbon_native_vtable = carbon_native_vtable}});
 }
 
 // Checks that the specified finished class definition is valid and builds and
@@ -271,7 +302,7 @@ static auto CheckCompleteClassType(
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
   // TODO: Use InstId from base declaration.
-  auto base_type_inst_id = context.types().GetInstId(base_type_id);
+  auto base_type_inst_id = context.types().GetTypeInstId(base_type_id);
   std::optional<SemIR::ClassType> base_class_type;
   if (base_type_id.has_value()) {
     // TODO: If the base class is template dependent, we will need to decide
@@ -289,7 +320,7 @@ static auto CheckCompleteClassType(
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_inst_id = context.types().GetInstId(
+         .type_inst_id = context.types().GetTypeInstId(
              GetPointerType(context, SemIR::VtableType::TypeInstId))});
   }
   if (base_type_id.has_value()) {
@@ -315,7 +346,8 @@ static auto CheckCompleteClassType(
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = context.types().GetInstId(struct_type_id)});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(struct_type_id)});
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
@@ -327,6 +359,20 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
       context, node_id, class_id, field_decls, vtable_contents, body);
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = complete_type_witness_id;
+}
+
+auto InNonStaticFieldDecl(Context& context) -> bool {
+  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+         !context.decl_introducer_state_stack()
+              .innermost()
+              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
+auto InStaticClassScopeVar(Context& context) -> bool {
+  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+         context.decl_introducer_state_stack()
+             .innermost()
+             .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
 }  // namespace Carbon::Check

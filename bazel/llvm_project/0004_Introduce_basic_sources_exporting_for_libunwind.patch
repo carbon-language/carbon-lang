@@ -1,7 +1,7 @@
-Commit ID: a79f1facf56cc5772557cdb09d811aa11a22e43b
+Commit ID: 354e38c89f28e2cc284e655a9cde707f457dc02c
 Change ID: sxspxmonsuvqzuvxvrvorlumwpwromsv
 Author   : Chandler Carruth <chandlerc@gmail.com> (2025-09-25 22:55:26)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2025-11-17 09:59:25)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-02-14 03:46:06)
 
     Introduce basic sources exporting for libunwind
 
@@ -32,3 +32,33 @@ index c9fdc819c0..7d734c5a06 100644
 +        "src/*.S",
 +    ]),
 +)
+diff --git a/utils/bazel/llvm-project-overlay/libunwind/libunwind_library.bzl b/utils/bazel/llvm-project-overlay/libunwind/libunwind_library.bzl
+new file mode 100644
+index 0000000000..25675d3070
+--- /dev/null
++++ b/utils/bazel/llvm-project-overlay/libunwind/libunwind_library.bzl
+@@ -0,0 +1,24 @@
++# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
++# See https://llvm.org/LICENSE.txt for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++"""Starlark variables and macros for building libunwind.
++
++Variables provide base line information for how to build libunwind source files.
++These can be used to generate non-Bazel builds of the library.
++
++Macros provide a convenient way to construct Bazel `cc_library` rules for
++libunwind.
++"""
++
++# TODO: Should libunwind use `-fvisibility-inlines-hidden` and
++# `-fvisibility=hidden`, similar to libc++?
++libunwind_copts = [
++    "-D_LIBUNWIND_IS_NATIVE_ONLY",
++    "-O3",
++    "-fPIC",
++    "-fno-exceptions",
++    "-fno-rtti",
++    "-funwind-tables",
++    "-nostdinc++",
++]

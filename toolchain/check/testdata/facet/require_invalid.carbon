@@ -145,7 +145,7 @@ interface Z {
 
   fn F() {
     // The name lookup error still happens, since the `require` is not `extend`.
-    // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE+4]]:5: error: member name `A` not found in `Z` [MemberNameNotFoundInInstScope]
+    // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE+4]]:5: error: member name `A` not found in `Z` [MemberNameNotFoundInSpecificScope]
     // CHECK:STDERR:     Self.A;
     // CHECK:STDERR:     ^~~~~~
     // CHECK:STDERR:
@@ -191,4 +191,21 @@ interface Z {
     // in that scope.
     Self.A;
   }
+}
+
+// --- todo_fail_impl_mismatch_named_constraint_rewrites.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z0:! type; }
+
+constraint M {
+  require impls Z where .Z0 = {};
+}
+
+fn G() {
+  class C {}
+  // .Z0 has the wrong type for M.
+  impl C as Z where .Z0 = () {}
+  // TODO: Converting C to M should fail since the rewrite constraints are incompatible.
+  C as M;
 }

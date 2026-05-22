@@ -25,8 +25,8 @@ import Cpp library "enum_member.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  let a: Cpp.A.E = Cpp.A.a;
-  let b: Cpp.A.E = Cpp.A.E.b;
+  let unused a: Cpp.A.E = Cpp.A.a;
+  let unused b: Cpp.A.E = Cpp.A.E.b;
 }
 //@dump-sem-ir-end
 
@@ -62,26 +62,26 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc8_23: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %Cpp.ref.loc8_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc8_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a.ref: %E = name_ref a, imports.%int_0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc8: type = splice_block %E.ref.loc8 [concrete = constants.%E] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc8_13: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc8_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc8: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %E = value_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc9_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc9_23: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %E.ref.loc9_25: type = name_ref E, imports.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %Cpp.ref.loc9_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc9_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %E.ref.loc9_32: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %b.ref: %E = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc9: type = splice_block %E.ref.loc9_15 [concrete = constants.%E] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc9_13: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %E.ref.loc9_15: type = name_ref E, imports.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %.loc9: type = splice_block %E.ref.loc9_22 [concrete = constants.%E] {
+// CHECK:STDOUT:     %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc9_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %E.ref.loc9_22: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %E = value_binding b, %b.ref
 // CHECK:STDOUT:   return

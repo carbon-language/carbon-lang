@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_PARSE_PARSE_H_
 
 #include "common/ostream.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 

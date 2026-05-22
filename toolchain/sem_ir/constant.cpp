@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/constant.h"
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -63,3 +64,10 @@ auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::InstId, SemIR::ConstantId,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::ConstantId::SymbolicId,
+                          SemIR::SymbolicConstant, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

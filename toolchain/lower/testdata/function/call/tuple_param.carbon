@@ -19,7 +19,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.11a.loc16_20.6 = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.c4c.loc16_20.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main({ i32 } %_, ptr %_1) #0 !dbg !4 {
@@ -30,7 +30,7 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.11a.loc16_20.6), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.c4c.loc16_20.6), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,7 +46,7 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7, !7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9, !10}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)

@@ -34,13 +34,9 @@ library "[[@TEST_NAME]]";
 namespace NS;
 
 fn F() -> {} {
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+8]]:9: error: name `NS` not found [NameNotFound]
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:9: error: name `NS` not found [NameNotFound]
   // CHECK:STDERR:   alias NS.a = {};
   // CHECK:STDERR:         ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:16: error: alias initializer must be a name reference [AliasRequiresNameRef]
-  // CHECK:STDERR:   alias NS.a = {};
-  // CHECK:STDERR:                ^~
   // CHECK:STDERR:
   alias NS.a = {};
   // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInInstScope]
@@ -62,7 +58,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: type = alias_binding a, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %a: type = alias_binding a, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

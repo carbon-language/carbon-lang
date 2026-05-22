@@ -8,6 +8,7 @@
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/state.h"
 
 namespace Carbon::Parse {
 
@@ -130,6 +131,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
+  set(Lex::TokenKind::Observe, NodeKind::ObserveIntroducer,
+      StateKind::ObserveAfterIntroducer);
   set(Lex::TokenKind::Require, NodeKind::RequireIntroducer,
       StateKind::RequireAfterIntroducer);
   set_contextual(Lex::TokenKind::Let, RegularContext, NodeKind::LetIntroducer,
@@ -141,8 +144,11 @@ static constexpr auto DeclIntroducers = [] {
                  StateKind::AssociatedConstant);
   set_contextual(Lex::TokenKind::Var, RegularContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
-  set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
-                 StateKind::FieldDecl);
+  set_contextual(Lex::TokenKind::Var, ClassContext,
+                 NodeKind::VariableIntroducer, StateKind::VarAsRegular);
+
+  set(Lex::TokenKind::Inline, NodeKind::InlineIntroducer,
+      StateKind::InlineDeclAfterIntroducer);
 
   set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
                 StateKind::Package);
@@ -223,6 +229,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Extern:
         case Lex::TokenKind::Fn:
         case Lex::TokenKind::Import:
+        case Lex::TokenKind::Inline:
         case Lex::TokenKind::Interface:
         case Lex::TokenKind::Let:
         case Lex::TokenKind::Library:

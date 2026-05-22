@@ -503,7 +503,8 @@ auto StringLiteral::ComputeCharLiteralValue(
   buffer.resize_for_overwrite(content_.size());
 
   auto result = ExpandEscapeSequencesAndRemoveIndent(
-      emitter, content_, 0, /*indent=*/llvm::StringRef(), buffer.data());
+      emitter, content_, hash_level_, /*indent=*/llvm::StringRef(),
+      buffer.data());
   CARBON_CHECK(result.size() <= content_.size(),
                "Content grew from {0} to {1}: `{2}`", content_.size(),
                result.size(), content_);

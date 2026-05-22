@@ -20,7 +20,7 @@ library Shapes;
 
 // CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR: library r#default;
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
 library r#default;
 

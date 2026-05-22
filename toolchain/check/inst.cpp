@@ -8,7 +8,9 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
@@ -44,7 +46,9 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   // Template-dependent instructions are handled separately by
   // `AddDependentActionInst`.
   CARBON_CHECK(
-      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      inst.kind().constant_kind() !=
+              SemIR::InstConstantKind::ConstantInstAction &&
+          inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
@@ -57,7 +61,17 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
 auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
-  context.inst_block_stack().AddInstId(inst_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), inst_id) ==
+      SemIR::ExprCategory::Pattern) {
+    auto type_id = loc_id_and_inst.inst.type_id();
+    CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
+                     context.types().Is<SemIR::PatternType>(type_id),
+                 "Unexpected kind for type {0}",
+                 context.types().GetAsInst(type_id));
+    context.pattern_block_stack().AddInstId(inst_id);
+  } else {
+    context.inst_block_stack().AddInstId(inst_id);
+  }
   return inst_id;
 }
 
@@ -87,16 +101,6 @@ auto AddDependentActionInst(Context& context,
   // Register the instruction to be added to the eval block.
   AttachDependentInstToCurrentGeneric(
       context, {.inst_id = inst_id, .kind = DependentInstKind::Template});
-  return inst_id;
-}
-
-auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto type_id = loc_id_and_inst.inst.type_id();
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
-               context.types().Is<SemIR::PatternType>(type_id));
-  auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
-  context.pattern_block_stack().AddInstId(inst_id);
   return inst_id;
 }
 
@@ -178,11 +182,17 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     }
 
     case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
-      // Evaluation temporarily needs an InstId. Add one for now.
-      auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+      // Evaluation temporarily needs an InstId. Add one for now. We add the
+      // instruction outside of a block, and never call `FinishInst` for this
+      // non-canonical instruction. This means it never gets attached to the
+      // constant value, and is not added to any enclosing generic context's
+      // eval block.
+      auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+      CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n",
+                     loc_id_and_inst.inst);
       // TODO: Consider removing `inst_id` from `insts` if it's still the most
       // recently added instruction.
-      return context.constant_values().Get(inst_id);
+      return TryEvalInstUnsafe(context, inst_id, loc_id_and_inst.inst);
     }
 
     case SemIR::InstConstantNeedsInstIdKind::Permanent: {

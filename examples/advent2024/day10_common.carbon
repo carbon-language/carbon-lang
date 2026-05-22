@@ -11,6 +11,8 @@ import Core library "range";
 import library "io_utils";
 
 class Terrain {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Terrain {
     returned var me: Terrain;
     for (y: i32 in Core.Range(43)) {

@@ -19,50 +19,40 @@ of:
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; create a PR with those changes in order to include
         the host platform.
+
+For updates, run `scripts/query_module_versions.py` to list the latest package
+versions.
 """
 
 module(name = "carbon")
 
-http_archive = use_repo_rule(
-    "@bazel_tools//tools/build_defs/repo:http.bzl",
-    "http_archive",
-)
-
-bazel_dep(name = "abseil-cpp", version = "20250512.1")
+bazel_dep(name = "abseil-cpp", version = "20260107.1")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
-bazel_dep(name = "google_benchmark", version = "1.9.4")
-bazel_dep(name = "googletest", version = "1.17.0")
-bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.2.6")
-bazel_dep(name = "rules_pkg", version = "1.1.0")
-bazel_dep(name = "rules_shell", version = "0.6.1")
-bazel_dep(name = "tcmalloc", version = "0.0.0-20250331-43fcf6e")
-bazel_dep(name = "tree-sitter-bazel", version = "0.26.3")
+bazel_dep(name = "boost.unordered", version = "1.90.0.bcr.1")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "libpfm", version = "4.13.0")
+bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
+bazel_dep(name = "rules_cc", version = "0.2.18")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "rules_shell", version = "0.8.0")
+bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
+bazel_dep(name = "tree-sitter-bazel", version = "0.26.5")
 
-# The registry only has an old version. We use that here to avoid a miss but
-# override it with a newer version.
-bazel_dep(name = "libpfm", version = "4.11.0")
-
-libpfm_version = "4.13.0"
-
-# The official site is https://perfmon2.sourceforge.net/, but SourceForge makes
-# it difficult to download from bazel. On GitHub action runners,
-# https://git.code.sf.net/p/perfmon2/libpfm4 seems to be blocked. As a
-# consequence, use a mirror.
-archive_override(
-    module_name = "libpfm",
-    integrity = "sha256-sGBx1+UoQCplBCc+pwA1Tr/PS2L/4jnLZHH82wSuPz0=",
-    patch_strip = 1,
-    patches = ["@//bazel/libpfm:0001-Introduce-a-simple-native-Bazel-build.patch"],
-    strip_prefix = "libpfm4-{0}".format(libpfm_version),
-    urls = ["https://github.com/wcohen/libpfm4/archive/v{0}.tar.gz".format(libpfm_version)],
+bazel_dep(name = "wolfd_bazel_compile_commands", version = "0.5.2", dev_dependency = True)
+git_override(
+    module_name = "wolfd_bazel_compile_commands",
+    # This is https://github.com/wolfd/bazel-compile-commands/pull/3 which is
+    # needed to correctly select target configurations in our compile commands.
+    commit = "7c673ac868cd237f262bb37a7819b1a279566a66",
+    remote = "https://github.com/chandlerc/bazel-compile-commands.git",
 )
 
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
     module_name = "bazel_clang_tidy",
-    # HEAD as of 2025-01-09.
-    commit = "db677011c7363509a288a9fb3bf0a50830bbf791",
+    # HEAD as of 2026-01-28.
+    commit = "c4d35e0d0b838309358e57a2efed831780f85cd0",
     remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
@@ -74,54 +64,37 @@ use_repo(bazel_cc_toolchain, "bazel_cc_toolchain")
 
 register_toolchains("@bazel_cc_toolchain//:all")
 
-bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
-git_override(
-    module_name = "hedron_compile_commands",
-    # HEAD as of 2025-01-09.
-    commit = "4f28899228fb3ad0126897876f147ca15026151e",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-)
-
-boost_unordered_version = "1.85.0"
-
-http_archive(
-    name = "boost_unordered",
-    build_file = "@//:third_party/boost_unordered/BUILD.bazel",
-    integrity = "sha256-2dQ4IQH/xFiK1iWCkrMYLeR8zsSQqGchKOdTuf1u0zI=",
-    strip_prefix = "boost_unordered-{0}".format(boost_unordered_version),
-    urls = ["https://github.com/MikePopoloski/boost_unordered/archive/v{0}.tar.gz".format(boost_unordered_version)],
-)
+register_toolchains("//toolchain/install:all")
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "protobuf", version = "33.1", repo_name = "com_google_protobuf")
-bazel_dep(name = "zlib-ng", version = "2.0.7", repo_name = "llvm_zlib")
-bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
+bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "zlib-ng", version = "2.3.3", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
 ###############################################################################
 # llvm-project
 ###############################################################################
 
-# We pin to specific upstream commits and try to track top-of-tree reasonably
-# closely rather than pinning to a specific release.
-# HEAD as of 2026-01-08.
-llvm_project_version = "21a1e6e6a70d70635c68b9aaa54f816ae36a6416"
-
 # Load a repository for the raw llvm-project, pre-overlay.
-http_archive(
-    name = "llvm-raw",
+bazel_dep(name = "llvm-raw")
+git_override(
+    module_name = "llvm-raw",
     build_file_content = "# empty",
-    integrity = "sha256-ouWG2d4Cob9P6+dxCLZnV4RldSOqZp7mtwd6vd+ZK3Q=",
-    patch_args = ["-p1"],
+    # We pin to specific upstream commits and try to track top-of-tree
+    # reasonably closely rather than pinning to a specific release.
+    # HEAD as of 2026-05-14.
+    commit = "9a4faee1068c09efbf837cfb7b0f5693b24635f4",
+    patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
+    patch_strip = 1,
     patches = [
-        "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "@carbon//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
-        "@carbon//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
-        "@carbon//bazel/llvm_project:0008_Add_filegroups_for_installed_compiler-rt_headers.patch",
+        "//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
+        "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
+        "//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
     ],
-    strip_prefix = "llvm-project-{0}".format(llvm_project_version),
-    urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
+    remote = "https://github.com/llvm/llvm-project.git",
 )
 
 # Apply the overlay to produce llvm-project.
@@ -135,10 +108,39 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "1.6.0")
+bazel_dep(name = "rules_python", version = "1.9.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
     python_version = "3.11",
 )
 use_repo(python, "python_versions")
+
+###############################################################################
+# Bazel integration testing
+###############################################################################
+
+bazel_dep(
+    name = "rules_bazel_integration_test",
+    version = "0.37.1",
+    dev_dependency = True,
+)
+
+# We test against our current Bazel version, the latest release, and the latest
+# release candidate.
+bazel_binaries = use_extension(
+    "@rules_bazel_integration_test//:extensions.bzl",
+    "bazel_binaries",
+    dev_dependency = True,
+)
+bazel_binaries.download(version_file = "//:.bazelversion")
+bazel_binaries.download(version = "latest")
+bazel_binaries.download(version = "last_rc")
+use_repo(
+    bazel_binaries,
+    "bazel_binaries",
+    "bazel_binaries_bazelisk",
+    "build_bazel_bazel_.bazelversion",
+    "build_bazel_bazel_last_rc",
+    "build_bazel_bazel_latest",
+)

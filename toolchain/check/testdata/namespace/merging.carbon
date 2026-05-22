@@ -166,7 +166,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %NS: <namespace> = namespace imports.%Example.NS, [concrete] {
 // CHECK:STDOUT:     .A = imports.%Example.A
 // CHECK:STDOUT:     .B1 = imports.%Example.B1
 // CHECK:STDOUT:     .B2 = imports.%Example.B2

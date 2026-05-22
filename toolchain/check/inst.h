@@ -87,6 +87,12 @@ auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
 // Adds the instruction to the current block if it might be referenced by its
 // constant value; otherwise, does not add the instruction to an instruction
 // block.
+//
+// The resulting ConstantId should be used immediately, or its canonical
+// instruction can be inserted into some other instruction (though it won't have
+// location information, so GetOrAddInst is typically better unless a canonical
+// instruction is required). The constant value can't be modified by specifics
+// unless it is done so as part of some other instruction.
 auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId;
 
@@ -124,23 +130,6 @@ auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
     -> SemIR::TypeInstId {
   return context.types().GetAsTypeInstId(
       AddDependentActionInst(context, loc, inst));
-}
-
-// Adds an instruction to the current pattern block, returning the produced
-// ID.
-// TODO: Is it possible to remove this and pattern_block_stack, now that
-// we have BeginSubpattern etc. instead?
-auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId;
-
-// Convenience for AddPatternInst with typed nodes.
-//
-// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
-template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup() &&
-           std::convertible_to<LocT, SemIR::LocId>)
-auto AddPatternInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
-  return AddPatternInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction to the current block, returning the produced ID. The

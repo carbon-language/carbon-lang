@@ -20,7 +20,7 @@ class C {}
 impl C as Z {}
 impl C as Y {}
 
-fn G(z:! Z) {}
+fn G(unused z:! Z) {}
 
 fn F() {
   G(C);

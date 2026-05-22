@@ -15,7 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 
-namespace Carbon::SemIR {
+namespace Carbon {
 
 // Provides a block-based ValueStore, which uses slab allocation of added
 // blocks. This allows references to values to outlast vector resizes that might
@@ -23,6 +23,16 @@ namespace Carbon::SemIR {
 //
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
+//
+// This template class is designed to be explicitly instantiated to improve
+// compile times. Heavy method definitions are in `block_value_store_impl.h`.
+//
+// To use a new instantiation:
+// 1. Add an `extern template class BlockValueStore<...>;` declaration in the
+//    header where the instantiation is anchored.
+// 2. Add `template class BlockValueStore<...>;` definition in the associated
+//    `.cpp` file.
+// 3. Include `toolchain/base/block_value_store_impl.h` in that `.cpp` file.
 template <typename IdT, typename ElementT, typename TagIdT = Untagged>
 class BlockValueStore
     : public Yaml::Printable<BlockValueStore<IdT, ElementT, TagIdT>> {
@@ -36,18 +46,18 @@ class BlockValueStore
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator,
                            IdTagType::TagIdType tag_id,
                            int32_t initial_reserved_ids = 0)
-    requires(!IdTagIsUntagged<IdTagType>)
-      : allocator_(&allocator), values_(tag_id, initial_reserved_ids) {
-    auto empty = RefType();
-    auto empty_val = canonical_blocks_.Insert(
-        empty, [&] { return values_.Add(empty); }, KeyContext(this));
-    CARBON_CHECK(empty_val.key() == IdT::Empty);
-  }
+    requires(!IdTagIsUntagged<IdTagType>);
+
+  ~BlockValueStore();
+  BlockValueStore(BlockValueStore&&) noexcept;
+  auto operator=(BlockValueStore&&) noexcept -> BlockValueStore&;
 
   // Adds a block with the given content, returning an ID to reference it.
   auto Add(ConstRefType content) -> IdT {
-    if (content.empty()) {
-      return IdT::Empty;
+    if constexpr (requires { IdT::Empty; }) {
+      if (content.empty()) {
+        return IdT::Empty;
+      }
     }
     return values_.Add(AllocateCopy(content));
   }
@@ -71,8 +81,10 @@ class BlockValueStore
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
   auto AddCanonical(ConstRefType content) -> IdT {
-    if (content.empty()) {
-      return IdT::Empty;
+    if constexpr (requires { IdT::Empty; }) {
+      if (content.empty()) {
+        return IdT::Empty;
+      }
     }
     auto result = canonical_blocks_.Insert(
         content, [&] { return Add(content); }, KeyContext(this));
@@ -90,48 +102,26 @@ class BlockValueStore
     return result.key();
   }
 
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto [block_id, block] : values_.enumerate()) {
-        map.Add(PrintToString(block_id),
-                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                  for (auto [i, elem_id] : llvm::enumerate(block)) {
-                    map.Add(llvm::itostr(i), Yaml::OutputScalar(elem_id));
-                  }
-                }));
-      }
-    });
-  }
+  auto OutputYaml() const -> Yaml::OutputMapping;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "canonical_blocks_"),
-                      canonical_blocks_, KeyContext(this));
-  }
+      -> void;
 
-  auto size() const -> int { return values_.size(); }
+  auto size() const -> size_t { return values_.size(); }
 
   auto GetRawIndex(IdT id) const -> int { return values_.GetRawIndex(id); }
 
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
+
+  auto ids() const -> auto { return values_.ids(); }
+
  protected:
   // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(ConstRefType data) -> RefType {
-    auto result = AllocateUninitialized(data.size());
-    std::uninitialized_copy(data.begin(), data.end(), result.begin());
-    return result;
-  }
+  auto AllocateCopy(ConstRefType data) -> RefType;
 
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(size_t size) -> RefType {
-    // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<ElementType>);
-
-    auto storage = static_cast<ElementType*>(
-        allocator_->Allocate(size * sizeof(ElementType), alignof(ElementType)));
-    return RefType(storage, size);
-  }
+  auto AllocateUninitialized(size_t size) -> RefType;
 
   // Allow children to have more complex value handling.
   auto values() -> ValueStore<IdT, RefType, TagIdT>& { return values_; }
@@ -156,6 +146,6 @@ class BlockValueStore<IdT, ElementT, TagIdT>::KeyContext
   const BlockValueStore* store_;
 };
 
-}  // namespace Carbon::SemIR
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_H_

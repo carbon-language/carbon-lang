@@ -7,6 +7,7 @@
 
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -39,6 +40,7 @@ struct NameComponent {
   // SemIR::EntityWithParamsBase).
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
+  SemIR::Function::CallParamIndexRanges param_ranges;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
@@ -46,8 +48,8 @@ struct NameComponent {
 
 // Pops a name component from the node stack (and pattern block stack, if it has
 // parameters).
-auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id =
-                                            SemIR::InstBlockId::None)
+auto PopNameComponent(Context& context,
+                      SemIR::InstId return_pattern_id = SemIR::InstId::None)
     -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has

@@ -144,7 +144,7 @@ content (comment markers don't allow `[[`).
 
 Settings in files are provided in comments, similar to `FileCheck` syntax.
 `bazel run :file_test -- --autoupdate` automatically constructs compatible
-CHECK:STDOUT: and CHECK:STDERR: lines.
+`CHECK:STDOUT:` and `CHECK:STDERR:` lines.
 
 Supported comment markers are:
 
@@ -184,7 +184,8 @@ Supported comment markers are:
     -   `%s`
 
         Replaced with the list of files. Currently only allowed as a standalone
-        argument, not a substring.
+        argument, not a substring. (The added arguments can be customized by
+        overriding `FileTestBase::AddArgsForFilename`.)
 
     -   `%t`
 
@@ -193,10 +194,11 @@ Supported comment markers are:
     -   `%{identifier}`
 
         Replaces some implementation-specific identifier with a value. (Mappings
-        provided by way of an optional `MyFileTest::GetArgReplacements`)
+        can be provided by overriding `FileTestBase::GetArgReplacement`.)
 
     `ARGS` can be specified at most once. If not provided, the `FileTestBase`
-    child is responsible for providing default arguments.
+    child is responsible for providing default arguments by overriding
+    `FileTestBase::GetDefaultArgs`.
 
 -   ```
     // EXTRA-ARGS: <arguments>

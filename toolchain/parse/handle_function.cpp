@@ -25,6 +25,10 @@ auto HandleFunctionAfterParams(Context& context) -> void {
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
+  } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
+    context.PushState(StateKind::FunctionReturnFormFinish);
+    context.ConsumeAndDiscard();
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   }
 }
 
@@ -32,6 +36,12 @@ auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::ReturnType, state.token, state.has_error);
+}
+
+auto HandleFunctionReturnFormFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::ReturnForm, state.token, state.has_error);
 }
 
 auto HandleFunctionSignatureFinish(Context& context) -> void {

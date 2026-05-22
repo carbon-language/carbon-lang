@@ -47,7 +47,7 @@ r#á
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
 r#r#foo
-// CHECK:STDOUT:   - { index:  8, kind:    "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "r", identifier: 0, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  8, kind:    "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "r#r", identifier: 0, has_leading_space: true }
 // CHECK:STDOUT:   - { index:  9, kind:         "Error", line: {{ *}}[[@LINE-2]], column: 4, indent: 1, spelling: "#" }
 // CHECK:STDOUT:   - { index: 10, kind:    "Identifier", line: {{ *}}[[@LINE-3]], column: 5, indent: 1, spelling: "foo", identifier: 1 }
 

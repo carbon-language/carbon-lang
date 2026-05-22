@@ -5,6 +5,7 @@
 package Core library "prelude/types/float";
 
 import library "prelude/copy";
+import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/float_literal";
@@ -15,6 +16,8 @@ private fn MakeFloat(size: IntLiteral()) -> type = "float.make_type";
 class Float(N:! IntLiteral()) {
   adapt MakeFloat(N);
 }
+
+impl forall [N:! IntLiteral()] Float(N) as UnformedInit {}
 
 // Copy.
 

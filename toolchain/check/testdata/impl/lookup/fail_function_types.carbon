@@ -29,7 +29,7 @@ fn F() {
   // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `<type of G in () as Z>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   &(().(Z.G)) as type;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+4]]:3: note: type `<type of G in () as Z>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+4]]:3: note: type `<type of G in () as Z>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   &(().(Z.G)) as type;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -49,7 +49,7 @@ fn F() {
   // CHECK:STDERR: fail_function_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `<type of F>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   &F as type;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+4]]:3: note: type `<type of F>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+4]]:3: note: type `<type of F>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   &F as type;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

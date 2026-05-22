@@ -92,9 +92,15 @@ class ToolchainFileTest : public FileTestBase {
   // Sets different default flags based on the component being tested.
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
 
-  // Returns string replacements to implement `%{key}` -> `value` in arguments.
-  auto GetArgReplacements() const -> llvm::StringMap<std::string> override {
-    return {{"core", data_->installation.core_package().native()}};
+  auto AddArgsForFilename(llvm::SmallVectorImpl<std::string>& args,
+                          llvm::StringRef filename) const -> void override;
+
+  auto GetArgReplacement(llvm::StringRef key) const
+      -> std::optional<std::string> override {
+    if (key == "core") {
+      return data_->installation.core_package().native();
+    }
+    return std::nullopt;
   }
 
   // Generally uses the parent implementation, with special handling for lex.
@@ -210,6 +216,24 @@ auto ToolchainFileTest::Run(
     output_stream << "\n";
   }
   return result;
+}
+
+auto ToolchainFileTest::AddArgsForFilename(
+    llvm::SmallVectorImpl<std::string>& args, llvm::StringRef filename) const
+    -> void {
+  if (filename.ends_with(".h")) {
+    // C++ header files don't need a corresponding argument.
+    return;
+  }
+
+  if (filename.ends_with("module.modulemap")) {
+    // Convert module map files to clang module map arguments.
+    args.push_back("--clang-arg=-fmodule-map-file=" + filename.str());
+    return;
+  }
+
+  // Anything else is expected to be a .carbon input file.
+  args.push_back(filename.str());
 }
 
 auto ToolchainFileTest::GetDefaultArgs() const

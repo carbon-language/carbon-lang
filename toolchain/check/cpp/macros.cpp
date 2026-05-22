@@ -9,18 +9,50 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
+#include "toolchain/check/cpp/constant.h"
+#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/literal.h"
 
 namespace Carbon::Check {
 
-auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameId name_id,
-                                clang::MacroInfo* macro_info) -> clang::Expr* {
+// Maps a Clang literal expression to a Carbon constant.
+static auto MapConstant(Context& context, SemIR::LocId loc_id,
+                        clang::Expr* expr) -> SemIR::InstId {
+  CARBON_CHECK(expr, "empty expression");
+
+  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
+    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: string literal type: {0}",
+                                 expr->getType()));
+      return SemIR::ErrorInst::InstId;
+    }
+    StringLiteralValueId string_id =
+        context.string_literal_values().Add(string_literal->getString());
+    auto inst_id =
+        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
+    return inst_id;
+  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
+    auto type_id = ImportCppType(context, loc_id, expr->getType()).type_id;
+    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
+                                                   {.type_id = type_id});
+  }
+
+  context.TODO(loc_id,
+               llvm::formatv("Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
+  return SemIR::ErrorInst::InstId;
+}
+
+auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
+                      SemIR::NameId name_id, clang::MacroInfo* macro_info)
+    -> SemIR::InstId {
   auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
   CARBON_CHECK(macro_info, "macro info missing");
 
   if (macro_info->getNumTokens() == 0) {
     context.TODO(loc_id, "Unsupported: macro with 0 replacement tokens");
-    return nullptr;
+    return SemIR::ErrorInst::InstId;
   }
 
   clang::Sema& sema = context.clang_sema();
@@ -59,52 +91,33 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
         "failed to parse macro Cpp.{0} to a valid constant expression",
         std::string);
     context.emitter().Emit(loc_id, InCppMacroEvaluation, (*name_str_opt).str());
-    return nullptr;
+    return SemIR::ErrorInst::InstId;
   }
 
   result_expr = result_expr->IgnoreParenImpCasts();
 
   if (isa<clang::StringLiteral>(result_expr) ||
-      isa<clang::CharacterLiteral>(result_expr) ||
       isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
-    return result_expr;
+    return MapConstant(context, loc_id, result_expr);
   }
 
   clang::Expr::EvalResult evaluated_result;
-  CARBON_CHECK(result_expr->EvaluateAsConstantExpr(evaluated_result,
-                                                   sema.getASTContext()));
-
-  clang::APValue ap_value = evaluated_result.Val;
-  // TODO: Add support for other types.
-  if (ap_value.isLValue()) {
-    if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-      context.TODO(loc_id,
-                   "Unsupported: macro evaluated to a non-integer LValue");
-      return nullptr;
-    }
-    ap_value = evaluated_result.Val;
+  if (!result_expr->EvaluateAsConstantExpr(evaluated_result,
+                                           sema.getASTContext())) {
+    CARBON_FATAL("failed to evaluate macro as constant expression");
   }
 
-  switch (ap_value.getKind()) {
-    case clang::APValue::Int:
-      if (result_expr->getType()->isBooleanType()) {
-        return clang::CXXBoolLiteralExpr::Create(
-            sema.getASTContext(), ap_value.getInt().getBoolValue(),
-            result_expr->getType(), result_expr->getExprLoc());
-      }
-      return clang::IntegerLiteral::Create(
-          sema.getASTContext(), ap_value.getInt(), result_expr->getType(),
-          result_expr->getExprLoc());
-    case clang::APValue::Float:
-      return clang::FloatingLiteral::Create(
-          sema.getASTContext(), ap_value.getFloat(),
-          /*isExact=*/true, result_expr->getType(), result_expr->getExprLoc());
-    default:
-      context.TODO(loc_id,
-                   "Unsupported: macro evaluated to a constant of type: " +
-                       result_expr->getType().getAsString());
-      return nullptr;
+  auto const_id = MapAPValueToConstant(context, loc_id, evaluated_result.Val,
+                                       result_expr->getType(),
+                                       /*is_lvalue=*/result_expr->isGLValue());
+  if (const_id == SemIR::ConstantId::NotConstant) {
+    context.TODO(loc_id,
+                 "Unsupported: macro evaluated to a constant of type: " +
+                     result_expr->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
   }
+
+  return context.constant_values().GetInstId(const_id);
 }
 
 }  // namespace Carbon::Check

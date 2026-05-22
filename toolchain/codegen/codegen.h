@@ -7,7 +7,7 @@
 
 #include "llvm/IR/Module.h"
 #include "llvm/Target/TargetMachine.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon {

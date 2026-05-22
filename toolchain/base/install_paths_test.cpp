@@ -32,7 +32,6 @@ namespace {
 
 using ::bazel::tools::cpp::runfiles::Runfiles;
 using ::testing::_;
-using ::testing::EndsWith;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using Testing::IsSuccess;
@@ -61,14 +60,6 @@ class InstallPathsTest : public ::testing::Test {
     ASSERT_THAT(root_result, IsSuccess(_));
     Filesystem::Dir root = *std::move(root_result);
 
-    // Check that the root is located in the expected part of the FHS layout.
-    // TODO: Adjust this to work equally well on Windows.
-    EXPECT_THAT(root_path.native(), EndsWith("lib/carbon/"));
-    EXPECT_THAT(
-        root.Access("../../bin/carbon", Filesystem::AccessCheckFlags::Execute),
-        IsSuccess(Eq(true)))
-        << "path: " << (root_path / "../../bin/carbon");
-
     std::filesystem::path core_package_path = paths.core_package();
     ASSERT_THAT(core_package_path, StartsWith(root_path));
     EXPECT_THAT(Filesystem::Cwd().Access(core_package_path / "prelude.carbon"),
@@ -93,8 +84,8 @@ class InstallPathsTest : public ::testing::Test {
 };
 
 TEST_F(InstallPathsTest, RootBusybox) {
-  std::string installed_busybox_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/install/prefix/lib/carbon/carbon-busybox");
+  std::string installed_busybox_path =
+      test_runfiles_->Rlocation("carbon/toolchain/install/carbon-busybox");
 
   auto paths = InstallPaths::MakeExeRelative(installed_busybox_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
@@ -102,8 +93,8 @@ TEST_F(InstallPathsTest, RootBusybox) {
 }
 
 TEST_F(InstallPathsTest, RootExplicit) {
-  std::string marker_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/install/prefix/lib/carbon/carbon_install.txt");
+  std::string marker_path =
+      test_runfiles_->Rlocation("carbon/toolchain/install/carbon_install.txt");
 
   llvm::StringRef root_path = marker_path;
   CARBON_CHECK(root_path.consume_back("carbon_install.txt"),

@@ -38,3 +38,10 @@ and or not if else for return var break continue _
 
 notakeyword
 // CHECK:STDOUT:   - { index: 1, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "notakeyword", identifier: 0, has_leading_space: true }
+// --- eval_musteval.carbon
+// CHECK:STDOUT: - filename: eval_musteval.carbon
+// CHECK:STDOUT:   tokens:
+
+eval musteval
+// CHECK:STDOUT:   - { index: 1, kind:      "Eval", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "eval", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 2, kind:  "MustEval", line: {{ *}}[[@LINE-2]], column:   6, indent: 1, spelling: "musteval", has_leading_space: true }

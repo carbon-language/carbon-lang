@@ -12,7 +12,7 @@
 #include <utility>
 
 #include "common/check.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/test_helpers.h"
 
 namespace Carbon::Lex {

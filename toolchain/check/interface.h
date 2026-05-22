@@ -29,26 +29,25 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 // given a specific for the interface plus a type to use as `Self`.
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId interface_specific_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::SpecificId;
+    SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id)
+    -> SemIR::SpecificId;
 
 // Gets the type of the specified associated entity, given the specific for the
 // interface and the type of `Self`.
-auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
-                                        SemIR::SpecificId interface_specific_id,
-                                        SemIR::InstId decl_id,
-                                        SemIR::TypeId self_type_id,
-                                        SemIR::InstId self_witness_id)
-    -> SemIR::TypeId;
+auto GetTypeForSpecificAssociatedEntity(
+    Context& context, SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::InstId decl_id) -> SemIR::TypeId;
 
 // Creates a symbolic binding for `Self` of type `type_id` in the scope of
-// `scope_id`, and add the name `Self` for the compile time binding.
+// `scope_id`.
 //
 // Returns the symbolic binding instruction.
-auto AddSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
-                             SemIR::TypeId type_id, SemIR::NameScopeId scope_id,
-                             bool is_template) -> SemIR::InstId;
+auto AddSelfSymbolicBindingToScope(Context& context,
+                                   SemIR::LocId definition_loc_id,
+                                   SemIR::TypeId type_id,
+                                   SemIR::NameScopeId scope_id,
+                                   bool is_template) -> SemIR::InstId;
 
 // Given a search result `lookup_result` for `name`, returns the previous valid
 // declaration of `name` if there is one. The `entity` is a new decl of the same

@@ -23,6 +23,8 @@ fn Concat(a_val: i64, b_val: i64) -> i64 {
 }
 
 class Equation {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Equation {
     returned var me: Equation;
     me.num_operands = 0;

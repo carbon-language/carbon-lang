@@ -54,7 +54,6 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
                                 EntityKind entity_kind_for_diagnostic,
                                 SemIR::SpecificId enclosing_specific_id,
-                                SemIR::InstId self_type_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
@@ -86,7 +85,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   auto specific_id = SemIR::SpecificId::None;
   if (entity.generic_id.has_value()) {
     specific_id = DeduceGenericCallArguments(
-        context, loc_id, entity.generic_id, enclosing_specific_id, self_type_id,
+        context, loc_id, entity.generic_id, enclosing_specific_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
         arg_ids);
     if (!specific_id.has_value()) {
@@ -107,7 +106,6 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, generic_class,
                           EntityKind::GenericClass, enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
@@ -147,7 +145,6 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, entity, entity_kind_for_diagnostic,
                           enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
@@ -215,13 +212,13 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId callee_id,
                            const SemIR::CalleeFunction& callee_function,
                            llvm::ArrayRef<SemIR::InstId> arg_ids,
-                           bool is_operator_syntax) -> SemIR::InstId {
+                           bool is_desugared) -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
       context, loc_id, context.functions().Get(callee_function.function_id),
       EntityKind::Function, callee_function.enclosing_specific_id,
-      callee_function.self_type_id, callee_function.self_id, arg_ids);
+      callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
@@ -239,55 +236,52 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     return_type_id = GetTupleType(context, {});
   }
 
-  llvm::SmallVector<SemIR::InstId, 1> return_arg_ids;
-  for (auto return_pattern_id :
-       context.inst_blocks().GetOrEmpty(callee.return_patterns_id)) {
+  auto return_arg_id = SemIR::InstId::None;
+  if (callee.return_pattern_id.has_value()) {
     Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");
-          builder.Note(return_pattern_id, IncompleteReturnTypeHere);
+          builder.Note(callee.return_pattern_id, IncompleteReturnTypeHere);
         });
     auto arg_type_id = CheckFunctionReturnPatternType(
-        context, loc_id, return_pattern_id, *callee_specific_id);
+        context, loc_id, callee.return_pattern_id, *callee_specific_id);
     if (arg_type_id == SemIR::ErrorInst::TypeId) {
       return_type_id = SemIR::ErrorInst::TypeId;
-    }
-    switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
-      case SemIR::InitRepr::InPlace:
-      case SemIR::InitRepr::Dependent:
-        // Tentatively use storage for a temporary as the return argument.
-        // This will be replaced if necessary when we perform initialization.
-        return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
-            context, loc_id, {.type_id = arg_type_id}));
-        break;
-      case SemIR::InitRepr::None:
-      case SemIR::InitRepr::ByCopy:
-      case SemIR::InitRepr::Incomplete:
-      case SemIR::InitRepr::Abstract:
-        return_arg_ids.push_back(SemIR::InstId::None);
-        break;
+    } else if (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id)
+                   .MightBeInPlace()) {
+      // Tentatively use storage for a temporary as the return argument.
+      // This will be replaced if necessary when we perform initialization.
+      return_arg_id = AddInst<SemIR::TemporaryStorage>(
+          context, loc_id, {.type_id = arg_type_id});
     }
   }
   // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_arg_ids, callee,
-      *callee_specific_id, is_operator_syntax);
+  auto converted_args_id =
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_arg_id, callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
-      LoadImportRef(context, callee.thunk_decl_id());
+      auto callee_inst_id =
+          context.sem_ir().thunks().Get(callee.thunk_id()).callee_id;
+      LoadImportRef(context, callee_inst_id);
 
       // Name the thunk target within the enclosing scope of the thunk.
       auto thunk_ref_id =
-          BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
+          BuildNameRef(context, loc_id, callee.name_id, callee_inst_id,
                        callee_function.enclosing_specific_id);
+
+      auto param_pattern_ids =
+          context.inst_blocks().Get(context.functions()
+                                        .Get(callee_function.function_id)
+                                        .param_patterns_id);
 
       // This recurses back into `PerformCall`. However, we never form a thunk
       // to a thunk, so we only recurse once.
-      return PerformThunkCall(context, loc_id, callee_function.function_id,
-                              context.inst_blocks().Get(converted_args_id),
-                              thunk_ref_id);
+      return PerformThunkCall(
+          context, loc_id, callee_function.function_id, param_pattern_ids,
+          context.inst_blocks().Get(converted_args_id), thunk_ref_id);
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
@@ -297,7 +291,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     }
 
     case SemIR::Function::SpecialFunctionKind::None:
-    case SemIR::Function::SpecialFunctionKind::Builtin: {
+    case SemIR::Function::SpecialFunctionKind::Builtin:
+    case SemIR::Function::SpecialFunctionKind::CoreWitness:
+    case SemIR::Function::SpecialFunctionKind::CppThunk: {
       return GetOrAddInst<SemIR::Call>(context, loc_id,
                                        {.type_id = return_type_id,
                                         .callee_id = callee_id,
@@ -344,7 +340,7 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_operator_syntax)
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
     -> SemIR::InstId {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
@@ -354,16 +350,16 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
-                                   is_operator_syntax);
+                                   is_desugared);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
-      return PerformCallToCppFunction(
-          context, loc_id, overload.cpp_overload_set_id, overload.self_id,
-          arg_ids, is_operator_syntax);
+      return PerformCallToCppFunction(context, loc_id,
+                                      overload.cpp_overload_set_id,
+                                      overload.self_id, arg_ids, is_desugared);
     }
   }
 }

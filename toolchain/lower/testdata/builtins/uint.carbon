@@ -280,7 +280,7 @@ fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: !79 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 50, type: !80, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !83)
 // CHECK:STDOUT: !80 = !DISubroutineType(types: !81)
 // CHECK:STDOUT: !81 = !{!82, !7, !7}
-// CHECK:STDOUT: !82 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !82 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !83 = !{!84, !85}
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !79, type: !7)
 // CHECK:STDOUT: !85 = !DILocalVariable(arg: 2, scope: !79, type: !7)

@@ -23,6 +23,8 @@ struct LinkOptions {
   CodegenOptions codegen_options;
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> object_filenames;
+
+  llvm::SmallVector<llvm::StringRef> extra_clang_args;
 };
 
 // Implements the link subcommand of the driver.

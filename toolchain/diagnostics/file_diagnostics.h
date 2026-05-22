@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_FILE_DIAGNOSTICS_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_FILE_DIAGNOSTICS_H_
 
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Diagnostics {
 

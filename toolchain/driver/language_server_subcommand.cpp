@@ -4,7 +4,7 @@
 
 #include "toolchain/driver/language_server_subcommand.h"
 
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/language_server/language_server.h"
 
 namespace Carbon {

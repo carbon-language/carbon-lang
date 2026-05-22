@@ -31,12 +31,23 @@ class FileTestBaseTest : public FileTestBase {
            llvm::raw_pwrite_stream& error_stream) const
       -> ErrorOr<RunResult> override;
 
-  auto GetArgReplacements() const -> llvm::StringMap<std::string> override {
-    return {{"replacement", "replaced"}};
-  }
-
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override {
     return {"default_args", "%s"};
+  }
+
+  auto AddArgsForFilename(llvm::SmallVectorImpl<std::string>& args,
+                          llvm::StringRef filename) const -> void override {
+    if (!filename.ends_with(".exclude")) {
+      args.emplace_back(filename);
+    }
+  }
+
+  auto GetArgReplacement(llvm::StringRef key) const
+      -> std::optional<std::string> override {
+    if (key == "replacement") {
+      return "replaced";
+    }
+    return std::nullopt;
   }
 
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const

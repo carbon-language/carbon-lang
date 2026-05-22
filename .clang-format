@@ -11,6 +11,7 @@ DerivePointerAlignment: 'false'
 ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'
 InsertBraces: 'true'
+InsertTrailingCommas: None
 PointerAlignment: Left
 # We abuse control macros for formatting other kinds of macros.
 SpaceBeforeParens: ControlStatementsExceptControlMacros
@@ -23,3 +24,11 @@ IfMacros:
     'CARBON_KIND_SWITCH',
   ]
 StatementMacros: ['ABSTRACT']
+QualifierAlignment: Custom
+QualifierOrder:
+  [inline, static, friend, constexpr, const, volatile, restrict, type]
+Macros:
+  # These macros can contain variable declarations, so clang-format needs to
+  # "see through" them in order to format them correctly.
+  - CARBON_ASSIGN_OR_RETURN(x)=x
+  - CARBON_KIND(x)=x

@@ -10,7 +10,7 @@ They presume an LLVM and Clang toolchain's tools, but support both a single
 installation and installations that split the LLVM tools and Clang tools apart.
 """
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "action_config",
@@ -20,8 +20,6 @@ load(
 load(
     ":cc_toolchain_actions.bzl",
     "all_c_compile_actions",
-    "all_cpp_compile_actions",
-    "all_link_actions",
 )
 
 def llvm_tool_paths(llvm_bindir, clang_bindir = None):
@@ -56,14 +54,14 @@ def llvm_action_configs(llvm_bindir, clang_bindir = None):
             enabled = True,
             tools = [tool(path = clang_bindir + "/clang++")],
         )
-        for name in all_cpp_compile_actions
+        for name in ACTION_NAME_GROUPS.all_cpp_compile_actions
     ] + [
         action_config(
             action_name = name,
             enabled = True,
             tools = [tool(path = clang_bindir + "/clang++")],
         )
-        for name in all_link_actions
+        for name in ACTION_NAME_GROUPS.all_cc_link_actions
     ] + [
         action_config(
             action_name = name,

@@ -11,6 +11,8 @@ import library "day10_common";
 import library "io_utils";
 
 class PathsToTop {
+  impl as Core.UnformedInit {}
+
   fn Make(terrain: Terrain) -> PathsToTop {
     returned var me: PathsToTop;
     for (y: i32 in Core.Range(43)) {

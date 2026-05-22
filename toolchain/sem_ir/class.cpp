@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/class.h"
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -45,10 +46,13 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
     return ErrorInst::TypeId;
   }
   return file.types().GetTypeIdForTypeInstId(
-      file.insts()
-          .GetAs<CompleteTypeWitness>(
-              file.constant_values().GetInstId(witness_id))
+      file.constant_values()
+          .GetInstAs<CompleteTypeWitness>(witness_id)
           .object_repr_type_inst_id);
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ClassId, SemIR::Class, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

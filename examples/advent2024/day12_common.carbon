@@ -11,6 +11,8 @@ import Core library "range";
 import library "io_utils";
 
 class Map {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Map {
     returned var me: Self;
     for (y: i32 in Core.Range(140)) {
@@ -32,6 +34,8 @@ class Map {
 }
 
 class DisjointSetForest {
+  impl as Core.UnformedInit {}
+
   fn Make() -> DisjointSetForest {
     returned var me: Self;
     for (i: i32 in Core.Range(140 * 140)) {
