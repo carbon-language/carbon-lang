@@ -224,6 +224,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
 
+  // Returns the tokens produced by lexing the source file. This includes any
+  // recovery tokens inserted inline by lexing, such as matching brackets, but
+  // excludes recovery tokens added after lexing finished.
   auto tokens() const -> llvm::iterator_range<TokenIterator> {
     return llvm::make_range(
         TokenIterator(TokenIndex(0)),

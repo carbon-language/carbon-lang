@@ -180,8 +180,9 @@ auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
 auto TokenizedBuffer::AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token)
     -> TokenIndex {
   auto kind = GetKind(token);
-  CARBON_CHECK(kind.is_word() && kind != TokenKind::Identifier,
-               "Recovery not required");
+  CARBON_CHECK(kind.is_word(),
+               "Invalid token kind {0} for recovery as identifier", kind);
+  CARBON_CHECK(kind != TokenKind::Identifier, "Recovery not required");
 
   auto identifier_id = value_stores_->identifiers().Add(GetTokenText(token));
   auto info = token_infos_.Get(token);
@@ -190,9 +191,14 @@ auto TokenizedBuffer::AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token)
 }
 
 auto TokenizedBuffer::AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex {
+  // Only resize once to avoid quadratic behavior if lots of recovery tokens are
+  // added.
+  if (recovery_tokens_.empty()) {
+    recovery_tokens_.resize(token_infos_.size());
+  }
+
   auto token = token_infos_.Add(info);
-  recovery_tokens_.resize(token_infos_.size());
-  recovery_tokens_[token.index] = true;
+  recovery_tokens_.push_back(true);
   ++post_lexing_recovery_tokens_;
   return token;
 }
