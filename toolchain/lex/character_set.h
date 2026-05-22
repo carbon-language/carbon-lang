@@ -34,6 +34,12 @@ inline auto IsDecimalDigit(char c) -> bool { return llvm::isDigit(c); }
 // being a valid continuation character of an identifier or numeric literal.
 inline auto IsAlnum(char c) -> bool { return llvm::isAlnum(c); }
 
+// Does this string start with a word start character according to Carbon's
+// lexical rules?
+inline auto StartsWithWord(llvm::StringRef text) -> bool {
+  return !text.empty() && (IsAlpha(text[0]) || text[0] == '_');
+}
+
 // Is this a hexadecimal digit according to Carbon's lexical rules?
 //
 // Hexadecimal digits are permitted in `0x`-prefixed literals, as well as after
