@@ -23,6 +23,8 @@ fn Euclid(a: i64, b: i64) -> {.m: i64, .n: i64, .gcd: i64} {
 }
 
 class Machine {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Machine {
     returned var me: Machine;
     // "Button A: X+"

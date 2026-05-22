@@ -47,7 +47,7 @@ import G;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'A'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -58,7 +58,7 @@ import G;
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'E'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'E'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},

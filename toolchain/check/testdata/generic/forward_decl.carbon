@@ -21,4 +21,4 @@ fn F() {
     G({} as C);
 }
 
-fn G[T:! Z](p: T) {}
+fn G[T:! Z](unused p: T) {}

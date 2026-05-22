@@ -202,7 +202,7 @@ interface BitComplementPrimitive
     [implicit_into anchor Self:! Form] {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self: Self]() -> Result;
+  fn Op(self) -> Result;
 }
 constraint BitComplement {
   let Result:! type;
@@ -219,7 +219,7 @@ interface BitAndWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint BitAndWith(U:! type) {
@@ -240,7 +240,7 @@ interface BitOrWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint BitOrWith(U:! type) {
@@ -261,7 +261,7 @@ interface BitXorWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint BitXorWith(U:! type) {
@@ -284,7 +284,7 @@ interface LeftShiftWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint LeftShiftWith(U:! type) {
@@ -305,7 +305,7 @@ interface RightShiftWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint RightShiftWith(U:! type) {

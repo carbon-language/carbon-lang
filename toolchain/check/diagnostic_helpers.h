@@ -48,11 +48,11 @@ class LocIdForDiagnostics {
 using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
+using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 
-// A function that forms a diagnostic for some kind of problem. The
-// DiagnosticBuilder is returned rather than emitted so that the caller
-// can add contextual notes as appropriate.
-using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
+// A function that adds a Context message for a diagnostic.
+using DiagnosticContextFn =
+    llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
 
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.

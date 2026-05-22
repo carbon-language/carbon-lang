@@ -1,0 +1,260 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/diagnostics/emitter.h"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "llvm/ADT/StringRef.h"
+#include "toolchain/diagnostics/mocks.h"
+
+namespace Carbon::Testing {
+namespace {
+
+using testing::ElementsAre;
+
+class FakeEmitter : public Diagnostics::Emitter<int> {
+ public:
+  using Emitter::Emitter;
+
+ protected:
+  auto ConvertLoc(int n, ContextFnT /*context_fn*/) const
+      -> Diagnostics::ConvertedLoc override {
+    return {.loc = {.line_number = 1, .column_number = n},
+            .last_byte_offset = -1};
+  }
+};
+
+class EmitterTest : public ::testing::Test {
+ public:
+  EmitterTest() : emitter_(&consumer_) {}
+
+  Testing::MockDiagnosticConsumer consumer_;
+  FakeEmitter emitter_;
+};
+
+TEST_F(EmitterTest, EmitSimpleError) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
+  EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 1, "simple error")));
+  EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 2, "simple error")));
+  emitter_.Emit(1, TestDiagnostic);
+  emitter_.Emit(2, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitSimpleWarning) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(consumer_,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  Diagnostics::Kind::TestDiagnostic,
+                  Diagnostics::Level::Warning, 1, 1, "simple warning")));
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitOneArgDiagnostic) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", std::string);
+  EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 1, "arg: `str`")));
+  emitter_.Emit(1, TestDiagnostic, "str");
+}
+
+TEST_F(EmitterTest, EmitNote) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnosticNote, Note, "note");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticNote,
+                                  Diagnostics::Level::Note, 1, 2, "note")))));
+  emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
+}
+
+TEST_F(EmitterTest, EmitContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 2, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitSoftContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
+                                  Diagnostics::Level::SoftContext, 1, 2,
+                                  "soft context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticSoftContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitSoftContextAndContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
+                                  Diagnostics::Level::SoftContext, 1, 3,
+                                  "soft context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 2, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(3, TestDiagnosticSoftContext);
+  });
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitContextAndSoftContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 3, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(3, TestDiagnosticContext);
+  });
+  // This SoftContext does not produce a message, since the earlire Context
+  // supersedes it.
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticSoftContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitTwoContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext2, Context, "context 2");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 3, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext2,
+                                  Diagnostics::Level::Context, 1, 2,
+                                  "context 2"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(3, TestDiagnosticContext);
+  });
+  Diagnostics::ContextScope scope2(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticContext2);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitTwoSoftContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext2, SoftContext, "soft context 2");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
+                                  Diagnostics::Level::SoftContext, 1, 3,
+                                  "soft context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(3, TestDiagnosticSoftContext);
+  });
+  // This SoftContext does not produce a message, since the earlire Context
+  // supersedes it.
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticSoftContext2);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, Flush) {
+  bool flushed = false;
+  auto flush_fn = [&]() { flushed = true; };
+
+  {
+    FakeEmitter emitter(&consumer_);
+    emitter.AddFlushFn(flush_fn);
+
+    // Registering the function does not flush.
+    EXPECT_FALSE(flushed);
+
+    // Explicit calls to `Flush` should flush.
+    emitter.Flush();
+    EXPECT_TRUE(flushed);
+    flushed = false;
+
+    {
+      Diagnostics::AnnotationScope annot(&emitter, [](auto&) {});
+
+      // Registering an annotation scope should flush.
+      EXPECT_TRUE(flushed);
+      flushed = false;
+    }
+
+    // Unregistering an annotation scope should flush.
+    EXPECT_TRUE(flushed);
+    flushed = false;
+  }
+
+  // Destroying the emitter should not flush, as that could call back into the
+  // base class emitter after the derived-class emitter has been destroyed.
+  EXPECT_FALSE(flushed);
+}
+
+}  // namespace
+}  // namespace Carbon::Testing

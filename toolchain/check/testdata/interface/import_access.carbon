@@ -45,7 +45,7 @@ package Test library "[[@TEST_NAME]]";
 
 impl package Test library "[[@TEST_NAME]]";
 
-fn F(i: Def) {}
+fn F(unused i: Def) {}
 
 // --- fail_local_def.carbon
 
@@ -53,11 +53,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:9: error: name `Def` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Def) {}
-// CHECK:STDERR:         ^~~
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:16: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Def) {}
+// CHECK:STDERR:                ^~~
 // CHECK:STDERR:
-fn F(i: Def) {}
+fn F(unused i: Def) {}
 
 // --- fail_other_def.carbon
 
@@ -65,17 +65,17 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(i: Test.Def) {}
-// CHECK:STDERR:         ^~~~~~~~
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:16: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fn F(unused i: Test.Def) {}
+// CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-fn F(i: Test.Def) {}
+fn F(unused i: Test.Def) {}
 
 // --- forward_with_def.impl.carbon
 
 impl package Test library "[[@TEST_NAME]]";
 
-fn F(i: ForwardWithDef) {}
+fn F(unused i: ForwardWithDef) {}
 
 // --- fail_local_forward_with_def.carbon
 
@@ -83,11 +83,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:9: error: name `ForwardWithDef` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: ForwardWithDef) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:16: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: ForwardWithDef) {}
+// CHECK:STDERR:                ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(i: ForwardWithDef) {}
+fn F(unused i: ForwardWithDef) {}
 
 // --- fail_other_forward_with_def.carbon
 
@@ -95,24 +95,24 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(i: Test.ForwardWithDef) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:16: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fn F(unused i: Test.ForwardWithDef) {}
+// CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(i: Test.ForwardWithDef) {}
+fn F(unused i: Test.ForwardWithDef) {}
 
 // --- fail_todo_forward.impl.carbon
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+7]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+7]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:9: error: name `Forward` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
-fn F(i: Forward*) {}
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:16: error: name `Forward` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
+fn F(unused i: Forward*) {}
 
 // CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface Forward {}
@@ -126,11 +126,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-fn F(i: Forward*) {}
+fn F(unused i: Forward*) {}
 
 // --- fail_other_forward.carbon
 
@@ -138,11 +138,11 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-fn F(i: Forward*) {}
+fn F(unused i: Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
 
@@ -168,6 +168,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def {
 // CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Def.WithSelf.decl = interface_with_self_decl @Def [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -175,6 +176,8 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Def.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
@@ -193,6 +196,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef {
 // CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %ForwardWithDef.WithSelf.decl = interface_with_self_decl @ForwardWithDef [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -200,6 +204,8 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardWithDef.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward.carbon
 // CHECK:STDOUT:
@@ -211,6 +217,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [concrete]
+// CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Def.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -218,7 +225,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, loc4_23, unloaded
+// CHECK:STDOUT:   %Test.import_ref.d6c = import_ref Test//def, loc4_23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -229,8 +236,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %pattern_type = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def.type]
@@ -240,7 +247,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Test.import_ref
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.d6c
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -249,6 +256,10 @@ private interface Redecl {}
 // CHECK:STDOUT: fn @F(%i.param: %Def.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Def.WithSelf(constants.%Self) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -265,12 +276,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -300,15 +311,15 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,6 +332,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [concrete]
+// CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -328,7 +340,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, loc6_26, unloaded
+// CHECK:STDOUT:   %Test.import_ref.335 = import_ref Test//forward_with_def, loc6_26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -339,8 +351,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %pattern_type = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef.type]
@@ -350,7 +362,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Test.import_ref
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.335
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -359,6 +371,10 @@ private interface Redecl {}
 // CHECK:STDOUT: fn @F(%i.param: %ForwardWithDef.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardWithDef.WithSelf(constants.%Self) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward_with_def.carbon
@@ -375,12 +391,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -410,15 +426,15 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -444,21 +460,22 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [concrete = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Forward {
 // CHECK:STDOUT:   %Self: %Forward.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Forward.WithSelf.decl = interface_with_self_decl @Forward [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -471,6 +488,8 @@ private interface Redecl {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Forward.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward.carbon
 // CHECK:STDOUT:
@@ -486,15 +505,15 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -524,15 +543,15 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -558,6 +577,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Redecl {
 // CHECK:STDOUT:   %Self: %Redecl.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Redecl.WithSelf.decl = interface_with_self_decl @Redecl [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -565,4 +585,6 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Redecl.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

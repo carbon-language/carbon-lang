@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
-    -   [Types and facets](#types-and-facets)
+    -   [Types, forms, and facets](#types-forms-and-facets)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
@@ -76,7 +76,7 @@ For example:
 namespace Widgets;
 
 interface Widgets.Widget {
-  fn Grow[ref self: Self](factor: f64);
+  fn Grow(ref self, factor: f64);
 }
 
 class Widgets.Cog {
@@ -127,12 +127,17 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, if the first operand is a type, facet, package, or
-namespace, a search for the member name is performed in the first operand.
-Otherwise, a search for the member name is performed in the type of the first
-operand. In either case, the search must succeed. In the latter case, if the
-result is an instance member, then [instance binding](#instance-binding) is
+For a simple member access, if the first operand is a type, form, facet,
+package, or namespace, a search for the member name is performed in the first
+operand. Otherwise, a search for the member name is performed in the type of the
+first operand. In either case, the search must succeed. In the latter case, if
+the result is an instance member, then [instance binding](#instance-binding) is
 performed on the first operand.
+
+A search for a name within a form searches for the name in its
+[type component](/docs/design/values.md#expression-forms). Note that this means
+that the form of an expression never affects simple member access into that
+expression, except through its type component.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
@@ -189,11 +194,12 @@ class Bar {
 }
 ```
 
-### Types and facets
+### Types, forms, and facets
 
-If the first operand is a type or facet, it must be a compile-time constant.
-This disallows member access into a type except during compile-time, see leads
-issue [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
+If the first operand is a type, form, or facet, it must be a compile-time
+constant. This disallows member access into a type except during compile-time,
+see leads issue
+[#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
 
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
@@ -212,11 +218,11 @@ Being part of the `impl` rather than the interface, no further
 
 ```carbon
 interface Cowboy {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class Avatar {
@@ -227,6 +233,9 @@ class Avatar {
 
 Simple member access `(Avatar as Cowboy).Draw` finds the `Cowboy.Draw`
 implementation for `Avatar`, ignoring `Renderable.Draw`.
+
+Similarly, a form has members, specifically the members of the form's type
+component.
 
 ### Tuple indexing
 
@@ -273,13 +282,13 @@ let n: i32 = p->(e);
 
 ### Values
 
-If the first operand is not a type, package, namespace, or facet, it does not
-have member names, and a search is performed into the type of the first operand
-instead.
+If the first operand is not a type, form, package, namespace, or facet, it does
+not have member names, and a search is performed into the type of the first
+operand instead.
 
 ```carbon
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 impl i32 as Printable;
@@ -318,7 +327,7 @@ For example:
 
 ```
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 fn GenericPrint[T:! Printable](a: T) {
@@ -353,7 +362,7 @@ fn F[T:! type](x: GenericWrapper(T)) -> T {
 }
 
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 fn DrawChecked[T:! Renderable](c: T) {
   // `Draw` resolves to `(T as Renderable).Draw` or
@@ -361,8 +370,8 @@ fn DrawChecked[T:! Renderable](c: T) {
   c.Draw();
 }
 
-class Cowboy { fn Draw[self: Self](); }
-impl Cowboy as Renderable { fn Draw[self: Self](); }
+class Cowboy { fn Draw(self); }
+impl Cowboy as Renderable { fn Draw(self); }
 
 fn CallsDrawChecked(c: Cowboy) {
   // ✅ Calls member of `impl Cowboy as Renderable`.
@@ -452,7 +461,7 @@ when looking in multiple interfaces that are
 
 ```carbon
 interface Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 fn DrawTemplate2[template T:! Renderable](c: T) {
@@ -461,23 +470,23 @@ fn DrawTemplate2[template T:! Renderable](c: T) {
   c.Draw();
 }
 
-class Cowboy { fn Draw[self: Self](); }
-impl Cowboy as Renderable { fn Draw[self: Self](); }
+class Cowboy { fn Draw(self); }
+impl Cowboy as Renderable { fn Draw(self); }
 
 class Pig { }
 impl Pig as Renderable {
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class RoundWidget {
   impl as Renderable {
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  fn Draw[self: Self]() {}
+  fn Draw(self) {}
   impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -549,7 +558,7 @@ For example:
 ```carbon
 interface Addable {
   // #1
-  fn Add[self: Self](other: Self) -> Self;
+  fn Add(self, other: Self) -> Self;
   // #2
   default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
@@ -560,7 +569,7 @@ interface Addable {
 class Integer {
   extend impl as Addable {
     // #3
-    fn Add[self: Self](other: Self) -> Self;
+    fn Add(self, other: Self) -> Self;
     // #4, generated from default implementation for #2.
     // fn Sum[...](...);
   }
@@ -593,13 +602,13 @@ naming the interface member as a member of the class.
 ```carbon
 interface Renderable {
   // #5
-  fn Draw[self: Self]();
+  fn Draw(self);
 }
 
 class RoundWidget {
   impl as Renderable {
     // #6
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
   // `Draw` names #5, the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
@@ -607,7 +616,7 @@ class RoundWidget {
 
 class SquareWidget {
   // #7
-  fn Draw[self: Self]() {}
+  fn Draw(self) {}
   impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -630,14 +639,14 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `SquareWidget`, #7.
   // The outer member access fails because we can't call
-  // #7, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #7, `Draw(self: SquareWidget)`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
   // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access fails because we can't call
-  // #6, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #6, `Draw(self: RoundWidget)`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
@@ -723,16 +732,22 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
 ## Instance binding
 
 Next, _instance binding_ may be performed. This associates an expression with a
-particular object instance. For example, this is the value bound to `self` when
-calling a method.
+particular object or value instance. For example, this is the value bound to
+`self` when calling a method.
 
 For the simple member access syntax `x.y`, if `x` is an entity that has member
 names, such as a namespace or a type, then `y` is looked up within `x`, and
 instance binding is not performed. Otherwise, `y` is looked up within the type
 of `x` and instance binding is performed if an instance member is found.
 
-If instance binding is performed:
+If instance binding is to be performed, the result of instance binding depends
+on what instance member `M` was found:
 
+-   For a field member of a struct type or tuple type, `x` is converted to a
+    struct or tuple form by
+    [form decomposition](/docs/design/values.md#category-conversions), and the
+    `.f` element of the result of that conversion becomes the result of `x.f`.
+    All other elements are [discarded](/docs/design/values.md#form-conversions).
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an
@@ -769,7 +784,7 @@ If instance binding is performed:
 
     ```carbon
     class Blob {
-      fn Mutate[ref self: Self](n: i32);
+      fn Mutate(ref self, n: i32);
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.
@@ -790,7 +805,7 @@ instance member. For example:
 ```carbon
 interface DebugPrint {
   // instance member
-  fn Print[self:Self]();
+  fn Print(self);
 }
 impl i32 as DebugPrint;
 impl type as DebugPrint;
@@ -861,7 +876,7 @@ always used for lookup.
 
 ```
 interface Printable {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 impl i32 as Printable;
 

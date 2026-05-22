@@ -146,12 +146,8 @@ fn F();
 struct X { fn () }
 fn F();
 
-// --- fail_with_identifier_as_param.carbon
+// --- with_identifier_as_param.carbon
 
-// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+4]]:11: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
-// CHECK:STDERR: fn foo(bar);
-// CHECK:STDERR:           ^
-// CHECK:STDERR:
 fn foo(bar);
 
 // --- fail_without_name_and_many_tokens_in_params.carbon
@@ -162,11 +158,37 @@ fn foo(bar);
 // CHECK:STDERR:
 fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 
+// --- form_parameter.carbon
+
+fn FormParam(x:? Form);
+fn ComplexFormParam(x:? X.Y(Z));
+
+// --- fail_ref_on_form_parameter.carbon
+
+// CHECK:STDERR: fail_ref_on_form_parameter.carbon:[[@LINE+4]]:6: error: expected `:` binding after `ref` [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR: fn F(ref x:? Form);
+// CHECK:STDERR:      ^~~
+// CHECK:STDERR:
+fn F(ref x:? Form);
+
+// --- fail_form_within_var.carbon
+
+// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: found `:?` pattern inside `var` pattern [NonRegularBindingInVarDecl]
+// CHECK:STDERR: fn FormInVar(var x:? Form);
+// CHECK:STDERR:                          ^
+// CHECK:STDERR:
+fn FormInVar(var x:? Form);
+
+// --- return_form.carbon
+
+fn SimpleReturnForm() ->? Form;
+fn ComplexReturnForm() ->? X.Y(Z);
+
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -176,9 +198,9 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
@@ -190,7 +212,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
@@ -202,13 +224,13 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 9},
@@ -221,7 +243,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -230,13 +252,13 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 9},
@@ -247,7 +269,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'UnsignedIntTypeLiteral', text: 'u32'},
@@ -260,21 +282,21 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
 // CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'H'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
@@ -282,7 +304,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'PrivateModifier', text: 'private'},
 // CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'I'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'I'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
@@ -292,7 +314,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -300,7 +322,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Div'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Div'},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -316,7 +338,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: 'fn', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -343,7 +365,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -356,7 +378,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -369,7 +391,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -382,7 +404,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -394,23 +416,21 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'struct', has_error: yes},
 // CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '}', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_with_identifier_as_param.carbon
+// CHECK:STDOUT: - filename: with_identifier_as_param.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'bar'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'bar', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'bar'},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_without_name_and_many_tokens_in_params.carbon
@@ -419,5 +439,83 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: form_parameter.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FormParam'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Form'},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'ComplexFormParam'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'X'},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
+// CHECK:STDOUT:               {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Z'},
+// CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_ref_on_form_parameter.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Form'},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_form_within_var.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FormInVar'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Form'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':?', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: return_form.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'SimpleReturnForm'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Form'},
+// CHECK:STDOUT:       {kind: 'ReturnForm', text: '->?', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'ComplexReturnForm'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'X'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
+// CHECK:STDOUT:             {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Z'},
+// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ReturnForm', text: '->?', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -28,6 +28,7 @@ The following syntaxes are supported:
 -   [Integer literals](#integer-literals)
     -   `12345` (decimal)
     -   `0x1FE` (hexadecimal)
+    -   `0o755` (octal)
     -   `0b1010` (binary)
 -   [Real-number literals](#real-number-literals)
     -   `123.456` (digits on both sides of the `.`)
@@ -55,15 +56,16 @@ base. The available base specifiers and corresponding bases are:
 | Base specifier | Base | Digits                   |
 | -------------- | ---- | ------------------------ |
 | `b`            | 2    | `0` and `1`              |
+| `o`            | 8    | `0` ... `7`              |
 | `x`            | 16   | `0` ... `9`, `A` ... `F` |
 
-The above table is case-sensitive. For example, `0b1` and `0x1A` are valid, and
-`0B1`, `0X1A`, and `0x1a` are invalid.
+The above table is case-sensitive. For example, `0b1`, `0o7`, and `0x1A` are
+valid, and `0B1`, `0O7`, `0X1A`, and `0x1a` are invalid.
 
 A zero at the start of a literal can never be followed by another digit: either
 the literal is `0`, the `0` begins a base specifier, or the next character is a
-decimal point (see below). No support is provided for octal literals, and any C
-or C++ octal literal (other than `0`) is invalid in Carbon.
+decimal point (see below). The `0o` prefix is used for octal literals; a C-style
+`0755` octal is invalid in Carbon.
 
 ### Real-number literals
 
@@ -111,8 +113,9 @@ example:
 
 -   Decimal integers: `1_23_456_7890`
 -   Hexadecimal integers: `0x7_F_FF_FFFF`
--   Real-number literals: `2_147.48_3648e12_345` or `0x1_00CA.FE_F00Dp+2_4`
+-   Octal literals: `0o7_55`
 -   Binary literals: `0b1_000_101_11`
+-   Real-number literals: `2_147.48_3648e12_345` or `0x1_00CA.FE_F00Dp+2_4`
 
 ## Divergence from other languages
 
@@ -129,7 +132,7 @@ provides benefits directly in line with the goal that Carbon code should be
 That said, it still provides sufficient variations to address important use
 cases for the goal of not leaving room for a lower level language:
 
--   Hexadecimal and binary integer literals.
+-   Hexadecimal, octal, and binary integer literals.
 -   Scientific notation floating point literals.
 -   Hexadecimal (scientific) floating point literals.
 
@@ -145,6 +148,7 @@ cases for the goal of not leaving room for a lower level language:
     -   [3-digit decimal groupings](/proposals/p1983.md#3-digit-decimal-groupings)
     -   [2-digit or 4-digit hexadecimal digit groupings](/proposals/p1983.md#2-digit-or-4-digit-hexadecimal-digit-groupings)
     -   [Disallow digit separators in fractions](/proposals/p1983.md#disallow-digit-separators-in-fractions)
+-   [No octal literals](/proposals/p6910.md#no-octal-literals)
 
 ## References
 
@@ -154,3 +158,5 @@ cases for the goal of not leaving room for a lower level language:
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 -   Proposal
     [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)
+-   Proposal
+    [#6910: Support octal literals](https://github.com/carbon-language/carbon-lang/pull/6910)

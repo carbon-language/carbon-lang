@@ -123,7 +123,7 @@ _prebuilt_clang_runtimes_internal = rule(
             doc = "Optional target for the built runtimes",
         ),
         "_builtin_headers": attr.label(
-            default = Label("//toolchain/install:clang_headers"),
+            default = Label("@llvm-project//clang:builtin_headers_gen"),
         ),
     },
 )
@@ -152,11 +152,11 @@ def prebuilt_runtimes(name, target = None, tags = []):
         # have different internal properties (that can't be `select`-ed) and we
         # can select between the attributes instead.
         internal_exec_runtimes_builder = select({
-            "//toolchain/driver:use_target_config_runtimes_builder_config": None,
-            "//conditions:default": "//toolchain/driver:bazel_build_clang_runtimes",
+            Label("//toolchain/driver:use_target_config_runtimes_builder_config"): None,
+            "//conditions:default": Label("//toolchain/driver:bazel_build_clang_runtimes"),
         }),
         internal_target_runtimes_builder = select({
-            "//toolchain/driver:use_target_config_runtimes_builder_config": "//toolchain/driver:bazel_build_clang_runtimes",
+            Label("//toolchain/driver:use_target_config_runtimes_builder_config"): Label("//toolchain/driver:bazel_build_clang_runtimes"),
             "//conditions:default": None,
         }),
     )

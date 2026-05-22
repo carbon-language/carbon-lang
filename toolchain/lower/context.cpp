@@ -20,7 +20,7 @@ Context::Context(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
     int total_ir_count, Lower::OptimizationLevel opt_level,
-    llvm::raw_ostream* vlog_stream)
+    bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
       clang_code_generator_(clang_code_generator),
       llvm_module_owner_(
@@ -39,6 +39,7 @@ Context::Context(
       tree_and_subtrees_getters_(tree_and_subtrees_getters),
       vlog_stream_(vlog_stream),
       total_ir_count_(total_ir_count),
+      mangle_string_fingerprint_(mangle_string_fingerprint),
       file_contexts_(
           FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
 }
@@ -94,7 +95,20 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
                                       /*RV=*/0);
 }
 
-auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
+auto Context::GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI {
+  if (abs_node_id.is_cpp()) {
+    const SemIR::File* file = abs_node_id.file();
+    // TODO: Consider asking our cpp_code_generator to map the location to a
+    // debug location, in order to use Clang's rules for (eg) macro handling.
+    auto loc = file->clang_source_locs().Get(abs_node_id.clang_source_loc_id());
+    auto presumed_loc = file->cpp_file()->source_manager().getPresumedLoc(loc);
+    return {
+        .filename = presumed_loc.getFilename(),
+        .line_number = static_cast<int32_t>(presumed_loc.getLine()),
+        .column_number = static_cast<int32_t>(presumed_loc.getColumn()),
+    };
+  }
+
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters().Get(abs_node_id.check_ir_id())();
   const auto& tokens = tree_and_subtrees.tree().tokens();

@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LEX_HELPERS_H_
 #define CARBON_TOOLCHAIN_LEX_HELPERS_H_
 
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Lex {
 

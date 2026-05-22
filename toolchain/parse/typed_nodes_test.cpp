@@ -135,7 +135,7 @@ TEST_F(TypedNodeTest, For) {
       tree.ExtractAs<VarBindingPattern>(for_var_pattern->inner);
   ASSERT_TRUE(for_var_binding.has_value());
   auto for_var_name =
-      tree.ExtractAs<IdentifierNameNotBeforeParams>(for_var_binding->name);
+      tree.ExtractAs<IdentifierNameNotBeforeSignature>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 
@@ -263,7 +263,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory IntConst\|MemberExpr\|MemberName: kind IdentifierNameNotBeforeParams consumed
+NodeIdInCategory IntConst\|MemberExpr\|MemberName: kind IdentifierNameNotBeforeSignature consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));
@@ -289,9 +289,9 @@ Optional [^:]*: begin
 NodeIdForKind: ExplicitParamList consumed
 Optional [^:]*: found
 Optional [^:]*: begin
-NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
+NodeIdForKind error: wrong kind IdentifierNameMaybeBeforeSignature, expected ImplicitParamList
 Optional [^:]*: missing
-NodeIdInCategory NonExprName: kind IdentifierNameBeforeParams consumed
+NodeIdInCategory NonExprName: kind IdentifierNameMaybeBeforeSignature consumed
 Vector: begin
 NodeIdOneOf IdentifierNameQualifierWithParams or IdentifierNameQualifierWithoutParams: IdentifierNameQualifierWithoutParams consumed
 NodeIdOneOf error: wrong kind AbstractModifier, expected IdentifierNameQualifierWithParams or IdentifierNameQualifierWithoutParams
@@ -383,7 +383,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
     Error err = trace;
     EXPECT_THAT(err.message(), testing::MatchesRegex(
                                    R"Trace((?s).*
-NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
+NodeIdForKind error: wrong kind IdentifierNameMaybeBeforeSignature, expected ImplicitParamList
 .*
 Error: ClassIntroducer node left unconsumed.)Trace"));
   }

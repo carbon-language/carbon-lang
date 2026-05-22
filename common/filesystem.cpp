@@ -643,7 +643,7 @@ auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
   if (buffer_size == 0) {
     buffer_size = MinBufferSize;
   }
-  large_buffer.resize(status.size());
+  large_buffer.resize(buffer_size);
   ssize_t result =
       readlinkat(dfd_, path.c_str(), large_buffer.data(), large_buffer.size());
   if (result == -1) {

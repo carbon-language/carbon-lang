@@ -24,7 +24,7 @@ auto GetReturnedVarParam(Context& context, const SemIR::Function& function)
 // var` in this scope.
 auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
-                         SemIR::InstId bind_id) -> void;
+                         SemIR::InstId bind_id, SemIR::NameId name_id) -> void;
 
 // Checks and builds SemIR for a `return;` statement.
 auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void;

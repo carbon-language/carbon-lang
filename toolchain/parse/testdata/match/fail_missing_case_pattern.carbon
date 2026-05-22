@@ -10,7 +10,7 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected pattern [ExpectedPattern]
     // CHECK:STDERR:     case => { return 2; }
     // CHECK:STDERR:          ^~
     // CHECK:STDERR:
@@ -23,7 +23,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'f'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
@@ -34,16 +34,15 @@ fn f() -> i32 {
 // CHECK:STDOUT:             {kind: 'IntLiteral', text: '3'},
 // CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: '=>', has_error: yes},
+// CHECK:STDOUT:               {kind: 'MatchCaseIntroducer', text: 'case'},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: '=>', has_error: yes},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: '=>', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '=>', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'MatchCase', text: '=>', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 12},
+// CHECK:STDOUT:             {kind: 'MatchCase', text: '=>', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: '=>', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'MatchHandler', text: '=>', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 11},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 23},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

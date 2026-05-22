@@ -28,14 +28,14 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   var v: Interface.T;
-  // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:10: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var v: Interface.T;
-  // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   var unused v: Interface.T;
+  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:17: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   var unused v: Interface.T;
+  // CHECK:STDERR:                 ^~~~~~~~~~~
   // CHECK:STDERR:
-  var v: Interface.T;
+  var unused v: Interface.T;
 }
 
 interface Different {}
@@ -50,24 +50,24 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
-// CHECK:STDOUT:   %Self.887: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
-// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Self.51c: %Interface.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf(%Self.51c) [symbolic]
+// CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
-// CHECK:STDOUT:   %assoc0.fcf: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface.F.decl [concrete]
-// CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%T [concrete]
+// CHECK:STDOUT:   %assoc0.063: %Interface.assoc_type = assoc_entity element0, @Interface.WithSelf.%Interface.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [concrete]
-// CHECK:STDOUT:   %Self.b4f: %Different.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.87f: %Different.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.c3a: type = pattern_type %Different.type [concrete]
 // CHECK:STDOUT:   %U: %Different.type = symbolic_binding U, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.cb4: type = pattern_type %Different.type [concrete]
-// CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U [symbolic]
+// CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -79,7 +79,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,39 +96,45 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.cb4 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.c3a = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_6.2 [symbolic = %U.loc32_6.1 (constants.%U)]
+// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_7.2 [symbolic = %U.loc32_7.1 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %U.as_type: type = facet_access_type %U.ref [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
+// CHECK:STDOUT:     %U.as_type.loc32_25.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc32_25.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     %.loc32: type = splice_block %Different.ref [concrete = constants.%Different.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc32_6.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc32_7.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_7.1 (constants.%U)]
+// CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self.887]
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0.fcf]
+// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self.51c]
+// CHECK:STDOUT:   %Interface.WithSelf.decl = interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %Interface.WithSelf.F.decl: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl [concrete = constants.%assoc0.063]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:     %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%T [concrete = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.WithSelf.%T [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %assoc0
+// CHECK:STDOUT:   .F = @Interface.WithSelf.%assoc0
 // CHECK:STDOUT:   .T = @T.%assoc1
-// CHECK:STDOUT:   witness = (%Interface.F.decl, %T)
+// CHECK:STDOUT:   witness = (@Interface.WithSelf.%Interface.WithSelf.F.decl, @Interface.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Different {
-// CHECK:STDOUT:   %Self: %Different.type = symbolic_binding Self, 0 [symbolic = constants.%Self.b4f]
+// CHECK:STDOUT:   %Self: %Different.type = symbolic_binding Self, 0 [symbolic = constants.%Self.87f]
+// CHECK:STDOUT:   %Different.WithSelf.decl = interface_with_self_decl @Different [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -137,23 +143,20 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.WithSelf.F(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc14: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.%assoc0 [concrete = constants.%assoc0.fcf]
+// CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.WithSelf.%assoc0 [concrete = constants.%assoc0.063]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
@@ -163,19 +166,28 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc32_6.2: %Different.type) {
-// CHECK:STDOUT:   %U.loc32_6.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
-// CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc32_6.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
+// CHECK:STDOUT: generic fn @G(%U.loc32_7.2: %Different.type) {
+// CHECK:STDOUT:   %U.loc32_7.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_7.1 (constants.%U)]
+// CHECK:STDOUT:   %U.as_type.loc32_25.1: type = facet_access_type %U.loc32_7.1 [symbolic = %U.as_type.loc32_25.1 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Self.51c) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Self.51c
+// CHECK:STDOUT:   %Interface.WithSelf.F.type => constants.%Interface.WithSelf.F.type
+// CHECK:STDOUT:   %Interface.WithSelf.F => constants.%Interface.WithSelf.F
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.51c) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Different.WithSelf(constants.%Self.87f) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.loc32_6.1 => constants.%U
-// CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type
+// CHECK:STDOUT:   %U.loc32_7.1 => constants.%U
+// CHECK:STDOUT:   %U.as_type.loc32_25.1 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

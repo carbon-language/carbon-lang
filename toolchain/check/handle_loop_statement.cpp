@@ -15,7 +15,8 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -115,8 +116,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
   // Begin an implicit let declaration context for the pattern.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::NameBindingDecl);
+  context.full_pattern_stack().PushNameBindingDecl();
   BeginSubpattern(context);
 
   context.node_stack().Push(node_id);
@@ -124,6 +124,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
+  EndSubpattern(context, context.node_stack());
   auto pattern_block_id = context.pattern_block_stack().Pop();
   AddInst<SemIR::NameBindingDecl>(context, node_id,
                                   {.pattern_block_id = pattern_block_id});
@@ -160,24 +161,34 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Create the cursor variable.
   // TODO: Produce a custom diagnostic if the range operand can't be used as a
   // range.
+  // TODO: We need to allocate the `VarStorage` before building the operator.
+  // The current order risks violating the preconditions on `Initialize` and
+  // risks violating the topological ordering of insts.
   auto cursor_id =
       BuildUnaryOperator(context, node_id,
                          {.interface_name = CoreIdentifier::Iterate,
                           .op_name = CoreIdentifier::NewCursor},
                          range_id);
   auto cursor_type_id = context.insts().Get(cursor_id).type_id();
-  auto cursor_var_id = AddInstWithCleanup<SemIR::VarStorage>(
-      context, node_id,
+  PendingBlock cursor_var_block(&context);
+  auto cursor_var_id = cursor_var_block.AddInstWithCleanup<SemIR::VarStorage>(
+      node_id,
       {.type_id = cursor_type_id, .pattern_id = SemIR::AbsoluteInstId::None});
-  auto init_id = Initialize(context, node_id, cursor_var_id, cursor_id);
-  AddInst<SemIR::Assign>(context, node_id,
-                         {.lhs_id = cursor_var_id, .rhs_id = init_id});
+  auto init_result = Initialize(
+      context, node_id,
+      // Disable broken lint that suggests a "fix" that doesn't compile.
+      // NOLINTNEXTLINE(performance-move-const-arg)
+      std::move(cursor_var_id), std::move(cursor_var_block), cursor_id);
+  AddInst<SemIR::Assign>(
+      context, node_id,
+      {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
+  cursor_var_id = init_result.storage_id;
 
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
   // Call `<range>.(Iterate.Next)(&cursor)`.
-  auto cursor_type_inst_id = context.types().GetInstId(cursor_type_id);
+  auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
   auto cursor_addr_id = AddInst<SemIR::AddrOf>(
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),

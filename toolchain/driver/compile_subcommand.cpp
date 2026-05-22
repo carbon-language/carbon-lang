@@ -23,8 +23,9 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
@@ -360,6 +361,17 @@ Whether to emit DWARF debug information.
       });
   b.AddFlag(
       {
+          .name = "output-last-input-only",
+          .help = R"""(
+Only write output for the last input file, ignoring all others.
+
+TODO: This is a temporary workaround and should be removed once separate
+compilation is better implemented.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
+  b.AddFlag(
+      {
           .name = "verify-llvm-ir",
           .help = R"""(
 Whether to run the LLVM verifier on modules.
@@ -379,6 +391,14 @@ in the check phase. If empty, the dump is not written.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
+  b.AddFlag(
+      {
+          .name = "mangle-string-fingerprint",
+          .help = R"""(
+Use the string form of the fingerprint from mangling instead of the hash form.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -492,7 +512,7 @@ class CompilationUnit {
   auto RunLower() -> void;
 
   // Runs the optimization pipeline.
-  auto RunOptimize() -> void;
+  auto RunOptimize(const clang::CompilerInvocation& clang_invocation) -> void;
 
   // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
   // lowering work, after we've finished building the IR in RunLower() and,
@@ -538,7 +558,8 @@ class CompilationUnit {
   auto IncludeInDumps() -> bool;
 
   // Builds the LLVM target machine.
-  auto MakeTargetMachine() -> void;
+  auto MakeTargetMachine(const clang::CompilerInvocation& clang_invocation)
+      -> void;
 
   // The index of the unit amongst all units.
   SemIR::CheckIRId check_ir_id_;
@@ -808,13 +829,15 @@ auto CompilationUnit::RunLower() -> void {
     options.want_debug_info = options_->include_debug_info;
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
+    options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
   });
 }
 
-auto CompilationUnit::MakeTargetMachine() -> void {
+auto CompilationUnit::MakeTargetMachine(
+    const clang::CompilerInvocation& clang_invocation) -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
   CARBON_CHECK(!target_machine_, "Should not call this multiple times");
 
@@ -828,7 +851,16 @@ auto CompilationUnit::MakeTargetMachine() -> void {
   constexpr llvm::StringLiteral CPU = "generic";
   constexpr llvm::StringLiteral Features = "";
 
+  const auto& codegen_opts = clang_invocation.getCodeGenOpts();
+
+  // TODO: Make the code in Clang's BackendUtil.cpp externally accessible and
+  // call it from here. This is doing a subset of the same work to translate
+  // Clang code generation options into target options.
   llvm::TargetOptions target_opts;
+  target_opts.UseInitArray = codegen_opts.UseInitArray;
+  target_opts.FunctionSections = codegen_opts.FunctionSections;
+  target_opts.DataSections = codegen_opts.DataSections;
+  target_opts.UniqueSectionNames = codegen_opts.UniqueSectionNames;
   target_machine_.reset(target_->createTargetMachine(
       target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
 }
@@ -842,7 +874,7 @@ static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return llvm::OptimizationLevel::O1;
     case Lower::OptimizationLevel::Size:
-      return llvm::OptimizationLevel::Oz;
+      return llvm::OptimizationLevel::O2;
     case Lower::OptimizationLevel::Speed:
       return llvm::OptimizationLevel::O3;
   }
@@ -857,13 +889,14 @@ static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return "-O1";
     case Lower::OptimizationLevel::Size:
-      return "-Oz";
+      return "-O2";
     case Lower::OptimizationLevel::Speed:
       return "-O3";
   }
 }
 
-auto CompilationUnit::RunOptimize() -> void {
+auto CompilationUnit::RunOptimize(
+    const clang::CompilerInvocation& clang_invocation) -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
 
   // TODO: A lot of the work done here duplicates work done by Clang setting up
@@ -873,7 +906,7 @@ auto CompilationUnit::RunOptimize() -> void {
   // pipeline rather than building one of our own, or factoring out enough of
   // Clang's pipeline builder that we can reuse and further customize it.
 
-  MakeTargetMachine();
+  MakeTargetMachine(clang_invocation);
 
   // TODO: There's no way to set these automatically from an
   // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
@@ -1015,12 +1048,6 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       output_filename = input_filename_;
       llvm::sys::path::replace_extension(output_filename,
                                          options_->asm_output ? ".s" : ".o");
-    } else {
-      // TODO: Handle the case where multiple input files were specified
-      // along with an output file name. That should either be an error or
-      // should produce a single LLVM IR module containing all inputs.
-      // Currently each unit overwrites the output from the previous one in
-      // this case.
     }
     CARBON_VLOG("Writing output to: {0}\n", output_filename);
 
@@ -1094,7 +1121,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Build a clang invocation. We do this regardless of whether we're running
   // check, because this is essentially performing further option validation,
   // and we generally validate all options even if we're not using them for the
-  // selected phases of compilation.
+  // selected phases of compilation. We also use Clang's target option handling
+  // to configure our target, to ensure that we are using the same ABI for both
+  // the C++ and Carbon parts of the compilation.
   // TODO: Share any arguments we specify here with the `carbon clang`
   // subcommand.
   {
@@ -1144,8 +1173,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  int total_unit_count = prelude.size() + options_.input_filenames.size();
   int unit_index = -1;
+  int total_unit_count = prelude.size() + options_.input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -1240,6 +1269,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   options.prelude_import = options_.prelude_import;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
+  options.mangle_string_fingerprint = options_.mangle_string_fingerprint;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
       options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
@@ -1283,7 +1313,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->RunLower();
 
     if (options_.phase != CompileOptions::Phase::Lower) {
-      unit->RunOptimize();
+      unit->RunOptimize(*clang_invocation);
     }
 
     unit->PostLower();
@@ -1295,9 +1325,29 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_CHECK(options_.phase == CompileOptions::Phase::CodeGen,
                "CodeGen should be the last stage");
 
+  bool output_last_input_only = options_.output_last_input_only;
+  if (!output_last_input_only && units.size() > 1 &&
+      !options_.output_filename.empty() && options_.output_filename != "-") {
+    // TODO: Command line structure should change to make this implicit (passing
+    // non-compiling inputs differently), and the warning should be removed.
+    CARBON_DIAGNOSTIC(
+        CompileMultipleInputsWithOutput, Warning,
+        "only outputting {0} to {1}, skipping output of {2} input "
+        "file{2:s}; pass `--output-last-input-only` to silence this warning",
+        std::string, std::string, Diagnostics::IntAsSelect);
+    driver_env.emitter.Emit(CompileMultipleInputsWithOutput,
+                            units.back()->input_filename().str(),
+                            options_.output_filename.str(), units.size() - 1);
+    output_last_input_only = true;
+  }
+
   // Codegen.
-  for (auto& unit : units) {
-    unit->RunCodeGen();
+  if (output_last_input_only) {
+    units.back()->RunCodeGen();
+  } else {
+    for (const auto& unit : units) {
+      unit->RunCodeGen();
+    }
   }
   return make_result();
 }

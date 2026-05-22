@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/include_recursive.carbon
 
-// CHECK:STDOUT: 6 args: `default_args`, `include_recursive.carbon`, `c.carbon`, `d.carbon`, `a.carbon`, `b.carbon`
+// CHECK:STDOUT: 6 args: `default_args`, `c.carbon`, `d.carbon`, `a.carbon`, `b.carbon`, `include_recursive.carbon`
 // CHECK:STDOUT: c.carbon:2: c
 // CHECK:STDOUT: d.carbon:2: d
 // CHECK:STDOUT: a.carbon:2: a

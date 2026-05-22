@@ -105,8 +105,10 @@ struct AccessOptionalMemberAction {
 // A value acquisition. Used when an expression contains a reference and we want
 // a value.
 struct AcquireValue {
-  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>(
-      {.ir_name = "acquire_value"});
+  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>({
+      .ir_name = "acquire_value",
+      .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
+  });
 
   TypeId type_id;
   InstId value_id;
@@ -166,7 +168,8 @@ struct ArrayIndex {
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "array_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -197,9 +200,9 @@ struct AsCompatible {
   InstId source_id;
 };
 
-// Performs a source-level initialization or assignment of `lhs_id` from
-// `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-// `InitializeFrom`.
+// Consumes the initializer `rhs_id`, and uses it to performs a source-level
+// initialization or assignment of `lhs_id`. If `rhs_id` has a storage argument,
+// it is required to already be `lhs_id`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
@@ -251,10 +254,11 @@ struct AssociatedEntityType {
   // The interface in which the entity was declared.
   InterfaceId interface_id;
   // The specific for the interface in which the entity was declared.
-  SpecificId interface_specific_id;
+  SpecificId interface_without_self_specific_id;
 
   auto GetSpecificInterface() -> SpecificInterface {
-    return {.interface_id = interface_id, .specific_id = interface_specific_id};
+    return {.interface_id = interface_id,
+            .specific_id = interface_without_self_specific_id};
   }
 };
 
@@ -372,6 +376,8 @@ struct Call {
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
        .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -380,6 +386,26 @@ struct Call {
   // Runtime arguments in lexical order of the parameter declarations, followed
   // by the argument for the return slot, if present.
   InstBlockId args_id;
+};
+
+struct CalleePatternMatchAction {
+  static constexpr auto Kind =
+      InstKind::CalleePatternMatchAction.Define<Parse::NodeId>(
+          {.ir_name = "callee_pattern_match_action",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  // TODO: Inline these args back into the inst. They are only factored out as
+  // a bundle to validate `BundleStore` until a followup PR introduces a
+  // "real" use case.
+  struct Args {
+    MetaInstId pattern_id;
+    CallParamIndex parent_index;
+  };
+
+  TypeId type_id;
+  BundleId<Args> args_id;
 };
 
 // A unicode code point character literal. This type only provides compile-time
@@ -435,7 +461,8 @@ struct ClassElementAccess {
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
-      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "class_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -623,6 +650,18 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// Represents an expression pattern.
+struct ExprPattern {
+  static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeId>(
+      {.ir_name = "expr_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
+  ExprRegionId expr_region_id;
+};
+
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetAccessType {
@@ -678,11 +717,10 @@ struct FacetValue {
 // A field in a class, of the form `var field: field_type;`. The type of the
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
-  static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
-          {.ir_name = "field_decl",
-           .expr_category = ExprCategory::NotExpr,
-           .constant_kind = InstConstantKind::AlwaysUnique});
+  static constexpr auto Kind = InstKind::FieldDecl.Define<Parse::NodeId>(
+      {.ir_name = "field_decl",
+       .expr_category = ExprCategory::NotExpr,
+       .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
   NameId name_id;
@@ -739,8 +777,27 @@ struct FloatValue {
   FloatId float_id;
 };
 
+// An action that creates an input parameter pattern with the form specified by
+// `form_id`. See `AnyFormParamAction` for member documentation.
+struct FormParamPatternAction {
+  static constexpr auto Kind =
+      InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_param_pattern_action",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::ConstantInstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId form_id;
+
+  // A name to associate with this Param in pretty-printed IR. This is not
+  // necessarily unique, and can even be `None`; it has no semantic
+  // significance.
+  NameId pretty_name_id;
+};
+
 // The type `Core.Form`.
-struct FormType : public SingletonTypeInst<InstKind::FormType, "form"> {
+struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
   // `FormType` is always set complete in file.cpp.
   static constexpr auto TypeId =
       TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
@@ -880,7 +937,7 @@ struct ImplWitnessAccess {
       InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_access",
            .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly,
+           .constant_kind = InstConstantKind::Conditional,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
@@ -985,6 +1042,16 @@ struct ImportCppDecl {
            .is_lowered = false});
 };
 
+// An `inline Cpp` declaration.
+struct InlineCppDecl {
+  static constexpr auto Kind =
+      InstKind::InlineCppDecl.Define<Parse::InlineCppDeclId>(
+          {.ir_name = "inline_cpp",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+  StringLiteralValueId text_id;
+};
+
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
@@ -1023,28 +1090,6 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
-// Tracks that an object has been initialized in-place to form the result of
-// this expression, even if its type's initializing representation is not
-// normally in-place. If the type does not use in-place initialization,
-// initialization from this expression will copy the value out of the
-// destination.
-//
-// This is used to model the initialization performed by C++ thunks, where
-// in-place initialization is used even for types that would normally have a
-// copy initializing representation.
-struct InPlaceInit {
-  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "in_place_init",
-       .expr_category = ExprCategory::Initializing,
-       .constant_kind = InstConstantKind::Never});
-
-  TypeId type_id;
-  // Used only to track the source of the initialization; this has no semantic
-  // meaning.
-  InstId src_id;
-  DestInstId dest_id;
-};
-
 // An initializing primitive form.
 struct InitForm {
   static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
@@ -1056,21 +1101,19 @@ struct InitForm {
   TypeId type_id;
   // The type component of the form.
   TypeInstId type_component_inst_id;
-  // If this is a function's return form, the index of the corresponding
-  // `OutParam` in the function's `Call` parameter list.
-  CallParamIndex index;
 };
 
-// Finalizes the initialization of `dest_id` from the initializer expression
-// `src_id`, by performing a final copy from source to destination, for types
-// whose initialization is not in-place.
-struct InitializeFrom {
-  // Note this Parse::NodeId is unused. InitializeFrom is only constructed by
+// Consumes the repr-initializing expression `src_id` and forms an in-place
+// initializing expression that initializes the storage at `dest_id`, by
+// performing a final copy from source to destination for types whose
+// initialization is not in-place.
+struct InPlaceInit {
+  // Note this Parse::NodeId is unused. InPlaceInit is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
-  static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
-      {.ir_name = "initialize_from",
-       .expr_category = ExprCategory::Initializing});
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   InstId src_id;
@@ -1078,7 +1121,12 @@ struct InitializeFrom {
 };
 
 // Used as the type of template actions that produce instructions.
-using InstType = SingletonTypeInst<InstKind::InstType, "<instruction>">;
+struct InstType
+    : public SingletonTypeInst<InstKind::InstType, "<instruction>"> {
+  // `InstType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // A value of type `InstType` that refers to an instruction. This is used to
 // represent an instruction as a value for use as a result of a template action.
@@ -1099,12 +1147,23 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
-  // Always `type`.
+  // If the interface is not generic, this is `type`, otherwise it's
+  // `GenericInterfaceType`.
   TypeId type_id;
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
   DeclInstBlockId decl_block_id;
+};
+
+struct InterfaceWithSelfDecl {
+  static constexpr auto Kind =
+      InstKind::InterfaceWithSelfDecl.Define<Parse::AnyInterfaceDeclId>(
+          {.ir_name = "interface_with_self_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+  // No type: an interface-with-self declaration is not a value.
+  InterfaceId interface_id;
 };
 
 // An arbitrary-precision integer type, which is used as the type of integer
@@ -1145,21 +1204,16 @@ struct IntValue {
   IntId int_id;
 };
 
-// A symbolic instruction that takes the place of an `ImplWitness` when the
-// result is not fully known. When evaluated it does an impl lookup query, based
-// on the stored query arguments, that a type implements an interface. The query
-// can be symbolic, and thus modified to be more concrete by applying a
-// specific. Once the query is concrete enough, or a final impl is found, the
-// instruction evaluates to an `ImplWitness`.
+// A non-final witness representing an impl lookup that did not yet find a final
+// witness.
 //
-// This instruction also represents a promise that an impl lookup query was
-// satisfied, like `ImplWitness`, but without providing which impl declaration
-// satisfies it.
+// When a final impl becomes available, or once the query and specific interface
+// are monomorphized to be concrete, this evaluates to that final witness.
 struct LookupImplWitness {
   static constexpr auto Kind =
       InstKind::LookupImplWitness.Define<Parse::NodeId>(
           {.ir_name = "lookup_impl_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
+           .constant_kind = InstConstantKind::Conditional,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
@@ -1169,6 +1223,27 @@ struct LookupImplWitness {
   // The self type (or facet value) and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
+};
+
+// Records that evaluation of the expression `src_id` will initialize the
+// storage identified by `dest_id` (even if its type's initializing
+// representation is not normally in-place), and forms an in-place initializing
+// expression to represent it. Note that `src_id` must find its target storage
+// using the exact ID `dest_id`, not another ID that aliases it.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct MarkInPlaceInit {
+  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "mark_in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
 };
 
 // A type that holds an object representation of another type, that may or may
@@ -1193,6 +1268,7 @@ struct NameBindingDecl {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
       {.ir_name = "name_binding_decl",
+       .expr_category = ExprCategory::NotExpr,
        .constant_kind = InstConstantKind::Never});
 
   InstBlockId pattern_block_id;
@@ -1204,12 +1280,24 @@ struct NamedConstraintDecl {
       InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
           {.ir_name = "constraint_decl", .is_lowered = false});
 
-  // Always `type`.
+  // If the constraint is not generic, this is `type`, otherwise it's
+  // `GenericNamedConstraintType`.
   TypeId type_id;
   NamedConstraintId named_constraint_id;
   // The declaration block, containing the constraint name's qualifiers and the
   // constraint's generic parameters.
   DeclInstBlockId decl_block_id;
+};
+
+struct NamedConstraintWithSelfDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintWithSelfDecl
+          .Define<Parse::AnyNamedConstraintDeclId>(
+              {.ir_name = "constraint_with_self_decl",
+               .constant_kind = InstConstantKind::AlwaysUnique,
+               .is_lowered = false});
+  // No type: an constraint-with-self declaration is not a value.
+  NamedConstraintId named_constraint_id;
 };
 
 // A name reference, with the value of the name. This only handles name
@@ -1240,9 +1328,6 @@ struct Namespace {
 
   TypeId type_id;
   NameScopeId name_scope_id;
-  // If the namespace was produced by an `import` line, the associated line for
-  // diagnostics.
-  AbsoluteInstId import_id;
 };
 
 // The type of namespace and imported package names.
@@ -1250,6 +1335,23 @@ struct Namespace {
 // This is a singleton instruction. However, it may still evolve into a more
 // standard type and be removed.
 using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
+
+// An action that creates an output parameter pattern with the form specified by
+// `form_id`. See `AnyFormParamAction` for member documentation.
+struct OutFormParamPatternAction {
+  static constexpr auto Kind =
+      // TODO: Use Parse::AnyReturnDeclId once we support passing node
+      // categories to Define.
+      InstKind::OutFormParamPatternAction
+          .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
+              {.ir_name = "out_form_param_pattern_action",
+               .expr_category = ExprCategory::Value,
+               .constant_kind = InstConstantKind::ConstantInstAction,
+               .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId form_id;
+};
 
 // An output `Call` parameter. See AnyParam for member documentation.
 struct OutParam {
@@ -1269,16 +1371,14 @@ struct OutParam {
 // A pattern that represents an output `Call` parameter. See `AnyParamPattern`
 // for member documentation.
 struct OutParamPattern {
-  static constexpr auto Kind =
-      InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "out_param_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "out_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
-  InstId subpattern_id;
-  CallParamIndex index;
+  NameId pretty_name_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.
@@ -1335,6 +1435,35 @@ struct RefBinding {
   InstId value_id;
 };
 
+// An action that performs form refinement of the form expression `form_id`:
+// for each operand of `form_id` in a position where a form is expected, if the
+// operand is not a concrete constant, it is wrapped in a `RefineFormAction`.
+// A `RefineFormAction` can be performed (i.e. is non-template-dependent) if we
+// can identify the form operands of `form_id`, which is typically possible only
+// if it will not be rewritten by constant evaluation except to substitute
+// values for its operands. As usual when creating Actions, if possible the
+// nested `RefineFormActions` are performed immediately, and not added to the
+// SemIR.
+//
+// This ensures that a form expression is template-dependent if it depends on
+// any non-concrete constants in form positions, even if those constants are not
+// themselves template-dependent. Unlike type refinement, form refinement does
+// not necessarily produce a concrete result, but it moves as far as possible
+// toward a state where non-concrete constants occur only in type positions, and
+// so the structure of the form is concretely known even if its type component
+// remains symbolic.
+struct RefineFormAction {
+  static constexpr auto Kind = InstKind::RefineFormAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_form_action",
+       .constant_kind = InstConstantKind::ConstantInstAction,
+       .is_lowered = false});
+
+  // Always `Core.Form`.
+  TypeId type_id;
+
+  MetaInstId form_id;
+};
+
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -1348,8 +1477,8 @@ struct RefineTypeAction {
   TypeInstId inst_type_inst_id;
 };
 
-// Represents a reference binding pattern. See `AnyBindingPattern` for member
-// documentation.
+// Represents a reference binding pattern that is not a parameter. See
+// `AnyBindingPattern` for member documentation.
 struct RefBindingPattern {
   static constexpr auto Kind =
       InstKind::RefBindingPattern.Define<Parse::NodeId>(
@@ -1364,7 +1493,8 @@ struct RefBindingPattern {
 
 struct RefForm {
   static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
+                                                  Parse::RefPrimitiveFormId>>(
           {.ir_name = "ref_form",
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
@@ -1387,7 +1517,7 @@ struct RefParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a `ref`-qualified `Call` parameter. See
+// A pattern that represents a by-reference `Call` parameter. See
 // `AnyParamPattern` for member documentation.
 struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
@@ -1398,8 +1528,33 @@ struct RefParamPattern {
        .is_lowered = false});
 
   TypeId type_id;
-  InstId subpattern_id;
-  CallParamIndex index;
+  NameId pretty_name_id;
+};
+
+// Represents a reference return form within the function body, in the same
+// way that `OutParam` represents an initializing return form. It is used where
+// output storage would otherwise be expected, and signifies that the output
+// in question is not written to memory, but is instead returned directly,
+// as the result (or part of the result) of the `Call` inst.
+struct RefReturn {
+  static constexpr auto Kind = InstKind::RefReturn.Define<Parse::NodeId>(
+      {.ir_name = "ref_return",
+       .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+};
+
+// A pattern that represents a reference return form, in the same way that an
+// OutParamPattern represents an initializing return form.
+struct RefReturnPattern {
+  static constexpr auto Kind = InstKind::RefReturnPattern.Define<Parse::NodeId>(
+      {.ir_name = "ref_return_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
 };
 
 // A `ref x` expression. The semantics of this instruction depend on the usage
@@ -1488,7 +1643,8 @@ struct RequirementBaseFacetType {
 
   // No type since not an expression
 
-  // A FacetType, the TypeType singleton, or an ErrorInst.
+  // An expression that evaluates to a FacetType, the TypeType singleton, or an
+  // ErrorInst.
   TypeInstId base_type_inst_id;
 };
 
@@ -1547,6 +1703,9 @@ struct Return {
 };
 
 // A `return expr;` statement.
+//
+// If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
+// and `expr_id` has a storage argument, the storage argument must be `dest_id`.
 struct ReturnExpr {
   static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
       {.ir_name = "return",
@@ -1565,7 +1724,7 @@ struct ReturnExpr {
 struct ReturnSlot {
   static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
       {.ir_name = "return_slot",
-       .expr_category = ExprCategory::DurableRef,
+       .expr_category = ComputedExprCategory::SameAsSecondOperand,
        .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
@@ -1586,7 +1745,7 @@ struct ReturnSlot {
 // for input parameters.
 struct ReturnSlotPattern {
   static constexpr auto Kind =
-      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+      InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
@@ -1595,6 +1754,8 @@ struct ReturnSlotPattern {
   // Always a PatternType whose scrutinee type is the return type of the
   // function.
   TypeId type_id;
+
+  InstId subpattern_id;
 
   // The function return type as originally written by the user. For diagnostics
   // only; this has no semantic significance, and is not preserved across
@@ -1691,9 +1852,8 @@ struct SpliceBlock {
 struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
-       // TODO: The expression category is in general dependent on
-       // instantiation. Add ExprCategory::Dependent to model this.
-       .expr_category = ExprCategory::Value});
+       .expr_category = ExprCategory::Dependent,
+       .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   // The instruction that computes the instruction to splice. The type of this
@@ -1730,7 +1890,8 @@ struct StructAccess {
 // Initializes a dest struct with the provided elements.
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
-      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "struct_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1801,28 +1962,14 @@ struct SymbolicBindingPattern {
   EntityNameId entity_name_id;
 };
 
-// The constant value of a FacetAccessType for a symbolic facet value.
-struct SymbolicBindingType {
-  static constexpr auto Kind =
-      InstKind::SymbolicBindingType.Define<Parse::NodeId>(
-          {.ir_name = "symbolic_binding_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::SymbolicOnly});
-
-  // Always the builtin type TypeType.
-  TypeId type_id;
-  // The symbolic facet value binding for which this instruction accesses the
-  // concrete type once it is known for the symbolic value.
-  EntityNameId entity_name_id;
-  // TODO: Remove this, and find it through a lookup on ScopeStack.
-  InstId facet_value_inst_id;
-};
-
-// A temporary value.
+// Consumes the initializer `init_id`, uses it to initialize a temporary
+// object, and forms an ephemeral reference to it. If `init_id` has a
+// storage arg, it must be a `TemporaryStorage` inst.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
        .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Conditional,
        .has_cleanup = true});
 
   TypeId type_id;
@@ -1859,7 +2006,8 @@ struct TupleAccess {
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
-      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "tuple_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1915,6 +2063,34 @@ struct TupleValue {
 
   TypeId type_id;
   InstBlockId elements_id;
+};
+
+// Extracts the type component of `form_inst_id`, which must have type
+// `Core.Form`.
+struct TypeComponentOf {
+  static constexpr auto Kind =
+      InstKind::TypeComponentOf.Define<Parse::NoneNodeId>(
+          {.ir_name = "type_component_of",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always TypeType.
+  TypeId type_id;
+  InstId form_inst_id;
+};
+
+// A type literal, such as `bool` or `type` or `i32`. The constant value of this
+// instruction will be the type value that the type literal evaluates to, which
+// is typically either a builtin type or a class defined in the prelude.
+struct TypeLiteral {
+  static constexpr auto Kind = InstKind::TypeLiteral.Define<Parse::NodeId>(
+      {.ir_name = "type_literal", .expr_category = ExprCategory::Value});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The type value that the type literal evaluates to.
+  TypeInstId value_id;
 };
 
 // Returns the type of the instruction produced by an action. For example, given
@@ -1980,6 +2156,20 @@ struct UninitializedValue {
   TypeId type_id;
 };
 
+// Initializes an object by performing a base initialization followed by an
+// update step.
+struct UpdateInit {
+  static constexpr auto Kind = InstKind::UpdateInit.Define<Parse::NodeId>(
+      {.ir_name = "update_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
+
+  TypeId type_id;
+  // The base initializer. Always an in-place initializer.
+  InstId base_init_id;
+  // The update expression. Always an in-place initializer.
+  InstId update_init_id;
+};
+
 // Converts from a value expression to an ephemeral reference expression, in
 // the case where the value representation of the type is a pointer. For
 // example, when indexing a value expression of array type, this is used to
@@ -2007,8 +2197,8 @@ struct ValueBinding {
   InstId value_id;
 };
 
-// Represents a value binding pattern. See `AnyBindingPattern` for member
-// documentation.
+// Represents a value binding pattern that is not a parameter. See
+// `AnyBindingPattern` for member documentation.
 struct ValueBindingPattern {
   static constexpr auto Kind =
       InstKind::ValueBindingPattern.Define<Parse::NodeId>(
@@ -2019,6 +2209,18 @@ struct ValueBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// A primitive value form.
+struct ValueForm {
+  static constexpr auto Kind =
+      InstKind::ValueForm.Define<Parse::ValPrimitiveFormId>(
+          {.ir_name = "value_form",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
 };
 
 // Converts an initializing expression to a value expression, in the case
@@ -2057,13 +2259,41 @@ struct ValueParamPattern {
            .is_lowered = false});
 
   TypeId type_id;
-  InstId subpattern_id;
-  CallParamIndex index;
+  NameId pretty_name_id;
 };
 
-// A pattern that represents a `Call` parameter corresponding to a `var`
-// pattern. See `AnyParamPattern` for member documentation. Note that there is
-// no `VarParam` -- a `VarParamPattern` corresponds to a `RefParam`.
+// Represents a value return form within the function body, in the same way
+// that `OutParam` represents an initializing return form. It is used where
+// output storage would otherwise be expected, and signifies that the output
+// in question is not written to memory, but is instead returned directly,
+// as the result (or part of the result) of the `Call` inst.
+struct ValueReturn {
+  static constexpr auto Kind = InstKind::ValueReturn.Define<Parse::NodeId>(
+      {.ir_name = "value_return",
+       .expr_category = ExprCategory::Value,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+};
+
+// A pattern that represents a value return form, in the same way that an
+// OutParamPattern represents an initializing return form.
+struct ValueReturnPattern {
+  static constexpr auto Kind =
+      InstKind::ValueReturnPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_return_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+};
+
+// A `var` pattern that is a `Call` parameter. See `AnyVarPattern` for member
+// documentation. This is functionally equivalent to a `VarPattern` with a
+// `RefParamPattern` subpattern; it is represented as a single inst to reduce
+// SemIR bloat. Note that as a consequence, there is no `VarParam` -- a
+// `VarParamPattern` corresponds to a `RefParam`.
 struct VarParamPattern {
   static constexpr auto Kind =
       InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
@@ -2074,17 +2304,16 @@ struct VarParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
-// A `var` pattern.
+// A `var` pattern that is not a `Call` parameter.
 struct VarPattern {
-  static constexpr auto Kind =
-      InstKind::VarPattern.Define<Parse::VariablePatternId>(
-          {.ir_name = "var_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::VarPattern.Define<Parse::NodeIdOneOf<
+      Parse::VariablePatternId, Parse::FormBindingPatternId>>(
+      {.ir_name = "var_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of
   // `subpattern_id`.
@@ -2144,9 +2373,6 @@ struct WhereExpr {
        .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
-  // This is the `.Self` symbolic binding. Its type matches the left type
-  // argument of the `where`.
-  InstId period_self_id;
   InstBlockId requirements_id;
 };
 
@@ -2160,6 +2386,23 @@ struct WhereExpr {
 // This is a singleton instruction. However, it may still evolve into a more
 // standard type and be removed.
 using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
+
+// A binding pattern that binds a name to the result of matching
+// `subpattern_id` against this pattern's scrutinee. Currently there is no
+// explicit syntax for such a pattern, but it arises implicitly when handling
+// function parameters, and particularly `:?` form bindings.
+struct WrapperBindingPattern {
+  static constexpr auto Kind =
+      InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "at_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId subpattern_id;
+};
 
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {

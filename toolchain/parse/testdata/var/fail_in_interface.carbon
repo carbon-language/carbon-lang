@@ -38,7 +38,7 @@ interface I {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'I'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},

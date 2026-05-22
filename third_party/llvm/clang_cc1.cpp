@@ -35,10 +35,10 @@
 
 namespace Carbon {
 
-auto RunClangCC1(const InstallPaths& installation,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 llvm::SmallVectorImpl<const char*>& cc1_args,
-                 bool enable_leaking) -> int {
+auto RunClangCC1Main(const InstallPaths& installation,
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     llvm::SmallVectorImpl<const char*>& cc1_args,
+                     bool enable_leaking) -> int {
   llvm::BumpPtrAllocator allocator;
   llvm::cl::ExpansionContext expansion_context(
       allocator, llvm::cl::TokenizeGNUCommandLine);
@@ -121,7 +121,6 @@ auto RunClangCC1(const InstallPaths& installation,
   // engine. If we've already hit an error, we can exit early once that's done.
   diag_buffer.FlushDiagnostics(clang_instance->getDiagnostics());
   if (!success) {
-    clang_instance->getDiagnosticClient().finish();
     return EXIT_FAILURE;
   }
 

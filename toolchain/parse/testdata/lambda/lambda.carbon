@@ -14,6 +14,37 @@ var a: auto = fn [T:! type] (x: T) -> T { return x; };
 var b: auto = fn (x: i32) => x;
 var c: auto = fn { };
 
+// --- fail_unconsumed_lambda_introducer.carbon
+
+// Tests that the compiler does not crash when a LambdaIntroducer (`fn`)
+// is left unconsumed inside an invalid binary operator sequence.
+
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:10: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:          ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+8]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:16: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
+require j%-fn->>
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+8]]:1: error: expected `=>` or `{` after return type [ExpectedLambdaBodyAfterReturnType]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:1: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+
 // --- fail_expected_body.carbon
 
 fn F() {
@@ -38,20 +69,20 @@ fn G() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'T'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
@@ -65,14 +96,14 @@ fn G() {
 // CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 20},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 27},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
@@ -81,7 +112,7 @@ fn G() {
 // CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'c'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
@@ -93,16 +124,33 @@ fn G() {
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_unconsumed_lambda_introducer.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'RequireIntroducer', text: 'require'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'j'},
+// CHECK:STDOUT:             {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '>', has_error: yes},
+// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '', has_error: yes},
+// CHECK:STDOUT:               {kind: 'InfixOperatorGreater', text: '>', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'ReturnType', text: '->', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'InvalidParse', text: '', has_error: yes},
+// CHECK:STDOUT:           {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'InfixOperatorPercent', text: '%', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'RequireDecl', text: '>', has_error: yes, subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_expected_body.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
@@ -116,20 +164,22 @@ fn G() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'G'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

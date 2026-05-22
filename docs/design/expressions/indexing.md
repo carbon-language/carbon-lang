@@ -64,7 +64,7 @@ interface IndexWithPrimitive
     [implicit_into anchor Self:! Form]
     (implicit_into Subscript:! Form) {
   let implicit_from ResultForm:! Form;
-  fn Op[bound self:? Self](subscript:? Subscript)
+  fn Op(bound self:? Self, subscript:? Subscript)
       ->? ResultForm;
 }
 ```
@@ -149,11 +149,11 @@ An array type could implement subscripting like so:
 class Array(template T:! type) {
   impl as IndexValWith(i64) {
     where ElementType = T;
-    fn At[bound self: Self](subscript: i64) -> val T;
+    fn At(bound self, subscript: i64) -> val T;
   }
   impl as IndexRefWith(i64) {
     where ElementType = T;
-    fn Ref[bound ref self: Self](subscript: i64) -> ref T;
+    fn Ref(bound ref self, subscript: i64) -> ref T;
   }
 }
 ```
@@ -164,7 +164,7 @@ And a type such as `std::span` could look like this:
 class Span(T:! type) {
   impl as IndirectIndexWith(i64) {
     where ElementType = T;
-    fn Ref[bound self: Self](subscript: i64) -> ref T;
+    fn Ref(bound self, subscript: i64) -> ref T;
   }
 }
 ```

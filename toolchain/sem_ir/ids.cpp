@@ -47,11 +47,7 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
 }
 
 auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
-  if (*this == Cpp) {
-    out << Label << "(Cpp)";
-  } else {
-    IdBase::Print(out);
-  }
+  IdBase::Print(out);
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
@@ -202,6 +198,8 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
+  } else if (*this == Generated) {
+    out << "generated";
   } else if (*this == Imports) {
     out << "imports";
   } else if (*this == GlobalInit) {
@@ -285,6 +283,15 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
         out << "_desugared";
       }
       break;
+  }
+}
+
+auto AnyRawId::Print(llvm::raw_ostream& out) const -> void {
+  out << AnyRawId::Label;
+  if (has_value()) {
+    out << llvm::format_hex_no_prefix(index, 0, /*Upper=*/true);
+  } else {
+    out << "<none>";
   }
 }
 

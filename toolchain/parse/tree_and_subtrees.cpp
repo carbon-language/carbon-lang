@@ -35,17 +35,19 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
         CARBON_CHECK(static_cast<size_t>(child.index) < subtree_sizes_.size());
         size += subtree_sizes_.Get(child);
         if (kind.has_bracket() && i == kind.child_count() - 1) {
-          CARBON_CHECK(kind.bracket() == tree.node_kind(child),
-                       "Node {0} with child count {1} needs bracket {2}, found "
-                       "wrong bracket {3}",
-                       kind, kind.child_count(), kind.bracket(),
-                       tree.node_kind(child));
+          CARBON_CHECK(
+              kind.bracket() == tree.node_kind(child),
+              "NodeId {0} ({1}) with child count {2} needs bracket {3}, found "
+              "wrong bracket {4}",
+              n, kind, kind.child_count(), kind.bracket(),
+              tree.node_kind(child));
         }
       }
     } else {
       while (true) {
-        CARBON_CHECK(!size_stack.empty(), "Node {0} is missing bracket {1}",
-                     kind, kind.bracket());
+        CARBON_CHECK(!size_stack.empty(),
+                     "NodeId {0} ({1}) is missing bracket {2}", kind, n,
+                     kind.bracket());
         auto child = size_stack.pop_back_val();
         size += subtree_sizes_.Get(child);
         if (kind.bracket() == tree.node_kind(child)) {

@@ -14,16 +14,19 @@
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
@@ -35,6 +38,7 @@
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -46,6 +50,21 @@ struct SpecificEvalInfo {
   SemIR::GenericInstIndex::Region region;
   // The work-in-progress contents of the eval block.
   llvm::ArrayRef<SemIR::InstId> values;
+};
+
+// Information about a local scope that we're currently evaluating, such as a
+// call to an `eval fn`. In this scope, instructions with runtime phase may
+// locally have constant values, for example values that are computed from the
+// arguments to the call. These values are specific to the current evaluation
+// and not global properties of the instruction.
+struct LocalEvalInfo {
+  // A mapping from instructions with runtime phase within the local scope to
+  // the values that they have in the current evaluation. This is populated as
+  // the local scope is evaluated, and due to control flow, the same instruction
+  // may have its value set multiple times. This map tracks the most recent
+  // value that the instruction had, which is the one that a reference to it in
+  // well-formed SemIR should refer to.
+  Map<SemIR::InstId, SemIR::ConstantId>* locals;
 };
 
 // Information about the context within which we are performing evaluation.
@@ -60,6 +79,9 @@ class EvalContext {
         fallback_loc_id_(fallback_loc_id),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
+
+  EvalContext(const EvalContext&) = delete;
+  auto operator=(const EvalContext&) -> EvalContext& = delete;
 
   // Gets the location to use for diagnostics if a better location is
   // unavailable.
@@ -85,7 +107,7 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeAcquireValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
     if (!bind_index.has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
@@ -129,6 +151,18 @@ class EvalContext {
   // Gets the constant value of the specified instruction in this context.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = constant_values().GetAttached(inst_id);
+
+    // While evaluating a function, map from local non-constant instructions to
+    // their earlier-evaluated values.
+    if (!const_id.is_constant()) {
+      if (local_eval_info_) {
+        if (auto local = local_eval_info_->locals->Lookup(inst_id)) {
+          return local.value();
+        }
+      }
+      return const_id;
+    }
+
     if (!const_id.is_symbolic()) {
       return const_id;
     }
@@ -212,6 +246,20 @@ class EvalContext {
 
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
+ protected:
+  explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
+                       SemIR::SpecificId specific_id,
+                       std::optional<LocalEvalInfo> local_eval_info)
+      : context_(context),
+        fallback_loc_id_(fallback_loc_id),
+        specific_id_(specific_id),
+        local_eval_info_(local_eval_info) {}
+
+  // Returns the current locals map, which is assumed to exist.
+  auto locals() -> Map<SemIR::InstId, SemIR::ConstantId>& {
+    return *local_eval_info_->locals;
+  }
+
  private:
   // The type-checking context in which we're performing evaluation.
   Context* context_;
@@ -222,6 +270,10 @@ class EvalContext {
   // If we are currently evaluating an eval block for `specific_id_`,
   // information about that evaluation.
   std::optional<SpecificEvalInfo> specific_eval_info_;
+  // If we are currently evaluating within a local scope, values of local
+  // instructions that have already been evaluated. This is here rather than in
+  // `FunctionEvalContext` so we can reference it from `GetConstantValue`.
+  std::optional<LocalEvalInfo> local_eval_info_;
 };
 }  // namespace
 
@@ -312,6 +364,17 @@ static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
                                            : SemIR::ConstantId::NotConstant;
 }
 
+// Forms a constant for an empty tuple value.
+static auto MakeEmptyTupleResult(EvalContext& eval_context)
+    -> SemIR::ConstantId {
+  auto type_id = GetTupleType(eval_context.context(), {});
+  return MakeConstantResult(
+      eval_context.context(),
+      SemIR::TupleValue{.type_id = type_id,
+                        .elements_id = SemIR::InstBlockId::Empty},
+      Phase::Concrete);
+}
+
 // Converts a bool value into a ConstantId.
 static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
                            bool result) -> SemIR::ConstantId {
@@ -377,6 +440,15 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   return eval_context.constant_values().GetInstId(const_id);
 }
 
+// Issue a suitable diagnostic for an instruction that evaluated to a
+// non-constant value but was required to evaluate to a constant.
+static auto DiagnoseNonConstantValue(Context& context, SemIR::LocId loc_id)
+    -> void {
+  CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
+                    "expression is runtime; expected constant");
+  context.emitter().Emit(loc_id, EvalRequiresConstantValue);
+}
+
 // Gets a constant value for an `inst_id`, diagnosing when the input is not a
 // constant value.
 static auto RequireConstantValue(EvalContext& eval_context,
@@ -385,6 +457,11 @@ static auto RequireConstantValue(EvalContext& eval_context,
   if (!inst_id.has_value()) {
     return SemIR::InstId::None;
   }
+  if (inst_id == SemIR::ErrorInst::InstId) {
+    *phase = Phase::UnknownDueToError;
+    return SemIR::ErrorInst::InstId;
+  }
+
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase =
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
@@ -392,12 +469,8 @@ static auto RequireConstantValue(EvalContext& eval_context,
     return eval_context.constant_values().GetInstId(const_id);
   }
 
-  if (inst_id != SemIR::ErrorInst::InstId) {
-    CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
-                      "expression is runtime; expected constant");
-    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
-                                EvalRequiresConstantValue);
-  }
+  DiagnoseNonConstantValue(eval_context.context(),
+                           eval_context.GetDiagnosticLoc({inst_id}));
   *phase = Phase::UnknownDueToError;
   return SemIR::ErrorInst::InstId;
 }
@@ -429,6 +502,22 @@ static auto RequireConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
   return const_inst_id;
 }
 
+// Gets a constant value for an `inst_id`, diagnosing when the input is not
+// constant, and CHECKing that it is concrete. Should only be used in contexts
+// where non-concrete constants cannot appear.
+static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  auto phase = Phase::Concrete;
+  auto value_inst_id = RequireConstantValue(eval_context, inst_id, &phase);
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::InstId;
+  }
+  CARBON_CHECK(phase == Phase::Concrete,
+               "expression evaluates to symbolic value {0}",
+               eval_context.insts().Get(value_inst_id));
+  return value_inst_id;
+}
+
 // Find the instruction that the given instruction instantiates to, and return
 // that.
 static auto GetConstantValue(EvalContext& eval_context,
@@ -458,7 +547,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandIsDependent(eval_context.context(), inst_id)) {
+  if (OperandDependence(eval_context.context(), inst_id) ==
+      SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
   return inst_id;
@@ -505,24 +595,29 @@ static auto GetConstantValue(EvalContext& eval_context,
                              Phase* phase) -> SemIR::InstBlockId = delete;
 
 // If the given instruction block contains only constants, returns a
-// corresponding block of those values.
-static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::InstBlockId inst_block_id, Phase* phase)
-    -> SemIR::InstBlockId {
+// corresponding block of those values. Ignores the instructions in the
+// specified range of indexes, replacing those elements with `None`.
+static auto GetConstantBlockValueIgnoringIndexRange(
+    EvalContext& eval_context, SemIR::InstBlockId inst_block_id, Phase* phase,
+    std::pair<int, int> ignored_range) -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
   auto insts = eval_context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
-    auto const_inst_id = GetConstantValue(eval_context, inst_id, phase);
-    if (!const_inst_id.has_value()) {
-      return SemIR::InstBlockId::None;
+    auto const_inst_id = SemIR::InstId::None;
+    if (static_cast<int>(const_insts.size()) < ignored_range.first ||
+        static_cast<int>(const_insts.size()) >= ignored_range.second) {
+      const_inst_id = GetConstantValue(eval_context, inst_id, phase);
+      if (!const_inst_id.has_value()) {
+        return SemIR::InstBlockId::None;
+      }
     }
 
     // Once we leave the small buffer, we know the first few elements are all
-    // constant, so it's likely that the entire block is constant. Resize to the
-    // target size given that we're going to allocate memory now anyway.
+    // constant, so it's likely that the entire block is constant. Resize to
+    // the target size given that we're going to allocate memory now anyway.
     if (const_insts.size() == const_insts.capacity()) {
       const_insts.reserve(insts.size());
     }
@@ -532,6 +627,15 @@ static auto GetConstantValue(EvalContext& eval_context,
   // TODO: If the new block is identical to the original block, and we know the
   // old ID was canonical, return the original ID.
   return eval_context.inst_blocks().AddCanonical(const_insts);
+}
+
+// If the given instruction block contains only constants, returns a
+// corresponding block of those values.
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::InstBlockId inst_block_id, Phase* phase)
+    -> SemIR::InstBlockId {
+  return GetConstantBlockValueIgnoringIndexRange(eval_context, inst_block_id,
+                                                 phase, {0, 0});
 }
 
 // Compute the constant value of a type block. This may be different from the
@@ -621,6 +725,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.extend_constraints.push_back(
         {.interface_id = extend.interface_id,
          .specific_id =
@@ -629,6 +734,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
   for (const auto& self_impls : orig.self_impls_constraints) {
+    // TODO: Add GetConstantValue for SpecificInterface.
     info.self_impls_constraints.push_back(
         {.interface_id = self_impls.interface_id,
          .specific_id =
@@ -637,6 +743,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
   for (const auto& extend : orig.extend_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.extend_named_constraints.push_back(
         {.named_constraint_id = extend.named_constraint_id,
          .specific_id =
@@ -646,10 +753,39 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   info.self_impls_named_constraints.reserve(
       orig.self_impls_named_constraints.size());
   for (const auto& self_impls : orig.self_impls_named_constraints) {
+    // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.self_impls_named_constraints.push_back(
         {.named_constraint_id = self_impls.named_constraint_id,
          .specific_id =
              GetConstantValue(eval_context, self_impls.specific_id, phase)});
+  }
+
+  info.type_impls_interfaces.reserve(orig.type_impls_interfaces.size());
+  for (const auto& type_impls : orig.type_impls_interfaces) {
+    info.type_impls_interfaces.push_back(
+        {.self_type =
+             GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificInterface.
+         .specific_interface = {
+             .interface_id = type_impls.specific_interface.interface_id,
+             .specific_id = GetConstantValue(
+                 eval_context, type_impls.specific_interface.specific_id,
+                 phase)}});
+  }
+
+  info.type_impls_named_constraints.reserve(
+      orig.type_impls_named_constraints.size());
+  for (const auto& type_impls : orig.type_impls_named_constraints) {
+    info.type_impls_named_constraints.push_back(
+        {.self_type =
+             GetConstantValue(eval_context, type_impls.self_type, phase),
+         // TODO: Add GetConstantValue for SpecificNamedConstraint.
+         .specific_named_constraint = {
+             .named_constraint_id =
+                 type_impls.specific_named_constraint.named_constraint_id,
+             .specific_id = GetConstantValue(
+                 eval_context, type_impls.specific_named_constraint.specific_id,
+                 phase)}});
   }
 
   // Rewrite constraints are resolved first before replacing them with their
@@ -712,6 +848,23 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
+// Returns the constant value of `id` if it has a `GetConstantValue` overload,
+// and otherwise returns `id` itself.
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT;
+
+template <typename BundleT>
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::BundleId<BundleT> bundle_id, Phase* phase)
+    -> SemIR::BundleId<BundleT> {
+  return eval_context.context().bundles().AddCanonical(std::apply(
+      [&]<typename... Ids>(Ids... ids) -> BundleT {
+        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id)));
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -741,31 +894,14 @@ static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
 };
 
-using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
-    -> int32_t;
-
-// Returns the arg handler for an `IdKind`.
-template <typename... Types>
-static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
-  static constexpr std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> Table =
-      {
-          [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-            auto id = SemIR::Inst::FromRaw<Types>(arg);
-            if constexpr (HasGetConstantValueOverload<Types>) {
-              // If we have a custom `GetConstantValue` overload, call it.
-              return SemIR::Inst::ToRaw(
-                  GetConstantValue(eval_context, id, phase));
-            } else {
-              // Otherwise, we assume the value is already constant.
-              return arg;
-            }
-          }...,
-          // Invalid and None handling (ordering-sensitive).
-          [](auto...) -> int32_t { CARBON_FATAL("Unexpected invalid IdKind"); },
-          [](EvalContext& /*context*/, int32_t arg,
-             Phase* /*phase*/) -> int32_t { return arg; },
-      };
-  return Table[id_kind.ToIndex()];
+template <typename IdT>
+static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
+                                          Phase* phase) -> IdT {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    return GetConstantValue(eval_context, id, phase);
+  } else {
+    return id;
+  }
 }
 
 // Given the stored value `arg` of an instruction field and its corresponding
@@ -774,10 +910,11 @@ static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
 // the resulting phase is not constant, the returned value is not useful and
 // will typically be `NoneIndex`.
 static auto GetConstantValueForArg(EvalContext& eval_context,
-                                   SemIR::Inst::ArgAndKind arg_and_kind,
-                                   Phase* phase) -> int32_t {
-  return GetArgHandlerFn(arg_and_kind.kind())(eval_context,
-                                              arg_and_kind.value(), phase);
+                                   SemIR::IdAndKind arg_and_kind, Phase* phase)
+    -> int32_t {
+  return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
+    return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
+  });
 }
 
 // Given an instruction, replaces its operands with their constant values from
@@ -849,68 +986,86 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                       specific_id);
 }
 
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::FacetTypeId facet_type_id)
+    -> void {
+  const auto& info = eval_context.context().facet_types().Get(facet_type_id);
+  for (const auto& interface : info.extend_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& interface : info.self_impls_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+  }
+  for (const auto& constraint : info.extend_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& constraint : info.self_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_interfaces) {
+    ResolveSpecificDeclForSpecificId(eval_context,
+                                     type_impls.specific_interface.specific_id);
+  }
+  for (const auto& type_impls : info.type_impls_named_constraints) {
+    ResolveSpecificDeclForSpecificId(
+        eval_context, type_impls.specific_named_constraint.specific_id);
+  }
+}
+
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::SpecificId specific_id) -> void {
+  ResolveSpecificDeclForSpecificId(eval_context, specific_id);
+}
+
+static auto ResolveSpecificDeclForArg(
+    EvalContext& eval_context, SemIR::SpecificInterfaceId specific_interface_id)
+    -> void {
+  ResolveSpecificDeclForSpecificId(eval_context,
+                                   eval_context.specific_interfaces()
+                                       .Get(specific_interface_id)
+                                       .specific_id);
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT> &&
+           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::DestInstId,
+                       SemIR::EntityNameId, SemIR::InstBlockId, SemIR::InstId,
+                       SemIR::MetaInstId, SemIR::StructTypeFieldsId,
+                       SemIR::TypeInstId>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  // These id types have a GetConstantValue() overload but that overload
+  // does not canonicalize any SpecificId in the value type.
+}
+
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
+    -> void {
+  if constexpr (HasGetConstantValueOverload<IdT>) {
+    CARBON_FATAL("Missing case for {0} which has a GetConstantValue() overload",
+                 IdT::Label);
+  }
+}
+
+template <typename BundleT>
+static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
+                                      SemIR::BundleId<BundleT> bundle_id)
+    -> void {
+  std::apply(
+      [&](auto... ids) -> void {
+        (..., ResolveSpecificDeclForArg(eval_context, ids));
+      },
+      eval_context.context().bundles().GetAsTuple(bundle_id));
+}
+
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-    // This switch must handle any field type that has a GetConstantValue()
-    // overload which canonicalizes a specific (and thus potentially forms a new
-    // specific) as part of forming its constant value.
-    CARBON_KIND_SWITCH(arg_and_kind) {
-      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-        const auto& info =
-            eval_context.context().facet_types().Get(facet_type_id);
-        for (const auto& interface : info.extend_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& interface : info.self_impls_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-        }
-        for (const auto& constraint : info.extend_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& constraint : info.self_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificId specific_id): {
-        ResolveSpecificDeclForSpecificId(eval_context, specific_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificInterfaceId specific_interface_id): {
-        ResolveSpecificDeclForSpecificId(eval_context,
-                                         eval_context.specific_interfaces()
-                                             .Get(specific_interface_id)
-                                             .specific_id);
-        break;
-      }
-
-        // These id types have a GetConstantValue() overload but that overload
-        // does not canonicalize any SpecificId in the value type.
-      case SemIR::IdKind::For<SemIR::DestInstId>:
-      case SemIR::IdKind::For<SemIR::EntityNameId>:
-      case SemIR::IdKind::For<SemIR::InstBlockId>:
-      case SemIR::IdKind::For<SemIR::InstId>:
-      case SemIR::IdKind::For<SemIR::MetaInstId>:
-      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-      case SemIR::IdKind::For<SemIR::TypeInstId>:
-        break;
-
-      case SemIR::IdKind::None:
-        // No arg.
-        break;
-
-      default:
-        CARBON_CHECK(
-            !KindHasGetConstantValueOverload(arg_and_kind.kind()),
-            "Missing case for {0} which has a GetConstantValue() overload",
-            arg_and_kind.kind());
-        break;
-    }
+    arg_and_kind.Dispatch<void>(
+        [&](auto id) { ResolveSpecificDeclForArg(eval_context, id); });
   }
 }
 
@@ -1689,13 +1844,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::NoOp: {
-      // Return an empty tuple value.
-      auto type_id = GetTupleType(eval_context.context(), {});
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::TupleValue{.type_id = type_id,
-                            .elements_id = SemIR::InstBlockId::Empty},
-          phase);
+      return MakeEmptyTupleResult(eval_context);
     }
 
     case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
@@ -1760,6 +1909,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           SemIR::IntValue{.type_id = call.type_id, .int_id = int_id}, phase);
     }
 
+    case SemIR::BuiltinFunctionKind::MakeUninitialized:
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:
@@ -1784,7 +1934,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::IntRightShiftAssign:
     case SemIR::BuiltinFunctionKind::PointerMakeNull:
     case SemIR::BuiltinFunctionKind::PointerIsNull:
-    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
+    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert:
+    case SemIR::BuiltinFunctionKind::CppStdInitializerListMake: {
       // These are runtime-only builtins.
       // TODO: Consider tracking this on the `BuiltinFunctionKind`.
       return SemIR::ConstantId::NotConstant;
@@ -1854,6 +2005,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
               .type_id = SemIR::TypeType::TypeId,
               .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::FormMakeType: {
+      return context.constant_values().Get(SemIR::FormType::TypeInstId);
     }
 
     // Character conversions.
@@ -2000,6 +2155,44 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
   return SemIR::ConstantId::NotConstant;
 }
 
+static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
+                        const SemIR::Function& function,
+                        SemIR::SpecificId specific_id,
+                        SemIR::InstBlockId args_id) -> SemIR::ConstantId;
+
+// Returns the range of parameter indexes that contain the return storage for
+// this function call.
+static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
+                                            const SemIR::Callee& callee)
+    -> std::pair<int, int> {
+  if (const auto* callee_function =
+          std::get_if<SemIR::CalleeFunction>(&callee)) {
+    const auto& function =
+        eval_context.functions().Get(callee_function->function_id);
+    return {function.call_param_ranges.return_begin().index,
+            function.call_param_ranges.return_end().index};
+  }
+
+  return {0, 0};
+}
+
+// Replace the `args_id` field of a call with its constant value. The return
+// storage argument, if any, is instead replaced with `None`.
+static auto ReplaceCallArgsFieldWithConstantValue(EvalContext& eval_context,
+                                                  const SemIR::Callee& callee,
+                                                  SemIR::Call* call,
+                                                  Phase* phase) -> bool {
+  auto return_storage_param_index_range =
+      GetReturnStorageParamIndexRange(eval_context, callee);
+  auto args_id = GetConstantBlockValueIgnoringIndexRange(
+      eval_context, call->args_id, phase, return_storage_param_index_range);
+  if (!args_id.has_value() && call->args_id.has_value()) {
+    return false;
+  }
+  call->args_id = args_id;
+  return IsConstantOrError(*phase);
+}
+
 // Makes a constant for a call instruction.
 static auto MakeConstantForCall(EvalContext& eval_context,
                                 SemIR::InstId inst_id, SemIR::Call call)
@@ -2014,19 +2207,26 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     return SemIR::ErrorInst::ConstantId;
   }
 
+  // If the callee is a C++ thunk, modify the `call` to directly call
+  // the thunk's callee.
+  MaybeModifyCppThunkCallForConstEval(eval_context.context(), &call);
+
   // Find the constant value of the callee.
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);
 
   auto callee = SemIR::GetCallee(eval_context.sem_ir(), call.callee_id);
+  const SemIR::Function* function = nullptr;
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (auto* fn = std::get_if<SemIR::CalleeFunction>(&callee)) {
-    // Calls to builtins might be constant.
-    builtin_kind =
-        eval_context.functions().Get(fn->function_id).builtin_function_kind();
-    if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-      // TODO: Eventually we'll want to treat some kinds of non-builtin
-      // functions as producing constants.
+  auto evaluation_mode = SemIR::Function::EvaluationMode::None;
+  if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
+    function = &eval_context.functions().Get(callee_function->function_id);
+    builtin_kind = function->builtin_function_kind();
+    evaluation_mode = function->evaluation_mode;
+    // Calls to builtins and to `eval` or `musteval` functions might be
+    // constant.
+    if (builtin_kind == SemIR::BuiltinFunctionKind::None &&
+        evaluation_mode == SemIR::Function::EvaluationMode::None) {
       return SemIR::ConstantId::NotConstant;
     }
   } else {
@@ -2038,8 +2238,8 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   bool has_constant_operands =
       has_constant_callee &&
       ReplaceTypeWithConstantValue(eval_context, inst_id, &call, &phase) &&
-      ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::args_id,
-                                    &phase);
+      ReplaceCallArgsFieldWithConstantValue(eval_context, callee, &call,
+                                            &phase);
   if (phase == Phase::UnknownDueToError) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -2049,7 +2249,8 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   if (!has_constant_operands) {
     if (builtin_kind.IsCompTimeOnly(
             eval_context.sem_ir(), eval_context.inst_blocks().Get(call.args_id),
-            call.type_id)) {
+            call.type_id) ||
+        evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
@@ -2071,6 +2272,24 @@ static auto MakeConstantForCall(EvalContext& eval_context,
         eval_context.inst_blocks().Get(call.args_id), phase);
   }
 
+  // Handle calls to `eval` and `musteval` functions.
+  if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
+    // A non-concrete call to `eval` or `musteval` is a template symbolic
+    // constant, regardless of the phase of the arguments.
+    if (phase != Phase::Concrete) {
+      CARBON_CHECK(phase <= Phase::TemplateSymbolic);
+      return MakeConstantResult(eval_context.context(), call,
+                                Phase::TemplateSymbolic);
+    }
+
+    // TODO: Instead of performing the call immediately, add it to a work queue
+    // and do it non-recursively.
+    return TryEvalCall(
+        eval_context, SemIR::LocId(inst_id), *function,
+        std::get<SemIR::CalleeFunction>(callee).resolved_specific_id,
+        call.args_id);
+  }
+
   return SemIR::ConstantId::NotConstant;
 }
 
@@ -2090,14 +2309,20 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
 // TryEvalTypedInst to avoid repeated instantiation of common code.
 static auto ConvertEvalResultToConstantId(Context& context,
                                           ConstantEvalResult result,
+                                          SemIR::InstKind orig_inst_kind,
                                           Phase orig_phase)
     -> SemIR::ConstantId {
   if (result.is_new()) {
-    return MakeConstantResult(
-        context, result.new_inst(),
-        result.same_phase_as_inst()
-            ? orig_phase
-            : ComputeInstPhase(context, result.new_inst()));
+    auto is_symbolic_only =
+        orig_inst_kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
+    auto new_phase = result.same_phase_as_inst()
+                         ? orig_phase
+                         : ComputeInstPhase(context, result.new_inst());
+    CARBON_CHECK(!is_symbolic_only || new_phase > Phase::Concrete ||
+                     result.new_inst().kind() != orig_inst_kind,
+                 "SymbolicOnly instruction `{0}` has a concrete value",
+                 orig_inst_kind);
+    return MakeConstantResult(context, result.new_inst(), new_phase);
   }
   return result.existing();
 }
@@ -2156,7 +2381,9 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
-    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
+    } else if constexpr (ConstantKind ==
+                             SemIR::InstConstantKind::ConstantInstAction ||
+                         ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
           eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
@@ -2178,11 +2405,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return ConvertEvalResultToConstantId(
           eval_context.context(),
           EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
-          phase);
+          InstT::Kind, phase);
     } else {
       return ConvertEvalResultToConstantId(
           eval_context.context(),
-          EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
+          EvalConstantInst(eval_context.context(), inst.As<InstT>()),
+          InstT::Kind, phase);
     }
   }
 }
@@ -2233,7 +2461,7 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
@@ -2254,155 +2482,286 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
 }
 
 template <>
-auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
-                                                  SemIR::InstId inst_id,
-                                                  SemIR::Inst inst)
+auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
+                                        SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  // If a specific provides a new value for the binding with `entity_name_id`,
-  // the SymbolicBindingType is evaluated for that new value.
-  const auto& bind_name = eval_context.entity_names().Get(
-      inst.As<SemIR::SymbolicBindingType>().entity_name_id);
-  if (bind_name.bind_index().has_value()) {
-    if (auto value =
-            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
-        value.has_value()) {
-      auto value_inst_id = eval_context.constant_values().GetInstId(value);
-
-      // A SymbolicBindingType can evaluate to a FacetAccessType if the new
-      // value of the entity is a facet value that that does not have a concrete
-      // type (a FacetType) and does not have a new EntityName to point to (a
-      // SymbolicBinding).
-      auto access = SemIR::FacetAccessType{
-          .type_id = SemIR::TypeType::TypeId,
-          .facet_value_inst_id = value_inst_id,
-      };
-      return ConvertEvalResultToConstantId(
-          eval_context.context(),
-          EvalConstantInst(eval_context.context(), access),
-          ComputeInstPhase(eval_context.context(), access));
-    }
-  }
+  auto temporary = inst.As<SemIR::Temporary>();
+  temporary.storage_id = SemIR::InstId::None;
 
   Phase phase = Phase::Concrete;
-  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
-      !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &temporary,
+                                    &phase) ||
+      !ReplaceFieldWithConstantValue(eval_context, &temporary,
+                                     &SemIR::Temporary::init_id, &phase)) {
     return SemIR::ConstantId::NotConstant;
   }
-  // Propagate error phase after getting the constant value for all fields.
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::ConstantId;
-  }
 
-  // Evaluation of SymbolicBindingType.
-  //
-  // Like FacetAccessType, a SymbolicBindingType of a FacetValue just evaluates
-  // to the type inside.
-  //
-  // TODO: Look in ScopeStack with the entity_name_id to find the facet value
-  // and get its constant value in the current specific context. The
-  // facet_value_inst_id will go away.
-  if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
-          inst.As<SemIR::SymbolicBindingType>().facet_value_inst_id)) {
-    return eval_context.constant_values().Get(facet_value->type_inst_id);
-  }
-
-  return MakeConstantResult(eval_context.context(), inst, phase);
+  return MakeConstantResult(eval_context.context(), temporary, phase);
 }
 
-// Returns whether `const_id` is the same constant facet value as
-// `facet_value_inst_id`.
+static auto AddRequirementBase(Context& context,
+                               SemIR::RequirementBaseFacetType base,
+                               SemIR::FacetTypeInfo* info, Phase* phase)
+    -> void {
+  auto base_type_inst_id =
+      context.constant_values().GetConstantTypeInstId(base.base_type_inst_id);
+  if (base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
+    *phase = Phase::UnknownDueToError;
+    return;
+  }
+
+  if (auto base_facet_type =
+          context.insts().TryGetAs<SemIR::FacetType>(base_type_inst_id)) {
+    const auto& base_info =
+        context.facet_types().Get(base_facet_type->facet_type_id);
+    info->extend_constraints.append(base_info.extend_constraints);
+    info->extend_named_constraints.append(base_info.extend_named_constraints);
+    info->self_impls_constraints.append(base_info.self_impls_constraints);
+    info->self_impls_named_constraints.append(
+        base_info.self_impls_named_constraints);
+    info->type_impls_interfaces.append(base_info.type_impls_interfaces);
+    info->type_impls_named_constraints.append(
+        base_info.type_impls_named_constraints);
+    info->rewrite_constraints.append(base_info.rewrite_constraints);
+    info->other_requirements |= base_info.other_requirements;
+  }
+}
+
+static auto AddRequirementRewrite(Context& context,
+                                  SemIR::RequirementRewrite rewrite,
+                                  SemIR::FacetTypeInfo* info, Phase* phase)
+    -> void {
+  auto lhs_id = context.constant_values().GetConstantInstId(rewrite.lhs_id);
+  auto rhs_id = context.constant_values().GetConstantInstId(rewrite.rhs_id);
+  if (lhs_id == SemIR::ErrorInst::InstId ||
+      rhs_id == SemIR::ErrorInst::InstId) {
+    *phase = Phase::UnknownDueToError;
+    return;
+  }
+  if (!rhs_id.has_value()) {
+    // The RHS may be an arbitrary expression, which means it could have a
+    // runtime value, which we reject since we can't evaluate that.
+    DiagnoseNonConstantValue(context, SemIR::LocId(rewrite.rhs_id));
+    *phase = Phase::UnknownDueToError;
+    return;
+  }
+
+  // The FacetTypeInfo must hold canonical IDs for constant comparison, yet here
+  // we must insert the non-canonical IDs:
+  // * Rewrite constraints are resolved once the FacetTypeInfo is fully
+  //   constructed in order to produce the constant value of the facet type.
+  //   That resolution step needs the non-canonical insts to do its job
+  //   correctly. For instance, the LHS may be a `ImplWitnessAccessSubstituted`
+  //   instruction which preserves which element in the witness is being
+  //   assigned to but evaluates to the RHS of some other rewrite. So the
+  //   constant value would be incorrect to use.
+  // * We use the id of the non-canonical RHS instruction as a hint to order
+  //   diagnostics in the resolution of rewrites, so that they can usually refer
+  //   to the rewrites in the same order as they are written in the code. Using
+  //   the constant value of the RHS reorders the diagnostics in a worse way.
+  // * The final step of constructing the facet type from the WhereExpr
+  //   canonicalizes all the instructions, so we don't need to store canonical
+  //   values here. We only need to use canonical values if we need to observe
+  //   the constant value, such as to determine in the RHS has a runtime value
+  //   above.
+  info->rewrite_constraints.push_back(
+      {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
+}
+
+static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
+                                SemIR::RequirementImpls impls,
+                                SemIR::FacetTypeInfo* info, Phase* phase)
+    -> void {
+  auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
+  auto rhs_id = context.constant_values().GetConstantInstId(impls.rhs_id);
+  if (lhs_id == SemIR::ErrorInst::InstId ||
+      rhs_id == SemIR::ErrorInst::InstId) {
+    *phase = Phase::UnknownDueToError;
+    return;
+  }
+
+  if (rhs_id == SemIR::TypeType::TypeInstId) {
+    // `<type> impls type` -> nothing to do.
+    return;
+  }
+
+  auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
+  const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
+
+  if (IsPeriodSelf(context, lhs_id)) {
+    // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
+    // type constrains for `.Self` gets forwarded to the output facet type to
+    // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
+    // resulting facet type.
+    llvm::append_range(info->self_impls_constraints, rhs.extend_constraints);
+    llvm::append_range(info->self_impls_constraints,
+                       rhs.self_impls_constraints);
+    llvm::append_range(info->self_impls_named_constraints,
+                       rhs.extend_named_constraints);
+    llvm::append_range(info->self_impls_named_constraints,
+                       rhs.self_impls_named_constraints);
+    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
+    llvm::append_range(info->type_impls_named_constraints,
+                       rhs.type_impls_named_constraints);
+    llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
+  } else {
+    auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
+
+    auto extends_interface = [=](SemIR::SpecificInterface si)
+        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      return {lhs_facet_or_type, si};
+    };
+    auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
+        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      return {lhs_facet_or_type, sc};
+    };
+
+    // Extend constraints are copied over without replacing anything, but are
+    // converted to type impls constraints so they apply to the LHS type.
+    llvm::append_range(
+        info->type_impls_interfaces,
+        llvm::map_range(rhs.extend_constraints, extends_interface));
+    llvm::append_range(
+        info->type_impls_named_constraints,
+        llvm::map_range(rhs.extend_named_constraints, extends_constraint));
+
+    // Impls constraints are written as `T impls X` where `T` is a facet and `X`
+    // is a facet type. The `T` can be `.Self`.
+    //
+    // A value for `.Self` is not known here, so we do not replace them
+    // generally. However in `T impls X where ...` the value of `.Self` on the
+    // RHS of the `where` refers to the `T`. Generally this would make the
+    // `.Self` be ambiguous, but any explicit use of an ambiguous `.Self` is
+    // diagnosed before we get here. So any explicit `.Self` left over are known
+    // to be non-ambiguous and refer to the top level value for `.Self`.
+    //
+    // However, implicit references to `.Self`, via designators, are bound to
+    // the innermost possible value, which makes them bound to the `T` on the
+    // RHS of the nested `where`. We need to replace those implicit `.Self`
+    // references here so that we are left with a facet type where all `.Self`
+    // references are to the same top-level value for `.Self` and can all be
+    // replaced together later.
+
+    auto period_self_replacement_id =
+        context.constant_values().Get(lhs_facet_or_type);
+
+    auto self_impls_interface = [&](SemIR::SpecificInterface si) {
+      return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id,
+                             SubstPeriodSelfBehaviour::ImplicitOnly);
+    };
+    auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
+      return SubstPeriodSelf(context, loc_id, sc, period_self_replacement_id,
+                             SubstPeriodSelfBehaviour::ImplicitOnly);
+    };
+    auto type_impls_interface =
+        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
+        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      auto self = SubstPeriodSelf(
+          context, loc_id, context.constant_values().Get(impls.self_type),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      auto interface = SubstPeriodSelf(
+          context, loc_id, impls.specific_interface, period_self_replacement_id,
+          SubstPeriodSelfBehaviour::ImplicitOnly);
+      return {context.constant_values().GetInstId(self), interface};
+    };
+    auto type_impls_constraint =
+        [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
+        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      auto self = SubstPeriodSelf(
+          context, loc_id, context.constant_values().Get(impls.self_type),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      auto constraint = SubstPeriodSelf(
+          context, loc_id, impls.specific_named_constraint,
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      return {context.constant_values().GetInstId(self), constraint};
+    };
+
+    llvm::append_range(
+        info->self_impls_constraints,
+        llvm::map_range(rhs.self_impls_constraints, self_impls_interface));
+    llvm::append_range(info->self_impls_named_constraints,
+                       llvm::map_range(rhs.self_impls_named_constraints,
+                                       self_impls_constraint));
+    llvm::append_range(
+        info->type_impls_interfaces,
+        llvm::map_range(rhs.type_impls_interfaces, type_impls_interface));
+    llvm::append_range(info->type_impls_named_constraints,
+                       llvm::map_range(rhs.type_impls_named_constraints,
+                                       type_impls_constraint));
+
+    auto rewrite_constraint =
+        [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
+        -> SemIR::FacetTypeInfo::RewriteConstraint {
+      auto lhs_id = SubstPeriodSelf(
+          context, loc_id, context.constant_values().Get(rewrite.lhs_id),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      auto rhs_id = SubstPeriodSelf(
+          context, loc_id, context.constant_values().Get(rewrite.rhs_id),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      return {context.constant_values().GetInstId(lhs_id),
+              context.constant_values().GetInstId(rhs_id)};
+    };
+
+    llvm::append_range(
+        info->rewrite_constraints,
+        llvm::map_range(rhs.rewrite_constraints, rewrite_constraint));
+  }
+
+  info->other_requirements |= rhs.other_requirements;
+}
+
+// Add the constraints from the WhereExpr instruction into a FacetTypeInfo in
+// order to construct a FacetType constant value.
 //
-// Compares with the canonical facet value of `const_id`, dropping any `as type`
-// conversions.
-static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
-                             SemIR::InstId facet_value_inst_id) -> bool {
-  auto canon_const_id = GetCanonicalFacetOrTypeValue(context, const_id);
-  return canon_const_id == context.constant_values().Get(facet_value_inst_id);
-}
-
 // TODO: Convert this to an EvalConstantInst function. This will require
 // providing a `GetConstantValue` overload for a requirement block.
 template <>
 auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
-                                        SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::ConstantId {
+                                        SemIR::InstId where_inst_id,
+                                        SemIR::Inst inst) -> SemIR::ConstantId {
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
-  // Add the constraints from the `WhereExpr` instruction into `info`.
-  if (typed_inst.requirements_id.has_value()) {
-    auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
-    for (auto inst_id : insts) {
-      if (auto base =
-              eval_context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
-                  inst_id)) {
-        if (base->base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
-          return SemIR::ErrorInst::ConstantId;
-        }
+  // Note that these requirement instructions don't have a constant value. That
+  // means we have to look for errors inside them, we can't just look to see if
+  // their constant value is an error.
+  for (auto inst_id :
+       eval_context.inst_blocks().GetOrEmpty(typed_inst.requirements_id)) {
+    if (phase == Phase::UnknownDueToError) {
+      // Abandon ship to save work once we've encountered an error.
+      return SemIR::ErrorInst::ConstantId;
+    }
 
-        if (auto base_facet_type =
-                eval_context.insts().TryGetAs<SemIR::FacetType>(
-                    base->base_type_inst_id)) {
-          const auto& base_info =
-              eval_context.facet_types().Get(base_facet_type->facet_type_id);
-          info.extend_constraints.append(base_info.extend_constraints);
-          info.self_impls_constraints.append(base_info.self_impls_constraints);
-          info.rewrite_constraints.append(base_info.rewrite_constraints);
-          info.other_requirements |= base_info.other_requirements;
-        }
-      } else if (auto rewrite =
-                     eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
-                         inst_id)) {
-        info.rewrite_constraints.push_back(
-            {.lhs_id = rewrite->lhs_id, .rhs_id = rewrite->rhs_id});
-      } else if (auto impls =
-                     eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
-                         inst_id)) {
-        SemIR::ConstantId lhs_const_id =
-            eval_context.GetConstantValue(impls->lhs_id);
-        SemIR::ConstantId rhs_const_id =
-            eval_context.GetConstantValue(impls->rhs_id);
-        if (IsSameFacetValue(eval_context.context(), lhs_const_id,
-                             typed_inst.period_self_id)) {
-          auto rhs_inst_id =
-              eval_context.constant_values().GetInstId(rhs_const_id);
-          if (rhs_inst_id == SemIR::ErrorInst::InstId) {
-            // `.Self impls <error>`.
-            return SemIR::ErrorInst::ConstantId;
-          } else if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
-            // `.Self impls type` -> nothing to do.
-          } else {
-            auto facet_type = eval_context.insts().GetAs<SemIR::FacetType>(
-                RequireConstantValue(eval_context, impls->rhs_id, &phase));
-            const auto& more_info =
-                eval_context.facet_types().Get(facet_type.facet_type_id);
-            // The way to prevent lookup into the interface requirements of a
-            // facet type is to put it to the right of a `.Self impls`, which we
-            // accomplish by putting them into `self_impls_constraints`.
-            llvm::append_range(info.self_impls_constraints,
-                               more_info.extend_constraints);
-            llvm::append_range(info.self_impls_constraints,
-                               more_info.self_impls_constraints);
-            // Other requirements are copied in.
-            llvm::append_range(info.rewrite_constraints,
-                               more_info.rewrite_constraints);
-            info.other_requirements |= more_info.other_requirements;
-          }
-        } else {
-          // TODO: Handle `impls` constraints beyond `.Self impls`.
-          info.other_requirements = true;
-        }
-      } else {
-        // TODO: Handle other requirements.
-        info.other_requirements = true;
+    auto inst = eval_context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
+        AddRequirementBase(eval_context.context(), base, &info, &phase);
+        break;
       }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        AddRequirementRewrite(eval_context.context(), rewrite, &info, &phase);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
+                            impls, &info, &phase);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent _): {
+        // TODO: Handle equality requirements.
+        info.other_requirements = true;
+        break;
+      }
+      default:
+        CARBON_FATAL("unexpected inst {0} in WhereExpr requirements block",
+                     inst);
     }
   }
 
   auto const_info = GetConstantFacetTypeInfo(
-      eval_context, SemIR::LocId(inst_id), info, &phase);
+      eval_context, SemIR::LocId(where_inst_id), info, &phase);
   return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 
@@ -2430,7 +2789,7 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
-    -> SemIR::InstBlockId {
+    -> std::pair<SemIR::InstBlockId, bool> {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
@@ -2444,22 +2803,393 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                                .values = result,
                            });
 
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
+                          "unable to monomorphize specific {0}",
                           SemIR::SpecificId);
-        builder.Note(loc_id, ResolvingSpecificHere, specific_id);
+        builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  bool has_error = false;
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
+    if (const_id == SemIR::ErrorInst::ConstantId) {
+      has_error = true;
+    }
     result[i] = context.constant_values().GetInstId(const_id);
     CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
   }
 
-  return context.inst_blocks().Add(result);
+  return {context.inst_blocks().Add(result), has_error};
+}
+
+// Information about the function call we are currently executing. Unlike
+// evaluation, execution sequentially interprets instructions, and can handle
+// control flow and (eventually) side effects and mutable state.
+class FunctionExecContext : public EvalContext {
+ public:
+  // A block argument passed to `BranchWithArg`.
+  struct BlockArgValue {
+    SemIR::InstBlockId block_id = SemIR::InstBlockId::None;
+    SemIR::ConstantId arg_id = SemIR::ConstantId::None;
+  };
+
+  FunctionExecContext(Context* context, SemIR::LocId loc_id,
+                      SemIR::SpecificId specific_id,
+                      Map<SemIR::InstId, SemIR::ConstantId>* locals,
+                      SemIR::InstBlockId args_id)
+      : EvalContext(context, loc_id, specific_id,
+                    LocalEvalInfo{.locals = locals}),
+        args_(context->inst_blocks().Get(args_id)) {}
+
+  // Returns the argument values supplied in the call to the function.
+  auto args() const -> llvm::ArrayRef<SemIR::InstId> { return args_; }
+
+  using EvalContext::locals;
+
+  // Branch control flow to the given block. This replaces the innermost block
+  // in the block stack, but doesn't affect any enclosing blocks.
+  auto BranchTo(SemIR::InstBlockId block_id) -> void {
+    blocks_.back() = inst_blocks().Get(block_id);
+  }
+
+  // Push a new block to be executed immediately. After the block finishes,
+  // control will resume after the current instruction.
+  auto PushBlock(SemIR::InstBlockId block_id) -> void {
+    blocks_.push_back(inst_blocks().Get(block_id));
+  }
+
+  // Pops and returns the next instruction to be executed.
+  auto PopNextInstId() -> SemIR::InstId {
+    while (blocks_.back().empty()) {
+      blocks_.pop_back();
+      CARBON_CHECK(!blocks_.empty(), "Fell off end of function");
+    }
+    return blocks_.back().consume_front();
+  }
+
+  // Sets the most recent block argument value provided by a `BranchWithArg`.
+  // This can later be retrieved by a `BlockArg`.
+  auto SetCurrentBlockArgValue(BlockArgValue arg) -> void {
+    current_block_arg_value_ = arg;
+  }
+
+  // Returns the most recent block argument value provided by a `BranchWithArg`.
+  auto current_block_arg_value() const -> BlockArgValue {
+    return current_block_arg_value_;
+  }
+
+ private:
+  // The stack of code blocks that we are currently evaluating. This is kept as
+  // a stack so that we can schedule the function body to execute after the decl
+  // block and so that we can handle `SpliceBlock`s. When the innermost block is
+  // complete, it will be popped and the next outer block will execute.
+  llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
+
+  // The arguments in the function call.
+  llvm::ArrayRef<SemIR::InstId> args_;
+
+  // The block argument provided by the most recently executed `BranchWithArg`.
+  // We assume that we only need to track one of these, as the branch target
+  // will invoke `BlockArg` before the next `BranchWithArg` happens. We will
+  // need to track more than one of these if that ever changes.
+  BlockArgValue current_block_arg_value_;
+};
+
+// Handles the result of executing an instruction in a function. Returns an
+// error the result is not a constant, and otherwise updates the locals map to
+// track the result as an input to later evaluations in this function and
+// returns None.
+static auto HandleExecResult(FunctionExecContext& eval_context,
+                             SemIR::InstId inst_id, SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  if (const_id == SemIR::ErrorInst::ConstantId) {
+    return const_id;
+  }
+  if (!const_id.has_value() || !const_id.is_constant()) {
+    DiagnoseNonConstantValue(eval_context.context(),
+                             eval_context.GetDiagnosticLoc(inst_id));
+    return SemIR::ErrorInst::ConstantId;
+  }
+  eval_context.locals().Update(inst_id, const_id);
+  return SemIR::ConstantId::None;
+}
+
+// Executes an instruction for TryEvalCall. By default, performs normal
+// evaluation of the instruction within a context that supplies the values
+// produced by executing prior instructions in this function execution. This is
+// specialized for instructions that have special handling in function
+// execution, such as those that access parameters or perform flow control. If
+// execution should continue, returns `SemIR::ConstantId::None`, otherwise
+// returns the result to produce for the enclosing function call, which should
+// be either the returned value or an error.
+template <typename InstT>
+static auto TryExecTypedInst(FunctionExecContext& eval_context,
+                             SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  if constexpr (InstT::Kind.expr_category().TryAsFixedCategory() ==
+                SemIR::ExprCategory::NotExpr) {
+    // Instructions in this category are assumed to not have a runtime effect.
+    // This includes some kinds of declaration.
+    return SemIR::ConstantId::None;
+  }
+
+  if constexpr (InstT::Kind.constant_kind() != SemIR::InstConstantKind::Never) {
+    if (eval_context.constant_values().Get(inst_id).is_concrete()) {
+      // Instruction has a concrete constant value that doesn't depend on the
+      // context. We don't need to evaluate it again.
+      return SemIR::ConstantId::None;
+    }
+  }
+
+  // Evaluate the instruction in the current context.
+  auto const_id = TryEvalTypedInst<InstT>(eval_context, inst_id, inst);
+  return HandleExecResult(eval_context, inst_id, const_id);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::BlockArg>(FunctionExecContext& eval_context,
+                                       SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto block_arg = inst.As<SemIR::BlockArg>();
+  CARBON_CHECK(
+      block_arg.block_id == eval_context.current_block_arg_value().block_id,
+      "BlockArg does not refer to most recent BranchWithArg");
+  eval_context.locals().Update(inst_id,
+                               eval_context.current_block_arg_value().arg_id);
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::Branch>(FunctionExecContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto branch = inst.As<SemIR::Branch>();
+  eval_context.BranchTo(branch.target_id);
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::BranchIf>(FunctionExecContext& eval_context,
+                                       SemIR::InstId /*inst_id*/,
+                                       SemIR::Inst inst) -> SemIR::ConstantId {
+  auto branch_if = inst.As<SemIR::BranchIf>();
+  auto cond_id = CheckConcreteValue(eval_context, branch_if.cond_id);
+  if (cond_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto cond = eval_context.insts().GetAs<SemIR::BoolLiteral>(cond_id);
+  if (cond.value == SemIR::BoolValue::True) {
+    eval_context.BranchTo(branch_if.target_id);
+  }
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::BranchWithArg>(FunctionExecContext& eval_context,
+                                            SemIR::InstId /*inst_id*/,
+                                            SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto branch = inst.As<SemIR::BranchWithArg>();
+  eval_context.SetCurrentBlockArgValue(
+      {.block_id = branch.target_id,
+       .arg_id = eval_context.GetConstantValue(branch.arg_id)});
+  eval_context.BranchTo(branch.target_id);
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::Return>(FunctionExecContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst /*inst*/)
+    -> SemIR::ConstantId {
+  return MakeEmptyTupleResult(eval_context);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::ReturnExpr>(FunctionExecContext& eval_context,
+                                         SemIR::InstId /*inst_id*/,
+                                         SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto return_expr = inst.As<SemIR::ReturnExpr>();
+  return eval_context.GetConstantValue(return_expr.expr_id);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::ReturnSlot>(FunctionExecContext& eval_context,
+                                         SemIR::InstId inst_id,
+                                         SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto return_slot = inst.As<SemIR::ReturnSlot>();
+  // In the case where the function's return type is not in-place, the return
+  // slot will refer to an out parameter that doesn't have an argument. In that
+  // case, we don't have a constant value for storage_id. To handle this, copy
+  // the value directly from the locals map rather than using GetConstantValue.
+  //
+  // TODO: Remove this and use a normal call to `GetConstantValue` if we stop
+  // adding out parameters with no corresponding argument.
+  eval_context.locals().Insert(
+      inst_id, eval_context.locals().Lookup(return_slot.storage_id).value());
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::SpliceBlock>(FunctionExecContext& eval_context,
+                                          SemIR::InstId /*inst_id*/,
+                                          SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto splice_block = inst.As<SemIR::SpliceBlock>();
+  eval_context.PushBlock(splice_block.block_id);
+  // TODO: Copy the values from the result_id instruction to the result of
+  // the splice_block instruction once the spliced block finishes.
+  return SemIR::ConstantId::None;
+}
+
+// Executes the introduction of a parameter into the local scope. Copies the
+// argument supplied by the caller for the parameter into the locals map.
+static auto TryExecTypedParam(FunctionExecContext& eval_context,
+                              SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto param = inst.As<SemIR::AnyParam>();
+  CARBON_CHECK(static_cast<size_t>(param.index.index) <
+               eval_context.args().size());
+  eval_context.locals().Insert(inst_id,
+                               eval_context.constant_values().Get(
+                                   eval_context.args()[param.index.index]));
+  return SemIR::ConstantId::None;
+}
+
+template <>
+auto TryExecTypedInst<SemIR::OutParam>(FunctionExecContext& eval_context,
+                                       SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto param = inst.As<SemIR::OutParam>();
+  if (static_cast<size_t>(param.index.index) >= eval_context.args().size()) {
+    // For return values that have a copy initializing representation, the SemIR
+    // has an OutParam with an index that has no corresponding argument. In that
+    // case, we do not have a constant value for the parameter, but this doesn't
+    // prevent the call from being constant.
+    //
+    // TODO: Remove this once we stop adding out parameters with no
+    // corresponding argument.
+    eval_context.locals().Insert(inst_id, SemIR::ConstantId::None);
+    return SemIR::ConstantId::None;
+  }
+
+  if (!eval_context.args()[param.index.index].has_value()) {
+    // The argument will be `None` for an index corresponding to a return
+    // storage argument for return values that have an in-place initializing
+    // representation. Produce an opaque "out parameter" variable for now, so
+    // that references to it can still successfully evaluate.
+    //
+    // TODO: Create and track mutable storage for the return value here. This is
+    // necessary to support things like `returned var`.
+    eval_context.locals().Insert(
+        inst_id,
+        MakeConstantResult(
+            eval_context.context(),
+            SemIR::VarStorage{.type_id = inst.type_id(),
+                              .pattern_id = SemIR::AbsoluteInstId::None},
+            Phase::Concrete));
+    return SemIR::ConstantId::None;
+  }
+
+  return TryExecTypedParam(eval_context, inst_id, inst);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::RefParam>(FunctionExecContext& eval_context,
+                                       SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  return TryExecTypedParam(eval_context, inst_id, inst);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::ValueParam>(FunctionExecContext& eval_context,
+                                         SemIR::InstId inst_id,
+                                         SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  return TryExecTypedParam(eval_context, inst_id, inst);
+}
+
+template <>
+auto TryExecTypedInst<SemIR::ValueBinding>(FunctionExecContext& eval_context,
+                                           SemIR::InstId inst_id,
+                                           SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto value_binding = inst.As<SemIR::ValueBinding>();
+  auto local_value_id = eval_context.GetConstantValue(value_binding.value_id);
+  eval_context.locals().Insert(inst_id, local_value_id);
+  return SemIR::ConstantId::None;
+}
+
+static auto TryExecInst(FunctionExecContext& eval_context,
+                        SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  using ExecInstFn = auto(FunctionExecContext & eval_context,
+                          SemIR::InstId inst_id, SemIR::Inst inst)
+                         ->SemIR::ConstantId;
+  static constexpr ExecInstFn* ExecInstFns[] = {
+#define CARBON_SEM_IR_INST_KIND(Kind) &TryExecTypedInst<SemIR::Kind>,
+#include "toolchain/sem_ir/inst_kind.def"
+  };
+  [[clang::musttail]] return ExecInstFns[inst.kind().AsInt()](eval_context,
+                                                              inst_id, inst);
+}
+
+// Evaluates a call to an `eval` or `musteval` function by executing the
+// function body.
+static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
+                        const SemIR::Function& function,
+                        SemIR::SpecificId specific_id,
+                        SemIR::InstBlockId args_id) -> SemIR::ConstantId {
+  if (function.clang_decl_id != SemIR::ClangDeclId::None) {
+    return EvalCppCall(outer_eval_context.context(), loc_id,
+                       function.clang_decl_id, args_id);
+  } else if (function.body_block_ids.empty()) {
+    // TODO: Diagnose this.
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  if (specific_id.has_value()) {
+    ResolveSpecificDefinition(outer_eval_context.context(), loc_id,
+                              specific_id);
+  }
+
+  // TODO: Consider tracking the lowest and highest inst_id in the function and
+  // using an array instead of a map. We would still need a map for instantiated
+  // portions of a function template.
+  Map<SemIR::InstId, SemIR::ConstantId> locals;
+
+  FunctionExecContext eval_context(&outer_eval_context.context(), loc_id,
+                                   specific_id, &locals, args_id);
+
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &eval_context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
+                          SemIR::NameId);
+        builder.Note(loc_id, InCallToEvalFn, function.name_id);
+      });
+
+  // Execute the function decl block followed by the body.
+  eval_context.PushBlock(function.body_block_ids.front());
+  eval_context.PushBlock(eval_context.insts()
+                             .GetAs<SemIR::FunctionDecl>(function.definition_id)
+                             .decl_block_id);
+
+  // Execute the blocks. This is mostly expression evaluation, with special
+  // handling for control flow and parameters.
+  while (true) {
+    auto inst_id = eval_context.PopNextInstId();
+    auto inst = eval_context.context().insts().Get(inst_id);
+    if (auto result = TryExecInst(eval_context, inst_id, inst);
+        result.has_value()) {
+      return result;
+    }
+  }
 }
 
 }  // namespace Carbon::Check

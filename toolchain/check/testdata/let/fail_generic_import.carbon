@@ -63,14 +63,16 @@ let a: T = 0;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc8_9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

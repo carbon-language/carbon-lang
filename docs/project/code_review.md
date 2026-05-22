@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Responding to review comments](#responding-to-review-comments)
         -   [Responding to questions or confusion](#responding-to-questions-or-confusion)
         -   [Understand the feedback in the comments](#understand-the-feedback-in-the-comments)
+    -   [Fixing conflicts with trunk](#fixing-conflicts-with-trunk)
 -   [Code reviewer guide](#code-reviewer-guide)
     -   [How quickly should you respond to a review request?](#how-quickly-should-you-respond-to-a-review-request)
     -   [What should be covered by a review?](#what-should-be-covered-by-a-review)
@@ -324,6 +325,13 @@ impasse or conflict and shift strategy to
 long delays between these iterations. Consider discussing over Discord chat or
 scheduling a quick video chat on the specific issue. This can avoid multi-hour
 -- or multi-day -- round trips.
+
+### Fixing conflicts with trunk
+
+If a PR has conflicts with trunk, those conflicts must be resolved before the PR
+can be merged. If the PR is already in review, prefer to wait until review is
+mostly done before fixing the conflicts. Conflicts should be fixed by way of a
+merge commit rather than rebasing.
 
 ## Code reviewer guide
 

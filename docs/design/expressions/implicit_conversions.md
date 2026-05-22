@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
     -   [Facet types](#facet-types)
+    -   [Struct, tuple, and array types](#struct-tuple-and-array-types)
 -   [Consistency with `as`](#consistency-with-as)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
@@ -189,6 +190,10 @@ implicitly converted to the facet type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-facet-types)
 of `TT2`.
 
+### Struct, tuple, and array types
+
+See [here](/docs/design/values.md#type-conversions).
+
 ## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
@@ -218,7 +223,7 @@ interface ImplicitAsPrimitive
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
   // let implicit_from ResultForm:! Form where .type = Dest;
-  // fn Convert[bound self:? Self]()
+  // fn Convert(bound self:? Self)
   //     ->? ResultForm;
 }
 constraint ImplicitAs(Dest:! type) {

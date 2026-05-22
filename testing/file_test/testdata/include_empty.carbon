@@ -10,4 +10,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/include_empty.carbon
 
-// CHECK:STDOUT: 3 args: `default_args`, `include_empty.carbon`, `empty.carbon`
+// CHECK:STDOUT: 3 args: `default_args`, `empty.carbon`, `include_empty.carbon`

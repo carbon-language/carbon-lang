@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 
+#include <concepts>
 #include <cstdint>
 #include <optional>
 
@@ -17,7 +18,47 @@ namespace Carbon::SemIR {
 struct TypeId;
 
 // The expression category of an instruction. See /docs/design/values.md for
-// details.
+// background.
+//
+// Several categories are concerned with object initialization. At the SemIR
+// level, initialization consists of several phase transitions:
+// 1. A _repr-initializing_ expression forms an initializing representation of
+//    the object's eventual contents.
+// 2. An _in-place initializing_ expression commits to writing an object
+//    representation to memory.
+// 3. An _ephemeral entire reference_ expression commits to a particular memory
+//    location for the object.
+// 4. Finally, the owner/lifetime for that object is specified. This need not be
+//    an expression, so it doesn't correspond to a particular expression
+//    category. Instead, the inst kinds that perform this role are marked with
+//    has_cleanup = true.`
+//
+// If an inst combines more than one of those transitions, its category is
+// determined by the last one it performs (which means a non-expression inst may
+// perform some of the first three steps). Note that the language-level category
+// "initializing expression" is the union of the repr-initializing and in-place
+// initializing categories, which exist only in the implementation.
+//
+// An _initializer_ is an inst in any of those three categories. An inst that
+// directly depends on it is said to _consume_ it, and typically an initializer
+// must be consumed by exactly one inst.
+//
+// Thus, the key distinction between an initializing expression and a reference
+// expression is that the storage location of a reference expression is fixed as
+// soon as it is evaluated, but the storage location of an initializing
+// expression is notionally set by the inst that consumes it. "Notionally",
+// because that distinction is obscured by two optimizations:
+// - The storage location inst is always a direct or indirect argument of the
+//   in-place initializing inst. The ID of the storage argument inst is fixed
+//   when the initializing inst is created, and can be found with
+//   `FindStorageArgForInitializer`, but the inst stored at that ID may be
+//   overwritten when the consumer is created. This makes the final SemIR appear
+//   as though the location was set by the initializing inst.
+// - When the initializing inst and its consumer are created together, the
+//   initializing inst is typically created with its storage argument already
+//   set, rather than creating and then immediately overwriting a placeholder.
+//
+// TODO: Add an enumerator for ephemeral entire references, when needed.
 enum class ExprCategory : int8_t {
   // This instruction does not correspond to an expression, and as such has no
   // category.
@@ -28,20 +69,28 @@ enum class ExprCategory : int8_t {
   Pattern,
   // This instruction represents a value expression.
   Value,
-  // This instruction represents a durable reference expression, that denotes an
-  // object that outlives the current full expression context.
-  DurableRef,
-  // This instruction represents an ephemeral reference expression, that denotes
+  // This instruction represents a repr-initializing expression (see above),
+  // which initializes an object using the type's initializing representation.
+  // It must be consumed exactly once unless the type's initializing
+  // representation is known not to be in-place.
+  ReprInitializing,
+  // This instruction represents an in-place initializing expression (see
+  // above), which initializes an object in-place, regardless of the type's
+  // initializing representation. It must be consumed exactly once.
+  InPlaceInitializing,
+  // This instruction represents a ephemeral non-entire reference, which denotes
   // an object that does not outlive the current full expression context.
   EphemeralRef,
-  // This instruction represents an initializing expression, that describes how
-  // to initialize an object.
-  Initializing,
+  // This instruction represents a durable reference expression, which denotes
+  // an object that outlives the current full expression context.
+  DurableRef,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
   Mixed,
+  // The category of this instruction is dependent because its form is symbolic.
+  Dependent,
   // This instruction is a `RefTagExpr`, and so its semantics (including its
   // expression category) depends on the usage context.
   RefTagged,
@@ -147,10 +196,13 @@ enum class InstConstantKind : int8_t {
   // This instruction is a metaprogramming or template instantiation action that
   // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
   // constant inst depending on its operands, but never a concrete constant
-  // inst. The instruction may have a concrete constant value that is a
-  // generated instruction. Constant evaluation support for types with this
+  // inst. The instruction may or may not have a concrete constant value that is
+  // a generated instruction. Constant evaluation support for types with this
   // constant kind is provided automatically, by calling `PerformDelayedAction`.
   InstAction,
+  // Equivalent to InstAction, but this instruction is guaranteed to have a
+  // constant value.
+  ConstantInstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
   // error, in ways not expressed by the other InstConstantKinds. For example,
@@ -242,6 +294,13 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     bool is_lowered = true;
     bool deduce_through = false;
     bool has_cleanup = false;
+
+    // The inst's allowed node kinds, for `IsAllowedNodeKind`.
+    //
+    // Do not set these directly. They are set by the `TypedNodeId` template
+    // parameter of `Define`.
+    bool internal_allow_all_node_kinds = false;
+    llvm::ArrayRef<Parse::NodeKind::RawEnumType> internal_allowed_node_kinds;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -315,6 +374,21 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // destructor.
   constexpr auto has_cleanup() const -> bool {
     return definition_info(*this).has_cleanup;
+  }
+
+  // Returns true if the passed `NodeKind` is allowed.
+  auto IsAllowedNodeKind(Parse::NodeKind node_kind) const -> bool;
+
+  // Returns true if all `NodeKind`s are allowed.
+  auto allow_all_node_kinds() const -> bool {
+    return definition_info(*this).internal_allow_all_node_kinds;
+  }
+
+  // Returns true if no `NodeKind`s are allowed.
+  auto disallow_all_node_kinds() const -> bool {
+    const auto& def = definition_info(*this);
+    return !def.internal_allow_all_node_kinds &&
+           def.internal_allowed_node_kinds.empty();
   }
 
  private:
@@ -405,9 +479,44 @@ class InstKind::Definition : public InstKind {
   InstKind::DefinitionInfo info_;
 };
 
+namespace Internal {
+
+// Storage for `internal_allowed_node_kinds` where there's a list of kinds.
+template <Parse::NodeKind::RawEnumType... T>
+constexpr std::array<Parse::NodeKind::RawEnumType, sizeof...(T)> Kinds = {T...};
+
+// `NoneNodeId` uses should never have a node associated; it's mainly for
+// builtins.
+constexpr auto GetAllowedNodeKinds(Parse::NoneNodeId* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return {};
+}
+
+// For a regular `NodeId`, returns an array of just its kind.
+template <const Parse::NodeKind& Kind>
+constexpr auto GetAllowedNodeKinds(Parse::NodeIdForKind<Kind>* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return Kinds<static_cast<Parse::NodeKind::RawEnumType>(Kind)>;
+}
+
+// For `NodeIdOneOf`, returns an array of each kind.
+template <typename... T>
+constexpr auto GetAllowedNodeKinds(Parse::NodeIdOneOf<T...>* /*unused*/)
+    -> llvm::ArrayRef<Parse::NodeKind::RawEnumType> {
+  return Kinds<T::Kind...>;
+}
+
+}  // namespace Internal
+
 template <typename TypedNodeId>
 constexpr auto InstKind::Define(DefinitionInfo info) const
     -> Definition<TypedNodeId> {
+  if constexpr (std::same_as<Parse::NodeId, TypedNodeId>) {
+    info.internal_allow_all_node_kinds = true;
+  } else {
+    info.internal_allowed_node_kinds =
+        Internal::GetAllowedNodeKinds(static_cast<TypedNodeId*>(nullptr));
+  }
   return Definition<TypedNodeId>(*this, info);
 }
 

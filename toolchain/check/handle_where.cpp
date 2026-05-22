@@ -2,19 +2,49 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/period_self.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+static auto GetExtendedOnlyFacetType(Context& context,
+                                     const SemIR::FacetType& facet_type)
+    -> SemIR::TypeId {
+  const auto& info = context.facet_types().Get(facet_type.facet_type_id);
+  auto stripped_info = SemIR::FacetTypeInfo::ExtendedOnly(info);
+  stripped_info.Canonicalize();
+  return GetFacetType(context, stripped_info);
+}
+
+static auto GetPeriodSelfType(Context& context,
+                              SemIR::TypeId facet_type_type_id)
+    -> SemIR::TypeId {
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(facet_type_type_id)) {
+    return GetExtendedOnlyFacetType(context, *facet_type);
+  } else if (facet_type_type_id == SemIR::TypeType::TypeId) {
+    // The self may be `TypeType` in `type where X impls Y`, so we use an empty
+    // facet type.
+    return GetEmptyFacetType(context);
+  } else {
+    CARBON_CHECK(facet_type_type_id == SemIR::ErrorInst::TypeId,
+                 "unexpected .Self type {0}", facet_type_type_id);
+    return SemIR::ErrorInst::TypeId;
+  }
+}
 
 auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // The expression at the top of the stack represents a constraint type that
@@ -30,6 +60,12 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     context.emitter().Emit(self_node, WhereOnNonFacetType);
     self_with_constraints_type_id = SemIR::ErrorInst::TypeId;
   }
+  if (self_with_constraints_type_id == SemIR::ErrorInst::TypeId) {
+    // Keep `self_id` in sync with `self_with_constraints_type_id`, if one is an
+    //  error they both are. Note that ExprAsType may have returned ErrorInst,
+    //  or we may have set it to ErrorInst in this function.
+    self_id = SemIR::ErrorInst::InstId;
+  }
 
   // Strip off any constraints provided by a `WhereExpr` from the `Self` facet
   // type. For a facet type like `I & J where .X = .Y`, this will reduce it down
@@ -38,27 +74,15 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Any references to `.Self` in constraints for the current `WhereExpr` will
   // not see constraints in the `Self` facet type, but they will resolve to
   // values through the constraints explicitly when they are combined together.
-  auto self_without_constraints_type_id = self_with_constraints_type_id;
-  if (auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-          self_without_constraints_type_id)) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    auto stripped_info =
-        SemIR::FacetTypeInfo{.extend_constraints = info.extend_constraints};
-    stripped_info.Canonicalize();
-    self_without_constraints_type_id = GetFacetType(context, stripped_info);
-  }
+  auto period_self_type_id =
+      GetPeriodSelfType(context, self_with_constraints_type_id);
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
   context.scope_stack().PushForSameRegion();
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
-  auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, self_without_constraints_type_id);
-
-  // Save the `.Self` symbolic binding on the node stack. It will become the
-  // first argument to the `WhereExpr` instruction.
-  context.node_stack().Push(node_id, period_self_inst_id);
+  MakePeriodSelfFacetValue(context, node_id, period_self_type_id);
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other
@@ -70,12 +94,11 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementBaseFacetType>(
           context, SemIR::LocId(node_id),
-          {.base_type_inst_id =
-               context.types().GetInstId(self_with_constraints_type_id)}));
+          {.base_type_inst_id = context.types().GetAsTypeInstId(self_id)}));
 
-  // Add a context stack for tracking rewrite constraints, that will be used to
-  // allow later constraints to read from them eagerly.
-  context.rewrites_stack().emplace_back();
+  // Add a context stack for tracking constraints, that will be used to allow
+  // later constraints to read from them eagerly.
+  context.where_stack().emplace_back();
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
@@ -85,7 +108,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
         context.facet_types().Get(self_facet_type->facet_type_id);
     for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
-        context.rewrites_stack().back().Insert(
+        context.where_stack().back().rewrites.Insert(
             context.constant_values().Get(
                 GetImplWitnessAccessWithoutSubstitution(context,
                                                         rewrite.lhs_id)),
@@ -128,7 +151,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // immediately, before they are evaluated. This happens directly where the
     // `ImplWitnessAccess` that refers to the rewrite constraint would have been
     // created, and the value of the constraint will be used instead.
-    context.rewrites_stack().back().Insert(
+    context.where_stack().back().rewrites.Insert(
         context.constant_values().Get(
             GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
         rhs_id);
@@ -150,6 +173,32 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
   return true;
 }
 
+// Returns whether `inst_id` is `.Self` or an access into `.Self`, possibly
+// nested.
+static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
+    -> bool {
+  // Walks through nested `ImplWitnessAccess(LookupImplWitness(...))`
+  // instructions until it either finds `.Self` and returns true, or finds
+  // anything else and returns false.
+  while (true) {
+    if (IsPeriodSelf(context, inst_id)) {
+      return true;
+    }
+    // Recurse through ImplWitnessAccess into the self type being accessed.
+    auto access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccessWithoutSubstitution(context, inst_id));
+    if (!access) {
+      return false;
+    }
+    auto lookup =
+        context.insts().TryGetAs<SemIR::LookupImplWitness>(access->witness_id);
+    if (!lookup) {
+      return false;
+    }
+    inst_id = lookup->query_self_inst_id;
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
@@ -164,17 +213,52 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
+    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
     rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
   // TODO: Require that at least one side uses a designator.
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
+  if (FindAndDiagnoseAmbiguousPeriodSelf(context, lhs_as_type.inst_id,
+                                         rhs_id)) {
+    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
+    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementImpls>(
           context, node_id,
           {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
+
+  if (lhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+      rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+      rhs_as_type.type_id != SemIR::TypeType::TypeId) {
+    // Track the impls relationship so further constraints can use it
+    // immediately, before they are evaluated. Impl lookup will search the top
+    // of the stack.
+    context.where_stack().back().impls.push_back({
+        context.constant_values().Get(lhs_as_type.inst_id),
+        context.constant_values().Get(rhs_as_type.inst_id),
+    });
+
+    // Track any rewrites that are inherited from the impls constraint as the
+    // LHS can be referring to `.Self` or a member of it, which makes those
+    // rewrites modification of this facet type's self.
+    if (IsPeriodSelfAccess(context, lhs_as_type.inst_id)) {
+      auto facet_type =
+          context.types().GetAs<SemIR::FacetType>(rhs_as_type.type_id);
+      const auto& facet_type_info =
+          context.facet_types().Get(facet_type.facet_type_id);
+      for (const auto& rewrite : facet_type_info.rewrite_constraints) {
+        auto lhs = SubstPeriodSelf(
+            context, rhs_node, context.constant_values().Get(rewrite.lhs_id),
+            context.constant_values().Get(lhs_as_type.inst_id));
+        context.where_stack().back().rewrites.Insert(lhs, rewrite.rhs_id);
+      }
+    }
+  }
   return true;
 }
 
@@ -184,18 +268,170 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
+// Returns whether a designator (`.Self` or `.MemberName`) is present in the
+// where clause.
+static auto FindDesignator(Context& context,
+                           SemIR::InstBlockId requirements_block_id) -> bool {
+  llvm::SmallVector<SemIR::InstId> requirements;
+
+  struct WorkItem {
+    SemIR::InstBlockId requirements_block_id;
+    bool search_rhs;
+  };
+  llvm::SmallVector<WorkItem> work = {{requirements_block_id, true}};
+
+  while (!work.empty()) {
+    auto item = work.pop_back_val();
+    auto block = context.inst_blocks().GetOrEmpty(item.requirements_block_id);
+    if (item.search_rhs) {
+      requirements.reserve(block.size() * 2);
+    }
+
+    for (auto inst_id : block) {
+      auto inst = context.insts().Get(inst_id);
+      CARBON_KIND_SWITCH(inst) {
+        case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
+          requirements.push_back(base.base_type_inst_id);
+          break;
+        }
+        case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+          if (item.search_rhs) {
+            requirements.push_back(rewrite.lhs_id);
+            // The LHS of a rewrite currently always constrains the current
+            // type, so looking in the RHS is redundant.
+            //
+            // Regardless, if the RHS is a facet type, designators inside it
+            // don't constrain the current type, so we don't recurse into it.
+            auto const_rhs_id =
+                context.constant_values().GetConstantInstId(rewrite.rhs_id);
+            if (const_rhs_id.has_value() &&
+                !context.insts().Is<SemIR::FacetType>(const_rhs_id)) {
+              requirements.push_back(rewrite.rhs_id);
+            }
+          }
+          break;
+        }
+        case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+          if (item.search_rhs) {
+            // If the instruction is a facet type, designators inside it don't
+            // constrain the current type, so we don't recurse into it.
+            auto const_lhs_id =
+                context.constant_values().GetConstantInstId(equiv.rhs_id);
+            if (const_lhs_id.has_value() &&
+                !context.insts().Is<SemIR::FacetType>(const_lhs_id)) {
+              requirements.push_back(equiv.lhs_id);
+            }
+            // If the instruction is a facet type, designators inside it don't
+            // constrain the current type, so we don't recurse into it.
+            auto const_rhs_id =
+                context.constant_values().GetConstantInstId(equiv.rhs_id);
+            if (const_rhs_id.has_value() &&
+                !context.insts().Is<SemIR::FacetType>(const_rhs_id)) {
+              requirements.push_back(equiv.rhs_id);
+            }
+          }
+          break;
+        }
+        case CARBON_KIND(SemIR::RequirementImpls impls): {
+          if (item.search_rhs) {
+            requirements.push_back(impls.lhs_id);
+
+            CARBON_KIND_SWITCH(context.insts().Get(impls.rhs_id)) {
+                // If the RHS of the `impls` contains a `where`, then it will be
+                // a WhereExpr instruction. We require a designator to be part
+                // of the constraint on the LHS of the nested `where`, so we
+                // won't search the RHS of a nested `where`.
+              case CARBON_KIND(SemIR::WhereExpr rhs_where_expr): {
+                work.push_back({rhs_where_expr.requirements_id, false});
+                break;
+              }
+                // Otherwise, it's a facet type without a `where`, so we will
+                // search that for a designator.
+              default:
+                requirements.push_back(impls.rhs_id);
+                break;
+            }
+          }
+          break;
+        }
+        default:
+          CARBON_CHECK(inst_id == SemIR::ErrorInst::InstId,
+                       "unexpected inst {0} in requirements", inst);
+      }
+    }
+  }
+
+  class SubstFindDesignator : public SubstInstCallbacks {
+   public:
+    explicit SubstFindDesignator(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (*found_) {
+        return FullySubstituted;
+      }
+
+      // An error was diagnosed for the where clause already.
+      if (inst_id == SemIR::ErrorInst::InstId) {
+        *found_ = true;
+        return FullySubstituted;
+      }
+
+      // TypeType has type TypeType, avoid recursing on its type.
+      if (context().insts().Is<SemIR::TypeType>(inst_id)) {
+        return FullySubstituted;
+      }
+
+      // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
+      // we only need to look for `.Self` here.
+      if (IsPeriodSelf(context(), inst_id)) {
+        *found_ = true;
+        return FullySubstituted;
+      }
+
+      return SubstOperands;
+    }
+
+    auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild, no insts should change");
+    }
+
+    bool* found_;
+  };
+
+  for (auto inst_id : requirements) {
+    bool found = false;
+    SubstFindDesignator callbacks(&context, &found);
+    SubstInst(context, inst_id, callbacks);
+    if (found) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  context.rewrites_stack().pop_back();
+  context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
-  context.scope_stack().Pop();
-  SemIR::InstId period_self_id =
-      context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
+  context.scope_stack().Pop(/*check_unused=*/true);
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
-  AddInstAndPush<SemIR::WhereExpr>(context, node_id,
-                                   {.type_id = SemIR::TypeType::TypeId,
-                                    .period_self_id = period_self_id,
-                                    .requirements_id = requirements_id});
+
+  auto type_id = SemIR::TypeType::TypeId;
+  if (!FindDesignator(context, requirements_id)) {
+    CARBON_DIAGNOSTIC(
+        WhereWithoutDesignator, Error,
+        "`where` clause without a designator that constrains the current type; "
+        "did not find `.Self` or a member access like `.M` that refers to the "
+        "current type");
+    context.emitter().Emit(node_id, WhereWithoutDesignator);
+    type_id = SemIR::ErrorInst::TypeId;
+  }
+
+  AddInstAndPush<SemIR::WhereExpr>(
+      context, node_id,
+      {.type_id = type_id, .requirements_id = requirements_id});
   return true;
 }
 

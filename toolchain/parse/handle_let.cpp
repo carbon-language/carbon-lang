@@ -17,8 +17,9 @@ auto HandleLet(Context& context) -> void {
   context.PushState(state, StateKind::LetFinishAsRegular);
   context.PushState(state, StateKind::LetAfterPatternAsRegular);
 
-  // This will start at the pattern.
-  context.PushState(StateKind::Pattern);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
+                              /*in_unused_pattern=*/false,
+                              PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleAssociatedConstant(Context& context) -> void {
@@ -52,7 +53,7 @@ auto HandleAssociatedConstant(Context& context) -> void {
     return;
   }
 
-  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *identifier);
   state.token = *colon_exclaim;
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
   context.PushState(state, StateKind::LetAfterPatternAsAssociatedConstant);

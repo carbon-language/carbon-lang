@@ -36,8 +36,8 @@ New lexed tokens must be added to
 `CARBON_KEYWORD_TOKEN` both provide some built-in lexing logic, while
 `CARBON_TOKEN` requires custom lexing support.
 
-[TokenizedBuffer::Lex](/toolchain/lex/tokenized_buffer.h) is the main dispatch
-for lexing, and calls that need to do custom lexing will be dispatched there.
+[Lex](/toolchain/lex/lex.h) is the main dispatch for lexing, and calls that need
+to do custom lexing will be dispatched there.
 
 ## Parse
 
@@ -51,7 +51,7 @@ designs. Adding a parse node kind will also require a handler in the `Check`
 step.
 
 The state transitions are in [parse/state.def](/toolchain/parse/state.def). Each
-`CARBON_PARSER_STATE` defines a distinct state and has comments for state
+`CARBON_PARSE_STATE` defines a distinct state and has comments for state
 transitions. If several states should share handling, name them
 `FeatureAsVariant`.
 
@@ -63,16 +63,43 @@ processing.
 
 ### Typed parse node metadata implementation
 
-As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
+The key file structure is:
 
-![parse](parse.svg)
+```mermaid
+graph BT
+    subgraph common
+        EnumBase["enum_base.h"]
+    end
 
-> TODO: Convert this chart to Mermaid.
+    subgraph parse
+        NodeKindDef["node_kind.def"]
+        NodeKind["node_kind.h"]
+        NodeIds["node_ids.h"]
+        TypedNodes["typed_nodes.h"]
+        NodeKindCpp["node_kind.cpp"]
+        Tree["tree.h"]
+        TreeAndSubtrees["tree_and_subtrees.h"]
+        Extract["extract.cpp"]
+    end
+
+    NodeKind --> EnumBase
+    NodeKind --> NodeKindDef
+    NodeIds --> NodeKindDef
+    TypedNodes --> NodeKindDef
+    NodeKindCpp --> NodeKindDef
+    TypedNodes --> NodeKind
+    Tree --> NodeIds
+    NodeKindCpp --> TypedNodes
+    Tree --> TypedNodes
+    Extract --> TypedNodes
+    TreeAndSubtrees --> Tree
+    Extract --> TreeAndSubtrees
+```
 
 -   [common/enum_base.h](/common/enum_base.h) defines the `EnumBase`
     [CRTP](idioms.md#crtp-or-curiously-recurring-template-pattern) class
     extending `Printable` from [common/ostream.h](/common/ostream.h), along with
-    `CARBON_ENUM` macros for making enumerations
+    `CARBON_ENUM` macros for making enumerations.
 
 -   [parse/node_kind.h](/toolchain/parse/node_kind.h) includes
     [common/enum_base.h](/common/enum_base.h) and defines an enumeration
@@ -81,46 +108,41 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
     -   The `NodeKind` enumeration is populated with the list of all parse node
         kinds using [parse/node_kind.def](/toolchain/parse/node_kind.def) (using
         [the .def file idiom](idioms.md#def-files)) _declared_ in this file
-        using a macro from [common/enum_base.h](/common/enum_base.h)
+        using a macro from [common/enum_base.h](/common/enum_base.h).
 
     -   `NodeKind` has a member type `NodeKind::Definition` that extends
-        `NodeKind` and adds a `NodeCategory` field (and others in the future).
+        `NodeKind` and adds a `NodeCategory` field (and others).
 
     -   `NodeKind` has a method `Define` for creating a `NodeKind::Definition`
-        with the same enumerant value, plus values for the other fields.
+        with the same enumerant value, plus values for the added fields.
 
     -   `HasKindMember<T>` at the bottom of
         [parse/node_kind.h](/toolchain/parse/node_kind.h) uses
         [field detection](idioms.md#field-detection) to determine if the type
         `T` has a `NodeKind::Definition Kind` static constant member.
-
         -   Note: both the type and name of these fields must match exactly.
 
-    -   Note that additional information is needed to define the `category()`
-        method (and other methods in the future) of `NodeKind`. This information
-        comes from the typed parse node definitions in
-        [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h) (described below).
-
 -   [parse/node_ids.h](/toolchain/parse/node_ids.h) defines a number of types
-    that store a _node id_ that identifies a node in the parse tree
+    that store a _node id_ that identifies a node in the `Tree`.
 
-    -   `NodeId` stores a node id with no restrictions
+    -   `NodeId` stores an node id with no restrictions.
 
     -   `NodeIdForKind<Kind>` inherits from `NodeId` and stores the id of a node
         that must have the specified `NodeKind` "`Kind`". Note that this is not
-        used directly, instead aliases `FooId` for
-        `NodeIdForKind<NodeKind::Foo>` are defined for every node kind using
+        used directly; instead, `using FooId = NodeIdForKind<NodeKind::Foo>;` is
+        defined for every node kind using
         [parse/node_kind.def](/toolchain/parse/node_kind.def) (using
         [the .def file idiom](idioms.md#def-files)).
 
     -   `NodeIdInCategory<Category>` inherits from `NodeId` and stores the id of
-        a node that must overlap the specified `NodeCategory` "`Category`". Note
-        that this is not typically used directly, instead this file defines
-        aliases `AnyDeclId`, `AnyExprId`, ..., `AnyStatementId`.
+        a node that must overlap the specified `NodeCategory`. Note that this is
+        not typically used directly; instead, this file defines aliases such as
+        `using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;`.
 
-    -   Similarly `NodeIdOneOf<T, U>` and `NodeIdNot<V>` inherit from `NodeId`
+    -   Similarly, `NodeIdOneOf<T, U>` and `NodeIdNot<V>` inherit from `NodeId`
         and stores the id of a node restricted to either matching `T::Kind` or
         `U::Kind` or not matching `V::Kind`.
+
     -   In addition to the node id type definitions above, the struct
         `NodeForId<T>` is declared but not defined.
 
@@ -131,6 +153,7 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
         to `Define()` on the corresponding enumerant member of `NodeKind` from
         [parse/node_kind.h](/toolchain/parse/node_kind.h) (which is included by
         this file).
+
     -   The fields of these types specify the children of the parse node using
         the types from [parse/node_ids.h](/toolchain/parse/node_ids.h).
 
@@ -145,12 +168,12 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
 
 -   [parse/node_kind.cpp](/toolchain/parse/node_kind.cpp) includes both
     [parse/node_kind.h](/toolchain/parse/node_kind.h) and
-    [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h)
+    [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h).
 
-    -   Uses the macro from [common/enum_base.h](/common/enum_base.h), the
-        enumerants of `NodeKind` are _defined_ using the list of parse node
-        kinds from [parse/node_kind.def](/toolchain/parse/node_kind.def) (using
-        [the .def file idiom](idioms.md#def-files)).
+    -   The enumerants of `NodeKind` that were declared in parse/node*kind.h are
+        \_defined*, again using the macro from
+        [common/enum_base.h](/common/enum_base.h) and the list of node kinds in
+        [parse/node_kind.def](/toolchain/parse/node_kind.def).
 
     -   `NodeKind::definition()` is defined. It has a static table of
         `const NodeKind::Definition*` indexed by the enum value, populated by
@@ -166,28 +189,37 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
         [parse/node_kind.def](/toolchain/parse/node_kind.def).
 
 -   [parse/tree.h](/toolchain/parse/tree.h) includes
-    [parse/node_ids.h](/toolchain/parse/node_ids.h). It does not depend on
-    [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h) to reduce compilation
-    time in those files that don't use the typed parse node struct types.
+    [parse/node_ids.h](/toolchain/parse/node_ids.h).
 
-    -   Defines `Tree::Extract`... functions that take a node id and return a
-        typed parse node struct type from
+    -   `Tree` is the parse tree. It is a node-based tree where each node has a
+        kind, a token, and a list of children. It has basic iterator support,
+        sufficient for checking tree structure.
+
+-   [parse/tree_and_subtrees.h](/toolchain/parse/tree_and_subtrees.h) includes
+    [parse/tree.h](/toolchain/parse/tree.h).
+
+    -   `TreeAndSubtrees` is separate from `Tree` because we try to avoid
+        building subtrees when compiling valid code. It builds subtree
+        information that can be helpful for diagnostics and other tooling.
+
+    -   Defines `TreeAndSubtrees::Extract`... functions that take a node id and
+        return a typed parse node struct type from
         [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h).
 
     -   Uses `HasKindMember<T>` to restrict calling `ExtractAs` except on typed
         nodes defined in [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h).
 
-    -   `Tree::Extract` uses `NodeForId<T>` to get the corresponding typed parse
-        node struct type for a `FooId` type defined in
+    -   `TreeAndSubtrees::Extract` uses `NodeForId<T>` to get the corresponding
+        typed parse node struct type for a `FooId` type defined in
         [parse/node_ids.h](/toolchain/parse/node_ids.h).
 
         -   Note that this is done without a dependency on the typed parse node
             struct types by using the forward declaration of `NodeForId<T>` from
             [parse/node_ids.h](/toolchain/parse/node_ids.h).
 
-    -   The `Tree::Extract`... functions ultimately call
-        `Tree::TryExtractNodeFromChildren<T>`, which is a templated function
-        only declared in this file. Its definition is in
+    -   The `TreeAndSubtrees::Extract`... functions ultimately call
+        `TreeAndSubtrees::TryExtractNodeFromChildren<T>`, which is a templated
+        function only declared in this file. Its definition is in
         [parse/extract.cpp](/toolchain/parse/extract.cpp).
 
 -   [parse/extract.cpp](/toolchain/parse/extract.cpp) includes
@@ -195,8 +227,8 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
     [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h)
 
     -   Defines struct `Extractable<T>` that defines how to extract a field of
-        type `T` from a `Tree::SiblingIterator` pointing at the corresponding
-        child node.
+        type `T` from a `TreeAndSubtrees::SiblingIterator` pointing at the
+        corresponding child node.
 
     -   `Extractable<T>` is defined for the node id types defined in
         [parse/node_ids.h](/toolchain/parse/node_ids.h).
@@ -214,7 +246,7 @@ As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
         directly as fields of typed parse node struct types -- in those places
         `FooId` should be used instead.
 
-    -   Defines `Tree::TryExtractNodeFromChildren<T>` and explicitly
+    -   Defines `TreeAndSubtrees::TryExtractNodeFromChildren<T>` and explicitly
         instantiates it for every typed parse node struct type defined in
         [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h) using
         [parse/node_kind.def](/toolchain/parse/node_kind.def) (using
@@ -233,7 +265,7 @@ Note: this is broadly similar to
 
 ## Check
 
-Each parse node kind requires adding a `Handle<kind>` function in a
+Each parse node kind requires adding a `HandleParseNode` function in a
 `check/handle_*.cpp` file.
 
 ### Adding a new SemIR instruction
@@ -243,7 +275,7 @@ If the resulting SemIR needs a new instruction:
 -   Add a new kind to [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def).
 
     -   Add a `CARBON_SEM_IR_INST_KIND(NewInstKindName)` line in alphabetical
-        order
+        order.
 
 -   Add a new struct definition to
     [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h), such as:
@@ -269,8 +301,8 @@ If the resulting SemIR needs a new instruction:
         // an expression.
         TypeId type_id;
 
-        // 0-2 id fields, with types from sem_ir/ids.h or
-        // sem_ir/builtin_kind.h. For example, fields would look like:
+        // 0-2 id fields, with allowed types listed in `sem_ir/id_kind.h`. For
+        // example, fields would look like:
         NameId name_id;
         InstId value_id;
     };
@@ -279,6 +311,7 @@ If the resulting SemIR needs a new instruction:
     -   [`sem_ir/inst_kind.h`](/toolchain/sem_ir/inst_kind.h) documents the
         different options when defining a new instruction, as well as their
         defaults, see `InstKind::DefinitionInfo`.
+
     -   If an instruction always produces a type:
 
         -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
@@ -293,14 +326,12 @@ If the resulting SemIR needs a new instruction:
 
     -   Although most instructions have distinct types represented by
         instructions like `ClassType`, we also have builtin types for cases
-        where types don't need to be distinct per-entity. This is rare, but
-        used, for example, when an expression implicitly uses a value as part of
+        where types don't need to be distinct per-entity. This is rare; an
+        example use is when an expression implicitly uses a value as part of
         SemIR evaluation or as part of desugaring. We have builtin types for
-        bound methods, namespaces, witnesses, among others. These are
-        constructed as a special-case in
-        [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
+        bound methods, namespaces, witnesses, and others. To get a type id for
         one of these builtin types, use something like
-        `GetSingletonType(context,SemIR::WitnessType::TypeInstId)`, as in:
+        `GetSingletonType(context, SemIR::WitnessType::TypeInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
@@ -318,36 +349,49 @@ type. Look to the comments on those functions for instructions on what is
 needed.
 
 Instructions won't be given a name unless
-[`InstNamer::CollectNamesInBlock`](/toolchain/sem_ir/inst_namer.cpp) is called
-on the `InstBlockId` they are a member of. As of this writing,
-`InstNamer::CollectNamesInBlock` should only be called once per `InstBlockId`.
-To accomplish this, there should be one instruction kind that "owns" the
-instruction block, and will have a case in `InstNamer::CollectNamesInBlock` that
-visits the `InstBlockId`. That instruction kind will typically use
-`FormatTrailingBlock` in the `sem_ir/formatter.cpp` to list the instructions in
-curly braces (`{`...`}`). Other instructions that reference that `InstBlockId`
-will use the default rendering that has just the instruction names in parens
-(`(`...`)`).
+[`InstNamer`](/toolchain/sem_ir/inst_namer.cpp) traverses the `InstBlockId` they
+are a member of. To accomplish this, `InstNamer` starts at each of constants,
+imports, and the file scope blocks. It then recursively traverses instructions
+those contain, blocks referenced by those instructions, and so on. Instructions
+must be "owned" by exactly one of the recursively traversed blocks to be
+correctly named. That instruction kind will typically use `FormatTrailingBlock`
+in the `sem_ir/formatter.cpp` to list the instructions in curly braces
+(`{`...`}`). Other instructions that reference that `InstBlockId` will use the
+default rendering that has just the instruction names in parens (`(`...`)`).
 
 Adding an instruction will generally also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
-formatter. If not, then add a `FormatInst` overload to
-[`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp). If only the arguments
-need custom formatting, then a `FormatInstRhs` overload can be implemented
-instead.
-
-If the resulting SemIR needs a new built-in, add it to
-[`File` construction](/toolchain/sem_ir/file.cpp).
+formatter. Some instructions need specialized formatting to `FormatInstLhs` and
+`FormatInstRhs` in [`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp). If
+an argument needs custom formatting, then a `FormatArg` overload can be
+implemented instead.
 
 ### SemIR typed instruction metadata implementation
 
-How does this work? As of
-[#3310](https://github.com/carbon-language/carbon-lang/pull/3310):
+The key file structure is:
 
-![check](check.svg)
+```mermaid
+graph BT
+    subgraph common
+        EnumBase["enum_base.h"]
+    end
 
-> TODO: Convert this chart to Mermaid.
+    subgraph sem_ir
+        InstKindDef["inst_kind.def"]
+        InstKindH["inst_kind.h"]
+        TypedInstsH["typed_insts.h"]
+        InstKindCpp["inst_kind.cpp"]
+        InstH["inst.h"]
+    end
+
+    InstKindH --> EnumBase
+    InstKindH --> InstKindDef
+    InstKindCpp --> InstKindDef
+    TypedInstsH --> InstKindH
+    InstKindCpp --> TypedInstsH
+    InstH --> TypedInstsH
+```
 
 -   [common/enum_base.h](/common/enum_base.h) defines the `EnumBase`
     [CRTP](idioms.md#crtp-or-curiously-recurring-template-pattern) class
@@ -384,10 +428,10 @@ How does this work? As of
         [sem_ir/inst_kind.h](/toolchain/sem_ir/inst_kind.h) (which is included
         by this file).
 
--   `HasParseNodeMember<TypedInst>` and `HasTypeIdMember<TypedInst>` at the
+-   `HasKindMemberAsField<TypedInst>` and `HasTypeIdMember<TypedInst>` at the
     bottom of [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) use
     [field detection](idioms.md#field-detection) to determine if `TypedInst` has
-    a `Parse::Node parse_node` or a `TypeId type_id` field respectively.
+    an `InstKind kind` or a `TypeId type_id` field respectively.
 
     -   Note: both the type and name of these fields must match exactly.
 
@@ -405,6 +449,7 @@ How does this work? As of
         [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) to every
         instruction kind by using the list from
         [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def).
+
     -   `InstKind::definition()` is defined. It has a static table of
         `const InstKind::Definition*` indexed by the enum value, populated by
         taking the address of the `Kind` member of each `TypedInst`, using the
@@ -412,6 +457,7 @@ How does this work? As of
 
     -   `InstKind::ir_name()` and `InstKind::terminator_kind()` are defined
         using `InstKind::definition()`.
+
     -   Tested assumption: the tables built in this file are indexed by the enum
         values. We rely on the fact that we get the instruction kinds in the
         same order by consistently using
@@ -422,35 +468,37 @@ How does this work? As of
         corresponding struct type in
         [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h).
 
--   `TypedInstArgsInfo<TypedInst>` defined in
+-   `InstLikeTypeInfo<TypedInst>` defined in
     [sem_ir/inst.h](/toolchain/sem_ir/inst.h) uses
     [struct reflection](idioms.md#struct-reflection) to determine the other
-    fields from `TypedInst`. It skips the `parse_node` and `type_id` fields
-    using `HasParseNodeMember<TypedInst>` and `HasTypeIdMember<TypedInst>`.
+    fields from `TypedInst`. It skips the `kind` and `type_id` fields using
+    `HasKindMemberAsField<TypedInst>` and `HasTypeIdMember<TypedInst>`.
 
-    -   Tested assumption: the `parse_node` and `type_id` are the first fields
-        in `TypedInst`, and there are at most two more fields.
+    -   Tested assumption: the `kind` and `type_id` are the first fields in
+        `TypedInst`, and there are at most two more fields.
 
 -   [sem_ir/inst.h](/toolchain/sem_ir/inst.h) defines templated conversions
     between `Inst` and each of the typed instruction structs:
 
-    -   Uses `TypedInstArgsInfo<TypedInst>`, `HasParseNodeMember<TypedInst>`,
+    -   Uses `InstLikeTypeInfo<TypedInst>`, `HasKindMemberAsField<TypedInst>`,
         and `HasTypeIdMember<TypedInst>`, and
         [local lambda](idioms.md#local-lambdas-to-reduce-duplicate-code).
 
     -   Defines a templated `ToRaw` function that converts the various id field
         types to an `int32_t`.
+
     -   Defines a templated `FromRaw<T>` function that converts an `int32_t` to
         `T` to perform the opposite conversion.
-    -   Tested assumption: The `parse_node` field is first, when present, and
-        the `type_id` is next, when present, in each `TypedInst` struct type.
+
+    -   Tested assumption: The `kind` field is first, when present, and the
+        `type_id` is next, when present, in each `TypedInst` struct type.
 
 -   The "tested assumptions" above are all tested by
     [sem_ir/typed_insts_test.cpp](/toolchain/sem_ir/typed_insts_test.cpp)
 
 ## Lower
 
-Each SemIR instruction requires adding a `Handle<kind>` function in a
+Each SemIR instruction requires adding a `HandleInst` function in a
 `lower/handle_*.cpp` file.
 
 ## Tests and debugging

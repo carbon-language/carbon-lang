@@ -4,13 +4,20 @@
 
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
-load("runtime_sources.bzl", "generate_runtime_sources_cc_library")
+load("runtimes_build_info.bzl", "generate_runtimes_build_info_cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+    "runtimes_build_vars.tpl.bzl",
+])
+
 cc_library(
     name = "block_value_store",
-    hdrs = ["block_value_store.h"],
+    hdrs = [
+        "block_value_store.h",
+        "block_value_store_impl.h",
+    ],
     deps = [
         ":id_tag",
         ":mem_usage",
@@ -25,7 +32,10 @@ cc_library(
 
 cc_library(
     name = "canonical_value_store",
-    hdrs = ["canonical_value_store.h"],
+    hdrs = [
+        "canonical_value_store.h",
+        "canonical_value_store_impl.h",
+    ],
     deps = [
         ":mem_usage",
         ":value_store",
@@ -42,7 +52,9 @@ cc_test(
     srcs = ["canonical_value_store_test.cpp"],
     deps = [
         ":canonical_value_store",
+        ":shared_value_stores",
         ":value_ids",
+        ":value_store",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -57,7 +69,7 @@ cc_library(
         ":install_paths",
         "//common:check",
         "//common:string_helpers",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
@@ -229,7 +241,10 @@ cc_library(
 
 cc_library(
     name = "value_store",
-    hdrs = ["value_store.h"],
+    hdrs = [
+        "value_store.h",
+        "value_store_impl.h",
+    ],
     deps = [
         ":id_tag",
         ":mem_usage",
@@ -248,6 +263,7 @@ cc_test(
     size = "small",
     srcs = ["value_store_test.cpp"],
     deps = [
+        ":shared_value_stores",
         ":value_ids",
         ":value_store",
         "//common:raw_string_ostream",
@@ -326,10 +342,11 @@ cc_library(
     ] + [info.lib for info in LLVM_MAIN_TOOLS.values()],
 )
 
-generate_runtime_sources_cc_library(name = "runtime_sources")
+generate_runtimes_build_info_cc_library(name = "runtimes_build_info")
 
 cc_library(
     name = "shared_value_stores",
+    srcs = ["shared_value_stores.cpp"],
     hdrs = ["shared_value_stores.h"],
     deps = [
         ":canonical_value_store",

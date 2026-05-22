@@ -32,7 +32,7 @@ extern fn F();
 
 package Other library "[[@TEST_NAME]]";
 
-fn F(x: ()) {}
+fn F(unused x: ()) {}
 
 // --- other_fn2.carbon
 
@@ -106,8 +106,8 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import [InImport]
 // CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn F(x: ()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fn F(unused x: ()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import [InImport]
 // CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F() {}
@@ -261,13 +261,13 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -480,10 +480,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.a71006.1: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.680f0e.1: %F.type.a71006.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.a71006.2: type = fn_type @F.loc23 [concrete]
-// CHECK:STDOUT:   %F.680f0e.2: %F.type.a71006.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.eab4ea.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.14f67d.1: %F.type.eab4ea.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.eab4ea.2: type = fn_type @F.loc23 [concrete]
+// CHECK:STDOUT:   %F.14f67d.2: %F.type.eab4ea.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,7 +492,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.F: %F.type.a71006.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.680f0e.1]
+// CHECK:STDOUT:   %Other.F: %F.type.eab4ea.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.14f67d.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -501,7 +501,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.a71006.2 = fn_decl @F.loc23 [concrete = constants.%F.680f0e.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.eab4ea.2 = fn_decl @F.loc23 [concrete = constants.%F.14f67d.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
@@ -530,7 +530,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [concrete] {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }

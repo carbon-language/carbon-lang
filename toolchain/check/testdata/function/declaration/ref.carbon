@@ -18,7 +18,7 @@
 fn F() -> ref i32;
 
 fn G() {
-  let ref x: i32 = F();
+  let unused ref x: i32 = F();
 }
 
 // CHECK:STDOUT: --- ref_return.carbon
@@ -28,12 +28,12 @@ fn G() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.cf3: form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %.a8d: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,11 +52,15 @@ fn G() {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.1: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.2: form = ref_form %i32 [concrete = constants.%.cf3]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.c6b = ref_return_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %.loc4_11.1, %i32 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = ref_tag %i32
+// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.a8d]
+// CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -66,14 +70,11 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.c6b = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc7: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

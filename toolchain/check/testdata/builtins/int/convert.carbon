@@ -79,7 +79,7 @@ fn F() {
   // CHECK:STDERR: fail_self_test.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
   // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+4]]:3: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+4]]:3: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

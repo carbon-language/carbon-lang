@@ -26,7 +26,7 @@ interface Instance {
 }
 
 impl {.i: ()} as Instance {
-  fn G[self: Self]() {}
+  fn G[unused self: Self]() {}
 }
 
 // --- import_instance_success.carbon

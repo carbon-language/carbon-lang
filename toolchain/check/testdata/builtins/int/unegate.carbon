@@ -21,7 +21,7 @@ let arr_p: array(u32, 123)* = &arr;
 
 let n: u32 = Negate(1);
 
-fn RuntimeCallIsValid(a: u32, b: u32) -> u32 {
+fn RuntimeCallIsValid(a: u32, unused b: u32) -> u32 {
   //@dump-sem-ir-begin
   return Negate(a);
   //@dump-sem-ir-end
@@ -127,9 +127,6 @@ fn F() {
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %u32, %b.param: %u32) -> out %return.param: %u32 {

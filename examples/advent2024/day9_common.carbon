@@ -11,6 +11,8 @@ import Core library "range";
 import library "io_utils";
 
 class SectorList {
+  impl as Core.UnformedInit {}
+
   fn Read() -> SectorList {
     returned var me: SectorList;
     me.size = 0;

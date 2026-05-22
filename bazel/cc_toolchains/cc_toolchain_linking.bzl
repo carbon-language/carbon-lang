@@ -4,7 +4,7 @@
 
 """Definitions of linking related features used in a `cc_toolchain_config`."""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES", "ACTION_NAME_GROUPS")
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
@@ -13,17 +13,13 @@ load(
     "variable_with_value",
     "with_feature_set",
 )
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_link_actions",
-)
 
 link_libraries_feature = feature(
     name = "link_libraries",
     enabled = True,
     flag_sets = [
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
                 flag_group(
                     expand_if_available = "linkstamp_paths",
@@ -111,7 +107,7 @@ link_libraries_feature = feature(
             with_features = [with_feature_set(not_features = ["macos_target"])],
         ),
         flag_set(
-            actions = all_link_actions,
+            actions = ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
                 flag_group(
                     expand_if_available = "linkstamp_paths",

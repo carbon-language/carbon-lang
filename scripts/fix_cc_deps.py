@@ -38,31 +38,39 @@ class RuleChoice(NamedTuple):
     rules: set[str]
 
 
+# Compiled regexes for external repo remapping.
+LLVM_PREFIX_REGEX = re.compile(r"^(.*:(lib|include))/")
+COLON_REGEX = re.compile(r":")
+GOOGLE_TEST_PREFIX_REGEX = re.compile(r":google(?:mock|test)/include/")
+BOOST_INCLUDE_PREFIX_REGEX = re.compile(r"^(.*:include)/")
+
+# Regex for finding #include directives.
+INCLUDE_REGEX = re.compile(r'^(#include (?:(["<])([^">]+)[">]))', re.MULTILINE)
+
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
 EXTERNAL_REPOS: dict[str, ExternalRepo] = {
     # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
     # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
     "@llvm-project": ExternalRepo(
-        lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
+        lambda x: COLON_REGEX.sub("/", LLVM_PREFIX_REGEX.sub("", x)),
         "...",
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
-    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    "@bazel_tools": ExternalRepo(lambda x: COLON_REGEX.sub("/", x), "..."),
     # absl/flags:flag.h -> absl/flags/flag.h
-    "@abseil-cpp": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    "@abseil-cpp": ExternalRepo(lambda x: COLON_REGEX.sub("/", x), "..."),
     # :re2/re2.h -> re2/re2.h
-    "@re2": ExternalRepo(lambda x: re.sub(":", "", x), ":re2"),
+    "@re2": ExternalRepo(lambda x: COLON_REGEX.sub("", x), ":re2"),
     # :googletest/include/gtest/gtest.h -> gtest/gtest.h
     "@googletest": ExternalRepo(
-        lambda x: re.sub(":google(?:mock|test)/include/", "", x),
+        lambda x: GOOGLE_TEST_PREFIX_REGEX.sub("", x),
         ":gtest",
         use_system_include=True,
     ),
-    # All of the `boost_unordered` headers are in a single rule.
-    "@boost_unordered": ExternalRepo(
-        lambda x: re.sub("^(.*:include)/", "", x),
-        ":boost_unordered",
+    "@boost.unordered": ExternalRepo(
+        lambda x: BOOST_INCLUDE_PREFIX_REGEX.sub("", x),
+        ":boost.unordered",
         use_system_include=True,
     ),
 }
@@ -71,7 +79,7 @@ IGNORE_SOURCE_FILE_REGEX = re.compile(
     r"^(third_party/clangd.*|common/version.*\.cpp"
     r"|.*_autogen_manifest\.cpp"
     r"|toolchain/base/llvm_tools.def"
-    r"|toolchain/base/runtime_sources.h)$"
+    r"|toolchain/base/runtimes_build_info.h)$"
 )
 
 
@@ -127,6 +135,7 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> dict[str, Rule]:
     args = [
         bazel,
         "query",
+        "--curses=no",
         "--output=xml",
         f"kind('(cc_binary|cc_library|cc_test|genrule)', set({targets}))",
     ]
@@ -223,12 +232,9 @@ def get_missing_deps(
             file_content = f.read()
         file_content_changed = False
 
-        for header_groups in re.findall(
-            r'^(#include (?:(["<])([^">]+)[">]))',
-            file_content,
-            re.MULTILINE,
+        for full_include, include_open, header in INCLUDE_REGEX.findall(
+            file_content
         ):
-            (full_include, include_open, header) = header_groups
             is_system_include = include_open == "<"
 
             if header in rule_files:
@@ -296,6 +302,18 @@ def main() -> None:
     all_missing_deps: list[tuple[str, set[str]]] = []
     any_ambiguous = False
     for rule_name, rule in carbon_rules.items():
+        # Skip rules building runtimes as the rules that provide their sources
+        # are not analyzed by this script.
+        if rule_name in [
+            "//toolchain/install:builtins",
+            "//toolchain/install:builtins_internal",
+            "//toolchain/install:libc_internal_libcxx",
+            "//toolchain/install:libcxx",
+            "//toolchain/install:libcxxabi_internal",
+            "//toolchain/install:libcxxabi",
+            "//toolchain/install:libunwind",
+        ]:
+            continue
         missing_deps, ambiguous = get_missing_deps(
             header_to_rule_map, generated_files, rule
         )

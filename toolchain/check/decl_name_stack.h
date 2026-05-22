@@ -217,7 +217,9 @@ class DeclNameStack {
   // the `A.B` in `fn A.B.F()`.
   //
   // This should be called at the end of the declaration.
-  auto PopScope() -> void;
+  // If check_unused is true, then performs unused bindings checks and emits
+  // associated diagnostics.
+  auto PopScope(bool check_unused = false) -> void;
 
   // Peeks the current parent scope of the name on top of the stack. Note
   // that if we're still processing the name qualifiers, this can change before

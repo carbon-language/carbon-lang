@@ -87,8 +87,15 @@ auto HandleLambdaBody(Context& context) -> void {
                       "expected `=>` or `{{` after return type");
     context.emitter().Emit(*context.position(),
                            ExpectedLambdaBodyAfterReturnType);
+
+    // Add a dummy node for the missing body without consuming the current
+    // token.
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
+
     state.has_error = true;
-    context.ReturnErrorOnState();
+    // Bundle all nodes into a complete lambda node.
+    context.PushState(state, StateKind::LambdaBodyFinish);
   }
 }
 

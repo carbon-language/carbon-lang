@@ -31,7 +31,7 @@ impl C as Simple {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Op[self: Self]();
+  fn Op[unused self: Self]();
 }
 
 class C {}
@@ -42,7 +42,7 @@ class C {}
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
 impl Unknown as I {
-  fn Op[self: Self]() {}
+  fn Op[unused self: Self]() {}
 }
 
 // --- fail_import_invalid_impl.carbon
@@ -134,6 +134,7 @@ final impl C(invalid) as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.Simple.impl.F.decl
+// CHECK:STDOUT:   extend %Simple.ref
 // CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

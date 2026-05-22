@@ -27,7 +27,9 @@ class FunctionContext {
   // be null (see members).
   explicit FunctionContext(
       FileContext& file_context, llvm::Function* function,
-      FileContext& specific_file_context, SemIR::SpecificId specific_id,
+      FileContext& specific_file_context,
+      SemIR::FunctionId specific_sem_ir_function_id,
+      SemIR::SpecificId specific_id,
       SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
       llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
 
@@ -178,12 +180,17 @@ class FunctionContext {
   auto StoreObject(TypeInFile type, llvm::Value* value, llvm::Value* addr)
       -> void;
 
-  // After emitting an initializer `init_id`, finishes performing the
-  // initialization of `dest_id` from that initializer. This is a no-op if the
-  // initialization was performed in-place, and otherwise performs a store or a
-  // copy.
-  auto FinishInit(TypeInFile type, SemIR::InstId dest_id,
-                  SemIR::InstId source_id) -> void;
+  // Emits the instructions necessary to initialize the storage at `dest_id`
+  // from the repr-initializing expression `source_id`. This assumes the
+  // instructions for `source_id` have already been emitted, so it's a no-op if
+  // the initialization was performed in-place, and otherwise performs a store
+  // or a copy.
+  auto InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
+                         SemIR::InstId source_id) -> void;
+
+  // Emits the instructions necessary to perform the initialization described by
+  // `init_id` in-place in its storage.
+  auto InitializeStorage(SemIR::InstId init_id) -> void;
 
   // When fingerprinting for a specific, adds the call, found in the function
   // body, to <function_id, specific_id>. `function_id` and `specific_id` are
@@ -237,6 +244,11 @@ class FunctionContext {
   auto specific_sem_ir() -> const SemIR::File& {
     return specific_file_context_->sem_ir();
   }
+
+  auto specific_sem_ir_function_id() -> SemIR::FunctionId {
+    return specific_sem_ir_function_id_;
+  }
+
   // The specific ID for the function that is being lowered. Note that this is
   // an ID from `specific_sem_ir()`, not from `sem_ir()`.
   auto specific_id() -> SemIR::SpecificId { return specific_id_; }
@@ -307,6 +319,9 @@ class FunctionContext {
   // if we are lowering a specific that was generated for a generic function
   // defined in a different file.
   FileContext* specific_file_context_;
+
+  // The function id of the function we're lowering.
+  SemIR::FunctionId specific_sem_ir_function_id_;
 
   // The specific id, if the function is a specific.
   SemIR::SpecificId specific_id_;

@@ -520,7 +520,7 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
     state.ResumeTiming();
   }
 }
-static auto CreateDirectoriesBenchArgs(benchmark::internal::Benchmark* b) {
+static auto CreateDirectoriesBenchArgs(benchmark::Benchmark* b) {
   // The first argument is the depth of directory to create. We mostly care
   // about reasonably small depths here. It must be >= 1 for there to be
   // something to benchmark. The second number is the depth of pre-existing

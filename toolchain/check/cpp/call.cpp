@@ -5,8 +5,10 @@
 #include "toolchain/check/cpp/call.h"
 
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/Template.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/operators.h"
@@ -19,13 +21,46 @@
 
 namespace Carbon::Check {
 
+// Returns true if the given instruction can only be a template argument, and
+// not a function argument. We classify arguments as definitely being template
+// arguments if they are types or the name of a template or generic.
+// TODO: We should also have a way to specify that an argument is a non-type
+// template argument.
+static auto IsTemplateArg(Context& context, SemIR::InstId arg_id) -> bool {
+  auto arg_type_id = context.insts().Get(arg_id).type_id();
+  auto arg_type = context.types().GetAsInst(arg_type_id);
+  return arg_type
+      .IsOneOf<SemIR::TypeType, SemIR::FacetType, SemIR::CppTemplateNameType,
+               SemIR::GenericClassType, SemIR::GenericInterfaceType,
+               SemIR::GenericNamedConstraintType>();
+}
+
+// Splits a call argument list into a list of template arguments followed by a
+// list of function arguments. We split the argument list as early as possible,
+// subject to the constraint that if an argument is a template argument, it goes
+// in the template argument list.
+static auto SplitCallArgumentList(Context& context,
+                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> std::pair<llvm::ArrayRef<SemIR::InstId>, llvm::ArrayRef<SemIR::InstId>> {
+  for (auto [n, arg_id] : llvm::enumerate(llvm::reverse(arg_ids))) {
+    if (IsTemplateArg(context, arg_id)) {
+      return {arg_ids.drop_back(n), arg_ids.take_back(n)};
+    }
+  }
+  // No template arguments found.
+  return {{}, arg_ids};
+}
+
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,
-                              bool is_operator_syntax) -> SemIR::InstId {
-  SemIR::InstId callee_id = PerformCppOverloadResolution(
-      context, loc_id, overload_set_id, self_id, arg_ids);
+                              bool is_desugared) -> SemIR::InstId {
+  auto [template_arg_ids, function_arg_ids] =
+      SplitCallArgumentList(context, arg_ids);
+  auto callee_id = PerformCppOverloadResolution(
+      context, loc_id, context.cpp_overload_sets().Get(overload_set_id),
+      template_arg_ids, self_id, function_arg_ids);
   SemIR::Callee callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
     case CARBON_KIND(SemIR::CalleeError _): {
@@ -37,8 +72,8 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
         // Preserve the `self` argument from the original callee.
         fn.self_id = self_id;
       }
-      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
-                                   is_operator_syntax);
+      return PerformCallToFunction(context, loc_id, callee_id, fn,
+                                   function_arg_ids, is_desugared);
     }
     case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
       CARBON_FATAL("overloads can't be recursive");
@@ -75,18 +110,22 @@ static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
 // Converts an argument in a call to a C++ template name into a corresponding
 // clang template argument, given the template parameter it will be matched
 // against.
-static auto ConvertArgToTemplateArg(Context& context,
-                                    const clang::NamedDecl* param_decl,
-                                    SemIR::InstId arg_id)
+static auto ConvertArgToTemplateArg(
+    Context& context, clang::TemplateDecl* template_decl,
+    clang::NamedDecl* param_decl, SemIR::InstId arg_id,
+    clang::SmallVector<clang::TemplateArgument>* template_args,
+    unsigned argument_pack_index, bool diagnose)
     -> std::optional<clang::TemplateArgumentLoc> {
   if (isa<clang::TemplateTypeParmDecl>(param_decl)) {
-    auto type = ExprAsType(context, SemIR::LocId(arg_id), arg_id);
+    auto type = ExprAsType(context, SemIR::LocId(arg_id), arg_id, diagnose);
     if (type.type_id == SemIR::ErrorInst::TypeId) {
       return std::nullopt;
     }
     auto clang_type = MapToCppType(context, type.type_id);
     if (clang_type.isNull()) {
-      context.TODO(arg_id, "unsupported type used as template argument");
+      if (diagnose) {
+        context.TODO(arg_id, "unsupported type used as template argument");
+      }
       return std::nullopt;
     }
     return clang::TemplateArgumentLoc(
@@ -114,23 +153,117 @@ static auto ConvertArgToTemplateArg(Context& context,
     return MakePlaceholderTemplateArg(context, arg_id);
   }
 
-  if (isa<clang::NonTypeTemplateParmDecl>(param_decl)) {
-    // TODO: Check the argument has a concrete constant value, and convert it to
-    // a Clang constant value.
-    context.TODO(arg_id, "argument for non-type template parameter");
+  if (auto* non_type = dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
+    auto param_type = non_type->getType();
+    if (non_type->isParameterPack() && non_type->isExpandedParameterPack()) {
+      param_type = non_type->getExpansionType(argument_pack_index);
+    }
+
+    // Handle non-type parameters with a dependent type. For example:
+    //
+    // C++:    template<typename T, T N> struct S{};
+    // Carbon: Cpp.S(i32, 42)
+    //
+    // When evaluating the second template argument, the generic type of
+    // `T` should be substituted with `i32`.
+    if (param_type->isInstantiationDependentType()) {
+      // If we don't want to diagnose errors, create a SFINAE context so that
+      // Clang knows to suppress error messages.
+      std::optional<clang::Sema::SFINAETrap> sfinae;
+      if (!diagnose) {
+        sfinae.emplace(context.clang_sema());
+      }
+
+      clang::Sema::InstantiatingTemplate inst(
+          context.clang_sema(), clang::SourceLocation(), param_decl, non_type,
+          *template_args, clang::SourceRange());
+      if (inst.isInvalid()) {
+        return std::nullopt;
+      }
+      clang::MultiLevelTemplateArgumentList mltal(template_decl, *template_args,
+                                                  /*Final=*/true);
+
+      mltal.addOuterRetainedLevels(non_type->getDepth());
+      if (const auto* pet = param_type->getAs<clang::PackExpansionType>()) {
+        clang::Sema::ArgPackSubstIndexRAII subst_index(context.clang_sema(),
+                                                       argument_pack_index);
+        param_type = context.clang_sema().SubstType(pet->getPattern(), mltal,
+                                                    non_type->getLocation(),
+                                                    non_type->getDeclName());
+      } else {
+        param_type = context.clang_sema().SubstType(param_type, mltal,
+                                                    non_type->getLocation(),
+                                                    non_type->getDeclName());
+      }
+
+      if (!param_type.isNull()) {
+        param_type = context.clang_sema().CheckNonTypeTemplateParameterType(
+            param_type, non_type->getLocation());
+      }
+      if (param_type.isNull() || (sfinae && sfinae->hasErrorOccurred())) {
+        return std::nullopt;
+      }
+    }
+
+    // Get the Carbon type corresponding to the parameter's Clang type.
+    const auto type_expr =
+        ImportCppType(context, SemIR::LocId(arg_id), param_type);
+
+    // Try to convert the argument to the parameter type.
+    const auto converted_inst_id =
+        Convert(context, SemIR::LocId(arg_id), arg_id,
+                {
+                    .kind = ConversionTarget::Value,
+                    .type_id = type_expr.type_id,
+                    .diagnose = diagnose,
+                });
+
+    if (converted_inst_id == SemIR::ErrorInst::InstId) {
+      return std::nullopt;
+    }
+
+    // TODO: provide a better location.
+    auto template_loc = clang::TemplateArgumentLocInfo(context.ast_context(),
+                                                       clang::SourceLocation());
+
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(converted_inst_id);
+    if (const_inst_id.has_value()) {
+      if (param_type->isPointerType()) {
+        if (auto addr_of =
+                context.insts().TryGetAs<SemIR::AddrOf>(const_inst_id)) {
+          if (auto* var_decl = GetAsClangVarDecl(context, addr_of->lvalue_id)) {
+            clang::TemplateArgument template_arg(var_decl, param_type);
+            return clang::TemplateArgumentLoc(template_arg, template_loc);
+          }
+
+          // TODO: support pointers to variables declared in Carbon.
+        }
+      } else if (auto ap_value =
+                     MapConstantToAPValue(context, const_inst_id, param_type)) {
+        clang::TemplateArgument template_arg(context.ast_context(), param_type,
+                                             *ap_value);
+        return clang::TemplateArgumentLoc(template_arg, template_loc);
+      }
+    }
+
+    // TODO: Support other types.
+    if (diagnose) {
+      context.TODO(arg_id,
+                   "unsupported argument type for non-type template parameter");
+    }
     return std::nullopt;
   }
 
   CARBON_FATAL("Unknown declaration kind for template parameter");
 }
 
-// Converts a call argument list into a Clang template argument list for a given
-// template. Returns true on success, or false if an error was diagnosed.
-static auto ConvertArgsToTemplateArgs(Context& context,
-                                      clang::TemplateDecl* template_decl,
-                                      llvm::ArrayRef<SemIR::InstId> arg_ids,
-                                      clang::TemplateArgumentListInfo& arg_list)
-    -> bool {
+auto ConvertArgsToTemplateArgs(Context& context,
+                               clang::TemplateDecl* template_decl,
+                               llvm::ArrayRef<SemIR::InstId> arg_ids,
+                               clang::TemplateArgumentListInfo& arg_list,
+                               bool diagnose) -> bool {
+  clang::SmallVector<clang::TemplateArgument> template_args;
   for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
     if (arg_ids.empty()) {
       return true;
@@ -143,9 +276,13 @@ static auto ConvertArgsToTemplateArgs(Context& context,
     llvm::ArrayRef<SemIR::InstId> args_for_param =
         param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
                                               : arg_ids.consume_front();
-    for (auto arg_id : args_for_param) {
-      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
+    for (auto [argument_pack_index, arg_id] : llvm::enumerate(args_for_param)) {
+      if (auto arg = ConvertArgToTemplateArg(context, template_decl, param_decl,
+                                             arg_id, &template_args,
+                                             argument_pack_index, diagnose)) {
         arg_list.addArgument(*arg);
+        template_args.push_back(arg->getArgument());
+        argument_pack_index++;
       } else {
         return false;
       }

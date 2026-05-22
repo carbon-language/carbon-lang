@@ -21,9 +21,16 @@ import re
 import sys
 from typing import Dict, List, NamedTuple, Set
 
-
 # Example or test diagnostics, ignored because they're expected to not pass.
-IGNORED = set(["MyDiagnostic", "TestDiagnostic", "TestDiagnosticNote"])
+IGNORED = set(
+    [
+        "MyDiagnostic",
+        "TestDiagnostic",
+        "TestDiagnosticContext",
+        "TestDiagnosticNote",
+        "TestDiagnosticSoftContext",
+    ]
+)
 
 
 class Loc(NamedTuple):
@@ -41,7 +48,7 @@ def load_diagnostic_kind() -> Set[str]:
 
     This isn't validated for uniqueness because the compiler does that.
     """
-    path = Path("toolchain/diagnostics/diagnostic_kind.def")
+    path = Path("toolchain/diagnostics/kind.def")
     content = path.read_text()
     decls = set(re.findall(r"^\s+CARBON_DIAGNOSTIC_KIND\((.+)\)", content))
     return decls.difference(IGNORED)

@@ -13,14 +13,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   var x: bool = not 12;
-  // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var x: bool = not 12;
-  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
+  // CHECK:STDERR:   var unused x: bool = not 12;
+  // CHECK:STDERR:                        ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   var unused x: bool = not 12;
+  // CHECK:STDERR:                        ^~~~~~
   // CHECK:STDERR:
-  var x: bool = not 12;
+  var unused x: bool = not 12;
 }
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -33,11 +33,11 @@ fn Main() {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -49,7 +49,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,19 +70,15 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc23_17.1: bool = converted %int_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_17.2: <error> = not <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_24.1: bool = converted %int_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_24.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc23_10.1: type = splice_block %.loc23_10.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc23_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc23_10.3: type = converted %Bool.call, %.loc23_10.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23_17: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %x: ref bool = ref_binding x, %x.var
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:

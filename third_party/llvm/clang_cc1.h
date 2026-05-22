@@ -19,10 +19,10 @@ namespace Carbon {
 // TODO: Much of the logic here should be factored out of the CC1
 // implementation in Clang's driver and into a reusable part of its libraries.
 // That should allow reducing the code here to a minimal amount.
-auto RunClangCC1(const InstallPaths& installation,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 llvm::SmallVectorImpl<const char*>& cc1_args,
-                 bool enable_leaking) -> int;
+auto RunClangCC1Main(const InstallPaths& installation,
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     llvm::SmallVectorImpl<const char*>& cc1_args,
+                     bool enable_leaking) -> int;
 
 }  // namespace Carbon
 

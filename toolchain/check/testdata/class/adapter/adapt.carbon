@@ -52,6 +52,8 @@ fn F(a: AdaptNotExtend) {
 
 // --- fail_misplaced.carbon
 
+library "[[@TEST_NAME]]";
+
 fn F() {
   // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
   // CHECK:STDERR:   adapt i32;
@@ -78,7 +80,7 @@ interface I {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %SomeClass.elem: type = unbound_element_type %SomeClass, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %complete_type.f58: <witness> = complete_type_witness %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [concrete]
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [concrete]
 // CHECK:STDOUT: }
@@ -106,13 +108,9 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.f58]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -124,7 +122,7 @@ interface I {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [concrete = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.f58]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -133,13 +131,11 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @StructAdapter {
-// CHECK:STDOUT:   %int_32.loc14_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc14_14: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc14_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   adapt_decl %struct_type.a.b [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.f58]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -178,8 +174,8 @@ interface I {
 // CHECK:STDOUT:   %Adapted.decl: type = class_decl @Adapted [concrete = constants.%Adapted] {} {}
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [concrete = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param call_param0
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [concrete = constants.%AdaptNotExtend]
@@ -253,8 +249,10 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -265,8 +263,9 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

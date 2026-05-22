@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_LEX_LEX_H_
 
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/source/source_buffer.h"
 

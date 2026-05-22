@@ -22,7 +22,7 @@ import Cpp library "enum.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  let a: Cpp.Enum = Cpp.Enum.a;
+  let unused a: Cpp.Enum = Cpp.Enum.a;
 }
 //@dump-sem-ir-end
 
@@ -33,11 +33,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_name_without_scope.carbon:[[@LINE+4]]:21: error: member name `b` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let b: Cpp.Enum = Cpp.b;
-  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_name_without_scope.carbon:[[@LINE+4]]:28: error: member name `b` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused b: Cpp.Enum = Cpp.b;
+  // CHECK:STDERR:                            ^~~~~
   // CHECK:STDERR:
-  let b: Cpp.Enum = Cpp.b;
+  let unused b: Cpp.Enum = Cpp.b;
 }
 
 // CHECK:STDOUT: --- import_enum.carbon
@@ -68,12 +68,12 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc8_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc8_31: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_20 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc8_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %Enum = value_binding a, %a.ref
 // CHECK:STDOUT:   return

@@ -65,11 +65,14 @@ struct CompileOptions {
   bool builtin_sem_ir = false;
   bool prelude_import = false;
   bool include_debug_info = true;
+  bool output_last_input_only = false;
   bool run_llvm_verifier = true;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 
   llvm::StringRef sem_ir_crash_dump;
+
+  bool mangle_string_fingerprint = false;
 };
 
 // Implements the compile subcommand of the driver.

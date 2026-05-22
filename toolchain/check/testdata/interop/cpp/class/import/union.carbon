@@ -1,0 +1,443 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/class/import/union.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/import/union.carbon
+
+// ============================================================================
+// Declaration
+// ============================================================================
+
+// --- declaration.h
+
+union Bar;
+
+// --- import_declaration.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "declaration.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar*);
+//@dump-sem-ir-end
+
+// --- fail_use_declaration_as_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "declaration.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:19: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var unused bar: Cpp.Bar;
+  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union Bar;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var unused bar: Cpp.Bar;
+}
+
+// ============================================================================
+// Definition
+// ============================================================================
+
+// --- definition.h
+
+union Bar {};
+
+// --- import_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "definition.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar*);
+//@dump-sem-ir-end
+
+// ============================================================================
+// Declaration and definition
+// ============================================================================
+
+// --- declaration_and_definition.h
+
+union Bar;
+union Bar {};
+
+// --- import_declaration_and_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "declaration_and_definition.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar*);
+//@dump-sem-ir-end
+
+// ============================================================================
+// Static member function
+// ============================================================================
+
+// --- static_member_function.h
+
+union Bar {
+ public:
+  static auto foo() -> void;
+};
+
+// --- import_static_member_function.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "static_member_function.h";
+
+fn MyF() {
+  //@dump-sem-ir-begin
+  Cpp.Bar.foo();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Static data member
+// ============================================================================
+
+// --- static_data_member.h
+
+union Bar {
+ public:
+  static Bar* _Nonnull foo;
+};
+
+// --- import_static_data_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "static_data_member.h";
+
+fn MyF() {
+  //@dump-sem-ir-begin
+  let unused bar: Cpp.Bar* = Cpp.Bar.foo;
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Data member
+// ============================================================================
+
+// --- data_member.h
+
+union Bar {
+ public:
+  Bar* _Nonnull foo;
+};
+
+// --- import_data_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "data_member.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar : Cpp.Bar*) {
+  let unused foo_bar: Cpp.Bar* = bar->foo;
+}
+//@dump-sem-ir-end
+
+// ============================================================================
+// Template
+// ============================================================================
+
+// --- template.h
+
+struct X {};
+
+template<typename T>
+union Bar {};
+
+// --- import_template.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "template.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar(Cpp.X)*);
+//@dump-sem-ir-end
+
+// CHECK:STDOUT: --- import_declaration.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_definition.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_declaration_and_definition.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_static_member_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.type: type = cpp_overload_set_type @Bar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
+// CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete = constants.%Bar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_static_data_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr.00b: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.00b [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
+// CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %ptr.00b = var %foo.var_patt [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:   %foo.ref: ref %ptr.00b = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
+// CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_37: %ptr.00b = acquire_value %foo.ref
+// CHECK:STDOUT:   %bar: %ptr.00b = value_binding bar, %.loc8_37
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_data_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr.00b: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.00b [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.00b [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr.00b = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr.00b = value_binding bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.00b) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %bar.ref: %ptr.00b = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
+// CHECK:STDOUT:   %.loc8_37.2: ref %ptr.00b = class_element_access %.loc8_37.1, element0
+// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_37.3: %ptr.00b = acquire_value %.loc8_37.2
+// CHECK:STDOUT:   %foo_bar: %ptr.00b = value_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_template.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar.type: type = cpp_type_template_type Bar [concrete]
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.template
+// CHECK:STDOUT:     .X = %X.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete = constants.%Bar.template]
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref.loc7_13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: %Bar.type = name_ref Bar, imports.%Bar.template [concrete = constants.%Bar.template]
+// CHECK:STDOUT:       %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:       %ptr: type = ptr_type imports.%Bar.decl [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:

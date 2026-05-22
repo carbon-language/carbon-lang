@@ -12,6 +12,7 @@
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/formatter_chunks.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::SemIR {
@@ -28,24 +29,28 @@ class Formatter {
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // We first print top-level scopes (constants, imports, and file) then
-  // entities (types and functions). The ordering is based on references:
+  // We first print top-level scopes (`constants`, `imports`, `generated`, and
+  // `file`) then entities (types and functions). The ordering is based on
+  // references:
   //
-  // - constants can have internal references.
-  // - imports can refer to constants.
-  // - file can refer to constants and imports, and also entities.
+  // - `constants` is self-contained.
+  // - `imports` can refer to `constants`.
+  // - `generated` can refer to both of the above.
+  // - `file` can refer to any of the above, and also entities.
   // - Entities are difficult to order (forward declarations may lead to
   //   circular references), and so are simply grouped by type.
   //
-  // When formatting constants and imports, we use `OutputChunks` to only print
-  // entities which are referenced. For example, imports speculatively create
-  // constants which may never be referenced, or for which the referencing
-  // instruction may be hidden and we normally hide those. See `OutputChunk` for
+  // When formatting scopes other than `file`, we use `FormatterChunks` to only
+  // print entities which are referenced. For example, `imports` speculatively
+  // create constants which may never be referenced, or for which the
+  // referencing instruction may be hidden and we normally hide those; those are
+  // excluded from the `constants` scope output. See `FormatterChunks` for
   // additional information.
   //
-  // Beyond `OutputChunk`, `ShouldFormatEntity` and `ShouldFormatInst` can also
-  // hide instructions. These interact because an hidden instruction means its
-  // references are unused for `OutputChunk` visibility.
+  // Beyond the reference-based printing, `ShouldFormatEntity` and
+  // `ShouldFormatInst` can also hide instructions. These interact because an
+  // hidden instruction means its references are unused for `FormatterChunks`
+  // visibility.
   auto Format() -> void;
 
   // Write buffered output to the given stream. `Format` must be called first.
@@ -54,62 +59,9 @@ class Formatter {
  private:
   enum class AddSpace : bool { Before, After };
 
-  // A chunk of the buffered output. Constants and imports are buffered as
-  // `OutputChunk`s until we reach the end of formatting so that we can decide
-  // whether to include them based on whether they are referenced.
-  //
-  // When `FormatName` is called for an instruction, it's considered referenced;
-  // if that instruction is in an `OutputChunk`, it and all of its dependencies
-  // will be marked for printing by `Write`. If that doesn't occur by the end,
-  // it will be omitted.
-  struct OutputChunk {
-    // Whether this chunk is known to be included in the output.
-    bool include_in_output;
-    // The textual contents of this chunk.
-    std::string chunk = std::string();
-    // Indices in `ouput_chunks_` that should be included in the output if this
-    // one is.
-    llvm::SmallVector<size_t> dependencies = {};
-  };
-
-  // All formatted output within the scope of this object is redirected to a
-  // new tentative `OutputChunk`. The new chunk will depend on
-  // `parent_chunk_index`.
-  struct TentativeOutputScope {
-    explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
-        : formatter(f) {
-      // If our parent is not known to be included, create a new chunk and
-      // include it only if the parent is later found to be used.
-      if (!f.output_chunks_[parent_chunk_index].include_in_output) {
-        index = formatter.AddChunk(false);
-        f.output_chunks_[parent_chunk_index].dependencies.push_back(index);
-      }
-    }
-    ~TentativeOutputScope() {
-      auto next_index = formatter.AddChunk(true);
-      CARBON_CHECK(next_index == index + 1, "Nested TentativeOutputScope");
-    }
-    Formatter& formatter;
-    size_t index;
-  };
-
   // Fills `node_parents_` with parent information. Called at most once during
   // construction.
   auto ComputeNodeParents() -> void;
-
-  // Flushes the buffered output to the current chunk.
-  auto FlushChunk() -> void;
-
-  // Adds a new chunk to the output. Does not flush existing output, so should
-  // only be called if there is no buffered output.
-  auto AddChunkNoFlush(bool include_in_output) -> size_t;
-
-  // Flushes the current chunk and add a new chunk to the output.
-  auto AddChunk(bool include_in_output) -> size_t;
-
-  // Marks the given chunk as being included in the output if the current chunk
-  // is.
-  auto IncludeChunkInOutput(size_t chunk) -> void;
 
   // Returns true if the instruction should be included according to its
   // originating IR. Typically `ShouldFormatEntity` should be used instead.
@@ -145,9 +97,8 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
-                                 llvm::ArrayRef<InstId> block,
-                                 bool use_tentative_output_scopes) -> void;
+  auto FormatTopLevelScope(InstNamer::ScopeId scope_id,
+                           llvm::ArrayRef<InstId> block) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id, const Class& class_info) -> void;
@@ -165,10 +116,6 @@ class Formatter {
   // Formats a full require declaration.
   auto FormatRequireImpls(RequireImplsId id, const RequireImpls& require)
       -> void;
-
-  // Formats an associated constant entity.
-  auto FormatAssociatedConstant(AssociatedConstantId id,
-                                const AssociatedConstant& assoc_const) -> void;
 
   // Formats a full impl.
   auto FormatImpl(ImplId id, const Impl& impl) -> void;
@@ -210,13 +157,20 @@ class Formatter {
   // entities.
   auto FormatGenericEnd() -> void;
 
-  // Formats parameters, eliding them completely if they're empty. Wraps input
-  // parameters in parentheses. If `return_form_id` is not None, this also
-  // formats the return form, and parameters in the return form are omitted
-  // from the parenthesized parameter list.
-  auto FormatParamList(InstBlockId params_id,
-                       SemIR::InstId return_form_id = SemIR::InstId::None)
-      -> void;
+  // Formats `params_id` as a parameter list in parentheses. Does nothing if
+  // `params_id` is None.
+  auto FormatParamList(InstBlockId params_id) -> void {
+    FormatFunctionSignature(params_id, SemIR::CallParamIndex::None,
+                            SemIR::InstId::None);
+  }
+
+  // Formats a function signature with `Call` parameter block `params_id` and
+  // declared return form `return_form`. `return_begin` must be the starting
+  // index of the return-parameter subrange of `params_id` (so if there are
+  // no return parameters it should be equal to the number of parameters).
+  auto FormatFunctionSignature(InstBlockId params_id,
+                               SemIR::CallParamIndex return_begin,
+                               SemIR::InstId return_form_id) -> void;
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void;
@@ -249,9 +203,12 @@ class Formatter {
   // no such arguments.
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
-  // Formats `<name>[: <type>] = `. Skips unnamed instructions (according to
+  // Formats `<name>[: <form>] = `. Skips unnamed instructions (according to
   // `inst_namer_`). Typed instructions must be named.
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
+
+  // Formats `<name>[: <form>]`. The inst must have a name.
+  auto FormatNameAndForm(InstId inst_id, Inst inst) -> void;
 
   // Formats arguments to an instruction. This will typically look like "
   // <arg0>, <arg1>".
@@ -287,9 +244,9 @@ class Formatter {
 
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
-    out_ << ' ';
+    out() << ' ';
     llvm::ListSeparator sep;
-    ((out_ << sep, FormatArg(args)), ...);
+    ((out() << sep, FormatArg(args)), ...);
   }
 
   // FormatArg variants handling printing instruction arguments. Several things
@@ -304,31 +261,37 @@ class Formatter {
     FormatName(id);
   }
 
-  auto FormatArg(BoolValue v) -> void { out_ << v; }
-  auto FormatArg(CharId c) -> void { out_ << c; }
+  auto FormatArg(BoolValue v) -> void { out() << v; }
+  auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(FacetTypeId id) -> void;
-  auto FormatArg(IntKind k) -> void { k.Print(out_); }
-  auto FormatArg(FloatKind k) -> void { k.Print(out_); }
+  auto FormatArg(IntKind k) -> void { k.Print(out()); }
+  auto FormatArg(FloatKind k) -> void { k.Print(out()); }
   auto FormatArg(ImportIRId id) -> void;
   auto FormatArg(IntId id) -> void;
-  auto FormatArg(ElementIndex index) -> void { out_ << index; }
-  auto FormatArg(CallParamIndex index) -> void { out_ << index; }
+  auto FormatArg(ElementIndex index) -> void { out() << index; }
+  auto FormatArg(CallParamIndex index) -> void { out() << index; }
   auto FormatArg(NameScopeId id) -> void;
   auto FormatArg(InstBlockId id) -> void;
   auto FormatArg(AbsoluteInstBlockId id) -> void;
+  auto FormatArg(ExprRegionId id) -> void;
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
+  auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
 
-  // A `FormatArg` wrapper for `FormatInstArgAndKind`.
-  using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;
+  template <typename BundleT>
+  auto FormatArg(BundleId<BundleT> bundle_id) -> void {
+    llvm::ListSeparator sep;
+    auto format_with_sep = [&](auto id) {
+      out() << sep;
+      FormatArg(id);
+    };
+    std::apply([&](auto... id) -> void { (..., format_with_sep(id)); },
+               sem_ir_->bundles().GetAsTuple(bundle_id));
+  }
 
-  // Returns the `FormatArgFnT` for the given `IdKind`.
-  template <typename... Types>
-  static auto GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT*;
-
-  // Calls `FormatArg` from an `ArgAndKind`.
-  auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
+  // Calls `FormatArg` from an `IdAndKind`.
+  auto FormatInstArgAndKind(IdAndKind arg_and_kind) -> void;
 
   auto FormatReturnSlotArg(InstId dest_id) -> void;
 
@@ -339,7 +302,7 @@ class Formatter {
     requires(InstNamer::ScopeIdTypeEnum::Contains<IdT> ||
              std::same_as<IdT, GenericId>)
   auto FormatName(IdT id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
+    out() << inst_namer_.GetNameFor(id);
   }
 
   auto FormatName(NameId id) -> void;
@@ -358,6 +321,12 @@ class Formatter {
   // Returns the label for the indicated IR.
   auto GetImportIRLabel(ImportIRId id) -> std::string;
 
+  // The output stream.
+  auto out() -> llvm::raw_ostream& { return chunks_.out(); }
+
+  // The output chunks.
+  FormatterChunks chunks_;
+
   const File* sem_ir_;
   InstNamer inst_namer_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
@@ -367,15 +336,6 @@ class Formatter {
 
   // Whether to use ranges when dumping, or to dump the full SemIR.
   bool use_dump_sem_ir_ranges_;
-
-  // The output stream buffer.
-  std::string buffer_;
-
-  // The output stream.
-  llvm::raw_string_ostream out_ = llvm::raw_string_ostream(buffer_);
-
-  // Chunks of output text that we have created so far.
-  llvm::SmallVector<OutputChunk> output_chunks_;
 
   // The current scope that we are formatting within. References to names in
   // this scope will not have a `@scope.` prefix added.
@@ -408,9 +368,18 @@ class Formatter {
   // first open brace or the semicolon in the entity declaration.
   llvm::StringRef pending_imported_from_;
 
-  // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index.
-  FixedSizeValueStore<InstId, size_t, Tag<CheckIRId>> tentative_inst_chunks_;
+  // Chunks for each scope's labels, including `File` scope. These are parents
+  // of chunks containing a scope's `<label> {` and `}` output, and children of
+  // the scope's instructions in `tentative_inst_chunks_`.
+  std::array<FormatterChunks::ChunkId,
+             static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope)>
+      scope_label_chunks_;
+
+  // Chunks for each instruction in a tentative top-level scope. These don't
+  // directly contain content, and are instead parents of the instruction's
+  // output to help indirect inclusion.
+  FixedSizeValueStore<InstId, FormatterChunks::ChunkId, Tag<CheckIRId>>
+      tentative_inst_chunks_;
 
   // Maps nodes to their parents. Only set when dump ranges are in use, because
   // the parents aren't used otherwise.
@@ -425,15 +394,15 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
     FormatGenericStart(entity_kind, generic_id);
   }
 
-  out_ << "\n";
+  out() << "\n";
   after_open_brace_ = false;
   Indent();
-  out_ << entity_kind;
+  out() << entity_kind;
 
   // If there's a generic, it will have attached the name. Otherwise, add the
   // name here.
   if (!generic_id.has_value()) {
-    out_ << " ";
+    out() << " ";
     FormatName(entity_id);
   }
 }
@@ -443,24 +412,6 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
   FormatEntityStart(entity_kind, entity.generic_id, entity_id);
-}
-
-template <typename... Types>
-auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
-  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
-      [](Formatter& formatter, int32_t arg) -> void {
-        auto typed_arg = Inst::FromRaw<Types>(arg);
-        if constexpr (requires { formatter.FormatArg(typed_arg); }) {
-          formatter.FormatArg(typed_arg);
-        } else {
-          CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
-        }
-      }...,
-      // Invalid and None handling (ordering-sensitive).
-      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
-      [](auto...) -> void {},
-  };
-  return Table[id_kind.ToIndex()];
 }
 
 }  // namespace Carbon::SemIR

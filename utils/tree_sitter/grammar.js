@@ -46,6 +46,7 @@ module.exports = grammar({
   conflicts: ($) => [
     [$.paren_pattern, $.paren_expression],
     [$.struct_literal, $.struct_type_literal],
+    [$._pattern_without_expression, $._simple_expression],
   ],
 
   extras: ($) => [/\s/, $.comment],
@@ -163,6 +164,7 @@ module.exports = grammar({
     _pattern_without_expression: ($) =>
       choice(
         'auto',
+        seq(optional('ref'), 'self', optional(seq(':', $._expression))),
         seq($.binding_lhs, ':', $._expression),
         seq($.binding_lhs, ':!', $._expression),
         seq('template', $.binding_lhs, ':!', $._expression),
@@ -316,7 +318,7 @@ module.exports = grammar({
 
     var_declaration: ($) =>
       seq(
-        'var',
+        seq(optional('static'), 'var'),
         $._pattern_without_expression,
         optional(seq('=', $._expression)),
         ';'
@@ -379,11 +381,7 @@ module.exports = grammar({
     generic_binding: ($) =>
       seq(optional('template'), $.ident, ':!', $._expression),
 
-    deduced_param: ($) =>
-      choice(
-        $.generic_binding,
-        seq(optional('addr'), 'self', ':', $._expression)
-      ),
+    deduced_param: ($) => $.generic_binding,
 
     deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
 

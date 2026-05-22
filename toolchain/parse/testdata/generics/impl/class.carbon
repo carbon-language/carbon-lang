@@ -23,7 +23,7 @@ class C {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'ImplDefaultSelfAs', text: 'as'},
@@ -46,7 +46,7 @@ class C {
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'ExtendImpl'},
 // CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'FunctionDecl', text: ';', subtree_size: 5},

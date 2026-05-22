@@ -17,6 +17,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
@@ -63,8 +64,7 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
   // Push a pattern block for the signature of the `forall`.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
+  context.full_pattern_stack().PushParameterizedDecl();
   return true;
 }
 
@@ -126,9 +126,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     // duplicating the handling of the `Self` expression.
     self_inst_id = AddTypeInst(
         context, node_id,
-        SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
-                       .name_id = SemIR::NameId::SelfType,
-                       .value_id = context.types().GetInstId(self_type_id)});
+        SemIR::NameRef{
+            .type_id = SemIR::TypeType::TypeId,
+            .name_id = SemIR::NameId::SelfType,
+            .value_id = context.types().GetTypeInstId(self_type_id)});
   } else {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
@@ -156,14 +157,15 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto [call_param_patterns_id, call_params_id] =
+    auto match_results =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::None, SemIR::InstBlockId::None);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
-    CARBON_CHECK(call_param_patterns_id == SemIR::InstBlockId::Empty);
+                           SemIR::InstBlockId::None, SemIR::InstId::None);
+    CARBON_CHECK(match_results.call_params_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(match_results.call_param_patterns_id ==
+                 SemIR::InstBlockId::Empty);
   }
 
-  Parse::NodeId first_param_node_id =
+  auto first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
@@ -186,6 +188,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
+          .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
           .pattern_block_id = pattern_block_id};
 }
 
@@ -226,17 +229,43 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                          SemIR::ImplDecl{.impl_id = SemIR::ImplId::None,
                                          .decl_block_id = decl_block_id});
 
-  // This requires that the facet type is identified. It returns None if an
-  // error was diagnosed.
+  if (!CheckConstraintIsFacetType(context, node_id, constraint_type_inst_id)) {
+    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // The identified facet type will also replace `.Self` references in the
+  // specific interface, but we want to store the full facet type not just the
+  // identified one. So we have to replace `.Self` references explicitly here in
+  // the constraint.
+  //
+  // We do this after `CheckConstraintIsFacetType()` which has ensured the
+  // constraint is in fact a FacetType. We do this before identifying the facet
+  // type in `CheckConstraintIsInterface()` so that the identified facet type is
+  // for the substituted facet type instruction that will be stored in the Impl.
+  // This ensures the impl bucket finds the identified facet type.
+  constraint_type_inst_id = SubstPeriodSelfInFacetType(
+      context, constraint_node, self_type_inst_id, constraint_type_inst_id);
+
+  // This requires that the facet type is identified, and returns the single
+  // interface from the identified facet type. It returns None if an error was
+  // diagnosed.
   auto specific_interface = CheckConstraintIsInterface(
-      context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
+      context, node_id, self_type_inst_id, constraint_type_inst_id);
+  if (!specific_interface.interface_id.has_value()) {
+    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // The impl decl has a scope stack entry for the DeclNameStack, so we look at
+  // the parent scope of that.
+  auto parent_scope_inst_id = context.scope_stack().PeekParentInstId();
 
   auto impl_id = SemIR::ImplId::None;
   {
     SemIR::Impl impl = {name_context.MakeEntityWithParamsBase(
                             name, impl_decl_id,
                             /*is_extern=*/false, SemIR::LibraryNameId::None),
-                        {.self_id = self_type_inst_id,
+                        {.parent_scope_inst_id = parent_scope_inst_id,
+                         .self_id = self_type_inst_id,
                          .constraint_id = constraint_type_inst_id,
                          .interface = specific_interface,
                          .is_final = is_final}};
@@ -249,8 +278,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         context.types().GetTypeIdForTypeInstId(impl.self_id) ==
             SemIR::ErrorInst::TypeId ||
         context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
-            SemIR::ErrorInst::TypeId ||
-        !impl.interface.interface_id.has_value();
+            SemIR::ErrorInst::TypeId;
 
     CARBON_KIND_SWITCH(FindImplId(context, impl)) {
       case CARBON_KIND(RedeclaredImpl redeclared_impl): {
@@ -342,6 +370,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   impl.scope_id =
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
+  context.name_scopes().Get(impl.scope_id).set_self_type_id(impl.self_id);
+  context.name_scopes().Get(impl.scope_id).AddExtendedScope(impl.constraint_id);
 
   context.scope_stack().PushForEntity(
       impl_decl_id, impl.scope_id,

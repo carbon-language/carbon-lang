@@ -24,6 +24,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -79,11 +80,6 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
 
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
-    prev_class.scope_id = new_class.scope_id;
-    prev_class.body_block_id = new_class.body_block_id;
-    prev_class.adapt_id = new_class.adapt_id;
-    prev_class.base_id = new_class.base_id;
-    prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
   if (prev_import_ir_id.has_value() ||
@@ -318,7 +314,7 @@ static auto GetCurrentScopeAsClassOrDiagnose(Context& context,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope =
-      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
+      context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
     DiagnoseClassSpecificDeclOutsideClass(context, loc_id, tok);
   }
@@ -377,21 +373,24 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_type_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = AsConcreteType(
-      context, adapted_type_id, node_id,
-      [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                          "adapted type {0} is an incomplete type",
-                          InstIdAsType);
-        return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                       adapted_type_inst_id);
-      },
-      [&] {
-        CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
-                          "adapted type {0} is an abstract type", InstIdAsType);
-        return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
-                                       adapted_type_inst_id);
-      });
+  if (!RequireConcreteType(
+          context, adapted_type_id, node_id,
+          [&](auto& builder) {
+            CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Context,
+                              "adapted type {0} is an incomplete type",
+                              InstIdAsType);
+            builder.Context(node_id, IncompleteTypeInAdaptDecl,
+                            adapted_type_inst_id);
+          },
+          [&](auto& builder) {
+            CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Context,
+                              "adapted type {0} is an abstract type",
+                              InstIdAsType);
+            builder.Context(node_id, AbstractTypeInAdaptDecl,
+                            adapted_type_inst_id);
+          })) {
+    adapted_type_id = SemIR::ErrorInst::TypeId;
+  }
   if (adapted_type_id == SemIR::ErrorInst::TypeId) {
     adapted_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
@@ -449,14 +448,14 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto [base_type_inst_id, base_type_id] =
       ExprAsType(context, node_id, base_expr_id);
-  base_type_id = AsCompleteType(context, base_type_id, node_id, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "base {0} is an incomplete type", InstIdAsType);
-    return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
-                                   base_type_inst_id);
-  });
-
   if (base_type_id == SemIR::ErrorInst::TypeId) {
+    return BaseInfo::Error;
+  }
+  if (!RequireCompleteType(context, base_type_id, node_id, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Context,
+                          "base {0} is an incomplete type", InstIdAsType);
+        builder.Context(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
+      })) {
     return BaseInfo::Error;
   }
 
@@ -529,7 +528,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context, context.types().GetTypeInstId(class_info.self_type_id),
       base_info.inst_id);
   class_info.base_id =
       AddInst<SemIR::BaseDecl>(context, node_id,

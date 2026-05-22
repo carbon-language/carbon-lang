@@ -9,6 +9,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -28,7 +29,9 @@ auto GetReturnedVarParam(Context& context, const SemIR::Function& function)
   if (auto return_form =
           context.insts().TryGetAsIfValid<SemIR::InitForm>(return_form_id)) {
     auto call_params = context.inst_blocks().Get(function.call_params_id);
-    auto return_param_id = call_params[return_form->index.index];
+    CARBON_CHECK(function.call_param_ranges.return_size() == 1);
+    auto return_param_id =
+        call_params[function.call_param_ranges.return_begin().index];
     auto return_type_id = context.insts().Get(return_param_id).type_id();
     if (SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
             .MightBeInPlace()) {
@@ -73,7 +76,7 @@ static auto NoteReturnedVar(DiagnosticBuilder& diag,
 
 auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
-                         SemIR::InstId bind_id) -> void {
+                         SemIR::InstId bind_id, SemIR::NameId name_id) -> void {
   auto& function = GetCurrentFunctionForReturn(context);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
@@ -111,7 +114,8 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
     diag.Emit();
   }
 
-  auto existing_id = context.scope_stack().SetReturnedVarOrGetExisting(bind_id);
+  auto existing_id =
+      context.scope_stack().SetReturnedVarOrGetExisting(bind_id, name_id);
   if (existing_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "cannot declare a `returned var` in the scope of "
@@ -164,22 +168,30 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
-  } else if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
-                  .is_valid() ||
-             return_type_id == SemIR::ErrorInst::TypeId) {
-    // We already diagnosed that the return type is invalid. Don't try to
-    // convert to it.
-    expr_id = SemIR::ErrorInst::InstId;
   } else {
     auto return_form =
         context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
     CARBON_KIND_SWITCH(return_form) {
-      case CARBON_KIND(SemIR::InitForm init_form): {
-        auto call_params = context.inst_blocks().Get(
-            GetCurrentFunctionForReturn(context).call_params_id);
-        out_param_id = call_params[init_form.index.index];
+      case CARBON_KIND(SemIR::InitForm _): {
+        if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
+                 .is_valid() ||
+            return_type_id == SemIR::ErrorInst::TypeId) {
+          // We already diagnosed that the return type is invalid.
+          // Don't try to convert to it.
+          expr_id = SemIR::ErrorInst::InstId;
+          break;
+        }
+        auto call_params = context.inst_blocks().Get(function.call_params_id);
+        if (function.call_param_ranges.return_size() == 0) {
+          out_param_id = SemIR::InstId::None;
+          break;
+        }
+        CARBON_CHECK(function.call_param_ranges.return_size() == 1);
+        out_param_id =
+            call_params[function.call_param_ranges.return_begin().index];
         CARBON_CHECK(out_param_id.has_value());
-        expr_id = Initialize(context, loc_id, out_param_id, expr_id);
+        expr_id = InitializeExisting(context, loc_id, out_param_id, expr_id,
+                                     /*for_return=*/true);
         if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
                  .MightBeInPlace()) {
           out_param_id = SemIR::InstId::None;
@@ -194,11 +206,14 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                                  ref_form.type_component_inst_id)});
         break;
       }
+      case CARBON_KIND(SemIR::ErrorInst _): {
+        expr_id = SemIR::ErrorInst::InstId;
+        break;
+      }
       default:
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
-
   AddReturnCleanupBlockWithExpr(context, loc_id,
                                 {.expr_id = expr_id, .dest_id = out_param_id});
 }

@@ -43,7 +43,8 @@ class DeductionWorklist {
 
   // Adds a single (param, arg) type deduction.
   auto Add(SemIR::TypeId param, SemIR::TypeId arg) -> void {
-    Add(context_->types().GetInstId(param), context_->types().GetInstId(arg));
+    Add(context_->types().GetTypeInstId(param),
+        context_->types().GetTypeInstId(arg));
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -109,7 +110,7 @@ class DeductionWorklist {
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
-  auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg) -> void {
+  auto AddInstArg(SemIR::IdAndKind param, int32_t arg) -> void {
     CARBON_KIND_SWITCH(param) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
@@ -159,8 +160,7 @@ class DeductionContext {
   // not be deduced. `context` must not be null.
   DeductionContext(Context* context, SemIR::LocId loc_id,
                    SemIR::GenericId generic_id,
-                   SemIR::SpecificId enclosing_specific_id,
-                   SemIR::InstId self_type_id, bool diagnose);
+                   SemIR::SpecificId enclosing_specific_id, bool diagnose);
 
   auto context() const -> Context& { return *context_; }
 
@@ -230,7 +230,7 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
 DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
                                    SemIR::GenericId generic_id,
                                    SemIR::SpecificId enclosing_specific_id,
-                                   SemIR::InstId self_type_id, bool diagnose)
+                                   bool diagnose)
     : context_(context),
       loc_id_(loc_id),
       generic_id_(generic_id),
@@ -265,16 +265,6 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
     first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
   }
 
-  if (self_type_id.has_value()) {
-    // Copy the provided `Self` type as the value of the next binding.
-    auto self_index = first_deduced_index_;
-    result_arg_ids_[self_index.index] = self_type_id;
-    substitutions_.push_back(
-        {.bind_id = SemIR::CompileTimeBindIndex(self_index),
-         .replacement_id = context->constant_values().Get(self_type_id)});
-    first_deduced_index_ = SemIR::CompileTimeBindIndex(self_index.index + 1);
-  }
-
   non_deduced_indexes_.resize(result_arg_ids_.size() -
                               first_deduced_index_.index);
 }
@@ -300,8 +290,11 @@ auto DeductionContext::Deduce() -> bool {
 
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
-      Add(context().types().GetInstId(param_type_id),
-          context().types().GetInstId(context().insts().Get(arg_id).type_id()));
+      // TODO: This looks liable to add redundant work (possibly even
+      // exponential amounts of it) in some of the cases handled below.
+      Add(context().types().GetTypeInstId(param_type_id),
+          context().types().GetTypeInstId(
+              context().insts().Get(arg_id).type_id()));
     } else {
       // The argument (e.g. a TupleLiteral of types) may be convertible to a
       // compile-time value (e.g. TupleType) that we can decompose further.
@@ -407,11 +400,6 @@ auto DeductionContext::Deduce() -> bool {
           }
           result_arg_ids_[index.index] = arg_const_inst_id;
         }
-        continue;
-      }
-
-      case CARBON_KIND(SemIR::ValueParamPattern pattern): {
-        Add(pattern.subpattern_id, arg_id);
         continue;
       }
 
@@ -576,13 +564,13 @@ auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
 
 auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::InstId self_type_id,
+    SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
     SemIR::InstBlockId param_patterns_id,
     [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
-                             enclosing_specific_id, self_type_id,
+                             enclosing_specific_id,
                              /*diagnose=*/true);
 
   // Prepare to perform deduction of the explicit parameters against their
@@ -603,7 +591,6 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
-                             /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface. Use the canonical

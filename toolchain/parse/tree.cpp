@@ -8,6 +8,7 @@
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -87,3 +88,8 @@ auto Tree::PostorderIterator::Print(llvm::raw_ostream& output) const -> void {
 }
 
 }  // namespace Carbon::Parse
+
+namespace Carbon {
+template class ValueStore<Parse::DeferredDefinitionIndex,
+                          Parse::DeferredDefinition>;
+}  // namespace Carbon

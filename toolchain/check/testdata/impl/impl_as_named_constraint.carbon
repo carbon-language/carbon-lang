@@ -169,14 +169,146 @@ constraint B(X:! Undefined) {
 
 impl () as B(1) {}
 
+// --- impl_as_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I;
+}
+
+class C;
+impl C as N where .I1 = C {}
+
+fn F(_:! I where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- impl_as_concrete_generic_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+class C;
+
+constraint N {
+  extend require impls I(C);
+}
+
+impl C as N where .I1 = C {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I(Self);
+}
+
+class C;
+impl C as N where .I1 = C {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I where .I1 = Self;
+}
+
+class C;
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1:! type;
+// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:
+impl C as N {}
+
+fn F(_:! I where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let I1:! type;
+}
+
+constraint N {
+  extend require impls I(Self) where .I1 = Self;
+}
+
+class C;
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1:! type;
+// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:
+impl C as N {}
+
+fn F(_:! I(.Self) where .I1 = .Self) {}
+fn G() {
+// TODO: This crashes.
+//   F(C);
+}
+
+// --- fail_no_require_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+class C;
+
+constraint Y {
+  // `Self` must appear somewhere in the require decl, so it's in the interface
+  // specific because we want to test a different self-type.
+  require C impls Z(Self);
+}
+
+// Y does not have any extend require on `Self`.
+// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y {}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = generic_named_constaint_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct: %B.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -193,9 +325,12 @@ impl () as B(1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self: <error> = symbolic_binding Self, 1 [concrete = <error>]
+// CHECK:STDOUT:     %B.WithSelf.decl = constraint_with_self_decl @B [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self
+// CHECK:STDOUT:     .A = <poisoned>
+// CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     has_error
@@ -205,4 +340,6 @@ impl () as B(1) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(<error>) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B.WithSelf(<error>, <error>) {}
 // CHECK:STDOUT:

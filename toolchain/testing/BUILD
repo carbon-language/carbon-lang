@@ -33,7 +33,7 @@ cc_library(
     srcs = ["compile_helper.cpp"],
     hdrs = ["compile_helper.h"],
     deps = [
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/lex",
         "//toolchain/parse",
         "//toolchain/parse:tree",
@@ -62,7 +62,7 @@ file_test(
     srcs = ["file_test.cpp"],
     data = [
         ":min_prelude",
-        "//toolchain/install:clang_headers",
+        "//toolchain/install:clang_hdrs",
         "//toolchain/install:clang_headers_manifest.txt",
     ],
     tests = [":all_testdata"],

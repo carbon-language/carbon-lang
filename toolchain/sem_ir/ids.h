@@ -12,7 +12,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::SemIR {
@@ -307,19 +307,21 @@ struct FunctionId : public IdBase<FunctionId> {
   using IdBase::IdBase;
 };
 
+// The ID of a thunk info record.
+struct ThunkId : public IdBase<ThunkId> {
+  static constexpr llvm::StringLiteral Label = "thunk";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
-  // Used when referring to the imported C++.
-  static const CheckIRId Cpp;
-
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void;
 };
-
-inline constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
@@ -487,6 +489,13 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
   static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ClangDeclSignature`.
+struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
 
   using IdBase::IdBase;
 };
@@ -712,18 +721,31 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // the 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Empty until the File is fully checked; intermediate
-  // state is in the Check::Context.
+  // Exported instructions.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
   static const InstBlockId Exports;
 
-  // Instructions produced through import logic. Empty until the File is fully
-  // checked; intermediate state is in the Check::Context.
+  // Generated entities.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
+  static const InstBlockId Generated;
+
+  // Instructions produced through import logic.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
   static const InstBlockId Imports;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
   // be inserted into it.
   static const InstBlockId GlobalInit;
+
+  // A convenience list of reserved IDs.
+  static const std::array<InstBlockId, 5> ReservedIds;
 
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
@@ -734,10 +756,13 @@ struct InstBlockId : public IdBase<InstBlockId> {
 
 inline constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
-inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::Generated = InstBlockId(2);
+inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(4);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
+inline constexpr std::array<InstBlockId, 5> InstBlockId::ReservedIds = {
+    Empty, Exports, Generated, Imports, GlobalInit};
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.
@@ -977,6 +1002,29 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of a bundle of arguments with type `BundleT`.
+template <typename BundleT>
+struct BundleId : public IdBase<BundleId<BundleT>> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  using IdBase<BundleId<BundleT>>::IdBase;
+};
+
+// The ID of a bundle of arguments with an unspecified type.
+struct RawBundleId : public IdBase<RawBundleId> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  template <typename BundleT>
+  explicit(false) RawBundleId(BundleId<BundleT> bundle_id)
+      : IdBase(bundle_id.index) {}
+  using IdBase::IdBase;
+
+  template <typename BundleT>
+  explicit operator BundleId<BundleT>() const {
+    return BundleId<BundleT>(index);
+  }
+};
+
 // A SemIR location used as the location of instructions. This contains either a
 // InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
 // indicate the source of an instruction, and also be used to associate a line
@@ -1109,12 +1157,18 @@ struct LocId : public IdBase<LocId> {
 // - In the case the specific instruction has no field in the same position, the
 //   `Any[...]` type will hold a default constructed `AnyRawId` with a `None`
 //   value.
-struct AnyRawId : public AnyIdBase {
+struct AnyRawId : public AnyIdBase, Printable<AnyRawId> {
   // For IdKind.
   static constexpr llvm::StringLiteral Label = "any_raw";
 
   constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::NoneIndex) {}
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  friend auto operator==(AnyRawId lhs, AnyRawId rhs) -> bool {
+    return lhs.index == rhs.index;
+  }
 };
 
 }  // namespace Carbon::SemIR

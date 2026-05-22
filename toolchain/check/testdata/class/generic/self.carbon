@@ -18,8 +18,8 @@ class Class(T:! type) {
   fn MakeSelf() -> Self { return {}; }
   fn MakeClass() -> Class(T) { return {}; }
   fn F() {
-    var c: Class(T) = MakeSelf();
-    var s: Self = MakeClass();
+    var unused c: Class(T) = MakeSelf();
+    var unused s: Self = MakeClass();
   }
 }
 
@@ -28,14 +28,14 @@ class Class(T:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %.859: form = init_form %Class, call_param0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.466: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %.8f0: Core.Form = init_form %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.a45: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.MakeSelf.type: type = fn_type @Class.MakeSelf, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Class.MakeSelf: %Class.MakeSelf.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Class.MakeClass.type: type = fn_type @Class.MakeClass, @Class(%T) [symbolic]
@@ -50,12 +50,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.MakeSelf.specific_fn: <specific function> = specific_function %Class.MakeSelf, @Class.MakeSelf(%T) [symbolic]
 // CHECK:STDOUT:   %Class.MakeClass.specific_fn: <specific function> = specific_function %Class.MakeClass, @Class.MakeClass(%T) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.bb8: %Destroy.type = facet_value %Class, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %.05d: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.bb8 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.21b: %Destroy.type = facet_value %Class, (%Destroy.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.8e3: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.21b) [symbolic]
+// CHECK:STDOUT:   %.dd5: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.8e3, %Destroy.facet.21b [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.dd5 = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(%Destroy.facet.21b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,41 +76,44 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc15_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc15_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%T.loc15_13.2: type) {
-// CHECK:STDOUT:   %T.loc15_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Class(%T.loc15_14.2: type) {
+// CHECK:STDOUT:   %T.loc15_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.MakeSelf.type: type = fn_type @Class.MakeSelf, @Class(%T.loc15_13.1) [symbolic = %Class.MakeSelf.type (constants.%Class.MakeSelf.type)]
+// CHECK:STDOUT:   %Class.MakeSelf.type: type = fn_type @Class.MakeSelf, @Class(%T.loc15_14.1) [symbolic = %Class.MakeSelf.type (constants.%Class.MakeSelf.type)]
 // CHECK:STDOUT:   %Class.MakeSelf: @Class.%Class.MakeSelf.type (%Class.MakeSelf.type) = struct_value () [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
-// CHECK:STDOUT:   %Class.MakeClass.type: type = fn_type @Class.MakeClass, @Class(%T.loc15_13.1) [symbolic = %Class.MakeClass.type (constants.%Class.MakeClass.type)]
+// CHECK:STDOUT:   %Class.MakeClass.type: type = fn_type @Class.MakeClass, @Class(%T.loc15_14.1) [symbolic = %Class.MakeClass.type (constants.%Class.MakeClass.type)]
 // CHECK:STDOUT:   %Class.MakeClass: @Class.%Class.MakeClass.type (%Class.MakeClass.type) = struct_value () [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
-// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_13.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
+// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_14.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.MakeSelf.decl: @Class.%Class.MakeSelf.type (%Class.MakeSelf.type) = fn_decl @Class.MakeSelf [symbolic = @Class.%Class.MakeSelf (constants.%Class.MakeSelf)] {
-// CHECK:STDOUT:       %return.patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.MakeSelf.%pattern_type (%pattern_type.a45) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.MakeSelf.%pattern_type (%pattern_type.a45) = return_slot_pattern %return.param_patt, %Self.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc18_20.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_20.2 [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %.loc18_20.3: form = init_form %Self.ref, call_param0 [symbolic = %.loc18_20.1 (constants.%.859)]
+// CHECK:STDOUT:       %.loc18_20.3: Core.Form = init_form %Self.ref [symbolic = %.loc18_20.1 (constants.%.8f0)]
 // CHECK:STDOUT:       %return.param: ref @Class.MakeSelf.%Class (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Class.MakeSelf.%Class (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.MakeClass.decl: @Class.%Class.MakeClass.type (%Class.MakeClass.type) = fn_decl @Class.MakeClass [symbolic = @Class.%Class.MakeClass (constants.%Class.MakeClass)] {
-// CHECK:STDOUT:       %return.patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.MakeClass.%pattern_type (%pattern_type.a45) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.MakeClass.%pattern_type (%pattern_type.a45) = return_slot_pattern %return.param_patt, %Class.loc19_28.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc19_28.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_28.1 (constants.%Class)]
-// CHECK:STDOUT:       %.loc19_28.2: form = init_form %Class.loc19_28.2, call_param0 [symbolic = %.loc19_28.1 (constants.%.859)]
+// CHECK:STDOUT:       %.loc19_28.2: Core.Form = init_form %Class.loc19_28.2 [symbolic = %.loc19_28.1 (constants.%.8f0)]
 // CHECK:STDOUT:       %return.param: ref @Class.MakeClass.%Class.loc19_28.1 (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Class.MakeClass.%Class.loc19_28.1 (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -128,11 +131,11 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.MakeSelf(@Class.%T.loc15_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.MakeSelf(@Class.%T.loc15_14.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %.loc18_20.1: form = init_form %Class, call_param0 [symbolic = %.loc18_20.1 (constants.%.859)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [symbolic = %pattern_type (constants.%pattern_type.466)]
+// CHECK:STDOUT:   %.loc18_20.1: Core.Form = init_form %Class [symbolic = %.loc18_20.1 (constants.%.8f0)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [symbolic = %pattern_type (constants.%pattern_type.a45)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic = %require_complete (constants.%require_complete)]
@@ -147,11 +150,11 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.MakeClass(@Class.%T.loc15_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.MakeClass(@Class.%T.loc15_14.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class.loc19_28.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc19_28.1 (constants.%Class)]
-// CHECK:STDOUT:   %.loc19_28.1: form = init_form %Class.loc19_28.1, call_param0 [symbolic = %.loc19_28.1 (constants.%.859)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc19_28.1 [symbolic = %pattern_type (constants.%pattern_type.466)]
+// CHECK:STDOUT:   %.loc19_28.1: Core.Form = init_form %Class.loc19_28.1 [symbolic = %.loc19_28.1 (constants.%.8f0)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc19_28.1 [symbolic = %pattern_type (constants.%pattern_type.a45)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc19_28.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -166,68 +169,78 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc15_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc15_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %Class.loc21_19.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc21_19.2 [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc21_19.2 [symbolic = %pattern_type (constants.%pattern_type.466)]
+// CHECK:STDOUT:   %Class.loc21_26.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc21_26.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc21_26.2 [symbolic = %pattern_type (constants.%pattern_type.a45)]
 // CHECK:STDOUT:   %Class.MakeSelf.type: type = fn_type @Class.MakeSelf, @Class(%T) [symbolic = %Class.MakeSelf.type (constants.%Class.MakeSelf.type)]
 // CHECK:STDOUT:   %Class.MakeSelf: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = struct_value () [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
-// CHECK:STDOUT:   %Class.MakeSelf.specific_fn.loc21_23.2: <specific function> = specific_function %Class.MakeSelf, @Class.MakeSelf(%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_23.2 (constants.%Class.MakeSelf.specific_fn)]
+// CHECK:STDOUT:   %Class.MakeSelf.specific_fn.loc21_30.2: <specific function> = specific_function %Class.MakeSelf, @Class.MakeSelf(%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_30.2 (constants.%Class.MakeSelf.specific_fn)]
 // CHECK:STDOUT:   %Class.MakeClass.type: type = fn_type @Class.MakeClass, @Class(%T) [symbolic = %Class.MakeClass.type (constants.%Class.MakeClass.type)]
 // CHECK:STDOUT:   %Class.MakeClass: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = struct_value () [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
-// CHECK:STDOUT:   %Class.MakeClass.specific_fn.loc22_19.2: <specific function> = specific_function %Class.MakeClass, @Class.MakeClass(%T) [symbolic = %Class.MakeClass.specific_fn.loc22_19.2 (constants.%Class.MakeClass.specific_fn)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc21_19.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.bb8)]
-// CHECK:STDOUT:   %.loc22_5.2: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc22_5.2 (constants.%.05d)]
+// CHECK:STDOUT:   %Class.MakeClass.specific_fn.loc22_26.2: <specific function> = specific_function %Class.MakeClass, @Class.MakeClass(%T) [symbolic = %Class.MakeClass.specific_fn.loc22_26.2 (constants.%Class.MakeClass.specific_fn)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.loc21_26.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc21_26.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.21b)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.8e3)]
+// CHECK:STDOUT:   %.loc22_5.2: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc22_5.2 (constants.%.dd5)]
+// CHECK:STDOUT:   %impl.elem0.loc22_5.2: @Class.F.%.loc22_5.2 (%.dd5) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc22_5.2: <specific function> = specific_impl_function %impl.elem0.loc22_5.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc22_5.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: @Class.F.%pattern_type (%pattern_type.466) = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:       %c.var_patt: @Class.F.%pattern_type (%pattern_type.466) = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:       %c.patt: @Class.F.%pattern_type (%pattern_type.a45) = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:       %c.var_patt: @Class.F.%pattern_type (%pattern_type.a45) = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_19.2 (%Class) = var %c.var_patt
-// CHECK:STDOUT:     %.loc21_23: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = specific_constant @Class.%Class.MakeSelf.decl, @Class(constants.%T) [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
-// CHECK:STDOUT:     %MakeSelf.ref: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = name_ref MakeSelf, %.loc21_23 [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
-// CHECK:STDOUT:     %Class.MakeSelf.specific_fn.loc21_23.1: <specific function> = specific_function %MakeSelf.ref, @Class.MakeSelf(constants.%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_23.2 (constants.%Class.MakeSelf.specific_fn)]
-// CHECK:STDOUT:     %.loc21_5: ref @Class.F.%Class.loc21_19.2 (%Class) = splice_block %c.var {}
-// CHECK:STDOUT:     %Class.MakeSelf.call: init @Class.F.%Class.loc21_19.2 (%Class) to %.loc21_5 = call %Class.MakeSelf.specific_fn.loc21_23.1()
+// CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var %c.var_patt
+// CHECK:STDOUT:     %.loc21_30: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = specific_constant @Class.%Class.MakeSelf.decl, @Class(constants.%T) [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
+// CHECK:STDOUT:     %MakeSelf.ref: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = name_ref MakeSelf, %.loc21_30 [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
+// CHECK:STDOUT:     %Class.MakeSelf.specific_fn.loc21_30.1: <specific function> = specific_function %MakeSelf.ref, @Class.MakeSelf(constants.%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_30.2 (constants.%Class.MakeSelf.specific_fn)]
+// CHECK:STDOUT:     %.loc21_5: ref @Class.F.%Class.loc21_26.2 (%Class) = splice_block %c.var {}
+// CHECK:STDOUT:     %Class.MakeSelf.call: init @Class.F.%Class.loc21_26.2 (%Class) to %.loc21_5 = call %Class.MakeSelf.specific_fn.loc21_30.1()
 // CHECK:STDOUT:     assign %c.var, %Class.MakeSelf.call
-// CHECK:STDOUT:     %.loc21_19: type = splice_block %Class.loc21_19.1 [symbolic = %Class.loc21_19.2 (constants.%Class)] {
+// CHECK:STDOUT:     %.loc21_26: type = splice_block %Class.loc21_26.1 [symbolic = %Class.loc21_26.2 (constants.%Class)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %Class.loc21_19.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %Class.loc21_26.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_19.2 (%Class) = ref_binding c, %c.var
+// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_26.2 (%Class) = ref_binding c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %s.patt: @Class.F.%pattern_type (%pattern_type.466) = ref_binding_pattern s [concrete]
-// CHECK:STDOUT:       %s.var_patt: @Class.F.%pattern_type (%pattern_type.466) = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:       %s.patt: @Class.F.%pattern_type (%pattern_type.a45) = ref_binding_pattern s [concrete]
+// CHECK:STDOUT:       %s.var_patt: @Class.F.%pattern_type (%pattern_type.a45) = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_19.2 (%Class) = var %s.var_patt
-// CHECK:STDOUT:     %.loc22_19: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = specific_constant @Class.%Class.MakeClass.decl, @Class(constants.%T) [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
-// CHECK:STDOUT:     %MakeClass.ref: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = name_ref MakeClass, %.loc22_19 [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
-// CHECK:STDOUT:     %Class.MakeClass.specific_fn.loc22_19.1: <specific function> = specific_function %MakeClass.ref, @Class.MakeClass(constants.%T) [symbolic = %Class.MakeClass.specific_fn.loc22_19.2 (constants.%Class.MakeClass.specific_fn)]
-// CHECK:STDOUT:     %.loc22_5.1: ref @Class.F.%Class.loc21_19.2 (%Class) = splice_block %s.var {}
-// CHECK:STDOUT:     %Class.MakeClass.call: init @Class.F.%Class.loc21_19.2 (%Class) to %.loc22_5.1 = call %Class.MakeClass.specific_fn.loc22_19.1()
+// CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var %s.var_patt
+// CHECK:STDOUT:     %.loc22_26: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = specific_constant @Class.%Class.MakeClass.decl, @Class(constants.%T) [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
+// CHECK:STDOUT:     %MakeClass.ref: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = name_ref MakeClass, %.loc22_26 [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
+// CHECK:STDOUT:     %Class.MakeClass.specific_fn.loc22_26.1: <specific function> = specific_function %MakeClass.ref, @Class.MakeClass(constants.%T) [symbolic = %Class.MakeClass.specific_fn.loc22_26.2 (constants.%Class.MakeClass.specific_fn)]
+// CHECK:STDOUT:     %.loc22_5.1: ref @Class.F.%Class.loc21_26.2 (%Class) = splice_block %s.var {}
+// CHECK:STDOUT:     %Class.MakeClass.call: init @Class.F.%Class.loc21_26.2 (%Class) to %.loc22_5.1 = call %Class.MakeClass.specific_fn.loc22_26.1()
 // CHECK:STDOUT:     assign %s.var, %Class.MakeClass.call
-// CHECK:STDOUT:     %.loc22_12.1: type = splice_block %Self.ref [symbolic = %Class.loc21_19.2 (constants.%Class)] {
-// CHECK:STDOUT:       %.loc22_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_12.2 [symbolic = %Class.loc21_19.2 (constants.%Class)]
+// CHECK:STDOUT:     %.loc22_19.1: type = splice_block %Self.ref [symbolic = %Class.loc21_26.2 (constants.%Class)] {
+// CHECK:STDOUT:       %.loc22_19.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_19.2 [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_19.2 (%Class) = ref_binding s, %s.var
-// CHECK:STDOUT:     %DestroyOp.bound.loc22: <bound method> = bound_method %s.var, constants.%DestroyOp
-// CHECK:STDOUT:     %DestroyOp.call.loc22: init %empty_tuple.type = call %DestroyOp.bound.loc22(%s.var)
-// CHECK:STDOUT:     %DestroyOp.bound.loc21: <bound method> = bound_method %c.var, constants.%DestroyOp
-// CHECK:STDOUT:     %DestroyOp.call.loc21: init %empty_tuple.type = call %DestroyOp.bound.loc21(%c.var)
+// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_26.2 (%Class) = ref_binding s, %s.var
+// CHECK:STDOUT:     %impl.elem0.loc22_5.1: @Class.F.%.loc22_5.2 (%.dd5) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %s.var, %impl.elem0.loc22_5.1
+// CHECK:STDOUT:     %specific_impl_fn.loc22_5.1: <specific function> = specific_impl_function %impl.elem0.loc22_5.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.21b) [symbolic = %specific_impl_fn.loc22_5.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc22_5.2: <bound method> = bound_method %s.var, %specific_impl_fn.loc22_5.1
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22_5.2(%s.var)
+// CHECK:STDOUT:     %impl.elem0.loc21: @Class.F.%.loc22_5.2 (%.dd5) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc21_5.1: <bound method> = bound_method %c.var, %impl.elem0.loc21
+// CHECK:STDOUT:     %specific_impl_fn.loc21: <specific function> = specific_impl_function %impl.elem0.loc21, @Destroy.WithSelf.Op(constants.%Destroy.facet.21b) [symbolic = %specific_impl_fn.loc22_5.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc21_5.2: <bound method> = bound_method %c.var, %specific_impl_fn.loc21
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc21: init %empty_tuple.type = call %bound_method.loc21_5.2(%c.var)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @Class.F.%Class.loc21_19.2 (%Class)) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_13.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_14.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class.MakeSelf.type => constants.%Class.MakeSelf.type
@@ -241,8 +254,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @Class.MakeSelf(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %.loc18_20.1 => constants.%.859
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
+// CHECK:STDOUT:   %.loc18_20.1 => constants.%.8f0
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a45
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
@@ -252,8 +265,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @Class.MakeClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc19_28.1 => constants.%Class
-// CHECK:STDOUT:   %.loc19_28.1 => constants.%.859
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
+// CHECK:STDOUT:   %.loc19_28.1 => constants.%.8f0
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a45
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete

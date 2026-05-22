@@ -19,7 +19,7 @@ interface I;
 // `N.F` uses `N.I` and not `package.I`.
 namespace N;
 interface N.I {}
-fn N.F(x:! I) {}
+fn N.F(unused x:! I) {}
 
 fn TestCall(x:! N.I) {
   // `N.F` accepts an `N.I` not a `package.I`.

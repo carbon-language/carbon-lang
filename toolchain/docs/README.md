@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [High-level architecture](#high-level-architecture)
     -   [Design patterns](#design-patterns)
 -   [Adding features](#adding-features)
+-   [Design docs](#design-docs)
 -   [Videos](#videos)
     -   [Talks](#talks)
         -   [2025](#2025)
@@ -96,6 +97,10 @@ techniques.
 ## Adding features
 
 We have a [walkthrough for adding features](adding_features.md).
+
+## Design docs
+
+We have [design docs](design).
 
 ## Videos
 

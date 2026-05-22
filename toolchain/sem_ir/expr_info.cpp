@@ -15,16 +15,15 @@
 namespace Carbon::SemIR {
 
 // Returns the InstId represented by an instruction operand.
-static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
+static auto AsAnyInstId(IdAndKind arg) -> InstId {
   if (auto inst_id = arg.TryAs<SemIR::InstId>()) {
     return *inst_id;
   }
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
-  const File* ir = &file;
-
+static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
+    -> ExprCategory {
   // The overall expression category if the current instruction is a value
   // expression.
   ExprCategory value_category = ExprCategory::Value;
@@ -58,26 +57,28 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        auto callee = GetCallee(file, inst.callee_id);
+        auto callee = GetCallee(*ir, inst.callee_id);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
           }
           case CARBON_KIND(SemIR::CalleeFunction callee_function): {
             const auto& function =
-                file.functions().Get(callee_function.function_id);
+                ir->functions().Get(callee_function.function_id);
             auto return_form_id = function.GetDeclaredReturnForm(
-                file, callee_function.resolved_specific_id);
+                *ir, callee_function.resolved_specific_id);
             if (!return_form_id.has_value()) {
               // Treat as equivalent to `-> ()`.
-              return ExprCategory::Initializing;
+              return ExprCategory::ReprInitializing;
             }
-            auto return_form = file.insts().Get(return_form_id);
+            auto return_form = ir->insts().Get(return_form_id);
             CARBON_KIND_SWITCH(return_form) {
               case CARBON_KIND(InitForm _):
-                return ExprCategory::Initializing;
+                return ExprCategory::ReprInitializing;
               case CARBON_KIND(RefForm _):
                 return ExprCategory::DurableRef;
+              case CARBON_KIND(ValueForm _):
+                return ExprCategory::Value;
               case CARBON_KIND(ErrorInst _):
                 return ExprCategory::Error;
               default:
@@ -89,7 +90,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
           }
           case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
             // TODO: support `ref` returns from C++.
-            return ExprCategory::Initializing;
+            return ExprCategory::ReprInitializing;
           }
         }
       } else {
@@ -137,8 +138,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
-auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
-                                     bool allow_transitive) -> InstId {
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
+  return GetExprCategoryImpl(&file, inst_id);
+}
+
+auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
+                                  bool allow_transitive) -> InstId {
   while (true) {
     Inst init_untyped = sem_ir.insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -156,6 +161,13 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
         init_id = init.result_id;
         continue;
       }
+      case CARBON_KIND(UpdateInit init): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        init_id = init.base_init_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
         return init.dest_id;
       }
@@ -168,13 +180,10 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
       case CARBON_KIND(TupleInit init): {
         return init.dest_id;
       }
-      case CARBON_KIND(InitializeFrom init): {
+      case CARBON_KIND(InPlaceInit init): {
         return init.dest_id;
       }
-      case CARBON_KIND(InPlaceInit init): {
-        if (!InitRepr::ForType(sem_ir, init.type_id).MightBeInPlace()) {
-          return InstId::None;
-        }
+      case CARBON_KIND(MarkInPlaceInit init): {
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
@@ -202,8 +211,10 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
               return InstId::None;
             }
 
+            CARBON_CHECK(function.call_param_ranges.return_size() == 1,
+                         "Unexpected number of output parameters on function");
             return sem_ir.inst_blocks().Get(
-                call.args_id)[init_form.index.index];
+                call.args_id)[function.call_param_ranges.return_begin().index];
           }
           case CARBON_KIND(RefForm _): {
             return InstId::None;

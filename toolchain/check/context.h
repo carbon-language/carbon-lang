@@ -25,8 +25,9 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
+#include "toolchain/check/require_impls_stack.h"
 #include "toolchain/check/scope_stack.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -60,7 +61,8 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, llvm::raw_ostream* vlog_stream);
+                   int total_ir_count, llvm::raw_ostream* vlog_stream,
+                   bool mangle_string_fingerprint = false);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
@@ -125,7 +127,7 @@ class Context {
     return field_decls_stack_;
   }
 
-  auto require_impls_stack() -> ArrayStack<SemIR::RequireImplsId>& {
+  auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
 
@@ -158,9 +160,9 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  using CheckIRToImpportIRStore =
+  using CheckIRToImportIRStore =
       FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
-  auto check_ir_map() -> CheckIRToImpportIRStore& { return check_ir_map_; }
+  auto check_ir_map() -> CheckIRToImportIRStore& { return check_ir_map_; }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -179,6 +181,8 @@ class Context {
   auto global_init() -> GlobalInit& { return global_init_; }
 
   auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
+
+  auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
 
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
@@ -219,6 +223,9 @@ class Context {
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
     SemIR::InstId impl_loc = SemIR::InstId::None;
+    // TODO: If we make a proper stack class, we only need one `diagnosed_cycle`
+    // field, which resets to false when the stack becomes empty.
+    bool diagnosed_cycle = false;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
@@ -227,7 +234,7 @@ class Context {
   // A map from a (self, interface) pair to a final witness.
   using ImplLookupCacheKey =
       std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
-  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
@@ -238,31 +245,50 @@ class Context {
     SemIR::LocId loc_id;
     // The query for a witness of an impl for an interface.
     SemIR::LookupImplWitness query;
-    // The resulting ImplWitness.
-    SemIR::InstId impl_witness;
+    // The resulting final witness.
+    SemIR::ConstantId witness_id;
   };
   auto poisoned_concrete_impl_lookup_queries()
       -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {
     return poisoned_concrete_impl_lookup_queries_;
   }
 
-  // A stack that tracks the rewrite constraints from a `where` expression being
-  // checked. The back of the stack is the currently checked `where` expression.
-  auto rewrites_stack()
-      -> llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>>& {
-    return rewrites_stack_;
+  // A stack that tracks constraints from a `where` expression being checked.
+  // The back of the stack is the currently checked `where` expression.
+  struct WhereStackEntry {
+    // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
+    // value on the RHS. Used during checking of a `where` expression to allow
+    // constraints to access values from earlier constraints.
+    Map<SemIR::ConstantId, SemIR::InstId> rewrites;
+
+    // A collection of `A impls B` facts known about the current `where`
+    // expression being checked. Used to allow constraints to know about `impls`
+    // relationships from earlier constraints.
+    struct SelfImplsFacetType {
+      SemIR::ConstantId self_const_id;
+      SemIR::ConstantId facet_type_const_id;
+    };
+    llvm::SmallVector<SelfImplsFacetType> impls;
+  };
+
+  auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
+    return where_stack_;
   }
 
   // Data about a form expression.
+  //
+  // TODO: consider moving this out of Context.
   struct FormExpr {
+    static const FormExpr Error;
+
     // The inst ID of the form expression itself. This is always a form inst,
     // such as InitForm or RefForm.
     // TODO: Consider creating an AnyForm inst category to refer to those insts.
     SemIR::InstId form_inst_id;
     // The inst ID of the form expression's type component.
-    SemIR::TypeInstId type_component_id;
+    SemIR::TypeInstId type_component_inst_id;
     // The type ID corresponding to type_component_id.
-    SemIR::TypeId type_id;
+    SemIR::TypeId type_component_id;
   };
 
   // Pushes form_expr onto the stack of return form declarations for in-progress
@@ -347,6 +373,9 @@ class Context {
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }
+  auto clang_decl_signatures() -> SemIR::ClangDeclSignatureStore& {
+    return sem_ir().clang_decl_signatures();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
@@ -368,6 +397,11 @@ class Context {
     return sem_ir().inst_blocks();
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
+  auto bundles() -> SemIR::BundleStore& { return sem_ir().bundles(); }
+  auto total_ir_count() const -> int { return total_ir_count_; }
+  auto mangle_string_fingerprint() const -> bool {
+    return mangle_string_fingerprint_;
+  }
 
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
@@ -419,7 +453,7 @@ class Context {
 
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
-  ArrayStack<SemIR::RequireImplsId> require_impls_stack_;
+  RequireImplsStack require_impls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
@@ -446,7 +480,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  CheckIRToImpportIRStore check_ir_map_;
+  CheckIRToImportIRStore check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
@@ -475,6 +509,14 @@ class Context {
   //
   // This becomes `InstBlockId::Imports`.
   llvm::SmallVector<SemIR::InstId> imports_;
+
+  // Entities which are generated internally to the toolchain, to represent
+  // builtin concepts which should be dumped as part of `SemIR`. For example,
+  // when doing destruction, the `Destroy.Op` function is generated, and will be
+  // found here.
+  //
+  // This becomes `InstBlockId::Generated`.
+  llvm::SmallVector<SemIR::InstId> generated_;
 
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.
@@ -510,17 +552,23 @@ class Context {
   llvm::SmallVector<PoisonedConcreteImplLookupQuery>
       poisoned_concrete_impl_lookup_queries_;
 
-  // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
-  // value on the RHS. Used during checking of a `where` expression to allow
-  // constraints to access values from earlier constraints.
-  llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
+  // Tracks information about constraints in the current `where` expression
+  // being checked so that they can be used by later constraints.
+  llvm::SmallVector<WhereStackEntry> where_stack_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;
+
+  bool mangle_string_fingerprint_;
 };
+
+inline constexpr Context::FormExpr Context::FormExpr::Error = {
+    .form_inst_id = SemIR::ErrorInst::InstId,
+    .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+    .type_component_id = SemIR::ErrorInst::TypeId};
 
 }  // namespace Carbon::Check
 

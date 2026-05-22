@@ -15,7 +15,7 @@
 // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
 // CHECK:STDERR: var x: {} = ();
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: {} = ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -29,8 +29,8 @@ var x: {} = ();
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -39,7 +39,7 @@ var x: {} = ();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

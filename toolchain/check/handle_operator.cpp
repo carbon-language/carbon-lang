@@ -11,7 +11,7 @@
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/expr_info.h"
 
@@ -39,7 +39,7 @@ static auto HandleBinaryOperator(Context& context,
   // the type of the RHS operand. `as` has different rules and we don't call
   // this function for it.
   SemIR::InstId args[] = {
-      context.types().GetInstId(context.insts().Get(rhs_id).type_id())};
+      context.types().GetTypeInstId(context.insts().Get(rhs_id).type_id())};
   auto result_id = BuildBinaryOperator(context, expr_node_id,
                                        {.interface_name = interface_name,
                                         .interface_args_ref = args,
@@ -113,7 +113,7 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
   }
   // TODO: Destroy the old value before reinitializing. This will require
   // building the destruction code before we build the RHS subexpression.
-  rhs_id = Initialize(context, node_id, lhs_id, rhs_id);
+  rhs_id = InitializeExisting(context, node_id, lhs_id, rhs_id);
   AddInst<SemIR::Assign>(context, node_id,
                          {.lhs_id = lhs_id, .rhs_id = rhs_id});
   // We model assignment as an expression, so we need to push a value for
@@ -277,7 +277,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       break;
   }
   // TODO: Preserve spelling of type of operand where possible.
-  auto type_inst_id = context.types().GetInstId(type_id);
+  auto type_inst_id = context.types().GetTypeInstId(type_id);
   AddInstAndPush<SemIR::AddrOf>(
       context, node_id,
       SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),

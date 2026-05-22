@@ -20,7 +20,7 @@ auto HandleIndexExpr(Context& context) -> void {
 auto HandleIndexExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::IndexExpr);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::IndexExpr);
 }
 
 }  // namespace Carbon::Parse

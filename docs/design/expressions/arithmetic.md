@@ -197,7 +197,7 @@ package Core;
 interface NegatePrimitive[implicit_into anchor Self:! Form] {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[bound self:? Self]()
+  fn Op(bound self:? Self)
       ->? ResultForm;
 
 }
@@ -216,7 +216,7 @@ interface AddWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint AddWith(U:! type) {
@@ -237,7 +237,7 @@ interface SubWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint SubWith(U:! type) {
@@ -258,7 +258,7 @@ interface MulWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint MulWith(U:! type) {
@@ -279,7 +279,7 @@ interface DivWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint DivWith(U:! type) {
@@ -300,7 +300,7 @@ interface ModWithPrimitive
     (implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[self:? Self](other:? U)
+  fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
 constraint ModWith(U:! type) {

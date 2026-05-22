@@ -21,8 +21,8 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.88a: form = init_form %i32, call_param2 [concrete]
+// CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.70c: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -43,27 +43,20 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type = fn_decl @Add [concrete = constants.%Add] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.c6b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c6b = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.c6b = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.c6b = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c6b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32.loc15_27 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15_27: form = init_form %i32.loc15_27, call_param2 [concrete = constants.%.88a]
+// CHECK:STDOUT:     %i32.loc15_27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_27 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc15_11: type = splice_block %i32.loc15_11 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc15_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc15_11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc15_19: type = splice_block %i32.loc15_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc15_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc15_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param

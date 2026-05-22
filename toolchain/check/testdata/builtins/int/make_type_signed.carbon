@@ -111,9 +111,6 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %i13.builtin: type = int_type signed, %int_13 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> out %return.param: %i64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Element access](#element-access)
+-   [Conversion](#conversion)
     -   [Empty tuples](#empty-tuples)
     -   [Trailing commas and single-element tuples](#trailing-commas-and-single-element-tuples)
     -   [Tuple of types and tuple types](#tuple-of-types-and-tuple-types)
@@ -63,6 +64,14 @@ fn Choose(template N:! i32) -> i32 {
   return (1, 2, 3).(N % 3);
 }
 ```
+
+## Conversion
+
+A tuple type `Source` can be converted to a tuple type `Dest` if they have the
+same number of elements, and each element type of `Source` is convertible to the
+corresponding element type of `Dest`, and the conversion is implicit if all of
+the element type conversions are implicit. See
+[here](values.md#type-conversions) for full details.
 
 ### Empty tuples
 

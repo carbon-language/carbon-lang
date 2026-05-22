@@ -1,0 +1,56 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+"""Example Bazel module that builds C++ with the Carbon toolchain.
+
+Note that this is at the root of an example Bazel project, not part of the
+larger Carbon Bazel project. To interact with this example, you'll want to
+`cd examples/bazel` so that you can operate Bazel entirely within this example
+(sub-)project.
+
+Once interacting with this subdirectory's project, you can use this and build
+with the Carbon toolchain in a few different ways:
+
+1) Override the module with a local installation on the command line:
+   `bazel build --override_module=carbon_toolchain=/path/to/carbon_toolchain/installation/lib/carbon`
+
+2) Encode a local override into this file:
+   ```
+   local_path_override(
+       module_name = "carbon_toolchain",
+       path = "/path/to/carbon_toolchain/installation/lib/carbon",
+   )
+   ```
+
+3) Encode a archive override into this file:
+   ```
+   version = "0.0.0-0.nightly.YYYY.MM.DD"
+   archive_override(
+       module_name = "carbon_toolchain",
+       strip_prefix = "carbon_toolchain-{0}/lib/carbon".format(version),
+       urls = ["https://github.com/carbon-language/carbon-lang/releases/download/v{0}/carbon_toolchain-{0}.tar.gz".format(version)],
+   )
+   ```
+
+   Note: Initially, Bazel will warn about the lack of an `integrity` field,
+   and will print the value it found by downloading the archive which you can
+   verify on GitHub before encoding.
+
+You can use the provided script `update_module_to_nightly.py` to generate and
+add an `archive_override` of the current nightly release, including integrity
+from GitHub.
+
+Once the Carbon toolchain has established releases in the Bazel central
+registry, this file will work with an updated version out of the box.
+"""
+
+module(name = "example")
+
+bazel_dep(name = "rules_cc", version = "0.2.14")
+
+# Declare the `carbon_toolchain` module. This is needed even if it will be
+# overridden with a local path or archive.
+bazel_dep(name = "carbon_toolchain", version = "0.0.0")
+
+register_toolchains("@carbon_toolchain//:all")

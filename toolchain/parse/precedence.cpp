@@ -262,7 +262,6 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     case Lex::TokenKind::TildeEqual:
     case Lex::TokenKind::Exclaim:
     case Lex::TokenKind::LessGreater:
-    case Lex::TokenKind::Question:
     case Lex::TokenKind::Colon:
       break;
 

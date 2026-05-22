@@ -8,6 +8,8 @@ import Core library "range";
 // Compute and return the number of primes less than 1000.
 
 class Sieve {
+  impl as Core.UnformedInit {}
+
   fn Make() -> Sieve {
     returned var s: Sieve;
     for (n: i32 in Core.Range(1000)) {

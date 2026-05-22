@@ -15,7 +15,7 @@ fn A() {
     // This declares `n` in two different scopes, it's just showing the IR
     // behavior of having both on the same line.
     //@dump-sem-ir-begin
-    var n: (); } else { var n: ();
+    var unused n: () = (); } else { var unused n: () = ();
     //@dump-sem-ir-end
   }
 }
@@ -26,11 +26,8 @@ fn A() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -39,37 +36,45 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_9: %pattern_type.cb1 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_9 [concrete]
+// CHECK:STDOUT:     %n.patt.loc18_17: %pattern_type.cb1 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_17 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var %n.var_patt.loc18_5
-// CHECK:STDOUT:   %.loc18_13.1: type = splice_block %.loc18_13.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc18_13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc18_13.3: type = converted %.loc18_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc18_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_5: init %empty_tuple.type = converted %.loc18_25.1, %.loc18_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %n.var.loc18_5, %.loc18_5
+// CHECK:STDOUT:   %.loc18_20.1: type = splice_block %.loc18_20.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc18_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc18_20.3: type = converted %.loc18_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_9: ref %empty_tuple.type = ref_binding n, %n.var.loc18_5
+// CHECK:STDOUT:   %n.loc18_17: ref %empty_tuple.type = ref_binding n, %n.var.loc18_5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_29: %pattern_type.cb1 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt.loc18_25: %pattern_type.cb1 = var_pattern %n.patt.loc18_29 [concrete]
+// CHECK:STDOUT:     %n.patt.loc18_49: %pattern_type.cb1 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_49 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc18_25: ref %empty_tuple.type = var %n.var_patt.loc18_25
-// CHECK:STDOUT:   %.loc18_33.1: type = splice_block %.loc18_33.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc18_33.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc18_33.3: type = converted %.loc18_33.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %n.var.loc18_37: ref %empty_tuple.type = var %n.var_patt.loc18_37
+// CHECK:STDOUT:   %.loc18_57.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_57.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_37: init %empty_tuple.type = converted %.loc18_57.1, %.loc18_57.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %n.var.loc18_37, %.loc18_37
+// CHECK:STDOUT:   %.loc18_52.1: type = splice_block %.loc18_52.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc18_52.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc18_52.3: type = converted %.loc18_52.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_29: ref %empty_tuple.type = ref_binding n, %n.var.loc18_25
+// CHECK:STDOUT:   %n.loc18_49: ref %empty_tuple.type = ref_binding n, %n.var.loc18_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %DestroyOp.bound.loc18_25: <bound method> = bound_method %n.var.loc18_25, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc18_25: init %empty_tuple.type = call %DestroyOp.bound.loc18_25(%n.var.loc18_25)
-// CHECK:STDOUT:   %DestroyOp.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc18_5: init %empty_tuple.type = call %DestroyOp.bound.loc18_5(%n.var.loc18_5)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_37: <bound method> = bound_method %n.var.loc18_37, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_37: init %empty_tuple.type = call %Destroy.Op.bound.loc18_37(%n.var.loc18_37)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

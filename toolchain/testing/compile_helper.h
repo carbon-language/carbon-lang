@@ -8,7 +8,7 @@
 #include <forward_list>
 
 #include "llvm/Support/VirtualFileSystem.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"

@@ -25,35 +25,37 @@ pkg_naming_variables = rule(
     attrs = VERSION_ATTRS,
 )
 
-def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, **kwargs):
+def pkg_tar_and_test(name, package_file_name_base, install_data_manifest, tags = [], **kwargs):
     """Create a `pkg_tar` and a test for both `.tar` and `.tar.gz` extensions.
 
     Args:
-        name_base:
+        name:
             The base name of the rules and tests. Will have `tar` or `tar_gz` added
-            and then `_rule` for the `pkg_tar` and `_test` for the test.
+            for the `pkg_tar` rule, and additionally `_test` for the test.
         package_file_name_base:
             The base of the `package_file_name` attribute to `pkg_tar`. The file
             extensions will be appended after a `.`.
         install_data_manifest:
             The install data manifest file to compare with.
+        tags:
+            Tags to apply to the generated rules and tests.
         **kwargs:
             Passed to `pkg_tar` for all the rest of its attributes.
     """
     for file_ext in ["tar", "tar.gz"]:
         target_ext = file_ext.replace(".", "_")
-        tar_target = name_base + "_" + target_ext + "_rule"
+        tar_target = name + "_" + target_ext
         pkg_tar(
             name = tar_target,
             extension = file_ext,
             package_file_name = package_file_name_base + "." + file_ext,
             # The compressed tar is slow, exclude building and testing that.
-            tags = ["manual"] if file_ext == "tar.gz" else [],
+            tags = tags + (["manual"] if file_ext == "tar.gz" else []),
             **kwargs
         )
 
         py_test(
-            name = name_base + "_" + target_ext + "_test",
+            name = name + "_" + target_ext + "_test",
             size = "small",
             srcs = ["toolchain_tar_test.py"],
             data = [":" + tar_target, install_data_manifest],
@@ -63,5 +65,5 @@ def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, *
             },
             main = "toolchain_tar_test.py",
             # The compressed tar is slow, exclude building and testing that.
-            tags = ["manual"] if file_ext == "tar.gz" else [],
+            tags = tags + (["manual"] if file_ext == "tar.gz" else []),
         )

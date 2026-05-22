@@ -20,9 +20,9 @@ choice X {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'X'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
 // CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
 // CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '}', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

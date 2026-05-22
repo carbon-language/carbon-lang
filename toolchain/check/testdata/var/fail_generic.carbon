@@ -17,7 +17,7 @@ fn Main() {
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -25,9 +25,6 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- fail_generic.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main();
 // CHECK:STDOUT:

@@ -45,6 +45,10 @@ struct TestData : Printable<TestData> {
 
 static_assert(std::is_copy_constructible_v<TestData>);
 
+inline auto CarbonHashtableEq(int lhs, TestData rhs) -> bool {
+  return lhs == rhs;
+}
+
 // Non-trivial type for testing.
 struct MoveOnlyTestData : Printable<TestData> {
   int value;
@@ -84,6 +88,10 @@ struct MoveOnlyTestData : Printable<TestData> {
 
 static_assert(!std::is_copy_constructible_v<MoveOnlyTestData>);
 static_assert(std::is_move_constructible_v<MoveOnlyTestData>);
+
+inline auto CarbonHashtableEq(int lhs, const MoveOnlyTestData& rhs) -> bool {
+  return lhs == rhs;
+}
 
 // Test stateless key context that produces different hashes from normal.
 // Changing the hash values should result in test failures if the context ever

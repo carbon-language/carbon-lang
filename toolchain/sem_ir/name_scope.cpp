@@ -7,6 +7,7 @@
 #include <optional>
 #include <utility>
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -22,12 +23,8 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
 
   out << ", extended_scopes: [";
   llvm::ListSeparator scope_sep;
-  for (auto [id, inner_self_id] : extended_scopes_) {
-    if (inner_self_id.has_value()) {
-      out << scope_sep << "(" << id << ", inner self: " << inner_self_id << ")";
-    } else {
-      out << scope_sep << id;
-    }
+  for (auto id : extended_scopes_) {
+    out << scope_sep << id;
   }
   out << "]";
 
@@ -104,3 +101,8 @@ auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::NameScopeId, SemIR::NameScope,
+                          Tag<SemIR::CheckIRId>>;
+}

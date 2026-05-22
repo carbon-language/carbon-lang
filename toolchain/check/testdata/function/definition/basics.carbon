@@ -17,14 +17,14 @@
 
 class C;
 
-// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:6: error: parameter has incomplete type `C` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(n: C) {}
-// CHECK:STDERR:      ^~~~
+// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `C` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(unused n: C) {}
+// CHECK:STDERR:             ^~~~
 // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-fn F(n: C) {}
+fn F(unused n: C) {}
 
 // CHECK:STDOUT: --- fail_incomplete_type.carbon
 // CHECK:STDOUT:
@@ -42,8 +42,8 @@ fn F(n: C) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.patt: %pattern_type = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
