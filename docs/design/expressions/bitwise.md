@@ -198,8 +198,8 @@ implementing the following family of interfaces:
 package Core;
 
 // Unary `^`.
-interface BitComplementPrimitive
-    [implicit_into anchor Self:! Form] {
+interface BitComplementPrimitive(
+    implicit_into anchor Self:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self) -> Result;
@@ -214,9 +214,9 @@ constraint BitComplement {
 
 ```
 // Binary `&`.
-interface BitAndWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface BitAndWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -235,9 +235,9 @@ constraint BitAnd {
 
 ```
 // Binary `|`.
-interface BitOrWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface BitOrWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -256,9 +256,9 @@ constraint BitOr {
 
 ```
 // Binary `^`.
-interface BitXorWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface BitXorWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -279,9 +279,9 @@ Note that the shift operators anchor on the type of the left argument.
 
 ```
 // Binary `<<`.
-interface LeftShiftWithPrimitive
-    [implicit_into anchor Self:! Form]
-    (implicit_into U:! Form) {
+interface LeftShiftWithPrimitive(
+    implicit_into anchor Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -300,9 +300,9 @@ constraint LeftShift {
 
 ```
 // Binary `>>`.
-interface RightShiftWithPrimitive
-    [implicit_into anchor Self:! Form]
-    (implicit_into U:! Form) {
+interface RightShiftWithPrimitive(
+    implicit_into anchor Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
