@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -176,6 +177,8 @@ class MatchContext {
   auto DoPreWork(State state, SemIR::AnyReturnPattern return_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ExprPattern expr_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::FieldDecl field_decl,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
@@ -537,6 +540,29 @@ auto MatchContext::DoPostWork(State /*state*/,
                               SemIR::ExprPattern /*expr_pattern*/,
                               WorkItem /*entry*/) -> void {}
 
+auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
+                             SemIR::InstId scrutinee_id, WorkItem entry)
+    -> void {
+  if (!scrutinee_id.has_value()) {
+    return;
+  }
+
+  // Get the field initializer.
+  auto unbound_element_type = context_.insts().GetAs<SemIR::UnboundElementType>(
+      context_.types().GetTypeInstId(field_decl.type_id));
+  auto element_type = context_.types().GetTypeIdForTypeInstId(
+      unbound_element_type.element_type_inst_id);
+  auto converted_id = ConvertToValueOfType(context_, SemIR::LocId(scrutinee_id),
+                                           scrutinee_id, element_type,
+                                           /*diagnose=*/true);
+  if (converted_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+
+  // Store a mapping to the field's initializer.
+  context_.field_initializers().Insert(entry.pattern_id, converted_id);
+}
+
 auto MatchContext::DoPreWork(State state,
                              SemIR::ReturnSlotPattern return_slot_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
@@ -836,6 +862,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::ExprPattern expr_pattern): {
           DoPreWork(state, expr_pattern, work.scrutinee_id, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::FieldDecl field_decl): {
+          DoPreWork(state, field_decl, work.scrutinee_id, entry);
           break;
         }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {

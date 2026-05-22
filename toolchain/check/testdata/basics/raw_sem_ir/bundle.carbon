@@ -96,9 +96,9 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   facet_types:
 // CHECK:STDOUT:     facet_type70000000: {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000010:    {kind: ImportDecl, arg0: name(Core)}
-// CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, arg1: inst70000010, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000012:    {kind: FacetType, arg0: facet_type70000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst70000013:    {kind: SymbolicBinding, arg0: entity_name70000000, arg1: inst<none>, type: type(inst70000012)}
 // CHECK:STDOUT:     inst70000014:    {kind: SymbolicBinding, arg0: entity_name70000000, arg1: inst<none>, type: type(inst70000012)}

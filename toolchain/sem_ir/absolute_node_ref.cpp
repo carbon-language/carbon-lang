@@ -110,8 +110,10 @@ static auto GetAbsoluteNodeRefImpl(
 
     // If a namespace has an instruction for an import, switch to looking at it.
     if (auto ns = cursor_inst.TryAs<Namespace>()) {
-      if (ns->import_id.has_value()) {
-        cursor_inst_id = ns->import_id;
+      auto import_id =
+          cursor_ir->name_scopes().Get(ns->name_scope_id).import_id();
+      if (import_id.has_value()) {
+        cursor_inst_id = import_id;
         continue;
       }
     }

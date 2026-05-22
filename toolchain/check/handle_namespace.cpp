@@ -41,7 +41,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
 
   auto namespace_inst = SemIR::Namespace{
       GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-      SemIR::NameScopeId::None, SemIR::InstId::None};
+      SemIR::NameScopeId::None};
   auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
   SemIR::ScopeLookupResult lookup_result =
@@ -73,7 +73,10 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
         context.name_scopes()
             .Get(existing->name_scope_id)
             .set_is_closed_import(false);
-      } else if (existing->import_id.has_value() &&
+      } else if (context.name_scopes()
+                     .Get(existing->name_scope_id)
+                     .import_id()
+                     .has_value() &&
                  !context.insts()
                       .GetCanonicalLocId(existing_inst_id)
                       .has_value()) {

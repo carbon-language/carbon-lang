@@ -487,7 +487,7 @@ auto CheckParseTrees(
     auto* unit_info = ready_to_check[check_index];
     CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
               unit_info->unit->llvm_context, clang_invocation,
-              options.vlog_stream)
+              options.vlog_stream, options.mangle_string_fingerprint)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -537,7 +537,7 @@ auto CheckParseTrees(
       if (unit_info.imports_remaining > 0) {
         CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
                   unit_info.unit->llvm_context, clang_invocation,
-                  options.vlog_stream)
+                  options.vlog_stream, options.mangle_string_fingerprint)
             .Run();
       }
     }

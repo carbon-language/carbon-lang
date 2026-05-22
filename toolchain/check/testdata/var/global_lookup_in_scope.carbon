@@ -28,12 +28,12 @@ fn Main() {
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type.c4c: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.c0c: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.39a: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc5_3.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc5_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,7 +74,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc5_28.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
+// CHECK:STDOUT:   %.loc5_28.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.39a]
 // CHECK:STDOUT:   %.loc5_28.2: ref %empty_tuple.type = struct_access %y.var, element0
 // CHECK:STDOUT:   %.loc5_28.3: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_28.4: init %empty_tuple.type = converted %.loc5_28.1, %.loc5_28.3 [concrete = constants.%empty_tuple]
@@ -87,7 +87,7 @@ fn Main() {
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.v = ref_binding y, %y.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op.1dc86d.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%y.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -103,7 +103,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc2_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.1: %struct_type.v = struct_literal (%.loc2_26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc2_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.c0c]
+// CHECK:STDOUT:   %.loc2_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.39a]
 // CHECK:STDOUT:   %.loc2_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.3: init %empty_tuple.type = converted %.loc2_26.1, %.loc2_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.4: init %struct_type.v to file.%x.var = struct_init (%.loc2_27.3) [concrete = constants.%struct]

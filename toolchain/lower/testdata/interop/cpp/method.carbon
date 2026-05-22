@@ -291,7 +291,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %struct.NeedThunk = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @int_1.30e = internal constant i8 1
+// CHECK:STDOUT: @int_1.9eb = internal constant i8 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %n) #0 !dbg !11 {
@@ -299,11 +299,11 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   %.loc7_14.3.temp = alloca i8, align 1, !dbg !17
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !17
-// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.__(ptr %n, ptr @int_1.30e), !dbg !19
+// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.__(ptr %n, ptr @int_1.9eb), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !18
-// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr %n, ptr @int_1.30e), !dbg !20
-// CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !18
-// CHECK:STDOUT:   call void @"_COp.43bece552030817c:core.Destroy.Core"(ptr @int_1.30e), !dbg !17
+// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr %n, ptr @int_1.9eb), !dbg !20
+// CHECK:STDOUT:   call void @"_COp.4bf3b2f84a23e67d:core.Destroy.Core"(ptr @int_1.9eb), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.4bf3b2f84a23e67d:core.Destroy.Core"(ptr @int_1.9eb), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -337,7 +337,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.43bece552030817c:core.Destroy.Core"(ptr %self) #0 !dbg !29 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4bf3b2f84a23e67d:core.Destroy.Core"(ptr %self) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
@@ -350,7 +350,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.43bece552030817c:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.4bf3b2f84a23e67d:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -391,7 +391,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !26 = !{!"p1 omnipotent char", !24, i64 0}
 // CHECK:STDOUT: !27 = !{}
 // CHECK:STDOUT: !28 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp.43bece552030817c:core.Destroy.Core", scope: null, file: !6, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4bf3b2f84a23e67d:core.Destroy.Core", scope: null, file: !6, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{null, !32}
 // CHECK:STDOUT: !32 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)

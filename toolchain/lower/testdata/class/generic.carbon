@@ -160,31 +160,31 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'create_generic.carbon'
 // CHECK:STDOUT: source_filename = "create_generic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.21c.loc22_28.6 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.03f.loc22_28.6 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInts.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.5662bbc72901b5f6(ptr %return, i32 1, i32 2), !dbg !8
+// CHECK:STDOUT:   call void @_CMake.Main.980bd46fd9fb5b99(ptr %return, i32 1, i32 2), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CEmpty.Main(ptr sret({ {}, {} }) %return) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.62c077bda9003188(ptr %return), !dbg !11
+// CHECK:STDOUT:   call void @_CMake.Main.d18344b232c82104(ptr %return), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTuples.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.97ffc1d4880babb0(ptr %return, ptr @tuple.21c.loc22_28.6, ptr @tuple.21c.loc22_28.6), !dbg !14
+// CHECK:STDOUT:   call void @_CMake.Main.878f62403168310d(ptr %return, ptr @tuple.03f.loc22_28.6, ptr @tuple.03f.loc22_28.6), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.5662bbc72901b5f6(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.980bd46fd9fb5b99(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !23
 // CHECK:STDOUT:   store i32 %x, ptr %.loc10_25.2.x, align 4, !dbg !23
@@ -194,7 +194,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.62c077bda9003188(ptr sret({ {}, {} }) %return) #0 !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.d18344b232c82104(ptr sret({ {}, {} }) %return) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !26
 // CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !26
@@ -202,17 +202,17 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.97ffc1d4880babb0(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %x, ptr %y) #0 !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.878f62403168310d(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %x, ptr %y) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !34
-// CHECK:STDOUT:   call void @"_COp.b31b63747b02f3d2:Copy.Core.57b0cafb2bd0e18e"(ptr %.loc10_25.2.x, ptr %x), !dbg !35
+// CHECK:STDOUT:   call void @"_COp.2ebefcbfae1e57a1:Copy.Core.ff97138eb0714319"(ptr %.loc10_25.2.x, ptr %x), !dbg !35
 // CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !34
-// CHECK:STDOUT:   call void @"_COp.b31b63747b02f3d2:Copy.Core.57b0cafb2bd0e18e"(ptr %.loc10_25.4.y, ptr %y), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.2ebefcbfae1e57a1:Copy.Core.ff97138eb0714319"(ptr %.loc10_25.4.y, ptr %y), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.b31b63747b02f3d2:Copy.Core.57b0cafb2bd0e18e"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.2ebefcbfae1e57a1:Copy.Core.ff97138eb0714319"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !44
 // CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !44
 // CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !45
@@ -225,7 +225,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.b31b63747b02f3d2:Copy.Core.57b0cafb2bd0e18e", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.2ebefcbfae1e57a1:Copy.Core.ff97138eb0714319", { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -248,7 +248,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Tuples", linkageName: "_CTuples.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 10, scope: !13)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 3, scope: !13)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.5662bbc72901b5f6", scope: null, file: !3, line: 9, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.980bd46fd9fb5b99", scope: null, file: !3, line: 9, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{!7, !19, !19}
 // CHECK:STDOUT: !19 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -257,10 +257,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 2, scope: !16, type: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 10, column: 10, scope: !16)
 // CHECK:STDOUT: !24 = !DILocation(line: 10, column: 3, scope: !16)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.62c077bda9003188", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.d18344b232c82104", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !26 = !DILocation(line: 10, column: 10, scope: !25)
 // CHECK:STDOUT: !27 = !DILocation(line: 10, column: 3, scope: !25)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.97ffc1d4880babb0", scope: null, file: !3, line: 9, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.878f62403168310d", scope: null, file: !3, line: 9, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{!7, !7, !7}
 // CHECK:STDOUT: !31 = !{!32, !33}
@@ -270,7 +270,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !35 = !DILocation(line: 10, column: 16, scope: !28)
 // CHECK:STDOUT: !36 = !DILocation(line: 10, column: 24, scope: !28)
 // CHECK:STDOUT: !37 = !DILocation(line: 10, column: 3, scope: !28)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b31b63747b02f3d2:Copy.Core.57b0cafb2bd0e18e", scope: null, file: !39, line: 48, type: !40, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !42)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.2ebefcbfae1e57a1:Copy.Core.ff97138eb0714319", scope: null, file: !39, line: 48, type: !40, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !42)
 // CHECK:STDOUT: !39 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
 // CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
 // CHECK:STDOUT: !41 = !{!7, !7}
@@ -283,9 +283,9 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.e12.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
-// CHECK:STDOUT: @C.val.c5b.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
-// CHECK:STDOUT: @C.val.589.loc31_3 = internal constant { i1, { i32, i32, i32 } } { i1 true, { i32, i32, i32 } { i32 1, i32 2, i32 3 } }
+// CHECK:STDOUT: @C.val.79a.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
+// CHECK:STDOUT: @C.val.ef0.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
+// CHECK:STDOUT: @C.val.a1c.loc31_3 = internal constant { i1, { i32, i32, i32 } } { i1 true, { i32, i32, i32 } { i32 1, i32 2, i32 3 } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CAccessBool.Main() #0 !dbg !4 {
@@ -294,26 +294,26 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   %.loc16_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   %.loc16_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.e12.loc16_3, i64 8, i1 false), !dbg !8
-// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.5662bbc72901b5f6(ptr %c.var), !dbg !10
-// CHECK:STDOUT:   call void @"_COp.cb0afdcb021e53ea:core.Destroy.Core"(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.79a.loc16_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.980bd46fd9fb5b99(ptr %c.var), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.433ec17d6c887bfd:core.Destroy.Core"(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.6ff8d75e287d0783:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7e571874d02370cb:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.cb0afdcb021e53ea:core.Destroy.Core"(ptr %self) #0 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_COp.433ec17d6c887bfd:core.Destroy.Core"(ptr %self) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
@@ -325,9 +325,9 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !32
 // CHECK:STDOUT:   %.loc21_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !33
 // CHECK:STDOUT:   %.loc21_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !33
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.e12.loc16_3, i64 8, i1 false), !dbg !32
-// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.5662bbc72901b5f6(ptr %c.var), !dbg !34
-// CHECK:STDOUT:   call void @"_COp.cb0afdcb021e53ea:core.Destroy.Core"(ptr %c.var), !dbg !32
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.79a.loc16_3, i64 8, i1 false), !dbg !32
+// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.980bd46fd9fb5b99(ptr %c.var), !dbg !34
+// CHECK:STDOUT:   call void @"_COp.433ec17d6c887bfd:core.Destroy.Core"(ptr %c.var), !dbg !32
 // CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,9 +338,9 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !39
 // CHECK:STDOUT:   %.loc26_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !40
 // CHECK:STDOUT:   %.loc26_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !40
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.c5b.loc26_3, i64 1, i1 false), !dbg !39
-// CHECK:STDOUT:   call void @_CGetT.C.Main.62c077bda9003188(ptr %c.var), !dbg !41
-// CHECK:STDOUT:   call void @"_COp.b463de16153845f9:core.Destroy.Core"(ptr %c.var), !dbg !39
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.ef0.loc26_3, i64 1, i1 false), !dbg !39
+// CHECK:STDOUT:   call void @_CGetT.C.Main.d18344b232c82104(ptr %c.var), !dbg !41
+// CHECK:STDOUT:   call void @"_COp.7f4191e38d4b4592:core.Destroy.Core"(ptr %c.var), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -351,7 +351,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.b463de16153845f9:core.Destroy.Core"(ptr %self) #0 !dbg !47 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7f4191e38d4b4592:core.Destroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
@@ -366,26 +366,26 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 0, !dbg !54
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 1, !dbg !54
 // CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 2, !dbg !54
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.589.loc31_3, i64 16, i1 false), !dbg !52
-// CHECK:STDOUT:   call void @_CGetT.C.Main.3c894851e1eed3bc(ptr %return, ptr %c.var), !dbg !55
-// CHECK:STDOUT:   call void @"_COp.86c3e27a08440887:core.Destroy.Core"(ptr %c.var), !dbg !52
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.a1c.loc31_3, i64 16, i1 false), !dbg !52
+// CHECK:STDOUT:   call void @_CGetT.C.Main.04f80dc80ae8a44a(ptr %return, ptr %c.var), !dbg !55
+// CHECK:STDOUT:   call void @"_COp.316c701fc75e6074:core.Destroy.Core"(ptr %c.var), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.819e9e1e390140e8:core.Destroy.Core"(ptr %self) #0 !dbg !57 {
+// CHECK:STDOUT: define weak_odr void @"_COp.9eed32d146d768a4:core.Destroy.Core"(ptr %self) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.bfc82a34bd610125:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
+// CHECK:STDOUT: define weak_odr void @"_COp.222209af0eb67092:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.86c3e27a08440887:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
+// CHECK:STDOUT: define weak_odr void @"_COp.316c701fc75e6074:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
@@ -397,7 +397,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.5662bbc72901b5f6(ptr %self) #0 !dbg !69 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.980bd46fd9fb5b99(ptr %self) #0 !dbg !69 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_16.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !74
 // CHECK:STDOUT:   %.loc6_16.2 = load i8, ptr %.loc6_16.1.v, align 1, !dbg !74
@@ -406,7 +406,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.5662bbc72901b5f6(ptr %self) #0 !dbg !76 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.980bd46fd9fb5b99(ptr %self) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !81
 // CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !81
@@ -414,22 +414,22 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.62c077bda9003188(ptr %self) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.d18344b232c82104(ptr %self) #0 !dbg !83 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !86
 // CHECK:STDOUT:   ret void, !dbg !87
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.3c894851e1eed3bc(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !88 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.04f80dc80ae8a44a(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !88 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !91
-// CHECK:STDOUT:   call void @"_COp.69353d7f5c47b8f0:Copy.Core.27541808ae6dc7ae"(ptr %return, ptr %.loc9_16.1.w), !dbg !91
+// CHECK:STDOUT:   call void @"_COp.8f8a97a660e99434:Copy.Core.649e390b4d8c77ae"(ptr %return, ptr %.loc9_16.1.w), !dbg !91
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.69353d7f5c47b8f0:Copy.Core.27541808ae6dc7ae"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !93 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp.8f8a97a660e99434:Copy.Core.649e390b4d8c77ae"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !93 {
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !97
 // CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !97
 // CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !98
@@ -467,20 +467,20 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 19, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !3, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !15}
 // CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 16, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.6ff8d75e287d0783:core.Destroy.Core", scope: null, file: !3, line: 16, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e571874d02370cb:core.Destroy.Core", scope: null, file: !3, line: 16, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{null, !7}
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !19, type: !7)
 // CHECK:STDOUT: !24 = !DILocation(line: 16, column: 3, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cb0afdcb021e53ea:core.Destroy.Core", scope: null, file: !3, line: 16, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.433ec17d6c887bfd:core.Destroy.Core", scope: null, file: !3, line: 16, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 16, column: 3, scope: !25)
@@ -502,7 +502,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !46 = !DILocation(line: 26, column: 3, scope: !43)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b463de16153845f9:core.Destroy.Core", scope: null, file: !3, line: 26, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7f4191e38d4b4592:core.Destroy.Core", scope: null, file: !3, line: 26, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
 // CHECK:STDOUT: !48 = !{!49}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !47, type: !7)
 // CHECK:STDOUT: !50 = !DILocation(line: 26, column: 3, scope: !47)
@@ -512,43 +512,43 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !54 = !DILocation(line: 31, column: 48, scope: !51)
 // CHECK:STDOUT: !55 = !DILocation(line: 32, column: 10, scope: !51)
 // CHECK:STDOUT: !56 = !DILocation(line: 32, column: 3, scope: !51)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Op", linkageName: "_COp.819e9e1e390140e8:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !58)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9eed32d146d768a4:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !58)
 // CHECK:STDOUT: !58 = !{!59}
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !57, type: !7)
 // CHECK:STDOUT: !60 = !DILocation(line: 31, column: 3, scope: !57)
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Op", linkageName: "_COp.bfc82a34bd610125:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !62)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Op", linkageName: "_COp.222209af0eb67092:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !62)
 // CHECK:STDOUT: !62 = !{!63}
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !61, type: !7)
 // CHECK:STDOUT: !64 = !DILocation(line: 31, column: 3, scope: !61)
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "Op", linkageName: "_COp.86c3e27a08440887:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !66)
+// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "Op", linkageName: "_COp.316c701fc75e6074:core.Destroy.Core", scope: null, file: !3, line: 31, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !66)
 // CHECK:STDOUT: !66 = !{!67}
 // CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !65, type: !7)
 // CHECK:STDOUT: !68 = !DILocation(line: 31, column: 3, scope: !65)
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.5662bbc72901b5f6", scope: null, file: !3, line: 5, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !72)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.980bd46fd9fb5b99", scope: null, file: !3, line: 5, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !72)
 // CHECK:STDOUT: !70 = !DISubroutineType(types: !71)
 // CHECK:STDOUT: !71 = !{!7, !7}
 // CHECK:STDOUT: !72 = !{!73}
 // CHECK:STDOUT: !73 = !DILocalVariable(arg: 1, scope: !69, type: !7)
 // CHECK:STDOUT: !74 = !DILocation(line: 6, column: 12, scope: !69)
 // CHECK:STDOUT: !75 = !DILocation(line: 6, column: 5, scope: !69)
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.5662bbc72901b5f6", scope: null, file: !3, line: 8, type: !77, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !79)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.980bd46fd9fb5b99", scope: null, file: !3, line: 8, type: !77, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !79)
 // CHECK:STDOUT: !77 = !DISubroutineType(types: !78)
 // CHECK:STDOUT: !78 = !{!15, !7}
 // CHECK:STDOUT: !79 = !{!80}
 // CHECK:STDOUT: !80 = !DILocalVariable(arg: 1, scope: !76, type: !7)
 // CHECK:STDOUT: !81 = !DILocation(line: 9, column: 12, scope: !76)
 // CHECK:STDOUT: !82 = !DILocation(line: 9, column: 5, scope: !76)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.62c077bda9003188", scope: null, file: !3, line: 8, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !84)
+// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.d18344b232c82104", scope: null, file: !3, line: 8, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !84)
 // CHECK:STDOUT: !84 = !{!85}
 // CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !83, type: !7)
 // CHECK:STDOUT: !86 = !DILocation(line: 9, column: 12, scope: !83)
 // CHECK:STDOUT: !87 = !DILocation(line: 9, column: 5, scope: !83)
-// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.3c894851e1eed3bc", scope: null, file: !3, line: 8, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !89)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.04f80dc80ae8a44a", scope: null, file: !3, line: 8, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !89)
 // CHECK:STDOUT: !89 = !{!90}
 // CHECK:STDOUT: !90 = !DILocalVariable(arg: 1, scope: !88, type: !7)
 // CHECK:STDOUT: !91 = !DILocation(line: 9, column: 12, scope: !88)
 // CHECK:STDOUT: !92 = !DILocation(line: 9, column: 5, scope: !88)
-// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "Op", linkageName: "_COp.69353d7f5c47b8f0:Copy.Core.27541808ae6dc7ae", scope: null, file: !94, line: 54, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !95)
+// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8f8a97a660e99434:Copy.Core.649e390b4d8c77ae", scope: null, file: !94, line: 54, type: !70, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !95)
 // CHECK:STDOUT: !94 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
 // CHECK:STDOUT: !95 = !{!96}
 // CHECK:STDOUT: !96 = !DILocalVariable(arg: 1, scope: !93, type: !7)

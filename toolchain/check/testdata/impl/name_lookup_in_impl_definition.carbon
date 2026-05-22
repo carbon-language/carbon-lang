@@ -37,8 +37,8 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
-// CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
-// CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.878: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %pattern_type.77c: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.F.type: type = fn_type @T.as.I.impl.F, @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.F: %T.as.I.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
@@ -53,14 +53,14 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %.loc10_31 {
 // CHECK:STDOUT:     %T.as.I.impl.F.decl: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = fn_decl @T.as.I.impl.F [symbolic = @T.as.I.impl.%T.as.I.impl.F (constants.%T.as.I.impl.F)] {
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.7c7 = out_param_pattern [concrete]
-// CHECK:STDOUT:       %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %U.ref [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.77c = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: %pattern_type.77c = return_slot_pattern %return.param_patt, %U.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %I.facet.loc13_13.2: %I.type = facet_value @T.as.I.impl.%T.ref, (constants.%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
 // CHECK:STDOUT:       %.loc13_13.1: %I.type = converted @T.as.I.impl.%T.ref, %I.facet.loc13_13.2 [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %impl.elem0 [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc13_13.2: Core.Form = init_form %U.ref [concrete = constants.%.a69]
+// CHECK:STDOUT:       %.loc13_13.2: Core.Form = init_form %U.ref [concrete = constants.%.878]
 // CHECK:STDOUT:       %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:       %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:     }

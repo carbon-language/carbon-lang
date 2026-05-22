@@ -18,6 +18,17 @@
 
 namespace Carbon::SemIR {
 
+Mangler::Mangler(const SemIR::File& sem_ir, int total_ir_count,
+                 bool use_string_fingerprint)
+    : sem_ir_(sem_ir),
+      fingerprinter_(
+          use_string_fingerprint
+              ? std::variant<HashInstFingerprinter, StringInstFingerprinter>(
+                    std::in_place_type<StringInstFingerprinter>, total_ir_count)
+              : std::variant<HashInstFingerprinter, StringInstFingerprinter>(
+                    std::in_place_type<HashInstFingerprinter>,
+                    total_ir_count)) {}
+
 auto Mangler::MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id)
     -> void {
   CARBON_CHECK(name_id.AsIdentifierId().has_value(),
@@ -124,9 +135,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           }
           default: {
             // Fall back to including a fingerprint.
-            llvm::write_hex(
-                os, fingerprinter_.GetOrCompute(&sem_ir(), self_const_inst_id),
-                llvm::HexPrintStyle::Lower, 16);
+            MangleFingerprint(os, &sem_ir(), self_const_inst_id);
             break;
           }
         }
@@ -199,9 +208,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 
     case SemIR::Function::SpecialFunctionKind::CoreWitness:
       os << ".";
-      llvm::write_hex(
-          os, fingerprinter_.GetOrCompute(&sem_ir(), function.self_param_id),
-          llvm::HexPrintStyle::Lower, 16);
+      MangleFingerprint(os, &sem_ir(), function.self_param_id);
       os << ":core";
       break;
     case SemIR::Function::SpecialFunctionKind::Thunk:
@@ -246,11 +253,8 @@ auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
   // but isn't necessarily stable across toolchain changes.
   if (specific_id.has_value()) {
     os << ".";
-    llvm::write_hex(
-        os,
-        fingerprinter_.GetOrCompute(
-            &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
-        llvm::HexPrintStyle::Lower, 16);
+    MangleFingerprint(os, &sem_ir(),
+                      sem_ir().specifics().Get(specific_id).args_id);
   }
 }
 

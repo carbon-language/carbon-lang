@@ -168,6 +168,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns whether the given token has trailing whitespace.
   auto HasTrailingWhitespace(TokenIndex token) const -> bool;
 
+  // Returns whether the token was spelled as a raw identifier.
+  auto IsRawIdentifier(TokenIndex token) const -> bool;
+
   // Returns whether the token was created as part of an error recovery effort.
   //
   // For example, a closing paren inserted to match an unmatched paren.

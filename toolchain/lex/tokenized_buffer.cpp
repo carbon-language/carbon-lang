@@ -107,7 +107,18 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 
   CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
                token_info.kind());
-  return value_stores_->identifiers().Get(token_info.ident_id());
+
+  // If this is a raw identifier, obtain its spelling from the source text.
+  auto ident = value_stores_->identifiers().Get(token_info.ident_id());
+  if (IsRawIdentifier(token)) {
+    llvm::StringRef raw_ident =
+        source_->text().substr(token_info.byte_offset(), ident.size() + 2);
+    CARBON_CHECK(raw_ident[0] == 'r' && raw_ident[1] == '#' &&
+                     raw_ident.substr(2) == ident,
+                 "`{0}` != `r#` + `{1}`", raw_ident, ident);
+    return raw_ident;
+  }
+  return ident;
 }
 
 auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
@@ -168,6 +179,22 @@ auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
   CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
                closing_token_info.kind());
   return closing_token_info.opening_token_index();
+}
+
+auto TokenizedBuffer::IsRawIdentifier(TokenIndex token) const -> bool {
+  const auto& token_info = token_infos_.Get(token);
+  if (token_info.kind() != TokenKind::Identifier) {
+    return false;
+  }
+  // Check if the spelling starts `r#`. A small nuance here: we also need to
+  // check the character after the `#` is an identifier start character, because
+  // `r#<non-identifier-character>` is lexed as an `r` token followed by a token
+  // starting with `#`. It suffices to check that character is the first
+  // character of the identifier.
+  auto token_text = source_->text().substr(token_info.byte_offset());
+  return token_text.starts_with("r#") &&
+         token_text[2] ==
+             value_stores_->identifiers().Get(token_info.ident_id()).front();
 }
 
 auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {

@@ -108,16 +108,16 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @_Cv.Main = global { i32, i32 } zeroinitializer
 // CHECK:STDOUT: @_Cy.Main = global i32 0
 // CHECK:STDOUT: @_Cz.Main = global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @tuple.21c.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
-// CHECK:STDOUT: @tuple.092.loc8_1 = internal constant { i32, i32 } { i32 5, i32 6 }
+// CHECK:STDOUT: @tuple.03f.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.f35.loc8_1 = internal constant { i32, i32 } { i32 5, i32 6 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.21c.loc4_1, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.03f.loc4_1, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   store i32 4, ptr @_Cy.Main, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cz.Main, ptr align 4 @tuple.092.loc8_1, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cz.Main, ptr align 4 @tuple.f35.loc8_1, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

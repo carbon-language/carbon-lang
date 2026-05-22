@@ -63,7 +63,7 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
@@ -75,7 +75,8 @@ CheckUnit::CheckUnit(
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
+               unit_and_imports_->unit->total_ir_count, vlog_stream,
+               mangle_string_fingerprint) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -126,8 +127,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto package_inst_id =
       AddInst<SemIR::Namespace>(context_, Parse::NodeId::None,
                                 {.type_id = namespace_type_id,
-                                 .name_scope_id = SemIR::NameScopeId::Package,
-                                 .import_id = SemIR::InstId::None});
+                                 .name_scope_id = SemIR::NameScopeId::Package});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and

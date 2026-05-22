@@ -51,7 +51,7 @@ class Context {
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       clang::CodeGenerator* code_generator, llvm::StringRef module_name,
       int total_ir_count, Lower::OptimizationLevel opt_level,
-      llvm::raw_ostream* vlog_stream);
+      bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -124,6 +124,9 @@ class Context {
     return *tree_and_subtrees_getters_;
   }
   auto total_ir_count() -> int { return total_ir_count_; }
+  auto mangle_string_fingerprint() const -> bool {
+    return mangle_string_fingerprint_;
+  }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -170,6 +173,9 @@ class Context {
 
   // The total number of files.
   int total_ir_count_;
+
+  // Whether to use the string form of the fingerprint for mangling.
+  bool mangle_string_fingerprint_;
 
   // The `FileContext`s for each IR that is involved in this lowering action.
   using FileContextStore =

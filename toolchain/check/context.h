@@ -61,7 +61,8 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, llvm::raw_ostream* vlog_stream);
+                   int total_ir_count, llvm::raw_ostream* vlog_stream,
+                   bool mangle_string_fingerprint = false);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
@@ -352,6 +353,9 @@ class Context {
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
+  auto field_initializers() -> SemIR::File::FieldInitializerMap& {
+    return sem_ir().field_initializers();
+  }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
@@ -398,6 +402,9 @@ class Context {
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
   auto bundles() -> SemIR::BundleStore& { return sem_ir().bundles(); }
   auto total_ir_count() const -> int { return total_ir_count_; }
+  auto mangle_string_fingerprint() const -> bool {
+    return mangle_string_fingerprint_;
+  }
 
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
@@ -557,6 +564,8 @@ class Context {
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;
+
+  bool mangle_string_fingerprint_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

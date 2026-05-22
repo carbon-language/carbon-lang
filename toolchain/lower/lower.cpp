@@ -25,7 +25,7 @@ auto LowerToLLVM(
       &tree_and_subtrees_getters,
       sem_ir.cpp_file() ? sem_ir.cpp_file()->GetCodeGenerator() : nullptr,
       sem_ir.filename(), total_ir_count, options.opt_level,
-      options.vlog_stream);
+      options.mangle_string_fingerprint, options.vlog_stream);
 
   // TODO: Consider disabling instruction naming by default if we're not
   // producing textual LLVM IR.
