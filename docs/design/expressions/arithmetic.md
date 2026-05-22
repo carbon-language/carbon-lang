@@ -194,7 +194,7 @@ following family of interfaces:
 package Core;
 
 // Unary `-`.
-interface NegatePrimitive[implicit_into anchor Self:! Form] {
+interface NegatePrimitive(implicit_into anchor Self:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self)
@@ -211,9 +211,9 @@ constraint Negate {
 
 ```
 // Binary `+`.
-interface AddWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface AddWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -232,9 +232,9 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface SubWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -253,9 +253,9 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface MulWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -274,9 +274,9 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface DivWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
@@ -295,9 +295,9 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWithPrimitive
-    [implicit_into Self:! Form]
-    (implicit_into U:! Form) {
+interface ModWithPrimitive(
+    implicit_into Self:! Form,
+    implicit_into U:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)

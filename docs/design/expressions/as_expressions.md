@@ -181,8 +181,8 @@ Explicit casts can be defined for user-defined types such as
 ```carbon
 package Core;
 
-interface AsPrimitive[implicit_into Self:! Form]
-    (Dest:! type) {
+interface AsPrimitive(implicit_into Self:! Form,
+                      Dest:! type) {
   // FIXME: Need to get the unqualified version
   // of `Dest` without `const`/`partial` here.
   let implicit_from ResultForm:! Form where .type = Dest;

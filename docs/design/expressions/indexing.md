@@ -60,9 +60,9 @@ Its semantics are defined in terms of the following form interface:
 ```carbon
 package Core;
 
-interface IndexWithPrimitive
-    [implicit_into anchor Self:! Form]
-    (implicit_into Subscript:! Form) {
+interface IndexWithPrimitive(
+    implicit_into anchor Self:! Form,
+    implicit_into Subscript:! Form) {
   let implicit_from ResultForm:! Form;
   fn Op(self:? Self, subscript:? Subscript)
       ->? ResultForm;
@@ -102,8 +102,8 @@ constraint IndexRefWith(SubscriptType:! type) {
 
 // `lhs[index]` is a reference expression or value
 // depending on the category of `lhs`.
-constraint IndexWith
-    [Self:! NoVarForm](SubscriptType:! type) {
+constraint IndexWith(Self:! NoVarForm,
+                     SubscriptType:! type) {
   let ElementType:! type;
   match_first {
     extend require impls IndexRefWith(SubscriptType)

@@ -254,9 +254,9 @@ The `EqWithPrimitive` interface is used to define the semantics of the `==` and
 `!=` operators for a given pair of types:
 
 ```
-interface EqWithPrimitive
-    [implicit_into Self:! Core.Form]
-    (implicit_into U:! Core.Form) {
+interface EqWithPrimitive(
+    implicit_into Self:! Core.Form,
+    implicit_into U:! Core.Form) {
   fn Equal(self:? Self, u:? U) -> bool;
   default fn NotEqual(self:? Self, u:? U) -> bool {
     return not (self == u);
@@ -365,9 +365,9 @@ choice Ordering {
   Greater,
   Incomparable
 }
-interface OrderedWithPrimitive
-    [implicit_into Self:! Core.Form]
-    (implicit_into U:! Core.Form) {
+interface OrderedWithPrimitive(
+    implicit_into Self:! Core.Form,
+    implicit_into U:! Core.Form) {
   fn Compare(self:? Self, u:? U) -> Ordering;
   default fn Less(self:? Self, u:? U) -> bool {
     return self.Compare(u) == Ordering.Less;

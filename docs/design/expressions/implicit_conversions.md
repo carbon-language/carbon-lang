@@ -218,8 +218,8 @@ package Core;
 // FIXME: `implicit_into` is concerning here, since we
 // generally only want to perform a single implicit
 // type conversion. Perhaps it should have `anchor`?
-interface ImplicitAsPrimitive
-    [implicit_into Self:! Form](Dest:! type) {
+interface ImplicitAsPrimitive(
+    implicit_into Self:! Form, Dest:! type) {
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
   // let implicit_from ResultForm:! Form where .type = Dest;
