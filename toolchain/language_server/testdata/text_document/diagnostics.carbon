@@ -48,8 +48,8 @@
 // CHECK:STDOUT:         "message": "opening symbol without a corresponding closing symbol",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 2,
-// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:             "character": 1,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
 // CHECK:STDOUT:             "character": 0,
@@ -63,8 +63,8 @@
 // CHECK:STDOUT:         "message": "unrecognized declaration introducer",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 2,
-// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:             "character": 1,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
 // CHECK:STDOUT:             "character": 0,
@@ -78,8 +78,8 @@
 // CHECK:STDOUT:         "message": "semantics TODO: `handle invalid parse trees in `check``",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 2,
-// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:             "character": 1,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
 // CHECK:STDOUT:             "character": 0,
@@ -104,8 +104,8 @@
 // CHECK:STDOUT:         "message": "no return expression should be provided in this context",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 20,
-// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:             "character": 19,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
 // CHECK:STDOUT:             "character": 9,
