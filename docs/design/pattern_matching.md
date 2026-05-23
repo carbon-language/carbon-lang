@@ -157,7 +157,8 @@ pattern_ or a _template binding pattern_, depending on whether it is prefixed
 with `template`.
 
 The binding declared by a binding pattern has a
-[primitive form](values.md#expression-forms) with the following components:
+[primitive extended type](values.md#extended-types) with the following
+components:
 
 -   The type is _expression_.
 -   The category is "value" if the pattern is a value binding pattern, "durable
@@ -167,13 +168,13 @@ The binding declared by a binding pattern has a
     pattern is a runtime, symbolic, or template binding pattern.
 
 During pattern matching, the scrutinee is implicitly converted as needed to have
-the same form, and the binding is _bound_ to (and consumes) the result of these
-conversions. This makes a runtime or template binding a kind of reusable alias
-for the converted scrutinee expression, with the same form and value. Symbolic
-bindings are more complex: the binding will have the same type, category, and
-phase as the converted scrutinee expression, but its constant value is an opaque
-symbol introduced by the binding, which the type system knows to be equal to the
-converted scrutinee expression.
+the same extended type, and the binding is _bound_ to (and consumes) the result
+of these conversions. This makes a runtime or template binding a kind of
+reusable alias for the converted scrutinee expression, with the same extended
+type and value. Symbolic bindings are more complex: the binding will have the
+same type, category, and phase as the converted scrutinee expression, but its
+constant value is an opaque symbol introduced by the binding, which the type
+system knows to be equal to the converted scrutinee expression.
 
 Note that there is no way to implicitly convert to a durable reference
 expression from any other category, so the scrutinee of a reference binding
@@ -299,13 +300,13 @@ scrutinee.
 
 -   _pattern_ ::= `var` _pattern_
 
-The scrutinee is expected to have the same type as the resolved type of the
-nested _pattern_, and it is expected to be a runtime-phase ephemeral entire
-reference expression, which therefore refers to a newly-allocated temporary
-object. The scrutinee expression is converted as needed to satisfy those
-expectations, and the `var` pattern takes ownership of the referenced object,
-promotes it to a _durable_ entire reference expression, and matches the nested
-_pattern_ with it.
+The scrutinee is expected to have the same type component as the resolved type
+component of the nested _pattern_, and it is expected to be a runtime-phase
+ephemeral entire reference expression, which therefore refers to a
+newly-allocated temporary object. The scrutinee expression is converted as
+needed to satisfy those expectations, and the `var` pattern takes ownership of
+the referenced object, promotes it to a _durable_ entire reference expression,
+and matches the nested _pattern_ with it.
 
 The lifetime of the allocated object extends to the end of scope of the `var`
 pattern (that is the scope that any bindings declared within it would have).
@@ -379,12 +380,13 @@ A tuple of patterns can be used as a pattern.
     `)`
 -   _pattern_ ::= _tuple-pattern_
 
-The scrutinee is required to be of tuple type, with the same arity as the number
-of nested _patterns_. It is converted to a tuple form by
-[form decomposition](values.md#form-conversions), and then each nested _pattern_
-is matched against the corresponding element of the converted scrutinee's
-[result](values.md#expression-forms). The tuple pattern matches if all of these
-sub-matches succeed.
+The scrutinee is required to have a type component that is a tuple type, with
+the same arity as the number of nested _patterns_. It is converted to a tuple
+extended type by
+[extended type decomposition](values.md#extended-type-conversions), and then
+each nested _pattern_ is matched against the corresponding element of the
+converted scrutinee's [result](values.md#extended-types). The tuple pattern
+matches if all of these sub-matches succeed.
 
 ### Struct patterns
 
@@ -408,15 +410,16 @@ match ({.a = 1, .b = 2}) {
 }
 ```
 
-The scrutinee is required to be of struct type, and every field name in the
-pattern must be a field name in the scrutinee. It is converted to a struct form
-by [form decomposition](values.md#form-conversions) and then each
+The scrutinee is required to have a type component that is a struct type, and
+every field name in the pattern must be a field name in the scrutinee. It is
+converted to a struct extended type by
+[extended type decomposition](values.md#extended-type-conversions) and then each
 _field-pattern_ is matched with the same-named element of the converted
-scrutinee's [result](values.md#expression-forms). If the scrutinee result has
-any field names not present in the pattern, those sub-results are
-[discarded](values.md#form-conversions) in lexical order if the pattern has a
-trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does not. The
-struct pattern matches if all of these sub-matches succeed.
+scrutinee's [result](values.md#extended-types). If the scrutinee result has any
+field names not present in the pattern, those sub-results are
+[discarded](values.md#extended-type-conversions) in lexical order if the pattern
+has a trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does
+not. The struct pattern matches if all of these sub-matches succeed.
 
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
@@ -503,12 +506,12 @@ is compared using `==`.
 
 ### Templates
 
-Any checking of the type of the scrutinee against the type of the pattern that
-cannot be performed because the type of the scrutinee involves a template
-parameter is deferred until the template parameter's value is known. During
-instantiation, patterns that are not meaningful due to a type error are instead
-treated as not matching. This includes cases where an `==` fails because of a
-missing `EqWith` implementation.
+Any checking of the type component of the scrutinee against the type component
+of the pattern that cannot be performed because the type component of the
+scrutinee involves a template parameter is deferred until the template
+parameter's value is known. During instantiation, patterns that are not
+meaningful due to a type error are instead treated as not matching. This
+includes cases where an `==` fails because of a missing `EqWith` implementation.
 
 ```carbon
 fn TypeName[template T:! Type](x: T) -> String {
@@ -741,9 +744,9 @@ In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
-If the scrutinee expression's [form](values.md#expression-forms) contains any
-primitive forms with category "initializing", they are converted to ephemeral
-non-entire reference expressions by
+If the scrutinee expression's [extended type](values.md#extended-types) contains
+any primitive extended types with category "initializing", they are converted to
+ephemeral non-entire reference expressions by
 [materialization](values.md#temporary-materialization) before pattern matching
 begins, so that the result can be reused by multiple `case`s. However, the
 objects created by `var` patterns are not reused by multiple `case`s:

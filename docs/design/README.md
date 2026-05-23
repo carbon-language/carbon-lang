@@ -2712,9 +2712,10 @@ not itself a type.
 
 ### Checked and template parameters
 
-The `:!` marks it as a compile-time binding pattern, and so `T` is a
-compile-time parameter. Compile-time parameters may either be _checked_ or
-_template_, and default to checked.
+Compile-time parameters like types may either be _checked_ (marked `generic` or
+defaulting to it) or _template_ (marked `template` and never the default).
+Parameters in the deduced parameter list of functions `[]` default to being
+checked generic parameters without a `generic` keyword.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
@@ -2724,7 +2725,8 @@ type `T` that implements the `Ordered` interface. Subsequent calls to `Min` only
 need to check that the deduced value of `T` implements `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
-parameter by prefixing with the `template` keyword, as in `template T:! type`.
+parameter by prefixing it with the `template` keyword. Keywords matching the
+contextual default are disallowed to ensure consistency.
 
 ```carbon
 fn Convert[template T:! type](source: T, template U:! type) -> U {
@@ -2763,9 +2765,10 @@ constraints declared in the function signature and evaluated at compile-time.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
-constant. A binding pattern using `:!` is a _compile-time binding pattern_; more
-specifically a _template binding pattern_ if it uses `template`, and a _symbolic
-binding pattern_ if it does not.
+constant. A binding pattern for a compile-time parameter is a _compile-time
+binding pattern_; more specifically a _template binding pattern_ if it uses
+`template`, and a _symbolic binding pattern_ if it uses `generic` or defaults to
+it.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
