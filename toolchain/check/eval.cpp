@@ -2721,6 +2721,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                         SemIR::Inst inst) -> SemIR::ConstantId {
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
+  Phase base_phase = Phase::Concrete;
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
@@ -2737,7 +2738,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
     auto inst = eval_context.insts().Get(inst_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
-        AddRequirementBase(eval_context.context(), base, &info, &phase);
+        AddRequirementBase(eval_context.context(), base, &info, &base_phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
@@ -2762,6 +2763,14 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
   auto const_info = GetConstantFacetTypeInfo(
       eval_context, SemIR::LocId(where_inst_id), info, &phase);
+
+  // Ignore period self dependence from anywhere other than the base of the
+  // `where` expression.
+  if (phase == Phase::PeriodSelfSymbolic) {
+    phase = Phase::Concrete;
+  }
+  phase = LatestPhase(phase, base_phase);
+
   return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 

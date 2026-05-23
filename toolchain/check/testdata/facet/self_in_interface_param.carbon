@@ -39,8 +39,8 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:   %I.lookup_impl_witness.e39: <witness> = lookup_impl_witness %.Self.00b, @I, @I(%.Self.as_type.246) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness.e39, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I, @I(%.Self.as_type.246) where %impl.elem0 = %empty_tuple.type> [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.c98: type = pattern_type %I_where.type [symbolic_self]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I, @I(%.Self.as_type.246) where %impl.elem0 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %pattern_type.c98: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %T.3a9: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.3a9 [symbolic]
 // CHECK:STDOUT:   %facet_value: %type = facet_value %T.as_type, () [symbolic]
@@ -72,7 +72,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:     %.loc18_39.5: %type = converted constants.%T.3a9, %facet_value.loc18_39.4 [symbolic = %facet_value.loc18_39.1 (constants.%facet_value)]
 // CHECK:STDOUT:     %impl.elem0.loc18_39: type = impl_witness_access constants.%I.lookup_impl_witness.9e3, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc18_39.6: Core.Form = init_form %impl.elem0.loc18_39 [concrete = constants.%.262]
-// CHECK:STDOUT:     %.loc18_19.1: type = splice_block %.loc18_19.2 [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc18_19.1: type = splice_block %.loc18_19.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %.Self.loc18_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: %I.type.a64 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:       %.Self.ref.loc18_12: %type = name_ref .Self, %.Self.loc18_7 [symbolic_self = constants.%.Self.c39]
@@ -88,7 +88,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:       %impl.elem0.loc18_25: type = impl_witness_access constants.%I.lookup_impl_witness.e39, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc18_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc18_32.2: type = converted %.loc18_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc18_19.2: type = where_expr [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc18_19.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %I.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_25, %.loc18_32.2
 // CHECK:STDOUT:       }
