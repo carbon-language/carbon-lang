@@ -165,7 +165,6 @@ issues for longer discussion:
 -   When you both have
     [approval](/docs/project/code_review.md#approving-the-change) from the
     assigned lead and the last blocking issue is addressed, merge!
-
     -   If you end up making significant changes when incorporating resolved
         issues after the approval from the assigned lead, circle back for a
         fresh approval before merging, just like you would with code review.
@@ -201,7 +200,6 @@ issues for longer discussion:
 -   If there is an open question or a critical blocking issue that needs to get
     resolved, move it to its own issue that the PR depends on, and focus the
     discussion there.
-
     -   The issue should focus on surfacing the important aspects of the
         tradeoff represented by the issue or open question, not on advocacy.
 
@@ -277,8 +275,10 @@ the proposal possible.
 
 A proposal PR will include a "P-numbered" _proposal document_,
 `proposals/p######-slug.md`, where `######` is the pull request number (padded
-to 6 digits) and `slug` is a robust slugification of the title. This file should
-be based on the [proposal template file](/proposals/scripts/template.md).
+to 6 digits) and `slug` is a robust
+["slug"-compatible](https://en.wikipedia.org/wiki/Clean_URL#Slug) version of the
+title. This file should be based on the
+[proposal template file](/proposals/scripts/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
