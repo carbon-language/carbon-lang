@@ -864,7 +864,7 @@ or restrictions on casts between pointers and integers.
 ### Arrays and slices
 
 > **TODO:** The provisional array syntax documented here has been superseded by
-> [p4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md).
+> [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md).
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to

@@ -48,7 +48,7 @@ class C {
   impl as Z;
 }
 
-// TODO: This should typecheck (see p5366).
+// TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: impl C.(as Z) {}
 // CHECK:STDERR:         ^~
@@ -74,7 +74,7 @@ class C {
   impl Self as Z;
 }
 
-// TODO: This should typecheck (see p5366).
+// TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR: impl C.(Self as Z) {}
 // CHECK:STDERR:         ^~~~
@@ -98,7 +98,7 @@ class C {
   impl as Z;
 }
 
-// TODO: This should typecheck (see p5366).
+// TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR: impl C.(Self as Z) {}
 // CHECK:STDERR:         ^~~~
@@ -122,7 +122,7 @@ class C {
   impl Self as Z;
 }
 
-// TODO: This should typecheck (see p5366).
+// TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: impl C.(as Z) {}
 // CHECK:STDERR:         ^~

@@ -327,7 +327,7 @@ date, and can easily find out what has changed. For example:
 
 ```md
 > **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-> [p5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
+> [#5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
 ```
 
 See the `docs/design` changes in

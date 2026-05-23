@@ -34,7 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 > **TODO:** >
-> [p3720: Member binding operators](/proposals/p003720-member-binding-operators.md)
+> [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md)
 > introduces an additional "member binding" step, redefines simple member access
 > in terms of compound member access, and defines compound member access in
 > terms of calls to user-implementable interface methods. This document must be

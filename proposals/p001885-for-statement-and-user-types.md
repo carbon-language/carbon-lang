@@ -84,7 +84,7 @@ The goals for the solution includes:
 ## Background
 
 The original proposal of `for` loops were discussed in
-[p0353](/proposals/p000353-for-loops.md), and the basic design documented in
+[#353](/proposals/p000353-for-loops.md), and the basic design documented in
 [control_flow/loops#for](/docs/design/control_flow/loops.md#for).
 
 The resulting syntax was:

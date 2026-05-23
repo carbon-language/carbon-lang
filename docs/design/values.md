@@ -1504,16 +1504,16 @@ itself.
 
 ## References
 
--   [Proposal #257: Initialization of memory and values][p0257]
--   [Proposal #339: `var` statement][p0339]
--   [Proposal #618: `var` ordering][p0618]
--   [Proposal #851: auto keyword for vars][p0851]
--   [Proposal #2006: Values, variables, and pointers][p2006]
--   [Proposal #5545: Expression form basics][p5545]
+-   [Proposal #257: Initialization of memory and values][#257]
+-   [Proposal #339: `var` statement][#339]
+-   [Proposal #618: `var` ordering][#618]
+-   [Proposal #851: auto keyword for vars][#851]
+-   [Proposal #2006: Values, variables, and pointers][#2006]
+-   [Proposal #5545: Expression form basics][#5545]
 
-[p0257]: /proposals/p000257-initialization-of-memory-and-variables.md
-[p0339]: /proposals/p000339-var-statement.md
-[p0618]: /proposals/p000618-var-ordering.md
-[p0851]: /proposals/p000851-variable-type-inference.md
-[p2006]: /proposals/p002006-values-variables-pointers-and-references.md
-[p5545]: /proposals/p005545-expression-form-basics.md
+[#257]: /proposals/p000257-initialization-of-memory-and-variables.md
+[#339]: /proposals/p000339-var-statement.md
+[#618]: /proposals/p000618-var-ordering.md
+[#851]: /proposals/p000851-variable-type-inference.md
+[#2006]: /proposals/p002006-values-variables-pointers-and-references.md
+[#5545]: /proposals/p005545-expression-form-basics.md

@@ -130,12 +130,12 @@ Leads questions which informed the design proposed here:
 -   [What syntax should we use for pointer types? (#523)][#523]
 
 It also builds on the design of the proposal ["Initialization of memory and
-variables"][p0257] ([#257]), implementing part of [#1993].
+variables"][#257] ([#257]), implementing part of [#1993].
 
 [#257]: https://github.com/carbon-language/carbon-lang/pull/257
 [#523]: https://github.com/carbon-language/carbon-lang/issues/523
 [#1993]: https://github.com/carbon-language/carbon-lang/issues/1993
-[p0257]: /proposals/p000257-initialization-of-memory-and-variables.md
+[#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 
 ## Proposal
 

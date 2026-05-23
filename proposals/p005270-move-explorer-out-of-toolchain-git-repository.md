@@ -103,7 +103,7 @@ maintain searchability, the explorer codebase must either remain on `trunk` in
 archived repositories.
 
 Proposal
-[p3532](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003532-focus-implementation-effort-on-the-toolchain.md)
+[#3532](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003532-focus-implementation-effort-on-the-toolchain.md)
 directed to keep the explorer codebase active in the main repository, with its
 tests building and running:
 

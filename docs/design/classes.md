@@ -804,7 +804,7 @@ type has not yet been decided.
 
 > **TODO:** Document that qualified names can be looked up in an incomplete
 > type, as adopted in
-> [p5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
+> [#5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
 
 ### `Self`
 
