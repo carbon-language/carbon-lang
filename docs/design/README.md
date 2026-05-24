@@ -2990,13 +2990,13 @@ to a checked parameter.
 
 An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
-to compile-time values in implementations, and so use the
-[`:!` compile-time binding pattern syntax](#checked-and-template-parameters)
-inside a [`let` declaration](#constant-let-declarations) without an initializer.
-This allows types in the signatures of functions in the interface to vary. For
-example, an interface describing a
-[stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
-associated constant to represent the type of elements stored in the stack.
+to compile-time values in implementations, and so are defined using a
+[`let` declaration](#constant-let-declarations) without an initializer, which
+defines an associated constant in this context. This allows types in the
+signatures of functions in the interface to vary. For example, an interface
+describing a [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
+might use an associated constant to represent the type of elements stored in the
+stack.
 
 ```
 interface StackInterface {
@@ -3042,9 +3042,9 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be compile-time, and so defined with `:!`, either with or
-without the `template` prefix. For example, to define a stack that can hold
-values of any type `T`:
+to a class must be compile-time, and are `generic` by default, or can be marked
+as `template`. For example, to define a stack that can hold values of any type
+`T`:
 
 ```carbon
 class Stack(T:! type) {
