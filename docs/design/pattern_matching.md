@@ -133,7 +133,8 @@ A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= `ref`? (_identifier_ `:` _expression_ | `self` (`:`
     _expression_)?)
--   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _binding-pattern_ ::= (`generic` | `template`)? _identifier_ `:`
+    _expression_
 -   _pattern_ ::= _binding-pattern_
 
 A name binding pattern declares a _binding_ with a name specified by the
@@ -150,11 +151,12 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-If the pattern syntax uses `:` it is a _runtime binding pattern_. If it uses
-`:!`, it is a _compile-time binding pattern_, and it cannot appear inside a
-`var` pattern. A compile-time binding pattern is either a _symbolic binding
-pattern_ or a _template binding pattern_, depending on whether it is prefixed
-with `template`.
+A binding pattern is a _compile-time binding pattern_ if it uses the `generic`
+or `template` keyword, or appears in a compile-time context (such as parameters
+to compile-time entities). Otherwise, it is a _runtime binding pattern_. A
+compile-time binding pattern cannot appear inside a `var` pattern. It is either
+a _symbolic binding pattern_ or a _template binding pattern_, depending on
+whether it is prefixed with `template`.
 
 The binding declared by a binding pattern has a
 [primitive extended type](values.md#extended-types) with the following
@@ -213,7 +215,7 @@ patterns in the same scope), and in all other respects it behaves as if it were
 wrapped in an [`unused` pattern](#unused).
 
 -   _binding-pattern_ ::= `_` `:` _expression_
--   _binding-pattern_ ::= `template`? `_` `:!` _expression_
+-   _binding-pattern_ ::= (`generic` | `template`)? `_` `:` _expression_
 
 ```carbon
 fn F(n: i32) {

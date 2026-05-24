@@ -319,22 +319,41 @@ comparison `(a < b) > (c)`. In order to resolve the ambiguity, the compiler has
 to perform name lookup on `a` to determine whether there's a function named `a`
 in scope.
 
-It's also worth noting that Carbon
-[doesn't use _any_ kind of brackets](/docs/design/README.md#checked-and-template-parameters)
-to mark template- or checked-generic parameters, so if Carbon had angle
-brackets, they would mean something different than they do in C++, which could
-cause confusion. We do use square brackets to mark _deduced_ parameters, as in:
+It's also worth noting that Carbon distinguishes between parameters based on
+whether they are _deduced_ or _explicit_, rather than using different brackets
+for generic or template parameters.
 
+We use square brackets `[]` to mark _deduced_ parameters, as in:
+
+```carbon
+fn Sort[T: Comparable](a: Vector(T)*)
 ```
-fn Sort[T:! Comparable](a: Vector(T)*)
-```
 
-But deduced parameters aren't the same thing as template parameters. In
-particular, deduced parameters are never mentioned at the callsite, so those
-square brackets are never part of the expression syntax.
+Deduced parameters are inferred by the compiler and are not mentioned at the
+call site, so those square brackets are never part of the expression syntax.
+This is a key distinction from C++ template parameters, which are often
+specified at the call site using angle brackets (for example,
+`std::make_shared<T>()`). In Carbon, if a compile-time parameter needs to be
+specified at the call site, it must be an explicit parameter in `()`. As a
+consequence, even if we used `<` / `>` delimiters, they would mean something
+different from their meaning in C++.
 
-See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
-background on how and why we chose our current compile-time parameter syntax.
+By default, deduced parameters are `generic` and explicit parameters (in `()`)
+are `runtime`. We can use keywords to override these defaults:
+
+-   Use `template` in `[]` for deduced template parameters (for example,
+    `fn F[template T: type](...)`).
+-   Use `generic` in `()` for explicit generic parameters (for example,
+    `fn G(generic T: type, ...)`).
+
+In all cases, the brackets indicate deduction, not the compile-time versus
+runtime phase.
+
+See
+[Proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
+for details on the syntax using keywords and defaults, and
+[Proposal #676](/proposals/p0676.md) for the original background on avoiding
+angle brackets.
 
 ### Why do variable declarations have to start with `var` or `let`?
 

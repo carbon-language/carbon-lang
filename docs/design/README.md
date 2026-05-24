@@ -737,7 +737,7 @@ Value expressions are further broken down into three _expression phases_:
 -   A _runtime value_ has a dynamic value only known at runtime.
 
 Template constants and symbolic constants are collectively called _compile-time
-constants_ and correspond to declarations using `:!`.
+constants_ and correspond to declarations of compile-time parameters.
 
 Carbon will automatically convert a template constant to a symbolic constant, or
 any value to a runtime value:
@@ -1052,10 +1052,11 @@ example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
-A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
-a colon (`:`) and can only match [compile-time constants](#expression-phases),
-not run-time values. A `template` keyword before the binding selects a template
-binding instead of a symbolic binding.
+A [compile-time binding](#checked-and-template-parameters) is indicated by
+context or by keywords like `generic` or `template`, and can only match
+[compile-time constants](#expression-phases), not run-time values. A `template`
+keyword before the binding selects a template binding instead of a symbolic
+binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
