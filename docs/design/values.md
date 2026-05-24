@@ -396,8 +396,8 @@ example:
 -   [Indexing](/docs/design/expressions/indexing.md) into a type similar to
     C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
     type with a durable reference expression such as `local_array[i]`.
--   Calls to functions whose [return forms](#function-calls-and-returns) contain
-    `ref`.
+-   Calls to functions whose
+    [return extended types](#function-calls-and-returns) contain `ref`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -704,8 +704,8 @@ along with the type if `fwd`, or "initializing" otherwise.
 
 If the _category-tag_ is `fwd`, then this denotes a return extended type
 forwarded from "_expression_ `as exttype`". Otherwise, this denotes a primitive
-form with runtime phase, category _category-tag_, and type "_expression_
-`as type`".
+extended type with runtime phase, category _category-tag_, and type
+"_expression_ `as type`".
 
 -   _expression-return-exttype_ ::= _expression_
 
