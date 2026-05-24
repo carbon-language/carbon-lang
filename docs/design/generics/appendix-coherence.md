@@ -67,7 +67,7 @@ this:
 
     ```
     package Container;
-    class HashSet(Key:! Hashable) { ... }
+    class HashSet(Key: Hashable) { ... }
     ```
 
 -   A `Song` type is defined in package `SongLib`.

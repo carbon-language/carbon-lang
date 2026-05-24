@@ -179,7 +179,7 @@ parameters are always permitted.
 
 ```carbon
 fn Foo() {
-  let lambda: auto = fn [T:! Printable](t: T) { Print(t); };
+  let lambda: auto = fn [T: Printable](t: T) { Print(t); };
 }
 ```
 

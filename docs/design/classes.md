@@ -997,8 +997,8 @@ they appear in square brackets `[`...`]` as usual, while `self` remains the
 first parameter in the parens `(`...`)`:
 
 ```carbon
-class Wrapper(T:! type) {
-  fn Print[U:! type](self, x: U);
+class Wrapper(T: type) {
+  fn Print[U: type](self, x: U);
 }
 ```
 
@@ -1170,13 +1170,13 @@ Other type constants can be defined using a `let` declaration:
 
 ```
 class MyClass {
-  let Pi:! f32 = 3.141592653589793;
-  let IndexType:! type = i32;
+  let Pi: f32 = 3.141592653589793;
+  let IndexType: type = i32;
 }
 ```
 
-The `:!` indicates that this is defining a compile-time constant, and so does
-not affect the storage of instances of that class.
+The `let` declaration indicates that this is defining a compile-time constant,
+and so does not affect the storage of instances of that class.
 
 ### Alias
 
@@ -1739,8 +1739,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable](ref self, p: T*);
-  fn UnsafeDelete[T:! Destructible](ref self, p: T*);
+  fn Delete[T: Deletable](ref self, p: T*);
+  fn UnsafeDelete[T: Destructible](ref self, p: T*);
 }
 ```
 
@@ -1750,13 +1750,13 @@ checked-generic function expecting a `Deletable` type, use the
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
-class UnsafeAllowDelete(T:! Concrete) {
+class UnsafeAllowDelete(T: Concrete) {
   extend adapt T;
   impl as Deletable {}
 }
 
 // Example usage:
-fn RequiresDeletable[T:! Deletable](p: T*);
+fn RequiresDeletable[T: Deletable](p: T*);
 var x: MyExtensible;
 RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
 ```

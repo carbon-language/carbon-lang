@@ -164,7 +164,7 @@ Explicit casts can be defined for user-defined types such as
 [classes](../classes.md) by implementing the `As` interface:
 
 ```
-interface As(Dest:! type) {
+interface As(Dest: type) {
   fn Convert(self) -> Dest;
 }
 ```

@@ -165,7 +165,7 @@ alias MyNS = MyNamespace;
 fn CallMyFunction() { MyNS.MyFunction(); }
 
 // ❌ Error: a namespace is not a value.
-let MyNS2:! auto = MyNamespace;
+let MyNS2: auto = MyNamespace;
 
 fn CallMyFunction2() {
   // ❌ Error: cannot perform compound member access into a namespace.
@@ -272,7 +272,7 @@ positional element of the tuple.
 // ✅ `d == 43`.
 let d: i32 = (41, 42, 43).(1 + 1);
 // ✅ `e == 2`.
-let template e:! i32 = (1, 2, 3).(0x1);
+let template e: i32 = (1, 2, 3).(0x1);
 // ❌ Error: no tuple element with index 4.
 let f: i32 = (1, 2).(2 * 2);
 
@@ -319,7 +319,7 @@ fn PrintPointTwice() {
 
 ### Facet binding
 
-A search for members of a facet binding `T:! C` treats the facet binding as an
+A search for members of a facet binding `T: C` treats the facet binding as an
 [archetype](/docs/design/generics/terminology.md#archetype), and finds members
 of the facet `T` of facet type `C`.
 
@@ -330,7 +330,7 @@ interface Printable {
   fn Print(self);
 }
 
-fn GenericPrint[T:! Printable](a: T) {
+fn GenericPrint[T: Printable](a: T) {
   // ✅ OK, type of `a` is the facet binding `T`;
   // `Print` found in the facet `T as Printable`.
   a.Print();
@@ -353,10 +353,10 @@ Evaluation of an expression involving the binding may still succeed, but will
 result in a symbolic constant involving that binding.
 
 ```carbon
-class GenericWrapper(T:! type) {
+class GenericWrapper(T: type) {
   var field: T;
 }
-fn F[T:! type](x: GenericWrapper(T)) -> T {
+fn F[T: type](x: GenericWrapper(T)) -> T {
   // ✅ OK, finds `GenericWrapper(T).field`.
   return x.field;
 }
@@ -364,7 +364,7 @@ fn F[T:! type](x: GenericWrapper(T)) -> T {
 interface Renderable {
   fn Draw(self);
 }
-fn DrawChecked[T:! Renderable](c: T) {
+fn DrawChecked[T: Renderable](c: T) {
   // `Draw` resolves to `(T as Renderable).Draw` or
   // `T.(Renderable.Draw)`.
   c.Draw();
@@ -387,7 +387,7 @@ any symbolic bindings are still unknown. The lookup results from these two
 contexts are [combined](#lookup-ambiguity).
 
 ```carbon
-fn DrawTemplate[template T:! type](c: T) {
+fn DrawTemplate[template T: type](c: T) {
   // `Draw` not found in `type`, looked up in the
   // actual deduced value of `T`.
   c.Draw();
@@ -407,10 +407,10 @@ the compiler can assume the body of a templated class will be the same for all
 argument values:
 
 ```carbon
-class TemplateWrapper(template T:! type) {
+class TemplateWrapper(template T: type) {
   var field: T;
 }
-fn G[template T:! type](x: TemplateWrapper(T)) -> T {
+fn G[template T: type](x: TemplateWrapper(T)) -> T {
   // ✅ Allowed, finds `TemplateWrapper(T).field`.
   return x.field;
 }
@@ -423,10 +423,10 @@ cases where the lookup only succeeds for specific values of `T`:
 class HasField {
   var field: i32;
 }
-class DerivingWrapper(template T:! type) {
+class DerivingWrapper(template T: type) {
   extend base: T;
 }
-fn H[template T:! type](x: DerivingWrapper(T)) -> i32 {
+fn H[template T: type](x: DerivingWrapper(T)) -> i32 {
   // ✅ Allowed, but no name `field` found in template
   // definition of `DerivingWrapper`.
   return x.field;
@@ -464,7 +464,7 @@ interface Renderable {
   fn Draw(self);
 }
 
-fn DrawTemplate2[template T:! Renderable](c: T) {
+fn DrawTemplate2[template T: Renderable](c: T) {
   // Member lookup finds `(T as Renderable).Draw` and the
   // `Draw` member of the actual deduced value of `T`, if any.
   c.Draw();
@@ -492,7 +492,7 @@ class SquareWidget {
   }
 }
 
-fn FlyTemplate[template T:! type](c: T) {
+fn FlyTemplate[template T: type](c: T) {
   c.Fly();
 }
 
@@ -560,7 +560,7 @@ interface Addable {
   // #1
   fn Add(self, other: Self) -> Self;
   // #2
-  default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
+  default fn Sum[Seq: Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
   }
   alias AliasForSum = Sum;
@@ -654,7 +654,7 @@ base class WidgetBase {
   // ✅ OK, even though `WidgetBase` does not implement `Renderable`.
   alias Draw = Renderable.Draw;
 
-  fn DrawAll[T:! Renderable](v: Vector(T)) {
+  fn DrawAll[T: Renderable](v: Vector(T)) {
     for (var w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
@@ -860,11 +860,11 @@ fn CallStaticMethod(c: C) {
   // same as `c.field = 1;`
   c.(C.field) = 1;
 
-  // ✅ OK
-  let T:! type = C.Nested;
-  // ❌ Error: value of `:!` binding is not compile-time because it
+  // ✅ OK (also OK with `template`)
+  let generic G: type = C.Nested;
+  // ❌ Error: value of `generic` binding is not compile-time because it
   // refers to local variable `c`.
-  let U:! type = c.Nested;
+  let generic U: type = c.Nested;
 }
 ```
 

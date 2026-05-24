@@ -209,7 +209,7 @@ alone. For example, let's say we have some overloaded function called `F` that
 has two overloads:
 
 ```
-fn F[template T:! type](x: T*) -> T;
+fn F[template T: type](x: T*) -> T;
 fn F(x: Int) -> bool;
 ```
 
@@ -364,10 +364,10 @@ cases, we are concerned with the type value after the implicit conversion.
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
-[compile-time binding pattern](#bindings) (using `:!` with or without the
-`template` modifier) where the declared type is a [facet type](#facet-type). In
-the binding pattern `T:! Hashable`, `T` is a facet binding, and the value of `T`
-is a [facet](#facet).
+[compile-time binding pattern](#bindings) (indicated by context or keywords like
+`generic` or `template`) where the declared type is a [facet type](#facet-type).
+In the binding pattern `T: Hashable`, `T` is a facet binding, and the value of
+`T` is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -752,14 +752,14 @@ associated constants.
 ```
 // Stack using associated facets
 interface Stack {
-  let ElementType:! type;
+  let ElementType: type;
   fn Push(ref self, value: ElementType);
   fn Pop(ref self) -> ElementType;
 }
 
 // Works on any type implementing `Stack`. Return type
 // is determined by the type's implementation of `Stack`.
-fn PeekAtTopOfStack[T:! Stack](s: T*) -> T.ElementType {
+fn PeekAtTopOfStack[T: Stack](s: T*) -> T.ElementType {
   let ret: T.ElementType = s->Pop();
   s->Push(ret);
   return ret;
@@ -789,8 +789,8 @@ For example, we might have an interface that says how to perform addition with
 another type:
 
 ```
-interface AddWith(T:! type) {
-  let ResultType:! type;
+interface AddWith(T: type) {
+  let ResultType: type;
   fn Add(self, rhs: T) -> ResultType;
 }
 ```
@@ -809,12 +809,12 @@ to be some way to determine the type to add to:
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `y` parameter.
-fn DoAdd[T:! type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
+fn DoAdd[T: type, U: AddWith(T)](x: U, y: T) -> U.ResultType {
   return x.Add(y);
 }
 
 // ❌ This is forbidden, can't uniquely determine `T`.
-fn CompileError[T:! type, U:! AddWith(T)](x: U) -> T;
+fn CompileError[T: type, U: AddWith(T)](x: U) -> T;
 ```
 
 Once the interface parameters can be determined, that determines the values for
