@@ -64,21 +64,17 @@ library "[[@TEST_NAME]]";
 interface Z {
   let Z1:! type;
 }
-interface Y(T:! type) {
-  let Y1:! type;
-}
-interface X(U:! Y(.Self)) {
-  let X1:! type;
-}
+interface Y(T:! type) {}
+interface X(U:! Y(.Self)) {}
 class C;
 
 // Needs to identify `C as Y(.Self)` without replacing this `.Self` with `C`,
 // since it refers to `T`.
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+4]]:52: error: cannot convert type `C` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(unused T:! Z where C impls Y(.Self) and .Z1 = C.(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                                    ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+4]]:53: error: cannot convert type `C` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn F(unused T:! Z where C impls Y(.Self) and .Z1 = (C as Y(.Self))) {}
+// CHECK:STDERR:                                                     ^~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where C impls Y(.Self) and .Z1 = C.(Y(.Self).Y1)) {}
+fn F(unused T:! Z where C impls Y(.Self) and .Z1 = (C as Y(.Self))) {}
 
 class D(V:! type);
 
@@ -86,14 +82,14 @@ class D(V:! type);
 // `.Self` to `D` since it refers to `T`. But we _do_ need to replace the
 // `.Self` in the type of `U`, since it refers to `U` which is being replaced by
 // `D(.Self)` in this specific.
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+7]]:72: error: cannot convert type `D(.Self)` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and .Z1 = D(.Self).(X(D(.Self)).X1)) {}
-// CHECK:STDERR:                                                                        ^~~~~~~~~~~
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE-22]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: interface X(U:! Y(.Self)) {
+// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+7]]:71: error: cannot convert type `D(.Self)` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and D(.Self) impls X(D(.Self))) {}
+// CHECK:STDERR:                                                                       ^~~~~~~~~~~
+// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE-20]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: interface X(U:! Y(.Self)) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and .Z1 = D(.Self).(X(D(.Self)).X1)) {}
+fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and D(.Self) impls X(D(.Self))) {}
 
 // --- fail_todo_early_class_impls_generic_interface_with_member_designator.carbon
 library "[[@TEST_NAME]]";
