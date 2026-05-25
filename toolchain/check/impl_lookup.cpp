@@ -436,6 +436,13 @@ static auto CollectFacetWitnessSources(
   }
 
   if (!context.where_stack().empty()) {
+    // Grab witnesses from any `impls` constraints in the current `where`
+    // expression.
+    //
+    // The `where` expression may be nested inside another `where`, but the
+    // inner `where` expression is checked before the outer, so it needs to be
+    // self-consistent and provide any `impls` constraints required by other
+    // constraints.
     const auto& impls = context.where_stack().back().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
       auto canon_self_const_id =
