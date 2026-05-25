@@ -716,6 +716,29 @@ constraint N {
   require C.(Z(Self).Z1) impls Y(Self);
 }
 
+// --- fail_self_in_compound_member_access_is_not_in_type_structure.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let Z1:! type;
+}
+interface Y {}
+
+class C {}
+
+constraint N {
+  require C impls Z(Self);
+  // The type structure is `? impls Y`, where the `?` is dependent on `Self` but
+  // it is not `Self`. Since `Self` is not directly part of the type structure,
+  // we don't accept this require decl.
+  //
+  // CHECK:STDERR: fail_self_in_compound_member_access_is_not_in_type_structure.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require C.(Z(Self).Z1) impls Y;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require C.(Z(Self).Z1) impls Y;
+}
+
 // CHECK:STDOUT: --- extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
