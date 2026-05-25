@@ -699,6 +699,23 @@ fn G(T:! Z) {
   T as N;
 }
 
+// --- partially_identified_witness_from_self_in_lookup_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let Z1:! type;
+}
+interface Y(T:! type) {}
+
+class C {}
+
+constraint N {
+  require C impls Z(Self);
+  // Test that we can find the `C impls Z(Self)` witness above through the
+  // `Self` in the lookup target facet type in `C as Z(Self)`.
+  require C.(Z(Self).Z1) impls Y(Self);
+}
+
 // CHECK:STDOUT: --- extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

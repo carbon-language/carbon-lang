@@ -432,7 +432,7 @@ static auto CollectFacetWitnessSources(
   {
     SemIR::TypeIterator iter(&context.sem_ir());
     iter.Add(context.insts().GetAs<SemIR::FacetType>(query_facet_type_inst_id));
-    collect_facets(iter, /*allow_partially_identified=*/false);
+    collect_facets(iter, /*allow_partially_identified=*/true);
   }
 
   if (!context.where_stack().empty()) {
