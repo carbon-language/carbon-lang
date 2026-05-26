@@ -56,7 +56,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn Foo[a: C];
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
@@ -65,7 +65,7 @@ class C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Foo[a: C];
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn Foo[a: (C)] {}
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR:

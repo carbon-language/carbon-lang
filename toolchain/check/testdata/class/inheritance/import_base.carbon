@@ -17,8 +17,8 @@
 library "[[@TEST_NAME]]";
 
 base class Base {
-  fn F[self: Self]();
-  fn Unused[self: Self]();
+  fn F(self);
+  fn Unused(self);
 
   var x: i32;
   var unused_y: i32;
@@ -197,8 +197,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.7f9: <witness> = import_ref Main//a, loc10_1, loaded [concrete = constants.%complete_type.e4d]
 // CHECK:STDOUT:   %Main.import_ref.e52 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e20: %Base.F.type = import_ref Main//a, loc5_21, loaded [concrete = constants.%Base.F]
-// CHECK:STDOUT:   %Main.import_ref.384 = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e20: %Base.F.type = import_ref Main//a, loc5_13, loaded [concrete = constants.%Base.F]
+// CHECK:STDOUT:   %Main.import_ref.384 = import_ref Main//a, loc6_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.fc2: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.98f]
 // CHECK:STDOUT:   %Main.import_ref.4cb = import_ref Main//a, loc9_15, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e2d: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.043]

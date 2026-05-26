@@ -25,7 +25,7 @@ base class Shape {
 class Circle {
   extend base: Shape;
 
-  fn GetPosition[self: Self]() -> (i32, i32) {
+  fn GetPosition(self) -> (i32, i32) {
     return (self.x, self.y);
   }
 }
@@ -45,7 +45,7 @@ base class B {
 
 base class C {
   extend base: B;
-  fn G[self: Self]() -> () { return self.F(); }
+  fn G(self) -> () { return self.F(); }
 }
 
 // --- inherited_member_access.carbon
@@ -82,7 +82,7 @@ base class Shape {
 class Square {
   extend base: Shape;
 
-  fn GetPosition[self: Self]() -> i32 {
+  fn GetPosition(self) -> i32 {
     // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: error: cannot access private member `y` of type `Shape` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     return self.y;
     // CHECK:STDERR:            ^~~~~~
@@ -233,7 +233,7 @@ class B {
     return A.SOME_PROTECTED_CONSTANT;
   }
 
-  fn SomeFunc[self: Self]() -> i32{
+  fn SomeFunc(self) -> i32{
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     return self.internal.INTERNAL_CONSTANT;
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,7 +255,7 @@ base class A {
 
 class B {
   extend base: A;
-  fn F[self: Self]() {
+  fn F(self) {
     // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+7]]:11: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     self.(A.x);
     // CHECK:STDERR:           ^~~
@@ -278,7 +278,7 @@ base class A {
 class B {
   extend base: A;
 
-  fn F[self: Self]() {
+  fn F(self) {
     self.(A.x);
   }
 }
@@ -362,13 +362,13 @@ class B {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.ced = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.ced = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.624 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.624 = return_slot_pattern %return.param_patt, %.loc12_44.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.624 = return_slot_pattern %return.param_patt, %.loc12_36.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc12_36: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc12_41: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12_44.1: %tuple.type.24b = tuple_literal (%i32.loc12_36, %i32.loc12_41) [concrete = constants.%tuple.8e3]
-// CHECK:STDOUT:     %.loc12_44.2: type = converted %.loc12_44.1, constants.%tuple.type.87c [concrete = constants.%tuple.type.87c]
-// CHECK:STDOUT:     %.loc12_44.3: Core.Form = init_form %.loc12_44.2 [concrete = constants.%.88c]
+// CHECK:STDOUT:     %i32.loc12_28: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12_33: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc12_36.1: %tuple.type.24b = tuple_literal (%i32.loc12_28, %i32.loc12_33) [concrete = constants.%tuple.8e3]
+// CHECK:STDOUT:     %.loc12_36.2: type = converted %.loc12_36.1, constants.%tuple.type.87c [concrete = constants.%tuple.type.87c]
+// CHECK:STDOUT:     %.loc12_36.3: Core.Form = init_form %.loc12_36.2 [concrete = constants.%.88c]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
 // CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
@@ -517,11 +517,11 @@ class B {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a99 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a99 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc15_26.2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %.loc15_18.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc15_26.3: Core.Form = init_form %.loc15_26.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc15_18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_18.2: type = converted %.loc15_18.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_18.3: Core.Form = init_form %.loc15_18.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param

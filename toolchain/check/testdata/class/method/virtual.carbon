@@ -16,13 +16,13 @@ package Modifiers;
 
 //@dump-sem-ir-begin
 base class Base {
-  virtual fn H[self: Self]();
+  virtual fn H(self);
 }
 
 abstract class Abstract {
-  abstract fn J[self: Self]();
+  abstract fn J(self);
 
-  virtual fn K[self: Self]();
+  virtual fn K(self);
 }
 //@dump-sem-ir-end
 
@@ -35,7 +35,7 @@ import Modifiers;
 //@dump-sem-ir-begin
 class Derived {
   extend base: Modifiers.Base;
-  override fn H[self: Self]();
+  override fn H(self);
 }
 //@dump-sem-ir-end
 
@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 import Modifiers;
 
 base class Derived {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
   extend base: Modifiers.Base;
 }
 
@@ -73,12 +73,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 abstract class A1 {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 abstract class A2 {
   extend base: A1;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- impl_base.carbon
@@ -86,17 +86,17 @@ abstract class A2 {
 library "[[@TEST_NAME]]";
 
 base class B1 {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 base class B2 {
   extend base: B1;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 class C {
   extend base: B2;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 fn Use() {
@@ -111,10 +111,10 @@ library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: override without base class [OverrideWithoutBase]
-  // CHECK:STDERR:   override fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- init_members.carbon
@@ -125,7 +125,7 @@ base class Base {
   var m1: i32;
   var m2: i32;
 
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 fn F() {
@@ -148,10 +148,10 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- abstract_impl.carbon
@@ -159,7 +159,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 abstract class AbstractBase {
-  abstract fn F[self: Self]();
+  abstract fn F(self);
 }
 
 abstract class AbstractIntermediate {
@@ -169,7 +169,7 @@ abstract class AbstractIntermediate {
 class Derived {
   extend base: AbstractIntermediate;
   //@dump-sem-ir-begin
-  override fn F[self: Self]();
+  override fn F(self);
   //@dump-sem-ir-end
 }
 
@@ -178,7 +178,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class VirtualBase {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 base class VirtualIntermediate {
@@ -188,7 +188,7 @@ base class VirtualIntermediate {
 class Derived {
   extend base: VirtualIntermediate;
   //@dump-sem-ir-begin
-  override fn F[self: Self]();
+  override fn F(self);
   //@dump-sem-ir-end
 }
 
@@ -197,22 +197,22 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+10]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   override fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self, v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   override fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self, v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self](v: i32);
+  override fn F(self, v: i32);
 }
 
 // --- impl_conversion.carbon
@@ -226,23 +226,23 @@ class T2 {
 }
 
 impl T2 as Core.ImplicitAs(T1) {
-  fn Convert[unused self: Self]() -> T1 {
+  fn Convert(unused self) -> T1 {
     return {};
   }
 }
 
 base class Base {
-  virtual fn F[self: Self]() -> T1;
+  virtual fn F(self) -> T1;
 }
 
 class Derived {
   extend base: Base;
   //@dump-sem-ir-begin
-  override fn F[self: Self]() -> T2;
+  override fn F(self) -> T2;
   //@dump-sem-ir-end
 }
 
-fn Derived.F[unused self: Self]() -> T2 {
+fn Derived.F(unused self) -> T2 {
   return {};
 }
 
@@ -255,10 +255,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 base class Base(T:! type) {
   // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR:   virtual fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 
@@ -270,12 +270,12 @@ class T1 {
 }
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
 }
 
 class Derived {
   extend base: Base(T1);
-  override fn F[unused self: Self](unused t: T1) { }
+  override fn F(unused self, unused t: T1) { }
 }
 
 // --- fail_virtual_without_self.carbon
@@ -310,21 +310,21 @@ library "[[@TEST_NAME]]";
 
 base class T1 {
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+3]]:17: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   virtual fn F1[self: Self]();
-  // CHECK:STDERR:                 ^~~~~~~~~~
-  virtual fn F1[self: Self]();
+  // CHECK:STDERR:   virtual fn F1(self);
+  // CHECK:STDERR:                 ^~~~
+  virtual fn F1(self);
 }
 
 class T2 {
   extend base: T1;
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F1[ref self: Self]();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F1(ref self);
+  // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F1[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F1(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F1[ref self: Self]();
+  override fn F1(ref self);
 }
 
 // --- fail_generic_virtual.carbon
@@ -333,10 +333,10 @@ library "[[@TEST_NAME]]";
 
 base class T1 {
   // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T:! type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self, T:! type]();
+  virtual fn F[T:! type](self);
 }
 
 // --- fail_generic_virtual_in_generic_class.carbon
@@ -345,10 +345,10 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T:! type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self, T:! type]();
+  virtual fn F[T:! type](self);
 }
 
 // --- generic_with_virtual.carbon
@@ -357,7 +357,7 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   //@dump-sem-ir-begin
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
   //@dump-sem-ir-end
 }
 
@@ -367,7 +367,7 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   //@dump-sem-ir-begin
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
   //@dump-sem-ir-end
 }
 
@@ -384,14 +384,14 @@ fn F(b: Modifiers.Base);
 library "[[@TEST_NAME]]";
 
 base class NonGenericBase {
-  virtual fn F1[unused self: Self]() { }
-  virtual fn F2[unused self: Self]() { }
+  virtual fn F1(unused self) { }
+  virtual fn F2(unused self) { }
 }
 
 base class GenericDerived(T:! type) {
   extend base: NonGenericBase;
-  override fn F2[unused self: Self]() { }
-  virtual fn F3[unused self: Self]() { }
+  override fn F2(unused self) { }
+  virtual fn F3(unused self) { }
 }
 
 // --- nongeneric_derived_from_generic.carbon
@@ -399,16 +399,16 @@ base class GenericDerived(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class GenericBase(T:! type) {
-  virtual fn F1[unused self: Self]() { }
-  virtual fn F2[unused self: Self]() { }
+  virtual fn F1(unused self) { }
+  virtual fn F2(unused self) { }
 }
 
 class T1;
 
 base class NonGenericDerived {
   extend base: GenericBase(T1);
-  override fn F2[unused self: Self]() { }
-  virtual fn F3[unused self: Self]() { }
+  override fn F2(unused self) { }
+  virtual fn F3(unused self) { }
 }
 
 // --- impl_generic_specifically.carbon
@@ -416,13 +416,13 @@ base class NonGenericDerived {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: Base(T)*) { }
+  virtual fn F(unused self, unused t: Base(T)*) { }
 }
 class T1;
 class D1 {
   extend base: Base(T1);
   //@dump-sem-ir-begin
-  override fn F[unused self: Self](unused t: Base(T1)*) { }
+  override fn F(unused self, unused t: Base(T1)*) { }
   //@dump-sem-ir-end
 }
 
@@ -434,25 +434,25 @@ class T1;
 class T2;
 
 base class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^~~~~~
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:42: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^~~~~~
-  virtual fn F[unused self: Self](unused t: T1*) { }
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+6]]:36: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
+  // CHECK:STDERR:                                    ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:36: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
+  // CHECK:STDERR:                                    ^~~~~~
+  virtual fn F(unused self, unused t: T1*) { }
 }
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F[unused self: Self](unused t: T2*) { }
-  // CHECK:STDERR:                                           ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T2*) { }
+  // CHECK:STDERR:                                     ^~~~~~
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[unused self: Self](unused t: T2*) { }
+  override fn F(unused self, unused t: T2*) { }
 }
 
 // --- fail_impl_generic_generic_mismatch.carbon
@@ -460,24 +460,24 @@ class D1 {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^~~~~
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:42: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^~~~~
-  virtual fn F[unused self: Self](unused t: T*) { }
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+6]]:36: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
+  // CHECK:STDERR:                                    ^~~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:36: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
+  // CHECK:STDERR:                                    ^~~~~
+  virtual fn F(unused self, unused t: T*) { }
 }
 class Derived(T:! type) {
   extend base: Base(T);
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F[unused self: Self](unused t: T) { }
-  // CHECK:STDERR:                                           ^~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
+  // CHECK:STDERR:                                     ^~~~
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[unused self: Self](unused t: T) { }
+  override fn F(unused self, unused t: T) { }
 }
 
 // --- impl_generic_generic.carbon
@@ -485,12 +485,12 @@ class Derived(T:! type) {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
 }
 class Derived(T:! type) {
   extend base: Base(T*);
   //@dump-sem-ir-begin
-  override fn F[unused self: Self](unused t: T*) { }
+  override fn F(unused self, unused t: T*) { }
   //@dump-sem-ir-end
 }
 
@@ -499,14 +499,14 @@ class Derived(T:! type) {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  abstract fn F[self: Self]();
+  abstract fn F(self);
 }
 
 class T1;
 
 class Derived {
   extend base: Base(T1);
-  override fn F[unused self: Self]() { }
+  override fn F(unused self) { }
 }
 
 // --- generic_lib.carbon
@@ -514,7 +514,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 // --- generic_import.carbon
@@ -531,7 +531,7 @@ var v: Base(T1) = {};
 library "[[@TEST_NAME]]";
 
 base class T1(G1:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T2(G2:! type) {
@@ -543,7 +543,7 @@ class T2(G2:! type) {
 library "[[@TEST_NAME]]";
 
 base class T1(G1:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T2(G2:! type) {
@@ -1105,13 +1105,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type.8c13ec.2: type = fn_type @Derived.F.loc23 [concrete]
 // CHECK:STDOUT:   %Derived.F.807341.2: %Derived.F.type.8c13ec.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.409: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.e9b, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc23_36.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc23_28.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.1: %Derived.F.type.8c13ec.1 = fn_decl @Derived.F.loc27 [concrete = constants.%Derived.F.807341.1] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_28.1: %Derived.F.type.8c13ec.1 = fn_decl @Derived.F.loc27 [concrete = constants.%Derived.F.807341.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref.loc23: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
@@ -1123,7 +1123,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.loc23: ref %T2 = return_slot %return.param.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.2: %Derived.F.type.8c13ec.2 = fn_decl @Derived.F.loc23 [concrete = constants.%Derived.F.807341.2] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_28.2: %Derived.F.type.8c13ec.2 = fn_decl @Derived.F.loc23 [concrete = constants.%Derived.F.807341.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1137,7 +1137,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .T2 = <poisoned>
-// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc23_36.1
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc23_28.1
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1146,30 +1146,30 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_36.2
+// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc23(%self.param: %Derived) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_36.1 for @Base.%Base.F.decl] {
+// CHECK:STDOUT: override fn @Derived.F.loc23(%self.param: %Derived) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_28.1 for @Base.%Base.F.decl] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %Derived.F.type.8c13ec.1 = name_ref F, @Derived.%Derived.F.decl.loc23_36.1 [concrete = constants.%Derived.F.807341.1]
+// CHECK:STDOUT:   %F.ref: %Derived.F.type.8c13ec.1 = name_ref F, @Derived.%Derived.F.decl.loc23_28.1 [concrete = constants.%Derived.F.807341.1]
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   %.loc23_36.1: ref %T2 = temporary_storage
-// CHECK:STDOUT:   %Derived.F.call: init %T2 to %.loc23_36.1 = call %Derived.F.bound(%self.param)
+// CHECK:STDOUT:   %.loc23_28.1: ref %T2 = temporary_storage
+// CHECK:STDOUT:   %Derived.F.call: init %T2 to %.loc23_28.1 = call %Derived.F.bound(%self.param)
 // CHECK:STDOUT:   %impl.elem0: %.409 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%T2.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Derived.F.call, %impl.elem0
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc23_36.2: ref %T2 = temporary %.loc23_36.1, %Derived.F.call
-// CHECK:STDOUT:   %.loc23_36.3: %T2 = acquire_value %.loc23_36.2
-// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.loc17 = call %bound_method(%.loc23_36.3)
-// CHECK:STDOUT:   %.loc23_36.4: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_36.2, constants.%Destroy.Op.1dc86d.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_36.2)
-// CHECK:STDOUT:   return %.loc23_36.4 to %return.param
+// CHECK:STDOUT:   %.loc23_28.2: ref %T2 = temporary %.loc23_28.1, %Derived.F.call
+// CHECK:STDOUT:   %.loc23_28.3: %T2 = acquire_value %.loc23_28.2
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.loc17 = call %bound_method(%.loc23_28.3)
+// CHECK:STDOUT:   %.loc23_28.4: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_28.2, constants.%Destroy.Op.1dc86d.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_28.2)
+// CHECK:STDOUT:   return %.loc23_28.4 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_36.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_28.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_36.2(%self.param: ref %T2) {
+// CHECK:STDOUT: fn @Destroy.Op.loc23_28.2(%self.param: ref %T2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1200,9 +1200,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %self.patt: @T1.F.%pattern_type (%pattern_type.462) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T1.F.%T1 (%T1) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_29.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
-// CHECK:STDOUT:         %.loc6_29.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_29.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       %.loc6_23.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
 // CHECK:STDOUT:     }
@@ -1276,15 +1276,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
-// CHECK:STDOUT:       %self.param_patt: @T1.F.%pattern_type.loc6_27 (%pattern_type.958) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %self.patt: @T1.F.%pattern_type.loc6_27 (%pattern_type.958) = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:       %t.param_patt: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %t.patt: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt [concrete]
+// CHECK:STDOUT:       %self.param_patt: @T1.F.%pattern_type.loc6_23 (%pattern_type.958) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @T1.F.%pattern_type.loc6_23 (%pattern_type.958) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %t.param_patt: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %t.patt: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T1.F.%T1 (%T1) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_29.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
-// CHECK:STDOUT:         %.loc6_29.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_29.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       %.loc6_23.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @T1.F.%T (%T) = value_param call_param1
@@ -1309,12 +1309,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:   %pattern_type.loc6_27: type = pattern_type %T1 [symbolic = %pattern_type.loc6_27 (constants.%pattern_type.958)]
-// CHECK:STDOUT:   %pattern_type.loc6_43: type = pattern_type %T [symbolic = %pattern_type.loc6_43 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %pattern_type.loc6_23: type = pattern_type %T1 [symbolic = %pattern_type.loc6_23 (constants.%pattern_type.958)]
+// CHECK:STDOUT:   %pattern_type.loc6_37: type = pattern_type %T [symbolic = %pattern_type.loc6_37 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type %T1 [symbolic = %require_complete.loc6_27 (constants.%require_complete.6f6)]
-// CHECK:STDOUT:   %require_complete.loc6_43: <witness> = require_complete_type %T [symbolic = %require_complete.loc6_43 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_23: <witness> = require_complete_type %T1 [symbolic = %require_complete.loc6_23 (constants.%require_complete.6f6)]
+// CHECK:STDOUT:   %require_complete.loc6_37: <witness> = require_complete_type %T [symbolic = %require_complete.loc6_37 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1), %t.param: @T1.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -1334,12 +1334,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT: specific @T1.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
-// CHECK:STDOUT:   %pattern_type.loc6_27 => constants.%pattern_type.958
-// CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %pattern_type.loc6_23 => constants.%pattern_type.958
+// CHECK:STDOUT:   %pattern_type.loc6_37 => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%require_complete.6f6
-// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%require_complete.6f6
+// CHECK:STDOUT:   %require_complete.loc6_37 => constants.%require_complete.944
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_generic_specifically.carbon
@@ -1435,23 +1435,23 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Derived.F.decl: @Derived.%Derived.F.type (%Derived.F.type) = fn_decl @Derived.F [symbolic = @Derived.%Derived.F (constants.%Derived.F)] {
-// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc10_28 (%pattern_type.432) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc10_28 (%pattern_type.432) = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc10_44 (%pattern_type.4f4) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc10_44 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc10_24 (%pattern_type.432) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc10_24 (%pattern_type.432) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc10_38 (%pattern_type.4f4) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc10_38 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @Derived.F.%Derived (%Derived) = value_param call_param0
-// CHECK:STDOUT:       %.loc10_30.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
-// CHECK:STDOUT:         %.loc10_30.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_30.2 [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:       %.loc10_24.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
+// CHECK:STDOUT:         %.loc10_24.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_24.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = value_binding self, %self.param
-// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f) = value_param call_param1
-// CHECK:STDOUT:       %.loc10_47: type = splice_block %ptr.loc10_47.2 [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)] {
+// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc10_41.1 (%ptr.e8f) = value_param call_param1
+// CHECK:STDOUT:       %.loc10_41: type = splice_block %ptr.loc10_41.2 [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)] {
 // CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:         %ptr.loc10_47.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:         %ptr.loc10_41.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc10_41.1 (%ptr.e8f) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc12_1.1
@@ -1478,15 +1478,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:   %pattern_type.loc10_28: type = pattern_type %Derived [symbolic = %pattern_type.loc10_28 (constants.%pattern_type.432)]
-// CHECK:STDOUT:   %ptr.loc10_47.1: type = ptr_type %T [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:   %pattern_type.loc10_44: type = pattern_type %ptr.loc10_47.1 [symbolic = %pattern_type.loc10_44 (constants.%pattern_type.4f4)]
+// CHECK:STDOUT:   %pattern_type.loc10_24: type = pattern_type %Derived [symbolic = %pattern_type.loc10_24 (constants.%pattern_type.432)]
+// CHECK:STDOUT:   %ptr.loc10_41.1: type = ptr_type %T [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:   %pattern_type.loc10_38: type = pattern_type %ptr.loc10_41.1 [symbolic = %pattern_type.loc10_38 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_28: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc10_28 (constants.%require_complete.8ee)]
-// CHECK:STDOUT:   %require_complete.loc10_44: <witness> = require_complete_type %ptr.loc10_47.1 [symbolic = %require_complete.loc10_44 (constants.%require_complete.ef1)]
+// CHECK:STDOUT:   %require_complete.loc10_24: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc10_24 (constants.%require_complete.8ee)]
+// CHECK:STDOUT:   %require_complete.loc10_38: <witness> = require_complete_type %ptr.loc10_41.1 [symbolic = %require_complete.loc10_38 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc10_47.1 (%ptr.e8f)) {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc10_41.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1511,12 +1511,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT: specific @Derived.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Derived => constants.%Derived
-// CHECK:STDOUT:   %pattern_type.loc10_28 => constants.%pattern_type.432
-// CHECK:STDOUT:   %ptr.loc10_47.1 => constants.%ptr.e8f
-// CHECK:STDOUT:   %pattern_type.loc10_44 => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %pattern_type.loc10_24 => constants.%pattern_type.432
+// CHECK:STDOUT:   %ptr.loc10_41.1 => constants.%ptr.e8f
+// CHECK:STDOUT:   %pattern_type.loc10_38 => constants.%pattern_type.4f4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_28 => constants.%require_complete.8ee
-// CHECK:STDOUT:   %require_complete.loc10_44 => constants.%require_complete.ef1
+// CHECK:STDOUT:   %require_complete.loc10_24 => constants.%require_complete.8ee
+// CHECK:STDOUT:   %require_complete.loc10_38 => constants.%require_complete.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

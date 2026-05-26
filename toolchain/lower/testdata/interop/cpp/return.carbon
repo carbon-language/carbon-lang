@@ -584,20 +584,27 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16)) unnamed_addr #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !25 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp"(ptr %self) #3 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !26
-// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %_.var), !dbg !27
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %_.var), !dbg !26
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %self), !dbg !31
+// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !32 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !33
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !33
+// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %_.var), !dbg !34
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %_.var), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4Makev(ptr dead_on_unwind writable sret(%struct.X) align 8) #4
+// CHECK:STDOUT: declare void @_Z4Makev(ptr dead_on_unwind writable sret(%struct.X) align 8) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
@@ -605,8 +612,9 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -637,10 +645,17 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !22 = !{null}
 // CHECK:STDOUT: !23 = !DILocation(line: 9, column: 18, scope: !20)
 // CHECK:STDOUT: !24 = !DILocation(line: 8, column: 1, scope: !20)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Var", linkageName: "_CVar.Main", scope: null, file: !6, line: 12, type: !21, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !26 = !DILocation(line: 13, column: 3, scope: !25)
-// CHECK:STDOUT: !27 = !DILocation(line: 13, column: 18, scope: !25)
-// CHECK:STDOUT: !28 = !DILocation(line: 12, column: 1, scope: !25)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp", scope: null, file: !26, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !26 = !DIFile(filename: "./class.h", directory: "")
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
+// CHECK:STDOUT: !28 = !{null, !14}
+// CHECK:STDOUT: !29 = !{!30}
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !14)
+// CHECK:STDOUT: !31 = !DILocation(line: 5, column: 3, scope: !25)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Var", linkageName: "_CVar.Main", scope: null, file: !6, line: 12, type: !21, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !33 = !DILocation(line: 13, column: 3, scope: !32)
+// CHECK:STDOUT: !34 = !DILocation(line: 13, column: 18, scope: !32)
+// CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !32)
 // CHECK:STDOUT: ; ModuleID = 'indirect_return_with_args.carbon'
 // CHECK:STDOUT: source_filename = "indirect_return_with_args.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

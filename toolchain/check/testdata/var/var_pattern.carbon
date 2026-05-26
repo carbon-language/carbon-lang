@@ -110,7 +110,7 @@ fn f() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:10: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:10: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn F[var u: ()]();
 // CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
@@ -126,11 +126,15 @@ fn F[var u: ()]();
 // CHECK:STDERR:
 fn G[var T:! type]();
 
-// --- var_self.carbon
+// --- fail_var_self.carbon
 
 library "[[@TEST_NAME]]";
 
 class C {
+  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+4]]:12: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR:   fn F[var self: Self]();
+  // CHECK:STDERR:            ^~~~~~~~~~
+  // CHECK:STDERR:
   fn F[var self: Self]();
 }
 
@@ -837,7 +841,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_self.carbon
+// CHECK:STDOUT: --- fail_var_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]

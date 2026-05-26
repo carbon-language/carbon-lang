@@ -177,17 +177,17 @@ library "[[@TEST_NAME]]";
 base class Base {
   var a: ();
 
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 // CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:21: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Base.F[ref self: Base]() {
+// CHECK:STDERR: fn Base.F(ref self: Base) {
 // CHECK:STDERR:                     ^~~~
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR:   fn F[ref self: Self]();
-// CHECK:STDERR:                  ^~~~
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:   fn F(ref self);
+// CHECK:STDERR:        ^~~~~~~~
 // CHECK:STDERR:
-fn Base.F[ref self: Base]() {
+fn Base.F(ref self: Base) {
   self.a = ();
 }
 

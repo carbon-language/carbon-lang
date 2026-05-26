@@ -19,12 +19,12 @@ base class Base {
 
 base class Intermediate {
   extend base: Base;
-  virtual fn Fn[unused self: Self]() { }
+  virtual fn Fn(unused self) { }
 }
 
 class Derived {
   extend base: Intermediate;
-  override fn Fn[unused self: Self]() { }
+  override fn Fn(unused self) { }
 }
 
 // --- create.carbon
@@ -82,7 +82,7 @@ package MemberInit;
 
 base class Base {
   var m: i32;
-  virtual fn Fn[unused self: Self]() { }
+  virtual fn Fn(unused self) { }
 }
 
 fn Fn() {
@@ -97,7 +97,7 @@ fn Fn() {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
@@ -113,7 +113,7 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 fn Use(b: Base) {
@@ -125,12 +125,12 @@ fn Use(b: Base) {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
   extend base: Base;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 fn Use() {
@@ -143,7 +143,7 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 // --- generic_use.carbon
@@ -151,7 +151,7 @@ base class Base(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! Core.Destroy) {
-  virtual fn F[unused self: Self]() {
+  virtual fn F(unused self) {
     var _: T;
   }
 }
@@ -171,7 +171,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T1;
@@ -192,16 +192,16 @@ class From {}
 class To {}
 
 impl From as Core.ImplicitAs(To) {
-  fn Convert[self: From]() -> To;
+  fn Convert(self: From) -> To;
 }
 
 base class Base {
-  virtual fn F[ref self: Self](n: From) -> To;
+  virtual fn F(ref self, n: From) -> To;
 }
 
 class Derived {
   extend base: Base;
-  override fn F[unused self: Self](unused n: To) -> From {
+  override fn F(unused self, unused n: To) -> From {
     return {};
   }
 }
@@ -1095,15 +1095,15 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_58.1.temp = alloca {}, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc12_33.1.temp = alloca {}, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_58.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_33.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.9040cf91eef70a75.Core"(ptr %.loc12_33.1.temp, ptr %n), !dbg !17
-// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_58.1.temp, ptr %self, ptr %.loc12_33.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.9040cf91eef70a75.Core"(ptr %return, ptr %.loc17_58.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.3c9b7712a77205d7:core.Destroy.Core"(ptr %.loc17_58.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.3790adf1d47396a2:core.Destroy.Core"(ptr %.loc12_33.1.temp), !dbg !17
+// CHECK:STDOUT:   %.loc17_52.1.temp = alloca {}, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc12_27.1.temp = alloca {}, align 8, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.9040cf91eef70a75.Core"(ptr %.loc12_27.1.temp, ptr %n), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.1.temp, ptr %self, ptr %.loc12_27.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.9040cf91eef70a75.Core"(ptr %return, ptr %.loc17_52.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_COp.3c9b7712a77205d7:core.Destroy.Core"(ptr %.loc17_52.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_COp.3790adf1d47396a2:core.Destroy.Core"(ptr %.loc12_27.1.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1206,7 +1206,7 @@ fn Use() {
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 2, scope: !12, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 12, column: 32, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 12, column: 26, scope: !12)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3c9b7712a77205d7:core.Destroy.Core", scope: null, file: !3, line: 17, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{null, !7}
@@ -1216,7 +1216,7 @@ fn Use() {
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3790adf1d47396a2:core.Destroy.Core", scope: null, file: !3, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !24, type: !7)
-// CHECK:STDOUT: !27 = !DILocation(line: 12, column: 32, scope: !24)
+// CHECK:STDOUT: !27 = !DILocation(line: 12, column: 26, scope: !24)
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 22, type: !29, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{null}

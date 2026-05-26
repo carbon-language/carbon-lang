@@ -15,10 +15,10 @@
 base class Base {
   var a: i32;
 
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
-fn Base.F[ref self: Self]() {
+fn Base.F(ref self) {
   self.a = 1;
 }
 

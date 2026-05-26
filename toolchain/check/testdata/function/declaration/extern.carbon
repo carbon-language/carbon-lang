@@ -63,10 +63,10 @@ class C {
   // CHECK:STDERR:
   extern fn F();
   // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
-  // CHECK:STDERR:   extern fn G[self: Self]();
+  // CHECK:STDERR:   extern fn G(self);
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
-  extern fn G[self: Self]();
+  extern fn G(self);
 }
 
 // --- fail_extern_library_in_importer.carbon

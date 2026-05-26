@@ -11,24 +11,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
-  // CHECK:STDERR:   fn F(self: Self);
-  // CHECK:STDERR:        ^~~~~~~~~~
-  // CHECK:STDERR:
-  fn F(self: Self);
+  fn F(self);
 
   fn G() -> Self;
 }
 
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:19: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
-// CHECK:STDERR: fn Class.F(unused self: Self) {
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR:
-fn Class.F(unused self: Self) {
+fn Class.F(unused self) {
 }
 
 fn Class.G() -> Self {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in a parameter list [SelfOutsideParamList]
   // CHECK:STDERR:   var self: Self;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
@@ -44,7 +36,19 @@ fn Class.G() -> Self {
 }
 
 class WrongSelf {
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR:   fn F[self: Class]();
+  // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[self: Class]();
+
+  // `self` in the implicit list alongside an explicit parameter is diagnosed
+  // only as being in the implicit list, not also as being out of position.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR:   fn G[self: Class](n: Class);
+  // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:
+  fn G[self: Class](n: Class);
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
@@ -54,7 +58,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-18]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~
   // CHECK:STDERR:

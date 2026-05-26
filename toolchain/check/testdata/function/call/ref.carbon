@@ -31,7 +31,7 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 class C {
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 fn G() {

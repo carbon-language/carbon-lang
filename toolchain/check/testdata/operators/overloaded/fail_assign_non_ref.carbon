@@ -17,10 +17,10 @@ package User;
 class C {};
 
 impl C as Core.Inc {
-  fn Op[ref self: C]();
+  fn Op(ref self: C);
 }
 impl C as Core.AddAssignWith(C) {
-  fn Op[ref self: C](other: C);
+  fn Op(ref self: C, other: C);
 }
 
 fn TestIncNonRef(a: C) {
@@ -28,7 +28,7 @@ fn TestIncNonRef(a: C) {
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:     ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op[ref self: C]();
+  // CHECK:STDERR:   fn Op(ref self: C);
   // CHECK:STDERR:         ^~~~~~~~~~~
   // CHECK:STDERR:
   ++a;
@@ -39,7 +39,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op[ref self: C](other: C);
+  // CHECK:STDERR:   fn Op(ref self: C, other: C);
   // CHECK:STDERR:         ^~~~~~~~~~~
   // CHECK:STDERR:
   a += b;

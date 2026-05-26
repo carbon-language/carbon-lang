@@ -19,12 +19,12 @@ package User;
 class C {};
 
 impl C as Core.DivWith(C) where .Result = C {
-  fn Op[unused self: C](unused other: C) -> C {
+  fn Op(unused self: C, unused other: C) -> C {
     return {};
   }
 }
 impl C as Core.DivAssignWith(C) {
-  fn Op[unused ref self: C](unused other: C) {}
+  fn Op(unused ref self: C, unused other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {

@@ -19,7 +19,7 @@ package User;
 class C {};
 
 impl C as Core.Inc {
-  fn Op[ref self: C]();
+  fn Op(ref self: C);
 }
 
 fn TestOp() {

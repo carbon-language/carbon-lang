@@ -15,6 +15,6 @@ import library "prelude/parts/optional";
 interface Iterate {
   let ElementType:! Copy;
   let CursorType:! type;
-  fn NewCursor[self: Self]() -> CursorType;
-  fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);
+  fn NewCursor(self) -> CursorType;
+  fn Next(self, cursor: CursorType*) -> Optional(ElementType);
 }

@@ -99,7 +99,7 @@ var init_const_from_const: const X = ({} as X) as const X;
 library "[[@TEST_NAME]]";
 
 class X {
-  fn TakeConstSelf[ref self: const Self]();
+  fn TakeConstSelf(ref self: const Self);
 }
 
 fn PassReferenceToConstReference(p: X*) {
@@ -110,7 +110,7 @@ fn PassReferenceToConstReference(p: X*) {
 library "[[@TEST_NAME]]";
 
 class X {
-  fn TakeSelf[ref self: Self]();
+  fn TakeSelf(ref self);
 }
 
 fn PassConstReferenceToReference(p: const X*) {
@@ -121,8 +121,8 @@ fn PassConstReferenceToReference(p: const X*) {
   // CHECK:STDERR:   p->(X.TakeSelf)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn TakeSelf[ref self: Self]();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn TakeSelf(ref self);
+  // CHECK:STDERR:               ^~~~~~~~
   // CHECK:STDERR:
   p->(X.TakeSelf)();
 }

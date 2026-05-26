@@ -195,13 +195,19 @@ fn Four() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !19 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp"(ptr %self) #2 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 1, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_19.2.temp), !dbg !20
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr %.loc11_19.2.temp), !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 1, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_19.2.temp), !dbg !28
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr %.loc11_19.2.temp), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -215,18 +221,18 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ev(ptr noundef nonnull align 4 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ev(ptr noundef nonnull align 4 dereferenceable(8) %this) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 8, ptr %x_, align 4, !tbaa !22
+// CHECK:STDOUT:   store i32 8, ptr %x_, align 4, !tbaa !30
 // CHECK:STDOUT:   %y_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 1
-// CHECK:STDOUT:   store i32 9, ptr %y_, align 4, !tbaa !24
+// CHECK:STDOUT:   store i32 9, ptr %y_, align 4, !tbaa !32
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,8 +241,9 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #3 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -261,12 +268,20 @@ fn Four() {
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTS1C", !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !20 = !DILocation(line: 11, column: 18, scope: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 10, column: 1, scope: !19)
-// CHECK:STDOUT: !22 = !{!23, !8, i64 0}
-// CHECK:STDOUT: !23 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
-// CHECK:STDOUT: !24 = !{!23, !8, i64 4}
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp", scope: null, file: !20, line: 2, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !20 = !DIFile(filename: "./default.h", directory: "")
+// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !22 = !{null, !23}
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{!25}
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !19, type: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 2, column: 7, scope: !19)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !28 = !DILocation(line: 11, column: 18, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 10, column: 1, scope: !27)
+// CHECK:STDOUT: !30 = !{!31, !8, i64 0}
+// CHECK:STDOUT: !31 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
+// CHECK:STDOUT: !32 = !{!31, !8, i64 4}
 // CHECK:STDOUT: ; ModuleID = 'implicit_default.carbon'
 // CHECK:STDOUT: source_filename = "implicit_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -302,13 +317,19 @@ fn Four() {
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp"(ptr %self) #2 !dbg !25 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret([8 x i8]) %return) #0 !dbg !25 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !27
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret([8 x i8]) %return) #0 !dbg !31 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
@@ -318,9 +339,9 @@ fn Four() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 8, ptr %x_, align 4, !tbaa !29
+// CHECK:STDOUT:   store i32 8, ptr %x_, align 4, !tbaa !35
 // CHECK:STDOUT:   %y_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 1
-// CHECK:STDOUT:   store i32 9, ptr %y_, align 4, !tbaa !31
+// CHECK:STDOUT:   store i32 9, ptr %y_, align 4, !tbaa !37
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -359,13 +380,19 @@ fn Four() {
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !24 = !DILocation(line: 4, column: 3, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !26, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !27 = !DILocation(line: 9, column: 28, scope: !25)
-// CHECK:STDOUT: !28 = !DILocation(line: 9, column: 21, scope: !25)
-// CHECK:STDOUT: !29 = !{!30, !8, i64 0}
-// CHECK:STDOUT: !30 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
-// CHECK:STDOUT: !31 = !{!30, !8, i64 4}
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp", scope: null, file: !20, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !27 = !{null, !23}
+// CHECK:STDOUT: !28 = !{!29}
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !25, type: !23)
+// CHECK:STDOUT: !30 = !DILocation(line: 2, column: 7, scope: !25)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !32, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !32 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !33 = !DILocation(line: 9, column: 28, scope: !31)
+// CHECK:STDOUT: !34 = !DILocation(line: 9, column: 21, scope: !31)
+// CHECK:STDOUT: !35 = !{!36, !8, i64 0}
+// CHECK:STDOUT: !36 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
+// CHECK:STDOUT: !37 = !{!36, !8, i64 4}
 // CHECK:STDOUT: ; ModuleID = 'defaulted_default.carbon'
 // CHECK:STDOUT: source_filename = "defaulted_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -430,19 +457,31 @@ fn Four() {
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2006d949fdf7b3ad.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %self) #2 !dbg !32 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !37
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.1a53b77aa5ecce03.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %self) #2 !dbg !38 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !41
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.dc183edbabc24d2f"(ptr sret([4 x i8]) %return) #0 !dbg !32 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.1458cb9e3f45d9d7.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !34
-// CHECK:STDOUT:   ret void, !dbg !35
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.dc183edbabc24d2f"(ptr sret([4 x i8]) %return) #0 !dbg !42 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.1458cb9e3f45d9d7.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.44ad2ae60410d16d"(ptr sret([4 x i8]) %return) #0 !dbg !36 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.16c8d515df1b6c01.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.44ad2ae60410d16d"(ptr sret([4 x i8]) %return) #0 !dbg !46 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.16c8d515df1b6c01.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
@@ -452,7 +491,7 @@ fn Four() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !19
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %struct.ImplicitlyDefaultedDefault, ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %x_, align 4, !tbaa !39
+// CHECK:STDOUT:   store i32 1, ptr %x_, align 4, !tbaa !49
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -463,7 +502,7 @@ fn Four() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !28
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %struct.ExplicitlyDefaultedDefault, ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %x_, align 4, !tbaa !41
+// CHECK:STDOUT:   store i32 1, ptr %x_, align 4, !tbaa !51
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -513,17 +552,27 @@ fn Four() {
 // CHECK:STDOUT: !29 = !{!"p1 _ZTS26ExplicitlyDefaultedDefault", !21, i64 0}
 // CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.16c8d515df1b6c01.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !31 = !DILocation(line: 7, column: 3, scope: !30)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.dc183edbabc24d2f", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !33 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !34 = !DILocation(line: 9, column: 28, scope: !32)
-// CHECK:STDOUT: !35 = !DILocation(line: 9, column: 21, scope: !32)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.44ad2ae60410d16d", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !37 = !DILocation(line: 9, column: 28, scope: !36)
-// CHECK:STDOUT: !38 = !DILocation(line: 9, column: 21, scope: !36)
-// CHECK:STDOUT: !39 = !{!40, !8, i64 0}
-// CHECK:STDOUT: !40 = !{!"_ZTS26ImplicitlyDefaultedDefault", !8, i64 0}
-// CHECK:STDOUT: !41 = !{!42, !8, i64 0}
-// CHECK:STDOUT: !42 = !{!"_ZTS26ExplicitlyDefaultedDefault", !8, i64 0}
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2006d949fdf7b3ad.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 6, type: !33, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !33 = !DISubroutineType(types: !34)
+// CHECK:STDOUT: !34 = !{null, !26}
+// CHECK:STDOUT: !35 = !{!36}
+// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !32, type: !26)
+// CHECK:STDOUT: !37 = !DILocation(line: 6, column: 8, scope: !32)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.1a53b77aa5ecce03.Core:ImplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 2, type: !33, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !39)
+// CHECK:STDOUT: !39 = !{!40}
+// CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !26)
+// CHECK:STDOUT: !41 = !DILocation(line: 2, column: 8, scope: !38)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.dc183edbabc24d2f", scope: null, file: !43, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !43 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !44 = !DILocation(line: 9, column: 28, scope: !42)
+// CHECK:STDOUT: !45 = !DILocation(line: 9, column: 21, scope: !42)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.44ad2ae60410d16d", scope: null, file: !43, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !46)
+// CHECK:STDOUT: !48 = !DILocation(line: 9, column: 21, scope: !46)
+// CHECK:STDOUT: !49 = !{!50, !8, i64 0}
+// CHECK:STDOUT: !50 = !{!"_ZTS26ImplicitlyDefaultedDefault", !8, i64 0}
+// CHECK:STDOUT: !51 = !{!52, !8, i64 0}
+// CHECK:STDOUT: !52 = !{!"_ZTS26ExplicitlyDefaultedDefault", !8, i64 0}
 // CHECK:STDOUT: ; ModuleID = 'call_copy.carbon'
 // CHECK:STDOUT: source_filename = "call_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -647,16 +696,22 @@ fn Four() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.43c4d369babe0700.Core:Derived.Cpp"(ptr %self) #2 !dbg !19 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN7DerivedC1Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN7DerivedC1Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV7Derived, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !19
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV7Derived, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !27
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -665,8 +720,9 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -691,8 +747,16 @@ fn Four() {
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTS7Derived", !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !19 = !{!20, !20, i64 0}
-// CHECK:STDOUT: !20 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.43c4d369babe0700.Core:Derived.Cpp", scope: null, file: !20, line: 3, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !20 = !DIFile(filename: "./header.h", directory: "")
+// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !22 = !{null, !23}
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{!25}
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !19, type: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 3, column: 8, scope: !19)
+// CHECK:STDOUT: !27 = !{!28, !28, i64 0}
+// CHECK:STDOUT: !28 = !{!"vtable pointer", !10, i64 0}
 // CHECK:STDOUT: ; ModuleID = 'call_multi_argument.carbon'
 // CHECK:STDOUT: source_filename = "call_multi_argument.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -738,19 +802,25 @@ fn Four() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COne.Main() #0 !dbg !20 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp"(ptr %self) #2 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_27.1.temp = alloca [1 x i8], align 1, !dbg !21
-// CHECK:STDOUT:   %.loc13_18.1.temp = alloca [1 x i8], align 1, !dbg !22
-// CHECK:STDOUT:   %.loc14_21.2.temp = alloca [1 x i8], align 1, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 1, ptr %.loc12_27.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 2, ptr %.loc13_18.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_21.2.temp), !dbg !23
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple._(i32 3, ptr %.loc14_21.2.temp), !dbg !23
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_COne.Main() #0 !dbg !28 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc12_27.1.temp = alloca [1 x i8], align 1, !dbg !29
+// CHECK:STDOUT:   %.loc13_18.1.temp = alloca [1 x i8], align 1, !dbg !30
+// CHECK:STDOUT:   %.loc14_21.2.temp = alloca [1 x i8], align 1, !dbg !31
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !29
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 1, ptr %.loc12_27.1.temp), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk._(i32 2, ptr %.loc13_18.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_21.2.temp), !dbg !31
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple._(i32 3, ptr %.loc14_21.2.temp), !dbg !31
+// CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -780,15 +850,15 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTwo.Main() #0 !dbg !25 {
+// CHECK:STDOUT: define void @_CTwo.Main() #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !26
-// CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !26
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk.__(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !27
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple.__(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !27
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !34
+// CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !35
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !34
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk.__(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !35
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple.__(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !35
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -824,15 +894,15 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CThree.Main() #0 !dbg !29 {
+// CHECK:STDOUT: define void @_CThree.Main() #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !30
-// CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.___(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !31
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.___(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !38
+// CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !38
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.___(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !39
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.___(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -874,15 +944,15 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFour.Main() #0 !dbg !33 {
+// CHECK:STDOUT: define void @_CFour.Main() #0 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !34
-// CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !35
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.____(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !35
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.____(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !42
+// CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !43
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !42
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk.____(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !42
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !43
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple.____(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !43
+// CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -930,10 +1000,10 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !17
@@ -942,7 +1012,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
@@ -953,7 +1023,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
@@ -966,7 +1036,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
@@ -988,8 +1058,9 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #3 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -1015,20 +1086,28 @@ fn Four() {
 // CHECK:STDOUT: !17 = !{!18, !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"p1 _ZTS1C", !19, i64 0}
 // CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "One", linkageName: "_COne.Main", scope: null, file: !6, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !21 = !DILocation(line: 12, column: 18, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 13, column: 18, scope: !20)
-// CHECK:STDOUT: !23 = !DILocation(line: 14, column: 18, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 1, scope: !20)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 18, scope: !25)
-// CHECK:STDOUT: !27 = !DILocation(line: 19, column: 18, scope: !25)
-// CHECK:STDOUT: !28 = !DILocation(line: 17, column: 1, scope: !25)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !30 = !DILocation(line: 23, column: 18, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 24, column: 18, scope: !29)
-// CHECK:STDOUT: !32 = !DILocation(line: 22, column: 1, scope: !29)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !6, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !34 = !DILocation(line: 28, column: 18, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 29, column: 18, scope: !33)
-// CHECK:STDOUT: !36 = !DILocation(line: 27, column: 1, scope: !33)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp", scope: null, file: !21, line: 2, type: !22, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !21 = !DIFile(filename: "./multi_argument.h", directory: "")
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !23 = !{null, !24}
+// CHECK:STDOUT: !24 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !25 = !{!26}
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !20, type: !24)
+// CHECK:STDOUT: !27 = !DILocation(line: 2, column: 7, scope: !20)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "One", linkageName: "_COne.Main", scope: null, file: !6, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !29 = !DILocation(line: 12, column: 18, scope: !28)
+// CHECK:STDOUT: !30 = !DILocation(line: 13, column: 18, scope: !28)
+// CHECK:STDOUT: !31 = !DILocation(line: 14, column: 18, scope: !28)
+// CHECK:STDOUT: !32 = !DILocation(line: 11, column: 1, scope: !28)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !34 = !DILocation(line: 18, column: 18, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 19, column: 18, scope: !33)
+// CHECK:STDOUT: !36 = !DILocation(line: 17, column: 1, scope: !33)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !38 = !DILocation(line: 23, column: 18, scope: !37)
+// CHECK:STDOUT: !39 = !DILocation(line: 24, column: 18, scope: !37)
+// CHECK:STDOUT: !40 = !DILocation(line: 22, column: 1, scope: !37)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !6, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !42 = !DILocation(line: 28, column: 18, scope: !41)
+// CHECK:STDOUT: !43 = !DILocation(line: 29, column: 18, scope: !41)
+// CHECK:STDOUT: !44 = !DILocation(line: 27, column: 1, scope: !41)

@@ -257,8 +257,22 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN3BoxI1BED1Ev(ptr noundef nonnull align 1 dead_on_return(1) dereferenceable(1)) unnamed_addr #3
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.46a99d3e7d20848b.Core:Box.Cpp"(ptr %self) #2 !dbg !39 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN3BoxI1BED1Ev(ptr %self), !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN3BoxI1AED1Ev(ptr noundef nonnull align 1 dead_on_return(1) dereferenceable(1)) unnamed_addr #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.53c64e11967600b3.Core:Box.Cpp"(ptr %self) #2 !dbg !45 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN3BoxI1AED1Ev(ptr %self), !dbg !48
+// CHECK:STDOUT:   ret void, !dbg !48
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
@@ -320,6 +334,16 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
 // CHECK:STDOUT: !38 = !DILocation(line: 8, column: 3, scope: !35)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.46a99d3e7d20848b.Core:Box.Cpp", scope: null, file: !27, line: 9, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
+// CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
+// CHECK:STDOUT: !41 = !{null, !14}
+// CHECK:STDOUT: !42 = !{!43}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !39, type: !14)
+// CHECK:STDOUT: !44 = !DILocation(line: 9, column: 3, scope: !39)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.53c64e11967600b3.Core:Box.Cpp", scope: null, file: !27, line: 9, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !46 = !{!47}
+// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !14)
+// CHECK:STDOUT: !48 = !DILocation(line: 9, column: 3, scope: !45)
 // CHECK:STDOUT: ; ModuleID = 'thunks_for_anonymous_namespace_collision.carbon'
 // CHECK:STDOUT: source_filename = "thunks_for_anonymous_namespace_collision.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -396,6 +420,13 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.ba77413d300bc2a9.Core:Collide..Cpp"(ptr %self) #2 !dbg !39 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN12_GLOBAL__N_17CollideD2Ev(ptr %self), !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN7CollideD2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
@@ -403,6 +434,13 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !23
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.3778a860a3240eaf.Core:Collide.Cpp"(ptr %self) #2 !dbg !45 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN7CollideD2Ev(ptr %self), !dbg !48
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -431,6 +469,8 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_ZN12_GLOBAL__N_17CollideD2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN7CollideD2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -482,3 +522,13 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
 // CHECK:STDOUT: !38 = !DILocation(line: 8, column: 3, scope: !35)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.ba77413d300bc2a9.Core:Collide..Cpp", scope: null, file: !27, line: 9, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
+// CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
+// CHECK:STDOUT: !41 = !{null, !14}
+// CHECK:STDOUT: !42 = !{!43}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !39, type: !14)
+// CHECK:STDOUT: !44 = !DILocation(line: 9, column: 3, scope: !39)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.3778a860a3240eaf.Core:Collide.Cpp", scope: null, file: !27, line: 18, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !46 = !{!47}
+// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !14)
+// CHECK:STDOUT: !48 = !DILocation(line: 18, column: 3, scope: !45)

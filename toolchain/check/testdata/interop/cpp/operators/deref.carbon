@@ -195,10 +195,12 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %assoc1: %CppUnsafeDeref.assoc_type = assoc_entity element1, imports.%Core.import_ref.072 [concrete]
 // CHECK:STDOUT:   %MutableDeref.cpp_operator.type: type = fn_type @MutableDeref.cpp_operator [concrete]
 // CHECK:STDOUT:   %MutableDeref.cpp_operator: %MutableDeref.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.0b1: <witness> = custom_witness (%i32, %MutableDeref.cpp_operator), @CppUnsafeDeref [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.facet.b48: %CppUnsafeDeref.type = facet_value %MutableDeref, (%custom_witness.0b1) [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.f94: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.b48) [concrete]
-// CHECK:STDOUT:   %.300: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.f94, %CppUnsafeDeref.facet.b48 [concrete]
+// CHECK:STDOUT:   %MutableDeref.Op.type: type = fn_type @MutableDeref.Op [concrete]
+// CHECK:STDOUT:   %MutableDeref.Op: %MutableDeref.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.261: <witness> = custom_witness (%i32, %MutableDeref.Op), @CppUnsafeDeref [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.facet.2f6: %CppUnsafeDeref.type = facet_value %MutableDeref, (%custom_witness.261) [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.5f3: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.2f6) [concrete]
+// CHECK:STDOUT:   %.6cf: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.5f3, %CppUnsafeDeref.facet.2f6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -212,6 +214,11 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Core.CppUnsafeDeref: type = import_ref Core//prelude/operators/deref, CppUnsafeDeref, loaded [concrete = constants.%CppUnsafeDeref.type]
 // CHECK:STDOUT:   %Core.import_ref.ca6: %CppUnsafeDeref.assoc_type = import_ref Core//prelude/operators/deref, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %Core.import_ref.072: @CppUnsafeDeref.WithSelf.%CppUnsafeDeref.WithSelf.Op.type (%CppUnsafeDeref.WithSelf.Op.type.0e1) = import_ref Core//prelude/operators/deref, loc{{\d+_\d+}}, loaded [symbolic = @CppUnsafeDeref.WithSelf.%CppUnsafeDeref.WithSelf.Op (constants.%CppUnsafeDeref.WithSelf.Op.808)]
+// CHECK:STDOUT:   %MutableDeref.cpp_operator.decl: %MutableDeref.cpp_operator.type = fn_decl @MutableDeref.cpp_operator [concrete = constants.%MutableDeref.cpp_operator] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestDerefPass(%int_ptr.param: ref %MutableDeref) -> ref %i32 {
@@ -219,11 +226,14 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %int_ptr.ref: ref %MutableDeref = name_ref int_ptr, %int_ptr
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %CppUnsafeDeref.ref: type = name_ref CppUnsafeDeref, imports.%Core.CppUnsafeDeref [concrete = constants.%CppUnsafeDeref.type]
-// CHECK:STDOUT:   %Op.ref: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.ca6 [concrete = constants.%assoc1]
+// CHECK:STDOUT:   %Op.ref.loc13_38: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.ca6 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant @MutableDeref.cpp_operator.%i32.2 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem1: %.300 = impl_witness_access constants.%custom_witness.0b1, element1 [concrete = constants.%MutableDeref.cpp_operator]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem1: %.6cf = impl_witness_access constants.%custom_witness.261, element1 [concrete = constants.%MutableDeref.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
-// CHECK:STDOUT:   %MutableDeref.cpp_operator.call: ref %i32 = call %bound_method(%int_ptr.ref)
+// CHECK:STDOUT:   %Op.ref.loc13_43: %MutableDeref.cpp_operator.type = name_ref Op, imports.%MutableDeref.cpp_operator.decl [concrete = constants.%MutableDeref.cpp_operator]
+// CHECK:STDOUT:   %MutableDeref.cpp_operator.bound: <bound method> = bound_method %int_ptr.ref, %Op.ref.loc13_43
+// CHECK:STDOUT:   %MutableDeref.cpp_operator.call: ref %i32 = call %MutableDeref.cpp_operator.bound(%int_ptr.ref)
 // CHECK:STDOUT:   return %MutableDeref.cpp_operator.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

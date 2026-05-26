@@ -43,7 +43,7 @@ fn Use(T:! I) -> T {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Copy[self: Self]() -> Self;
+  fn Copy(self) -> Self;
 }
 
 //@dump-sem-ir-begin
@@ -71,7 +71,7 @@ fn Use[T:! I](x: T){
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Copy[self: Self]() -> Self;
+  fn Copy(self) -> Self;
 }
 
 fn UseIndirect[T:! I](x: T) -> T {
@@ -196,7 +196,7 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let X:! type;
-  fn G[self: Self]() -> X*;
+  fn G(self) -> X*;
 }
 
 fn F(U:! I where .X = .Self, v: U) {

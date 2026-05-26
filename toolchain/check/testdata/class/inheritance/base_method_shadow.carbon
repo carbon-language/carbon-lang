@@ -13,17 +13,17 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/inheritance/base_method_shadow.carbon
 
 base class A {
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 base class B {
   extend base: A;
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 class C {
   extend base: B;
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 class D {

@@ -156,6 +156,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
+// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.type: type = cpp_overload_set_type @X.g.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.value: %X.g.cpp_overload_set.type = cpp_overload_set_value @X.g.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.g.type: type = fn_type @X.g [concrete]
@@ -166,6 +168,11 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//direct_import, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.g.cpp_overload_set.value: %X.g.cpp_overload_set.type = cpp_overload_set_value @X.g.cpp_overload_set [concrete = constants.%X.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.g.decl: %X.g.type = fn_decl @X.g [concrete = constants.%X.g] {
 // CHECK:STDOUT:     <elided>
@@ -188,7 +195,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_13.2: <bound method> = bound_method %.loc9_13.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc9_13.2(%.loc9_13.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %X.Op.bound: <bound method> = bound_method %.loc9_12.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, %Op.ref
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc9_12.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
@@ -203,7 +213,9 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_12.2, %g.ref
 // CHECK:STDOUT:   %.loc15_12.3: %X = acquire_value %.loc15_12.2
 // CHECK:STDOUT:   %X.g.call: init %i32 = call imports.%X.g.decl(%.loc15_12.3)
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   %X.Op.bound: <bound method> = bound_method %.loc15_12.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, %Op.ref
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc15_12.2)
 // CHECK:STDOUT:   return %X.g.call
 // CHECK:STDOUT: }
@@ -253,6 +265,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
+// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -272,6 +286,11 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.87c {
@@ -317,7 +336,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc10_23.3: init %i32 to %tuple.elem1 = in_place_init %X.g.call
 // CHECK:STDOUT:   %.loc10_23.4: init %tuple.type.87c to %return.param = tuple_init (%.loc10_23.2, %.loc10_23.3)
 // CHECK:STDOUT:   %.loc10_24: init %tuple.type.87c = converted %.loc10_23.1, %.loc10_23.4
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %ax.var, constants.%X.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %X.Op.bound: <bound method> = bound_method %ax.var, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %ax.var, %Op.ref
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%ax.var)
 // CHECK:STDOUT:   return %.loc10_24 to %return.param
 // CHECK:STDOUT: }
@@ -345,6 +367,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.type.300273.1: type = fn_type @Y.cpp_destructor.1 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.6dd6f2.1: %Y.cpp_destructor.type.300273.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Y.Op.type.5c6bab.1: type = fn_type @Y.Op.1 [concrete]
+// CHECK:STDOUT:   %Y.Op.3ad323.1: %Y.Op.type.5c6bab.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
@@ -365,6 +389,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.158: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8ae, %Copy.facet.916 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.type.300273.2: type = fn_type @Y.cpp_destructor.2 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.6dd6f2.2: %Y.cpp_destructor.type.300273.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Y.Op.type.5c6bab.2: type = fn_type @Y.Op.2 [concrete]
+// CHECK:STDOUT:   %Y.Op.3ad323.2: %Y.Op.type.5c6bab.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -372,12 +398,22 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Main.H: %H.type = import_ref Main//direct_import, H, loaded [concrete = constants.%H]
 // CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Y.cpp_destructor.decl.9a2ef5.1: %Y.cpp_destructor.type.300273.1 = fn_decl @Y.cpp_destructor.1 [concrete = constants.%Y.cpp_destructor.6dd6f2.1] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.Z.decl: %Z.Z.type = fn_decl @Z.Z [concrete = constants.%Z.Z] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z__carbon_thunk.decl: %Z__carbon_thunk.type = fn_decl @Z__carbon_thunk [concrete = constants.%Z__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Y.cpp_destructor.decl.9a2ef5.2: %Y.cpp_destructor.type.300273.2 = fn_decl @Y.cpp_destructor.2 [concrete = constants.%Y.cpp_destructor.6dd6f2.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -398,7 +434,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_13.2: <bound method> = bound_method %.loc9_13.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc9_13.2(%.loc9_13.2)
-// CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, constants.%Y.cpp_destructor.6dd6f2.1
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Y.Op.bound: <bound method> = bound_method %.loc9_12.2, constants.%Y.Op.3ad323.1
+// CHECK:STDOUT:   %Op.ref: %Y.cpp_destructor.type.300273.1 = name_ref Op, imports.%Y.cpp_destructor.decl.9a2ef5.1 [concrete = constants.%Y.cpp_destructor.6dd6f2.1]
+// CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, %Op.ref
 // CHECK:STDOUT:   %Y.cpp_destructor.call: init %empty_tuple.type = call %Y.cpp_destructor.bound(%.loc9_12.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
@@ -416,7 +455,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %impl.elem0: %.158 = impl_witness_access constants.%custom_witness.862, element0 [concrete = constants.%Z.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_13.2, %impl.elem0
 // CHECK:STDOUT:   %.loc15_13.3: ref %Z = temporary_storage
-// CHECK:STDOUT:   %Op.ref: %Z.Z.type = name_ref Op, imports.%Z.Z.decl [concrete = constants.%Z.Z]
+// CHECK:STDOUT:   %Op.ref.loc15_13: %Z.Z.type = name_ref Op, imports.%Z.Z.decl [concrete = constants.%Z.Z]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc15_13.4: ref %Z = value_as_ref %.loc15_13.2
 // CHECK:STDOUT:   %addr.loc15_13.1: %ptr.c6c = addr_of %.loc15_13.4
@@ -425,7 +464,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %addr.loc15_13.2: %ptr.c6c = addr_of %.loc13_19.1
 // CHECK:STDOUT:   %Z__carbon_thunk.call: init %empty_tuple.type = call imports.%Z__carbon_thunk.decl(%.loc15_13.6, %addr.loc15_13.2)
 // CHECK:STDOUT:   %.loc15_13.7: init %Z to %.loc13_19.1 = mark_in_place_init %Z__carbon_thunk.call
-// CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%Y.cpp_destructor.6dd6f2.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Y.Op.bound: <bound method> = bound_method %.loc15_12.2, constants.%Y.Op.3ad323.2
+// CHECK:STDOUT:   %Op.ref.loc15_12: %Y.cpp_destructor.type.300273.2 = name_ref Op, imports.%Y.cpp_destructor.decl.9a2ef5.2 [concrete = constants.%Y.cpp_destructor.6dd6f2.2]
+// CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, %Op.ref.loc15_12
 // CHECK:STDOUT:   %Y.cpp_destructor.call: init %empty_tuple.type = call %Y.cpp_destructor.bound(%.loc15_12.2)
 // CHECK:STDOUT:   return %.loc15_13.7 to %return.param
 // CHECK:STDOUT: }

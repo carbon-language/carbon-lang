@@ -22,7 +22,7 @@ class Foo {
 // This test verifies how the emitted definition is marked. Right now it is:
 // `_COp.a9f4dd835fff2161:core.Destroy.Core`
 impl Foo as Core.Copy {
-  fn Op[self: Self]() -> Self {
+  fn Op(self) -> Self {
     return (self as i32).(Core.Copy.Op)() as Foo;
   }
 }

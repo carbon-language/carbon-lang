@@ -515,9 +515,9 @@ fn F() {
 // CHECK:STDOUT:   %T.4ca: %Default.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.4ca) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.25a: %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c = struct_value () [symbolic]
-// CHECK:STDOUT:   %unsigned_int.Op.type: type = fn_type @unsigned_int.Op [concrete]
-// CHECK:STDOUT:   %unsigned_int.Op: %unsigned_int.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.213: <witness> = custom_witness (%unsigned_int.Op), @Default [concrete]
+// CHECK:STDOUT:   %unsigned_int.Op.type.43d658.1: type = fn_type @unsigned_int.Op.1 [concrete]
+// CHECK:STDOUT:   %unsigned_int.Op.cc70d5.1: %unsigned_int.Op.type.43d658.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.213: <witness> = custom_witness (%unsigned_int.Op.cc70d5.1), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.81b: %Default.type = facet_value %unsigned_int, (%custom_witness.213) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.05d: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.b72, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.81b) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %unsigned_int, (%DefaultOrUnformed.impl_witness.05d) [concrete]
@@ -530,6 +530,8 @@ fn F() {
 // CHECK:STDOUT:   %unsigned_int.foo: %unsigned_int.foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.type: type = fn_type @unsigned_int.cpp_destructor [concrete]
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor: %unsigned_int.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %unsigned_int.Op.type.43d658.2: type = fn_type @unsigned_int.Op.2 [concrete]
+// CHECK:STDOUT:   %unsigned_int.Op.cc70d5.2: %unsigned_int.Op.type.43d658.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -542,6 +544,11 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.b72 = impl_witness_table (%Core.import_ref.dfa), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.cpp_overload_set.value: %unsigned_int.foo.cpp_overload_set.type = cpp_overload_set_value @unsigned_int.foo.cpp_overload_set [concrete = constants.%unsigned_int.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %unsigned_int.foo.decl: %unsigned_int.foo.type = fn_decl @unsigned_int.foo [concrete = constants.%unsigned_int.foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %unsigned_int.cpp_destructor.decl: %unsigned_int.cpp_destructor.type = fn_decl @unsigned_int.cpp_destructor [concrete = constants.%unsigned_int.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -579,7 +586,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_40.1: %u32 = value_of_initializer %unsigned_int.foo.call
 // CHECK:STDOUT:   %.loc13_40.2: %u32 = converted %unsigned_int.foo.call, %.loc13_40.1
 // CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc13_40.2
-// CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %unsigned_int.Op.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.Op.cc70d5.2
+// CHECK:STDOUT:   %Op.ref: %unsigned_int.cpp_destructor.type = name_ref Op, imports.%unsigned_int.cpp_destructor.decl [concrete = constants.%unsigned_int.cpp_destructor]
+// CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, %Op.ref
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

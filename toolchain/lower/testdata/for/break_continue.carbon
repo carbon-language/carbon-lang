@@ -308,8 +308,8 @@ fn For() {
 // CHECK:STDOUT: !55 = !{!22, !33}
 // CHECK:STDOUT: !56 = !{!57}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !53, type: !33)
-// CHECK:STDOUT: !58 = !DILocation(line: 25, column: 51, scope: !53)
-// CHECK:STDOUT: !59 = !DILocation(line: 25, column: 44, scope: !53)
+// CHECK:STDOUT: !58 = !DILocation(line: 25, column: 43, scope: !53)
+// CHECK:STDOUT: !59 = !DILocation(line: 25, column: 36, scope: !53)
 // CHECK:STDOUT: !60 = distinct !DISubprogram(name: "Next", linkageName: "_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8", scope: null, file: !19, line: 26, type: !61, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !63)
 // CHECK:STDOUT: !61 = !DISubroutineType(types: !62)
 // CHECK:STDOUT: !62 = !{!33, !33, !33}
@@ -395,4 +395,4 @@ fn For() {
 // CHECK:STDOUT: !142 = distinct !DISubprogram(name: "AsInt", linkageName: "_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8", scope: null, file: !91, line: 57, type: !136, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !143)
 // CHECK:STDOUT: !143 = !{!144}
 // CHECK:STDOUT: !144 = !DILocalVariable(arg: 1, scope: !142, type: !22)
-// CHECK:STDOUT: !145 = !DILocation(line: 57, column: 36, scope: !142)
+// CHECK:STDOUT: !145 = !DILocation(line: 57, column: 28, scope: !142)

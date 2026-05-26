@@ -15,7 +15,7 @@
 // --- fail_multiple_bindings.carbon
 
 class X {
-  fn F[self: Self]();
+  fn F(self);
 }
 
 fn G(x: X) {

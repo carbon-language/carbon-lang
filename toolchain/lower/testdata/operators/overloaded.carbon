@@ -15,12 +15,12 @@ class Number {
 }
 
 impl Number as Core.Negate where .Result = Number {
-  fn Op[self: Number]() -> Number {
+  fn Op(self: Number) -> Number {
     return {.is_positive = not self.is_positive};
   }
 }
 impl Number as Core.MulWith(Number) where .Result = Number {
-  fn Op[self: Number](other: Number) -> Number {
+  fn Op(self: Number, other: Number) -> Number {
     return {.is_positive = (self.is_positive and other.is_positive) or
                             (not self.is_positive and not other.is_positive)};
   }

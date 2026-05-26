@@ -30,7 +30,7 @@ class PairAdapter {
     return PairOfInts.Make() as Self;
   }
 
-  fn GetB[self: Self]() -> i32 {
+  fn GetB(self) -> i32 {
     let pi: PairOfInts = self as PairOfInts;
     return pi.b;
   }
@@ -49,7 +49,7 @@ class Int {
   adapt i32;
 
   impl as Core.Copy {
-    fn Op[self: Self]() -> Self { return (self as i32).(Core.Copy.Op)() as Int; }
+    fn Op(self) -> Self { return (self as i32).(Core.Copy.Op)() as Int; }
   }
 }
 
@@ -202,7 +202,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 35, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 27, scope: !4)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "DoStuff", linkageName: "_CDoStuff.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
 // CHECK:STDOUT: !12 = !{!13}
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)

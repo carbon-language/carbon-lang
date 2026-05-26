@@ -10,6 +10,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_self_param.carbon
 
+// CHECK:STDERR: fail_self_param.carbon:[[@LINE+8]]:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR: class C[self:! type](x:! self) {}
+// CHECK:STDERR:         ^~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_self_param.carbon:[[@LINE+4]]:9: error: `self` parameter only allowed on functions [SelfParameterNotAllowed]
 // CHECK:STDERR: class C[self:! type](x:! self) {}
 // CHECK:STDERR:         ^~~~~~~~~~~

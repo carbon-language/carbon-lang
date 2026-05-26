@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_memaccess_category.carbon
 
 class A {
-  fn F[ref self: A]();
+  fn F(ref self: A);
 }
 
 class B {
@@ -24,7 +24,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[ref self: A]();
+  // CHECK:STDERR:   fn F(ref self: A);
   // CHECK:STDERR:        ^~~~~~~~~~~
   // CHECK:STDERR:
   s.a.F();
@@ -35,7 +35,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[ref self: A]();
+  // CHECK:STDERR:   fn F(ref self: A);
   // CHECK:STDERR:        ^~~~~~~~~~~
   // CHECK:STDERR:
   b.a.F();

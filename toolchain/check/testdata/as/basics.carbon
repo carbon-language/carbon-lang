@@ -91,11 +91,11 @@ class Y {
 }
 
 impl Y as Core.As(X) {
-  fn Convert[self: Y]() -> X { return {.x = self.y}; }
+  fn Convert(self: Y) -> X { return {.x = self.y}; }
 }
 
 impl X as Core.As(Y) {
-  fn Convert[self: X]() -> Y { return {.y = self.x}; }
+  fn Convert(self: X) -> Y { return {.y = self.x}; }
 }
 
 //@dump-sem-ir-begin

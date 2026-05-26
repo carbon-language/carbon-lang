@@ -1122,8 +1122,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %IntResult.cpp_destructor.type: type = fn_type @IntResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %IntResult.cpp_destructor: %IntResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %IntResult.Op.type: type = fn_type @IntResult.Op [concrete]
+// CHECK:STDOUT:   %IntResult.Op: %IntResult.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor: %LongResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %LongResult.Op.type: type = fn_type @LongResult.Op [concrete]
+// CHECK:STDOUT:   %LongResult.Op: %LongResult.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1179,6 +1183,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.831: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.98a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.e38)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.3c0 = impl_witness_table (%Core.import_ref.831), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %IntResult.cpp_destructor.decl: %IntResult.cpp_destructor.type = fn_decl @IntResult.cpp_destructor [concrete = constants.%IntResult.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %LongResult.cpp_destructor.decl: %LongResult.cpp_destructor.type = fn_decl @LongResult.cpp_destructor [concrete = constants.%LongResult.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1317,11 +1331,19 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
-// CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_72.3, constants.%IntResult.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %IntResult.Op.bound: <bound method> = bound_method %.loc22_72.3, constants.%IntResult.Op
+// CHECK:STDOUT:   %Op.ref.loc22: %IntResult.cpp_destructor.type = name_ref Op, imports.%IntResult.cpp_destructor.decl [concrete = constants.%IntResult.cpp_destructor]
+// CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_72.3, %Op.ref.loc22
 // CHECK:STDOUT:   %IntResult.cpp_destructor.call: init %empty_tuple.type = call %IntResult.cpp_destructor.bound(%.loc22_72.3)
-// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_83.3, constants.%LongResult.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %LongResult.Op.bound.loc19: <bound method> = bound_method %.loc19_83.3, constants.%LongResult.Op
+// CHECK:STDOUT:   %Op.ref.loc19: %LongResult.cpp_destructor.type = name_ref Op, imports.%LongResult.cpp_destructor.decl [concrete = constants.%LongResult.cpp_destructor]
+// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_83.3, %Op.ref.loc19
 // CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc19(%.loc19_83.3)
-// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_69.3, constants.%LongResult.cpp_destructor
+// CHECK:STDOUT:   %LongResult.Op.bound.loc16: <bound method> = bound_method %.loc16_69.3, constants.%LongResult.Op
+// CHECK:STDOUT:   %Op.ref.loc16: %LongResult.cpp_destructor.type = name_ref Op, imports.%LongResult.cpp_destructor.decl [concrete = constants.%LongResult.cpp_destructor]
+// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_69.3, %Op.ref.loc16
 // CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc16(%.loc16_69.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -4028,8 +4050,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.type: type = fn_type @UIntResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %UIntResult.cpp_destructor: %UIntResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %UIntResult.Op.type: type = fn_type @UIntResult.Op [concrete]
+// CHECK:STDOUT:   %UIntResult.Op: %UIntResult.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.type: type = fn_type @ULongResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor: %ULongResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ULongResult.Op.type: type = fn_type @ULongResult.Op [concrete]
+// CHECK:STDOUT:   %ULongResult.Op: %ULongResult.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4085,6 +4111,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.831: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.98a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.e38)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.3c0 = impl_witness_table (%Core.import_ref.831), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.decl: %UIntResult.cpp_destructor.type = fn_decl @UIntResult.cpp_destructor [concrete = constants.%UIntResult.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.decl: %ULongResult.cpp_destructor.type = fn_decl @ULongResult.cpp_destructor [concrete = constants.%ULongResult.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -4216,11 +4252,19 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
-// CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_74.3, constants.%UIntResult.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %UIntResult.Op.bound: <bound method> = bound_method %.loc22_74.3, constants.%UIntResult.Op
+// CHECK:STDOUT:   %Op.ref.loc22: %UIntResult.cpp_destructor.type = name_ref Op, imports.%UIntResult.cpp_destructor.decl [concrete = constants.%UIntResult.cpp_destructor]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_74.3, %Op.ref.loc22
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.call: init %empty_tuple.type = call %UIntResult.cpp_destructor.bound(%.loc22_74.3)
-// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_87.3, constants.%ULongResult.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %ULongResult.Op.bound.loc19: <bound method> = bound_method %.loc19_87.3, constants.%ULongResult.Op
+// CHECK:STDOUT:   %Op.ref.loc19: %ULongResult.cpp_destructor.type = name_ref Op, imports.%ULongResult.cpp_destructor.decl [concrete = constants.%ULongResult.cpp_destructor]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_87.3, %Op.ref.loc19
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc19(%.loc19_87.3)
-// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_89.3, constants.%ULongResult.cpp_destructor
+// CHECK:STDOUT:   %ULongResult.Op.bound.loc16: <bound method> = bound_method %.loc16_89.3, constants.%ULongResult.Op
+// CHECK:STDOUT:   %Op.ref.loc16: %ULongResult.cpp_destructor.type = name_ref Op, imports.%ULongResult.cpp_destructor.decl [concrete = constants.%ULongResult.cpp_destructor]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_89.3, %Op.ref.loc16
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc16(%.loc16_89.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

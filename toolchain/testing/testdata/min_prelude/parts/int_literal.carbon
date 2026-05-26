@@ -12,9 +12,9 @@ fn IntLiteral() -> type = "int_literal.make_type";
 
 interface Negate {
   let Result:! type;
-  fn Op[self: Self]() -> Result;
+  fn Op(self) -> Result;
 }
 
 impl IntLiteral() as Negate where .Result = Self {
-  fn Op[self: Self]() -> Self = "int.snegate";
+  fn Op(self) -> Self = "int.snegate";
 }

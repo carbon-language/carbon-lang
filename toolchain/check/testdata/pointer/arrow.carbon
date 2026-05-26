@@ -13,7 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/arrow.carbon
 
 class C {
-  fn Member[self: Self]();
+  fn Member(self);
   var field: C*;
 }
 

@@ -189,10 +189,10 @@ library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_unused_self_decl.carbon:[[@LINE+4]]:15: error: `unused` modifier on declaration [UnusedModifierOnDeclaration]
-  // CHECK:STDERR:   fn F[unused self: Self]();
-  // CHECK:STDERR:               ^~~~~~~~~~
+  // CHECK:STDERR:   fn F(unused self);
+  // CHECK:STDERR:               ^~~~
   // CHECK:STDERR:
-  fn F[unused self: Self]();
+  fn F(unused self);
 }
 
 // --- fail_multiple_uses_of_unused.carbon

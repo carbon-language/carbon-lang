@@ -19,7 +19,7 @@ package User;
 class C {};
 
 impl C as Core.Dec {
-  fn Op[ref self: C]();
+  fn Op(ref self: C);
 }
 
 fn TestOp() {
