@@ -902,6 +902,10 @@ auto GenerateAst(Context& context,
     return false;
   }
 
+  // The AST context is now available, so the mangle context (used to compute
+  // stable identities for imported C++ types) can be created.
+  context.sem_ir().cpp_file()->CreateMangleContext();
+
   auto& ast = clang_instance.getASTContext();
   llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
       llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);

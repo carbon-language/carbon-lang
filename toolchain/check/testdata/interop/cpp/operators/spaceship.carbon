@@ -303,27 +303,27 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:   %impl.elem3: %.137 = impl_witness_access %OrderedWith.lookup_impl_witness, element3 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.261: <specific function> = specific_impl_function %impl.elem3, @OrderedWith.WithSelf.GreaterOrEquivalent(%U, %T.589) [symbolic]
 // CHECK:STDOUT:   %DefaultSpaceshipOnly: type = class_type @DefaultSpaceshipOnly [concrete]
-// CHECK:STDOUT:   %pattern_type.1f3b: type = pattern_type %DefaultSpaceshipOnly [concrete]
+// CHECK:STDOUT:   %pattern_type.cce: type = pattern_type %DefaultSpaceshipOnly [concrete]
 // CHECK:STDOUT:   %ReturnsStrongOrdering: type = class_type @ReturnsStrongOrdering [concrete]
-// CHECK:STDOUT:   %pattern_type.87f: type = pattern_type %ReturnsStrongOrdering [concrete]
+// CHECK:STDOUT:   %pattern_type.a93: type = pattern_type %ReturnsStrongOrdering [concrete]
 // CHECK:STDOUT:   %ReturnsPartialOrdering: type = class_type @ReturnsPartialOrdering [concrete]
-// CHECK:STDOUT:   %pattern_type.103: type = pattern_type %ReturnsPartialOrdering [concrete]
+// CHECK:STDOUT:   %pattern_type.dbf: type = pattern_type %ReturnsPartialOrdering [concrete]
 // CHECK:STDOUT:   %CrossTypeLhs: type = class_type @CrossTypeLhs [concrete]
-// CHECK:STDOUT:   %pattern_type.f57: type = pattern_type %CrossTypeLhs [concrete]
+// CHECK:STDOUT:   %pattern_type.f3d: type = pattern_type %CrossTypeLhs [concrete]
 // CHECK:STDOUT:   %CrossTypeRhs: type = class_type @CrossTypeRhs [concrete]
-// CHECK:STDOUT:   %pattern_type.454: type = pattern_type %CrossTypeRhs [concrete]
-// CHECK:STDOUT:   %EqWith.type.ee6: type = facet_type <@EqWith.1, @EqWith.1(%DefaultSpaceshipOnly)> [concrete]
-// CHECK:STDOUT:   %pattern_type.f48: type = pattern_type %EqWith.type.ee6 [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.b43: type = facet_type <@OrderedWith.1, @OrderedWith.1(%DefaultSpaceshipOnly)> [concrete]
-// CHECK:STDOUT:   %pattern_type.260: type = pattern_type %OrderedWith.type.b43 [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.dfc: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsStrongOrdering)> [concrete]
-// CHECK:STDOUT:   %pattern_type.023: type = pattern_type %OrderedWith.type.dfc [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.928: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsPartialOrdering)> [concrete]
-// CHECK:STDOUT:   %pattern_type.c26: type = pattern_type %OrderedWith.type.928 [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.d3b: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeRhs)> [concrete]
-// CHECK:STDOUT:   %pattern_type.89f: type = pattern_type %OrderedWith.type.d3b [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.d59: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeLhs)> [concrete]
-// CHECK:STDOUT:   %pattern_type.912: type = pattern_type %OrderedWith.type.d59 [concrete]
+// CHECK:STDOUT:   %pattern_type.bd1: type = pattern_type %CrossTypeRhs [concrete]
+// CHECK:STDOUT:   %EqWith.type.d71: type = facet_type <@EqWith.1, @EqWith.1(%DefaultSpaceshipOnly)> [concrete]
+// CHECK:STDOUT:   %pattern_type.375: type = pattern_type %EqWith.type.d71 [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.519: type = facet_type <@OrderedWith.1, @OrderedWith.1(%DefaultSpaceshipOnly)> [concrete]
+// CHECK:STDOUT:   %pattern_type.0e9: type = pattern_type %OrderedWith.type.519 [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.62a: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsStrongOrdering)> [concrete]
+// CHECK:STDOUT:   %pattern_type.453: type = pattern_type %OrderedWith.type.62a [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.c87: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsPartialOrdering)> [concrete]
+// CHECK:STDOUT:   %pattern_type.ac7: type = pattern_type %OrderedWith.type.c87 [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.079: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeRhs)> [concrete]
+// CHECK:STDOUT:   %pattern_type.f80: type = pattern_type %OrderedWith.type.079 [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.ec4: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeLhs)> [concrete]
+// CHECK:STDOUT:   %pattern_type.cee: type = pattern_type %OrderedWith.type.ec4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -489,61 +489,61 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc4(constants.%DefaultSpaceshipOnly, <error>) {
 // CHECK:STDOUT:   %U.loc4_12.1 => constants.%DefaultSpaceshipOnly
-// CHECK:STDOUT:   %EqWith.type.loc4_38.1 => constants.%EqWith.type.ee6
+// CHECK:STDOUT:   %EqWith.type.loc4_38.1 => constants.%EqWith.type.d71
 // CHECK:STDOUT:   %T.loc4_22.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc4_22 => constants.%pattern_type.f48
+// CHECK:STDOUT:   %pattern_type.loc4_22 => constants.%pattern_type.375
 // CHECK:STDOUT:   %T.as_type.loc4_44.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc4_42 => <error>
-// CHECK:STDOUT:   %pattern_type.loc4_48 => constants.%pattern_type.1f3b
+// CHECK:STDOUT:   %pattern_type.loc4_48 => constants.%pattern_type.cce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%DefaultSpaceshipOnly, <error>) {
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%DefaultSpaceshipOnly
-// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.b43
+// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.519
 // CHECK:STDOUT:   %T.loc11_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.260
+// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.0e9
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.1f3b
+// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.cce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%ReturnsStrongOrdering, <error>) {
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%ReturnsStrongOrdering
-// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.dfc
+// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.62a
 // CHECK:STDOUT:   %T.loc11_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.023
+// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.453
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.87f
+// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.a93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%ReturnsPartialOrdering, <error>) {
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%ReturnsPartialOrdering
-// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.928
+// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.c87
 // CHECK:STDOUT:   %T.loc11_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.c26
+// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.ac7
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.103
+// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.dbf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%CrossTypeRhs, <error>) {
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%CrossTypeRhs
-// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.d3b
+// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.079
 // CHECK:STDOUT:   %T.loc11_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.89f
+// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.f80
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.454
+// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.bd1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%CrossTypeLhs, <error>) {
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%CrossTypeLhs
-// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.d59
+// CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.ec4
 // CHECK:STDOUT:   %T.loc11_27.1 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.912
+// CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.cee
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
-// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.f57
+// CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.f3d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

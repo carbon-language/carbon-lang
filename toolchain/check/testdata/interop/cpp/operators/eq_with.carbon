@@ -391,25 +391,25 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %impl.elem1: %.2bb = impl_witness_access %EqWith.lookup_impl_witness, element1 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.bc2: <specific function> = specific_impl_function %impl.elem1, @EqWith.WithSelf.NotEqual(%U, %T) [symbolic]
 // CHECK:STDOUT:   %EqualityComparable: type = class_type @EqualityComparable [concrete]
-// CHECK:STDOUT:   %pattern_type.6c6: type = pattern_type %EqualityComparable [concrete]
+// CHECK:STDOUT:   %pattern_type.51b: type = pattern_type %EqualityComparable [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %EqWith.type.f1f: type = facet_type <@EqWith.1, @EqWith.1(%EqualityComparable)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.ee4: type = assoc_entity_type @EqWith.1, @EqWith.1(%EqualityComparable) [concrete]
-// CHECK:STDOUT:   %assoc0.734: %EqWith.assoc_type.ee4 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.5b4: %EqWith.assoc_type.ee4 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %EqWith.type.01f: type = facet_type <@EqWith.1, @EqWith.1(%EqualityComparable)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.804: type = assoc_entity_type @EqWith.1, @EqWith.1(%EqualityComparable) [concrete]
+// CHECK:STDOUT:   %assoc0.614: %EqWith.assoc_type.804 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.7f7: %EqWith.assoc_type.804 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %EqualityComparable.Equal.type: type = fn_type @EqualityComparable.Equal [concrete]
 // CHECK:STDOUT:   %EqualityComparable.Equal: %EqualityComparable.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EqualityComparable.NotEqual.type: type = fn_type @EqualityComparable.NotEqual [concrete]
 // CHECK:STDOUT:   %EqualityComparable.NotEqual: %EqualityComparable.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.416: <witness> = custom_witness (%EqualityComparable.Equal, %EqualityComparable.NotEqual), @EqWith.1, @EqWith.1(%EqualityComparable) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.607: %EqWith.type.f1f = facet_value %EqualityComparable, (%custom_witness.416) [concrete]
-// CHECK:STDOUT:   %pattern_type.293: type = pattern_type %EqWith.type.f1f [concrete]
-// CHECK:STDOUT:   %complete_type.fc9: <witness> = complete_type_witness %EqWith.type.f1f [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.9be: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%EqualityComparable, %EqWith.facet.607) [concrete]
-// CHECK:STDOUT:   %.608: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.9be, %EqWith.facet.607 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.2b0: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%EqualityComparable, %EqWith.facet.607) [concrete]
-// CHECK:STDOUT:   %.b22: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.2b0, %EqWith.facet.607 [concrete]
+// CHECK:STDOUT:   %custom_witness.1b3: <witness> = custom_witness (%EqualityComparable.Equal, %EqualityComparable.NotEqual), @EqWith.1, @EqWith.1(%EqualityComparable) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.dc5: %EqWith.type.01f = facet_value %EqualityComparable, (%custom_witness.1b3) [concrete]
+// CHECK:STDOUT:   %pattern_type.6c1: type = pattern_type %EqWith.type.01f [concrete]
+// CHECK:STDOUT:   %complete_type.bcc: <witness> = complete_type_witness %EqWith.type.01f [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.d46: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%EqualityComparable, %EqWith.facet.dc5) [concrete]
+// CHECK:STDOUT:   %.5de: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.d46, %EqWith.facet.dc5 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.0ea: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%EqualityComparable, %EqWith.facet.dc5) [concrete]
+// CHECK:STDOUT:   %.45e: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.0ea, %EqWith.facet.dc5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -476,29 +476,29 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %pattern_type.loc11_48 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc11(constants.%EqualityComparable, constants.%EqWith.facet.607) {
+// CHECK:STDOUT: specific @EqWith.loc11(constants.%EqualityComparable, constants.%EqWith.facet.dc5) {
 // CHECK:STDOUT:   %U.loc11_12.1 => constants.%EqualityComparable
-// CHECK:STDOUT:   %EqWith.type.loc11_38.1 => constants.%EqWith.type.f1f
-// CHECK:STDOUT:   %T.loc11_22.1 => constants.%EqWith.facet.607
-// CHECK:STDOUT:   %pattern_type.loc11_22 => constants.%pattern_type.293
+// CHECK:STDOUT:   %EqWith.type.loc11_38.1 => constants.%EqWith.type.01f
+// CHECK:STDOUT:   %T.loc11_22.1 => constants.%EqWith.facet.dc5
+// CHECK:STDOUT:   %pattern_type.loc11_22 => constants.%pattern_type.6c1
 // CHECK:STDOUT:   %T.as_type.loc11_44.1 => constants.%EqualityComparable
-// CHECK:STDOUT:   %pattern_type.loc11_42 => constants.%pattern_type.6c6
-// CHECK:STDOUT:   %pattern_type.loc11_48 => constants.%pattern_type.6c6
+// CHECK:STDOUT:   %pattern_type.loc11_42 => constants.%pattern_type.51b
+// CHECK:STDOUT:   %pattern_type.loc11_48 => constants.%pattern_type.51b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc11_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc11_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc13 => constants.%complete_type.fc9
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.ee4
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.734
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.9be
-// CHECK:STDOUT:   %.loc13_5.2 => constants.%.608
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.416
+// CHECK:STDOUT:   %require_complete.loc13 => constants.%complete_type.bcc
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.804
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.614
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.d46
+// CHECK:STDOUT:   %.loc13_5.2 => constants.%.5de
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.1b3
 // CHECK:STDOUT:   %impl.elem0.loc13_5.2 => constants.%EqualityComparable.Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc13_5.2 => constants.%EqualityComparable.Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.5b4
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.2b0
-// CHECK:STDOUT:   %.loc14_5.2 => constants.%.b22
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.7f7
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.0ea
+// CHECK:STDOUT:   %.loc14_5.2 => constants.%.45e
 // CHECK:STDOUT:   %impl.elem1.loc14_5.2 => constants.%EqualityComparable.NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc14_5.2 => constants.%EqualityComparable.NotEqual
 // CHECK:STDOUT: }
@@ -537,99 +537,99 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %impl.elem1: %.2bb = impl_witness_access %EqWith.lookup_impl_witness, element1 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.bc2: <specific function> = specific_impl_function %impl.elem1, @EqWith.WithSelf.NotEqual(%U, %T) [symbolic]
 // CHECK:STDOUT:   %A1: type = class_type @A1 [concrete]
-// CHECK:STDOUT:   %pattern_type.489: type = pattern_type %A1 [concrete]
+// CHECK:STDOUT:   %pattern_type.c8a: type = pattern_type %A1 [concrete]
 // CHECK:STDOUT:   %B1: type = class_type @B1 [concrete]
-// CHECK:STDOUT:   %pattern_type.278: type = pattern_type %B1 [concrete]
+// CHECK:STDOUT:   %pattern_type.e62: type = pattern_type %B1 [concrete]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [concrete]
-// CHECK:STDOUT:   %pattern_type.914: type = pattern_type %A2 [concrete]
+// CHECK:STDOUT:   %pattern_type.1e3: type = pattern_type %A2 [concrete]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [concrete]
-// CHECK:STDOUT:   %pattern_type.6a4: type = pattern_type %B2 [concrete]
+// CHECK:STDOUT:   %pattern_type.fab: type = pattern_type %B2 [concrete]
 // CHECK:STDOUT:   %A3: type = class_type @A3 [concrete]
-// CHECK:STDOUT:   %pattern_type.e08: type = pattern_type %A3 [concrete]
+// CHECK:STDOUT:   %pattern_type.ada: type = pattern_type %A3 [concrete]
 // CHECK:STDOUT:   %B3: type = class_type @B3 [concrete]
-// CHECK:STDOUT:   %pattern_type.18a: type = pattern_type %B3 [concrete]
+// CHECK:STDOUT:   %pattern_type.a20: type = pattern_type %B3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %EqWith.type.a7b: type = facet_type <@EqWith.1, @EqWith.1(%B1)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.7fe: type = assoc_entity_type @EqWith.1, @EqWith.1(%B1) [concrete]
-// CHECK:STDOUT:   %assoc0.bd9: %EqWith.assoc_type.7fe = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.16f: %EqWith.assoc_type.7fe = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %EqWith.type.9e4: type = facet_type <@EqWith.1, @EqWith.1(%B1)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.196: type = assoc_entity_type @EqWith.1, @EqWith.1(%B1) [concrete]
+// CHECK:STDOUT:   %assoc0.f5f: %EqWith.assoc_type.196 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.511: %EqWith.assoc_type.196 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %A1.Equal.type: type = fn_type @A1.Equal [concrete]
 // CHECK:STDOUT:   %A1.Equal: %A1.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A1.NotEqual.type: type = fn_type @A1.NotEqual [concrete]
 // CHECK:STDOUT:   %A1.NotEqual: %A1.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.da5: <witness> = custom_witness (%A1.Equal, %A1.NotEqual), @EqWith.1, @EqWith.1(%B1) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.ebd: %EqWith.type.a7b = facet_value %A1, (%custom_witness.da5) [concrete]
-// CHECK:STDOUT:   %pattern_type.70c: type = pattern_type %EqWith.type.a7b [concrete]
-// CHECK:STDOUT:   %EqWith.type.4bb: type = facet_type <@EqWith.1, @EqWith.1(%A1)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.2fe: type = assoc_entity_type @EqWith.1, @EqWith.1(%A1) [concrete]
-// CHECK:STDOUT:   %assoc0.d56: %EqWith.assoc_type.2fe = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.839: %EqWith.assoc_type.2fe = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %custom_witness.494: <witness> = custom_witness (%A1.Equal, %A1.NotEqual), @EqWith.1, @EqWith.1(%B1) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.169: %EqWith.type.9e4 = facet_value %A1, (%custom_witness.494) [concrete]
+// CHECK:STDOUT:   %pattern_type.443: type = pattern_type %EqWith.type.9e4 [concrete]
+// CHECK:STDOUT:   %EqWith.type.361: type = facet_type <@EqWith.1, @EqWith.1(%A1)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.56b: type = assoc_entity_type @EqWith.1, @EqWith.1(%A1) [concrete]
+// CHECK:STDOUT:   %assoc0.eba: %EqWith.assoc_type.56b = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.8ff: %EqWith.assoc_type.56b = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %B1.Equal.type: type = fn_type @B1.Equal [concrete]
 // CHECK:STDOUT:   %B1.Equal: %B1.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B1.NotEqual.type: type = fn_type @B1.NotEqual [concrete]
 // CHECK:STDOUT:   %B1.NotEqual: %B1.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.359: <witness> = custom_witness (%B1.Equal, %B1.NotEqual), @EqWith.1, @EqWith.1(%A1) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.116: %EqWith.type.4bb = facet_value %B1, (%custom_witness.359) [concrete]
-// CHECK:STDOUT:   %pattern_type.a38: type = pattern_type %EqWith.type.4bb [concrete]
-// CHECK:STDOUT:   %EqWith.type.901: type = facet_type <@EqWith.1, @EqWith.1(%A2)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.e32: type = assoc_entity_type @EqWith.1, @EqWith.1(%A2) [concrete]
-// CHECK:STDOUT:   %assoc0.8d2: %EqWith.assoc_type.e32 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.182: %EqWith.assoc_type.e32 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %custom_witness.9ed: <witness> = custom_witness (%B1.Equal, %B1.NotEqual), @EqWith.1, @EqWith.1(%A1) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.136: %EqWith.type.361 = facet_value %B1, (%custom_witness.9ed) [concrete]
+// CHECK:STDOUT:   %pattern_type.144: type = pattern_type %EqWith.type.361 [concrete]
+// CHECK:STDOUT:   %EqWith.type.cd4: type = facet_type <@EqWith.1, @EqWith.1(%A2)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.4df: type = assoc_entity_type @EqWith.1, @EqWith.1(%A2) [concrete]
+// CHECK:STDOUT:   %assoc0.d22: %EqWith.assoc_type.4df = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.ae7: %EqWith.assoc_type.4df = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %B2.Equal.type: type = fn_type @B2.Equal [concrete]
 // CHECK:STDOUT:   %B2.Equal: %B2.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B2.NotEqual.type: type = fn_type @B2.NotEqual [concrete]
 // CHECK:STDOUT:   %B2.NotEqual: %B2.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.354: <witness> = custom_witness (%B2.Equal, %B2.NotEqual), @EqWith.1, @EqWith.1(%A2) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.a81: %EqWith.type.901 = facet_value %B2, (%custom_witness.354) [concrete]
-// CHECK:STDOUT:   %pattern_type.9a8: type = pattern_type %EqWith.type.901 [concrete]
-// CHECK:STDOUT:   %EqWith.type.561: type = facet_type <@EqWith.1, @EqWith.1(%B3)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.15c: type = assoc_entity_type @EqWith.1, @EqWith.1(%B3) [concrete]
-// CHECK:STDOUT:   %assoc0.6ac: %EqWith.assoc_type.15c = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.666: %EqWith.assoc_type.15c = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %custom_witness.8ba: <witness> = custom_witness (%B2.Equal, %B2.NotEqual), @EqWith.1, @EqWith.1(%A2) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.e2d: %EqWith.type.cd4 = facet_value %B2, (%custom_witness.8ba) [concrete]
+// CHECK:STDOUT:   %pattern_type.fdf: type = pattern_type %EqWith.type.cd4 [concrete]
+// CHECK:STDOUT:   %EqWith.type.07f: type = facet_type <@EqWith.1, @EqWith.1(%B3)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.fb1: type = assoc_entity_type @EqWith.1, @EqWith.1(%B3) [concrete]
+// CHECK:STDOUT:   %assoc0.5ff: %EqWith.assoc_type.fb1 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.0e8: %EqWith.assoc_type.fb1 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %A3.Equal.type: type = fn_type @A3.Equal [concrete]
 // CHECK:STDOUT:   %A3.Equal: %A3.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NotEqual.type: type = fn_type @NotEqual [concrete]
 // CHECK:STDOUT:   %NotEqual: %NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.505: <witness> = custom_witness (%A3.Equal, %NotEqual), @EqWith.1, @EqWith.1(%B3) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.364: %EqWith.type.561 = facet_value %A3, (%custom_witness.505) [concrete]
-// CHECK:STDOUT:   %pattern_type.005: type = pattern_type %EqWith.type.561 [concrete]
-// CHECK:STDOUT:   %EqWith.type.e18: type = facet_type <@EqWith.1, @EqWith.1(%A3)> [concrete]
-// CHECK:STDOUT:   %EqWith.assoc_type.d3d: type = assoc_entity_type @EqWith.1, @EqWith.1(%A3) [concrete]
-// CHECK:STDOUT:   %assoc0.865: %EqWith.assoc_type.d3d = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
-// CHECK:STDOUT:   %assoc1.afb: %EqWith.assoc_type.d3d = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
+// CHECK:STDOUT:   %custom_witness.4f1: <witness> = custom_witness (%A3.Equal, %NotEqual), @EqWith.1, @EqWith.1(%B3) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.06d: %EqWith.type.07f = facet_value %A3, (%custom_witness.4f1) [concrete]
+// CHECK:STDOUT:   %pattern_type.101: type = pattern_type %EqWith.type.07f [concrete]
+// CHECK:STDOUT:   %EqWith.type.3fd: type = facet_type <@EqWith.1, @EqWith.1(%A3)> [concrete]
+// CHECK:STDOUT:   %EqWith.assoc_type.796: type = assoc_entity_type @EqWith.1, @EqWith.1(%A3) [concrete]
+// CHECK:STDOUT:   %assoc0.a60: %EqWith.assoc_type.796 = assoc_entity element0, imports.%Core.import_ref.5f3 [concrete]
+// CHECK:STDOUT:   %assoc1.dce: %EqWith.assoc_type.796 = assoc_entity element1, imports.%Core.import_ref.515 [concrete]
 // CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [concrete]
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B3.NotEqual.type: type = fn_type @B3.NotEqual [concrete]
 // CHECK:STDOUT:   %B3.NotEqual: %B3.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.7a4: <witness> = custom_witness (%Equal, %B3.NotEqual), @EqWith.1, @EqWith.1(%A3) [concrete]
-// CHECK:STDOUT:   %EqWith.facet.967: %EqWith.type.e18 = facet_value %B3, (%custom_witness.7a4) [concrete]
-// CHECK:STDOUT:   %pattern_type.ea1: type = pattern_type %EqWith.type.e18 [concrete]
-// CHECK:STDOUT:   %complete_type.e1f: <witness> = complete_type_witness %EqWith.type.a7b [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.18c: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%B1, %EqWith.facet.ebd) [concrete]
-// CHECK:STDOUT:   %.76d: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.18c, %EqWith.facet.ebd [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.bd2: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%B1, %EqWith.facet.ebd) [concrete]
-// CHECK:STDOUT:   %.6e6: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.bd2, %EqWith.facet.ebd [concrete]
-// CHECK:STDOUT:   %complete_type.a8f: <witness> = complete_type_witness %EqWith.type.4bb [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.d12: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A1, %EqWith.facet.116) [concrete]
-// CHECK:STDOUT:   %.3f5: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.d12, %EqWith.facet.116 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.1d9: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A1, %EqWith.facet.116) [concrete]
-// CHECK:STDOUT:   %.fdb: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.1d9, %EqWith.facet.116 [concrete]
-// CHECK:STDOUT:   %complete_type.109: <witness> = complete_type_witness %EqWith.type.901 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.f00: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A2, %EqWith.facet.a81) [concrete]
-// CHECK:STDOUT:   %.ca5: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.f00, %EqWith.facet.a81 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.ee1: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A2, %EqWith.facet.a81) [concrete]
-// CHECK:STDOUT:   %.02f: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.ee1, %EqWith.facet.a81 [concrete]
-// CHECK:STDOUT:   %complete_type.02e: <witness> = complete_type_witness %EqWith.type.561 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.f3b: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%B3, %EqWith.facet.364) [concrete]
-// CHECK:STDOUT:   %.eed: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.f3b, %EqWith.facet.364 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.a49: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%B3, %EqWith.facet.364) [concrete]
-// CHECK:STDOUT:   %.5c9: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.a49, %EqWith.facet.364 [concrete]
-// CHECK:STDOUT:   %complete_type.d47: <witness> = complete_type_witness %EqWith.type.e18 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.be3: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A3, %EqWith.facet.967) [concrete]
-// CHECK:STDOUT:   %.af5: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.be3, %EqWith.facet.967 [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.a22: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A3, %EqWith.facet.967) [concrete]
-// CHECK:STDOUT:   %.b2b: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.a22, %EqWith.facet.967 [concrete]
+// CHECK:STDOUT:   %custom_witness.4ed: <witness> = custom_witness (%Equal, %B3.NotEqual), @EqWith.1, @EqWith.1(%A3) [concrete]
+// CHECK:STDOUT:   %EqWith.facet.2b7: %EqWith.type.3fd = facet_value %B3, (%custom_witness.4ed) [concrete]
+// CHECK:STDOUT:   %pattern_type.a79: type = pattern_type %EqWith.type.3fd [concrete]
+// CHECK:STDOUT:   %complete_type.fc0: <witness> = complete_type_witness %EqWith.type.9e4 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.b43: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%B1, %EqWith.facet.169) [concrete]
+// CHECK:STDOUT:   %.e88: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.b43, %EqWith.facet.169 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.cd5: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%B1, %EqWith.facet.169) [concrete]
+// CHECK:STDOUT:   %.a12: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.cd5, %EqWith.facet.169 [concrete]
+// CHECK:STDOUT:   %complete_type.1c8: <witness> = complete_type_witness %EqWith.type.361 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.d63: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A1, %EqWith.facet.136) [concrete]
+// CHECK:STDOUT:   %.895: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.d63, %EqWith.facet.136 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.6f4: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A1, %EqWith.facet.136) [concrete]
+// CHECK:STDOUT:   %.781: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.6f4, %EqWith.facet.136 [concrete]
+// CHECK:STDOUT:   %complete_type.017: <witness> = complete_type_witness %EqWith.type.cd4 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.135: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A2, %EqWith.facet.e2d) [concrete]
+// CHECK:STDOUT:   %.400: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.135, %EqWith.facet.e2d [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.57a: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A2, %EqWith.facet.e2d) [concrete]
+// CHECK:STDOUT:   %.ce7: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.57a, %EqWith.facet.e2d [concrete]
+// CHECK:STDOUT:   %complete_type.d97: <witness> = complete_type_witness %EqWith.type.07f [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.738: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%B3, %EqWith.facet.06d) [concrete]
+// CHECK:STDOUT:   %.72a: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.738, %EqWith.facet.06d [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.512: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%B3, %EqWith.facet.06d) [concrete]
+// CHECK:STDOUT:   %.a1d: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.512, %EqWith.facet.06d [concrete]
+// CHECK:STDOUT:   %complete_type.fb2: <witness> = complete_type_witness %EqWith.type.3fd [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.033: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%A3, %EqWith.facet.2b7) [concrete]
+// CHECK:STDOUT:   %.938: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.033, %EqWith.facet.2b7 [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.362: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(%A3, %EqWith.facet.2b7) [concrete]
+// CHECK:STDOUT:   %.2b0: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.362, %EqWith.facet.2b7 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -696,137 +696,137 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc34(constants.%B1, constants.%EqWith.facet.ebd) {
+// CHECK:STDOUT: specific @EqWith.loc34(constants.%B1, constants.%EqWith.facet.169) {
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%B1
-// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.a7b
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.ebd
-// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.70c
+// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.9e4
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.169
+// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.443
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%A1
-// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.489
-// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.278
+// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.c8a
+// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.e62
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc34_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.e1f
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.7fe
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.bd9
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.18c
-// CHECK:STDOUT:   %.loc36_5.2 => constants.%.76d
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.da5
+// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.fc0
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.196
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.f5f
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.b43
+// CHECK:STDOUT:   %.loc36_5.2 => constants.%.e88
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.494
 // CHECK:STDOUT:   %impl.elem0.loc36_5.2 => constants.%A1.Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc36_5.2 => constants.%A1.Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.16f
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.bd2
-// CHECK:STDOUT:   %.loc37_5.2 => constants.%.6e6
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.511
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.cd5
+// CHECK:STDOUT:   %.loc37_5.2 => constants.%.a12
 // CHECK:STDOUT:   %impl.elem1.loc37_5.2 => constants.%A1.NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc37_5.2 => constants.%A1.NotEqual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc34(constants.%A1, constants.%EqWith.facet.116) {
+// CHECK:STDOUT: specific @EqWith.loc34(constants.%A1, constants.%EqWith.facet.136) {
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A1
-// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.4bb
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.116
-// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.a38
+// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.361
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.136
+// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.144
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B1
-// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.278
-// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.489
+// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.e62
+// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.c8a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc34_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.a8f
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.2fe
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.d56
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.d12
-// CHECK:STDOUT:   %.loc36_5.2 => constants.%.3f5
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.359
+// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.1c8
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.56b
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.eba
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.d63
+// CHECK:STDOUT:   %.loc36_5.2 => constants.%.895
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.9ed
 // CHECK:STDOUT:   %impl.elem0.loc36_5.2 => constants.%B1.Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc36_5.2 => constants.%B1.Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.839
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.1d9
-// CHECK:STDOUT:   %.loc37_5.2 => constants.%.fdb
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.8ff
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.6f4
+// CHECK:STDOUT:   %.loc37_5.2 => constants.%.781
 // CHECK:STDOUT:   %impl.elem1.loc37_5.2 => constants.%B1.NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc37_5.2 => constants.%B1.NotEqual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc34(constants.%A2, constants.%EqWith.facet.a81) {
+// CHECK:STDOUT: specific @EqWith.loc34(constants.%A2, constants.%EqWith.facet.e2d) {
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A2
-// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.901
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.a81
-// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.9a8
+// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.cd4
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.e2d
+// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.fdf
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B2
-// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.6a4
-// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.914
+// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.fab
+// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.1e3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc34_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.109
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.e32
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8d2
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.f00
-// CHECK:STDOUT:   %.loc36_5.2 => constants.%.ca5
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.354
+// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.017
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.4df
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.d22
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.135
+// CHECK:STDOUT:   %.loc36_5.2 => constants.%.400
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.8ba
 // CHECK:STDOUT:   %impl.elem0.loc36_5.2 => constants.%B2.Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc36_5.2 => constants.%B2.Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.182
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.ee1
-// CHECK:STDOUT:   %.loc37_5.2 => constants.%.02f
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.ae7
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.57a
+// CHECK:STDOUT:   %.loc37_5.2 => constants.%.ce7
 // CHECK:STDOUT:   %impl.elem1.loc37_5.2 => constants.%B2.NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc37_5.2 => constants.%B2.NotEqual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc34(constants.%B3, constants.%EqWith.facet.364) {
+// CHECK:STDOUT: specific @EqWith.loc34(constants.%B3, constants.%EqWith.facet.06d) {
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%B3
-// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.561
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.364
-// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.005
+// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.07f
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.06d
+// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.101
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%A3
-// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.e08
-// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.18a
+// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.ada
+// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.a20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc34_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.02e
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.15c
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.6ac
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.f3b
-// CHECK:STDOUT:   %.loc36_5.2 => constants.%.eed
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.505
+// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.d97
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.fb1
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.5ff
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.738
+// CHECK:STDOUT:   %.loc36_5.2 => constants.%.72a
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.4f1
 // CHECK:STDOUT:   %impl.elem0.loc36_5.2 => constants.%A3.Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc36_5.2 => constants.%A3.Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.666
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.a49
-// CHECK:STDOUT:   %.loc37_5.2 => constants.%.5c9
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.0e8
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.512
+// CHECK:STDOUT:   %.loc37_5.2 => constants.%.a1d
 // CHECK:STDOUT:   %impl.elem1.loc37_5.2 => constants.%NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc37_5.2 => constants.%NotEqual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @EqWith.loc34(constants.%A3, constants.%EqWith.facet.967) {
+// CHECK:STDOUT: specific @EqWith.loc34(constants.%A3, constants.%EqWith.facet.2b7) {
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A3
-// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.e18
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.967
-// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.ea1
+// CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.3fd
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.2b7
+// CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.a79
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B3
-// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.18a
-// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.e08
+// CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.a20
+// CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.ada
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc34_48 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.d47
-// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.d3d
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.865
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.be3
-// CHECK:STDOUT:   %.loc36_5.2 => constants.%.af5
-// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.7a4
+// CHECK:STDOUT:   %require_complete.loc36 => constants.%complete_type.fb2
+// CHECK:STDOUT:   %EqWith.assoc_type => constants.%EqWith.assoc_type.796
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.a60
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type => constants.%EqWith.WithSelf.Equal.type.033
+// CHECK:STDOUT:   %.loc36_5.2 => constants.%.938
+// CHECK:STDOUT:   %EqWith.lookup_impl_witness => constants.%custom_witness.4ed
 // CHECK:STDOUT:   %impl.elem0.loc36_5.2 => constants.%Equal
 // CHECK:STDOUT:   %specific_impl_fn.loc36_5.2 => constants.%Equal
-// CHECK:STDOUT:   %assoc1 => constants.%assoc1.afb
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.a22
-// CHECK:STDOUT:   %.loc37_5.2 => constants.%.b2b
+// CHECK:STDOUT:   %assoc1 => constants.%assoc1.dce
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type => constants.%EqWith.WithSelf.NotEqual.type.362
+// CHECK:STDOUT:   %.loc37_5.2 => constants.%.2b0
 // CHECK:STDOUT:   %impl.elem1.loc37_5.2 => constants.%B3.NotEqual
 // CHECK:STDOUT:   %specific_impl_fn.loc37_5.2 => constants.%B3.NotEqual
 // CHECK:STDOUT: }
