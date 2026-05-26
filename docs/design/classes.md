@@ -1166,17 +1166,19 @@ class, but other kinds of type declarations, like choice types, are allowed.
 
 ### Let
 
-Other type constants can be defined using a `let` declaration:
+Other type constants can be defined using a `let` declaration with a `template`
+phase modifier:
 
 ```
 class MyClass {
-  let Pi: f32 = 3.141592653589793;
-  let IndexType: type = i32;
+  let template Pi: f32 = 3.141592653589793;
+  let template IndexType: type = i32;
 }
 ```
 
-The `let` declaration indicates that this is defining a compile-time constant,
-and so does not affect the storage of instances of that class.
+> **TODO**: This use of `let` and `template` is one we want to replace with a
+> better construct. There is nothing "templated" about the code using these, and
+> so that modifier isn't a good one even though it is the one available.
 
 ### Alias
 

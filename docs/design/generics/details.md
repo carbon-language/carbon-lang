@@ -678,8 +678,8 @@ var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 Here `T` is a facet whose type is `Vector`. It declares a _symbolic binding_
 since it did not use the `template` keyword to mark it as a _template binding_.
 
-> **References:** The syntax for compile-time bindings was accepted in
-> [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+> **References:** The syntax for compile-time bindings was decided in
+> [proposal #7254](https://github.com/carbon-language/carbon-lang/pull/7254).
 
 Since this symbolic binding pattern is in a function declaration, it marks a
 _[checked](terminology.md#checked-versus-template-parameters)
@@ -2231,8 +2231,8 @@ fn ExtractPoint[PointT: NSpacePoint](
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
-**Aside:** The use of `let` here means these declarations will only have
-compile-time and not runtime storage associated with them.
+**Aside:** The use of `let` in an `interface` scope declares an associated
+constant, which is a compile-time value.
 
 ### Associated functions
 
@@ -2830,11 +2830,11 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A compile-time binding `X` introduces `.Self: type`, where references to
-    `.Self` are resolved to `X`. This allows you to use `.Self` as an interface
-    parameter as in `X: I(.Self)`.
--   `A where` introduces `.Self: A` and a `.Foo` _designator_ for each member
-    `Foo` of `A`.
+-   A compile-time binding `X` introduces `generic .Self: type`, where
+    references to `.Self` are resolved to `X`. This allows you to use `.Self` as
+    an interface parameter as in `X: I(.Self)`.
+-   `A where` introduces `generic .Self: A` and a `.Foo` _designator_ for each
+    member `Foo` of `A`.
 -   It's an error to reference `.Self` if it refers to more than one different
     thing or isn't a facet.
 -   You get the innermost, most-specific type for `.Self` if it is introduced

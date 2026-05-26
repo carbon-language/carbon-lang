@@ -230,9 +230,9 @@ var VectorForPoint_Inline: Vector  = {
 };
 ```
 
-Since generic arguments (which are compile-time parameters) are passed at
-compile time, the actual value of `VectorForPoint_Inline` can be used to
-generate the code for functions using that impl.
+Since generic arguments (indicated by context or the `generic` modifier) are
+passed at compile time, the actual value of `VectorForPoint_Inline` can be used
+to generate the code for functions using that impl.
 
 ### Associated facets example
 
