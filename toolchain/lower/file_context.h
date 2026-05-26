@@ -9,6 +9,7 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
+#include "toolchain/lower/type.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -37,6 +38,11 @@ struct FunctionInfo {
 
   // The lowered function declaration.
   llvm::Function* llvm_function;
+
+  // Whether the function type information is inexact, because some component
+  // type was incomplete. If this is set, the function should not be used to
+  // emit a definition or a call.
+  bool inexact;
 };
 
 // Context and shared functionality for lowering within a SemIR file.
@@ -82,19 +88,20 @@ class FileContext {
   // Returns the FunctionInfo for the given function in the given specific. If
   // it's not already available, this function will compute it, including
   // creating the `llvm::Function` for it. Returns nullopt for a builtin.
-  auto GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
-                               SemIR::SpecificId specific_id)
+  //
+  // The fallback information is used if the specific function has incomplete
+  // types.
+  auto GetOrCreateFunctionInfo(
+      SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+      FileContext* fallback_file = nullptr,
+      SemIR::FunctionId fallback_function_id = SemIR::FunctionId::None,
+      SemIR::SpecificId fallback_specific_id = SemIR::SpecificId::None)
       -> std::optional<FunctionInfo>&;
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return GetTypeAndDIType(type_id).llvm_ir_type;
   }
-
-  struct LoweredTypes {
-    llvm::Type* llvm_ir_type;
-    llvm::DIType* llvm_di_type;
-  };
 
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info
   // type for the given type_id.
@@ -183,6 +190,9 @@ class FileContext {
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
  private:
+  // Lower global variables defined in `inst_block_id`.
+  auto LowerGlobalVariables(SemIR::InstBlockId inst_block_id) -> void;
+
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
@@ -196,27 +206,6 @@ class FileContext {
                                         SemIR::SpecificId specific_id,
                                         llvm::Type* llvm_type) -> void;
 
-  // Information used to build a `FunctionInfo`.
-  // TODO: Rename this, since it's not limited to type information, and/or
-  // restructure the code so it's not needed.
-  struct FunctionTypeInfo {
-    // See documentation for the corresponding members of FunctionInfo.
-    llvm::FunctionType* type;
-    llvm::DISubroutineType* di_type;
-    llvm::SmallVector<SemIR::CallParamIndex> lowered_param_indices;
-    llvm::SmallVector<SemIR::CallParamIndex> unused_param_indices;
-
-    // The names of the lowered `Call` parameters, in the same order as
-    // `lowered_param_indices`.
-    llvm::SmallVector<SemIR::NameId> param_name_ids;
-
-    // When `return_param_id` is not `None`, the corresponding lowered parameter
-    // should be given an `sret` attribute with this type.
-    llvm::Type* sret_type = nullptr;
-  };
-
-  class FunctionTypeInfoBuilder;
-
   // Builds an LLVM function declaration for the given function, or returns an
   // existing one if we've already lowered another declaration of the same
   // function.
@@ -229,7 +218,10 @@ class FileContext {
   // by the caller.
   auto BuildFunctionDecl(
       SemIR::FunctionId function_id,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::None)
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
+      FileContext* fallback_file = nullptr,
+      SemIR::FunctionId fallback_function_id = SemIR::FunctionId::None,
+      SemIR::SpecificId fallback_specific_id = SemIR::SpecificId::None)
       -> std::optional<FunctionInfo>;
 
   // Builds a function's body. Common functionality for all functions.
@@ -249,10 +241,6 @@ class FileContext {
   auto BuildDISubprogram(const SemIR::Function& function,
                          const FunctionInfo& function_info)
       -> llvm::DISubprogram*;
-
-  // Builds the `llvm::Type` and `llvm::DIType` for the given instruction, which
-  // should then be cached by the caller.
-  auto BuildType(SemIR::InstId inst_id) -> LoweredTypes;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
       -> llvm::GlobalVariable*;

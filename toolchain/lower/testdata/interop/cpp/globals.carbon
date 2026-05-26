@@ -504,7 +504,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "ReadVarTemplateWithConstructor", linkageName: "_CReadVarTemplateWithConstructor.Main", scope: null, file: !6, line: 10, type: !18, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !17)
 // CHECK:STDOUT: ; ModuleID = 'import_static_template.carbon'
 // CHECK:STDOUT: source_filename = "import_static_template.carbon"
@@ -555,5 +555,5 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "ReadStaticVarTemplateWithConstructor", linkageName: "_CReadStaticVarTemplateWithConstructor.Main", scope: null, file: !6, line: 10, type: !18, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !17)

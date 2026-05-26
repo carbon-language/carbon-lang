@@ -1,32 +1,88 @@
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Build rules supporting the install data tree for the Carbon toolchain.
+#
+# This populates a synthetic Carbon toolchain installation rooted at this
+# package in the output tree.
+#
+# We use a `toolchain_files` rule organize the files in in the installation and
+# handle cases where we need to symlink existing files or build outputs
+# into the correct location.
+#
+# This package also includes the logic for building Carbon's runtimes, and Bazel
+# `cc_toolchain`s for using the installation as a C++ toolchain in Bazel. This
+# allows multi-stage bootstrapping to occur entirely within Bazel. Note that the
+# specific stage will be in a _configuration specific_ output tree, but always
+# rooted under the install package.
+#
+# Last but ont least, we provide rules to build packages of the installation in
+# conventional layouts for directly extracting and using a binary build. The
+# packaged installation includes custom Bazel files to handle a pre-built and
+# installed toolchain in the same way as these handle the just-built toolchain.
 
 load(
     "@llvm-project//:vars.bzl",
     "LLVM_VERSION_MAJOR",
 )
-load("@rules_python//python:defs.bzl", "py_binary", "py_test")
+load(
+    "@llvm-project//compiler-rt:compiler-rt.bzl",
+    "builtins_copts",
+    "crt_copts",
+)
+load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
+load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
+load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load(
+    "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
+    "carbon_bootstrapped_cc_toolchain",
+    "filegroup_with_stage",
+    "gen_cc_toolchain_paths_with_stage",
+)
 load("//bazel/manifest:defs.bzl", "manifest")
-load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
-    "BUILTINS_SRCS_FILEGROUPS",
-    "BUILTINS_TEXTUAL_SRCS_FILEGROUPS",
-    "CRT_FILES",
     "generate_runtimes_build_vars",
 )
-load("configure_cmake_file.bzl", "configure_cmake_file")
-load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
+load("bazel/make_include_copts.bzl", "make_include_copts")
+load(
+    "install_filegroups.bzl",
+    "filtered_toolchain_files",
+    "toolchain_files",
+    "toolchain_llvm_binaries",
+    "toolchain_pkg_filegroup",
+)
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# Build rules supporting the install data tree for the Carbon toolchain.
-#
-# This populates a synthetic Carbon toolchain installation under the
-# `prefix` directory. For details on its layout, see `install_dirs` below.
+config_setting(
+    name = "is_runtimes_build",
+    flag_values = {"//:runtimes_build": "True"},
+)
+
+config_setting(
+    name = "not_runtimes_build",
+    flag_values = {"//:runtimes_build": "False"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_0",
+    flag_values = {"//:bootstrap_stage": "0"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_1",
+    flag_values = {"//:bootstrap_stage": "1"},
+)
+
+config_setting(
+    name = "is_bootstrap_stage_2",
+    flag_values = {"//:bootstrap_stage": "2"},
+)
 
 cc_library(
     name = "busybox_info",
@@ -75,370 +131,274 @@ cc_binary(
     ],
 )
 
-clang_aliases = [
-    "clang",
-    "clang++",
-    "clang-cl",
-    "clang-cpp",
-]
+toolchain_files(
+    name = "install_marker",
+    srcs = ["carbon_install.txt"],
+)
 
-# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
-# for them wired up through the busybox.
-lld_aliases = [
-    "ld.lld",
-    "ld64.lld",
-]
+toolchain_llvm_binaries(
+    name = "llvm_bins",
+    carbon_binary = ":carbon-busybox",
+)
 
-llvm_binaries = clang_aliases + lld_aliases + [
-    tool.bin_name
-    for tool in LLVM_MAIN_TOOLS.values()
-] + [
-    "llvm-" + alias
-    for (_, aliases) in LLVM_TOOL_ALIASES.items()
-    for alias in aliases
-]
+toolchain_files(
+    name = "core",
+    srcs = ["//core:prelude"],
+    prefix = "core/",
+)
 
-filegroup(
-    name = "clang_headers",
+toolchain_files(
+    name = "clang_builtin_hdrs",
     srcs = ["@llvm-project//clang:builtin_headers_gen"],
+    prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
+    remove_prefix = "staging/include/",
 )
 
-# Collect the runtime sources that are collectively installed into the
-# `builtins` directory.
+toolchain_files(
+    name = "fuzzer_runtime_hdrs",
+    srcs = ["@llvm-project//compiler-rt:fuzzer_installed_hdrs"],
+    prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
+    remove_prefix = "include/",
+)
+
+toolchain_files(
+    name = "profile_runtime_hdrs",
+    srcs = ["@llvm-project//compiler-rt:profile_installed_hdrs"],
+    prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
+    remove_prefix = "include/",
+)
+
+toolchain_files(
+    name = "sanitizer_runtime_hdrs",
+    srcs = ["@llvm-project//compiler-rt:sanitizer_installed_hdrs"],
+    prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
+    remove_prefix = "include/",
+)
+
 filegroup(
-    name = "clang_builtins_runtimes",
-    srcs = (
-        CRT_FILES.values() +
-        BUILTINS_SRCS_FILEGROUPS +
-        BUILTINS_TEXTUAL_SRCS_FILEGROUPS
-    ),
+    name = "clang_hdrs",
+    srcs = [
+        ":clang_builtin_hdrs",
+        ":fuzzer_runtime_hdrs",
+        ":profile_runtime_hdrs",
+        ":sanitizer_runtime_hdrs",
+    ],
 )
 
-py_binary(
-    name = "configure_cmake_file_impl",
-    srcs = ["configure_cmake_file_impl.py"],
+filtered_toolchain_files(
+    name = "builtins_srcs",
+    prefix = "runtimes/builtins/",
+    remove_prefix = "lib/builtins/",
+    srcs_groups = [
+        "@llvm-project//compiler-rt:builtins_aarch64_srcs",
+        "@llvm-project//compiler-rt:builtins_aarch64_textual_srcs",
+        "@llvm-project//compiler-rt:builtins_crtbegin_src",
+        "@llvm-project//compiler-rt:builtins_crtend_src",
+        "@llvm-project//compiler-rt:builtins_i386_srcs",
+        "@llvm-project//compiler-rt:builtins_i386_textual_srcs",
+        "@llvm-project//compiler-rt:builtins_x86_64_srcs",
+        "@llvm-project//compiler-rt:builtins_x86_64_textual_srcs",
+    ],
 )
 
-configure_cmake_file(
-    name = "libcxx_site_config_gen",
-    src = "@llvm-project//libcxx:include/__config_site.in",
-    out = "staging_libcxx/include/__config_site",
-    defines = {
-        # We can inject custom logic at the end of the site configuration with
-        # the ABI defines. This can custom set (or re-set) any of the relevant
-        # configuration defines. Note that while this is sorted here in the
-        # BUILD file, it is expanded at the _end_ of the configuration header
-        # and so overrides the other configuration settings.
-        #
-        # TODO: This is a lot of C++ code to embed into a BUILD file. Even
-        # though it moves it farther from the interacting CMake defines, we
-        # should look at factoring this into a header that is included.
-        "_LIBCPP_ABI_DEFINES": "\n".join([
-            # We want to install a single header that works in all build modes,
-            # so we define the ABI namespace based on how the header is used
-            # rather than a fixed one. However, we only support use with Clang
-            # and so we assume `__has_feature` is available and works.
-            #
-            # Note that generally, we don't rely on different ABI namespaces for
-            # functionality -- the distinction is more to make errors when
-            # linking with the wrong build of the standard library obvious and
-            # immediate. We only can achieve this for sanitizers that have a
-            # preprocessor detectable model.
-            "#if __has_feature(address_sanitizer)",
-            "# undef _LIBCPP_ABI_NAMESPACE",
-            "# define _LIBCPP_ABI_NAMESPACE __asan",
-            # Also mark that libc++ will be instrumented.
-            "# undef _LIBCPP_INSTRUMENTED_WITH_ASAN",
-            "# define _LIBCPP_INSTRUMENTED_WITH_ASAN 1",
-            "#elif __has_feature(memory_sanitizer)",
-            # TODO: If a track-origins macro becomes available, we should
-            # distinguish that case, too.
-            "# undef _LIBCPP_ABI_NAMESPACE",
-            "# define _LIBCPP_ABI_NAMESPACE __msan",
-            "#elif __has_feature(thread_sanitizer)",
-            "# undef _LIBCPP_ABI_NAMESPACE",
-            "# define _LIBCPP_ABI_NAMESPACE __tsan",
-            "#elif __has_feature(cfi_sanitizer)",
-            "# undef _LIBCPP_ABI_NAMESPACE",
-            "# define _LIBCPP_ABI_NAMESPACE __cfi",
-            "#endif",
-            "",
+toolchain_files(
+    name = "libcxx_basic_hdrs",
+    srcs = ["@llvm-project//libcxx:libcxx_hdrs"],
+    prefix = "runtimes/libcxx/include/",
+    remove_prefix = "include/",
+)
 
-            # Establish a default hardening mode where possible.
-            "#ifndef _LIBCPP_HARDENING_MODE",
-            "# ifndef NDEBUG",
-            # !NDEBUG has significant overhead anyway and is explicitly a
-            # debugging build rather than a production build.
-            "#  define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_DEBUG",
-            "# else",
-            # Default to the fast hardening checks.
-            "#  define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_FAST",
-            "# endif",
-            "#endif",
-            "",
+toolchain_files(
+    name = "libcxx_gen_hdrs",
+    srcs = ["//toolchain/runtimes:libcxx_gen_files"],
+    prefix = "runtimes/libcxx/include/",
+    remove_prefix = "staging_libcxx/include/",
+)
 
-            # CUDA can't call any existing abort implementations, so disable
-            # hardening there.
-            "#ifdef __CUDA__",
-            "# undef _LIBCPP_HARDENING_MODE",
-            "# define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_NONE",
-            "#endif",
-            "",
+filegroup(
+    name = "libcxx_hdrs",
+    srcs = [
+        ":libcxx_basic_hdrs",
+        ":libcxx_gen_hdrs",
+    ],
+)
 
-            # Setup platform-dependent features using preprocessor logic.
-            "#ifdef __linux__",
-            "# undef _LIBCPP_HAS_TIME_ZONE_DATABASE",
-            "# define _LIBCPP_HAS_TIME_ZONE_DATABASE 1",
-            "#endif",
-            "",
+filtered_toolchain_files(
+    name = "libcxx_srcs",
+    prefix = "runtimes/libcxx/src/",
+    remove_prefix = "src/",
+    srcs_groups = [
+        "@llvm-project//libcxx:libcxx_linux_srcs",
+        "@llvm-project//libcxx:libcxx_macos_srcs",
+        "@llvm-project//libcxx:libcxx_win32_srcs",
+    ],
+)
 
-            # Mixing translation units compiled with different versions of
-            # libc++ is unsupported. Disable ABI tags to decrease symbol
-            # lengths.
-            "#define _LIBCPP_NO_ABI_TAG",
-        ]),
+toolchain_files(
+    name = "libcxxabi_hdrs",
+    srcs = ["@llvm-project//libcxxabi:libcxxabi_hdrs"],
+    prefix = "runtimes/libcxxabi/include/",
+    remove_prefix = "include/",
+)
 
-        # No forced ABI.
-        "_LIBCPP_ABI_FORCE_ITANIUM": "OFF",
-        "_LIBCPP_ABI_FORCE_MICROSOFT": "OFF",
+toolchain_files(
+    name = "libcxxabi_srcs",
+    srcs = ["@llvm-project//libcxxabi:libcxxabi_srcs"],
+    prefix = "runtimes/libcxxabi/src/",
+    remove_prefix = "src/",
+)
 
-        # We use the unstable ABI and define a custom, Carbon-specific ABI
-        # namespace. This also matches the mangling prefix used for Carbon
-        # symbols.
-        "_LIBCPP_ABI_NAMESPACE": "_C",
-        # TODO: Fix the need to define _LIBCPP_ABI_VERSION when the unstable
-        # ABI is selected.
-        "_LIBCPP_ABI_VERSION": "999",
+toolchain_files(
+    name = "libcxxabi_textual_srcs",
+    srcs = ["@llvm-project//libcxxabi:libcxxabi_textual_srcs"],
+    prefix = "runtimes/libcxxabi/src/",
+    remove_prefix = "src/",
+)
 
-        # Follow hardening mode for the assertion semantics.
-        "_LIBCPP_ASSERTION_SEMANTIC_DEFAULT": "_LIBCPP_ASSERTION_SEMANTIC_HARDENING_DEPENDENT",
+toolchain_files(
+    name = "libc_internal_libcxx_hdrs",
+    srcs = ["@llvm-project//libc:libcxx_shared_headers_hdrs"],
+    prefix = "runtimes/libc/internal/",
+)
 
-        # Enable various features in libc++ available across platforms. We
-        # describe these in a block to allow the BUILD file to sort them.
-        #
-        # - We enable threads, and use auto-detection rather than forcing an
-        #   API.
-        # - Availability annotations do not apply to Carbon's libc++, so those
-        #   are disabled.
-        #
-        # Where there are platform differences in the features, we disable them
-        # here and re-enable them in the `_LIBCPP_ABI_DEFINES` section using
-        # custom logic to detect the relevant platform.
-        "_LIBCPP_HAS_FILESYSTEM": "ON",
-        "_LIBCPP_HAS_LOCALIZATION": "ON",
-        "_LIBCPP_HAS_MONOTONIC_CLOCK": "ON",
-        "_LIBCPP_HAS_NO_VENDOR_AVAILABILITY_ANNOTATIONS": "ON",
-        "_LIBCPP_HAS_RANDOM_DEVICE": "ON",
-        "_LIBCPP_HAS_TERMINAL": "ON",
-        "_LIBCPP_HAS_THREADS": "ON",
-        "_LIBCPP_HAS_THREAD_API_EXTERNAL": "OFF",
-        "_LIBCPP_HAS_THREAD_API_PTHREAD": "OFF",
-        "_LIBCPP_HAS_THREAD_API_WIN32": "OFF",
-        "_LIBCPP_HAS_TIME_ZONE_DATABASE": "OFF",
-        "_LIBCPP_HAS_UNICODE": "ON",
-        "_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS": "OFF",
-        "_LIBCPP_HAS_WIDE_CHARACTERS": "ON",
+toolchain_files(
+    name = "libunwind_hdrs",
+    srcs = ["@llvm-project//libunwind:libunwind_hdrs"],
+    prefix = "runtimes/libunwind/include/",
+    remove_prefix = "include/",
+)
 
-        # When ASan is enabled, we ensure that libc++ is built with it as well.
-        # However, we can't set this more carefully here so we set it to off and
-        # override it below when using ASan.
-        "_LIBCPP_INSTRUMENTED_WITH_ASAN": "OFF",
+toolchain_files(
+    name = "libunwind_srcs",
+    srcs = ["@llvm-project//libunwind:libunwind_srcs"],
+    prefix = "runtimes/libunwind/src/",
+    remove_prefix = "src/",
+)
 
-        # Set the parallel backend to serial.
-        # TODO: We should revisit this.
-        "_LIBCPP_PSTL_BACKEND_SERIAL": "1",
+filegroup(
+    name = "cc_toolchain_all_files",
+    srcs = [
+        ":carbon-busybox",
+        ":clang_hdrs",
+        ":core",
+        ":install_marker",
+        ":libcxx_hdrs",
+        ":libcxxabi_hdrs",
+        ":libunwind_hdrs",
+        ":llvm_bins",
+    ],
+)
+
+# The toolchain configuration starlark needs to switch from referencing the
+# `carbon_runtimes.bzl` starlark in the toolchain layout to the `bazel` tree
+# within the installation.
+#
+# TODO: Maybe we should move the `carbon_runtimes.bzl` to the same directory as
+# the other starlark so we can use relative load lines and avoid this?
+genrule(
+    name = "carbon_cc_toolchain_config_for_install",
+    srcs = ["//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl"],
+    outs = ["carbon_cc_toolchain_config.bzl"],
+    cmd = "sed 's|//toolchain/runtimes:carbon_runtimes.bzl|//bazel:carbon_runtimes.bzl|' $< > $@",
+)
+
+toolchain_files(
+    name = "bazel_common_srcs",
+    srcs = [
+        ":carbon_cc_toolchain_config_for_install",
+        "//bazel/cc_toolchains:installed_cc_toolchain_starlark",
+    ],
+    prefix = "bazel/",
+)
+
+toolchain_files(
+    name = "bazel_install_srcs",
+    srcs = [
+        "bazel/carbon_clang_variables.bzl",
+        "bazel/carbon_detected_variables.tpl.bzl",
+        "bazel/carbon_toolchain.bzl",
+        "bazel/make_include_copts.bzl",
+    ],
+)
+
+toolchain_files(
+    name = "carbon_runtimes_bzl_installed",
+    srcs = ["//toolchain/runtimes:carbon_runtimes.bzl"],
+    prefix = "bazel/",
+)
+
+toolchain_files(
+    name = "bazel_build_and_module",
+    srcs = [
+        "bazel/empty.BUILD",
+        "bazel/install.BUILD",
+        "bazel/install.MODULE.bazel",
+    ],
+    remove_prefix = "bazel/",
+    renames = {
+        "empty.BUILD": "bazel/BUILD.bazel",
+        "install.BUILD": "BUILD.bazel",
+        "install.MODULE.bazel": "MODULE.bazel",
     },
-)
-
-configure_cmake_file(
-    name = "libcxx_assertion_handler_gen",
-    src = "@llvm-project//libcxx:vendor/llvm/default_assertion_handler.in",
-    out = "staging_libcxx/include/__assertion_handler",
-    defines = {
-        # Currently the default handler needs no substitutions.
-    },
-)
-
-filegroup(
-    name = "libcxx",
-    srcs = [
-        "@llvm-project//libcxx:libcxx_all_srcs",
-        "@llvm-project//libcxx:libcxx_hdrs",
-    ],
-)
-
-filegroup(
-    name = "libcxx_gen_files",
-    srcs = [
-        "staging_libcxx/include/__assertion_handler",
-        "staging_libcxx/include/__config_site",
-    ],
-)
-
-filegroup(
-    name = "libcxxabi",
-    srcs = [
-        "@llvm-project//libcxxabi:libcxxabi_hdrs",
-        "@llvm-project//libcxxabi:libcxxabi_srcs",
-        "@llvm-project//libcxxabi:libcxxabi_textual_srcs",
-    ],
-)
-
-filegroup(
-    name = "libunwind",
-    srcs = [
-        "@llvm-project//libunwind:libunwind_hdrs",
-        "@llvm-project//libunwind:libunwind_srcs",
-    ],
-)
-
-# Currently, we're only installing the subset of LLVM's libc internals needed to
-# build libc++. At some point, we should ship LLVM's libc itself, and that will
-# likely expand this to cover more of the source. However, we'll still want to
-# distinguish between the _internal_ installation and the generated set of
-# headers that we inject into the include search for user compiles. The
-# `include` subdirectory in this file group is _not_ intended to be exposed to
-# user compiles, only to compilation of runtimes.
-filegroup(
-    name = "libc_internal",
-    srcs = [
-        "@llvm-project//libc:libcxx_shared_headers_hdrs",
-    ],
 )
 
 # Generate a Starlark file with all the build variables needed for our runtimes.
 generate_runtimes_build_vars(
-    name = "staging_bazel/runtimes_build_vars.bzl",
+    name = "bazel/runtimes_build_vars.bzl",
 )
 
-# Given a CMake-style install prefix[1], the hierarchy looks like:
-#
-# - prefix/bin: Binaries intended for direct use.
-# - prefix/lib/carbon: Private data and files.
-# - prefix/lib/carbon/core: The `Core` package files.
-# - prefix/lib/carbon/llvm/bin: LLVM binaries.
-#
-# This will be how installs are provided on Unix-y platforms, and is loosely
-# based on the FHS (Filesystem Hierarchy Standard). See the CMake install prefix
-# documentation[1] for more details.
-#
-# [1]: https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
-install_dirs = {
-    "bin": [
-        install_symlink(
-            "carbon",
-            "../lib/carbon/carbon-busybox",
-            is_driver = True,
-        ),
-    ],
-    "lib/carbon": [
-        install_target("MODULE.bazel", "bazel/install.MODULE.bazel"),
-        install_target("BUILD", "bazel/install.BUILD"),
-        install_target("carbon_install.txt", "carbon_install.txt"),
-        install_target(
-            "install_digest.txt",
-            ":install_digest.txt",
-            executable = False,
-            is_digest = True,
-            is_driver = True,
-        ),
-        install_target(
-            "carbon-busybox",
-            ":carbon-busybox",
-            executable = True,
-            is_driver = True,
-        ),
-        install_filegroup("bazel", "//bazel/cc_toolchains:installed_cc_toolchain_starlark"),
-        # TODO: Consider if we want to keep `core` here or group it with
-        # runtimes. It is a bit of both -- standard library, and runtimes.
-        install_filegroup("core", "//core:prelude"),
-    ],
-    "lib/carbon/bazel": [
-        install_target("carbon_cc_toolchain_config.bzl", "bazel/carbon_cc_toolchain_config.bzl"),
-        install_target("carbon_detected_variables.tpl.bzl", "bazel/carbon_detected_variables.tpl.bzl"),
-        install_target("carbon_runtimes.bzl", "bazel/carbon_runtimes.bzl"),
-        install_target("carbon_toolchain.bzl", "bazel/carbon_toolchain.bzl"),
-        install_target("make_include_copts.bzl", "bazel/make_include_copts.bzl"),
-        install_target("runtimes_build_vars.bzl", "staging_bazel/runtimes_build_vars.bzl"),
-        install_target("BUILD", "bazel/empty.BUILD"),
-    ],
-    "lib/carbon/llvm/bin": [install_symlink(
-        name,
-        "../../carbon-busybox",
-        is_driver = True,
-    ) for name in llvm_binaries],
-    "lib/carbon/runtimes": [
-        install_filegroup(
-            "builtins",
-            ":clang_builtins_runtimes",
-            remove_prefix = "lib/builtins/",
-        ),
-        install_filegroup("libcxx", ":libcxx"),
-        install_filegroup("libcxxabi", ":libcxxabi"),
-        install_filegroup("libunwind", ":libunwind"),
-        install_target("BUILD", "bazel/runtimes.BUILD"),
-    ],
-    "lib/carbon/runtimes/libc": [
-        install_filegroup("internal", ":libc_internal"),
-    ],
-    "lib/carbon/runtimes/libcxx": [
-        install_filegroup(
-            "include",
-            ":libcxx_gen_files",
-            remove_prefix = "staging_libcxx/include/",
-        ),
-    ],
-    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
-        install_target("BUILD", "bazel/clang_resource_dir.BUILD"),
-        install_filegroup(
-            "include",
-            ":clang_headers",
-            label = "installed_clang_headers",
-            remove_prefix = "staging/include/",
-        ),
-    ],
-    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/include": [
-        install_filegroup(
-            "fuzzer",
-            "@llvm-project//compiler-rt:fuzzer_installed_hdrs",
-            remove_prefix = "include/fuzzer/",
-        ),
-        install_filegroup(
-            "profile",
-            "@llvm-project//compiler-rt:profile_installed_hdrs",
-            remove_prefix = "include/profile/",
-        ),
-        install_filegroup(
-            "sanitizer",
-            "@llvm-project//compiler-rt:sanitizer_installed_hdrs",
-            remove_prefix = "include/sanitizer/",
-        ),
-    ],
-}
+filegroup(
+    name = "installed_bazel_files",
+    srcs = [
+        ":bazel_build_and_module",
+        ":bazel_common_srcs",
+        ":bazel_install_srcs",
+        ":carbon_runtimes_bzl_installed",
 
-make_install_filegroups(
-    name = "install_data",
-    install_dirs = install_dirs,
-    no_digest_name = "install_data.no_digest",
-    no_driver_name = "install_data.no_driver",
-    pkg_name = "pkg_data",
-    prefix = "prefix",
+        # Note that we have to put this here and not in one of the
+        # `toolchain_files` because it is a generated file.
+        "bazel/runtimes_build_vars.bzl",
+    ],
 )
 
-py_test(
-    name = "llvm_symlinks_test",
-    size = "small",
-    srcs = ["llvm_symlinks_test.py"],
-    data = [
-        ":install_data",
-        "//toolchain/driver:prebuilt_runtimes",
+filegroup(
+    name = "all_data_files",
+    srcs = [
+        ":builtins_all_srcs",
+        ":clang_hdrs",
+        ":core",
+        ":install_marker",
+        ":installed_bazel_files",
+        ":libc_internal_libcxx_hdrs",
+        ":libcxx_all_srcs",
+        ":libcxx_hdrs",
+        ":libcxxabi_hdrs",
+        ":libcxxabi_srcs",
+        ":libcxxabi_textual_srcs",
+        ":libunwind_hdrs",
+        ":libunwind_srcs",
     ],
-    deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+# A list of clang's installed builtin header files.
+# This is consumed by //toolchain/testing:file_test.
+manifest(
+    name = "clang_headers_manifest.txt",
+    srcs = [":clang_hdrs"],
+    strip_package_dir = True,
+)
+
+filegroup(
+    name = "all_digest_files",
+    srcs = [
+        ":all_data_files",
+        ":carbon-busybox",
+    ],
 )
 
 manifest(
-    name = "install_data_manifest.txt",
-    srcs = [":install_data"],
+    name = "install_digest_manifest.txt",
+    srcs = [":all_digest_files"],
 )
 
 cc_binary(
@@ -456,47 +416,375 @@ cc_binary(
     ],
 )
 
-manifest(
-    name = "install_digest_manifest.txt",
-    srcs = [":install_data.no_digest"],
-)
-
 genrule(
     name = "gen_digest",
     srcs = [
-        ":install_data.no_digest",
+        ":all_digest_files",
         "install_digest_manifest.txt",
     ],
-    outs = [":install_digest.txt"],
-    cmd = "$(location :make-installation-digest) " +
-          "$(location install_digest_manifest.txt) $@",
+    outs = ["install_digest.txt"],
+    cmd = "{0} {1} $@".format(
+        "$(location :make-installation-digest)",
+        "$(location install_digest_manifest.txt)",
+    ),
     tools = [":make-installation-digest"],
 )
 
-# A list of clang's installed builtin header files.
-# This is consumed by //toolchain/testing:file_test.
+filegroup(
+    name = "install_data",
+    srcs = [
+        "install_digest.txt",
+        ":all_digest_files",
+        ":llvm_bins",
+    ],
+)
+
 manifest(
-    name = "clang_headers_manifest.txt",
-    srcs = [":installed_clang_headers"],
-    strip_package_dir = True,
+    name = "install_data_manifest.txt",
+    srcs = [":install_data"],
+)
+
+cc_library(
+    name = "builtins_internal",
+    hdrs_check = "strict",
+    textual_hdrs = select({
+        "@platforms//cpu:aarch64": [":builtins_aarch64_textual_srcs"],
+        "@platforms//cpu:i386": [":builtins_i386_textual_srcs"],
+        "@platforms//cpu:x86_64": [":builtins_x86_64_textual_srcs"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "builtins",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":builtins_aarch64_srcs"],
+        "@platforms//cpu:i386": [":builtins_i386_srcs"],
+        "@platforms//cpu:x86_64": [":builtins_x86_64_srcs"],
+        "//conditions:default": [],
+    }),
+    copts = builtins_copts + make_include_copts([
+        "runtimes/builtins",
+    ]) + [
+        # TODO: Remove this once we are building sanitizer runtime libraries.
+        "-fno-sanitize=all",
+    ],
+    hdrs_check = "strict",
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [":builtins_internal"],
+)
+
+filegroup(
+    name = "builtins_archive",
+    srcs = [":builtins"],
+    output_group = "archive",
+)
+
+cc_library(
+    name = "libunwind",
+    srcs = [":libunwind_srcs"],
+    hdrs = [":libunwind_hdrs"],
+    copts = libunwind_copts + [
+        # We disable all warnings as upstream isn't clean with the common
+        # warning flags Carbon uses by default.
+        "-w",
+
+        # TODO: Remove this once we are building sanitizer runtime libraries.
+        "-fno-sanitize=all",
+    ],
+    hdrs_check = "strict",
+    includes = ["runtimes/libunwind/include"],
+    linkstatic = 1,
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+filegroup(
+    name = "libunwind_archive",
+    srcs = [":libunwind"],
+    output_group = "archive",
+)
+
+cc_library(
+    name = "libcxxabi_internal",
+    hdrs_check = "strict",
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    textual_hdrs = [":libcxxabi_textual_srcs"],
+)
+
+cc_library(
+    name = "libc_internal_libcxx",
+    hdrs = [":libc_internal_libcxx_hdrs"],
+    hdrs_check = "strict",
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_library(
+    name = "libcxx",
+    srcs = select({
+        "@platforms//os:macos": [":libcxx_macos_srcs"],
+        "@platforms//os:windows": [":libcxx_win32_srcs"],
+        "//conditions:default": [":libcxx_linux_srcs"],
+    }) + [":libcxxabi_srcs"],
+    hdrs = [
+        ":libcxx_hdrs",
+        ":libcxxabi_hdrs",
+    ],
+    copts = libcxx_and_abi_copts + make_include_copts([
+        "runtimes/libcxx/src",
+        "runtimes/libc/internal",
+    ]) + [
+        # We disable all warnings as upstream isn't clean with the common
+        # warning flags Carbon uses by default.
+        "-w",
+
+        # TODO: Remove this once we are building sanitizer runtime libraries.
+        "-fno-sanitize=all",
+    ],
+    hdrs_check = "strict",
+    includes = [
+        "runtimes/libcxx/include",
+        "runtimes/libcxxabi/include",
+    ],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [
+        ":libc_internal_libcxx",
+        ":libcxxabi_internal",
+    ],
+)
+
+filegroup(
+    name = "libcxx_archive",
+    srcs = [":libcxx"],
+    output_group = "archive",
+)
+
+carbon_runtimes_config(
+    name = "runtimes_cfg",
+    builtins_archive = ":builtins_archive",
+    clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
+    crt_copts = crt_copts + [
+        # Disable all sanitizers for CRT objects.
+        "-fno-sanitize=all",
+    ],
+    crtbegin_src = select({
+        "@platforms//os:linux": ":builtins_crtbegin_src",
+        "//conditions:default": None,
+    }),
+    crtend_src = select({
+        "@platforms//os:linux": ":builtins_crtend_src",
+        "//conditions:default": None,
+    }),
+    darwin_os_suffix = select({
+        # TODO: Add support for tvOS, watchOS, and iOS variants with the
+        # relevant Bazel constraints.
+        ":is_macos_arm64": "osx",
+        ":is_macos_x86_64": "osx",
+        "//conditions:default": None,
+    }),
+    libcxx_archive = ":libcxx_archive",
+    libunwind_archive = ":libunwind_archive",
+    target_triple = select({
+        # TODO: Add other triples (and if needed, constraints) so that we can
+        # build the correct Clang resource-dir structure for each.
+        ":is_freebsd_x86_64": "x86_64-unknown-freebsd",
+        ":is_linux_aarch64": "aarch64-unknown-linux-gnu",
+        ":is_linux_x86_64": "x86_64-unknown-linux-gnu",
+
+        # Note that Darwin OSes are handled by the `darwin_os_suffix` attribute.
+        "//conditions:default": None,
+    }),
+)
+
+platforms = {
+    "freebsd": ["x86_64"],
+    "linux": [
+        "aarch64",
+        "x86_64",
+    ],
+    "macos": [
+        "arm64",
+        "x86_64",
+    ],
+}
+
+[
+    config_setting(
+        name = "is_{0}_{1}".format(os, cpu),
+        constraint_values = [
+            "@platforms//os:{}".format(os),
+            "@platforms//cpu:{}".format(cpu),
+        ],
+    )
+    for os, cpus in platforms.items()
+    for cpu in cpus
+]
+
+carbon_bootstrapped_cc_toolchain(
+    name = "carbon_stage1",
+    all_hdrs = [
+        ":clang_hdrs",
+        ":libunwind_hdrs",
+        ":libcxx_hdrs",
+        ":libcxxabi_hdrs",
+    ],
+    base_files = [
+        ":install_marker",
+        ":carbon-busybox",
+        ":llvm_bins",
+    ],
+    build_stage = 1,
+    clang_hdrs = [":clang_hdrs"],
+    platforms = platforms,
+    runtimes_cfg = ":runtimes_cfg",
+)
+
+carbon_bootstrapped_cc_toolchain(
+    name = "carbon_stage2",
+    all_hdrs = [
+        ":clang_hdrs",
+        ":libunwind_hdrs",
+        ":libcxx_hdrs",
+        ":libcxxabi_hdrs",
+    ],
+    base_files = [
+        ":install_marker",
+        ":carbon-busybox",
+        ":llvm_bins",
+    ],
+    base_stage = 1,
+    build_stage = 2,
+    clang_hdrs = [":clang_hdrs"],
+    platforms = platforms,
+    runtimes_cfg = ":runtimes_cfg",
+    tags = ["manual"],
 )
 
 pkg_naming_variables(
     name = "packaging_variables",
 )
 
+toolchain_pkg_filegroup(
+    name = "stage1_pkg_data",
+    srcs = [
+        "install_digest.txt",
+        ":all_data_files",
+    ],
+    carbon_busybox = ":carbon-busybox",
+)
+
 # We build both a compressed and uncompressed tar file with the same code here.
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
 #
-# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
-# `carbon_toolchain_tar_gz_rule`.
+# For manual tests, the tar rules are `carbon_toolchain_tar` and
+# `carbon_toolchain_tar_gz`.
 pkg_tar_and_test(
-    srcs = [":pkg_data"],
+    name = "carbon_toolchain",
+    srcs = [":stage1_pkg_data"],
     install_data_manifest = ":install_data_manifest.txt",
-    name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
+)
+
+filegroup_with_stage(
+    name = "stage2_pkg_files",
+    srcs = [
+        ":all_data_files",
+        ":gen_digest",
+    ],
+    stage = 1,
+    tags = ["manual"],
+)
+
+filegroup_with_stage(
+    name = "stage2_busybox",
+    srcs = [":carbon-busybox"],
+    stage = 1,
+    tags = ["manual"],
+)
+
+toolchain_pkg_filegroup(
+    name = "stage2_pkg_data",
+    srcs = [":stage2_pkg_files"],
+    carbon_busybox = ":stage2_busybox",
+    tags = ["manual"],
+)
+
+pkg_tar_and_test(
+    name = "carbon_bootstrapped_toolchain",
+    srcs = [":stage2_pkg_data"],
+    install_data_manifest = ":install_data_manifest.txt",
+    package_dir = "carbon_toolchain-$(version)",
+    package_file_name_base = "carbon_bootstrapped_toolchain-$(version)",
+    package_variables = ":packaging_variables",
+    stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "built_runtimes",
+    srcs = [":carbon_stage1_runtimes"],
+)
+
+py_test(
+    name = "install_test",
+    size = "large",
+    srcs = ["install_test.py"],
+    data = [
+        ":built_runtimes",
+        ":carbon-busybox",
+        ":install_data",
+    ],
+    deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+# Generate paths file for stage 1 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage1",
+    stage = 1,
+)
+
+# Test that stage 1 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage1_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage1)"],
+    data = [":gen_cc_tools_paths_stage1"],
+    main = "cc_tools_wrapper_test.py",
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
+)
+
+# Generate paths file for stage 2 toolchain.
+gen_cc_toolchain_paths_with_stage(
+    name = "gen_cc_tools_paths_stage2",
+    stage = 2,
+    tags = ["manual"],
+)
+
+# Test that stage 2 toolchain's Make variables expand correctly.
+py_test(
+    name = "cc_tools_stage2_test",
+    srcs = ["cc_tools_wrapper_test.py"],
+    args = ["$(location :gen_cc_tools_paths_stage2)"],
+    data = [":gen_cc_tools_paths_stage2"],
+    main = "cc_tools_wrapper_test.py",
+    tags = ["manual"],
+    deps = ["//bazel/cc_toolchains:cc_tools_test_lib"],
 )

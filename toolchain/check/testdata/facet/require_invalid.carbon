@@ -192,3 +192,20 @@ interface Z {
     Self.A;
   }
 }
+
+// --- todo_fail_impl_mismatch_named_constraint_rewrites.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z0:! type; }
+
+constraint M {
+  require impls Z where .Z0 = {};
+}
+
+fn G() {
+  class C {}
+  // .Z0 has the wrong type for M.
+  impl C as Z where .Z0 = () {}
+  // TODO: Converting C to M should fail since the rewrite constraints are incompatible.
+  C as M;
+}

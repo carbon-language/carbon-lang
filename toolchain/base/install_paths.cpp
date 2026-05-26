@@ -21,8 +21,7 @@
 namespace Carbon {
 
 // The location within our Bazel output tree of the install root.
-static constexpr llvm::StringLiteral BazelRoot =
-    "carbon/toolchain/install/prefix/lib/carbon/";
+static constexpr llvm::StringLiteral BazelRoot = "carbon/toolchain/install/";
 
 // Path within an install root for our marker of a valid install.
 static constexpr llvm::StringLiteral MarkerPath = "carbon_install.txt";
@@ -84,7 +83,7 @@ auto InstallPaths::ReadClangHeadersManifest() const
   // root. Consider whether this manifest should be within the install or
   // consider moving the code to access it to be separate and specific to the
   // infrastructure needing it.
-  return ReadManifest(root_ / "../../..", "clang_headers_manifest.txt");
+  return ReadManifest(root_, "clang_headers_manifest.txt");
 }
 
 auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,

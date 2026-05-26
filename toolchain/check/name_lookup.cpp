@@ -119,10 +119,10 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                         .self_const_id = SemIR::ConstantId::None},
             /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
-      // In an interface definition, replace associated entity `M` with
-      // `Self.M` (where the `Self` is the `Self` of the interface).
+      // If the scope has a `Self` type, replace associated entity `M` with
+      // `Self.M`.
       const auto& scope = context.name_scopes().Get(lookup_scope_id);
-      if (scope.is_interface_definition()) {
+      if (scope.self_type_id().has_value()) {
         SemIR::InstId target_inst_id =
             non_lexical_result.scope_result.target_inst_id();
         if (auto assoc_type =
@@ -130,13 +130,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                     SemIR::GetTypeOfInstInSpecific(
                         context.sem_ir(), non_lexical_result.specific_id,
                         target_inst_id))) {
-          auto interface_decl =
-              context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
-                  scope.inst_id());
-          const auto& interface =
-              context.interfaces().Get(interface_decl.interface_id);
           SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, interface.self_param_id,
+              context, loc_id, scope.self_type_id(),
               SemIR::GetConstantValueInSpecific(context.sem_ir(),
                                                 non_lexical_result.specific_id,
                                                 target_inst_id),
@@ -214,8 +209,8 @@ static auto DiagnoseInvalidQualifiedNameAccess(
     Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-      context.constant_values().GetInstId(access_info.constant_id));
+  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
+      access_info.constant_id);
   if (!class_type) {
     return;
   }
@@ -268,6 +263,8 @@ static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
       return access_info->highest_allowed_access !=
                  SemIR::AccessKind::Private ||
              is_parent_access;
+    case SemIR::AccessKind::Hidden:
+      return true;
   }
 }
 
@@ -307,8 +304,7 @@ static auto GetSelfFacetForInterfaceFromLookupSelfType(
     return context.constant_values().Get(self_specific_args.back());
   }
 
-  if (context.insts().Is<SemIR::FacetType>(
-          context.constant_values().GetInstId(self_type_const_id))) {
+  if (context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
     // We are looking directly in a facet type, like `I.F` for an interface `I`,
     // which means there is no self-type from the lookup for the
     // interface-with-self specific. So the self-type we use is the abstract
@@ -346,6 +342,7 @@ static auto GetSelfFacetForInterfaceFromLookupSelfType(
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
                                    SemIR::ConstantId self_type_const_id,
+                                   bool extended_scope,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
   auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
@@ -358,17 +355,19 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
-    // TODO: Allow name lookup into classes that are being defined even if they
-    // are not complete.
-    RequireCompleteType(
-        context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-        loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
-                            "member access into incomplete class {0}",
-                            InstIdAsType);
-          builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
-                          lookup_inst_id);
-        });
+    if (!extended_scope) {
+      // TODO: Allow name lookup into classes that are being defined even if
+      // they are not complete.
+      RequireCompleteType(
+          context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
+          loc_id, [&](auto& builder) {
+            CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
+                              "member access into incomplete class {0}",
+                              InstIdAsType);
+            builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
+                            lookup_inst_id);
+          });
+    }
     auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
                                   .specific_id = class_ty->specific_id,
@@ -377,58 +376,62 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
   // Extended scopes may point to a FacetType.
   if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
-    // TODO: Allow name lookup into facet types that are being defined even if
-    // they are not complete.
-    if (RequireCompleteType(
-            context,
-            context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
-            [&](auto& builder) {
-              CARBON_DIAGNOSTIC(
-                  QualifiedExprInIncompleteFacetTypeScope, Context,
-                  "member access into incomplete facet type {0}", InstIdAsType);
-              builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                              lookup_inst_id);
-            })) {
-      auto facet_type_info =
-          context.facet_types().Get(facet_type->facet_type_id);
-      // Name lookup into "extend" constraints but not "self impls" constraints.
-      for (const auto& extend : facet_type_info.extend_constraints) {
-        auto& interface = context.interfaces().Get(extend.interface_id);
-
-        // We need to build the inner interface-with-self specific. To do that
-        // we need to determine the self facet value to use.
-        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
-            context, interface.generic_with_self_id, self_type_const_id);
-        auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-            context, loc_id, interface.generic_id,
-            interface.generic_with_self_id, extend.specific_id, self_facet);
-
-        scopes->push_back({.name_scope_id = interface.scope_with_self_id,
-                           .specific_id = interface_with_self_specific_id,
-                           .self_const_id = self_type_const_id});
+    if (!extended_scope) {
+      // TODO: Allow name lookup into facet types that are being defined even if
+      // they are not complete.
+      if (!RequireCompleteType(
+              context,
+              context.types().GetTypeIdForTypeConstantId(lookup_const_id),
+              loc_id, [&](auto& builder) {
+                CARBON_DIAGNOSTIC(
+                    QualifiedExprInIncompleteFacetTypeScope, Context,
+                    "member access into incomplete facet type {0}",
+                    InstIdAsType);
+                builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                                lookup_inst_id);
+              })) {
+        // Lookup into this scope should fail without producing an error since
+        // `RequireCompleteFacetType` has already issued a diagnostic.
+        scopes->push_back(
+            LookupScope{.name_scope_id = SemIR::NameScopeId::None,
+                        .specific_id = SemIR::SpecificId::None,
+                        .self_const_id = SemIR::ConstantId::None});
+        return true;
       }
-      for (const auto& extend : facet_type_info.extend_named_constraints) {
-        auto& constraint =
-            context.named_constraints().Get(extend.named_constraint_id);
+    }
 
-        // We need to build the inner constraint-with-self specific. To do that
-        // we need to determine the self facet value to use.
-        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
-            context, constraint.generic_with_self_id, self_type_const_id);
-        auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
-            context, loc_id, constraint.generic_id,
-            constraint.generic_with_self_id, extend.specific_id, self_facet);
+    auto facet_type_info = context.facet_types().Get(facet_type->facet_type_id);
+    // Name lookup into "extend" constraints but not "self impls" constraints.
+    for (const auto& extend : facet_type_info.extend_constraints) {
+      auto& interface = context.interfaces().Get(extend.interface_id);
 
-        scopes->push_back({.name_scope_id = constraint.scope_with_self_id,
-                           .specific_id = constraint_with_self_specific_id,
-                           .self_const_id = self_type_const_id});
-      }
-    } else {
-      // Lookup into this scope should fail without producing an error since
-      // `RequireCompleteFacetType` has already issued a diagnostic.
-      scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                    .specific_id = SemIR::SpecificId::None,
-                                    .self_const_id = SemIR::ConstantId::None});
+      // We need to build the inner interface-with-self specific. To do that
+      // we need to determine the self facet value to use.
+      auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+          context, interface.generic_with_self_id, self_type_const_id);
+      auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+          context, loc_id, interface.generic_id, interface.generic_with_self_id,
+          extend.specific_id, self_facet);
+
+      scopes->push_back({.name_scope_id = interface.scope_with_self_id,
+                         .specific_id = interface_with_self_specific_id,
+                         .self_const_id = self_type_const_id});
+    }
+    for (const auto& extend : facet_type_info.extend_named_constraints) {
+      auto& constraint =
+          context.named_constraints().Get(extend.named_constraint_id);
+
+      // We need to build the inner constraint-with-self specific. To do that
+      // we need to determine the self facet value to use.
+      auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+          context, constraint.generic_with_self_id, self_type_const_id);
+      auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
+          context, loc_id, constraint.generic_id,
+          constraint.generic_with_self_id, extend.specific_id, self_facet);
+
+      scopes->push_back({.name_scope_id = constraint.scope_with_self_id,
+                         .specific_id = constraint_with_self_specific_id,
+                         .self_const_id = self_type_const_id});
     }
     return true;
   }
@@ -541,7 +544,8 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
-                                           self_const_id, &scopes)) {
+                                           self_const_id,
+                                           /*extended_scope=*/true, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
           // look in its type.
         }

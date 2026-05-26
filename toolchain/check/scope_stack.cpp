@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/find.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/ids.h"

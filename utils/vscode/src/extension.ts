@@ -10,9 +10,15 @@
 
 import {
   workspace,
+  window,
   ExtensionContext,
   commands,
   WorkspaceConfiguration,
+  TextEditor,
+  Range,
+  DecorationOptions,
+  ThemeColor,
+  TextDocumentChangeEvent,
 } from 'vscode';
 
 import {
@@ -22,6 +28,70 @@ import {
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
+
+const splitLineNumberDecorationType = window.createTextEditorDecorationType({});
+
+function updateSplitLineNumbers(editor: TextEditor | undefined) {
+  if (!editor) {
+    return;
+  }
+  const document = editor.document;
+  if (!document.fileName.includes('/testdata/')) {
+    return;
+  }
+
+  const decorations: DecorationOptions[] = [];
+
+  // Find all splits
+  const splitStarts: number[] = [];
+  for (let i = 0; i < document.lineCount; i++) {
+    if (document.lineAt(i).text.startsWith('// ---')) {
+      splitStarts.push(i);
+    }
+  }
+
+  // Find the maximum split length to ensure consistent width across all splits
+  let maxSplitLength = 0;
+  for (let s = 0; s < splitStarts.length; s++) {
+    const startLine = splitStarts[s];
+    const endLine = s + 1 < splitStarts.length ? splitStarts[s + 1] : document.lineCount;
+    const splitLength = endLine - startLine - 1;
+    if (splitLength > maxSplitLength) {
+      maxSplitLength = splitLength;
+    }
+  }
+
+  const maxDigits = maxSplitLength > 0 ? maxSplitLength.toString().length : 1;
+  const widthStr = `${maxDigits}ch`;
+
+  // Iterate through each split
+  for (let s = 0; s < splitStarts.length; s++) {
+    const startLine = splitStarts[s];
+    const endLine = s + 1 < splitStarts.length ? splitStarts[s + 1] : document.lineCount;
+    const splitLength = endLine - startLine - 1;
+    if (splitLength <= 0) {
+      continue;
+    }
+
+    for (let i = startLine + 1; i < endLine; i++) {
+      const splitLineNum = i - startLine;
+      decorations.push({
+        range: new Range(i, 0, i, 0),
+        renderOptions: {
+          before: {
+            contentText: splitLineNum.toString(),
+            color: new ThemeColor('editorLineNumber.foreground'),
+            width: widthStr,
+            margin: '0 2ch 0 0',
+            textDecoration: 'none; text-align: right;',
+          }
+        }
+      });
+    }
+  }
+
+  editor.setDecorations(splitLineNumberDecorationType, decorations);
+}
 
 /**
  * Splits a CLI-style quoted string.
@@ -136,6 +206,27 @@ export function activate(context: ExtensionContext) {
       client.restart();
     })
   );
+
+  // Update split line numbers when the active editor changes
+  context.subscriptions.push(
+    window.onDidChangeActiveTextEditor((editor: TextEditor | undefined) => {
+      updateSplitLineNumbers(editor);
+    })
+  );
+
+  // Update split line numbers when the document changes
+  context.subscriptions.push(
+    workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
+      if (window.activeTextEditor && event.document === window.activeTextEditor.document) {
+        updateSplitLineNumbers(window.activeTextEditor);
+      }
+    })
+  );
+
+  // Initial update
+  if (window.activeTextEditor) {
+    updateSplitLineNumbers(window.activeTextEditor);
+  }
 }
 
 export function deactivate(): Thenable<void> | undefined {

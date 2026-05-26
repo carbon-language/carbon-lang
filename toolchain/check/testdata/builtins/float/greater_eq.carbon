@@ -36,16 +36,16 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]
 // CHECK:STDOUT:   %GreaterEq: %GreaterEq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.9a0, %b.param: %f64.9a0) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
-// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.9a0 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.9a0 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %GreaterEq.call
 // CHECK:STDOUT: }

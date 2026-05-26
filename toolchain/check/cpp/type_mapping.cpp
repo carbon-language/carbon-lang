@@ -17,6 +17,7 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/literal.h"
@@ -65,8 +66,8 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::LocId loc_id,
     // TODO: Add tests for these cases.
     return IntId::None;
   }
-  auto arg = context.insts().TryGetAs<SemIR::IntValue>(
-      context.constant_values().GetInstId(arg_const_id));
+  auto arg =
+      context.constant_values().TryGetInstAs<SemIR::IntValue>(arg_const_id);
   if (!arg) {
     return IntId::None;
   }
@@ -137,20 +138,9 @@ static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
 
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
-static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
-    -> TryMapTypeResult {
+static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
+                            SemIR::ClassType class_type) -> TryMapTypeResult {
   clang::ASTContext& ast_context = context.ast_context();
-
-  // If the class was imported from C++, return the original C++ type.
-  auto clang_decl_id =
-      context.name_scopes()
-          .Get(context.classes().Get(class_type.class_id).scope_id)
-          .clang_decl_context_id();
-  if (clang_decl_id.has_value()) {
-    clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).key.decl;
-    auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-    return ast_context.getCanonicalTagType(tag_type_decl);
-  }
 
   // If the class represents a Carbon type literal, map it to the corresponding
   // C++ builtin type.
@@ -230,10 +220,18 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     }
   }
 
-  // Otherwise we don't have a mapping for this Carbon class type.
-  // TODO: If the class type wasn't imported from C++, create a corresponding
-  // C++ class type.
-  return clang::QualType();
+  // TODO: We cannot yet map specific classes.
+  if (class_type.specific_id.has_value()) {
+    return clang::QualType();
+  }
+
+  // Otherwise, find the existing C++ declaration or create a new one.
+  auto* tag_decl =
+      ExportClassToCpp(context, SemIR::LocId(class_inst_id), class_type);
+  if (!tag_decl) {
+    return clang::QualType();
+  }
+  return ast_context.getCanonicalTagType(tag_decl);
 }
 
 // Maps a Carbon type to a C++ type. Either returns the mapped type, a null type
@@ -253,7 +251,8 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
       return context.ast_context().CharTy;
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
-      return TryMapClassType(context, class_type);
+      return TryMapClassType(context, context.types().GetTypeInstId(type_id),
+                             class_type);
     }
     case CARBON_KIND(SemIR::ConstType const_type): {
       return WrappedType{
@@ -519,7 +518,10 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
 
     case SemIR::ExprCategory::ReprInitializing:
     case SemIR::ExprCategory::InPlaceInitializing:
-      value_kind = clang::ExprValueKind::VK_PRValue;
+      // A Carbon initializing expression is much more similar to a C++ prvalue
+      // than a C++ xvalue, but we encode it as an xvalue expression to request
+      // that it be passed through the thunk by move rather than by copy.
+      value_kind = clang::ExprValueKind::VK_XValue;
       break;
 
     case SemIR::ExprCategory::Mixed:
@@ -585,7 +587,8 @@ static auto InventCompoundClangArg(Context& context, FormInfo form,
     auto rbrace_loc = compound_loc;
 
     auto* init_list = new (context.ast_context()) clang::InitListExpr(
-        context.ast_context(), lbrace_loc, inits, rbrace_loc);
+        context.ast_context(), lbrace_loc, inits, rbrace_loc,
+        /* isExplicit= */ true);
     init_list->setType(context.ast_context().VoidTy);
     return init_list;
   };

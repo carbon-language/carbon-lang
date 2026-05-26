@@ -220,11 +220,11 @@ def main() -> None:
     # Create a PR with WIP+proposal labels.
     if git_bin:
         _run([git_bin, "push"])
-        user = _run([git_bin, "config", "get", "user.name"], get_stdout=True)
     else:
         assert jj_bin  # For mypy.
         _run([jj_bin, "git", "push"])
-        user = _run([jj_bin, "config", "get", "user.name"], get_stdout=True)
+
+    user = _run([gh_bin, "api", "user", "-q", ".login"], get_stdout=True)
     assert user  # For mypy.
     user = user.strip()
     pr_num = _run_pr_create(

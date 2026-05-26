@@ -50,14 +50,14 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.6d5: type = fn_type @F.loc22 [concrete]
-// CHECK:STDOUT:   %F.e11: %F.type.6d5 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.d4f: type = fn_type @F.loc22 [concrete]
+// CHECK:STDOUT:   %F.cee: %F.type.d4f = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.117: type = fn_type @F.loc48 [concrete]
-// CHECK:STDOUT:   %F.d98: %F.type.117 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.4c8: type = fn_type @F.loc48 [concrete]
+// CHECK:STDOUT:   %F.93f: %F.type.4c8 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -80,10 +80,10 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %A: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl.loc22
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc22: %F.type.6d5 = fn_decl @F.loc22 [concrete = constants.%F.e11] {} {}
+// CHECK:STDOUT:   %F.decl.loc22: %F.type.d4f = fn_decl @F.loc22 [concrete = constants.%F.cee] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:   %.loc32: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
+// CHECK:STDOUT:   %n: <error> = value_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.loc38_17.1: type = splice_block %.loc38_17.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -95,12 +95,12 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %x: %T.67db0b.1 = value_binding x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %F.decl.loc48: %F.type.117 = fn_decl @F.loc48 [concrete = constants.%F.d98] {} {
+// CHECK:STDOUT:   %F.decl.loc48: %F.type.4c8 = fn_decl @F.loc48 [concrete = constants.%F.93f] {} {
 // CHECK:STDOUT:     %.loc48_17.1: type = splice_block %.loc48_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc48_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc48_13.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
+// CHECK:STDOUT:     %T.loc48_14.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,9 +109,9 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_13.3: type) {
-// CHECK:STDOUT:   %T.loc48_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.1 (constants.%T.67db0b.1)]
-// CHECK:STDOUT:   %T.loc48_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
+// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_14.3: type) {
+// CHECK:STDOUT:   %T.loc48_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.1 (constants.%T.67db0b.1)]
+// CHECK:STDOUT:   %T.loc48_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -122,7 +122,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc48(constants.%T.67db0b.2) {
-// CHECK:STDOUT:   %T.loc48_13.1 => constants.%T.67db0b.2
-// CHECK:STDOUT:   %T.loc48_13.2 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc48_14.1 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc48_14.2 => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

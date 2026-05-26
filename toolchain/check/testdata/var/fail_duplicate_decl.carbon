@@ -21,7 +21,7 @@ fn Main() {
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_basic.carbon:[[@LINE-4]]:14: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:   var unused x: () = ();
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR:              ^~~~~
   // CHECK:STDERR:
   var unused x: () = ();
 }

@@ -72,6 +72,52 @@ import Cpp inline '''
 int n;
 ''';
 
+// --- inline_cpp.carbon
+
+inline Cpp '''
+int n;
+''';
+
+// --- fail_inline_cpp_syntax_errors.carbon
+
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:7: error: expected `Cpp` after `inline` [ExpectedCppAfterInline]
+// CHECK:STDERR: inline;
+// CHECK:STDERR:       ^
+// CHECK:STDERR:
+inline;
+
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:8: error: expected `Cpp` after `inline` [ExpectedCppAfterInline]
+// CHECK:STDERR: inline '''
+// CHECK:STDERR:        ^~~
+// CHECK:STDERR:
+inline '''
+int n;
+''';
+
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:11: error: expected string literal after `inline Cpp` [ExpectedStringAfterInlineCpp]
+// CHECK:STDERR: inline Cpp;
+// CHECK:STDERR:           ^
+// CHECK:STDERR:
+inline Cpp;
+
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:12: error: expected string literal after `inline Cpp` [ExpectedStringAfterInlineCpp]
+// CHECK:STDERR: inline Cpp x;
+// CHECK:STDERR:            ^
+// CHECK:STDERR:
+inline Cpp x;
+
+inline Cpp '''
+int n;
+'''
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:1: error: `inline` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+
+// --- eof.carbon
+// This split exists to avoid the "no `;` at EOF" diagnostic above pointing to
+// the last CHECK:STDOUT line below.
+
 // CHECK:STDOUT: - filename: fail_bad_syntax.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -148,5 +194,44 @@ int n;
 // CHECK:STDOUT: ''''},
 // CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: inline_cpp.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'InlineImportBody', text: ''''
+// CHECK:STDOUT: int n;
+// CHECK:STDOUT: ''''},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_inline_cpp_syntax_errors.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'InlineImportBody', text: ''''
+// CHECK:STDOUT: int n;
+// CHECK:STDOUT: ''''},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ''''
+// CHECK:STDOUT: int n;
+// CHECK:STDOUT: '''', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: eof.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

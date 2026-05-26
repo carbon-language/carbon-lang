@@ -27,7 +27,6 @@ If you haven't received a response, a couple steps to take are (in order):
 1.  Contact individuals directly:
     -   [Chandler Carruth](mailto:chandlerc@gmail.com)
     -   [Richard Smith](mailto:richard@metafoo.co.uk)
-    -   [Jon Ross-Perkins](mailto:jperkins@google.com)
 2.  Reach out on
     [#infra](https://discord.com/channels/655572317891461132/707150492370862090)
     on Discord ([invite](https://discord.gg/ZjVdShJDAs))

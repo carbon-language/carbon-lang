@@ -90,7 +90,7 @@ fn F(T:! I & J) -> () {
 // --- non_final_impl_makes_compatible_facet_values.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X:! Core.Destroy; }
 interface J {}
 
 impl forall [T:! J] T as I where .X = () {}

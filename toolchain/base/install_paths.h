@@ -148,7 +148,7 @@ class InstallPaths {
   auto SetError(llvm::Twine message) -> void;
 
   // Check that the install paths have a marker file at
-  // `root()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
+  // `root()/carbon_install.txt". If not, calls `SetError` with the
   // relevant error message.
   auto CheckMarkerFile() -> void;
 
@@ -162,7 +162,7 @@ class InstallPaths {
   //
   // When run from Bazel (for example, in unit tests or development binaries)
   // this will look like:
-  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix/lib/carbon`
+  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install`
   //
   // When installed, it's expected to be similar to the CMake install prefix,
   // followed by `lib/carbon`:
@@ -177,7 +177,7 @@ class InstallPaths {
   // our installation to behave in a similar and compatible way.
   //
   // The hierarchy of files beneath the install root can be found in the
-  // BUILD's `install_dirs` entry for `lib/carbon`.
+  // BUILD rules in `//toolchain/install`.
   std::filesystem::path root_;
 
   // The opened root directory.

@@ -121,6 +121,7 @@ var b: T = *a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a [concrete = <error>]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>

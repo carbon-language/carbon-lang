@@ -9,25 +9,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_var_name.carbon
 
 class C {
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:6: error: expected identifier in field declaration [ExpectedFieldIdentifier]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:6: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:   var;
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
   var;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:11: error: expected `:` in field declaration [ExpectedFieldColon]
-  // CHECK:STDERR:   var name;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR:
   var name;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:   var :;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var :;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:   var : C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -39,7 +35,7 @@ class C {
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected `:` in field declaration [ExpectedFieldColon]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:   var name C;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
@@ -51,21 +47,17 @@ class C {
   // CHECK:STDERR:
   var name: C C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
-  // CHECK:STDERR:   var self: C;
-  // CHECK:STDERR:       ^~~~
-  // CHECK:STDERR:
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected `:` in field declaration [ExpectedFieldColon]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:   var name name: C;
   // CHECK:STDERR:            ^~~~
   // CHECK:STDERR:
   var name name: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:11: error: expected `:` in field declaration [ExpectedFieldColon]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var name:! C;
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR:               ^
   // CHECK:STDERR:
   var name:! C;
 }
@@ -76,32 +68,55 @@ class C {
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'FieldNameAndType', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:         {kind: 'FieldNameAndType', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FieldIntroducer', text: 'var'},
-// CHECK:STDOUT:       {kind: 'FieldDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 30},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
+// CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':!', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 53},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

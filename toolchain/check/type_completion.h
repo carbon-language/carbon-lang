@@ -36,6 +36,10 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
 // the completeness of the type will be enforced during monomorphization, and
 // `loc_id` is used as the location for a diagnostic produced at that time.
+//
+// Note that in general, the code that creates an inst is responsible for
+// enforcing any type completeness requirements associated with that inst; it
+// should not rely on its downstream consumers to do so.
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
                          DiagnosticContextFn diagnostic_context) -> bool;
@@ -65,6 +69,18 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          DiagnosticContextFn concrete_type_diagnostic_context)
     -> bool;
 
+// Performs `RequireIdentifiedFacetType`, but it is not an error if the facet
+// type is not identified.
+//
+// If `allow_partially_identified` is true, the facet type may be partially
+// identified, which can contain interfaces from a named constraint that is in
+// the middle of being defined.
+auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
+                            SemIR::ConstantId self_const_id,
+                            const SemIR::FacetType& facet_type,
+                            bool allow_partially_identified)
+    -> SemIR::IdentifiedFacetTypeId;
+
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is a
 // type or facet type expression that is the self that the FacetType is
@@ -77,10 +93,13 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // resulting IdentifiedFacetType. Comparing the `self_const_id` against the
 // output self values requires the caller to also canonicalize the
 // `self_const_id`.
+//
+// TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 const SemIR::FacetType& facet_type,
-                                DiagnosticContextFn diagnostic_context)
+                                DiagnosticContextFn diagnostic_context,
+                                bool diagnose = true)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.

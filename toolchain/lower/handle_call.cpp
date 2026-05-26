@@ -269,7 +269,7 @@ static auto StoreArrayAsStdInitializerList(FunctionContext& context,
       context.GetTypeIdOfInst(array_inst_id);
   auto array_type = array_type_file->types().GetAs<SemIR::ArrayType>(
       array_type_file->types().GetObjectRepr(array_type_id));
-  auto array_bound = array_type_file->GetArrayBoundValue(array_type.bound_id);
+  auto array_bound = array_type_file->GetZExtIntValue(array_type.bound_id);
   CARBON_CHECK(array_bound, "Array type with non-constant bound");
 
   // Store the array pointer in the first element of the initializer list.
@@ -329,6 +329,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::NoOp:
       return;
+
+    case SemIR::BuiltinFunctionKind::MakeUninitialized: {
+      context.SetLocal(inst_id,
+                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+      return;
+    }
 
     case SemIR::BuiltinFunctionKind::PrimitiveCopy:
       context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
@@ -585,9 +591,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
 static auto HandleVirtualCall(FunctionContext& context,
                               llvm::ArrayRef<llvm::Value*> args,
-                              const SemIR::File* callee_file,
                               const SemIR::Function& function,
-                              const SemIR::CalleeFunction& callee_function)
+                              const FunctionInfo& function_info)
     -> llvm::CallInst* {
   CARBON_CHECK(!args.empty(),
                "Virtual functions must have at least one parameter");
@@ -603,10 +608,6 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
-  auto function_info =
-      context.GetFileContext(callee_file)
-          .GetOrCreateFunctionInfo(callee_function.function_id,
-                                   callee_function.resolved_specific_id);
   llvm::Value* virtual_fn;
   if (function.clang_decl_id.has_value()) {
     // Use absolute vtables for clang interop - the itanium vtable contains
@@ -634,7 +635,7 @@ static auto HandleVirtualCall(FunctionContext& context,
          llvm::ConstantInt::get(
              i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
   }
-  return context.builder().CreateCall(function_info->type, virtual_fn, args);
+  return context.builder().CreateCall(function_info.type, virtual_fn, args);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -653,6 +654,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
           callee.inst_id)) {
     callee.inst_id = bound_method->function_decl_id;
   }
+
+  // Find the callee that the call instruction was type-checked against. This
+  // determines the meaning of the `arg_ids`.
+  auto inst_callee_function =
+      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
 
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
@@ -680,10 +686,18 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto& function_info =
+  // Get the function info for the callee. If the callee has incomplete types,
+  // fall back to using the information from the call instruction.
+  const auto& function_info =
       context.GetFileContext(callee.file)
           .GetOrCreateFunctionInfo(callee_function.function_id,
-                                   callee_function.resolved_specific_id);
+                                   callee_function.resolved_specific_id,
+                                   &context.GetFileContext(&context.sem_ir()),
+                                   inst_callee_function.function_id,
+                                   inst_callee_function.resolved_specific_id);
+  CARBON_CHECK(!function_info->inexact,
+               "Attempting to emit call to inexact function: {0}",
+               *function_info->llvm_function);
 
   // Lower args in the LLVM parameter order, rather than the SemIR parameter
   // order.
@@ -693,7 +707,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   llvm::CallInst* call;
-  if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
+  if (function.virtual_index == -1) {
     auto* llvm_callee = function_info->llvm_function;
     auto describe_call = [&] {
       RawStringOstream out;
@@ -713,8 +727,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                  "Argument count mismatch: {0}", describe_call());
     call = context.builder().CreateCall(llvm_callee, args);
   } else {
-    call = HandleVirtualCall(context, args, callee.file, function,
-                             callee_function);
+    call = HandleVirtualCall(context, args, function, *function_info);
   }
 
   context.SetLocal(inst_id, call);

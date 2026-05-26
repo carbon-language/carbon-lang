@@ -391,6 +391,14 @@ in the check phase. If empty, the dump is not written.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
+  b.AddFlag(
+      {
+          .name = "mangle-string-fingerprint",
+          .help = R"""(
+Use the string form of the fingerprint from mangling instead of the hash form.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -821,6 +829,7 @@ auto CompilationUnit::RunLower() -> void {
     options.want_debug_info = options_->include_debug_info;
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
+    options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
@@ -865,7 +874,7 @@ static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return llvm::OptimizationLevel::O1;
     case Lower::OptimizationLevel::Size:
-      return llvm::OptimizationLevel::Oz;
+      return llvm::OptimizationLevel::O2;
     case Lower::OptimizationLevel::Speed:
       return llvm::OptimizationLevel::O3;
   }
@@ -880,7 +889,7 @@ static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
     case Lower::OptimizationLevel::Debug:
       return "-O1";
     case Lower::OptimizationLevel::Size:
-      return "-Oz";
+      return "-O2";
     case Lower::OptimizationLevel::Speed:
       return "-O3";
   }
@@ -1039,9 +1048,6 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       output_filename = input_filename_;
       llvm::sys::path::replace_extension(output_filename,
                                          options_->asm_output ? ".s" : ".o");
-    } else {
-      CARBON_CHECK(total_ir_count_ == 1 || options_->output_last_input_only,
-                   "Handled by CompileMultipleInputsWithOutput diagnostic");
     }
     CARBON_VLOG("Writing output to: {0}\n", output_filename);
 
@@ -1165,22 +1171,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
-  int total_unit_count = prelude.size() + options_.input_filenames.size();
-  if (!options_.output_last_input_only && total_unit_count > 1 &&
-      !options_.output_filename.empty() && options_.output_filename != "-") {
-    CARBON_DIAGNOSTIC(
-        CompileMultipleInputsWithOutput, Error,
-        "writing {0} input file{0:s} to the same `--output` file would "
-        "overwrite the output file; for now, pass `--output-last-input-only` "
-        "if intended",
-        Diagnostics::IntAsSelect);
-    driver_env.emitter.Emit(CompileMultipleInputsWithOutput, total_unit_count);
-    return {.success = false};
-  }
-
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   int unit_index = -1;
+  int total_unit_count = prelude.size() + options_.input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -1275,6 +1269,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   options.prelude_import = options_.prelude_import;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
+  options.mangle_string_fingerprint = options_.mangle_string_fingerprint;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
       options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
@@ -1330,8 +1325,24 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_CHECK(options_.phase == CompileOptions::Phase::CodeGen,
                "CodeGen should be the last stage");
 
+  bool output_last_input_only = options_.output_last_input_only;
+  if (!output_last_input_only && units.size() > 1 &&
+      !options_.output_filename.empty() && options_.output_filename != "-") {
+    // TODO: Command line structure should change to make this implicit (passing
+    // non-compiling inputs differently), and the warning should be removed.
+    CARBON_DIAGNOSTIC(
+        CompileMultipleInputsWithOutput, Warning,
+        "only outputting {0} to {1}, skipping output of {2} input "
+        "file{2:s}; pass `--output-last-input-only` to silence this warning",
+        std::string, std::string, Diagnostics::IntAsSelect);
+    driver_env.emitter.Emit(CompileMultipleInputsWithOutput,
+                            units.back()->input_filename().str(),
+                            options_.output_filename.str(), units.size() - 1);
+    output_last_input_only = true;
+  }
+
   // Codegen.
-  if (options_.output_last_input_only) {
+  if (output_last_input_only) {
     units.back()->RunCodeGen();
   } else {
     for (const auto& unit : units) {

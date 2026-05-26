@@ -66,7 +66,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:                   {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:                 {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'TuplePattern', text: ')', subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'ParenPattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:                 {kind: 'MatchCaseGuardIntroducer', text: 'if'},
 // CHECK:STDOUT:                 {kind: 'MatchCaseGuardStart', text: '('},
 // CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'a'},

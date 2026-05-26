@@ -1009,6 +1009,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("custom_witness");
       return;
     }
+    case CARBON_KIND(ExprPattern inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.expr_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
+      }
+      AddInstName("expr_patt");
+      return;
+    }
     case CARBON_KIND(FacetAccessType inst): {
       auto name_id = SemIR::NameId::None;
       if (auto name =
@@ -1025,23 +1033,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case CARBON_KIND(SymbolicBindingType inst): {
-      auto bind =
-          sem_ir().insts().GetAs<SymbolicBinding>(inst.facet_value_inst_id);
-      auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".binding.as_type");
-      } else {
-        AddInstName("binding.as_type");
-      }
-      return;
-    }
     case CARBON_KIND(FacetType inst): {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.self_impls_named_constraints.empty() ||
+                       !facet_type_info.type_impls_interfaces.empty() ||
+                       !facet_type_info.type_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
       if (facet_type_info.extend_constraints.size() == 1 &&
           facet_type_info.extend_named_constraints.empty()) {

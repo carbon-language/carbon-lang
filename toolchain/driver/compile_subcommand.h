@@ -71,6 +71,8 @@ struct CompileOptions {
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 
   llvm::StringRef sem_ir_crash_dump;
+
+  bool mangle_string_fingerprint = false;
 };
 
 // Implements the compile subcommand of the driver.

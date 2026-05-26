@@ -10,7 +10,7 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected pattern [ExpectedPattern]
     // CHECK:STDERR:     case => { return 2; }
     // CHECK:STDERR:          ^~
     // CHECK:STDERR:
@@ -35,16 +35,14 @@ fn f() -> i32 {
 // CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:               {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: '=>', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '=>', has_error: yes},
-// CHECK:STDOUT:               {kind: 'LetBindingPattern', text: '=>', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'MatchCase', text: '=>', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: '=>', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'MatchHandler', text: '=>', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 13},
+// CHECK:STDOUT:               {kind: 'InvalidParse', text: '=>', has_error: yes},
+// CHECK:STDOUT:             {kind: 'MatchCase', text: '=>', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: '=>', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'MatchHandler', text: '=>', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 11},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 24},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

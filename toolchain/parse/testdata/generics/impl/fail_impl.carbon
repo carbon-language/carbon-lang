@@ -54,10 +54,6 @@ impl forall f32;
 // CHECK:STDERR:
 impl forall [] u32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:21: error: expected `:`, `:!`, or `:?` in binding pattern [ExpectedBindingPattern]
-// CHECK:STDERR: impl forall [invalid] i8;
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:25: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR: impl forall [invalid] i8;
 // CHECK:STDERR:                         ^
@@ -96,7 +92,7 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+92]]:21: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+90]]:21: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
@@ -136,12 +132,10 @@ impl
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'invalid'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ']', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'invalid', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'invalid'},
+// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: 'f16', has_error: yes},

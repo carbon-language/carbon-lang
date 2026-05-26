@@ -24,6 +24,7 @@ contributions.
     -   [Optional tools](#optional-tools)
         -   [Jujutsu (`jj`)](#jujutsu-jj)
         -   [AI assistants](#ai-assistants)
+    -   [Running tests with AddressSanitizer (ASan)](#running-tests-with-addresssanitizer-asan)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
@@ -256,30 +257,49 @@ system that can be used instead of or alongside Git. See the
 for more information.
 
 If you use `jj`, you may find the following configuration snippets (added to
-`~/.config/jj/config.toml`) helpful for your workflow:
+`jj config path --user`) helpful for your workflow:
 
-```toml
-[aliases]
+```sh
 # Clean up untracked or abandoned commits.
-abandon-untagged = ["abandon", "all() & ~ancestors(@ | bookmarks() | remote_bookmarks())"]
+jj config set --user aliases.abandon-untagged '["abandon", "~ancestors(working_copies() | bookmarks() | remote_bookmarks())"]'
 
-[ui]
 # Use Git-style conflict markers, which VS Code can provide merge support for.
-conflict-marker-style = "git"
+jj config set --user ui.conflict-marker-style 'git'
 
-[ui.diff]
 # Produce Git-compatible diff format.
-format = "git"
+jj config set --user ui.diff.format 'git'
 
-[remotes.origin]
-# Automatically track all remote bookmarks.
-auto-track-bookmarks = "*"
-
-[templates]
 # Automatically add a trailer to commits to indicate that they were AI-assisted.
-commit_trailers = '''
-"Assisted-by: My AI Tool"'''
+jj config set --user templates.commit_trailers "$(echo -e "'''\n\"Assisted-by: My AI Tool\"'''")"
+
+# Make `jj bookmark advance` / `jj b a` only move bookmarks that point to
+# mutable commits, and move them to the most recent non-empty descendant.
+jj config set --user revsets.bookmark-advance-from 'heads(::to & bookmarks()) & ~immutable_heads()'
+jj config set --user revsets.bookmark-advance-to 'heads(::@ & ~(description("") & empty() & ~merges()))'
 ```
+
+<!-- google-doc-style-ignore -->
+
+As well as this per-repository configuration (added to `jj config path --repo`)
+describing how your GitHub checkout is configured:
+
+```sh
+# Automatically track all remote bookmarks.
+jj config set --repo remotes.origin.auto-track-bookmarks '*'
+
+# `trunk()` is a jj builtin, but defaults to `main@upstream`.
+jj config set --repo 'revset-aliases."trunk()"' 'trunk@upstream'
+
+# Treat github.com/carbon-language/carbon-lang as immutable, but treat your fork
+# as mutable.
+jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, upstream)'
+```
+
+<!-- google-doc-style-resume -->
+
+The above assumes that you have configured the remote name `origin` to refer to
+your fork and `upstream` to refer to `github.com/carbon-language/carbon-lang`,
+and will need to be adjusted if you use different remote names.
 
 #### AI assistants
 
@@ -309,6 +329,20 @@ git log
 git show
 git status
 ```
+
+### Running tests with AddressSanitizer (ASan)
+
+By default, the Bazel build mode for the toolchain does not enable
+AddressSanitizer (ASan). If you wish to enable ASan for local testing, you must
+pass the `--config=asan` flag explicitly:
+
+```shell
+bazelisk test --config=asan //...
+```
+
+Note that our Continuous Integration (CI) infrastructure runs a separate
+configuration for ASan to ensure test coverage without slowing down the default
+test cycle.
 
 ### Manually building Clang and LLVM (not recommended)
 

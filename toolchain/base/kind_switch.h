@@ -41,10 +41,10 @@
 // - Each type passed to `CARBON_KIND_ANY` must have a macro of the form:
 //   ```
 //   #define AnyKind_CARBON_KIND_ANY_EXPAND   \
-//     CARBON_KIND_ANY_EXPAND_BEGIN CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
-//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
+//     CARBON_KIND_ANY_EXPAND_BEGIN() CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
+//     CARBON_KIND_ANY_EXPAND_SEP()   CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
 //     ...
-//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(KindN)
+//     CARBON_KIND_ANY_EXPAND_SEP()   CARBON_KIND_ANY_EXPAND_CASE(KindN)
 //   ```
 //   Note the prefix `,` is required.
 //
@@ -71,10 +71,10 @@
       : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)
 
 // Macros for clients to add support for `Type_CARBON_KIND_ANY_EXPAND` (see
-// example above).
+// example above). Empty parameters are used to allow delaying macro expansion.
 #define CARBON_KIND_ANY_EXPAND_CASE(X) CARBON_KIND_INTERNAL_CASE_VALUE(X)
-#define CARBON_KIND_ANY_EXPAND_BEGIN ,
-#define CARBON_KIND_ANY_EXPAND_SEP : case
+#define CARBON_KIND_ANY_EXPAND_BEGIN() ,
+#define CARBON_KIND_ANY_EXPAND_SEP() : case
 
 // Produces a case-compatible block of code that also instantiates a local typed
 // variable. Versus `CARBON_KIND(int i)`, note this requires a comma after the
@@ -210,6 +210,12 @@ CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                               15, 16, 17, 18, 19, 20, 21, 22);
 CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                               15, 16, 17, 18, 19, 20, 21, 22, 23);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
 
 #undef CARBON_INTERNAL_KIND_IDENTIFIER
 #undef CARBON_INTERNAL_KIND_IDENTIFIERS
@@ -308,15 +314,21 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
-// name, making it look more like a typical `case`.
+// name, making it look more like a typical `case`. We use an unbraced `if` body
+// to avoid lint warnings that the `else` is unbraced. Braces are required after
+// the `:`, but we don't have a good way to enforce that.
+//
+// TODO: Replace the `;` with `{}` if
+// https://github.com/llvm/llvm-project/issues/194694 is fixed.
 #define CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)                \
   if (typed_variable_decl =                                              \
           ::Carbon::Internal::Kind::Cast<CARBON_KIND_INTERNAL_WRAP_TYPE( \
               typed_variable_decl)>(                                     \
               std::forward<decltype(carbon_internal_kind_switch_value)>( \
                   carbon_internal_kind_switch_value));                   \
-      false) {                                                           \
-  } else [[maybe_unused]]                                                \
+      false)                                                             \
+    ;                                                                    \
+  else [[maybe_unused]]                                                  \
     CARBON_INTERNAL_KIND_LABEL(__LINE__)
 
 // Helper for `CARBON_KIND_ANY` that expands the now-suffixed macro.

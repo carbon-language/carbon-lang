@@ -261,5 +261,46 @@ TEST_F(ClangRunnerTest, ParamsFile) {
   EXPECT_THAT(out, HasSubstr("clang version"));
 }
 
+TEST_F(ClangRunnerTest, Assemble) {
+  std::filesystem::path test_file = *Testing::WriteTestFile("test.s", R"asm(
+	.file	"test.s"
+	.section	.text,"ax",@progbits,unique,1
+	.globl	_Z4testv
+	.p2align	2
+	.type	_Z4testv,@function
+_Z4testv:
+	.cfi_startproc
+	mov	w0, wzr
+	ret
+.Lfunc_end0:
+	.size	_Z4testv, .Lfunc_end0-_Z4testv
+	.cfi_endproc
+	.section	".note.GNU-stack","",@progbits
+	.addrsig)asm");
+
+  std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
+
+  RawStringOstream verbose_out;
+  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
+  std::string out;
+  std::string err;
+  EXPECT_THAT(
+      Testing::CallWithCapturedOutput(
+          out, err,
+          [&] {
+            return runner.RunWithNoRuntimes(
+                {"-c", test_file.string(), "--target=aarch64-unknown-linux-gnu",
+                 "-o", test_output.string()});
+          }),
+      IsSuccess(true))
+      << "Verbose output from runner:\n"
+      << verbose_out.TakeStr() << "\n";
+  verbose_out.clear();
+
+  // No output should be produced.
+  EXPECT_THAT(out, StrEq(""));
+  EXPECT_THAT(err, StrEq(""));
+}
+
 }  // namespace
 }  // namespace Carbon

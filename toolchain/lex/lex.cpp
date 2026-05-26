@@ -1111,14 +1111,14 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   position += token_size;
 
   CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue && value): {
+    case CARBON_KIND(NumericLiteral::IntValue&& value): {
       return LexTokenWithPayload(TokenKind::IntLiteral,
                                  buffer_.value_stores_->ints()
                                      .AddUnsigned(std::move(value.value))
                                      .AsTokenPayload(),
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::RealValue && value): {
+    case CARBON_KIND(NumericLiteral::RealValue&& value): {
       auto real_id = buffer_.value_stores_->reals().Add(
           Real{.mantissa = value.mantissa,
                .exponent = value.exponent,
@@ -1574,7 +1574,7 @@ class Lexer::ErrorRecoveryBuffer {
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
-    token_info.ResetAsError(error_length);
+    token_info = token_info.AsError(error_length);
     any_error_tokens_ = true;
   }
 

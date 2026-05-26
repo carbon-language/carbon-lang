@@ -134,7 +134,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-10]]:26: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn InterfaceParam(unused U:! Z) {}
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR:                          ^~~~~
   // CHECK:STDERR:
   InterfaceParam({.a = ()});
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `N` [ConversionFailureNonTypeToFacet]
@@ -145,7 +145,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-20]]:27: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn ConstraintParam(unused U:! N) {}
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:                           ^~~~~
   // CHECK:STDERR:
   ConstraintParam({.a = ()});
 }

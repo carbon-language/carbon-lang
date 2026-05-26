@@ -37,6 +37,13 @@ class CppContext {
     return carbon_file_locations_;
   }
 
+  auto placement_new_decl() const -> clang::FunctionDecl* {
+    return placement_new_decl_;
+  }
+  void set_placement_new_decl(clang::FunctionDecl* decl) {
+    placement_new_decl_ = decl;
+  }
+
  private:
   // The Clang AST context.
   clang::ASTContext* ast_context_;
@@ -53,6 +60,9 @@ class CppContext {
 
   // The Clang mangle context for the target in the ASTContext.
   std::unique_ptr<clang::MangleContext> clang_mangle_context_;
+
+  // The cached placement new function declaration.
+  clang::FunctionDecl* placement_new_decl_ = nullptr;
 };
 
 }  // namespace Carbon::Check

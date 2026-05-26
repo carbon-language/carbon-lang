@@ -5,6 +5,7 @@
 package Core library "prelude/types/cpp/int";
 
 import library "prelude/copy";
+import library "prelude/default";
 import library "prelude/operators";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
@@ -27,6 +28,11 @@ class CppCompat.LongLong64 {
 class CppCompat.ULongLong64 {
   adapt u64;
 }
+
+impl CppCompat.Long32 as UnformedInit {}
+impl CppCompat.ULong32 as UnformedInit {}
+impl CppCompat.LongLong64 as UnformedInit {}
+impl CppCompat.ULongLong64 as UnformedInit {}
 
 // Copy
 

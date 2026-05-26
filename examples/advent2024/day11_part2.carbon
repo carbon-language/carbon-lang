@@ -11,6 +11,8 @@ import library "day11_common";
 import library "io_utils";
 
 class Digits {
+  impl as Core.UnformedInit {}
+
   fn Make() -> Digits {
     returned var me: Digits;
     for (digit: i32 in Core.Range(10)) {

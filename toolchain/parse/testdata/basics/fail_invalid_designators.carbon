@@ -15,7 +15,7 @@ fn F() {
   // CHECK:STDERR:     ^
   // CHECK:STDERR:
   a.;
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.fn;
   // CHECK:STDERR:     ^~
   // CHECK:STDERR:
@@ -35,7 +35,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'fn', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},

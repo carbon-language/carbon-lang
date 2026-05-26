@@ -23,8 +23,8 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
@@ -53,17 +53,17 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc15_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_16.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_17.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Test(%T.loc15_16.2: type) {
-// CHECK:STDOUT:   %T.loc15_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_16.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @Test(%T.loc15_17.2: type) {
+// CHECK:STDOUT:   %T.loc15_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_17.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Local.type: type = fn_type @Local, @Test(%T.loc15_16.1) [symbolic = %Local.type (constants.%Local.type)]
+// CHECK:STDOUT:   %Local.type: type = fn_type @Local, @Test(%T.loc15_17.1) [symbolic = %Local.type (constants.%Local.type)]
 // CHECK:STDOUT:   %Local: @Test.%Local.type (%Local.type) = struct_value () [symbolic = %Local (constants.%Local)]
-// CHECK:STDOUT:   %Local.specific_fn.loc18_3.2: <specific function> = specific_function %Local, @Local(%T.loc15_16.1) [symbolic = %Local.specific_fn.loc18_3.2 (constants.%Local.specific_fn)]
+// CHECK:STDOUT:   %Local.specific_fn.loc18_3.2: <specific function> = specific_function %Local, @Local(%T.loc15_17.1) [symbolic = %Local.specific_fn.loc18_3.2 (constants.%Local.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -75,7 +75,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Local(@Test.%T.loc15_16.2: type) {
+// CHECK:STDOUT: generic fn @Local(@Test.%T.loc15_17.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -85,7 +85,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Test(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_16.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_17.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Local(constants.%T) {

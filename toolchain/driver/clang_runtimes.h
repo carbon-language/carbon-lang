@@ -284,6 +284,10 @@ class ClangResourceDirBuilder : public ClangRuntimesBuilderBase {
                           llvm::Triple target_triple, Runtimes* runtimes);
 
  private:
+  friend class ClangResourceDirBuilderTestPeer;
+
+  static auto GetDarwinOsSuffix(llvm::Triple target_triple) -> llvm::StringRef;
+
   // Helper method to encapsulate the logic of configuring the list of source
   // files to use in the `builtins` archive within these runtimes on a
   // particular target.

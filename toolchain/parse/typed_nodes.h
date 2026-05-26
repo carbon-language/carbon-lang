@@ -251,6 +251,18 @@ struct InlineImportSpecifier {
   InlineImportBodyId body;
 };
 
+using InlineIntroducer =
+    LeafNode<NodeKind::InlineIntroducer, Lex::InlineTokenIndex>;
+struct InlineCppDecl {
+  static constexpr auto Kind = NodeKind::InlineCppDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = InlineIntroducer::Kind});
+
+  InlineIntroducerId introducer;
+  CppNameExprId cpp_name;
+  InlineImportBodyId body;
+  Lex::SemiTokenIndex token;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
@@ -413,6 +425,18 @@ using TuplePatternStart =
     LeafNode<NodeKind::TuplePatternStart, Lex::OpenParenTokenIndex>;
 using PatternListComma =
     LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
+
+// A parenthesized pattern that isn't an explicit parameter list.
+struct ParenPattern {
+  static constexpr auto Kind =
+      NodeKind::ParenPattern.Define({.category = NodeCategory::Pattern,
+                                     .bracketed_by = TuplePatternStart::Kind,
+                                     .child_count = 2});
+
+  TuplePatternStartId left_paren;
+  AnyPatternId inner;
+  Lex::CloseParenTokenIndex token;
+};
 
 // A tuple pattern that isn't an explicit parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {
@@ -580,6 +604,11 @@ struct LetDecl {
 };
 
 // Associated constant nodes
+//
+// TODO: remove these nodes and parse associated constants as regular
+// `let`s instead. This will make associated constant parsing mirror how
+// class vars are handled; see
+// https://github.com/carbon-language/carbon-lang/pull/7188.
 using AssociatedConstantIntroducer =
     LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
 using AssociatedConstantInitializer =
@@ -636,35 +665,6 @@ struct VariableDecl {
 
   struct Initializer {
     VariableInitializerId equals;
-    AnyExprId value;
-  };
-  std::optional<Initializer> initializer;
-  Lex::SemiTokenIndex token;
-};
-
-using FieldIntroducer = LeafNode<NodeKind::FieldIntroducer, Lex::VarTokenIndex>;
-using FieldInitializer =
-    LeafNode<NodeKind::FieldInitializer, Lex::EqualTokenIndex>;
-
-struct FieldNameAndType {
-  static constexpr auto Kind =
-      NodeKind::FieldNameAndType.Define({.child_count = 2});
-
-  IdentifierNameNotBeforeSignatureId name;
-  Lex::ColonTokenIndex token;
-  AnyExprId type;
-};
-
-struct FieldDecl {
-  static constexpr auto Kind = NodeKind::FieldDecl.Define(
-      {.category = NodeCategory::Decl, .bracketed_by = FieldIntroducer::Kind});
-
-  FieldIntroducerId introducer;
-  llvm::SmallVector<AnyModifierId> modifiers;
-  FieldNameAndTypeId name_and_type;
-
-  struct Initializer {
-    FieldInitializerId equals;
     AnyExprId value;
   };
   std::optional<Initializer> initializer;

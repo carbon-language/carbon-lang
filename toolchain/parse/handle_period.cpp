@@ -38,16 +38,23 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     context.PushState(StateKind::OnlyParenExpr);
     return;
   } else {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
-                      "expected identifier after `{0:->|.}`",
-                      Diagnostics::BoolAsSelect);
+    bool recover_as_raw = context.PositionKind().is_word();
+    CARBON_DIAGNOSTIC(
+        ExpectedIdentifierAfterPeriodOrArrow, Error,
+        "expected identifier after `{0:->|.}`"
+        "{1:; prefix reserved word with `r#` to form a valid identifier|}",
+        Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     context.emitter().Emit(*context.position(),
-                           ExpectedIdentifierAfterPeriodOrArrow, is_arrow);
-    // If we see a keyword, assume it was intended to be a name.
-    // TODO: Should keywords be valid here?
-    if (context.PositionKind().is_keyword()) {
+                           ExpectedIdentifierAfterPeriodOrArrow, is_arrow,
+                           recover_as_raw);
+    // If we see a word, assume it was intended to be a name.
+    // TODO: Should word tokens be valid here?
+    if (recover_as_raw) {
+      auto word_as_identifier =
+          context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+              context.Consume());
       context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
-                          context.Consume(), /*has_error=*/true);
+                          word_as_identifier);
     } else {
       context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                           *context.position(), /*has_error=*/true);

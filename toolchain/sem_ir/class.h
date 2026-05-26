@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -33,6 +34,9 @@ struct ClassFields {
 
   // Whether this class or any base class has at least one virtual function.
   bool is_dynamic = false;
+
+  // Whether the class's fields have been exported to C++.
+  bool fields_exported = false;
 
   // The following members are set at the `{` of the class definition.
 
@@ -103,6 +107,17 @@ struct Class : public EntityWithParamsBase,
     return complete_type_witness_id.has_value();
   }
 
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const Class& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    scope_id = definition.scope_id;
+    body_block_id = definition.body_block_id;
+    adapt_id = definition.adapt_id;
+    base_id = definition.base_id;
+    complete_type_witness_id = definition.complete_type_witness_id;
+  }
+
   // Gets the type that this class type adapts. Returns `None` if there is no
   // such type, or if the class is not yet defined.
   auto GetAdaptedType(const File& file, SpecificId specific_id) const -> TypeId;
@@ -119,5 +134,10 @@ struct Class : public EntityWithParamsBase,
 using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::ClassId, SemIR::Class,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CLASS_H_

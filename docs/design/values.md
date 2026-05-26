@@ -583,8 +583,8 @@ to the operation in question. For example:
 
 ```carbon
 class S {
-  fn ValueMemberFunction[self: Self]();
-  fn RefMemberFunction[ref self: const Self]();
+  fn ValueMemberFunction(self);
+  fn RefMemberFunction(ref self: const Self);
 }
 
 fn F(s_value: S) {
@@ -1192,7 +1192,7 @@ The interface might look like:
 ```carbon
 interface Pointer {
   let ValueT:! Type;
-  fn Dereference[self: Self]() -> ValueT*;
+  fn Dereference(self) -> ValueT*;
 }
 ```
 
@@ -1206,7 +1206,7 @@ class TaggedPtr(T:! Type) {
 }
 external impl [T:! Type] TaggedPtr(T) as Pointer {
   let ValueT:! T;
-  fn Dereference[self: Self]() -> T* { return self.ptr; }
+  fn Dereference(self) -> T* { return self.ptr; }
 }
 
 fn Test(arg: TaggedPtr(T), dest: TaggedPtr(TaggedPtr(T))) {
@@ -1224,7 +1224,7 @@ pointers as a no-op:
 ```carbon
 impl [T:! Type] T* as Pointer {
   let ValueT:! Type = T;
-  fn Dereference[self: Self]() -> T* { return self; }
+  fn Dereference(self) -> T* { return self; }
 }
 ```
 
@@ -1256,10 +1256,10 @@ meaningful distinction between a value expression of type `T` and type
 
 ```carbon
 class X {
-  fn Method[self: Self]();
-  fn ConstMethod[self: const Self]();
-  fn RefMethod[ref self: Self]();
-  fn RefConstMethod[ref self: const Self]();
+  fn Method(self);
+  fn ConstMethod(self: const Self);
+  fn RefMethod(ref self);
+  fn RefConstMethod(ref self: const Self);
 }
 ```
 
@@ -1381,7 +1381,7 @@ will require that the type containing that specifier satisfies the constraint
 ```carbon
 interface ReferenceImplicitAs {
   let T:! type;
-  fn Convert[ref self: const Self]() -> T;
+  fn Convert(ref self: const Self) -> T;
 }
 ```
 
@@ -1413,7 +1413,7 @@ class StringView {
   }
 
   // A typical readonly view of a string API...
-  fn ExampleMethod[self: Self]() { ... }
+  fn ExampleMethod(self) { ... }
 }
 
 class String {
@@ -1426,7 +1426,7 @@ class String {
   private var capacity: i64;
 
   impl as ReferenceImplicitAs where .T = StringView {
-    fn Op[ref self: const Self]() -> StringView {
+    fn Op(ref self: const Self) -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
@@ -1437,11 +1437,11 @@ class String {
   // We can directly declare methods that take `self` as a `StringView` which
   // will cause the caller to implicitly convert value expressions to
   // `StringView` prior to calling.
-  fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
+  fn ExampleMethod(self: StringView) { self.ExampleMethod(); }
 
   // Or we can use a value binding for `self` much like normal, but the
   // implementation will be constrained because of the custom value rep.
-  fn ExampleMethod2[self: String]() {
+  fn ExampleMethod2(self: String) {
     // Error due to custom value rep:
     self.data_ptr;
 
@@ -1452,7 +1452,7 @@ class String {
   // Note that even though the `Self` type is `const` qualified here, this
   // cannot be called on a `String` value! That would require us to convert to a
   // `StringView` that does not track the extra data member.
-  fn Capacity[ref self: const Self]() -> i64 {
+  fn Capacity(ref self: const Self) -> i64 {
     return self.capacity;
   }
 }

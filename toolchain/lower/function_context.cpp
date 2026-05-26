@@ -16,12 +16,15 @@ namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
-    FileContext& specific_file_context, SemIR::SpecificId specific_id,
+    FileContext& specific_file_context,
+    SemIR::FunctionId specific_sem_ir_function_id,
+    SemIR::SpecificId specific_id,
     SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
       specific_file_context_(&specific_file_context),
+      specific_sem_ir_function_id_(specific_sem_ir_function_id),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
@@ -276,6 +279,7 @@ auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
       if (sem_ir().constant_values().Get(source_id).is_constant()) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
+        // TODO: If the type is small, emit a store rather than a memcpy.
         CopyValue(type, source_id, dest_id);
       }
       break;

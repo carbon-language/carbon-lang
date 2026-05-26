@@ -120,8 +120,9 @@ auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
   auto self_class_info = context.classes().Get(self_class_type->class_id);
 
   // TODO: Support other types.
-  if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-          context.constant_values().GetInstId(name_scope_const_id))) {
+  if (auto class_type =
+          context.constant_values().TryGetInstAs<SemIR::ClassType>(
+              name_scope_const_id)) {
     auto class_info = context.classes().Get(class_type->class_id);
 
     if (self_class_info.self_type_id == class_info.self_type_id) {
@@ -177,6 +178,26 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto PerformImplWitnessAccessAndSubstitute(
+    Context& context, SemIR::LocId loc_id, SemIR::ImplWitnessAccess access)
+    -> SemIR::InstId {
+  auto access_id =
+      GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
+
+  if (!context.where_stack().empty()) {
+    if (auto result = context.where_stack().back().rewrites.Lookup(
+            context.constant_values().Get(access_id))) {
+      return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
+          context, loc_id,
+          {.type_id = access.type_id,
+           .impl_witness_access_id = access_id,
+           .value_id = result.value()});
+    }
+  }
+
+  return access_id;
+}
+
 static auto AccessMemberOfImplWitness(
     Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
     SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId member_id)
@@ -202,10 +223,11 @@ static auto AccessMemberOfImplWitness(
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
       context, interface_with_self_specific_id, assoc_entity->decl_id);
 
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity->index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity->index});
 }
 
 // For an impl lookup query with a single interface in it, we can convert the
@@ -355,20 +377,6 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (!context.rewrites_stack().empty()) {
-    if (auto access =
-            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(member_id)) {
-      if (auto result = context.rewrites_stack().back().Lookup(
-              context.constant_values().Get(member_id))) {
-        return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
-            context, loc_id,
-            {.type_id = access->type_id,
-             .impl_witness_access_id = member_id,
-             .value_id = result.value()});
-      }
-    }
-  }
-
   return member_id;
 }
 
@@ -463,14 +471,14 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   // things.
   if (required) {
     return HandleAction<SemIR::AccessMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   } else {
     return HandleAction<SemIR::AccessOptionalMemberAction>(
-        context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+        context, loc_id, SemIR::TypeInstId::None,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   }
@@ -492,7 +500,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
     if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                      base_const_id, &lookup_scopes)) {
+                                      base_const_id, /*extended_scope=*/false,
+                                      &lookup_scopes)) {
       return LookupMemberNameInScope(
           context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
           /*lookup_in_type_of_base=*/false, required);
@@ -533,7 +542,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       auto base_type_const_id = context.types().GetConstantId(base_type_id);
       llvm::SmallVector<LookupScope> lookup_scopes;
       if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
-                                        base_const_id, &lookup_scopes)) {
+                                        base_const_id, /*extended_scope=*/false,
+                                        &lookup_scopes)) {
         // The name scope constant needs to be a type, but is currently a
         // FacetType, so perform `as type` to get a FacetAccessType.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
@@ -595,7 +605,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
           //
           // TODO: This can be replaced with `lookup_const_id` once we stop
           // having to look through the facet at its type for the scope.
-          context.types().GetConstantId(base_type_id), &lookup_scopes)) {
+          context.types().GetConstantId(base_type_id), /*extended_scope=*/false,
+          &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
         /*lookup_in_type_of_base=*/true, required);
@@ -711,10 +722,11 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context, interface_with_self_specific_id, assoc_entity.decl_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity.index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity.index});
 }
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
@@ -725,10 +737,9 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
-  auto value_inst_id =
-      context.constant_values().GetInstId(assoc_entity_const_id);
   auto assoc_entity =
-      context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
+      context.constant_values().GetInstAs<SemIR::AssociatedEntity>(
+          assoc_entity_const_id);
   auto decl_id = assoc_entity.decl_id;
   LoadImportRef(context, decl_id);
 
@@ -794,8 +805,8 @@ auto PerformCompoundMemberAccess(
       member.type_id() != SemIR::ErrorInst::TypeId) {
     // As a special case, an integer-valued expression can be used as a member
     // name when indexing a tuple.
-    if (context.insts().Is<SemIR::TupleType>(
-            context.constant_values().GetInstId(base_type_const_id))) {
+    if (context.constant_values().InstIs<SemIR::TupleType>(
+            base_type_const_id)) {
       return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
     }
 
@@ -850,8 +861,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return diag_non_constant_index();
   }
 
-  auto index_literal = context.insts().GetAs<SemIR::IntValue>(
-      context.constant_values().GetInstId(index_const_id));
+  auto index_literal =
+      context.constant_values().GetInstAs<SemIR::IntValue>(index_const_id);
   auto type_block = context.inst_blocks().Get(tuple_type->type_elements_id);
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());

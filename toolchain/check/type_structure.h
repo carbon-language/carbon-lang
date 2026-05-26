@@ -156,7 +156,8 @@ class TypeStructure : public Printable<TypeStructure> {
   // the struct type.
   using ConcreteType =
       std::variant<ConcreteTypeStart, SemIR::ClassId, SemIR::ConstantId,
-                   SemIR::InterfaceId, SemIR::NameId, SemIR::TypeId>;
+                   SemIR::InterfaceId, SemIR::NamedConstraintId, SemIR::NameId,
+                   SemIR::TypeId>;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
                 llvm::SmallVector<int> symbolic_type_indices,

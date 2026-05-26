@@ -44,4 +44,9 @@ using CppOverloadSetStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::CppOverloadSetId, SemIR::CppOverloadSet,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_

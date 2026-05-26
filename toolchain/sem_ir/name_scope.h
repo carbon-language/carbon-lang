@@ -15,9 +15,14 @@ namespace Carbon::SemIR {
 
 // Access control for an entity.
 enum class AccessKind : int8_t {
+  // Accessible to all code.
   Public,
+  // Accessible to the enclosing class and derived classes.
   Protected,
+  // Only accessible to the enclosing class and friends.
   Private,
+  // Not accessible to any code, but can still be redeclared.
+  Hidden,
 };
 
 // Represents the result of a name lookup.
@@ -121,6 +126,17 @@ class ScopeLookupResult {
 };
 static_assert(sizeof(ScopeLookupResult) == 8);
 
+// A declarative name scope, such as a namespace, class, or interface.
+//
+// This is used for scopes in which entities can be redeclared, and in which
+// qualified names can be used to declare and look up entities from outside the
+// scope. It is not used for sequential scopes such as the bodies of functions
+// or `if` statements, for which we only provide lexical, unqualified name
+// lookup.
+//
+// TODO: Quite a few of the fields on this class are specific to namespaces,
+// which don't have a representation of their own. Consider splitting the
+// namespace-specific parts out of this into a separate class.
 class NameScope : public Printable<NameScope> {
  public:
   struct Entry {
@@ -142,10 +158,12 @@ class NameScope : public Printable<NameScope> {
   auto operator=(NameScope&& other) noexcept -> NameScope& = default;
 
   explicit NameScope(InstId inst_id, NameId name_id,
-                     NameScopeId parent_scope_id)
+                     NameScopeId parent_scope_id,
+                     InstId import_id = SemIR::InstId::None)
       : inst_id_(inst_id),
         name_id_(name_id),
-        parent_scope_id_(parent_scope_id) {}
+        parent_scope_id_(parent_scope_id),
+        import_id_(import_id) {}
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -197,6 +215,8 @@ class NameScope : public Printable<NameScope> {
     inst_id_ = inst_id;
     name_id_ = name_id;
     parent_scope_id_ = parent_scope_id;
+    import_id_ = InstId::None;
+    self_type_id_ = InstId::None;
   }
 
   auto inst_id() const -> InstId { return inst_id_; }
@@ -217,22 +237,24 @@ class NameScope : public Printable<NameScope> {
     is_closed_import_ = is_closed_import;
   }
 
-  auto is_cpp_scope() const -> bool {
-    return clang_decl_context_id().has_value();
-  }
+  auto is_cpp_scope() const -> bool { return is_cpp_scope_; }
 
   auto clang_decl_context_id() const -> ClangDeclId {
     return clang_decl_context_id_;
   }
 
-  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id) -> void {
+  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id,
+                                 bool is_cpp_scope) -> void {
     clang_decl_context_id_ = clang_decl_context_id;
+    is_cpp_scope_ = is_cpp_scope;
   }
 
   // Returns true if this name scope describes an imported package.
   auto is_imported_package() const -> bool {
     return is_closed_import() && parent_scope_id() == NameScopeId::Package;
   }
+
+  auto import_id() const -> InstId { return import_id_; }
 
   auto import_ir_scopes() const
       -> llvm::ArrayRef<std::pair<ImportIRId, NameScopeId>> {
@@ -244,14 +266,10 @@ class NameScope : public Printable<NameScope> {
     import_ir_scopes_.push_back(import_ir_scope);
   }
 
-  auto is_interface_definition() const -> bool {
-    return is_interface_definition_;
-  }
+  auto self_type_id() const -> InstId { return self_type_id_; }
 
-  // TODO: Figure out a better way of setting this and is_cpp_scope() than
-  // calling a function immediately after construction.
-  auto set_is_interface_definition() -> void {
-    is_interface_definition_ = true;
+  auto set_self_type_id(InstId self_type_id) -> void {
+    self_type_id_ = self_type_id;
   }
 
  private:
@@ -286,6 +304,15 @@ class NameScope : public Printable<NameScope> {
   // The parent scope.
   NameScopeId parent_scope_id_;
 
+  // The `Self` value that should be used implicitly for unqualified lookups in
+  // this scope that find associated entities, if any. This is used for lookups
+  // in `interface`, `impl`, and `class` scopes so that unqualified names of
+  // associated entities resolve to their corresponding values rather than to an
+  // unbound associated entity constant.
+  // TODO: Instead of storing this separately, can we look up `SelfType` in the
+  // scope's name lookup table?
+  InstId self_type_id_ = InstId::None;
+
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
   // an `extend` declaration was ill-formed. If true, names are assumed to be
@@ -296,13 +323,18 @@ class NameScope : public Printable<NameScope> {
   // True if this is a closed namespace created by importing a package.
   bool is_closed_import_ = false;
 
-  // Set if this is the `Cpp` scope or a scope inside `Cpp`. Points to the
-  // matching Clang declaration context to look for names.
+  // True if this scope was imported from C++. Set if this is the `Cpp` scope or
+  // a scope inside `Cpp`.
+  bool is_cpp_scope_ = false;
+
+  // The C++ declaration context corresponding to this scope. If `is_cpp_scope_`
+  // is true, this is the C++ scope from which this name scope was imported.
+  // Otherwise, this is the scope to which this name scope is exported.
   ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
-  // True if this is the scope of an interface definition, where associated
-  // entities will be bound to the interface's `Self` symbolic type.
-  bool is_interface_definition_ = false;
+  // If this name scope is a namespace that was produced by an `import` line,
+  // the associated line for diagnostics.
+  InstId import_id_ = InstId::None;
 
   // Imported IR scopes that compose this namespace. This will be empty for
   // scopes that correspond to the current package.
@@ -318,6 +350,13 @@ class NameScopeStore {
   auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
       -> NameScopeId {
     return values_.Add(NameScope(inst_id, name_id, parent_scope_id));
+  }
+
+  // Adds an imported namespace scope, returning an ID to reference it.
+  auto AddImportedNamespace(InstId inst_id, NameId name_id,
+                            NameScopeId parent_scope_id, InstId import_id)
+      -> NameScopeId {
+    return values_.Add(NameScope(inst_id, name_id, parent_scope_id, import_id));
   }
 
   // Adds a name that is required to exist in a name scope, such as `Self`.
@@ -342,6 +381,26 @@ class NameScopeStore {
   auto GetInstIfValid(NameScopeId scope_id) const
       -> std::pair<InstId, std::optional<Inst>>;
 
+  // Returns whether the specified name scope is owned by an instruction of the
+  // specified kind. Returns false for `NameScopeId::None`.
+  template <typename InstT>
+  auto InstIs(NameScopeId scope_id) const -> bool {
+    auto [inst_id, inst] = GetInstIfValid(scope_id);
+    return inst && inst->Is<InstT>();
+  }
+
+  // Returns the instruction owning the requested name scope if there is one and
+  // it is of the specified kind. Returns `nullopt` otherwise, and for
+  // `NameScopeId::None`.
+  template <typename InstT>
+  auto TryGetInstAs(NameScopeId scope_id) const -> std::optional<InstT> {
+    auto [inst_id, inst] = GetInstIfValid(scope_id);
+    if (!inst.has_value()) {
+      return std::nullopt;
+    }
+    return inst->TryAs<InstT>();
+  }
+
   // Returns whether the provided scope ID is for the Core package.
   auto IsCorePackage(NameScopeId scope_id) const -> bool {
     return scope_id.has_value() && Get(scope_id).name_id() == NameId::Core;
@@ -352,6 +411,12 @@ class NameScopeStore {
   auto IsInCorePackageRoot(NameScopeId scope_id) const -> bool {
     return scope_id.has_value() &&
            IsCorePackage(Get(scope_id).parent_scope_id());
+  }
+
+  // Returns whether the ID is a package scope.
+  auto IsPackage(NameScopeId scope_id) const -> bool {
+    return scope_id == NameScopeId::Package ||
+           (scope_id.has_value() && Get(scope_id).is_imported_package());
   }
 
   auto OutputYaml() const -> Yaml::OutputMapping {

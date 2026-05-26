@@ -62,16 +62,16 @@ RUNTIMES_TEXTUAL_SRCS_FILEGROUPS = [
 ]
 
 RUNTIMES_PREFIXES = {
-    "libcxx_hdrs": "libcxx/",
-    "libcxx_linux_srcs": "libcxx/",
-    "libcxx_macos_srcs": "libcxx/",
-    "libcxx_shared_headers_hdrs": "libc/internal/",
-    "libcxx_win32_srcs": "libcxx/",
-    "libcxxabi_hdrs": "libcxxabi/",
-    "libcxxabi_srcs": "libcxxabi/",
-    "libcxxabi_textual_srcs": "libcxxabi/",
-    "libunwind_hdrs": "libunwind/",
-    "libunwind_srcs": "libunwind/",
+    "libcxx_hdrs": "runtimes/libcxx/",
+    "libcxx_linux_srcs": "runtimes/libcxx/",
+    "libcxx_macos_srcs": "runtimes/libcxx/",
+    "libcxx_shared_headers_hdrs": "runtimes/libc/internal/",
+    "libcxx_win32_srcs": "runtimes/libcxx/",
+    "libcxxabi_hdrs": "runtimes/libcxxabi/",
+    "libcxxabi_srcs": "runtimes/libcxxabi/",
+    "libcxxabi_textual_srcs": "runtimes/libcxxabi/",
+    "libunwind_hdrs": "runtimes/libunwind/",
+    "libunwind_srcs": "runtimes/libunwind/",
 }
 
 def _get_name(target):
@@ -94,7 +94,7 @@ def _builtins_path(file):
     path = path.removeprefix("compiler-rt/lib/")
     if not path.startswith("builtins/"):
         fail("Not a builtins-relative path for: {0}".format(file.path))
-    return path
+    return "runtimes/" + path
 
 def _runtimes_path(file):
     """Returns the install path for a file in a normal runtimes library."""

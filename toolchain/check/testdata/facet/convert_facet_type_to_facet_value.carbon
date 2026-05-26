@@ -45,7 +45,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE-8]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Feed(unused e:! Eats) {}
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~~~~~~~
   // CHECK:STDERR:
   Feed(Goat as Animal);
 }
@@ -74,7 +74,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-11]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Feed(unused e:! Eats) {}
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~~~~~~~
   // CHECK:STDERR:
   Feed(Goat as (Animal & Climbs));
 
@@ -83,7 +83,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-20]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Feed(unused e:! Eats) {}
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~~~~~~~
   // CHECK:STDERR:
   Feed(Animal & Climbs);
 }

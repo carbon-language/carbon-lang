@@ -20,6 +20,7 @@ def make_include_copts(include_dirs):
     package_name = native.package_name()
     for include_dir in include_dirs:
         copts.append("-I{}{}/{}".format(prefix, package_name, include_dir))
+        copts.append("-I$(BINDIR)/{}{}/{}".format(prefix, package_name, include_dir))
         copts.append("-I$(GENDIR)/{}{}/{}".format(prefix, package_name, include_dir))
 
     return copts

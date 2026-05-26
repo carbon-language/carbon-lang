@@ -106,7 +106,8 @@ using AnyMemberAccessId =
     NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr |
                      NodeCategory::IntConst>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
-using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
+using AnyPatternId =
+    NodeIdInCategory<NodeCategory::Pattern | NodeCategory::Expr>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
 using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;

@@ -18,17 +18,18 @@ namespace Carbon {
 //
 // This provides a hashtable-specific extension point to implement equality
 // comparison within a hashtable key context. By default, it will use
-// `operator==` on the LHS and RHS operands. However, types can provide a
-// dedicated customization point by implementing a free function that can be
-// found by ADL for your type called `CarbonHashtableEq` with the following
-// signature:
+// `operator==` on the LHS and RHS operands if they are of the identical type.
+// However, types can provide a dedicated customization point by implementing a
+// free function that can be found by ADL for your type called
+// `CarbonHashtableEq` with the following signature:
 //
 // ```cpp
 // auto CarbonHashtableEq(const YourType& lhs, const YourType& rhs) -> bool;
 // ```
 //
 // Any such overload will be able to override the default we provide for types
-// that can compare with `==`.
+// that can compare with `==`. This overload may only compare two objects equal
+// if the hash of those two objects are identical.
 //
 // This library also provides any customization points for LLVM or standard
 // library types either lacking `operator==` or where that operator is not
@@ -161,8 +162,37 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
-template <typename LeftT, typename RightT>
-inline auto CarbonHashtableEq(const LeftT& lhs, const RightT& rhs) -> bool
+inline auto CarbonHashtableEq(llvm::StringRef lhs, const std::string& rhs)
+    -> bool {
+  return lhs == rhs;
+}
+
+template <typename T>
+inline auto CarbonHashtableEq(llvm::MutableArrayRef<T> lhs,
+                              llvm::ArrayRef<T> rhs) -> bool {
+  return lhs == rhs;
+}
+
+template <typename LHS, typename RHS>
+inline auto CarbonHashtableEq(const LHS& lhs, const RHS& rhs) -> bool
+  requires(requires {
+    { CarbonHashtableEq(rhs, lhs) } -> std::convertible_to<bool>;
+  })
+{
+  return CarbonHashtableEq(rhs, lhs);
+}
+
+// Provides symmetric equality so the `CarbonHashtableEq` operands aren't
+// ordered.
+//
+// If this template proves problematic in any way, we can revisit it - the
+// `CarbonHashtableEq` functions don't really need to be symmetric, since they
+// generally represent an implicit conversion which is often only one-way (eg:
+// MutableArrayRef converts to ArrayRef, but not the other way around) - but
+// documenting/describing that asymmetry felt a little awkward too - so maybe
+// this template is an OK solution for now.
+template <typename T>
+inline auto CarbonHashtableEq(const T& lhs, const T& rhs) -> bool
   requires(requires {
     { lhs == rhs } -> std::convertible_to<bool>;
   })

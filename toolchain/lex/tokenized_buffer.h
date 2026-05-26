@@ -168,10 +168,19 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns whether the given token has trailing whitespace.
   auto HasTrailingWhitespace(TokenIndex token) const -> bool;
 
+  // Returns whether the token was spelled as a raw identifier.
+  auto IsRawIdentifier(TokenIndex token) const -> bool;
+
   // Returns whether the token was created as part of an error recovery effort.
   //
   // For example, a closing paren inserted to match an unmatched paren.
   auto IsRecoveryToken(TokenIndex token) const -> bool;
+
+  // Adds and returns the index of an identifier token formed from the spelling
+  // of the given word token. This should only be used for error recovery
+  // purposes, when a phase after the lexer determines that a word token was
+  // intended to represent an identifier rather than its special meaning.
+  auto AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token) -> TokenIndex;
 
   // Returns the 1-based indentation column number.
   auto GetIndentColumnNumber(LineIndex line) const -> int;
@@ -218,9 +227,14 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
 
+  // Returns the tokens produced by lexing the source file. This includes any
+  // recovery tokens inserted inline by lexing, such as matching brackets, but
+  // excludes recovery tokens added after lexing finished.
   auto tokens() const -> llvm::iterator_range<TokenIterator> {
-    return llvm::make_range(TokenIterator(TokenIndex(0)),
-                            TokenIterator(TokenIndex(token_infos_.size())));
+    return llvm::make_range(
+        TokenIterator(TokenIndex(0)),
+        TokenIterator(
+            TokenIndex(token_infos_.size() - post_lexing_recovery_tokens_)));
   }
 
   auto size() const -> int { return token_infos_.size(); }
@@ -314,6 +328,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Adds the token and adjusts the expected tree size.
   auto AddToken(TokenInfo info) -> TokenIndex;
 
+  // Adds a post-lexing recovery token and adjusts the buffer state.
+  auto AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex;
+
   auto GetTokenPrintWidths(TokenIndex token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
@@ -354,6 +371,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   bool has_errors_ = false;
 
+  // The number of recovery tokens created after lexing finished. These tokens
+  // are included in `token_infos_`, but are excluded from the token sequence
+  // produced by `tokens()`.
+  int32_t post_lexing_recovery_tokens_ = 0;
+
   // A vector of flags for recovery tokens. If empty, there are none. When doing
   // token recovery, this will be extended to be indexable by token indices and
   // contain true for the tokens that were synthesized for recovery.
@@ -382,5 +404,11 @@ inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
 }
 
 }  // namespace Carbon::Lex
+
+namespace Carbon {
+extern template class ValueStore<Lex::TokenIndex, Lex::TokenInfo>;
+extern template class ValueStore<Lex::LineIndex, Lex::LineInfo>;
+extern template class ValueStore<Lex::CommentIndex, Lex::CommentData>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_

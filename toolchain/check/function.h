@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -22,8 +23,8 @@ auto FindSelfPattern(Context& context,
 
 // Creates suitable return patterns for the given return form, and adds them to
 // the current pattern block.
-auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
-                       Context::FormExpr form_expr) -> SemIR::InstBlockId;
+auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
+                      Context::FormExpr form_expr) -> SemIR::InstId;
 
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
@@ -37,10 +38,12 @@ struct FunctionDeclArgs {
   // The type of the implicit `[self: Self]` parameter, or `None` if there is
   // none.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
-  // Whether `self` is a ref parameter.
-  bool self_is_ref = true;
+  // The kind of the `self` parameter.
+  ParamPatternKind self_kind = ParamPatternKind::Ref;
   // The types of the explicit parameters.
   llvm::ArrayRef<SemIR::TypeId> param_type_ids = {};
+  // The kind of the parameters described by `param_type_ids`.
+  ParamPatternKind param_kind = ParamPatternKind::Value;
   // The return type, or `None` if the function doesn't declare a return type.
   SemIR::TypeId return_type_id = SemIR::TypeId::None;
 };
@@ -68,14 +71,16 @@ auto CheckFunctionReturnTypeMatches(Context& context,
 //
 // `check_syntax` is false if the redeclaration can be called via a thunk with
 // implicit conversions from the original declaration.
-// `check_self` is false if the self declaration does not have to match (for
-// instance in impls of virtual functions).
-auto CheckFunctionTypeMatches(Context& context,
-                              const SemIR::Function& new_function,
-                              const SemIR::Function& prev_function,
-                              SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self,
-                              bool diagnose = true) -> bool;
+//
+// If `self_type_override_id` is specified, the self type is checked against
+// that type instead of the type from `prev_function`. This is used to check
+// virtual function overrides.
+auto CheckFunctionTypeMatches(
+    Context& context, const SemIR::Function& new_function,
+    const SemIR::Function& prev_function, SemIR::SpecificId prev_specific_id,
+    bool check_syntax,
+    SemIR::TypeId self_type_override_id = SemIR::TypeId::None,
+    bool diagnose = true) -> bool;
 
 inline auto CheckFunctionTypeMatches(Context& context,
                                      const SemIR::Function& new_function,
@@ -83,7 +88,7 @@ inline auto CheckFunctionTypeMatches(Context& context,
     -> bool {
   return CheckFunctionTypeMatches(context, new_function, prev_function,
                                   SemIR::SpecificId::None,
-                                  /*check_syntax=*/true, /*check_self=*/true);
+                                  /*check_syntax=*/true);
 }
 
 // Checks that the scrutinee type of `return_pattern_id` in `specific_id` is

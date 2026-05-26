@@ -569,9 +569,20 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                            /*use_hex_escapes=*/true)
           << "\"";
   }
-  if (fn.thunk_decl_id().has_value()) {
+  if (fn.thunk_id().has_value()) {
     out() << " [thunk ";
-    FormatArg(fn.thunk_decl_id());
+    const auto& thunk_info = sem_ir_->thunks().Get(fn.thunk_id());
+    FormatArg(thunk_info.callee_id);
+    if (thunk_info.signature_id.has_value()) {
+      out() << " for ";
+      FormatName(sem_ir_->functions()
+                     .Get(thunk_info.signature_id)
+                     .first_owning_decl_id);
+      if (thunk_info.specific_id.has_value()) {
+        out() << ", ";
+        FormatName(thunk_info.specific_id);
+      }
+    }
     out() << "]";
   }
 
@@ -773,6 +784,15 @@ auto Formatter::FormatFunctionSignature(InstBlockId params_id,
         FormatInstAsType(return_form_id);
         break;
       }
+      case CARBON_KIND(SpliceInst splice): {
+        out() << "out ";
+        FormatName(params[i]);
+        out() << ":? ";
+        // A form isn't a type, but it's close enough for formatting purposes.
+        FormatInstAsType(splice.inst_id);
+        ++i;
+        break;
+      }
       default:
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
@@ -831,6 +851,9 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
         break;
       case AccessKind::Private:
         out() << " [private]";
+        break;
+      case AccessKind::Hidden:
+        out() << " [hidden]";
         break;
     }
     out() << " = ";
@@ -1043,8 +1066,16 @@ auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   }
 }
 
-auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
-  GetFormatArgFn(arg_and_kind.kind())(*this, arg_and_kind.value());
+auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
+  arg_and_kind.Dispatch<void>([this]<typename IdT>(IdT arg) {
+    if constexpr (requires { FormatArg(arg); }) {
+      FormatArg(arg);
+    } else if constexpr (std::is_same_v<IdT, IdAndKind::NoneType>) {
+      // Do nothing
+    } else {
+      CARBON_FATAL("Missing FormatArg for {0}", typeid(IdT).name());
+    }
+  });
 }
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
@@ -1061,6 +1092,19 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
 
     case CARBON_KIND_ANY(AnyParam, param): {
       FormatArgs(param.index);
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
+    case CARBON_KIND_ANY(AnyLeafParamPattern, _): {
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
+    case CARBON_KIND(VarParamPattern param): {
+      FormatArgs(param.subpattern_id);
       // Omit pretty_name because it's an implementation detail of
       // pretty-printing.
       return;
@@ -1199,8 +1243,9 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(Namespace ns): {
-      if (ns.import_id.has_value()) {
-        FormatArgs(ns.import_id, ns.name_scope_id);
+      auto import_id = sem_ir_->name_scopes().Get(ns.name_scope_id).import_id();
+      if (import_id.has_value()) {
+        FormatArgs(import_id, ns.name_scope_id);
       } else {
         FormatArgs(ns.name_scope_id);
       }
@@ -1230,11 +1275,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case ReturnSlotPattern::Kind:
-      // No-op because type_id is the only semantically significant field,
-      // and it's handled separately.
-      return;
-
     case CARBON_KIND(SpliceBlock splice): {
       FormatArgs(splice.result_id);
       FormatTrailingBlock(splice.block_id);
@@ -1256,7 +1296,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(WhereExpr where): {
-      FormatArgs(where.period_self_id);
       FormatTrailingBlock(where.requirements_id);
       return;
     }
@@ -1444,6 +1483,13 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
   // used as the argument to a `facet_type` instruction.
   out() << "<";
 
+  auto format_specific = [&](SemIR::SpecificId specific_id) {
+    if (specific_id.has_value()) {
+      out() << ", ";
+      FormatName(specific_id);
+    }
+  };
+
   llvm::ListSeparator sep(" & ");
   if (info.extend_constraints.empty() &&
       info.extend_named_constraints.empty()) {
@@ -1452,45 +1498,56 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     for (auto extend : info.extend_constraints) {
       out() << sep;
       FormatName(extend.interface_id);
-      if (extend.specific_id.has_value()) {
-        out() << ", ";
-        FormatName(extend.specific_id);
-      }
+      format_specific(extend.specific_id);
     }
     for (auto extend : info.extend_named_constraints) {
       out() << sep;
       FormatName(extend.named_constraint_id);
-      if (extend.specific_id.has_value()) {
-        out() << ", ";
-        FormatName(extend.specific_id);
-      }
+      format_specific(extend.specific_id);
     }
   }
 
   if (info.other_requirements || !info.self_impls_constraints.empty() ||
+      !info.type_impls_interfaces.empty() ||
+      !info.type_impls_named_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out() << " where ";
     llvm::ListSeparator and_sep(" and ");
-    if (!info.self_impls_constraints.empty() ||
-        !info.self_impls_named_constraints.empty()) {
+    int num_self_impls = info.self_impls_constraints.size() +
+                         info.self_impls_named_constraints.size();
+    if (num_self_impls > 0) {
       out() << and_sep << ".Self impls ";
       llvm::ListSeparator amp_sep(" & ");
+      if (num_self_impls > 1) {
+        out() << "(";
+      }
       for (auto self_impls : info.self_impls_constraints) {
         out() << amp_sep;
         FormatName(self_impls.interface_id);
-        if (self_impls.specific_id.has_value()) {
-          out() << ", ";
-          FormatName(self_impls.specific_id);
-        }
+        format_specific(self_impls.specific_id);
       }
       for (auto self_impls : info.self_impls_named_constraints) {
         out() << amp_sep;
         FormatName(self_impls.named_constraint_id);
-        if (self_impls.specific_id.has_value()) {
-          out() << ", ";
-          FormatName(self_impls.specific_id);
-        }
+        format_specific(self_impls.specific_id);
       }
+      if (num_self_impls > 1) {
+        out() << ")";
+      }
+    }
+    for (const auto& type_impls : info.type_impls_interfaces) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_interface.interface_id);
+      format_specific(type_impls.specific_interface.specific_id);
+    }
+    for (const auto& type_impls : info.type_impls_named_constraints) {
+      out() << and_sep;
+      FormatName(type_impls.self_type);
+      out() << " impls ";
+      FormatName(type_impls.specific_named_constraint.named_constraint_id);
+      format_specific(type_impls.specific_named_constraint.specific_id);
     }
     for (auto rewrite : info.rewrite_constraints) {
       out() << and_sep;
@@ -1541,6 +1598,24 @@ auto Formatter::FormatArg(InstBlockId id) -> void {
 
 auto Formatter::FormatArg(AbsoluteInstBlockId id) -> void {
   FormatArg(static_cast<InstBlockId>(id));
+}
+
+auto Formatter::FormatArg(ExprRegionId id) -> void {
+  const auto& region = sem_ir_->expr_regions().Get(id);
+
+  FormatArg(region.result_id);
+  out() << " in ";
+  OpenBrace();
+  for (auto [i, block_id] : llvm::enumerate(region.block_ids)) {
+    if (i != 0) {
+      IndentLabel();
+      FormatLabel(block_id);
+      out() << ":\n";
+    }
+
+    FormatCodeBlock(block_id);
+  }
+  CloseBrace();
 }
 
 auto Formatter::FormatArg(RealId id) -> void {

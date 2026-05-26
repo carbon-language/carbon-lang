@@ -13,8 +13,9 @@ more detailed examples, see the Carbon project examples in examples/bazel
 
 module(name = "carbon_toolchain")
 
-bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 
 carbon_toolchain_config = use_extension(
     "//bazel:carbon_toolchain.bzl",

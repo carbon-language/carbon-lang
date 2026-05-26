@@ -16,6 +16,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/interface.h"
@@ -87,6 +88,18 @@ static auto BuildInterfaceDecl(Context& context,
   } else {
     // Create a new interface if this isn't a valid redeclaration.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
+
+    if (context.sem_ir().package_id() == PackageNameId::Core) {
+      auto name = context.names().GetIRBaseName(interface_info.name_id);
+      // This is awful for readability, but it's the only viable way to ensure
+      // adding new core interfaces are automatically picked up.
+      interface_info.core_interface =
+          llvm::StringSwitch<SemIR::CoreInterface>(name)
+#define CARBON_SEM_IR_CORE_INTERFACE_KIND(Name) \
+  .Case(#Name, SemIR::CoreInterface::Name)
+#include "toolchain/sem_ir/core_interface_kind.def"
+              .Default(SemIR::CoreInterface::Unknown);
+    }
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id =
@@ -170,7 +183,7 @@ auto HandleParseNode(Context& context,
   // Set on the name scope that `M` is replaced by `Self.M`.
   context.name_scopes()
       .Get(interface_info.scope_with_self_id)
-      .set_is_interface_definition();
+      .set_self_type_id(interface_info.self_param_id);
 
   // Start the definition of interface-with-self.
   StartGenericDefinition(context, interface_info.generic_with_self_id);
@@ -184,7 +197,7 @@ auto HandleParseNode(Context& context,
       context.inst_block_stack().PeekOrAdd();
 
   context.inst_block_stack().Push();
-  context.require_impls_stack().PushArray();
+  context.require_impls_stack().Push(interface_id);
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -213,8 +226,8 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
   auto require_impls_block_id = context.require_impls_blocks().Add(
-      context.require_impls_stack().PeekArray());
-  context.require_impls_stack().PopArray();
+      context.require_impls_stack().PeekTop());
+  context.require_impls_stack().Pop();
 
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {

@@ -78,10 +78,17 @@ class FileTestBase {
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() const -> llvm::SmallVector<std::string> = 0;
 
-  // Returns a map of string replacements to implement `%{key}` -> `value` in
-  // arguments.
-  virtual auto GetArgReplacements() const -> llvm::StringMap<std::string> {
-    return {};
+  // Adds arguments to the `args` vector for the given filename.
+  virtual auto AddArgsForFilename(llvm::SmallVectorImpl<std::string>& args,
+                                  llvm::StringRef filename) const -> void {
+    args.emplace_back(filename);
+  }
+
+  // Returns a replacement for the given key. Keys are passed without the
+  // surrounding %{}.
+  virtual auto GetArgReplacement(llvm::StringRef /*key*/) const
+      -> std::optional<std::string> {
+    return std::nullopt;
   }
 
   // Returns a regex to match the default file when a line may not be present.

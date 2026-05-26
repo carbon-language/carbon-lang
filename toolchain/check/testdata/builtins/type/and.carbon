@@ -55,7 +55,7 @@ fn Call() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-14]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn TakeIJ(unused T:! TypeAnd(I, J)) {}
-  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TakeIJ(JustI);
   // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE+7]]:3: error: cannot convert type `JustJ` into type implementing `I & J` [ConversionFailureTypeToFacet]
@@ -63,7 +63,7 @@ fn Call() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-22]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn TakeIJ(unused T:! TypeAnd(I, J)) {}
-  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TakeIJ(JustJ);
 }

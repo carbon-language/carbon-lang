@@ -44,6 +44,17 @@ impl forall [T:! type, U:! ImplicitAs(T)] const U as ImplicitAs(T) {
   fn Convert[self: const U]() -> T { return (self as U).Convert(); }
 }
 
+// `const` can be added to a pointer.
+// TODO: This is also provided as a builtin conversion. We provide it here so
+// that Optional(T*) can implicitly convert to Optional(const T*). See #5750.
+impl forall [T:! type] T* as ImplicitAs(const T*) {
+  fn Convert[self: T*]() -> const T* = "pointer.unsafe_convert";
+}
+
+impl forall [T:! type] T* as As(const T*) {
+  fn Convert[self: T*]() -> const T* = "pointer.unsafe_convert";
+}
+
 // Pointer types can be unsafely cast to other pointer types.
 // TODO: Should `unsafe as` be able to remove `const`?
 impl forall [T:! type, U:! type] T* as UnsafeAs(U*) {

@@ -254,8 +254,8 @@ operators for a given pair of types:
 
 ```
 interface EqWith(U:! type) {
-  fn Equal[self: Self](u: U) -> bool;
-  default fn NotEqual[self: Self](u: U) -> bool {
+  fn Equal(self, u: U) -> bool;
+  default fn NotEqual(self, u: U) -> bool {
     return not (self == u);
   }
 }
@@ -273,10 +273,10 @@ Given `x: T` and `y: U`:
 class Path {
   private var drive: String;
   private var path: String;
-  private fn CanonicalPath[self: Self]() -> String;
+  private fn CanonicalPath(self) -> String;
 
   impl as Eq {
-    fn Equal[self: Self](other: Self) -> bool {
+    fn Equal(self, other: Self) -> bool {
       return (self.drive, self.CanonicalPath()) ==
              (other.drive, other.CanonicalPath());
     }
@@ -293,11 +293,11 @@ can be used:
 ```
 class MyInt {
   var value: i32;
-  fn Value[self: Self]() -> i32 { return self.value; }
+  fn Value(self) -> i32 { return self.value; }
 }
 impl i32 as ImplicitAs(MyInt);
 impl like MyInt as EqWith(like MyInt) {
-  fn Equal[self: Self](other: Self) -> bool {
+  fn Equal(self, other: Self) -> bool {
     return self.Value() == other.Value();
   }
 }
@@ -316,13 +316,13 @@ operations should have no observable side-effects.
 
 ```
 impl like MyFloat as EqWith(like MyFloat) {
-  fn Equal[self: MyFloat](other: MyFloat) -> bool {
+  fn Equal(self: MyFloat, other: MyFloat) -> bool {
     if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
     return self.Representation() == other.Representation();
   }
-  fn NotEqual[self: MyFloat](other: MyFloat) -> bool {
+  fn NotEqual(self: MyFloat, other: MyFloat) -> bool {
     if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
@@ -354,18 +354,18 @@ choice Ordering {
   Incomparable
 }
 interface OrderedWith(U:! type) {
-  fn Compare[self: Self](u: U) -> Ordering;
-  default fn Less[self: Self](u: U) -> bool {
+  fn Compare(self, u: U) -> Ordering;
+  default fn Less(self, u: U) -> bool {
     return self.Compare(u) == Ordering.Less;
   }
-  default fn LessOrEquivalent[self: Self](u: U) -> bool {
+  default fn LessOrEquivalent(self, u: U) -> bool {
     let c: Ordering = self.Compare(u);
     return c == Ordering.Less or c == Ordering.Equivalent;
   }
-  default fn Greater[self: Self](u: U) -> bool {
+  default fn Greater(self, u: U) -> bool {
     return self.Compare(u) == Ordering.Greater;
   }
-  default fn GreaterOrEquivalent[self: Self](u: U) -> bool {
+  default fn GreaterOrEquivalent(self, u: U) -> bool {
     let c: Ordering = self.Compare(u);
     return c == Ordering.Greater or c == Ordering.Equivalent;
   }
@@ -395,11 +395,11 @@ class MyWidget {
   var width: i32;
   var height: i32;
 
-  fn Size[self: Self]() -> i32 { return self.width * self.height; }
+  fn Size(self) -> i32 { return self.width * self.height; }
 
   // Widgets are normally ordered by size.
   impl as Ordered {
-    fn Compare[self: Self](other: Self) -> Ordering {
+    fn Compare(self, other: Self) -> Ordering {
       return self.Size().(Ordered.Compare)(other.Size());
     }
   }
@@ -420,7 +420,7 @@ fn ReverseOrdering(o: Ordering) -> Ordering {
 }
 impl like MyInt as OrderedWith(like MyFloat);
 impl like MyFloat as OrderedWith(like MyInt) {
-  fn Compare[self: Self](other: Self) -> Ordering {
+  fn Compare(self, other: Self) -> Ordering {
     return Reverse(other.(OrderedWith(Self).Compare)(self));
   }
 }

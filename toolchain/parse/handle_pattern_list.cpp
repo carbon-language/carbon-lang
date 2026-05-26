@@ -13,9 +13,11 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
   auto state = context.PopState();
 
   context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
-                              state.in_unused_pattern);
+                              state.in_unused_pattern,
+                              state.ambient_precedence);
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
-                              state.in_unused_pattern);
+                              state.in_unused_pattern,
+                              state.ambient_precedence);
 }
 
 auto HandlePatternListElementAsTuple(Context& context) -> void {
@@ -43,11 +45,23 @@ static auto HandlePatternListElementFinish(Context& context,
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(NodeKind::PatternListComma, close_token,
-                               state.has_error) ==
-      Context::ListTokenKind::Comma) {
+  auto list_token_kind = context.ConsumeListToken(NodeKind::PatternListComma,
+                                                  close_token, state.has_error);
+
+  // If we have a comma, the parent is now a tuple pattern not a parenthesized
+  // pattern.
+  if (list_token_kind != Context::ListTokenKind::Close &&
+      param_state_kind == StateKind::PatternListElementAsTuple) {
+    auto parent_state = context.PopState();
+    CARBON_CHECK(parent_state.kind == StateKind::PatternListFinishAsTuple ||
+                 parent_state.kind == StateKind::PatternListFinishAsParen);
+    context.PushState(parent_state, StateKind::PatternListFinishAsTuple);
+  }
+
+  if (list_token_kind == Context::ListTokenKind::Comma) {
     context.PushStateForPattern(param_state_kind, state.in_var_pattern,
-                                state.in_unused_pattern);
+                                state.in_unused_pattern,
+                                state.ambient_precedence);
   }
 }
 
@@ -70,31 +84,39 @@ auto HandlePatternListElementFinishAsImplicit(Context& context) -> void {
 static auto HandlePatternList(Context& context, NodeKind node_kind,
                               Lex::TokenKind open_token_kind,
                               Lex::TokenKind close_token_kind,
-                              StateKind param_state, StateKind finish_state)
-    -> void {
+                              StateKind param_state,
+                              StateKind finish_state_empty,
+                              StateKind finish_state_nonempty) -> void {
   auto state = context.PopState();
+  auto open_token = context.ConsumeChecked(open_token_kind);
+  bool empty = context.PositionIs(close_token_kind);
 
-  context.PushStateForPattern(finish_state, state.in_var_pattern,
-                              state.in_unused_pattern);
-  context.AddLeafNode(node_kind, context.ConsumeChecked(open_token_kind));
+  context.PushStateForPattern(
+      empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
+      state.in_unused_pattern, state.ambient_precedence);
+  context.AddLeafNode(node_kind, open_token);
 
-  if (!context.PositionIs(close_token_kind)) {
+  if (!empty) {
     context.PushStateForPattern(param_state, state.in_var_pattern,
-                                state.in_unused_pattern);
+                                state.in_unused_pattern,
+                                PrecedenceGroup::ForTopLevelExpr());
   }
 }
 
 auto HandlePatternListAsTuple(Context& context) -> void {
-  HandlePatternList(context, NodeKind::TuplePatternStart,
-                    Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
-                    StateKind::PatternListElementAsTuple,
-                    StateKind::PatternListFinishAsTuple);
+  // If the list is nonempty, use PatternListFinishAsParen as the parent. This
+  // will be replaced by PatternListFinishAsTuple if we see a comma.
+  HandlePatternList(
+      context, NodeKind::TuplePatternStart, Lex::TokenKind::OpenParen,
+      Lex::TokenKind::CloseParen, StateKind::PatternListElementAsTuple,
+      StateKind::PatternListFinishAsTuple, StateKind::PatternListFinishAsParen);
 }
 
 auto HandlePatternListAsExplicit(Context& context) -> void {
   HandlePatternList(context, NodeKind::ExplicitParamListStart,
                     Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
                     StateKind::PatternListElementAsExplicit,
+                    StateKind::PatternListFinishAsExplicit,
                     StateKind::PatternListFinishAsExplicit);
 }
 
@@ -103,16 +125,22 @@ auto HandlePatternListAsImplicit(Context& context) -> void {
                     Lex::TokenKind::OpenSquareBracket,
                     Lex::TokenKind::CloseSquareBracket,
                     StateKind::PatternListElementAsImplicit,
+                    StateKind::PatternListFinishAsImplicit,
                     StateKind::PatternListFinishAsImplicit);
 }
 
-// Handles PatternListFinishAs(Tuple|Explicit|Implicit).
+// Handles PatternListFinishAs(Paren|Tuple|Explicit|Implicit).
 static auto HandlePatternListFinish(Context& context, NodeKind node_kind,
                                     Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(node_kind, context.ConsumeChecked(token_kind),
                   state.has_error);
+}
+
+auto HandlePatternListFinishAsParen(Context& context) -> void {
+  HandlePatternListFinish(context, NodeKind::ParenPattern,
+                          Lex::TokenKind::CloseParen);
 }
 
 auto HandlePatternListFinishAsTuple(Context& context) -> void {

@@ -61,6 +61,8 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
+    case ModifierOrder::Static:
+      return KeywordModifierSet::Static;
     case ModifierOrder::Evaluation:
       return KeywordModifierSet::Evaluation;
   }
@@ -225,8 +227,8 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          DeclIntroducerState& introducer,
                                          SemIR::NameScopeId parent_scope_id)
     -> void {
-  if (parent_scope_id.has_value() &&
-      context.name_scopes().Get(parent_scope_id).is_interface_definition()) {
+  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+          parent_scope_id)) {
     // Both `default` and `final` allowed in an interface definition.
     return;
   }

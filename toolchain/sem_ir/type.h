@@ -77,6 +77,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
   auto GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId;
 
+  // Like GetTypeIdForTypeInstId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
+
   // Converts an `InstId` to a `TypeInstId` of the same id value. This process
   // involves checking that the type of the instruction's value is `TypeType`,
   // and then this check is encoded in the type system via `TypeInstId`.
@@ -134,6 +138,16 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // particular kind.
   template <typename InstT>
   auto TryGetAs(TypeId type_id) const -> std::optional<InstT> {
+    return GetAsInst(type_id).TryAs<InstT>();
+  }
+
+  // Like TryGetAs() but also handles the case where `type_id` has no value, and
+  // then returns nullopt.
+  template <typename InstT>
+  auto TryGetAsIfValid(TypeId type_id) const -> std::optional<InstT> {
+    if (!type_id.has_value()) {
+      return {};
+    }
     return GetAsInst(type_id).TryAs<InstT>();
   }
 
@@ -249,6 +263,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
         map.Add(PrintToString(type_id),
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
                   map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+                  map2.Add(
+                      "object_layout",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map3) {
+                        map3.Add("size",
+                                 Yaml::OutputScalar(info.object_layout.size));
+                        map3.Add(
+                            "alignment",
+                            Yaml::OutputScalar(info.object_layout.alignment));
+                      }));
                   if (info.abstract_class_id.has_value()) {
                     map2.Add("abstract_class_id",
                              Yaml::OutputScalar(info.abstract_class_id));

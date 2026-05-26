@@ -31,62 +31,64 @@ using ::testing::internal::GetCapturedStdout;
 static constexpr llvm::StringLiteral StdinFilename = "STDIN";
 
 // Does replacements in ARGS for %s and %t.
-static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
-                              const llvm::StringMap<std::string>& replacements,
+static auto DoArgReplacements(const FileTestBase& test_base,
+                              llvm::SmallVector<std::string>& test_args,
                               llvm::ArrayRef<TestFile::Split*> split_files)
     -> ErrorOr<Success> {
-  for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
-    auto percent = it->find("%");
+  llvm::SmallVector<std::string> new_args;
+  for (auto& arg : test_args) {
+    auto percent = arg.find('%');
     if (percent == std::string::npos) {
+      new_args.push_back(std::move(arg));
       continue;
     }
 
-    if (percent + 1 >= it->size()) {
-      return ErrorBuilder() << "% is not allowed on its own: " << *it;
+    if (percent + 1 >= arg.size()) {
+      return ErrorBuilder() << "% is not allowed on its own: " << arg;
     }
-    char c = (*it)[percent + 1];
+    char c = arg[percent + 1];
     switch (c) {
       case 's': {
-        if (*it != "%s") {
-          return ErrorBuilder() << "%s must be the full argument: " << *it;
+        if (arg != "%s") {
+          return ErrorBuilder() << "%s must be the full argument: " << arg;
         }
-        it = test_args.erase(it);
         for (const auto& split : split_files) {
-          const std::string& filename = split->filename;
-          if (filename == StdinFilename || filename.ends_with(".h")) {
-            continue;
+          // AUTOUPDATE-SPLIT was filtered out when building the list of splits,
+          // but STDIN is still potentially present.
+          // TODO: Should we remove STDIN before we reach this point?
+          if (split->filename != StdinFilename) {
+            test_base.AddArgsForFilename(new_args, split->filename);
           }
-          it = test_args.insert(it, filename);
-          ++it;
         }
-        // Back up once because the for loop will advance.
-        --it;
         break;
       }
       case 't': {
         std::filesystem::path tmpdir = GetTempDirectory();
-        it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
+        arg.replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
+        new_args.push_back(std::move(arg));
         break;
       }
       case '{': {
-        auto end_brace = it->find('}', percent);
+        auto end_brace = arg.find('}', percent);
         if (end_brace == std::string::npos) {
-          return ErrorBuilder() << "%{ without closing }: " << *it;
+          return ErrorBuilder() << "%{ without closing }: " << arg;
         }
-        llvm::StringRef substr(&*(it->begin() + percent + 2),
+        llvm::StringRef substr(arg.data() + percent + 2,
                                end_brace - percent - 2);
-        auto replacement = replacements.find(substr);
-        if (replacement == replacements.end()) {
+        auto replacement = test_base.GetArgReplacement(substr);
+        if (!replacement) {
           return ErrorBuilder()
-                 << "unknown substitution: %{" << substr << "}: " << *it;
+                 << "unknown substitution: %{" << substr << "}: " << arg;
         }
-        it->replace(percent, end_brace - percent + 1, replacement->second);
+        arg.replace(percent, end_brace - percent + 1, *replacement);
+        new_args.push_back(std::move(arg));
         break;
       }
       default:
-        return ErrorBuilder() << "%" << c << " is not supported: " << *it;
+        return ErrorBuilder() << "%" << c << " is not supported: " << arg;
     }
   }
+  test_args = std::move(new_args);
   return Success();
 }
 
@@ -116,8 +118,8 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
     test_file.test_args = test_base.GetDefaultArgs();
   }
   test_file.test_args.append(test_file.extra_args);
-  CARBON_RETURN_IF_ERROR(DoArgReplacements(
-      test_file.test_args, test_base.GetArgReplacements(), all_splits));
+  CARBON_RETURN_IF_ERROR(
+      DoArgReplacements(test_base, test_file.test_args, all_splits));
 
   // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
   FILE* input_stream = nullptr;

@@ -55,18 +55,6 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   // Now search through any symlinks to locate the installed busybox binary.
   while (true) {
     if (info.bin_path.filename() == "carbon-busybox") {
-      // Check for bazel structure. For example, this makes work:
-      //   /bin/sh -c "exec -a carbon ./bazel-bin/toolchain/carbon"
-      //   /bin/sh -c "exec -a llvm-symbolizer ./bazel-bin/toolchain/carbon"
-      //
-      // This will never occur in a "bin" subdirectory, so doesn't need to be
-      // handled in the other return path.
-      std::string busybox_path = info.bin_path.parent_path().string() +
-                                 "/prefix/lib/carbon/carbon-busybox";
-      if (auto access = Filesystem::Cwd().Access(busybox_path);
-          access.ok() && *access) {
-        info.bin_path = busybox_path;
-      }
       return info;
     }
 
@@ -77,8 +65,8 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
     // output tree.
     //
     // We break this into two cases we need to handle:
-    // - Carbon's CLI will be: `<prefix>/bin/carbon`
-    // - Other tools will be: `<prefix>/lib/carbon/<group>/bin/<tool>`
+    // - An install using the Unix-style FHS layout: `<prefix>/bin/carbon`
+    // - Tools within the Carbon install root: `<install>/<group>/bin/<tool>`
     //
     // We also check that the current path is within a `bin` directory to
     // provide best-effort checking for accidentally walking up from symlinks

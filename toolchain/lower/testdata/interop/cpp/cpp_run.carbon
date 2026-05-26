@@ -34,10 +34,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #1 !dbg !11 {
+// CHECK:STDOUT: define i32 @main() #1 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !15
+// CHECK:STDOUT:   ret i32 0, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -60,6 +60,7 @@ fn Run() {
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !6, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 9, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 8, column: 1, scope: !11)
+// CHECK:STDOUT: !13 = !{!14}
+// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 8, column: 1, scope: !11)

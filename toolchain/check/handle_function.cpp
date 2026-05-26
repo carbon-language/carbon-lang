@@ -61,8 +61,8 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     }
   }();
   context.PushReturnForm(form_expr);
-  auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
-  context.node_stack().Push(node_id, return_patterns_id);
+  context.node_stack().Push(node_id,
+                            AddReturnPattern(context, node_id, form_expr));
   return true;
 }
 
@@ -169,12 +169,6 @@ static auto MergeFunctionRedecl(Context& context,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
-    prev_function.call_param_patterns_id = new_function.call_param_patterns_id;
-    prev_function.call_params_id = new_function.call_params_id;
-    prev_function.return_type_inst_id = new_function.return_type_inst_id;
-    prev_function.return_form_inst_id = new_function.return_form_inst_id;
-    prev_function.return_patterns_id = new_function.return_patterns_id;
-    prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
@@ -190,9 +184,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
+  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
+  // impl scope: if the name was referenced before being declared, we will have
+  // produced an error already.
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         name_context.poisoning_loc_id, name_context.loc_id);
+    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
+            name_context.parent_scope_id)) {
+      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                           name_context.poisoning_loc_id, name_context.loc_id);
+    }
     return;
   }
 
@@ -206,8 +206,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
     case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope (see
-      // NameScope::is_interface_definition()).
+      // This is a function in an interface definition scope.
       auto function_decl =
           context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
       prev_function_id = function_decl.function_id;
@@ -266,7 +265,7 @@ static auto MaybeAddToNameLookup(Context& context,
                                  const KeywordModifierSet& modifier_set,
                                  SemIR::NameScopeId parent_scope_id,
                                  SemIR::InstId decl_id) -> void {
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       name_context.prev_inst_id().has_value()) {
     return;
   }
@@ -275,12 +274,11 @@ static auto MaybeAddToNameLookup(Context& context,
   // function.
   auto lookup_result_id = decl_id;
   if (parent_scope_id.has_value() && !name_context.has_qualifiers) {
-    const auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-    if (parent_scope.is_interface_definition()) {
-      auto interface_decl = context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
-          parent_scope.inst_id());
+    if (auto interface_decl =
+            context.name_scopes().TryGetInstAs<SemIR::InterfaceWithSelfDecl>(
+                parent_scope_id)) {
       lookup_result_id =
-          BuildAssociatedEntity(context, interface_decl.interface_id, decl_id);
+          BuildAssociatedEntity(context, interface_decl->interface_id, decl_id);
     }
   }
 
@@ -312,20 +310,28 @@ static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
       continue;
     }
 
-    auto param =
-        context.insts().TryGetAs<SemIR::ValueParamPattern>(param_pattern_id);
-    if (!param) {
-      // Only value parameters are supported for now.
+    // Validate that this is a by-value parameter, which is represented as an
+    // WrapperBindingPattern wrapping a ValueParamPattern.
+    auto type_id = SemIR::TypeId::None;
+    if (auto binding = context.insts().TryGetAs<SemIR::WrapperBindingPattern>(
+            param_pattern_id)) {
+      if (auto param_pattern =
+              context.insts().TryGetAs<SemIR::ValueParamPattern>(
+                  binding->subpattern_id)) {
+        type_id = param_pattern->type_id;
+      }
+    }
+    if (!type_id.has_value()) {
       return false;
     }
 
-    if (param->type_id == SemIR::ErrorInst::TypeId) {
+    if (type_id == SemIR::ErrorInst::TypeId) {
       // Ignore parameters with erroneous types.
       continue;
     }
 
     auto param_type_inst_id = context.types()
-                                  .GetAs<SemIR::PatternType>(param->type_id)
+                                  .GetAs<SemIR::PatternType>(type_id)
                                   .scrutinee_type_inst_id;
     switch (index) {
       case 0: {
@@ -492,20 +498,20 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_patterns_id = SemIR::InstBlockId::None;
+  auto return_pattern_id = SemIR::InstId::None;
   auto return_type_inst_id = SemIR::TypeInstId::None;
   auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_patterns_id] =
+  if (auto [return_node, maybe_return_pattern_id] =
           context.node_stack()
               .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_patterns_id) {
-    return_patterns_id = *maybe_return_patterns_id;
+      maybe_return_pattern_id) {
+    return_pattern_id = *maybe_return_pattern_id;
     auto return_form = context.PopReturnForm();
     return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
   }
 
-  auto name = PopNameComponent(context, return_patterns_id);
+  auto name = PopNameComponent(context, return_pattern_id);
   auto name_context = context.decl_name_stack().FinishName(name);
 
   context.node_stack()
@@ -542,7 +548,7 @@ static auto BuildFunctionDecl(Context& context,
                        .call_param_ranges = name.param_ranges,
                        .return_type_inst_id = return_type_inst_id,
                        .return_form_inst_id = return_form_inst_id,
-                       .return_patterns_id = return_patterns_id,
+                       .return_pattern_id = return_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .evaluation_mode = evaluation_mode,
                        .self_param_id = self_param_id}};
@@ -614,8 +620,7 @@ static auto CheckUnusedBindingsInPattern(Context& context,
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND_ANY(SemIR::AnyParamPattern, param): {
-        work_list.push_back(param.subpattern_id);
+      case CARBON_KIND_ANY(SemIR::AnyLeafParamPattern, _): {
         break;
       }
       case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
@@ -628,9 +633,12 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                             "`unused` modifier on declaration");
           context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
         }
+        if (bind.kind == SemIR::WrapperBindingPattern::Kind) {
+          work_list.push_back(bind.subpattern_id);
+        }
         break;
       }
-      case CARBON_KIND(SemIR::VarPattern var_pattern): {
+      case CARBON_KIND_ANY(SemIR::AnyVarPattern, var_pattern): {
         work_list.push_back(var_pattern.subpattern_id);
         break;
       }

@@ -17,3 +17,7 @@ aaa
 // --- b.carbon
 bbb
 // CHECK:STDOUT: b.carbon:[[@LINE-1]]: bbb
+
+
+// --- c.exclude
+ccc

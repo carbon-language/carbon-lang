@@ -8,17 +8,21 @@ def _get_files(ctx):
     files = []
     for src in ctx.attr.srcs:
         files.extend([f.path for f in src[DefaultInfo].files.to_list()])
-        files.extend([
-            f.path
-            for f in src[DefaultInfo].default_runfiles.files.to_list()
-        ])
 
     if ctx.attr.strip_package_dir:
         # Files may or may not be prefixed with the bin directory, and then
         # may or may not be prefixed with the package directory. Strip both.
         bin_dir = ctx.bin_dir.path + "/"
+        workspace_root = (
+            ctx.label.workspace_root + "/" if ctx.label.workspace_root else ""
+        )
         package_dir = ctx.label.package + "/"
-        files_stripped = [f.removeprefix(bin_dir).removeprefix(package_dir) for f in files]
+        files_stripped = [
+            f.removeprefix(bin_dir)
+                .removeprefix(workspace_root)
+                .removeprefix(package_dir)
+            for f in files
+        ]
     else:
         files_stripped = files
 

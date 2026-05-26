@@ -1,0 +1,103 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
+#define CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
+
+#include <string>
+#include <variant>
+
+#include "clang/AST/Mangle.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_fingerprinter.h"
+
+namespace Carbon::SemIR {
+
+// A class for producing mangled (deterministically unique, at least partially
+// human readable) names for externally referenceable entities such as
+// functions.
+class Mangler {
+ public:
+  // Initialize a new Mangler instance for mangling entities within the
+  // specified `File`.
+  Mangler(const SemIR::File& sem_ir, int total_ir_count,
+          bool use_string_fingerprint = false);
+
+  // Produce a deterministically unique mangled name for the function specified
+  // by `function_id` and `specific_id`.
+  auto Mangle(SemIR::FunctionId function_id, SemIR::SpecificId specific_id)
+      -> std::string;
+
+  // Produce a deterministically unique mangled name for the given global
+  // variable pattern, or an empty string if the variable doesn't bind any
+  // names, in which case it can't be referenced from another file and should be
+  // given internal linkage.
+  auto MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string;
+
+  // Produce a deterministically unique mangled name for the specified class's
+  // vtable.
+  auto MangleVTable(const SemIR::Class& class_info,
+                    SemIR::SpecificId specific_id) -> std::string;
+
+ private:
+  // Mangle this `NameId` as an individual name component.
+  auto MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id) -> void;
+
+  // Mangle this `SpecificId`, or nothing if it is `SpecificId::None`.
+  auto MangleSpecificId(llvm::raw_ostream& os, SemIR::SpecificId specific_id)
+      -> void;
+
+  // Mangle this qualified name with inner scope first, working outwards. This
+  // may reduce the incidence of common prefixes in the name mangling. (i.e.:
+  // every standard library name won't have a common prefix that has to be
+  // skipped and compared before getting to the interesting part).
+  auto MangleInverseQualifiedNameScope(
+      llvm::raw_ostream& os, SemIR::NameScopeId name_scope_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
+      char initial_prefix = '.') -> void;
+
+  // Mangle the unqualified name of the specified entity.
+  auto MangleUnqualifiedName(llvm::raw_ostream& os,
+                             const SemIR::EntityWithParamsBase& entity,
+                             SemIR::SpecificId specific_id) -> void;
+
+  // Generates a mangled name using Clang mangling for imported C++ functions.
+  auto MangleCppClang(const clang::NamedDecl* decl) -> std::string;
+
+  auto sem_ir() const -> const SemIR::File& { return sem_ir_; }
+
+  auto names() const -> SemIR::NameStoreWrapper { return sem_ir().names(); }
+
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
+
+  auto types() const -> const SemIR::TypeStore& { return sem_ir().types(); }
+
+  auto constant_values() const -> const SemIR::ConstantValueStore& {
+    return sem_ir().constant_values();
+  }
+
+  template <typename IdT>
+  auto MangleFingerprint(llvm::raw_ostream& os, const File* file, IdT id)
+      -> void {
+    std::visit(
+        [&](auto& f) -> void {
+          using ResultT = typename std::decay_t<decltype(f)>::ResultType;
+          if constexpr (std::is_same_v<ResultT, llvm::StringRef>) {
+            os << f.GetOrCompute(file, id);
+          } else {
+            llvm::write_hex(os, f.GetOrCompute(file, id),
+                            llvm::HexPrintStyle::Lower, 16);
+          }
+        },
+        fingerprinter_);
+  }
+
+  const SemIR::File& sem_ir_;
+  std::variant<HashInstFingerprinter, StringInstFingerprinter> fingerprinter_;
+};
+
+}  // namespace Carbon::SemIR
+
+#endif  // CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_

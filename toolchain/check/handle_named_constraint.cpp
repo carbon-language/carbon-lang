@@ -184,7 +184,7 @@ auto HandleParseNode(Context& context,
   constraint_info.body_block_with_self_id =
       context.inst_block_stack().PeekOrAdd();
 
-  context.require_impls_stack().PushArray();
+  context.require_impls_stack().Push(named_constraint_id);
 
   context.node_stack().Push(node_id, named_constraint_id);
   return true;
@@ -199,8 +199,8 @@ auto HandleParseNode(Context& context,
   context.inst_block_stack().Pop();
 
   auto require_impls_block_id = context.require_impls_blocks().Add(
-      context.require_impls_stack().PeekArray());
-  context.require_impls_stack().PopArray();
+      context.require_impls_stack().PeekTop());
+  context.require_impls_stack().Pop();
 
   auto& constraint_info = context.named_constraints().Get(named_constraint_id);
   if (!constraint_info.complete) {

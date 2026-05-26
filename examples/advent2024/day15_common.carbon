@@ -45,6 +45,8 @@ let Empty: Square = ('.' as char) as Square;
 let Robot: Square = ('@' as char) as Square;
 
 class Grid {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Grid {
     returned var me: Grid;
     var y: i32 = 0;

@@ -404,7 +404,7 @@ class NodeStack {
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
     set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
-                          Id::KindFor<SemIR::InstBlockId>());
+                          Id::KindFor<SemIR::InstId>());
     return result;
   }
 
@@ -414,13 +414,11 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
-      case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
-      case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::ForIn:
@@ -455,13 +453,11 @@ class NodeStack {
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::ExplicitParamListStart:
-      case Parse::NodeKind::FieldInitializer:
-      case Parse::NodeKind::FieldIntroducer:
       case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
-      case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::ImplIntroducer:
+      case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LambdaIntroducer:
       case Parse::NodeKind::LetInitializer:
@@ -478,6 +474,9 @@ class NodeStack {
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
+      case Parse::NodeKind::InlineImportBody:
+      case Parse::NodeKind::InlineIntroducer:
+      case Parse::NodeKind::WhereOperand:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -511,7 +510,6 @@ class NodeStack {
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::InlineImportSpecifier:
-      case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
       case Parse::NodeKind::MatchCaseGuard:
       case Parse::NodeKind::MatchCaseGuardIntroducer:

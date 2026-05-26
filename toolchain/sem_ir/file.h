@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
 #include "common/error.h"
+#include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
@@ -18,6 +19,7 @@
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/associated_constant.h"
+#include "toolchain/sem_ir/bundle.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
@@ -40,6 +42,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/thunk.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
@@ -66,7 +69,7 @@ struct ExprRegion {
 using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
 using CustomLayoutStore =
-    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
+    BlockValueStore<CustomLayoutId, ObjectSize, Tag<CheckIRId>>;
 
 // The semantic IR for a single file.
 class File : public Printable<File> {
@@ -95,14 +98,21 @@ class File : public Printable<File> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  // Returns array bound value from the bound instruction.
+  // Returns the zero-extended integer value of the given instruction if it is a
+  // constant integer.
   // TODO: Move this function elsewhere.
-  auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
-    if (auto bound = insts().TryGetAs<IntValue>(
-            constant_values().GetConstantInstId(bound_id))) {
-      return ints().Get(bound->int_id).getZExtValue();
+  auto GetZExtIntValue(InstId inst_id) const -> std::optional<uint64_t> {
+    if (auto val = insts().TryGetAs<IntValue>(
+            constant_values().GetConstantInstId(inst_id))) {
+      return ints().Get(val->int_id).getZExtValue();
     }
     return std::nullopt;
+  }
+
+  // Returns the layout of a pointer.
+  // TODO: This should depend on the target machine.
+  auto GetPointerLayout() const -> ObjectLayout {
+    return {.size = ObjectSize::Bytes(8), .alignment = ObjectSize::Bytes(8)};
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -166,6 +176,8 @@ class File : public Printable<File> {
   auto cpp_overload_sets() const -> const CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
+  auto thunks() -> ThunkStore& { return thunks_; }
+  auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
@@ -195,6 +207,12 @@ class File : public Printable<File> {
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
   auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
+
+  using FieldInitializerMap = Map<SemIR::InstId, SemIR::InstId>;
+  auto field_initializers() -> FieldInitializerMap& {
+    return field_initializers_;
+  }
+
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }
@@ -227,6 +245,12 @@ class File : public Printable<File> {
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
+  auto clang_decl_signatures() -> ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
+  auto clang_decl_signatures() const -> const ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -268,6 +292,9 @@ class File : public Printable<File> {
   auto clang_source_locs() const -> const ClangSourceLocStore& {
     return clang_source_locs_;
   }
+
+  auto bundles() -> BundleStore& { return bundles_; }
+  auto bundles() const -> const BundleStore& { return bundles_; }
 
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
@@ -323,8 +350,18 @@ class File : public Printable<File> {
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
 
+  // Storage for thunk info records.
+  ThunkStore thunks_;
+
   // Storage for classes.
   ClassStore classes_;
+
+  // Map containing initializers for class fields. The map keys are
+  // `InstId`s corresponding to `FielDecl`s.
+  //
+  // TODO: consider replacing this map with a separate store for fields
+  // and tracking a new `FieldId` in the `FieldDecl`.
+  FieldInitializerMap field_initializers_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;
@@ -374,7 +411,10 @@ class File : public Printable<File> {
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
   // not add multiple entries with the same `decl` and different `inst_id`.
-  ClangDeclStore clang_decls_;
+  ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
+
+  // Storage for function signatures used in C++ interop.
+  ClangDeclSignatureStore clang_decl_signatures_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.
@@ -417,8 +457,23 @@ class File : public Printable<File> {
 
   // C++ source locations for C++ interop.
   ClangSourceLocStore clang_source_locs_;
+
+  // Storage for instruction argument bundles.
+  BundleStore bundles_;
 };
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::CustomLayoutId,
+                                 llvm::MutableArrayRef<SemIR::ObjectSize>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_

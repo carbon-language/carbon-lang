@@ -90,7 +90,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
                                               Parse::NodeId node_id,
                                               SemIR::IntKind int_kind,
                                               IntId size_id) -> bool {
-  if (!(context.ints().Get(size_id) & 3).isZero()) {
+  if (!(context.ints().Get(size_id) & 7).isZero()) {
     CARBON_DIAGNOSTIC(IntWidthNotMultipleOf8, Error,
                       "bit width of integer type literal must be a multiple of "
                       "8; use `Core.{0:Int|UInt}({1})` instead",

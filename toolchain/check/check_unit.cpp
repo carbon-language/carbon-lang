@@ -63,7 +63,7 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
@@ -75,7 +75,8 @@ CheckUnit::CheckUnit(
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
+               unit_and_imports_->unit->total_ir_count, vlog_stream,
+               mangle_string_fingerprint) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -126,8 +127,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto package_inst_id =
       AddInst<SemIR::Namespace>(context_, Parse::NodeId::None,
                                 {.type_id = namespace_type_id,
-                                 .name_scope_id = SemIR::NameScopeId::Package,
-                                 .import_id = SemIR::InstId::None});
+                                 .name_scope_id = SemIR::NameScopeId::Package});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
@@ -355,11 +355,12 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
         auto import_ir_inst_id =
             context_.import_ir_insts().Add(SemIR::ImportIRInst(
                 SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
-        import_decl_id =
-            AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
-                                  context_, import_ir_inst_id,
-                                  {.package_id = SemIR::NameId::ForPackageName(
-                                       api_imports_entry.first)}));
+        import_decl_id = AddInst(
+            context_,
+            SemIR::LocIdAndInst::RuntimeVerified(
+                context_.sem_ir(), import_ir_inst_id,
+                SemIR::ImportDecl{.package_id = SemIR::NameId::ForPackageName(
+                                      api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;
@@ -529,20 +530,19 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
-    auto witness_result = EvalLookupSingleImplWitness(
-        context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
+    auto found_witness_id = EvalLookupSingleFinalWitness(
+        context_, poison.loc_id, poison.query, SemIR::InstId::None,
         EvalImplLookupMode::RecheckPoisonedLookup);
-    CARBON_CHECK(witness_result.has_final_value());
-    auto found_witness_id = witness_result.final_witness();
-    if (found_witness_id == SemIR::ErrorInst::InstId) {
+    CARBON_CHECK(found_witness_id.has_value());
+    if (found_witness_id == SemIR::ErrorInst::ConstantId) {
       // Errors may have been diagnosed with the impl used in the poisoned query
       // in the meantime (such as a missing definition).
       continue;
     }
-    if (found_witness_id != poison.impl_witness) {
-      auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
-        auto table_id = context_.insts()
-                            .GetAs<SemIR::ImplWitness>(witness_id)
+    if (found_witness_id != poison.witness_id) {
+      auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
+        auto table_id = context_.constant_values()
+                            .GetInstAs<SemIR::ImplWitness>(witness_id)
                             .witness_table_id;
         return context_.insts()
             .GetAs<SemIR::ImplWitnessTable>(table_id)
@@ -554,7 +554,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       auto bad_impl_id = witness_to_impl_id(found_witness_id);
       const auto& bad_impl = context_.impls().Get(bad_impl_id);
 
-      auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
+      auto prev_impl_id = witness_to_impl_id(poison.witness_id);
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
 
       CARBON_DIAGNOSTIC(

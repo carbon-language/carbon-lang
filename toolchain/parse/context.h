@@ -332,10 +332,12 @@ class Context {
   // `in_unused_pattern` indicate whether that pattern is nested inside a `var`
   // or `unused` pattern.
   auto PushStateForPattern(StateKind kind, bool in_var_pattern,
-                           bool in_unused_pattern) -> void {
+                           bool in_unused_pattern, PrecedenceGroup precedence)
+      -> void {
     PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .in_unused_pattern = in_unused_pattern,
+               .ambient_precedence = precedence,
                .token = *position_,
                .subtree_start = tree_->size()});
   }
@@ -419,7 +421,7 @@ class Context {
 
   auto tree() const -> const Tree& { return *tree_; }
 
-  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+  auto tokens() const -> Lex::TokenizedBuffer& { return *tokens_; }
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 

@@ -117,7 +117,9 @@ auto HandleStatementForHeader(Context& context) -> void {
 
   state.kind = StateKind::StatementForHeaderIn;
   context.PushState(state);
-  context.PushState(StateKind::Pattern);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
+                              /*in_unused_pattern=*/false,
+                              PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleStatementForHeaderIn(Context& context) -> void {

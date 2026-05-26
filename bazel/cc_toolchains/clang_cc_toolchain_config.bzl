@@ -6,6 +6,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/toolchains:cc_toolchain_config_info.bzl", "CcToolchainConfigInfo")
 load(":cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load(":cc_toolchain_cpp_features.bzl", "libcxx_feature")
 load(":cc_toolchain_features.bzl", "clang_cc_toolchain_features")
@@ -17,7 +18,7 @@ load(
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
-    "clang_include_dirs_list",
+    "clang_include_dirs",
     "clang_resource_dir",
     "clang_version_for_cache",
     "llvm_bindir",
@@ -40,7 +41,7 @@ def _impl(ctx):
             extra_cpp_features = [libcxx_feature(llvm_bindir, clang_bindir)],
         ),
         action_configs = llvm_action_configs(llvm_bindir, clang_bindir),
-        cxx_builtin_include_directories = clang_include_dirs_list + [
+        cxx_builtin_include_directories = clang_include_dirs + [
             # Add Clang's resource directory to the end of the builtin include
             # directories to cover the use of sanitizer resource files by the
             # driver.
@@ -92,7 +93,7 @@ def cc_local_toolchain_suite(name, configs):
             target_cpu = cpu,
         )
         cc_toolchain(
-            name = config_name + "_tools",
+            name = config_name + "_toolchain",
             all_files = ":" + name + "_empty",
             ar_files = ":" + name + "_empty",
             as_files = ":" + name + "_empty",
@@ -109,7 +110,11 @@ def cc_local_toolchain_suite(name, configs):
         native.toolchain(
             name = config_name,
             exec_compatible_with = compatible_with,
+            target_settings = [
+                "@carbon//toolchain/install:is_bootstrap_stage_0",
+                "@carbon//toolchain/install:not_runtimes_build",
+            ],
             target_compatible_with = compatible_with,
-            toolchain = config_name + "_tools",
+            toolchain = config_name + "_toolchain",
             toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         )

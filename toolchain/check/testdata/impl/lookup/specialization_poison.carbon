@@ -168,3 +168,24 @@ fn G[X:! type](p: X*) -> (X*).(I.T) {
 final impl forall [V:! Core.Copy] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }
+
+// --- fail_todo_poisoned_concrete_lookup_from_eval_fn.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  class D {}
+
+  // CHECK:STDERR: fail_todo_poisoned_concrete_lookup_from_eval_fn.carbon:[[@LINE+4]]:22: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+  // CHECK:STDERR:   musteval fn G() -> auto {
+  // CHECK:STDERR:                      ^~~~
+  // CHECK:STDERR:
+  musteval fn G() -> auto {
+    class C(T:! type) {}
+    impl forall [T:! type] C(T) as Z {}
+    C(D) as Z;
+    return C(D);
+  }
+
+  // TODO: error: found `impl` that would change the result of an earlier use of `C(D) as Z`.
+  impl G() as Z {}
+}

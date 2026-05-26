@@ -61,6 +61,7 @@ TEST(SemIRTest, Yaml) {
       Pair("import_irs", Yaml::Mapping(SizeIs(2))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
+      Pair("clang_decl_signatures", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
       Pair("cpp_global_vars", Yaml::Mapping(SizeIs(0))),
@@ -96,6 +97,7 @@ TEST(SemIRTest, Yaml) {
                                                      "function[0-9A-F]+"))),
                                     Pair("arg1", "inst_block_empty"),
                                     Pair("type", type_id)))))))),
+      Pair("bundles", Yaml::Mapping(IsEmpty())),
       Pair("constant_values",
            Yaml::Mapping(ElementsAre(
                Pair("values",

@@ -14,6 +14,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
@@ -105,6 +106,9 @@ class ClangRunner : ToolRunnerBase {
 
  private:
   friend class ClangRuntimesBuilderBase;
+
+  auto RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
+                   bool enable_leaking) -> int;
 
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,

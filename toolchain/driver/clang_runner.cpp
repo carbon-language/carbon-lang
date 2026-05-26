@@ -239,10 +239,35 @@ auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                      enable_leaking);
 }
 
+auto ClangRunner::RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
+                              bool enable_leaking) -> int {
+  if (cstr_args[1] == llvm::StringRef("-cc1")) {
+    CARBON_VLOG("Dispatching `-cc1` command line in-process...");
+    int exit_code =
+        RunClangCC1Main(*installation_, fs_, cstr_args, enable_leaking);
+    return exit_code;
+  }
+
+  // Other CC1-based invocations need to dispatch into the `clang_main`
+  // routine to work correctly. This means they're not reliable in a library
+  // context but currently there is too much logic to reasonably extract here.
+  // This at least allows simple cases (often when directly used on the
+  // command line) to work correctly.
+  //
+  // TODO: Factor the relevant code paths into a library API or move this into
+  // the busybox dispatch logic.
+  CARBON_VLOG("Calling clang_main for a cc1-based invocation...");
+  // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
+  llvm::ToolContext tool_context = {
+      .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+  int exit_code = clang_main(
+      cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
+  return exit_code;
+}
+
 auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
     std::optional<llvm::StringRef> target_resource_dir_path,
-
     std::optional<std::filesystem::path> libunwind_path,
     std::optional<std::filesystem::path> libcxx_path, bool link_runtime_libs,
     bool enable_leaking) -> ErrorOr<bool> {
@@ -253,30 +278,8 @@ auto ClangRunner::RunInternal(
   if (!args.empty() && args[0].starts_with("-cc1")) {
     llvm::SmallVector<const char*, 64> cstr_args =
         BuildCStrArgs(clang_path_.native(), args, alloc);
-    if (args[0] == "-cc1") {
-      CARBON_VLOG("Dispatching `-cc1` command line...");
-      int exit_code =
-          RunClangCC1(*installation_, fs_, cstr_args, enable_leaking);
-      // TODO: Should this be forwarding the full exit code?
-      return exit_code == 0;
-    }
-
-    // Other CC1-based invocations need to dispatch into the `clang_main`
-    // routine to work correctly. This means they're not reliable in a library
-    // context but currently there is too much logic to reasonably extract here.
-    // This at least allows simple cases (often when directly used on the
-    // command line) to work correctly.
-    //
-    // TODO: Factor the relevant code paths into a library API or move this into
-    // the busybox dispatch logic.
-    CARBON_VLOG("Calling clang_main for a cc1-based invocation...");
-    // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
-    llvm::ToolContext tool_context = {
-        .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
-    int exit_code = clang_main(
-        cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
     // TODO: Should this be forwarding the full exit code?
-    return exit_code == 0;
+    return RunClangCC1(cstr_args, enable_leaking) == 0;
   }
 
   // We start with a custom prefix of arguments to establish Carbon's default
@@ -343,101 +346,96 @@ auto ClangRunner::RunInternal(
   llvm::SmallVector<std::pair<int, const clang::driver::Command*>>
       failing_commands;
   int result = -1;
-  {
-    // Create the diagnostic options and parse arguments controlling them out of
-    // our arguments.
-    std::unique_ptr<clang::DiagnosticOptions> diagnostic_options =
-        clang::CreateAndPopulateDiagOpts(cstr_args);
 
-    // TODO: We don't yet support serializing diagnostics the way the actual
-    // `clang` command line does. Unclear if we need to or not, but it would
-    // need a bit more logic here to set up chained consumers.
-    clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
-                                                   *diagnostic_options);
+  // Create the diagnostic options and parse arguments controlling them out of
+  // our arguments.
+  std::unique_ptr<clang::DiagnosticOptions> diagnostic_options =
+      clang::CreateAndPopulateDiagOpts(cstr_args);
 
-    // Note that the `DiagnosticsEngine` takes ownership (via a ref count) of
-    // the DiagnosticIDs, unlike the other parameters.
-    clang::DiagnosticsEngine diagnostics(
-        clang::DiagnosticIDs::create(), *diagnostic_options, &diagnostic_client,
-        /*ShouldOwnClient=*/false);
-    clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
+  // TODO: We don't yet support serializing diagnostics the way the actual
+  // `clang` command line does. Unclear if we need to or not, but it would
+  // need a bit more logic here to set up chained consumers.
+  clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
+                                                 *diagnostic_options);
 
-    // Note that we configure the driver's *default* target here, not the
-    // expected target as that will be parsed out of the command line below.
-    clang::driver::Driver driver(clang_path_.native(),
-                                 llvm::sys::getDefaultTargetTriple(),
-                                 diagnostics, "clang LLVM compiler", fs_);
+  // Note that the `DiagnosticsEngine` takes ownership (via a ref count) of
+  // the DiagnosticIDs, unlike the other parameters.
+  clang::DiagnosticsEngine diagnostics(clang::DiagnosticIDs::create(),
+                                       *diagnostic_options, &diagnostic_client,
+                                       /*ShouldOwnClient=*/false);
+  clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
 
-    llvm::Triple target_triple(target);
+  // Note that we configure the driver's *default* target here, not the
+  // expected target as that will be parsed out of the command line below.
+  clang::driver::Driver driver(clang_path_.native(),
+                               llvm::sys::getDefaultTargetTriple(), diagnostics,
+                               "clang LLVM compiler", fs_);
 
-    // We need to set an SDK system root on macOS by default. Setting it here
-    // allows a custom sysroot to still be specified on the command line.
-    //
-    // TODO: A different system root should be used for iOS, watchOS, tvOS.
-    // Currently, we're only targeting macOS support though.
-    if (target_triple.isMacOSX()) {
-      // This is the default CLT system root, shown by `xcrun --show-sdk-path`.
-      // We hard code it here to avoid the overhead of subprocessing to `xcrun`
-      // on each Clang invocation, but this may need to be updated to search or
-      // reflect macOS versions if this changes in the future.
-      driver.SysRoot = "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
-    }
+  llvm::Triple target_triple(target);
 
-    // If we have a target-specific resource directory, set it as the default
-    // here, otherwise use the installation's resource directory.
-    driver.ResourceDir = target_resource_dir_path
-                             ? target_resource_dir_path->str()
-                             : installation_->clang_resource_path().native();
-
-    // Configure the install directory to find other tools and data files.
-    //
-    // We directly override the detected directory as we use a synthetic path
-    // above. This makes it appear that our binary was in the installed binaries
-    // directory, and allows finding tools relative to it.
-    driver.Dir = installation_->llvm_install_bin();
-    CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
-
-    // When there's only one command being run, this will run it in-process.
-    // However, a `clang` invocation may cause multiple `cc1` invocations, which
-    // still subprocess. See `InProcess` comment at:
-    // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
-    //
-    // Note the subprocessing will effectively call `clang -cc1`, which turns
-    // into `carbon-busybox clang -cc1`, which results in an equivalent
-    // `clang_main` call.
-    //
-    // Also note that we only do `-disable-free` filtering in the in-process
-    // execution here, as subprocesses leaking memory won't impact this process.
-    auto cc1_main = [this, enable_leaking](
-                        llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
-      return RunClangCC1(*installation_, fs_, cc1_args, enable_leaking);
-    };
-    driver.CC1Main = cc1_main;
-
-    std::unique_ptr<clang::driver::Compilation> compilation(
-        driver.BuildCompilation(cstr_args));
-    CARBON_CHECK(compilation, "Should always successfully allocate!");
-    if (compilation->containsError()) {
-      // These should have been diagnosed by the driver.
-      return false;
-    }
-
-    // Make sure our target detection matches Clang's. Sadly, we can't just
-    // reuse Clang's as it is available too late.
-    // TODO: Use nice diagnostics here rather than a check failure.
-    CARBON_CHECK(llvm::Triple(target) == llvm::Triple(driver.getTargetTriple()),
-                 "Mismatch between the expected target '{0}' and the one "
-                 "computed by Clang '{1}'",
-                 target, driver.getTargetTriple());
-
-    CARBON_VLOG("Running Clang driver...\n");
-
-    result = driver.ExecuteCompilation(*compilation, failing_commands);
-
-    // Let diagnostics fall out of scope and be destroyed. This finishes
-    // diagnosing any failures before we verbosely log the source of those
-    // failures.
+  // We need to set an SDK system root on macOS by default. Setting it here
+  // allows a custom sysroot to still be specified on the command line.
+  //
+  // TODO: A different system root should be used for iOS, watchOS, tvOS.
+  // Currently, we're only targeting macOS support though.
+  if (target_triple.isMacOSX()) {
+    // This is the default CLT system root, shown by `xcrun --show-sdk-path`.
+    // We hard code it here to avoid the overhead of subprocessing to `xcrun`
+    // on each Clang invocation, but this may need to be updated to search or
+    // reflect macOS versions if this changes in the future.
+    driver.SysRoot = "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
   }
+
+  // If we have a target-specific resource directory, set it as the default
+  // here, otherwise use the installation's resource directory.
+  driver.ResourceDir = target_resource_dir_path
+                           ? target_resource_dir_path->str()
+                           : installation_->clang_resource_path().native();
+
+  // Configure the install directory to find other tools and data files.
+  //
+  // We directly override the detected directory as we use a synthetic path
+  // above. This makes it appear that our binary was in the installed binaries
+  // directory, and allows finding tools relative to it.
+  driver.Dir = installation_->llvm_install_bin();
+  CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
+
+  // When there's only one command being run, this will run it in-process.
+  // However, a `clang` invocation may cause multiple `cc1` invocations, which
+  // still subprocess. See `InProcess` comment at:
+  // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
+  //
+  // Note the subprocessing will effectively call `clang -cc1`, which turns
+  // into `carbon-busybox clang -cc1`, which results in an equivalent
+  // `clang_main` call.
+  //
+  // Also note that we only do `-disable-free` filtering in the in-process
+  // execution here, as subprocesses leaking memory won't impact this process.
+  auto cc1_main = [this, enable_leaking](
+                      llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+    return RunClangCC1(cc1_args, enable_leaking);
+  };
+  driver.CC1Main = cc1_main;
+
+  std::unique_ptr<clang::driver::Compilation> compilation(
+      driver.BuildCompilation(cstr_args));
+  CARBON_CHECK(compilation, "Should always successfully allocate!");
+  if (compilation->containsError()) {
+    // These should have been diagnosed by the driver.
+    return false;
+  }
+
+  // Make sure our target detection matches Clang's. Sadly, we can't just
+  // reuse Clang's as it is available too late.
+  // TODO: Use nice diagnostics here rather than a check failure.
+  CARBON_CHECK(llvm::Triple(target) == llvm::Triple(driver.getTargetTriple()),
+               "Mismatch between the expected target '{0}' and the one "
+               "computed by Clang '{1}'",
+               target, driver.getTargetTriple());
+
+  CARBON_VLOG("Running Clang driver...\n");
+
+  result = driver.ExecuteCompilation(*compilation, failing_commands);
 
   CARBON_VLOG("Execution result code: {0}\n", result);
   for (const auto& [command_result, failing_command] : failing_commands) {

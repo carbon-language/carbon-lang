@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/maybe_unformed";
 
+import library "prelude/default";
 import library "prelude/destroy";
 
 private fn MakeMaybeUnformed(t: type) -> type = "maybe_unformed.make_type";
@@ -12,3 +13,5 @@ private fn MakeMaybeUnformed(t: type) -> type = "maybe_unformed.make_type";
 class MaybeUnformed(T:! Destroy) {
   adapt MakeMaybeUnformed(T);
 }
+
+impl forall [T:! Destroy] MaybeUnformed(T) as UnformedInit {}

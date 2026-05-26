@@ -232,6 +232,9 @@ inline constexpr int32_t IntId::NoneIndex = None.AsIndex();
 // an array of `APInt` values and represented as an index in the ID.
 class IntStore {
  public:
+  // We rely on `APInt` values having a minimum bit width.
+  static constexpr int MinAPWidth = 64;
+
   // The maximum supported bit width of an integer type.
   // TODO: Pick a maximum size and document it in the design. For now
   // we use 2^^23, because that's the largest size that LLVM supports.
@@ -370,8 +373,6 @@ class IntStore {
     using IdBase::IdBase;
   };
 
-  static constexpr int MinAPWidth = 64;
-
   static auto MakeIndexOrNone(int index) -> IntId {
     CARBON_DCHECK(index >= 0 && index <= IntId::NoneIndex);
     return IntId(IntId::ZeroIndexId - index);
@@ -430,6 +431,9 @@ class IntStore {
 
 inline constexpr IntStore::APIntId IntStore::APIntId::None(
     IntId::None.AsIndex());
+
+extern template class CanonicalValueStore<IntStore::APIntId, llvm::APInt>;
+extern template class ValueStore<IntStore::APIntId, llvm::APInt>;
 
 }  // namespace Carbon
 

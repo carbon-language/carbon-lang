@@ -5,6 +5,7 @@
 package Core library "prelude/types/string";
 
 import library "prelude/copy";
+import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/types/char";
 import library "prelude/types/uint";
@@ -23,6 +24,8 @@ class String {
   // TODO: This should be a word-sized integer.
   private var size: u64;
 }
+
+impl String as UnformedInit {}
 
 impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
   fn At[self: Self](subscript: T) -> Char = "string.at";

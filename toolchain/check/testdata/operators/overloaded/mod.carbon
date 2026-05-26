@@ -44,40 +44,40 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ModWith.type.8f8: type = facet_type <@ModWith, @ModWith(%C)> [concrete]
+// CHECK:STDOUT:   %ModWith.type.9f5: type = facet_type <@ModWith, @ModWith(%C)> [concrete]
 // CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness @C.as.ModWith.impl.%ModWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op.type: type = fn_type @C.as.ModWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op: %C.as.ModWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.8f8 = facet_value %C, (%ModWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %ModWith.WithSelf.Op.type.9b1: type = fn_type @ModWith.WithSelf.Op, @ModWith.WithSelf(%C, %ModWith.facet) [concrete]
-// CHECK:STDOUT:   %ModAssignWith.type.0a7: type = facet_type <@ModAssignWith, @ModAssignWith(%C)> [concrete]
+// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.9f5 = facet_value %C, (%ModWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %ModWith.WithSelf.Op.type.8ce: type = fn_type @ModWith.WithSelf.Op, @ModWith.WithSelf(%C, %ModWith.facet) [concrete]
+// CHECK:STDOUT:   %ModAssignWith.type.47b: type = facet_type <@ModAssignWith, @ModAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %ModAssignWith.impl_witness: <witness> = impl_witness @C.as.ModAssignWith.impl.%ModAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type: type = fn_type @C.as.ModAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op: %C.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.0a7 = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %ModAssignWith.WithSelf.Op.type.12e: type = fn_type @ModAssignWith.WithSelf.Op, @ModAssignWith.WithSelf(%C, %ModAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.e8e: type = fn_type_with_self_type %ModWith.WithSelf.Op.type.9b1, %ModWith.facet [concrete]
-// CHECK:STDOUT:   %ptr.872: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.5a7: type = fn_type_with_self_type %ModAssignWith.WithSelf.Op.type.12e, %ModAssignWith.facet [concrete]
+// CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.47b = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %ModAssignWith.WithSelf.Op.type.bba: type = fn_type @ModAssignWith.WithSelf.Op, @ModAssignWith.WithSelf(%C, %ModAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.5b1: type = fn_type_with_self_type %ModWith.WithSelf.Op.type.8ce, %ModWith.facet [concrete]
+// CHECK:STDOUT:   %ptr.ec1: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %.043: type = fn_type_with_self_type %ModAssignWith.WithSelf.Op.type.bba, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.e8e = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%C.as.ModWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.5b1 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%C.as.ModWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.ModWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.872, %b.param: %C) {
+// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.ec1, %b.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %ptr.872 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %ptr.ec1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.5a7 = impl_witness_access constants.%ModAssignWith.impl_witness, element0 [concrete = constants.%C.as.ModAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.043 = impl_witness_access constants.%ModAssignWith.impl_witness, element0 [concrete = constants.%C.as.ModAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>

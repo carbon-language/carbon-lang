@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_EVAL_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -51,13 +52,11 @@ auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
 
 // Evaluates the eval block for a region of a specific. Produces a block
 // containing the evaluated constant values of the instructions in the eval
-// block.
-//
-// TODO: Return whether any of the instructions produced contain an ErrorInst.
+// block. The returned bool indicates whether the region has an error.
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
-    -> SemIR::InstBlockId;
+    -> std::pair<SemIR::InstBlockId, bool>;
 
 }  // namespace Carbon::Check
 

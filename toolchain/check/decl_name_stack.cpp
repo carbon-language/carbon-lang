@@ -140,6 +140,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
       return;
 
     case NameContext::State::Unresolved:
+    case NameContext::State::Poisoned:
       if (!name_context.parent_scope_id.has_value()) {
         AddNameToLookup(*context_, name_context.name_id, target_id,
                         name_context.initial_scope_index);

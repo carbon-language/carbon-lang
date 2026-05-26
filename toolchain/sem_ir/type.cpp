@@ -15,7 +15,8 @@ CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) {
 };
 
 // Verify that the constant value's type is `TypeType` (or an error).
-static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
+static auto CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id)
+    -> void {
   CARBON_CHECK(constant_id.is_constant(),
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
@@ -35,7 +36,7 @@ auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
 auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
     -> TypeId {
   if (constant_id == SemIR::ErrorInst::ConstantId) {
-    return TypeId::None;
+    return SemIR::ErrorInst::TypeId;
   }
   auto type_id = file_->insts()
                      .Get(file_->constant_values().GetInstId(constant_id))
@@ -55,6 +56,11 @@ auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
 auto TypeStore::GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
   return TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::TryGetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
+  auto constant_id = file_->constant_values().Get(inst_id);
+  return TryGetTypeIdForTypeConstantId(constant_id);
 }
 
 auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {

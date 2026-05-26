@@ -368,6 +368,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~
 //   1. Import
 //
+// inline ...
+// ^~~~~~
+//   1. InlineDeclAfterIntroducer (variant is Regular)
+//
 // interface ...
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
@@ -404,10 +408,6 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~
 //   1. VarAsRegular
 //
-// var ...        (variant is Class)
-// ^~~
-//   1. FieldDecl
-//
 // ;
 // ^
 //   (state done)
@@ -432,6 +432,13 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 //   2. DeclScopeLoopAs(Class|Interface|Regular)
 //
 CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface, Regular)
+
+// Handles processing of an inline declaration.
+//
+// inline Cpp "..." ;
+//        ^~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(InlineDeclAfterIntroducer)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
@@ -983,6 +990,7 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
 // ... , )  (variant is Tuple)
 //     ^
 //   (state done)
+//   SPECIAL: parent becomes PatternListFinishAsTuple
 //
 // ... , ]  (variant is Implicit)
 //     ^
@@ -991,6 +999,7 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
 // ... , ...
 //     ^
 //   1. PatternListElementAs(Tuple|Explicit|Implicit)
+//   SPECIAL (variant is Tuple): parent becomes PatternListFinishAsTuple
 //
 // ...
 //    ^
@@ -1007,22 +1016,28 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElementFinish, Tuple, Explicit,
 // ^
 //   1. PatternListFinishAs(Tuple|Explicit|Implicit)
 //
-// ( ... )    (variant is Tuple or Explicit)
+// ( ... )    (variant is Explicit)
 // ^
 // [ ... ]    (variant is Implicit)
 // ^
-//   1. PatternListElementAs(Tuple|Explicit|Implicit)
-//   2. PatternListFinishAs(Tuple|Explicit|Implicit)
+//   1. PatternListElementAs(Explicit|Implicit)
+//   2. PatternListFinishAs(Explicit|Implicit)
+//
+// ( ... )    (variant is Tuple)
+// ^
+//   1. PatternListElementAsTuple
+//   2. PatternListFinishAsParen             (SPECIAL: may be replaced)
 CARBON_PARSE_STATE_VARIANTS3(PatternList, Tuple, Explicit, Implicit)
 
 // Handles processing of a parameter list `]` or `)`.
 //
-// ( ... )    (variant is Tuple or Explicit)
+// ( ... )    (variant is Paren, Tuple or Explicit)
 //       ^
 // [ ... ]    (variant is Implicit)
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(PatternListFinish, Tuple, Explicit, Implicit)
+CARBON_PARSE_STATE_VARIANTS4(PatternListFinish, Paren, Tuple, Explicit,
+                             Implicit)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
@@ -1137,14 +1152,30 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //
 //   1. VariablePattern
 //
-//  ...
+//  unused ...
+// ^
+//   1. UnusedPattern
+//
+//  [identifier|self] [:|:!|:?]
+// ^
+//  template ...
+// ^
+//  ref ...
 // ^
 //   1. BindingPattern
 //
 //  ...
 // ^
-//   1. UnusedPattern
+//   1. Expr
+//   2. ExprPattern
 CARBON_PARSE_STATE(Pattern)
+
+// Tracks that we are parsing an expression as an expression pattern.
+//
+//  ...
+// ^
+//   (state done)
+CARBON_PARSE_STATE(ExprPattern)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
@@ -1595,14 +1626,14 @@ CARBON_PARSE_STATE(ObserveDecl)
 // var ...             (variant is Regular)
 //    ^
 //   1. Pattern
-//   2. VarAfterPatternAsVar
-//   3. VarFinishAsRegular
+//   2. VarAfterPattern
+//   3. VarFinish
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. Pattern
-//   2. VarAfterPatternAsVar
-//   3. VarFinishAsRegular
+//   2. VarAfterPattern
+//   3. VarFinish
 //
 // returned ??? ;      (variant is Returned)
 // ^~~~~~~~~~~~~~
@@ -1621,7 +1652,7 @@ CARBON_PARSE_STATE_VARIANTS2(Var, Regular, Returned)
 // var ... ...
 //        ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
+CARBON_PARSE_STATE(VarAfterPattern)
 
 // Handles `var` parsing at the end.
 //
@@ -1630,22 +1661,7 @@ CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
 // var ... ??? ;
 //         ^~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Regular, Field)
-
-// Handles the beginning of a field declaration (`var` in a class context).
-//
-// var name : type
-//     ^~~~~~
-//   1. Expr
-//   2. VarAfterPatternAsField
-//   3. VarFinishAsField
-//
-// var ??? ;
-//     ^~~~~
-// var name ??? ;
-//     ^~~~~~~~~
-//   (state done)
-CARBON_PARSE_STATE(FieldDecl)
+CARBON_PARSE_STATE(VarFinish)
 
 // Handles the start of a `let`.
 //
