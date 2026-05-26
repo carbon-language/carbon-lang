@@ -47,7 +47,6 @@ fn CompareCharChar(a: char, b: char) {
 }
 
 fn CompareCharCharLike(a: char, b: CharLike) {
-  // TODO: `b` converted twice.
   Discard(a == b);
   Discard(a != b);
   Discard(a < b);
@@ -65,7 +64,6 @@ fn CompareCharCharLike(a: char, b: CharLike) {
 
 fn SubCharChar(c: char, d: CharLike) {
   Discard(c - c);
-  // TODO: `d` converted twice
   Discard(c - d);
   Discard(d - c);
 }
@@ -168,29 +166,23 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCompareCharCharLike.Main(i8 %a, ptr %b) #0 !dbg !60 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc51_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !66
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc51_16 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !67
-// CHECK:STDOUT:   %char.as.EqWith.impl.Equal.call = icmp eq i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc51_16, !dbg !66
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc51 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !66
+// CHECK:STDOUT:   %char.as.EqWith.impl.Equal.call = icmp eq i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc51, !dbg !67
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.EqWith.impl.Equal.call), !dbg !68
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc52_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !69
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc52_16 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !70
-// CHECK:STDOUT:   %char.as.EqWith.impl.NotEqual.call = icmp ne i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc52_16, !dbg !69
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc52 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !69
+// CHECK:STDOUT:   %char.as.EqWith.impl.NotEqual.call = icmp ne i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc52, !dbg !70
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.EqWith.impl.NotEqual.call), !dbg !71
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc53_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !72
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc53_15 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !73
-// CHECK:STDOUT:   %char.as.OrderedWith.impl.Less.call = icmp ult i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc53_15, !dbg !72
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc53 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !72
+// CHECK:STDOUT:   %char.as.OrderedWith.impl.Less.call = icmp ult i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc53, !dbg !73
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.OrderedWith.impl.Less.call), !dbg !74
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc54_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !75
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc54_16 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !76
-// CHECK:STDOUT:   %char.as.OrderedWith.impl.LessOrEquivalent.call = icmp ule i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc54_16, !dbg !75
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc54 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !75
+// CHECK:STDOUT:   %char.as.OrderedWith.impl.LessOrEquivalent.call = icmp ule i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc54, !dbg !76
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.OrderedWith.impl.LessOrEquivalent.call), !dbg !77
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc55_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !78
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc55_15 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !79
-// CHECK:STDOUT:   %char.as.OrderedWith.impl.Greater.call = icmp ugt i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc55_15, !dbg !78
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc55 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !78
+// CHECK:STDOUT:   %char.as.OrderedWith.impl.Greater.call = icmp ugt i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc55, !dbg !79
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.OrderedWith.impl.Greater.call), !dbg !80
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc56_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !81
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc56_16 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !82
-// CHECK:STDOUT:   %char.as.OrderedWith.impl.GreaterOrEquivalent.call = icmp uge i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc56_16, !dbg !81
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc56 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !81
+// CHECK:STDOUT:   %char.as.OrderedWith.impl.GreaterOrEquivalent.call = icmp uge i8 %a, %CharLike.as.ImplicitAs.impl.Convert.call.loc56, !dbg !82
 // CHECK:STDOUT:   call void @_CDiscard.Main.a4c7fafe8a72cac4(i1 %char.as.OrderedWith.impl.GreaterOrEquivalent.call), !dbg !83
 // CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc58 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %b), !dbg !84
 // CHECK:STDOUT:   %T.as_type.as.EqWith.impl.Equal.call = icmp eq i8 %CharLike.as.ImplicitAs.impl.Convert.call.loc58, %a, !dbg !84
@@ -218,9 +210,8 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %char.as.SubWith.impl.Op.call.loc67 = call i32 @"_COp.Char.Core:SubWith.c874720ad95c181a.Core"(i8 %c, i8 %c), !dbg !101
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.SubWith.impl.Op.call.loc67), !dbg !102
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc69_13 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %d), !dbg !103
-// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc69_15 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %d), !dbg !104
-// CHECK:STDOUT:   %char.as.SubWith.impl.Op.call.loc69 = call i32 @"_COp.Char.Core:SubWith.bc6f0b889317533c.Core.fdda5ce961c25016"(i8 %c, i8 %CharLike.as.ImplicitAs.impl.Convert.call.loc69_15), !dbg !103
+// CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc69 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %d), !dbg !103
+// CHECK:STDOUT:   %char.as.SubWith.impl.Op.call.loc69 = call i32 @"_COp.Char.Core:SubWith.bc6f0b889317533c.Core.fdda5ce961c25016"(i8 %c, i8 %CharLike.as.ImplicitAs.impl.Convert.call.loc69), !dbg !104
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.SubWith.impl.Op.call.loc69), !dbg !105
 // CHECK:STDOUT:   %CharLike.as.ImplicitAs.impl.Convert.call.loc70 = call i8 @"_CConvert.CharLike.Main:ImplicitAs.c874720ad95c181a.Core"(ptr %d), !dbg !106
 // CHECK:STDOUT:   %T.as_type.as.SubWith.impl.Op.call = call i32 @"_COp.20e1d1146f520ad7:SubWith.c874720ad95c181a.Core.fdda5ce961c25016"(i8 %CharLike.as.ImplicitAs.impl.Convert.call.loc70, i8 %c), !dbg !106
@@ -647,23 +638,23 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !63 = !{!64, !65}
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !60, type: !7)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 2, scope: !60, type: !8)
-// CHECK:STDOUT: !66 = !DILocation(line: 51, column: 11, scope: !60)
-// CHECK:STDOUT: !67 = !DILocation(line: 51, column: 16, scope: !60)
+// CHECK:STDOUT: !66 = !DILocation(line: 51, column: 16, scope: !60)
+// CHECK:STDOUT: !67 = !DILocation(line: 51, column: 11, scope: !60)
 // CHECK:STDOUT: !68 = !DILocation(line: 51, column: 3, scope: !60)
-// CHECK:STDOUT: !69 = !DILocation(line: 52, column: 11, scope: !60)
-// CHECK:STDOUT: !70 = !DILocation(line: 52, column: 16, scope: !60)
+// CHECK:STDOUT: !69 = !DILocation(line: 52, column: 16, scope: !60)
+// CHECK:STDOUT: !70 = !DILocation(line: 52, column: 11, scope: !60)
 // CHECK:STDOUT: !71 = !DILocation(line: 52, column: 3, scope: !60)
-// CHECK:STDOUT: !72 = !DILocation(line: 53, column: 11, scope: !60)
-// CHECK:STDOUT: !73 = !DILocation(line: 53, column: 15, scope: !60)
+// CHECK:STDOUT: !72 = !DILocation(line: 53, column: 15, scope: !60)
+// CHECK:STDOUT: !73 = !DILocation(line: 53, column: 11, scope: !60)
 // CHECK:STDOUT: !74 = !DILocation(line: 53, column: 3, scope: !60)
-// CHECK:STDOUT: !75 = !DILocation(line: 54, column: 11, scope: !60)
-// CHECK:STDOUT: !76 = !DILocation(line: 54, column: 16, scope: !60)
+// CHECK:STDOUT: !75 = !DILocation(line: 54, column: 16, scope: !60)
+// CHECK:STDOUT: !76 = !DILocation(line: 54, column: 11, scope: !60)
 // CHECK:STDOUT: !77 = !DILocation(line: 54, column: 3, scope: !60)
-// CHECK:STDOUT: !78 = !DILocation(line: 55, column: 11, scope: !60)
-// CHECK:STDOUT: !79 = !DILocation(line: 55, column: 15, scope: !60)
+// CHECK:STDOUT: !78 = !DILocation(line: 55, column: 15, scope: !60)
+// CHECK:STDOUT: !79 = !DILocation(line: 55, column: 11, scope: !60)
 // CHECK:STDOUT: !80 = !DILocation(line: 55, column: 3, scope: !60)
-// CHECK:STDOUT: !81 = !DILocation(line: 56, column: 11, scope: !60)
-// CHECK:STDOUT: !82 = !DILocation(line: 56, column: 16, scope: !60)
+// CHECK:STDOUT: !81 = !DILocation(line: 56, column: 16, scope: !60)
+// CHECK:STDOUT: !82 = !DILocation(line: 56, column: 11, scope: !60)
 // CHECK:STDOUT: !83 = !DILocation(line: 56, column: 3, scope: !60)
 // CHECK:STDOUT: !84 = !DILocation(line: 58, column: 11, scope: !60)
 // CHECK:STDOUT: !85 = !DILocation(line: 58, column: 3, scope: !60)
@@ -684,8 +675,8 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 2, scope: !97, type: !8)
 // CHECK:STDOUT: !101 = !DILocation(line: 67, column: 11, scope: !97)
 // CHECK:STDOUT: !102 = !DILocation(line: 67, column: 3, scope: !97)
-// CHECK:STDOUT: !103 = !DILocation(line: 69, column: 11, scope: !97)
-// CHECK:STDOUT: !104 = !DILocation(line: 69, column: 15, scope: !97)
+// CHECK:STDOUT: !103 = !DILocation(line: 69, column: 15, scope: !97)
+// CHECK:STDOUT: !104 = !DILocation(line: 69, column: 11, scope: !97)
 // CHECK:STDOUT: !105 = !DILocation(line: 69, column: 3, scope: !97)
 // CHECK:STDOUT: !106 = !DILocation(line: 70, column: 11, scope: !97)
 // CHECK:STDOUT: !107 = !DILocation(line: 70, column: 3, scope: !97)
