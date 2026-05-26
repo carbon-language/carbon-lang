@@ -64,11 +64,14 @@ The following words are interpreted as keywords:
 -   `else`
 -   `export`
 -   `extend`
+-   `exttype`
 -   `final`
 -   `fn`
 -   `for`
 -   `forall`
 -   `friend`
+-   `fwd`
+-   `generic`
 -   `if`
 -   `impl`
 -   `impls`
@@ -92,6 +95,7 @@ The following words are interpreted as keywords:
 -   `require`
 -   `return`
 -   `returned`
+-   `runtime`
 -   `Self`
 -   `self`
 -   `template`
