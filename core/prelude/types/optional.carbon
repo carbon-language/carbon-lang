@@ -14,7 +14,7 @@ import library "prelude/types/maybe_unformed";
 
 // TODO: Decide how to expose this in the public API.
 private interface OptionalStorage {
-  let Type:! type;
+  let Type:! Destroy;
   fn None() -> Type;
   fn Some[self: Self]() -> Type;
   fn Has(value: Type) -> bool;

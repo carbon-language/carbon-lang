@@ -5,6 +5,7 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -150,6 +151,20 @@ static auto CanDestroyClass(
     return DestroyFormat::NoDestroy;
   }
 
+  // Evaluate the class definition block under the specific so `GetObjectRepr`
+  // is able to correctly determine whether the type can be destroyed.
+  if (class_type.specific_id.has_value() &&
+      class_info.complete_type_witness_id.has_value()) {
+    auto witness_const_id = context.constant_values().GetAttached(
+        class_info.complete_type_witness_id);
+    if (witness_const_id.is_symbolic()) {
+      const auto& symbolic =
+          context.constant_values().GetSymbolicConstant(witness_const_id);
+      TryEvalBlockForSpecific(context, loc_id, class_type.specific_id,
+                              symbolic.index.region());
+    }
+  }
+
   auto object_repr_id =
       class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   return HasWitnessForOneField(context, loc_id,
@@ -213,8 +228,8 @@ static auto CanDestroyType(
     }
 
     case SemIR::Call::Kind:
-      // TODO: These seem like they shouldn't be getting directly queried for
-      // destroy. The use is in a test that was TODO before this TODO.
+      // Dependent type constructor calls that cannot be resolved under the
+      // generic context.
       return DestroyFormat::NoDestroy;
 
     case CARBON_KIND(SemIR::ClassType class_type): {
