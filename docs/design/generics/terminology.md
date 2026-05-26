@@ -364,10 +364,9 @@ cases, we are concerned with the type value after the implicit conversion.
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
-[compile-time binding pattern](#bindings) (using `:!` with or without the
-`template` modifier) where the declared type is a [facet type](#facet-type). In
-the binding pattern `T:! Hashable`, `T` is a facet binding, and the value of `T`
-is a [facet](#facet).
+[compile-time binding pattern](#bindings) where the declared type is a
+[facet type](#facet-type). In the binding pattern `generic T: Hashable`, `T` is
+a facet binding, and the value of `T` is a [facet](#facet).
 
 ## Deduced parameter
 

@@ -282,9 +282,9 @@ let n: i32 = p->(e);
 
 ### Values
 
-If the first operand is not a type, form, package, namespace, or facet, it does
-not have member names, and a search is performed into the type of the first
-operand instead.
+If the first operand is not a type, extended type, facet, package, or namespace,
+it does not have member names, and a search is performed into the type of the
+first operand instead.
 
 ```carbon
 interface Printable {
