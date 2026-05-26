@@ -797,10 +797,6 @@ auto SourceGen::GenerateFunctionDecl(
   os << indent << "// TODO: make better comment text\n";
   if (!IsCpp()) {
     os << indent << (is_private ? "private " : "") << "fn " << name;
-
-    if (is_method) {
-      os << "[self: Self]";
-    }
   } else {
     os << indent;
     if (!is_method) {
@@ -815,10 +811,19 @@ auto SourceGen::GenerateFunctionDecl(
       (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
     os << "\n" << indent << "    ";
   }
+  // For Carbon methods, `self` is the first explicit parameter. Its type is
+  // omitted, which defaults it to `Self`.
+  bool is_carbon_method = is_method && !IsCpp();
+  if (is_carbon_method) {
+    os << "self";
+  }
   UniqueIdentifierPopper unique_param_names(*this, param_names);
   for (int i : llvm::seq(param_count)) {
-    if (i > 0) {
-      if ((i % MaxParamsPerLine) == 0) {
+    // `self` occupies the first slot for Carbon methods, so shift the index
+    // used for separators and line wrapping.
+    int slot = i + (is_carbon_method ? 1 : 0);
+    if (slot > 0) {
+      if ((slot % MaxParamsPerLine) == 0) {
         os << ",\n" << indent << "    ";
       } else {
         os << ", ";

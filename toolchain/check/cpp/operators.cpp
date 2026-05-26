@@ -329,7 +329,7 @@ static auto GetConversionSignatureToImport(
     // Otherwise, the initialization is calling a conversion function
     // `Source::operator Dest`:
     //
-    //   fn Source.<conversion function>[self: Source]() -> Dest;
+    //   fn Source.<conversion function>(self: Source) -> Dest;
     auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
     self_expr = arg_expr;
     arg_exprs = {};

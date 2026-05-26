@@ -15,11 +15,14 @@
 
 namespace Carbon::Check {
 
-// Returns the ID of the self parameter pattern, or None.
-// TODO: Do this during initial traversal of implicit params.
+// Returns the ID of the self parameter pattern, or None. `self` is declared as
+// the first explicit parameter. The implicit parameter list is also searched
+// for error recovery: declaring `self` there is diagnosed, but we still
+// recognize it as `self` afterwards.
+// TODO: Do this during initial traversal of the parameters.
 auto FindSelfPattern(Context& context,
-                     SemIR::InstBlockId implicit_param_patterns_id)
-    -> SemIR::InstId;
+                     SemIR::InstBlockId implicit_param_patterns_id,
+                     SemIR::InstBlockId param_patterns_id) -> SemIR::InstId;
 
 // Creates suitable return patterns for the given return form, and adds them to
 // the current pattern block.
@@ -35,8 +38,7 @@ auto IsValidBuiltinDeclaration(Context& context,
 struct FunctionDeclArgs {
   SemIR::NameScopeId parent_scope_id;
   SemIR::NameId name_id;
-  // The type of the implicit `[self: Self]` parameter, or `None` if there is
-  // none.
+  // The type of the leading `self` parameter, or `None` if there is none.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
   // The kind of the `self` parameter.
   ParamPatternKind self_kind = ParamPatternKind::Ref;

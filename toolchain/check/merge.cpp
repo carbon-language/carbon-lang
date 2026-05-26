@@ -482,6 +482,38 @@ static auto CheckRedeclParamSyntax(Context& context,
       prev_node_kind = context.parse_tree().node_kind(prev_node_id);
     }
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // A `self` binding must spell its type the same way (`self` vs.
+      // `self: Self`) in a redeclaration as in the previous declaration. The
+      // omitted form is a single `SelfBindingPattern`; the explicit form is a
+      // `SelfTypeNameExpr` followed by a `LetBindingPattern`. A mismatch is
+      // diagnosed, but we recover by treating the two forms as matching,
+      // skipping the extra type node on the explicit side.
+      bool new_self_omits_type =
+          new_node_kind == Parse::NodeKind::SelfBindingPattern &&
+          prev_node_kind == Parse::NodeKind::SelfTypeNameExpr;
+      bool prev_self_omits_type =
+          prev_node_kind == Parse::NodeKind::SelfBindingPattern &&
+          new_node_kind == Parse::NodeKind::SelfTypeNameExpr;
+      if (new_self_omits_type || prev_self_omits_type) {
+        if (diagnose) {
+          CARBON_DIAGNOSTIC(
+              RedeclParamSelfSyntaxDiffers, Error,
+              "redeclaration differs in whether the `self` type is written "
+              "explicitly");
+          CARBON_DIAGNOSTIC(RedeclParamSelfSyntaxPrevious, Note,
+                            "comparing with previous declaration here");
+          context.emitter()
+              .Build(new_node_id, RedeclParamSelfSyntaxDiffers)
+              .Note(prev_node_id, RedeclParamSelfSyntaxPrevious)
+              .Emit();
+        }
+        if (new_self_omits_type) {
+          ++prev_iter;
+        } else {
+          ++new_iter;
+        }
+        continue;
+      }
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
@@ -543,13 +575,14 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
           self_type_override_id)) {
     return false;
   }
-  // Don't forward `self_type_override_id` here because it's extra cost, and
-  // `self` is only allowed in implicit params.
+  // `self` is the first explicit parameter, so forward `self_type_override_id`
+  // here. `CheckRedeclParam` identifies the `self` parameter by name, so this
+  // applies the override wherever `self` appears.
   if (!CheckRedeclParams(context, new_entity.loc_id,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, check_syntax, SemIR::TypeId::None)) {
+                         diagnose, check_syntax, self_type_override_id)) {
     return false;
   }
   if (check_syntax &&

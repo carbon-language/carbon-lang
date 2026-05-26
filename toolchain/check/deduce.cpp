@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -566,17 +567,22 @@ auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
-    SemIR::InstBlockId param_patterns_id,
-    [[maybe_unused]] SemIR::InstId self_id,
+    SemIR::InstBlockId param_patterns_id, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
                              enclosing_specific_id,
                              /*diagnose=*/true);
 
-  // Prepare to perform deduction of the explicit parameters against their
-  // arguments.
-  // TODO: Also perform deduction for type of self.
-  deduction.AddAll(param_patterns_id, arg_ids);
+  // Prepare to perform deduction of the parameters against the explicit
+  // arguments. When `self` is provided as the method-call receiver it is
+  // excluded here; otherwise it is deduced from the first explicit argument
+  // like any other parameter.
+  // TODO: Deduce the type of `self` from the receiver when it is provided that
+  // way.
+  deduction.AddAll(
+      SemIR::CallArgParamPatterns(context.sem_ir(), param_patterns_id,
+                                  self_id.has_value()),
+      arg_ids);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

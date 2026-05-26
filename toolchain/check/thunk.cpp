@@ -227,17 +227,21 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   // Clone the signature.
   context.pattern_block_stack().Push();
   auto implicit_param_patterns_id = ClonePatternBlock(
-      context, signature_specific_id, signature.implicit_param_patterns_id,
-      signature_self_type_override_id);
+      context, signature_specific_id, signature.implicit_param_patterns_id);
+  // The `self` type override applies to the `self` parameter, which is the
+  // first explicit parameter; `ClonePattern` applies it only to a `self`
+  // binding.
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
-                                             signature.param_patterns_id);
+                                             signature.param_patterns_id,
+                                             signature_self_type_override_id);
   auto return_pattern_id =
       ClonePattern(context, signature_specific_id, signature.return_pattern_id);
   auto return_type_inst_id = CloneTypeInstId(context, signature_specific_id,
                                              signature.return_type_inst_id);
   auto return_form_inst_id = CloneInstId(context, signature_specific_id,
                                          signature.return_form_inst_id);
-  auto self_param_id = FindSelfPattern(context, implicit_param_patterns_id);
+  auto self_param_id =
+      FindSelfPattern(context, implicit_param_patterns_id, param_patterns_id);
   auto pattern_block_id = context.pattern_block_stack().Pop();
 
   // Perform callee-side pattern matching to rebuild the parameter list.

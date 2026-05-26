@@ -142,8 +142,8 @@ struct FunctionFields {
   // function.
   EvaluationMode evaluation_mode = EvaluationMode::None;
 
-  // The implicit self parameter pattern, if any, in
-  // implicit_param_patterns_id from EntityWithParamsBase.
+  // The `self` parameter pattern, if any. This is the first pattern in
+  // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use

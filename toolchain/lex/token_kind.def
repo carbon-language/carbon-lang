@@ -214,7 +214,8 @@ CARBON_KEYWORD_TOKEN(Ref,                 "ref")
 CARBON_KEYWORD_TOKEN(Return,              "return")
 CARBON_KEYWORD_TOKEN(Returned,            "returned")
 CARBON_KEYWORD_TOKEN(SelfTypeIdentifier,  "Self")
-CARBON_KEYWORD_TOKEN(SelfValueIdentifier, "self")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(SelfValueIdentifier, "self"))
 CARBON_KEYWORD_TOKEN(Static,              "static")
 // TODO: Although we provide a `str` type literal, it's not standardized.
 CARBON_KEYWORD_TOKEN(Str,                 "str")

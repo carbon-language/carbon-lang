@@ -996,6 +996,11 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
          .allow_unmarked_ref = true}));
   }
 
+  // `self` is matched separately above; if it is also the first explicit
+  // parameter, skip it in the parameter loop.
+  param_pattern_ids =
+      SemIR::ParamPatternsWithoutSelf(context.sem_ir(), param_pattern_ids);
+
   for (SemIR::InstId inst_id : param_pattern_ids) {
     inner_args.push_back(match.MatchWithResult(
         &state,
@@ -1035,7 +1040,11 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   CallerState state = {.callee_specific_id = specific_id};
   MatchContext match(context);
 
-  if (self_pattern_id.has_value()) {
+  // When `self` is provided as the method-call receiver, match it against the
+  // receiver here and exclude it from the explicit arguments below. Without a
+  // receiver, `self` is matched as the first explicit argument instead.
+  bool self_provided_as_receiver = self_arg_id.has_value();
+  if (self_pattern_id.has_value() && self_provided_as_receiver) {
     match.Match(&state,
                 {.pattern_id = self_pattern_id,
                  .work = MatchContext::PreWork{.scrutinee_id = self_arg_id},
@@ -1043,7 +1052,9 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   }
 
   for (auto [arg_id, param_pattern_id] : llvm::zip_equal(
-           arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id))) {
+           arg_refs,
+           SemIR::CallArgParamPatterns(context.sem_ir(), param_patterns_id,
+                                       self_provided_as_receiver))) {
     match.Match(&state, {.pattern_id = param_pattern_id,
                          .work = MatchContext::PreWork{.scrutinee_id = arg_id},
                          .allow_unmarked_ref = is_desugared});

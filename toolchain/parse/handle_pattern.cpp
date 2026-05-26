@@ -31,6 +31,13 @@ auto HandlePattern(Context& context) -> void {
                                   state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
+    case Lex::TokenKind::SelfValueIdentifier:
+      // `self` is always a binding, even when its type is omitted (and so is
+      // not followed by a `:`).
+      context.PushStateForPattern(StateKind::BindingPattern,
+                                  state.in_var_pattern, state.in_unused_pattern,
+                                  state.ambient_precedence);
+      break;
     default:
       if (context.PositionKind().is_word() &&
           context.PositionKind(Lookahead::NextToken)

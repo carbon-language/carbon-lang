@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -57,8 +58,9 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches.
-  auto params = context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+  // Check that the arity matches the explicit arguments.
+  auto params = SemIR::CallArgParamPatterns(
+      context.sem_ir(), entity.param_patterns_id, self_id.has_value());
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
@@ -258,8 +260,8 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_arg_id, callee, *callee_specific_id, is_desugared);
+      ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,
+                      callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
