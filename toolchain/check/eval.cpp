@@ -2744,7 +2744,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
   auto const_info = GetConstantFacetTypeInfo(
       eval_context, SemIR::LocId(where_inst_id), info, &phase);
-
   return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 
