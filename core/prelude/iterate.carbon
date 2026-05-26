@@ -13,15 +13,15 @@ interface Iterate {
   // TODO: Support iterating ranges of non-copyable values.
   let ElementType:! Copy & Destroy;
   let CursorType:! type;
-  fn NewCursor[self: Self]() -> CursorType;
-  fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);
+  fn NewCursor(self) -> CursorType;
+  fn Next(self, cursor: CursorType*) -> Optional(ElementType);
 }
 
 impl forall [T:! Copy & Destroy, N:! IntLiteral()]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
-  fn NewCursor[unused self: Self]() -> i32 { return 0; }
-  fn Next[self: Self](cursor: i32*) -> Optional(T) {
+  fn NewCursor(unused self) -> i32 { return 0; }
+  fn Next(self, cursor: i32*) -> Optional(T) {
     if (*cursor < N) {
       ++*cursor;
       return Optional(T).Some(self[*cursor - 1]);
@@ -34,6 +34,6 @@ impl forall [T:! Copy & Destroy, N:! IntLiteral()]
 interface CppRangeForIterate {
   let Iterator:! type;
   let Sentinel:! type;
-  fn Begin[ref self: Self]() -> Iterator;
-  fn End[ref self: Self]() -> Sentinel;
+  fn Begin(ref self) -> Iterator;
+  fn End(ref self) -> Sentinel;
 }

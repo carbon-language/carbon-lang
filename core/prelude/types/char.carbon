@@ -21,18 +21,18 @@ class Char {
 impl Char as UnformedInit {}
 
 impl Char as Copy {
-  fn Op[self: Self]() -> Self = "primitive_copy";
+  fn Op(self) -> Self = "primitive_copy";
 }
 
 impl CharLiteral() as ImplicitAs(Char) {
-  fn Convert[self: Self]() -> Char = "char.convert_checked";
+  fn Convert(self) -> Char = "char.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
 impl CharLiteral() as As(Char) {
-  fn Convert[self: Self]() -> Char = "char.convert_checked";
+  fn Convert(self) -> Char = "char.convert_checked";
 }
 
 impl forall [From:! IntLiteral()] UInt(From) as As(Char) {
-  fn Convert[self: Self]() -> Char = "int.convert_char";
+  fn Convert(self) -> Char = "int.convert_char";
 }
