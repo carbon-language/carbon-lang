@@ -75,9 +75,9 @@ fn G(T:! Z(.Self)) {
   // CHECK:STDERR: fail_concrete_impl_witness_access_in_type_structure.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Z(.Self)` into type implementing `Z(.Self) where C impls Z(C) and C.(Z(C).Z1) impls Y` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_concrete_impl_witness_access_in_type_structure.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_concrete_impl_witness_access_in_type_structure.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn F(unused T:! Z(.Self) where C impls (Z(C) where .Z1 impls Y)) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
