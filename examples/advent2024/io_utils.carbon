@@ -16,7 +16,7 @@ class CharOrEOF {
 }
 
 impl CharOrEOF as Core.Copy {
-  fn Op[self: Self]() -> Self {
+  fn Op(self) -> Self {
     return (self as i32).(Core.Copy.Op)() as Self;
   }
 }
@@ -28,40 +28,40 @@ fn CharOrEOF.EOF() -> Self {
 }
 
 impl forall [U:! Core.ImplicitAs(char)] U as Core.ImplicitAs(CharOrEOF) {
-  fn Convert[self: char]() -> CharOrEOF {
+  fn Convert(self: char) -> CharOrEOF {
     return ((self as u8) as i32) as CharOrEOF;
   }
 }
 
 impl forall [U:! Core.ImplicitAs(CharOrEOF)]
     CharOrEOF as Core.EqWith(U) {
-  fn Equal[self: Self](other: CharOrEOF) -> bool {
+  fn Equal(self, other: CharOrEOF) -> bool {
     return (self as i32) == (other as i32);
   }
-  fn NotEqual[self: Self](other: CharOrEOF) -> bool {
+  fn NotEqual(self, other: CharOrEOF) -> bool {
     return (self as i32) != (other as i32);
   }
 }
 
 impl forall [U:! Core.ImplicitAs(CharOrEOF)]
     CharOrEOF as Core.OrderedWith(U) {
-  fn Less[self: Self](other: CharOrEOF) -> bool {
+  fn Less(self, other: CharOrEOF) -> bool {
     return (self as i32) < (other as i32);
   }
-  fn LessOrEquivalent[self: Self](other: CharOrEOF) -> bool {
+  fn LessOrEquivalent(self, other: CharOrEOF) -> bool {
     return (self as i32) <= (other as i32);
   }
-  fn Greater[self: Self](other: CharOrEOF) -> bool {
+  fn Greater(self, other: CharOrEOF) -> bool {
     return (self as i32) > (other as i32);
   }
-  fn GreaterOrEquivalent[self: Self](other: CharOrEOF) -> bool {
+  fn GreaterOrEquivalent(self, other: CharOrEOF) -> bool {
     return (self as i32) >= (other as i32);
   }
 }
 
 impl forall [U:! Core.ImplicitAs(char)]
     CharOrEOF as Core.SubWith(U) where .Result = i32 {
-  fn Op[self: Self](other: char) -> i32 {
+  fn Op(self, other: char) -> i32 {
     return (self as i32) - ((other as u8) as i32);
   }
 }

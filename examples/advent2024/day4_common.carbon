@@ -29,12 +29,12 @@ class Wordsearch {
     return var;
   }
 
-  fn At[self: Self](x: i32, y: i32) -> i32 {
+  fn At(self, x: i32, y: i32) -> i32 {
     return if x < 0 or x >= 140 or y < 0 or y >= 140 then -1 else self.grid[x][y];
   }
 
   // TODO: Make this generic in the length of the search query.
-  fn Check4[self: Self](xmas: array(i32, 4), x: i32, y: i32, dx: i32, dy: i32) -> bool {
+  fn Check4(self, xmas: array(i32, 4), x: i32, y: i32, dx: i32, dy: i32) -> bool {
     var i: i32 = 0;
     while (i < 4) {
       if (self.At(x + i * dx, y + i * dy) != xmas[i]) {
@@ -45,7 +45,7 @@ class Wordsearch {
     return true;
   }
 
-  fn Check3[self: Self](mas: array(i32, 3), x: i32, y: i32, dx: i32, dy: i32) -> bool {
+  fn Check3(self, mas: array(i32, 3), x: i32, y: i32, dx: i32, dy: i32) -> bool {
     var i: i32 = 0;
     while (i < 3) {
       if (self.At(x + i * dx, y + i * dy) != mas[i]) {

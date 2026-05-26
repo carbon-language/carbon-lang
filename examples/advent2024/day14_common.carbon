@@ -35,13 +35,13 @@ class Robot {
     return var;
   }
 
-  fn Pos[self: Self](t: i32) -> (i32, i32) {
+  fn Pos(self, t: i32) -> (i32, i32) {
     return (Mod((self.p.0 + self.v.0 * Mod(t, 101)), 101),
             Mod((self.p.1 + self.v.1 * Mod(t, 103)), 103));
   }
 
   impl as Core.Copy {
-    fn Op[self: Self]() -> Self {
+    fn Op(self) -> Self {
       return {.p = self.p, .v = self.v};
     }
   }

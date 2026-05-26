@@ -6,17 +6,17 @@ library "sort";
 
 interface Ordered {
   // extend require impls Core.OrderedWith(Self);
-  fn Less[self: Self](other: Self) -> bool;
-  fn LessOrEquivalent[self: Self](other: Self) -> bool;
-  fn Greater[self: Self](other: Self) -> bool;
-  fn GreaterOrEquivalent[self: Self](other: Self) -> bool;
+  fn Less(self, other: Self) -> bool;
+  fn LessOrEquivalent(self, other: Self) -> bool;
+  fn Greater(self, other: Self) -> bool;
+  fn GreaterOrEquivalent(self, other: Self) -> bool;
 }
 
 impl i32 as Ordered {
-  fn Less[self: Self](other: Self) -> bool { return self < other; }
-  fn LessOrEquivalent[self: Self](other: Self) -> bool { return self <= other; }
-  fn Greater[self: Self](other: Self) -> bool { return self > other; }
-  fn GreaterOrEquivalent[self: Self](other: Self) -> bool { return self >= other; }
+  fn Less(self, other: Self) -> bool { return self < other; }
+  fn LessOrEquivalent(self, other: Self) -> bool { return self <= other; }
+  fn Greater(self, other: Self) -> bool { return self > other; }
+  fn GreaterOrEquivalent(self, other: Self) -> bool { return self >= other; }
 }
 
 fn Swap[T:! Core.Copy & Core.Destroy](ref from: T, ref to: T) {

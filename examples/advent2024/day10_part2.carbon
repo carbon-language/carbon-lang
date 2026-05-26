@@ -25,7 +25,7 @@ class PathsToTop {
     return var;
   }
 
-  fn AddLevel[ref self: Self](terrain: Terrain, level: i32) -> i64 {
+  fn AddLevel(ref self, terrain: Terrain, level: i32) -> i64 {
     var total: i64 = 0;
     let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     for (y: i32 in Core.Range(43)) {
