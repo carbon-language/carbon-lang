@@ -526,10 +526,10 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 
 auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   const llvm::Target* target;
-  if (auto t = options_.compile.ValidateTarget(driver_env.emitter); t.ok()) {
-    target = *t;
-  } else {
+  if (auto t = options_.compile.ValidateTarget(driver_env.emitter); !t.ok()) {
     return {.success = false};
+  } else {
+    target = *t;
   }
 
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
@@ -541,35 +541,35 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       return {.success = false};
     }
 
-    if (auto i = options_.compile.BuildClangInvocation(driver_env); i.ok()) {
-      clang_invocation = *i;
-    } else {
+    if (auto i = options_.compile.BuildClangInvocation(driver_env); !i.ok()) {
       return {.success = false};
+    } else {
+      clang_invocation = *i;
     }
   }
 
   // TODO: automatic prelude resolution.
   llvm::SmallVector<std::string> prelude;
-  if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
-    prelude = std::move(*find);
-  } else {
+  if (auto find = driver_env.installation->ReadPreludeManifest(); !find.ok()) {
     // TODO: Change ReadPreludeManifest to produce diagnostics.
     CARBON_DIAGNOSTIC(BuildPreludeManifestError, Error, "{0}", std::string);
     driver_env.emitter.Emit(BuildPreludeManifestError,
                             PrintToString(find.error()));
     return {.success = false};
+  } else {
+    prelude = std::move(*find);
   }
 
   std::optional<Filesystem::RemovingDir> temp_dir = std::nullopt;
   if (options_.use_temp_dir) {
-    if (auto d = Filesystem::MakeTmpDir(); d.ok()) {
-      temp_dir = std::move(*d);
-    } else {
+    if (auto d = Filesystem::MakeTmpDir(); !d.ok()) {
       CARBON_DIAGNOSTIC(BuildTempDirectoryCreationError, Error, "{0}",
                         std::string);
       driver_env.emitter.Emit(BuildTempDirectoryCreationError,
                               PrintToString(d.error()));
       return {.success = false};
+    } else {
+      temp_dir = std::move(*d);
     }
   }
 
@@ -619,6 +619,15 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
 
     driver_env.consumer.Flush();
+  });
+
+  PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
+    driver_env.consumer.set_stream(&out);
+    for (auto& unit : units) {
+      unit->FlushForStackTrace();
+    }
+    driver_env.consumer.Flush();
+    driver_env.consumer.set_stream(driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever any of the compilation steps

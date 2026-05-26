@@ -993,10 +993,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Validate the target before passing it to Clang.
   const llvm::Target* target;
-  if (auto t = options_.shared.ValidateTarget(driver_env.emitter); t.ok()) {
-    target = *t;
-  } else {
+  if (auto t = options_.shared.ValidateTarget(driver_env.emitter); !t.ok()) {
     return {.success = false};
+  } else {
+    target = *t;
   }
 
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
@@ -1008,10 +1008,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       return {.success = false};
     }
 
-    if (auto i = options_.shared.BuildClangInvocation(driver_env); i.ok()) {
-      clang_invocation = *i;
-    } else {
+    if (auto i = options_.shared.BuildClangInvocation(driver_env); !i.ok()) {
       return {.success = false};
+    } else {
+      clang_invocation = *i;
     }
   }
 
@@ -1021,14 +1021,15 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   llvm::SmallVector<std::string> prelude;
   if (options_.prelude_import && !options_.custom_core &&
       options_.phase >= CompileOptions::Phase::Check) {
-    if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
-      prelude = std::move(*find);
-    } else {
+    if (auto find = driver_env.installation->ReadPreludeManifest();
+        !find.ok()) {
       // TODO: Change ReadPreludeManifest to produce diagnostics.
       CARBON_DIAGNOSTIC(CompilePreludeManifestError, Error, "{0}", std::string);
       driver_env.emitter.Emit(CompilePreludeManifestError,
                               PrintToString(find.error()));
       return {.success = false};
+    } else {
+      prelude = std::move(*find);
     }
   }
 
