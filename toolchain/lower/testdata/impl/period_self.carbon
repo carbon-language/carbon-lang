@@ -88,7 +88,7 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !4)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b4fc7929164fb220", scope: null, file: !13, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !13 = !DIFile(filename: "library_with_period_self_in_impl.carbon", directory: "")
