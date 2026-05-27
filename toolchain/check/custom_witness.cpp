@@ -4,6 +4,7 @@
 
 #include "toolchain/check/custom_witness.h"
 
+#include "llvm/ADT/APFloat.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -648,9 +649,34 @@ static auto MakeIntFitsInWitness(
   }
 
   auto src_info = context.types().TryGetIntTypeInfo(src_type_id);
-  auto dest_info = context.types().TryGetIntTypeInfo(dest_type_id);
+  if (!src_info) {
+    return std::nullopt;
+  }
 
-  if (!src_info || !dest_info) {
+  auto dest_info = context.types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_info) {
+    if (src_info->bit_width == IntId::None) {
+      return std::nullopt;
+    }
+    // Check if the destination is a floating-point type.
+    auto dest_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+    if (auto dest_float_type =
+            context.types().TryGetAs<SemIR::FloatType>(dest_object_rep_id)) {
+      const auto& src_width = context.ints().Get(src_info->bit_width);
+      unsigned int float_precision = llvm::APFloat::semanticsPrecision(
+          dest_float_type->float_kind.Semantics());
+      // For iN we need one fewer bit. We don't need to worry about the value
+      // -2^(N-1) needing all N bits, as it can always be represented exactly.
+      if (src_width.sgt(src_info->is_signed ? float_precision + 1
+                                            : float_precision)) {
+        return std::nullopt;
+      }
+      if (!build_witness) {
+        return SemIR::InstId::None;
+      }
+      return BuildCustomWitness(context, loc_id, query_self_const_id,
+                                query_specific_interface_id, {});
+    }
     return std::nullopt;
   }
 

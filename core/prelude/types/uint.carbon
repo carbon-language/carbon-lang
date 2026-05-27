@@ -10,6 +10,7 @@ import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
+import library "prelude/types/float_literal";
 
 private fn MakeUInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
 
@@ -58,8 +59,8 @@ impl forall [N:! IntLiteral()] UInt(N) as AnyUInt where .Width = N {
   fn AsUInt[self: Self]() -> Self { return self; }
 }
 
-// Work around the inability to constrain types other than `.Self` by reversing
-// the Self and argument type of `ImplicitAs`.
+// Work around the inability to apply constraints to an impl that is only
+// parameterized by integers, and the lack of support for `match_first`.
 // TODO: Remove this once possible.
 private interface FromUInt(From:! type) {
   fn Convert(from: From) -> Self;
@@ -99,6 +100,12 @@ final impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(Int(
 // Never implicit.
 impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(UInt(To)) {
   fn Convert[self: Self]() -> UInt(To) = "int.convert";
+}
+
+// Explicit conversion from floating-point literals.
+impl forall [To:! IntLiteral()]
+    FloatLiteral() as UnsafeAs(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "float.convert_int";
 }
 
 // Comparisons.

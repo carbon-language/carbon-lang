@@ -478,6 +478,15 @@ constexpr BuiltinInfo IntConvert = {"int.convert",
 constexpr BuiltinInfo IntConvertChecked = {
     "int.convert_checked", ValidateSignature<auto(AnyInt)->AnyInt>};
 
+// Converts an integer type to a floating-point type.
+constexpr BuiltinInfo IntConvertFloat = {
+    "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
+
+// Converts an integer type to a floating-point type, checking for loss of
+// precision.
+constexpr BuiltinInfo IntConvertFloatChecked = {
+    "int.convert_float_checked", ValidateSignature<auto(AnyInt)->AnyFloat>};
+
 // "int.snegate": integer negation.
 constexpr BuiltinInfo IntSNegate = {"int.snegate",
                                     ValidateSignature<auto(IntT)->IntT>};
@@ -698,6 +707,10 @@ constexpr BuiltinInfo FloatDivAssign = {
 constexpr BuiltinInfo FloatConvertChecked = {
     "float.convert_checked", ValidateSignature<auto(FloatT)->FloatU>};
 
+// Converts a floating-point type to an integer type.
+constexpr BuiltinInfo FloatConvertInt = {
+    "float.convert_int", ValidateSignature<auto(AnyFloat)->AnyInt>};
+
 // "float.eq": float equality comparison.
 constexpr BuiltinInfo FloatEq = {
     "float.eq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
@@ -842,11 +855,14 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case CharConvertChecked:
     case FloatConvertChecked:
     case IntConvertChecked:
+    case IntConvertFloatChecked:
       // Checked conversions are compile-time only.
       return true;
 
+    case FloatConvertInt:
     case IntConvert:
     case IntConvertChar:
+    case IntConvertFloat:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:

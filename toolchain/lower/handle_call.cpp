@@ -431,6 +431,26 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                         IsSignedInt(context, arg_ids[0])));
       return;
     }
+    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, arg_ids[0]);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateSIToFP(operand, dest_type)
+                       : context.builder().CreateUIToFP(operand, dest_type));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvertInt: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, inst_id);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateFPToSI(operand, dest_type)
+                       : context.builder().CreateFPToUI(operand, dest_type));
+      return;
+    }
 
     case SemIR::BuiltinFunctionKind::IntSNegate: {
       // Lower `-x` as `0 - x`.
@@ -549,7 +569,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+    case SemIR::BuiltinFunctionKind::IntConvertChecked:
+    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
