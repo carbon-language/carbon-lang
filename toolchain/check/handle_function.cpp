@@ -659,10 +659,15 @@ static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
                                                SemIR::FunctionId function_id)
     -> void {
   const auto& function = context.functions().Get(function_id);
-  if (function.param_patterns_id.has_value()) {
-    for (auto pattern_id :
-         context.inst_blocks().Get(function.param_patterns_id)) {
-      CheckUnusedBindingsInPattern(context, pattern_id);
+  // The `unused` modifier is not permitted on any parameter of a declaration.
+  // This includes a `self` parameter, which appears in the implicit parameter
+  // list.
+  for (auto param_patterns_id :
+       {function.implicit_param_patterns_id, function.param_patterns_id}) {
+    if (param_patterns_id.has_value()) {
+      for (auto pattern_id : context.inst_blocks().Get(param_patterns_id)) {
+        CheckUnusedBindingsInPattern(context, pattern_id);
+      }
     }
   }
 }
