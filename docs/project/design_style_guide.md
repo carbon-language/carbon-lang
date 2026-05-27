@@ -75,7 +75,7 @@ that were considered, along with references to the proposals in which those
 designs were discussed. For example:
 
 ```md
--   [Paint widgets from bottom to top](/proposals/p000123.md#alternatives-considered).
+-   [Paint widgets from bottom to top](/proposals/p000123-bikeshed-design.md#alternatives-considered).
 ```
 
 ### References

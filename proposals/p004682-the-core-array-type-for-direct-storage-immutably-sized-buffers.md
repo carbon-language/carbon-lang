@@ -281,7 +281,7 @@ that must be overcome by developers.
 ### No predeclared identifiers
 
 Recently the proposal
-[#4864: No predeclared identifiers, Core is a keyword](https://docs.carbon-lang.dev/proposals/p004864.html)
+[#4864: No predeclared identifiers, Core is a keyword](p004864-no-predeclared-identifiers-core-is-a-keyword.md)
 clarified a direction for the Carbon language, wherein there will not be
 implicit imports from the `Core` library. Anything accessible directly in the
 language, rather than through a package name, is done so through a builtin
@@ -359,7 +359,7 @@ placing it in the `prelude` library. This avoids the need for developers to
 
 Since array types are expected to be very frequent, we also propose an `array`
 builtin keyword as a shorthand. This is in line with the
-[No predeclared identifiers](https://docs.carbon-lang.dev/proposals/p004864.html)
+[No predeclared identifiers](p004864-no-predeclared-identifiers-core-is-a-keyword.md)
 proposal, and uses a lowercase spelling to mark the word as a builtin. The
 spelling of `array(T, N)` will resolve to the library type `Core.Array(T, N)`.
 
@@ -477,5 +477,5 @@ different things: The first is the keyword, and the second is a name that the
 developer can use freely for other purposes.
 
 The
-[No predeclared identifiers, Core is a keyword](https://docs.carbon-lang.dev/proposals/p004864.html)
+[No predeclared identifiers, Core is a keyword](p004864-no-predeclared-identifiers-core-is-a-keyword.md)
 proposal discusses in more detail why this approach was not taken.

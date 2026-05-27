@@ -60,7 +60,7 @@ explorer tests[^2][^3][^4].
 ## Background
 
 -   Previous proposal:
-    [#3532: Focus implementation effort on the toolchain](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003532-focus-implementation-effort-on-the-toolchain.md)
+    [#3532: Focus implementation effort on the toolchain](p003532-focus-implementation-effort-on-the-toolchain.md)
 -   Kick-off of this discussion
     [#5224](https://github.com/carbon-language/carbon-lang/pull/5224#pullrequestreview-2730512195)
 -   Discord discussion:
@@ -102,8 +102,7 @@ maintain searchability, the explorer codebase must either remain on `trunk` in
 `carbon-lang` or in a sibling repository. GitHub search does continue to work in
 archived repositories.
 
-Proposal
-[#3532](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003532-focus-implementation-effort-on-the-toolchain.md)
+Proposal [#3532](p003532-focus-implementation-effort-on-the-toolchain.md)
 directed to keep the explorer codebase active in the main repository, with its
 tests building and running:
 
