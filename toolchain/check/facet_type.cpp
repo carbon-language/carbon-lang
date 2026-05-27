@@ -242,6 +242,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       return SemIR::ErrorInst::InstId;
     }
 
+    // If we are substituting non-canonical instructions, some of them have no
+    // constant representation at all, and we want to preserve attachment of
+    // symbolic constants. So when we rebuild them, we must create a new
+    // non-canonical instruction.
     bool is_canon = context().constant_values().GetConstantInstId(
                         orig_inst_id) == orig_inst_id;
     auto inst_id =
