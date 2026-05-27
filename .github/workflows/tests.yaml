@@ -27,8 +27,9 @@ jobs:
       matrix.config.name) || '' }} (${{ matrix.runner }})
     strategy:
       matrix:
-        # Test a recent version of each supported OS.
-        runner: ['ubuntu-22.04', 'macos-14']
+        # Test a recent version of each supported OS, covering both x86-64 and
+        # AArch64: Linux on x86-64 and AArch64, and macOS on AArch64.
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-14']
         # Create a synthetic matrix dimension with the event name for filtering.
         event: ['${{ github.event_name }}']
         config:
