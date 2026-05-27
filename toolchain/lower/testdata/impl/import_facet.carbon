@@ -29,7 +29,7 @@ export import library "a";
 
 interface I {
   let T:! Core.Copy & Core.UnformedInit & Core.Destroy;
-  fn GetI[unused self: Self]() -> C(T);
+  fn GetI[self: Self]() -> C(T);
 }
 
 // --- c.carbon

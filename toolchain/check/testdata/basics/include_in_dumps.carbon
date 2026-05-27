@@ -31,7 +31,7 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 interface I {
-  fn Op[unused self: Self]();
+  fn Op[self: Self]();
 }
 //@dump-sem-ir-end
 
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 interface I {
-  fn Op[unused self: Self]();
+  fn Op[self: Self]();
 }
 //@dump-sem-ir-end
 
@@ -147,13 +147,13 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     %self.param_patt: @I.WithSelf.Op.%pattern_type (%pattern_type.d72) = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.Op.%pattern_type (%pattern_type.d72) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.Op.%Self.as_type.loc8_22.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [symbolic = %Self.as_type.loc8_22.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.Op.%Self.as_type.loc8_15.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc8_15.1: type = splice_block %.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc8_22.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_22.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc8_22.2: type = converted %Self.ref, %Self.as_type.loc8_22.2 [symbolic = %Self.as_type.loc8_22.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc8_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc8_15.2: type = converted %Self.ref, %Self.as_type.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.Op.%Self.as_type.loc8_22.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.Op.%Self.as_type.loc8_15.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -167,10 +167,10 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.Op(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc8_22.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_22.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc8_22.1 [symbolic = %pattern_type (constants.%pattern_type.d72)]
+// CHECK:STDOUT:   %Self.as_type.loc8_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc8_15.1 [symbolic = %pattern_type (constants.%pattern_type.d72)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.Op.%Self.as_type.loc8_22.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.Op.%Self.as_type.loc8_15.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -182,7 +182,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.Op(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc8_22.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -195,7 +195,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.Op(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.as_type.loc8_22.1 => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.da6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,11 +235,11 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//included_with_range, loc16_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.cb7 = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e95: %I.assoc_type = import_ref Main//included_with_range, loc8_29, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.e95: %I.assoc_type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.da386d.2: %I.type = import_ref Main//included_with_range, loc7_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.d94 = import_ref Main//included_with_range, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e14: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.47c) = import_ref Main//included_with_range, loc8_29, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.0b4)]
+// CHECK:STDOUT:   %Main.import_ref.e14: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.47c) = import_ref Main//included_with_range, loc8_22, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.0b4)]
 // CHECK:STDOUT:   %Main.import_ref.4b7: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.b9c: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.4ec: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
@@ -357,8 +357,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.bfd: %I.assoc_type = import_ref Main//excluded_with_range, loc6_29, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.import_ref.c83: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.360) = import_ref Main//excluded_with_range, loc6_29, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.e20)]
+// CHECK:STDOUT:   %Main.import_ref.bfd: %I.assoc_type = import_ref Main//excluded_with_range, loc6_22, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.c83: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.360) = import_ref Main//excluded_with_range, loc6_22, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.e20)]
 // CHECK:STDOUT:   %Main.import_ref.4cc: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_32, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.4cc), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
