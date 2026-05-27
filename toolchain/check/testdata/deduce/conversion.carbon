@@ -38,7 +38,7 @@ impl A as Core.ImplicitAs(type) {
 
 fn F(unused T:! type) {}
 
-// Requires a conversion from (type, type) -> type.
+// Requires a conversion from A -> type.
 fn G() {
   // This should only call `Convert` once, during deduction.
   //@dump-sem-ir-begin
