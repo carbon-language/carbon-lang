@@ -42,7 +42,7 @@ documentation.
 -   Links to specific sections of a proposal should link to the repository copy
     of the proposal file, using the section title or other appropriate link
     text. For example,
-    `[Painting details](/proposals/p000123.md#painting-details)`
+    `[Painting details](/proposals/p000123-bikeshed-design.md#painting-details)`
 
 ## Document structure
 
