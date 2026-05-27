@@ -33,7 +33,7 @@
 namespace Carbon {
 
 auto BuildSubcommandOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  compile.Build(b);
+  compile_options.BuildForBuildSubcommand(b);
   b.AddStringOption(
       {
           .name = "output",
@@ -361,9 +361,9 @@ auto CompilationUnit::RunLower() -> void {
     }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream = driver_env_->error_stream;
-    options.want_debug_info = options_->compile.include_debug_info;
+    options.want_debug_info = options_->compile_options.include_debug_info;
     options.vlog_stream = vlog_stream_;
-    options.opt_level = options_->compile.opt_level;
+    options.opt_level = options_->compile_options.opt_level;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
@@ -378,7 +378,7 @@ auto CompilationUnit::MakeTargetMachine(
   // Set the target on the module.
   // TODO: We should do this earlier. Lower should be passed the target triple
   // so it can create the module with this already set.
-  llvm::Triple target_triple(options_->compile.codegen_options.target);
+  llvm::Triple target_triple(options_->compile_options.codegen_options.target);
   module_->setTargetTriple(target_triple);
 
   // TODO: Provide flags to control these.
@@ -417,10 +417,10 @@ auto CompilationUnit::RunOptimize(
   // here. For now we reconstruct what Clang does by default.
   llvm::PipelineTuningOptions pto;
   bool opt_for_speed =
-      options_->compile.opt_level == Lower::OptimizationLevel::Speed;
+      options_->compile_options.opt_level == Lower::OptimizationLevel::Speed;
   bool opt_for_size_or_speed =
       opt_for_speed ||
-      options_->compile.opt_level == Lower::OptimizationLevel::Size;
+      options_->compile_options.opt_level == Lower::OptimizationLevel::Size;
   // Loop unrolling is enabled by `--optimize=size` but isn't actually performed
   // because we add `optsize` attributes to the function definitions we emit.
   pto.LoopUnrolling = opt_for_size_or_speed;
@@ -458,8 +458,8 @@ auto CompilationUnit::RunOptimize(
   builder.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
-      SharedCompileOptions::GetLLVMOptimizationLevel(
-          options_->compile.opt_level));
+      CompileOptions::GetLLVMOptimizationLevel(
+          options_->compile_options.opt_level));
 
   LogCall("ModulePassManager::run", "optimize",
           [&] { pass_manager.run(*module_, mam); });
@@ -526,7 +526,8 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 
 auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   const llvm::Target* target;
-  if (auto t = options_.compile.ValidateTarget(driver_env.emitter); !t.ok()) {
+  if (auto t = options_.compile_options.ValidateTarget(driver_env.emitter);
+      !t.ok()) {
     return {.success = false};
   } else {
     target = *t;
@@ -534,14 +535,15 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
   {
-    if (driver_env.fuzzing && !options_.compile.clang_args.empty()) {
+    if (driver_env.fuzzing && !options_.compile_options.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
       TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "build");
       return {.success = false};
     }
 
-    if (auto i = options_.compile.BuildClangInvocation(driver_env); !i.ok()) {
+    if (auto i = options_.compile_options.BuildClangInvocation(driver_env);
+        !i.ok()) {
       return {.success = false};
     } else {
       clang_invocation = *i;
@@ -577,7 +579,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   int unit_index = -1;
   int total_unit_count =
-      prelude.size() + options_.compile.input_filenames.size();
+      prelude.size() + options_.compile_options.input_filenames.size();
   auto unit_builder = [&](llvm::StringRef input_filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -590,7 +592,8 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // the output filename from this.
   auto input_filenames_index = units.size();
   llvm::append_range(
-      units, llvm::map_range(options_.compile.input_filenames, unit_builder));
+      units,
+      llvm::map_range(options_.compile_options.input_filenames, unit_builder));
   CARBON_CHECK(units.size() == static_cast<size_t>(total_unit_count));
 
   // Add the cache to all units. This must be done after all units are
@@ -728,7 +731,8 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Pass the target down to Clang to pick up the correct defaults.
   std::string target_arg =
-      llvm::formatv("--target={0}", options_.compile.codegen_options.target)
+      llvm::formatv("--target={0}",
+                    options_.compile_options.codegen_options.target)
           .str();
   clang_link_args.push_back(target_arg);
 

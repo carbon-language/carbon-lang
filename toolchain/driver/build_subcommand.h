@@ -10,9 +10,9 @@
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
-#include "toolchain/driver/shared_compile_options.h"
 
 namespace Carbon {
 
@@ -20,7 +20,7 @@ namespace Carbon {
 struct BuildSubcommandOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  SharedCompileOptions compile;
+  CompileOptions compile_options;
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> extra_clang_link_args;
   bool use_temp_dir;

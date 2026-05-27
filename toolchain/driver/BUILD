@@ -135,6 +135,8 @@ cc_library(
         "build_subcommand.h",
         "clang_subcommand.cpp",
         "clang_subcommand.h",
+        "compile_options.cpp",
+        "compile_options.h",
         "compile_subcommand.cpp",
         "compile_subcommand.h",
         "config_subcommand.cpp",
@@ -152,8 +154,6 @@ cc_library(
         "lld_subcommand.h",
         "llvm_subcommand.cpp",
         "llvm_subcommand.h",
-        "shared_compile_options.cpp",
-        "shared_compile_options.h",
     ],
     hdrs = [
         "driver.h",

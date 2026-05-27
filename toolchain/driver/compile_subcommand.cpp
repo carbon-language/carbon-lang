@@ -35,283 +35,6 @@
 
 namespace Carbon {
 
-auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  shared.Build(b);
-
-  b.AddOneOfOption(
-      {
-          .name = "phase",
-          .help = R"""(
-Selects the compilation phase to run. These phases are always run in sequence,
-so every phase before the one selected will also be run. The default is to
-compile to machine code.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("lex", Phase::Lex),
-                arg_b.OneOfValue("parse", Phase::Parse),
-                arg_b.OneOfValue("check", Phase::Check),
-                arg_b.OneOfValue("lower", Phase::Lower),
-                arg_b.OneOfValue("optimize", Phase::Optimize),
-                arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
-            },
-            &phase);
-      });
-
-  // TODO: Rearrange the code setting this option and two related ones to
-  // allow them to reference each other instead of hard-coding their names.
-  b.AddStringOption(
-      {
-          .name = "output",
-          .value_name = "FILE",
-          .help = R"""(
-The output filename for codegen.
-
-When this is a file name, either textual assembly or a binary object will be
-written to it based on the flag `--asm-output`. The default is to write a binary
-object file.
-
-Passing `--output=-` will write the output to stdout. In that case, the flag
-`--asm-output` is ignored and the output defaults to textual assembly. Binary
-object output can be forced by enabling `--force-obj-output`.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_filename); });
-  b.AddFlag(
-      {
-          .name = "asm-output",
-          .help = R"""(
-Write textual assembly rather than a binary object file to the code generation
-output.
-
-This flag only applies when writing to a file. When writing to stdout, the
-default is textual assembly and this flag is ignored.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&asm_output); });
-
-  b.AddFlag(
-      {
-          .name = "force-obj-output",
-          .help = R"""(
-Force binary object output, even with `--output=-`.
-
-When `--output=-` is set, the default is textual assembly; this forces printing
-of a binary object file instead. Ignored for other `--output` values.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&force_obj_output); });
-
-  b.AddFlag(
-      {
-          .name = "stream-errors",
-          .help = R"""(
-Stream error messages to stderr as they are generated rather than sorting them
-and displaying them in source order.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&stream_errors); });
-
-  b.AddFlag(
-      {
-          .name = "dump-shared-values",
-          .help = R"""(
-Dumps shared values. These aren't owned by any particular file or phase.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_shared_values); });
-  b.AddFlag(
-      {
-          .name = "dump-tokens",
-          .help = R"""(
-Dump the tokens to stdout when lexed.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_tokens); });
-
-  b.AddFlag(
-      {
-          .name = "omit-file-boundary-tokens",
-          .help = R"""(
-For `--dump-tokens`, omit file start and end boundary tokens.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&omit_file_boundary_tokens); });
-
-  b.AddFlag(
-      {
-          .name = "dump-parse-tree",
-          .help = R"""(
-Dump the parse tree to stdout when parsed.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_parse_tree); });
-  b.AddFlag(
-      {
-          .name = "preorder-parse-tree",
-          .help = R"""(
-When dumping the parse tree, reorder it so that it is in preorder rather than
-postorder.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
-  b.AddFlag(
-      {
-          .name = "dump-raw-sem-ir",
-          .help = R"""(
-Dump the raw JSON structure of SemIR to stdout when built.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
-  b.AddFlag(
-      {
-          .name = "dump-sem-ir",
-          .help = R"""(
-Dump the full SemIR to stdout when built.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
-  b.AddFlag(
-      {
-          .name = "dump-cpp-ast",
-          .help = R"""(
-Dump the full C++ AST to stdout when built.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_cpp_ast); });
-
-  b.AddOneOfOption(
-      {
-          .name = "dump-sem-ir-ranges",
-          .help = R"""(
-Selects handling of `//@dump-sem-ir-[begin|end]` markers when dumping SemIR.
-By default, `if-present` prints ranges for files that have them, and full SemIR
-for files that don't. `only` skips files with no ranges, and `ignore` always
-prints full SemIR.
-)""",
-      },
-      [&](auto& arg_b) {
-        using DumpSemIRRanges = Check::CheckParseTreesOptions::DumpSemIRRanges;
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("if-present", DumpSemIRRanges::IfPresent)
-                    .Default(true),
-                arg_b.OneOfValue("only", DumpSemIRRanges::Only),
-                arg_b.OneOfValue("ignore", DumpSemIRRanges::Ignore),
-            },
-            &dump_sem_ir_ranges);
-      });
-
-  b.AddFlag(
-      {
-          .name = "builtin-sem-ir",
-          .help = R"""(
-Include the SemIR for builtins when dumping it.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&builtin_sem_ir); });
-  b.AddFlag(
-      {
-          .name = "dump-llvm-ir",
-          .help = R"""(
-Dump the LLVM IR to stdout after lowering.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_llvm_ir); });
-  b.AddFlag(
-      {
-          .name = "dump-asm",
-          .help = R"""(
-Dump the generated assembly to stdout after codegen.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_asm); });
-  b.AddFlag(
-      {
-          .name = "dump-mem-usage",
-          .help = R"""(
-Dumps the amount of memory used.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_mem_usage); });
-  b.AddFlag(
-      {
-          .name = "dump-timings",
-          .help = R"""(
-Dumps the duration of each phase for each compilation unit.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&dump_timings); });
-  b.AddFlag(
-      {
-          .name = "prelude-import",
-          .help = R"""(
-Whether to use the implicit prelude import. Enabled by default.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&prelude_import);
-      });
-  b.AddFlag(
-      {
-          .name = "custom-core",
-          .value_name = "CUSTOM_CORE",
-          .help = R"""(
-Whether to use a custom Core package, the files for which must all be included
-in the compile command line.
-
-The prelude library in the Core package is imported automatically. By default,
-the Core package shipped with the toolchain is used, and its files do not need
-to be specified in the compile command line.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(false);
-        arg_b.Set(&custom_core);
-      });
-  b.AddStringOption(
-      {
-          .name = "exclude-dump-file-prefix",
-          .value_name = "PREFIX",
-          .help = R"""(
-Excludes files with the given prefix from dumps.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
-  b.AddFlag(
-      {
-          .name = "output-last-input-only",
-          .help = R"""(
-Only write output for the last input file, ignoring all others.
-
-TODO: This is a temporary workaround and should be removed once separate
-compilation is better implemented.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
-  b.AddStringOption(
-      {
-          .name = "sem-ir-crash-dump",
-          .value_name = "PATH",
-          .help = R"""(
-Where to write a dump of the raw SemIR emitted so far, in the event of a crash
-in the check phase. If empty, the dump is not written.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
-  b.AddFlag(
-      {
-          .name = "mangle-string-fingerprint",
-          .help = R"""(
-Use the string form of the fingerprint from mangling instead of the hash form.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
-}
-
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "compile",
     .help = R"""(
@@ -329,24 +52,6 @@ can be written to standard output as these phases progress.
 
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
-// Returns a string for printing the phase in a diagnostic.
-static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
-  switch (phase) {
-    case CompileOptions::Phase::Lex:
-      return "lex";
-    case CompileOptions::Phase::Parse:
-      return "parse";
-    case CompileOptions::Phase::Check:
-      return "check";
-    case CompileOptions::Phase::Lower:
-      return "lower";
-    case CompileOptions::Phase::Optimize:
-      return "optimize";
-    case CompileOptions::Phase::CodeGen:
-      return "codegen";
-  }
-}
-
 auto CompileSubcommand::ValidateOptions(
     Diagnostics::NoLocEmitter& emitter) const -> bool {
   CARBON_DIAGNOSTIC(
@@ -358,26 +63,26 @@ auto CompileSubcommand::ValidateOptions(
     case Phase::Lex:
       if (options_.dump_parse_tree) {
         emitter.Emit(CompilePhaseFlagConflict, "parse tree",
-                     PhaseToString(options_.phase));
+                     CompileOptions::PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
         emitter.Emit(CompilePhaseFlagConflict, "SemIR",
-                     PhaseToString(options_.phase));
+                     CompileOptions::PhaseToString(options_.phase));
         return false;
       }
       if (options_.dump_cpp_ast) {
         emitter.Emit(CompilePhaseFlagConflict, "C++ AST",
-                     PhaseToString(options_.phase));
+                     CompileOptions::PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
         emitter.Emit(CompilePhaseFlagConflict, "LLVM IR",
-                     PhaseToString(options_.phase));
+                     CompileOptions::PhaseToString(options_.phase));
         return false;
       }
       [[fallthrough]];
@@ -735,12 +440,11 @@ auto CompilationUnit::RunLower() -> void {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
     }
     Lower::LowerToLLVMOptions options;
-    options.llvm_verifier_stream = options_->shared.run_llvm_verifier
-                                       ? driver_env_->error_stream
-                                       : nullptr;
-    options.want_debug_info = options_->shared.include_debug_info;
+    options.llvm_verifier_stream =
+        options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
+    options.want_debug_info = options_->include_debug_info;
     options.vlog_stream = vlog_stream_;
-    options.opt_level = options_->shared.opt_level;
+    options.opt_level = options_->opt_level;
     options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
@@ -756,7 +460,7 @@ auto CompilationUnit::MakeTargetMachine(
   // Set the target on the module.
   // TODO: We should do this earlier. Lower should be passed the target triple
   // so it can create the module with this already set.
-  llvm::Triple target_triple(options_->shared.codegen_options.target);
+  llvm::Triple target_triple(options_->codegen_options.target);
   module_->setTargetTriple(target_triple);
 
   // TODO: Provide flags to control these.
@@ -794,11 +498,9 @@ auto CompilationUnit::RunOptimize(
   // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
   // here. For now we reconstruct what Clang does by default.
   llvm::PipelineTuningOptions pto;
-  bool opt_for_speed =
-      options_->shared.opt_level == Lower::OptimizationLevel::Speed;
+  bool opt_for_speed = options_->opt_level == Lower::OptimizationLevel::Speed;
   bool opt_for_size_or_speed =
-      opt_for_speed ||
-      options_->shared.opt_level == Lower::OptimizationLevel::Size;
+      opt_for_speed || options_->opt_level == Lower::OptimizationLevel::Size;
   // Loop unrolling is enabled by `--optimize=size` but isn't actually performed
   // because we add `optsize` attributes to the function definitions we emit.
   pto.LoopUnrolling = opt_for_size_or_speed;
@@ -836,8 +538,7 @@ auto CompilationUnit::RunOptimize(
   builder.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
-      SharedCompileOptions::GetLLVMOptimizationLevel(
-          options_->shared.opt_level));
+      CompileOptions::GetLLVMOptimizationLevel(options_->opt_level));
 
   if (vlog_stream_) {
     CARBON_VLOG("*** Running pass pipeline: ");
@@ -993,7 +694,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Validate the target before passing it to Clang.
   const llvm::Target* target;
-  if (auto t = options_.shared.ValidateTarget(driver_env.emitter); !t.ok()) {
+  if (auto t = options_.ValidateTarget(driver_env.emitter); !t.ok()) {
     return {.success = false};
   } else {
     target = *t;
@@ -1001,14 +702,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
   {
-    if (driver_env.fuzzing && !options_.shared.clang_args.empty()) {
+    if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
       TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
 
-    if (auto i = options_.shared.BuildClangInvocation(driver_env); !i.ok()) {
+    if (auto i = options_.BuildClangInvocation(driver_env); !i.ok()) {
       return {.success = false};
     } else {
       clang_invocation = *i;
@@ -1036,8 +737,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   int unit_index = -1;
-  int total_unit_count =
-      prelude.size() + options_.shared.input_filenames.size();
+  int total_unit_count = prelude.size() + options_.input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -1045,8 +745,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         &driver_env.consumer, filename, target);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
-  llvm::append_range(
-      units, llvm::map_range(options_.shared.input_filenames, unit_builder));
+  llvm::append_range(units,
+                     llvm::map_range(options_.input_filenames, unit_builder));
   CARBON_CHECK(units.size() == static_cast<size_t>(total_unit_count));
 
   // Add the cache to all units. This must be done after all units are created.

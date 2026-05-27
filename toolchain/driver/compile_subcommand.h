@@ -11,63 +11,12 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/check/check.h"
+#include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
-#include "toolchain/driver/shared_compile_options.h"
 #include "toolchain/lower/options.h"
 
 namespace Carbon {
-
-// Options for the compile subcommand.
-//
-// See the implementation of `Build` for documentation on members.
-struct CompileOptions {
-  enum class Phase : int8_t {
-    Lex,
-    Parse,
-    Check,
-    Lower,
-    Optimize,
-    CodeGen,
-  };
-
-  friend auto operator<<(llvm::raw_ostream& out, Phase phase)
-      -> llvm::raw_ostream&;
-
-  auto Build(CommandLine::CommandBuilder& b) -> void;
-
-  Phase phase;
-  SharedCompileOptions shared;
-  Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges;
-
-  llvm::StringRef output_filename;
-
-  bool asm_output = false;
-  bool force_obj_output = false;
-  bool custom_core = false;
-  bool dump_shared_values = false;
-  bool dump_tokens = false;
-  bool omit_file_boundary_tokens = false;
-  bool dump_parse_tree = false;
-  bool dump_raw_sem_ir = false;
-  bool dump_sem_ir = false;
-  bool dump_cpp_ast = false;
-  bool dump_llvm_ir = false;
-  bool dump_asm = false;
-  bool dump_mem_usage = false;
-  bool dump_timings = false;
-  bool stream_errors = false;
-  bool preorder_parse_tree = false;
-  bool builtin_sem_ir = false;
-  bool prelude_import = false;
-  bool output_last_input_only = false;
-
-  llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
-
-  llvm::StringRef sem_ir_crash_dump;
-
-  bool mangle_string_fingerprint = false;
-};
 
 // Implements the compile subcommand of the driver.
 class CompileSubcommand : public DriverSubcommand {
@@ -75,7 +24,7 @@ class CompileSubcommand : public DriverSubcommand {
   explicit CompileSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
-    options_.Build(b);
+    options_.BuildForCompileSubcommand(b);
   }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
