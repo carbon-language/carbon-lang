@@ -584,6 +584,29 @@ auto BuildPrimitiveCopyWitness(
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }
+
+static auto BuildDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    DestroyFormat format) -> SemIR::InstId {
+  CARBON_CHECK(format != DestroyFormat::NoDestroy);
+
+  // Mark functions with the interface's scope as a hint to mangling. This
+  // does not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto parent_scope_id = context.interfaces()
+                             .Get(query_specific_interface.interface_id)
+                             .scope_without_self_id;
+
+  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
+                                     parent_scope_id, format);
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {op_id});
+}
+
 static auto MakeDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -600,19 +623,17 @@ static auto MakeDestroyWitness(
     return SemIR::InstId::None;
   }
 
-  // Mark functions with the interface's scope as a hint to mangling. This
-  // does not add them to the scope.
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-  auto parent_scope_id = context.interfaces()
-                             .Get(query_specific_interface.interface_id)
-                             .scope_without_self_id;
+  return BuildDestroyWitness(context, loc_id, query_self_const_id,
+                             query_specific_interface_id, format);
+}
 
-  auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     parent_scope_id, format);
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {op_id});
+auto BuildTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  return BuildDestroyWitness(context, loc_id, query_self_const_id,
+                             query_specific_interface_id,
+                             DestroyFormat::Trivial);
 }
 
 static auto MakeIntFitsInWitness(
