@@ -142,7 +142,7 @@ fn SortVector(generic T: Comparable, a: Vector(T)*) { ... }
 ```
 
 The syntax above uses the `generic` keyword to indicate that the parameter named
-`T` is compile-time. The `template` keyword may be added instead to make it a
+`T` is a _checked_ parameter. The `template` keyword may be added instead to make it a
 _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to

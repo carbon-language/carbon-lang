@@ -2534,7 +2534,7 @@ class Complex {
 }
 ```
 
-All interface parameters are `generic` by default. This reflects these two
+All interface parameters are checked by default. This reflects these two
 properties of these parameters:
 
 -   They must be resolved at compile-time, and so can't be passed regular
@@ -2830,7 +2830,7 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A compile-time binding `X` introduces `generic .Self: type`, where
+-   A compile-time binding `X` introduces a checked binding `.Self: type`, where
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
 -   `A where` introduces `generic .Self: A` and a `.Foo` _designator_ for each
@@ -6448,7 +6448,7 @@ class HashMap(
 ```
 
 Note that, unlike functions, every parameter to a type must be a compile-time
-binding, either `generic` or `template`, not runtime.
+binding, either checked or template, not runtime.
 
 Two types are the same if they have the same name and the same arguments, after
 applying aliases and [rewrite constraints](#rewrite-constraints). Carbon's
