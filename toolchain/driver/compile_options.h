@@ -46,6 +46,10 @@ struct CompileOptions {
   auto BuildForCompileSubcommand(CommandLine::CommandBuilder& b) -> void;
   auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b) -> void;
 
+  // Validate that the compile options make sense for the compilation phase
+  // selected.
+  auto ValidatePhase(Diagnostics::NoLocEmitter& emitter) const -> bool;
+
   // Validate the target before passing to clang.
   auto ValidateTarget(Diagnostics::NoLocEmitter& emitter)
       -> ErrorOr<const llvm::Target*>;

@@ -135,6 +135,8 @@ cc_library(
         "build_subcommand.h",
         "clang_subcommand.cpp",
         "clang_subcommand.h",
+        "compile_driver.cpp",
+        "compile_driver.h",
         "compile_options.cpp",
         "compile_options.h",
         "compile_subcommand.cpp",

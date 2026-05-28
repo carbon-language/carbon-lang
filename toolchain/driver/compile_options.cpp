@@ -393,6 +393,49 @@ auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
   BuildSharedOptions(b, this);
 }
 
+auto CompileOptions::ValidatePhase(Diagnostics::NoLocEmitter& emitter) const
+    -> bool {
+  CARBON_DIAGNOSTIC(
+      CompilePhaseFlagConflict, Error,
+      "requested dumping {0} but compile phase is limited to `{1}`",
+      std::string, std::string);
+  using Phase = CompileOptions::Phase;
+  switch (phase) {
+    case Phase::Lex:
+      if (dump_parse_tree) {
+        emitter.Emit(CompilePhaseFlagConflict, "parse tree",
+                     CompileOptions::PhaseToString(phase));
+        return false;
+      }
+      [[fallthrough]];
+    case Phase::Parse:
+      if (dump_sem_ir) {
+        emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     CompileOptions::PhaseToString(phase));
+        return false;
+      }
+      if (dump_cpp_ast) {
+        emitter.Emit(CompilePhaseFlagConflict, "C++ AST",
+                     CompileOptions::PhaseToString(phase));
+        return false;
+      }
+      [[fallthrough]];
+    case Phase::Check:
+      if (dump_llvm_ir) {
+        emitter.Emit(CompilePhaseFlagConflict, "LLVM IR",
+                     CompileOptions::PhaseToString(phase));
+        return false;
+      }
+      [[fallthrough]];
+    case Phase::Lower:
+    case Phase::Optimize:
+    case Phase::CodeGen:
+      // Everything can be dumped in these phases.
+      break;
+  }
+  return true;
+}
+
 auto CompileOptions::ValidateTarget(Diagnostics::NoLocEmitter& emitter)
     -> ErrorOr<const llvm::Target*> {
   std::string target_error;

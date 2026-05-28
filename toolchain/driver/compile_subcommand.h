@@ -6,15 +6,9 @@
 #define CARBON_TOOLCHAIN_DRIVER_COMPILE_SUBCOMMAND_H_
 
 #include "common/command_line.h"
-#include "common/error.h"
-#include "common/ostream.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "toolchain/check/check.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
-#include "toolchain/lower/options.h"
 
 namespace Carbon {
 
@@ -30,11 +24,6 @@ class CompileSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
-  // Does custom validation of the compile-subcommand options structure beyond
-  // what the command line parsing library supports. Diagnoses and returns false
-  // on failure.
-  auto ValidateOptions(Diagnostics::NoLocEmitter& emitter) const -> bool;
-
   CompileOptions options_;
 };
 
