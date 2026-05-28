@@ -7,12 +7,6 @@
 
 namespace Carbon::Parse {
 
-static auto IsBindingPatternOperator(Lex::TokenKind kind) -> bool {
-  return kind == Lex::TokenKind::Colon ||
-         kind == Lex::TokenKind::ColonExclaim ||
-         kind == Lex::TokenKind::ColonQuestion;
-}
-
 auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
   switch (context.PositionKind()) {
@@ -37,19 +31,15 @@ auto HandlePattern(Context& context) -> void {
                                   state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
-    case Lex::TokenKind::Identifier:
-    case Lex::TokenKind::SelfValueIdentifier:
-    case Lex::TokenKind::Underscore: {
-      if (IsBindingPatternOperator(
-              context.PositionKind(Lookahead::NextToken))) {
+    default:
+      if (context.PositionKind().is_word() &&
+          context.PositionKind(Lookahead::NextToken)
+              .is_binding_pattern_operator()) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
             state.in_unused_pattern, state.ambient_precedence);
         break;
       }
-      [[fallthrough]];
-    }
-    default:
       context.PushState(StateKind::ExprPattern);
       context.PushStateForExpr(state.ambient_precedence);
       break;
@@ -63,7 +53,7 @@ auto HandleExprPattern(Context& context) -> void {
   // have a malformed attempt to introduce a binding pattern that we interpreted
   // as an expression pattern, so diagnose that here rather than diagnosing a
   // missing `;` at an outer level.
-  if (IsBindingPatternOperator(context.PositionKind())) {
+  if (context.PositionKind().is_binding_pattern_operator()) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingName, Error,
                         "unexpected expression before {0} in binding pattern",

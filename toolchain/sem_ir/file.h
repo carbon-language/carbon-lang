@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
 #include "common/error.h"
+#include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
@@ -206,6 +207,12 @@ class File : public Printable<File> {
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
   auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
+
+  using FieldInitializerMap = Map<SemIR::InstId, SemIR::InstId>;
+  auto field_initializers() -> FieldInitializerMap& {
+    return field_initializers_;
+  }
+
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }
@@ -348,6 +355,13 @@ class File : public Printable<File> {
 
   // Storage for classes.
   ClassStore classes_;
+
+  // Map containing initializers for class fields. The map keys are
+  // `InstId`s corresponding to `FielDecl`s.
+  //
+  // TODO: consider replacing this map with a separate store for fields
+  // and tracking a new `FieldId` in the `FieldDecl`.
+  FieldInitializerMap field_initializers_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;

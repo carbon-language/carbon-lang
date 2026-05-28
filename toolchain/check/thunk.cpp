@@ -306,7 +306,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // `self` parameter but C++ models that parameter as an explicit argument
   // instead, so add the `self` to the argument list instead in that case.
   if (function.self_param_id.has_value() &&
-      !IsCppConstructorOrNonMethodOperator(context, callee_id)) {
+      !IsCppConstructorOrNonMethod(context, callee_id)) {
     callee_id = PerformCompoundMemberAccess(context, loc_id,
                                             args.consume_front(), callee_id);
   }

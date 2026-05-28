@@ -421,7 +421,7 @@ class Context {
 
   auto tree() const -> const Tree& { return *tree_; }
 
-  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+  auto tokens() const -> Lex::TokenizedBuffer& { return *tokens_; }
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 

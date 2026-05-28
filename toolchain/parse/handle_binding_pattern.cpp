@@ -12,15 +12,16 @@ auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&](bool expected_name) {
+  auto on_error = [&](bool expected_name, bool recover_as_raw = false) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(
           ExpectedBindingPattern, Error,
-          "expected {0:name|`:`, `:!`, or `:?`} in binding pattern",
-          Diagnostics::BoolAsSelect);
+          "expected {0:name|`:`, `:!`, or `:?`} in binding pattern"
+          "{1:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
       context.emitter().Emit(*context.position(), ExpectedBindingPattern,
-                             expected_name);
-      state.has_error = true;
+                             expected_name, recover_as_raw);
+      state.has_error = !recover_as_raw;
     }
   };
 
@@ -44,6 +45,19 @@ auto HandleBindingPattern(Context& context) -> void {
     context.AddLeafNode(NodeKind::SelfValueName, *self);
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
+  } else if (context.PositionKind().is_word() &&
+             context.PositionKind(Lookahead::NextToken)
+                 .is_binding_pattern_operator()) {
+    // A word token that is not a valid binding name appeared before the `:`,
+    // such as a numeric type literal or a keyword. For error recovery, convert
+    // the token to an identifier, as we can be confident that a word in this
+    // position was intended to be a declared name.
+    auto word_as_identifier =
+        context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+            context.Consume());
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
+                        word_as_identifier);
+    on_error(/*expected_name=*/true, /*recover_as_raw*/ true);
   } else {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
@@ -52,9 +66,7 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   if (auto token_kind = context.PositionKind();
-      token_kind == Lex::TokenKind::Colon ||
-      token_kind == Lex::TokenKind::ColonExclaim ||
-      token_kind == Lex::TokenKind::ColonQuestion) {
+      token_kind.is_binding_pattern_operator()) {
     // Add the wrapper node for the `template` keyword if present.
     if (template_token) {
       if (token_kind != Lex::TokenKind::ColonExclaim && !state.has_error) {

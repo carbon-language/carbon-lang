@@ -1574,7 +1574,7 @@ class Lexer::ErrorRecoveryBuffer {
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
-    token_info.ResetAsError(error_length);
+    token_info = token_info.AsError(error_length);
     any_error_tokens_ = true;
   }
 

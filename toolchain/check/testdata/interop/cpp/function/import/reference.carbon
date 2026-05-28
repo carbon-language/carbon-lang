@@ -88,6 +88,22 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// --- derived_to_base.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+inline Cpp '''
+struct Base { Base(const Base&) = delete; };
+struct Derived : Base {};
+void f(Base &b);
+''';
+
+fn F(ref r: Cpp.Derived) {
+  Cpp.f(ref r);
+}
+
 // ============================================================================
 // Rvalue reference as a parameter type
 // ============================================================================
@@ -430,8 +446,6 @@ fn PassRef(ref x: X) {
 
 fn PassConstRef(ref x: const X) {
   //@dump-sem-ir-begin
-  // TODO: This crashes!
-  // Cpp.TakeAnything_ExpectConstLRef(ref x);
   Cpp.TakeAnything_ExpectConstLRef(x);
   //@dump-sem-ir-end
 }
@@ -441,6 +455,32 @@ fn PassInit() {
   Cpp.TakeAnything_ExpectRRef(Make());
   //@dump-sem-ir-end
 }
+
+// --- fail_todo_forwarding_reference_by_ref.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+class X {}
+
+inline Cpp '''c++
+template<typename T> void TakeAnything_ExpectConstLRef(T&&) {
+  static_assert(__is_same(T, const Carbon::X&));
+}
+''';
+
+fn PassConstRef(ref x: const X) {
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE+7]]:36: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:   Cpp.TakeAnything_ExpectConstLRef(ref x);
+  // CHECK:STDERR:                                    ^~~~~
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE-9]]:59: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: template<typename T> void TakeAnything_ExpectConstLRef(T&&) {
+  // CHECK:STDERR:                                                           ^
+  // CHECK:STDERR:
+  Cpp.TakeAnything_ExpectConstLRef(ref x);
+}
+
 
 // CHECK:STDOUT: --- call_param_lvalue_ref.carbon
 // CHECK:STDOUT:
@@ -494,7 +534,7 @@ fn PassInit() {
 // CHECK:STDOUT:   %TakesLValue.ref: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %.loc9: %S = ref_tag %s.ref
-// CHECK:STDOUT:   %TakesLValue.call: init %empty_tuple.type = call imports.%TakesLValue.decl(%.loc9)
+// CHECK:STDOUT:   %TakesLValue.call: init %empty_tuple.type = call imports.%TakesLValue.decl(%s.ref)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -1311,7 +1351,7 @@ fn PassInit() {
 // CHECK:STDOUT:   %TakeAnything_ExpectLRef.ref: %TakeAnything_ExpectLRef.cpp_overload_set.type = name_ref TakeAnything_ExpectLRef, imports.%TakeAnything_ExpectLRef.cpp_overload_set.value [concrete = constants.%TakeAnything_ExpectLRef.cpp_overload_set.value]
 // CHECK:STDOUT:   %x.ref: ref %X = name_ref x, %x
 // CHECK:STDOUT:   %.loc34: %X = ref_tag %x.ref
-// CHECK:STDOUT:   %TakeAnything_ExpectLRef.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectLRef.decl(%.loc34)
+// CHECK:STDOUT:   %TakeAnything_ExpectLRef.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectLRef.decl(%x.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1320,14 +1360,14 @@ fn PassInit() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakeAnything_ExpectConstLRef.ref: %TakeAnything_ExpectConstLRef.cpp_overload_set.type = name_ref TakeAnything_ExpectConstLRef, imports.%TakeAnything_ExpectConstLRef.cpp_overload_set.value [concrete = constants.%TakeAnything_ExpectConstLRef.cpp_overload_set.value]
 // CHECK:STDOUT:   %x.ref: ref %const = name_ref x, %x
-// CHECK:STDOUT:   %.loc42_36.1: ref %X = as_compatible %x.ref
-// CHECK:STDOUT:   %.loc42_36.2: ref %X = converted %x.ref, %.loc42_36.1
-// CHECK:STDOUT:   %.loc42_36.3: %X = acquire_value %.loc42_36.2
-// CHECK:STDOUT:   %.loc42_36.4: ref %X = value_as_ref %.loc42_36.3
-// CHECK:STDOUT:   %addr: %ptr.f7a = addr_of %.loc42_36.4
-// CHECK:STDOUT:   %.loc42_37.1: %ptr.16a = as_compatible %addr
-// CHECK:STDOUT:   %.loc42_37.2: %ptr.16a = converted %addr, %.loc42_37.1
-// CHECK:STDOUT:   %TakeAnything_ExpectConstLRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstLRef__carbon_thunk.decl(%.loc42_37.2)
+// CHECK:STDOUT:   %.loc40_36.1: ref %X = as_compatible %x.ref
+// CHECK:STDOUT:   %.loc40_36.2: ref %X = converted %x.ref, %.loc40_36.1
+// CHECK:STDOUT:   %.loc40_36.3: %X = acquire_value %.loc40_36.2
+// CHECK:STDOUT:   %.loc40_36.4: ref %X = value_as_ref %.loc40_36.3
+// CHECK:STDOUT:   %addr: %ptr.f7a = addr_of %.loc40_36.4
+// CHECK:STDOUT:   %.loc40_37.1: %ptr.16a = as_compatible %addr
+// CHECK:STDOUT:   %.loc40_37.2: %ptr.16a = converted %addr, %.loc40_37.1
+// CHECK:STDOUT:   %TakeAnything_ExpectConstLRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstLRef__carbon_thunk.decl(%.loc40_37.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

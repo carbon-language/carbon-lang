@@ -193,14 +193,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:            ^~~
 // CHECK:STDERR:
 fn F() ->? i32;
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:12: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-// CHECK:STDERR: fn F() ->? ref i32;
-// CHECK:STDERR:            ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-// CHECK:STDERR: fn F() ->? ref i32;
-// CHECK:STDERR:            ^~~~~~~
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:12: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:12: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
 // CHECK:STDERR: fn F() ->? ref i32;
 // CHECK:STDERR:            ^~~~~~~
 // CHECK:STDERR:
@@ -247,7 +240,7 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, %y
 // CHECK:STDOUT:   %.loc10: %i32 = ref_tag %y.ref
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc10)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%y.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
