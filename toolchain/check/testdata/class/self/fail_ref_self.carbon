@@ -13,11 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_ref_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE+4]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn F[ref self: Self]();
-  // CHECK:STDERR:        ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 fn Make() -> Class;

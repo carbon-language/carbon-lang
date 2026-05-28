@@ -22,7 +22,7 @@ class Point {
   // CHECK:STDERR:   fn First(self, other: Point) -> i32 { return self.x; }
   // CHECK:STDERR:                  ^~~~~~~~~~~~
   // CHECK:STDERR:
-  fn First(self, other: Point) -> i32 { return self.x; }
+  fn First(self, other: Point) -> i32 { return self.x + other.x; }
 
   var x: i32;
 }

@@ -56,7 +56,7 @@ class Class {
 // CHECK:STDERR: fn Class.F(self) {}
 // CHECK:STDERR:            ^~~~
 // CHECK:STDERR:
-fn Class.F(self) {}
+fn Class.F(unused self) {}
 
 // CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+11]]:18: error: redeclaration differs in whether the `self` type is written explicitly [RedeclParamSelfSyntaxDiffers]
 // CHECK:STDERR: fn Class.G(self: Self) {}
@@ -69,7 +69,7 @@ fn Class.F(self) {}
 // CHECK:STDERR: fn Class.G(self: Self) {}
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
-fn Class.G(self: Self) {}
+fn Class.G(unused self: Self) {}
 
 // --- fail_return_self_value.carbon
 

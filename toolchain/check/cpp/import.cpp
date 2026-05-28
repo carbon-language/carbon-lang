@@ -1416,9 +1416,8 @@ static auto MapParameterType(
 }
 
 // Returns a block containing the `self` parameter pattern for the given
-// function declaration, to be placed at the front of the explicit parameter
-// list, or an empty block for a non-member function. On error, produces a
-// diagnostic and returns None.
+// function declaration, or `Empty` if it is not a method.
+// Returns `None` on error.
 static auto MakeSelfParamPatternBlockId(
     Context& context, SemIR::LocId loc_id,
     SemIR::ImportIRInstId import_ir_inst_id,
@@ -1704,7 +1703,7 @@ static auto CreateFunctionSignatureInsts(
     SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclSignatureId signature_id)
     -> std::optional<FunctionSignatureInsts> {
-  // The `self` parameter of an object member function (proposal #7016) is the
+  // The `self` parameter of a method (proposal #7016) is the
   // first entry in the explicit parameter list. Build it (if any) first, then
   // the remaining explicit parameters, and concatenate them into a single
   // explicit parameter list.
