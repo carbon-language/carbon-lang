@@ -685,27 +685,22 @@ expressions and "proper" return extended types, but this is just a technical
 means of avoiding formal ambiguity in the grammar; it has no greater
 significance.
 
--   _category-tag_ ::= `val` | `ref` | `var` | `fwd`
+-   _category-tag_ ::= `val` | `ref` | `var`
 
 These tags are used to specify "value", "non-entire durable reference", or
-"initializing" expression category (respectively). The last keyword `fwd` is
-used to _forward_ the expression category as well as the type component of an
-extended type, and when it is used it must be followed by an expression that is
-convertible to `exttype` rather than `type`. Note that there is no way to
+"initializing" expression category (respectively). Note that there is no way to
 express an entire or ephemeral reference category in a return extended type.
 
 -   _auto-return-exttype_ ::= _category-tag_? `auto`
 
 This denotes a primitive extended type with runtime phase and a deduced type
-component. The category is determined by _category-tag_ if present, and deduced
-along with the type if `fwd`, or "initializing" otherwise.
+component. The category is determined by _category-tag_ if present, or
+"initializing" otherwise.
 
 -   _proper-return-exttype_ ::= _category-tag_ _expression_
 
-If the _category-tag_ is `fwd`, then this denotes a return extended type
-forwarded from "_expression_ `as exttype`". Otherwise, this denotes a primitive
-extended type with runtime phase, category _category-tag_, and type
-"_expression_ `as type`".
+This denotes a primitive extended type with runtime phase, category
+_category-tag_, and type "_expression_ `as type`".
 
 -   _expression-return-exttype_ ::= _expression_
 

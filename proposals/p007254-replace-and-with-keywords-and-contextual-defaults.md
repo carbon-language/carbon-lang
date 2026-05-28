@@ -25,6 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives considered](#alternatives-considered)
     -   [Keep the `:!` syntax](#keep-the--syntax)
     -   [Alternative keyword names](#alternative-keyword-names)
+    -   [Use `template generic` instead of just `template`](#use-template-generic-instead-of-just-template)
     -   [Context-independent syntax](#context-independent-syntax)
     -   [Erased model for generics](#erased-model-for-generics)
     -   [Context-sensitive defaults based on parameter type](#context-sensitive-defaults-based-on-parameter-type)
@@ -57,10 +58,10 @@ The `:!` syntax for generics and templates has several issues:
 
 The `:!` syntax was originally chosen to evoke the idea of "phase", using `!` to
 mark parameters that belong to an earlier (compile-time) phase of evaluation.
-Similarly, the `:?` syntax in the current revision of proposal #5389 is intended to
-mark deduced _form bindings_: parameters that capture extended type information
-(what was called a "form") about an expression, such as its value category and
-phase, rather than just its object type.
+Similarly, the `:?` syntax in the current revision of proposal #5389 is intended
+to mark deduced _form bindings_: parameters that capture extended type
+information (what was called a "form") about an expression, such as its value
+category and phase, rather than just its object type.
 
 These issues were discussed in leads issue #6932, and a direction was decided to
 move away from punctuation and towards keywords and contextual defaults.
@@ -78,9 +79,10 @@ We propose to:
 3.  Allow overriding defaults with keywords `template`, `generic`, and
     `runtime`.
 4.  Disallow keywords that match the contextual default to ensure consistency.
-5.  Replace `:?` with a binding modifier `fwd` and use `exttype` as the analog
-    to `type` but for extended types that cover what were previously considered
-    _forms_.
+5.  Change the underlying terminology from "forms" to "extended types" and
+    introduce `exttype`. Also suggest replacing the `:?` and `->?` syntax from
+    pending proposal #5389 with a binding modifier `fwd` and corresponding
+    return syntax.
 
 ## Details
 
@@ -170,11 +172,18 @@ Under this new design:
 
 -   `exttype` is the keyword for the type of extended types (analogous to `type`
     for object types).
--   The previous `:?` syntax for deduced form bindings is replaced by a binding
-    modifier `fwd`. This modifier causes the right-hand-side of the binding's
-    `:` to be converted to `exttype` rather than `type`.
--   `fwd` can also be used in return types (for example, `-> fwd T`) to forward
-    the extended type information.
+-   The previous `:?` syntax for deduced form bindings is suggested to be
+    replaced by a binding modifier `fwd`. This modifier causes the
+    right-hand-side of the binding's `:` to be converted to `exttype` rather
+    than `type`. This is a suggested (but not fully decided) direction for
+    pending proposal #5389 to go with the syntax.
+-   `fwd` is also suggested for use in the return signature (for example,
+    `-> fwd T`) to forward the extended type information. Note that this may end
+    up being more significant than just a syntactic replacement: it remains to
+    be decided in proposal #5389 whether `fwd` must appear directly after the
+    `->` (matching how `->?` works in that proposal currently) or if it can be
+    used within tuple syntax in the return type, similar to how `ref` is
+    allowed.
 
 This approach allows us to reclaim high-value punctuation like `?` for other
 uses (such as optional types) while providing a more explicit and less
@@ -185,6 +194,10 @@ Example:
 ```carbon
 fn F[T: exttype](fwd arg: T) -> fwd T;
 ```
+
+> **Open question:** Should we require the `fwd` modifier on call arguments as
+> well, analogously to how `ref` is required on arguments for reference
+> parameters?
 
 ## Rationale
 
@@ -249,38 +262,67 @@ is used to denote generic and template parameters.
 
 Several alternative keywords were considered for the three phase keywords.
 
-For `generic`, the two key candidates discussed were:
+For `generic`, the key candidates considered were:
 
--   **`symbolic`**: This reflects the technical description of symbolic
-    compile-time evaluation and is arguably more technically precise. However,
-    it is substantially less accessible and teachable to developers who are not
-    already familiar with compiler or type theory terminology.
-
--   **`comptime`**: This reflects when the value is known (compile time). But
-    `comptime` describes _when_ the value is known, not _why_ or _how_ it is
-    used, so it lacks a strong mnemonic connection to the concept of generic
-    programming that `generic` provides naturally.
+-   **`symbolic`**: Reflects the technical description of symbolic compile-time
+    evaluation.
+-   **`comptime`**: Reflects when the value is known (compile time).
+-   **`checked`**: Reflects the semantic behavior that these parameters are
+    type-checked at the definition site.
 
 For `runtime`, the main candidate discussed was:
 
--   **`dynamic`**: This uses the term in a recognizable way (runtime values are
-    dynamically determined). However, it risks confusion with dynamic dispatch,
-    as in Rust's `dyn` keyword, making it a poor fit for Carbon.
+-   **`dynamic`**: Reflects that values are dynamically determined at runtime.
 
 -   **Advantages**:
-    -   `symbolic` may be marginally more technically precise for compiler
-        experts.
+    -   `symbolic` is more technically precise for compiler experts as it
+        reflects the symbolic evaluation phase.
     -   `comptime` is a familiar pattern from other modern systems languages.
+    -   `checked` is highly precise about the checking model used, matches the
+        terminology we use in the design, and matches the structure of
+        `template`.
+    -   `dynamic` uses a term that is recognizable for runtime behavior.
 -   **Disadvantages**:
     -   None of the alternatives offer as strong a mnemonic connection to the
         _programming concepts_ they represent as the chosen keywords.
-    -   `symbolic` is inaccessible jargon for many developers.
-    -   `comptime` describes the mechanism but not the programming paradigm.
-    -   `dynamic` conflicts with the well-established use in dynamic dispatch.
+    -   `symbolic` is inaccessible jargon and less teachable to developers not
+        familiar with compiler or type theory terminology.
+    -   `comptime` describes _when_ the value is known, not _why_ or _how_ it is
+        used, lacking a connection to generic programming.
+    -   `checked` focuses on the implementation mechanism (checking) rather than
+        the programmer's intent (generic programming) and loses the immediate
+        familiarity of the term `generic`.
+    -   `dynamic` conflicts with the well-established use in dynamic dispatch
+        (for example, Rust's `dyn`), making it a poor fit for Carbon.
 -   **Decision**: The chosen keywords (`generic`, `template`, `runtime`) were
     found to best balance accessibility with precision. `generic` in particular
     connects directly to the well-known concept of generic programming, making
     it both familiar and teachable.
+
+### Use `template generic` instead of just `template`
+
+An alternative considered was to require `template generic` (two keywords) for
+template parameters, and `generic` for checked parameters, to make it clear that
+templates _are_ generics.
+
+Under this model, the terminology is that we have "generics" that come in two
+semantic forms: "checked generics" and "template generics". Both of these are
+considered "generics". The _default_ semantic is checked generics, so when a
+parameter is marked `generic` (or defaults to it), it gets that semantic. The
+rejected alternative would be to use both keywords as `template generic` for the
+template case, rather than omitting the `generic` keyword and just using
+`template`.
+
+-   **Advantages**:
+    -   The syntax would more strictly reflect the terminology that templates
+        are a kind of generic.
+-   **Disadvantages**:
+    -   It makes the syntax significantly more verbose in a case where there is
+        nothing else that could be meant. The _only_ way to have the `template`
+        keyword on a parameter is for it to be a generic parameter, so adding
+        `generic` provides no additional information.
+-   **Decision**: Rejected in favor of using just `template` to avoid
+    unnecessary verbosity.
 
 ### Context-independent syntax
 

@@ -1032,6 +1032,24 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
+Every binding pattern has a _phase_ (either compile-time or runtime). A
+[compile-time binding](#checked-and-template-parameters) can only match
+[compile-time constants](#expression-phases), not run-time values.
+
+To minimize keyword noise, Carbon uses contextual defaults to determine the
+phase (compile-time vs runtime) of a binding in parameter lists:
+
+-   Parameters to compile-time entities (such as `interface`, `impl`, and
+    `class`) are `generic` by default.
+-   Deduced function parameters (declared in `[]`) are `generic` by default.
+-   Explicit function parameters and local bindings (declared in `()`) are
+    `runtime` by default.
+
+These defaults can be overridden by using the `template`, `generic`, or
+`runtime` keywords. However, using a keyword that matches the contextual default
+is disallowed to maintain consistency. A `template` keyword before the binding
+selects a template binding instead of a symbolic binding.
+
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
@@ -1051,12 +1069,6 @@ implementation's choice among these options may be indirectly observable, for
 example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
-
-A [compile-time binding](#checked-and-template-parameters) is indicated by
-context or by keywords like `generic` or `template`, and can only match
-[compile-time constants](#expression-phases), not run-time values. A `template`
-keyword before the binding selects a template binding instead of a symbolic
-binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -2713,12 +2725,13 @@ not itself a type.
 
 ### Checked and template parameters
 
-Compile-time bindings may either be _checked_ or _template_ bindings. A binding
-pattern declares a checked binding if it's marked `generic`, or appears in 
-a context that only supports compile-time bindings, such as the deduced
-parameter list `[]` of a function, the parameter list of a `class` or `interface`,
-or an associated constant declaration. A binding pattern declares a template
-binding if it's marked `template`.
+Compile-time bindings may either be _checked_ or _template_ bindings and are
+often used as _parameters_ to generic entities. A binding pattern declares a
+checked binding if it's marked `generic`, or appears in a context that only
+supports compile-time bindings, such as the deduced parameter list `[]` of a
+function, the parameter list of a `class` or `interface`, or an associated
+constant declaration. A binding pattern declares a template binding if it's
+marked `template`.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
