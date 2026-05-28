@@ -174,18 +174,22 @@ allow a container interface to include the type of iterators that are returned
 from and passed to various container methods.
 
 The function expresses that the type argument is passed in statically, basically
-generating a separate function body for every different type passed in, by using
-the compile-time parameter syntax. By default, this defines a
-[checked-generics parameter](#checked-generic-functions) below. In this case,
-the interface contains enough information to
+generating a separate function body for every different type passed in, by
+either accepting it as an
+[implicit parameter](terminology.md#deduced-parameter), or marking an explicit
+parameter as either `generic` or `template`. The default semantics for implicit
+parameters are [checked-generics parameter](#checked-generic-functions), the
+same as an explicit parameter with `generic`. In this case, the interface
+contains enough information to
 [type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
 function body.
 
-Alternatively, the `template` keyword can be included in the signature to make
-the type a template parameter. In this case, you could just use `type` instead
-of an interface and it will work as long as the function is only called with
-types that allow the definition of the function to compile.
+Alternatively, if the `template` keyword is used on the binding for either
+implicit or explicit parameters, it becomes a _template_ generic parameter. In
+this case, you could just use `type` instead of an interface and it will work as
+long as the function is only called with types that allow the definition of the
+function to compile.
 
 The interface bound has other benefits:
 
