@@ -609,10 +609,10 @@ static auto ConvertPartialInitializerToNonPartial(
 }
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
-template <typename TargetAccessInstT>
+template <typename TargetAccessInstT, typename GetDefault>
 static auto ConvertStructToStructOrClass(
     Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
-    SemIR::InstId value_id, ConversionTarget target,
+    SemIR::InstId value_id, ConversionTarget target, GetDefault get_default,
     SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
@@ -641,28 +641,38 @@ static auto ConvertStructToStructOrClass(
     value_id = MaterializeIfInitializer(context, value_id);
   }
 
-  // Check that the structs are the same size.
-  // TODO: If not, include the name of the first source field that doesn't
-  // exist in the destination or vice versa in the diagnostic.
-  if (src_elem_fields.size() != dest_elem_fields_size) {
-    if (target.diagnose) {
-      CARBON_DIAGNOSTIC(
-          StructInitElementCountMismatch, Error,
-          "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
-          "with {2} field{2:s}",
-          Diagnostics::BoolAsSelect, Diagnostics::IntAsSelect,
-          Diagnostics::IntAsSelect);
-      context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                             ToClass, dest_elem_fields_size,
-                             src_elem_fields.size());
-    }
-    return SemIR::ErrorInst::InstId;
+  Set<SemIR::NameId> dest_field_names;
+  for (auto field : dest_elem_fields) {
+    dest_field_names.Insert(field.name_id);
   }
 
-  // Prepare to look up fields in the source by index.
+  // Prepare to look up fields in the source by index. Also check for
+  // source fields that don't match any field in the destination.
   Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
+      if (!dest_field_names.Lookup(field.name_id)) {
+        if (target.diagnose) {
+          if (literal_elems_id.has_value()) {
+            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInLiteral, Error,
+                              "struct {0} has no field named `{1}`",
+                              SemIR::TypeId, SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitUnexpectedFieldInLiteral,
+                                   target.type_id, field.name_id);
+          } else {
+            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInConversion, Error,
+                              "cannot convert from struct type {0} to {1}: "
+                              "unexpected field `{2}` in source type",
+                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+            context.emitter().Emit(value_loc_id,
+                                   StructInitUnexpectedFieldInConversion,
+                                   value_id, target.type_id, field.name_id);
+          }
+        }
+        return SemIR::ErrorInst::InstId;
+      }
+
       auto result = src_field_indexes.Insert(field.name_id, i);
       CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
@@ -675,7 +685,8 @@ static auto ConvertStructToStructOrClass(
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.has_value() && !dest_vptr_index.has_value()
+      literal_elems_id.has_value() && !dest_vptr_index.has_value() &&
+              literal_elems.size() == dest_elem_fields_size
           ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
@@ -717,33 +728,14 @@ static auto ConvertStructToStructOrClass(
 
     // Find the matching source field.
     auto src_field_index = i;
+    bool found = true;
     if (src_type.fields_id != dest_type.fields_id) {
       if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
         src_field_index = lookup.value();
       } else {
-        if (target.diagnose) {
-          if (literal_elems_id.has_value()) {
-            CARBON_DIAGNOSTIC(
-                StructInitMissingFieldInLiteral, Error,
-                "missing value for field `{0}` in struct initialization",
-                SemIR::NameId);
-            context.emitter().Emit(value_loc_id,
-                                   StructInitMissingFieldInLiteral,
-                                   dest_field.name_id);
-          } else {
-            CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                              "cannot convert from struct type {0} to {1}: "
-                              "missing field `{2}` in source type",
-                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
-            context.emitter().Emit(value_loc_id,
-                                   StructInitMissingFieldInConversion, value_id,
-                                   target.type_id, dest_field.name_id);
-          }
-        }
-        return SemIR::ErrorInst::InstId;
+        found = false;
       }
     }
-    auto src_field = src_elem_fields[src_field_index];
 
     // When initializing the `.base` field of a class, the destination type is
     // `partial Base`, not `Base`.
@@ -758,20 +750,48 @@ static auto ConvertStructToStructOrClass(
       dest_field_type_inst_id = context.types().GetTypeInstId(partial_type_id);
     }
 
-    // TODO: This call recurses back into conversion. Switch to an iterative
-    // approach.
-    auto dest_field_index = src_field_index;
-    if (dest_vptr_index.has_value() &&
-        static_cast<int32_t>(src_field_index) >= dest_vptr_index.index) {
-      dest_field_index += 1;
+    SemIR::InstId init_id = SemIR::InstId::None;
+    if (found) {
+      auto src_field = src_elem_fields[src_field_index];
+
+      // TODO: This call recurses back into conversion. Switch to an iterative
+      // approach.
+      auto dest_field_index = src_field_index;
+      if (dest_vptr_index.has_value() &&
+          static_cast<int32_t>(src_field_index) >= dest_vptr_index.index) {
+        dest_field_index += 1;
+      }
+      init_id = ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
+          context, value_loc_id, value_id, src_field.type_inst_id,
+          literal_elems, inner_kind, target.storage_id, dest_field_type_inst_id,
+          target.storage_access_block, src_field_index, dest_field_index);
+    } else {
+      init_id = get_default(dest_field.name_id);
     }
-    auto init_id =
-        ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
-            context, value_loc_id, value_id, src_field.type_inst_id,
-            literal_elems, inner_kind, target.storage_id,
-            dest_field_type_inst_id, target.storage_access_block,
-            src_field_index, dest_field_index);
+
     if (init_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    if (!init_id.has_value()) {
+      if (target.diagnose) {
+        if (literal_elems_id.has_value()) {
+          CARBON_DIAGNOSTIC(
+              StructInitMissingFieldInLiteral, Error,
+              "missing value for field `{0}` in struct initialization",
+              SemIR::NameId);
+          context.emitter().Emit(value_loc_id, StructInitMissingFieldInLiteral,
+                                 dest_field.name_id);
+        } else {
+          CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
+                            "cannot convert from struct type {0} to {1}: "
+                            "missing field `{2}` in source type",
+                            TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+          context.emitter().Emit(value_loc_id,
+                                 StructInitMissingFieldInConversion, value_id,
+                                 target.type_id, dest_field.name_id);
+        }
+      }
       return SemIR::ErrorInst::InstId;
     }
 
@@ -825,7 +845,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::InstId value_id,
                                   ConversionTarget target) -> SemIR::InstId {
   return ConvertStructToStructOrClass<SemIR::StructAccess>(
-      context, src_type, dest_type, value_id, target);
+      context, src_type, dest_type, value_id, target,
+      /*get_default=*/[](SemIR::NameId) { return SemIR::InstId::None; });
 }
 
 // Performs a conversion from a struct to a class type. This function only
@@ -863,8 +884,46 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
+  const auto& dest_class_scope =
+      context.name_scopes().Get(dest_class_info.scope_id);
+
+  // Provide the default value for a field. Returns `InstId::None` if no
+  // default is available, or `ErrorInst::InstId` if a diagnosed error
+  // occurs.
+  auto get_default = [&](SemIR::NameId name_id) {
+    if (!context.insts().Is<SemIR::StructLiteral>(value_id)) {
+      return SemIR::InstId::None;
+    }
+
+    // Look up the field name in the class to get the corresponding
+    // `FieldDecl` `InstId`.
+    auto entry_id = dest_class_scope.Lookup(name_id);
+    if (!entry_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    // Look up the initializer `InstId` for the field and eval as a
+    // constant.
+    auto field_inst_id =
+        dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
+    auto lookup = context.field_initializers().Lookup(field_inst_id);
+    if (!lookup) {
+      return SemIR::InstId::None;
+    }
+    auto initializer_id = lookup.value();
+    SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
+    const_id = GetConstantValueInSpecific(
+        context.sem_ir(), dest_type.specific_id, initializer_id);
+    if (const_id == SemIR::ConstantId::NotConstant) {
+      context.TODO(initializer_id, "field initializer is not constant");
+      return SemIR::ErrorInst::InstId;
+    }
+
+    return context.constant_values().GetInstId(const_id);
+  };
+
   return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target,
+      context, src_type, dest_struct_type, value_id, target, get_default,
       is_partial ? nullptr : &dest_type);
 }
 
@@ -1676,6 +1735,8 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
     case SemIR::ExprCategory::Pattern:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
                    sem_ir_.insts().Get(expr_id));
+    case SemIR::ExprCategory::RefTagged:
+      CARBON_FATAL("Should have stripped ref tags already");
 
     case SemIR::ExprCategory::Error:
       return Done{SemIR::ErrorInst::InstId};
@@ -1725,41 +1786,10 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                         .category = SemIR::ExprCategory::EphemeralRef};
       }
 
-    case SemIR::ExprCategory::RefTagged: {
-      auto tagged_expr_id =
-          sem_ir_.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
-      auto tagged_expr_category =
-          SemIR::GetExprCategory(sem_ir_, tagged_expr_id);
-      if (target_.diagnose &&
-          tagged_expr_category != SemIR::ExprCategory::DurableRef) {
-        CARBON_DIAGNOSTIC(
-            RefTagNotDurableRef, Error,
-            "expression tagged with `ref` is not a durable reference");
-        context_.emitter().Emit(tagged_expr_id, RefTagNotDurableRef);
-      }
-
-      if (target_.kind == ConversionTarget::RefParam) {
-        return Done{expr_id};
-      }
-
-      // If the target isn't a reference parameter, ignore the `ref` tag.
-      // Unnecessary `ref` tags are diagnosed earlier.
-      return NextStep{.expr_id = tagged_expr_id,
-                      .category = tagged_expr_category};
-    }
-
     case SemIR::ExprCategory::DurableRef:
       if (target_.kind == ConversionTarget::DurableRef ||
-          target_.kind == ConversionTarget::UnmarkedRefParam) {
-        return Done{expr_id};
-      }
-      if (target_.kind == ConversionTarget::RefParam) {
-        if (target_.diagnose) {
-          CARBON_DIAGNOSTIC(
-              RefParamNoRefTag, Error,
-              "argument to `ref` parameter not marked with `ref`");
-          context_.emitter().Emit(expr_id, RefParamNoRefTag);
-        }
+          target_.kind == ConversionTarget::UnmarkedRefParam ||
+          target_.kind == ConversionTarget::RefParam) {
         return Done{expr_id};
       }
       [[fallthrough]];
@@ -1887,14 +1917,27 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // Diagnose unnecessary `ref` tags early, so that they're not obscured by
-  // conversions.
-  if (starting_category == SemIR::ExprCategory::RefTagged &&
-      target.kind != ConversionTarget::RefParam && target.diagnose) {
-    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                      "`ref` tag is not an argument to a `ref` parameter");
-    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  // Handle `ref`-tagged expressions.
+  if (starting_category == SemIR::ExprCategory::RefTagged) {
+    if (target.kind != ConversionTarget::RefParam) {
+      if (target.diagnose) {
+        CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                          "`ref` tag is not an argument to a `ref` parameter");
+        context.emitter().Emit(expr_id, RefTagNoRefParam);
+      }
+      return SemIR::ErrorInst::InstId;
+    }
+    expr_id = sem_ir.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
+    starting_category = SemIR::GetExprCategory(sem_ir, expr_id);
+  } else if (target.kind == ConversionTarget::RefParam) {
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                        "argument to `ref` parameter not marked with `ref`");
+      context.emitter().Emit(expr_id, RefParamNoRefTag);
+    }
+    return SemIR::ErrorInst::InstId;
   }
+  auto original_inner_expr_id = expr_id;
 
   // TODO: Allow abstract but complete types if the conversion is just a
   // same-type value acqisition.
@@ -2030,7 +2073,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Track that we performed a type conversion, if we did so.
-  if (orig_expr_id != expr_id) {
+  if (original_inner_expr_id != expr_id) {
     expr_id = AddInst<SemIR::Converted>(context, loc_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,

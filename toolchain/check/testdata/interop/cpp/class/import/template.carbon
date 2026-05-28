@@ -67,7 +67,7 @@ var x: Cpp.XY.r#type = 0;
 
 // CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+12]]:8: error: member access into incomplete class `Cpp.X` [QualifiedExprInIncompleteClassScope]
 // CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
-// CHECK:STDERR:        ^~~~~~~~~~~~~
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./instantiation_error.h:3:25: note: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
 // CHECK:STDERR:     3 |   using type = typename T::member;

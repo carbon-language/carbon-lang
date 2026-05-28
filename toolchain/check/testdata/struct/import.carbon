@@ -34,7 +34,7 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: struct `{.a: i32, .b: i32}` has no field named `c` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:1: in import [InImport]

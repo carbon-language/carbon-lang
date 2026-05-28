@@ -38,8 +38,8 @@ auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool;
 // Returns whether the specified instruction refers to a C++ constructor or
 // non-operator method. If so, when mapping from a Carbon interface to a C++
 // call, we pass a `self` parameter as the first argument instead.
-auto IsCppConstructorOrNonMethodOperator(Context& context,
-                                         SemIR::InstId inst_id) -> bool;
+auto IsCppConstructorOrNonMethod(Context& context, SemIR::InstId inst_id)
+    -> bool;
 
 }  // namespace Carbon::Check
 

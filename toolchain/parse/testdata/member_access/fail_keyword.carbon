@@ -9,32 +9,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/member_access/fail_keyword.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.self;
   // CHECK:STDERR:     ^~~~
   // CHECK:STDERR:
   a.self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.Self;
   // CHECK:STDERR:     ^~~~
   // CHECK:STDERR:
   a.Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.for;
   // CHECK:STDERR:     ^~~
   // CHECK:STDERR:
   a.for;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->self;
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
   p->self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->Self;
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
   p->Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->while;
   // CHECK:STDERR:      ^~~~~
   // CHECK:STDERR:
@@ -50,27 +50,27 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'self', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'self'},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Self', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'for', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'for'},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'self', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'self'},
 // CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Self', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'while', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'while'},
 // CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 30},

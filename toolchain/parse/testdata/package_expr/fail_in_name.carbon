@@ -15,7 +15,7 @@
 var package.n: i32;
 
 // `val` is a keyword, but during error recovery we treat it as an identifier.
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+8]]:13: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+8]]:13: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR: var package.val: i32;
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
@@ -49,7 +49,7 @@ class package.C {
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'val', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'val'},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},

@@ -75,14 +75,21 @@ fn Foo[a: C];
 // CHECK:STDERR:
 fn Foo[a: (C)] {}
 
-// --- todo_fail_raw_identifier.carbon
+// --- fail_raw_identifier.carbon
 
 library "[[@TEST_NAME]]";
 
 class C {}
 
-fn Foo(a: C);
-fn Foo(unused a: r#C) {}
+fn Foo(_: C);
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo(_: r#C) {}
+// CHECK:STDERR:           ^~~
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fn Foo(_: C);
+// CHECK:STDERR:           ^
+// CHECK:STDERR:
+fn Foo(_: r#C) {}
 
 // --- two_file.carbon
 
@@ -410,15 +417,17 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
+// CHECK:STDOUT: --- fail_raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
-// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Foo.type.2d3852.1: type = fn_type @Foo.loc6 [concrete]
+// CHECK:STDOUT:   %Foo.371266.1: %Foo.type.2d3852.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Foo.type.2d3852.2: type = fn_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.371266.2: %Foo.type.2d3852.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -427,21 +436,21 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.2d3852.1 = fn_decl @Foo.loc6 [concrete = constants.%Foo.371266.1] {
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc6: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc6: %C = value_binding a, %a.param.loc6
+// CHECK:STDOUT:     %_.param: %C = value_param call_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %_: %C = value_binding _, %_.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.2d3852.2 = fn_decl @Foo.loc14 [concrete = constants.%Foo.371266.2] {
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7: %C = value_binding a, %a.param.loc7
+// CHECK:STDOUT:     %_.param: %C = value_param call_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %_: %C = value_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -453,7 +462,9 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param.loc7: %C) {
+// CHECK:STDOUT: fn @Foo.loc6(%_.param: %C);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo.loc14(%_.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

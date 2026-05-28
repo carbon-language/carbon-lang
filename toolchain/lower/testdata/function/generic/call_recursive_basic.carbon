@@ -60,7 +60,7 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !16
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc40_9.4.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc40_9.2.temp = alloca {}, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !15
@@ -79,9 +79,9 @@ fn M() {
 // CHECK:STDOUT:   %F.call.loc37 = call ptr @_CF.Main.c6a12952cc402d96(ptr %.loc37_5, i32 0), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !18
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.4.temp), !dbg !19
-// CHECK:STDOUT:   call void @_CF.Main.cbacb6af70d3d312(ptr %.loc40_9.4.temp, ptr %c.var, i32 0), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %.loc40_9.4.temp), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.2.temp), !dbg !19
+// CHECK:STDOUT:   call void @_CF.Main.cbacb6af70d3d312(ptr %.loc40_9.2.temp, ptr %c.var, i32 0), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %.loc40_9.2.temp), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.b46d7363edf385cc:core.Destroy.Core"(ptr %m.var), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %n.var), !dbg !14
