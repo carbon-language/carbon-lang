@@ -126,7 +126,7 @@ fn F[var u: ()]();
 // CHECK:STDERR:
 fn G[var T:! type]();
 
-// --- fail_var_self.carbon
+// --- var_self.carbon
 
 library "[[@TEST_NAME]]";
 
