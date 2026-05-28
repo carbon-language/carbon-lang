@@ -131,41 +131,41 @@ fn F() {
 // CHECK:STDOUT:   %custom_witness.340963.1: <witness> = custom_witness (%Destroy.Op.1dc86d.1), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.959: %Destroy.type = facet_value %ptr.143, (%custom_witness.340963.1) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.5a6: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.959) [concrete]
-// CHECK:STDOUT:   %OptionalStorage.impl_witness.1b4: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.1fd, @ptr.as.OptionalStorage.impl(%i32) [concrete]
-// CHECK:STDOUT:   %OptionalStorage.facet.5c5: %OptionalStorage.type = facet_value %ptr.143, (%OptionalStorage.impl_witness.1b4) [concrete]
-// CHECK:STDOUT:   %Optional.ab2: type = class_type @Optional, @Optional(%OptionalStorage.facet.5c5) [concrete]
+// CHECK:STDOUT:   %OptionalStorage.impl_witness.2c2: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.1a6, @ptr.as.OptionalStorage.impl(%i32) [concrete]
+// CHECK:STDOUT:   %OptionalStorage.facet.7bd: %OptionalStorage.type = facet_value %ptr.143, (%OptionalStorage.impl_witness.2c2) [concrete]
+// CHECK:STDOUT:   %Optional.08a: type = class_type @Optional, @Optional(%OptionalStorage.facet.7bd) [concrete]
 // CHECK:STDOUT:   %TakesArray.type: type = fn_type @TakesArray [concrete]
 // CHECK:STDOUT:   %TakesArray: %TakesArray.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.535: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.ab2)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.1a6: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.08a)> [concrete]
 // CHECK:STDOUT:   %OptionalAs.type.c8f: type = facet_type <@OptionalAs, @OptionalAs(%T.390)> [symbolic]
 // CHECK:STDOUT:   %U.00a: %OptionalAs.type.c8f = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.ba3: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.20a(%T.390, %U.00a) [symbolic]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.7c5: %U.as_type.as.ImplicitAs.impl.Convert.type.ba3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %OptionalAs.type.5d0: type = facet_type <@OptionalAs, @OptionalAs(%OptionalStorage.facet.5c5)> [concrete]
+// CHECK:STDOUT:   %OptionalAs.type.edd: type = facet_type <@OptionalAs, @OptionalAs(%OptionalStorage.facet.7bd)> [concrete]
 // CHECK:STDOUT:   %T.as_type.as.OptionalAs.impl.Convert.type.135: type = fn_type @T.as_type.as.OptionalAs.impl.Convert, @T.as_type.as.OptionalAs.impl(%T.390) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalAs.impl.Convert.8c2: %T.as_type.as.OptionalAs.impl.Convert.type.135 = struct_value () [symbolic]
-// CHECK:STDOUT:   %OptionalAs.impl_witness.334: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.d46, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.5c5) [concrete]
-// CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.5d0 = facet_value %ptr.143, (%OptionalAs.impl_witness.334) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c80: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.d00, @U.as_type.as.ImplicitAs.impl.20a(%OptionalStorage.facet.5c5, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.3fc: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.20a(%OptionalStorage.facet.5c5, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.22a: %U.as_type.as.ImplicitAs.impl.Convert.type.3fc = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.974: %ImplicitAs.type.535 = facet_value %ptr.143, (%ImplicitAs.impl_witness.c80) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.811: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.ab2, %ImplicitAs.facet.974) [concrete]
-// CHECK:STDOUT:   %.3bb: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.811, %ImplicitAs.facet.974 [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.22a, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.5c5, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %OptionalAs.impl_witness.28e: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.d46, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.7bd) [concrete]
+// CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.edd = facet_value %ptr.143, (%OptionalAs.impl_witness.28e) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.60c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.d00, @U.as_type.as.ImplicitAs.impl.20a(%OptionalStorage.facet.7bd, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.f8c: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.20a(%OptionalStorage.facet.7bd, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.457: %U.as_type.as.ImplicitAs.impl.Convert.type.f8c = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.9dd: %ImplicitAs.type.1a6 = facet_value %ptr.143, (%ImplicitAs.impl_witness.60c) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.ce5: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.08a, %ImplicitAs.facet.9dd) [concrete]
+// CHECK:STDOUT:   %.e8b: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.ce5, %ImplicitAs.facet.9dd [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.457, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.7bd, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t: type = class_type @NullptrT [concrete]
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.f80: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.005: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.f80 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.54e: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e9c, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.bb8: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.779: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.bb8 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.e01: %ImplicitAs.type.535 = facet_value %Cpp.nullptr_t, (%ImplicitAs.impl_witness.54e) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.515: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.ab2, %ImplicitAs.facet.e01) [concrete]
-// CHECK:STDOUT:   %.108: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.515, %ImplicitAs.facet.e01 [concrete]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.779 [concrete]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.779, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
-// CHECK:STDOUT:   %bound_method.c21: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.4ab: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.912: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.4ab = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.731: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1d0, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.372: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.a4b: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.372 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.4a4: %ImplicitAs.type.1a6 = facet_value %Cpp.nullptr_t, (%ImplicitAs.impl_witness.731) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.073: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.08a, %ImplicitAs.facet.4a4) [concrete]
+// CHECK:STDOUT:   %.d17: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.073, %ImplicitAs.facet.4a4 [concrete]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.a4b [concrete]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.a4b, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
+// CHECK:STDOUT:   %bound_method.54c: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.4: type = fn_type @Destroy.Op.loc13_21.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.4: %Destroy.Op.type.af7ec0.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.7: type = fn_type @Destroy.Op.loc10_3.3 [concrete]
@@ -190,16 +190,17 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.6a0: @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Some.type (%ptr.as.OptionalStorage.impl.Some.type.876) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Some (constants.%ptr.as.OptionalStorage.impl.Some.0f5)]
 // CHECK:STDOUT:   %Core.import_ref.4ad = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.291 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.1fd = impl_witness_table (%Core.import_ref.7ae, %Core.import_ref.f1b, %Core.import_ref.6a0, %Core.import_ref.4ad, %Core.import_ref.291), @ptr.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.6b0 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.1a6 = impl_witness_table (%Core.import_ref.7ae, %Core.import_ref.f1b, %Core.import_ref.6a0, %Core.import_ref.4ad, %Core.import_ref.291, %Core.import_ref.6b0), @ptr.as.OptionalStorage.impl [concrete]
 // CHECK:STDOUT:   %TakesArray.decl: %TakesArray.type = fn_decl @TakesArray [concrete = constants.%TakesArray] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %.loc11_23.1: type = splice_block %Optional [concrete = constants.%Optional.ab2] {
+// CHECK:STDOUT:     %.loc11_23.1: type = splice_block %Optional [concrete = constants.%Optional.08a] {
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %OptionalStorage.facet: %OptionalStorage.type = facet_value constants.%ptr.143, (constants.%OptionalStorage.impl_witness.1b4) [concrete = constants.%OptionalStorage.facet.5c5]
-// CHECK:STDOUT:       %.loc11_23.2: %OptionalStorage.type = converted constants.%ptr.143, %OptionalStorage.facet [concrete = constants.%OptionalStorage.facet.5c5]
-// CHECK:STDOUT:       %Optional: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet.5c5) [concrete = constants.%Optional.ab2]
+// CHECK:STDOUT:       %OptionalStorage.facet: %OptionalStorage.type = facet_value constants.%ptr.143, (constants.%OptionalStorage.impl_witness.2c2) [concrete = constants.%OptionalStorage.facet.7bd]
+// CHECK:STDOUT:       %.loc11_23.2: %OptionalStorage.type = converted constants.%ptr.143, %OptionalStorage.facet [concrete = constants.%OptionalStorage.facet.7bd]
+// CHECK:STDOUT:       %Optional: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet.7bd) [concrete = constants.%Optional.08a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
@@ -207,8 +208,8 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.d00 = impl_witness_table (%Core.import_ref.0bb), @U.as_type.as.ImplicitAs.impl.20a [concrete]
 // CHECK:STDOUT:   %Core.import_ref.1a5: @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert.type (%T.as_type.as.OptionalAs.impl.Convert.type.135) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert (constants.%T.as_type.as.OptionalAs.impl.Convert.8c2)]
 // CHECK:STDOUT:   %OptionalAs.impl_witness_table.d46 = impl_witness_table (%Core.import_ref.1a5), @T.as_type.as.OptionalAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.ce7: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.f80) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.005)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e9c = impl_witness_table (%Core.import_ref.ce7), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.89d: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.4ab) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.912)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d0 = impl_witness_table (%Core.import_ref.89d), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -245,30 +246,30 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_21.2: %i32 = converted %int_0, %.loc11_21.1 [concrete = constants.%int_0.155]
 // CHECK:STDOUT:   %.loc11_22: ref %i32 = array_index %n.ref, %.loc11_21.2
 // CHECK:STDOUT:   %addr: %ptr.143 = addr_of %.loc11_22
-// CHECK:STDOUT:   %impl.elem0.loc11_18: %.3bb = impl_witness_access constants.%ImplicitAs.impl_witness.c80, element0 [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.22a]
+// CHECK:STDOUT:   %impl.elem0.loc11_18: %.e8b = impl_witness_access constants.%ImplicitAs.impl_witness.60c, element0 [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.457]
 // CHECK:STDOUT:   %bound_method.loc11_18.1: <bound method> = bound_method %addr, %impl.elem0.loc11_18
-// CHECK:STDOUT:   %specific_fn.loc11_18: <specific function> = specific_function %impl.elem0.loc11_18, @U.as_type.as.ImplicitAs.impl.Convert.2(constants.%OptionalStorage.facet.5c5, constants.%OptionalAs.facet) [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc11_18: <specific function> = specific_function %impl.elem0.loc11_18, @U.as_type.as.ImplicitAs.impl.Convert.2(constants.%OptionalStorage.facet.7bd, constants.%OptionalAs.facet) [concrete = constants.%U.as_type.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_18.2: <bound method> = bound_method %addr, %specific_fn.loc11_18
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.ab2 = call %bound_method.loc11_18.2(%addr)
-// CHECK:STDOUT:   %.loc11_18.1: init %Optional.ab2 = converted %addr, %U.as_type.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc11_18.2: ref %Optional.ab2 = temporary_storage
-// CHECK:STDOUT:   %.loc11_18.3: ref %Optional.ab2 = temporary %.loc11_18.2, %.loc11_18.1
-// CHECK:STDOUT:   %.loc11_18.4: %Optional.ab2 = acquire_value %.loc11_18.3
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.08a = call %bound_method.loc11_18.2(%addr)
+// CHECK:STDOUT:   %.loc11_18.1: init %Optional.08a = converted %addr, %U.as_type.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc11_18.2: ref %Optional.08a = temporary_storage
+// CHECK:STDOUT:   %.loc11_18.3: ref %Optional.08a = temporary %.loc11_18.2, %.loc11_18.1
+// CHECK:STDOUT:   %.loc11_18.4: %Optional.08a = acquire_value %.loc11_18.3
 // CHECK:STDOUT:   %TakesArray.call.loc11: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc11_18.4)
 // CHECK:STDOUT:   %Cpp.ref.loc13_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesArray.ref.loc13: %TakesArray.cpp_overload_set.type = name_ref TakesArray, imports.%TakesArray.cpp_overload_set.value [concrete = constants.%TakesArray.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref.loc13_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %impl.elem0.loc13: %.108 = impl_witness_access constants.%ImplicitAs.impl_witness.54e, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.779]
+// CHECK:STDOUT:   %impl.elem0.loc13: %.d17 = impl_witness_access constants.%ImplicitAs.impl_witness.731, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.a4b]
 // CHECK:STDOUT:   %bound_method.loc13_21.1: <bound method> = bound_method %nullptr.ref, %impl.elem0.loc13 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(constants.%i32) [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %nullptr.ref, %specific_fn.loc13 [concrete = constants.%bound_method.c21]
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call: init %Optional.ab2 = call %bound_method.loc13_21.2(%nullptr.ref)
-// CHECK:STDOUT:   %.loc13_21.1: init %Optional.ab2 = converted %nullptr.ref, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc13_21.2: ref %Optional.ab2 = temporary_storage
-// CHECK:STDOUT:   %.loc13_21.3: ref %Optional.ab2 = temporary %.loc13_21.2, %.loc13_21.1
-// CHECK:STDOUT:   %.loc13_21.4: %Optional.ab2 = acquire_value %.loc13_21.3
+// CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %nullptr.ref, %specific_fn.loc13 [concrete = constants.%bound_method.54c]
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call: init %Optional.08a = call %bound_method.loc13_21.2(%nullptr.ref)
+// CHECK:STDOUT:   %.loc13_21.1: init %Optional.08a = converted %nullptr.ref, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc13_21.2: ref %Optional.08a = temporary_storage
+// CHECK:STDOUT:   %.loc13_21.3: ref %Optional.08a = temporary %.loc13_21.2, %.loc13_21.1
+// CHECK:STDOUT:   %.loc13_21.4: %Optional.08a = acquire_value %.loc13_21.3
 // CHECK:STDOUT:   %TakesArray.call.loc13: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc13_21.4)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_21.3, constants.%Destroy.Op.1dc86d.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_21.3)
@@ -284,7 +285,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_21.2(%self.param: ref %Optional.ab2) {
+// CHECK:STDOUT: fn @Destroy.Op.loc13_21.2(%self.param: ref %Optional.08a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

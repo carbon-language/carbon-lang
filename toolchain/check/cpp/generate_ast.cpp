@@ -882,6 +882,13 @@ auto GenerateAst(Context& context,
   context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
       std::move(clang_instance_ptr), llvm_context));
 
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
+  // that diagnostics created here don't interleave with later Carbon
+  // diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
   clang_instance.setDiagnostics(diags);
   clang_instance.setVirtualFileSystem(fs);
   clang_instance.createFileManager();
@@ -914,10 +921,6 @@ auto GenerateAst(Context& context,
                                          llvm::toString(std::move(error)));
     return false;
   }
-
-  // Flush any diagnostics. We know we're not part-way through emitting a
-  // diagnostic now.
-  context.emitter().Flush();
 
   return true;
 }
