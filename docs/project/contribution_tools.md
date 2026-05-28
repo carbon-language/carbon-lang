@@ -181,8 +181,7 @@ These tools are essential for work on Carbon.
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
-    -   [prek](https://github.com/j178/prek): Fast, Rust-native Git hook
-        manager.
+    -   [prek](https://github.com/j178/prek): Validates and cleans up commits.
     -   `autoupdate_testdata.py`: Updates expected output for tests.
         -   Usage: `./toolchain/autoupdate_testdata.py [files...]`
         -   This is essential when changes affect compiler output (diagnostics,
@@ -190,9 +189,8 @@ These tools are essential for work on Carbon.
 
 #### Running prek
 
-[prek](https://github.com/j178/prek) is a fast, Rust-native Git hook manager. It
-is a drop-in replacement for `pre-commit` but runs significantly faster by
-executing hooks in parallel.
+[prek](https://github.com/j178/prek) runs linters and formatters. It's a drop-in
+replacement for [pre-commit](https://pre-commit.com/).
 
 To use it:
 
@@ -318,7 +316,6 @@ allowlisting) are:
 bazelisk build
 bazelisk test
 bazelisk run //toolchain/testing:file_test --
-clang-format
 prek run
 ./toolchain/autoupdate_testdata.py
 
