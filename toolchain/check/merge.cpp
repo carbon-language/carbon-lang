@@ -487,14 +487,16 @@ static auto CheckRedeclParamSyntax(Context& context,
       // omitted form is a single `SelfBindingPattern`; the explicit form is a
       // `SelfTypeNameExpr` followed by a `LetBindingPattern`. A mismatch is
       // diagnosed, but we recover by treating the two forms as matching,
-      // skipping the extra type node on the explicit side.
+      // skipping the extra type node on the explicit side. Other type
+      // mismatches between two explicit self bindings (e.g. `self: Self` vs.
+      // `self: C`) fall through to the generic "syntax differs" diagnostic.
       bool new_self_omits_type =
           new_node_kind == Parse::NodeKind::SelfBindingPattern &&
           prev_node_kind == Parse::NodeKind::SelfTypeNameExpr;
       bool prev_self_omits_type =
           prev_node_kind == Parse::NodeKind::SelfBindingPattern &&
           new_node_kind == Parse::NodeKind::SelfTypeNameExpr;
-      if (new_self_omits_type || prev_self_omits_type) {
+      if (new_self_omits_type != prev_self_omits_type) {
         if (diagnose) {
           CARBON_DIAGNOSTIC(
               RedeclParamSelfSyntaxDiffers, Error,

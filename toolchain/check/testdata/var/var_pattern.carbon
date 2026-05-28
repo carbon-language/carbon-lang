@@ -837,7 +837,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_var_self.carbon
+// CHECK:STDOUT: --- var_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -866,12 +866,14 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type = var_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc5_12: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt.loc5_12 [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc5_8: %pattern_type = var_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %self.param.loc5_8: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %self.param.loc5_12: %C = value_param call_param1
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param.loc5_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -881,7 +883,7 @@ fn Call() {
 // CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F(%self.param: ref %C);
+// CHECK:STDOUT: fn @C.F(%self.param.loc5_8: ref %C, %self.param.loc5_12: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_match.carbon
 // CHECK:STDOUT:
