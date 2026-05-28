@@ -1,14 +1,24 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "gql==2.0.0",
+#   "requests",
+#   "types-requests",
+# ]
+# ///
+
 """Check if a PR depends on other open PRs based on shared commits.
 
 Usage examples:
   # Check a specific PR in dry-run mode:
   GITHUB_ACCESS_TOKEN=$(gh auth token) \
-    python3 github_tools/check_dependent_pr.py --pr-number <PR_NUMBER> --dry-run
+    ./github_tools/check_dependent_pr.py --pr-number <PR_NUMBER> --dry-run
 
   # Scan all dependent PRs in dry-run mode:
   GITHUB_ACCESS_TOKEN=$(gh auth token) \
-    python3 github_tools/check_dependent_pr.py --scan --dry-run
+    ./github_tools/check_dependent_pr.py --scan --dry-run
 """
 
 __copyright__ = """
@@ -19,26 +29,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import datetime
-import importlib.util
 import json
 import re
-import os
 import sys
 import requests
 from typing import Any, Optional
 
-# Do some extra work to support direct runs.
 try:
     from github_tools import github_helpers
 except ImportError:
-    github_helpers_spec = importlib.util.spec_from_file_location(
-        "github_helpers",
-        os.path.join(os.path.dirname(__file__), "github_helpers.py"),
-    )
-    assert github_helpers_spec is not None
-    github_helpers = importlib.util.module_from_spec(github_helpers_spec)
-    github_helpers_spec.loader.exec_module(github_helpers)  # type: ignore
-
+    import github_helpers  # type: ignore
 
 # Queries
 _QUERY_OPEN_PRS = """

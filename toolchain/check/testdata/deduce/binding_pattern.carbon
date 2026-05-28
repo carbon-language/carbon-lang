@@ -274,8 +274,8 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.751: %ImplicitAs.WithSelf.Convert.type.7c0 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.d91 [symbolic_self]
 // CHECK:STDOUT:   %ImplicitAs.type.33a: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
-// CHECK:STDOUT:   %Destroy_where.type: type = facet_type <@Destroy where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.785: type = pattern_type %Destroy_where.type [symbolic_self]
+// CHECK:STDOUT:   %Destroy_where.type: type = facet_type <@Destroy where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type)> [concrete]
+// CHECK:STDOUT:   %pattern_type.785: type = pattern_type %Destroy_where.type [concrete]
 // CHECK:STDOUT:   %V: %Destroy_where.type = symbolic_binding V, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -347,7 +347,7 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %.loc9_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc9_14.2: type = symbolic_binding U, 0 [symbolic = %U.loc9_14.1 (constants.%U)]
-// CHECK:STDOUT:     %.loc9_40.1: type = splice_block %.loc9_40.2 [symbolic_self = constants.%Destroy_where.type] {
+// CHECK:STDOUT:     %.loc9_40.1: type = splice_block %.loc9_40.2 [concrete = constants.%Destroy_where.type] {
 // CHECK:STDOUT:       %.Self.loc9_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %Core.ref.loc9_27: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Destroy.ref: type = name_ref Destroy, imports.%Core.Destroy [concrete = constants.%Destroy.type]
@@ -360,7 +360,7 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %.loc9_76: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self.as_type)> [symbolic_self = constants.%ImplicitAs.type.33a]
 // CHECK:STDOUT:       %.loc9_47.2: type = converted %.loc9_47.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc9_40.2: type = where_expr [symbolic_self = constants.%Destroy_where.type] {
+// CHECK:STDOUT:       %.loc9_40.2: type = where_expr [concrete = constants.%Destroy_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %Destroy.ref
 // CHECK:STDOUT:         requirement_impls %.loc9_47.2, %ImplicitAs.type.loc9
 // CHECK:STDOUT:       }

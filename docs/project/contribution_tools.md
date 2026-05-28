@@ -59,11 +59,10 @@ sudo apt install \
   libc++abi-dev \
   lld \
   lldb \
-  python3 \
-  pipx
+  pre-commit
 
-# Install pre-commit.
-pipx install pre-commit
+# Install `uv` for Python scripts.
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Set up git.
 # If you don't already have a fork:
@@ -123,7 +122,7 @@ brew install \
   bazelisk \
   gh \
   llvm \
-  python@3.10 \
+  uv \
   pre-commit
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
@@ -161,13 +160,16 @@ These tools are essential for work on Carbon.
     -   [Homebrew](https://brew.sh/) (for macOS)
         -   To upgrade versions of `brew` packages, it will be necessary to
             periodically run `brew upgrade`.
-    -   [Python](https://python.org)
-        -   Carbon requires Python 3.10 or newer.
-        -   To upgrade versions of pip-installed packages, it will be necessary
-            to periodically run `pipx list --outdated`, then
-            `pipx install -U <package>` to upgrade desired packages.
-        -   When upgrading, version dependencies may mean packages _should_ be
-            outdated, and not be upgraded.
+    -   [Python](https://python.org) using [`uv`](https://docs.astral.sh/uv/)
+        -   Carbon uses `uv` to run Python scripts directly, ensuring automatic
+            dependency management.
+        -   Standalone scripts (for example, in `scripts/`) have dependencies
+            embedded in the file using PEP 723 inline metadata.
+        -   To run a script directly, ensure `uv` is installed and the script
+            should be runnable directly (for example,
+            `./scripts/create_compdb.py`).
+        -   Installation:
+            https://docs.astral.sh/uv/getting-started/installation/
 -   Main tools
     -   [Bazel](https://www.bazel.build/)
         -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
@@ -243,11 +245,6 @@ considering if they fit your workflow.
         ```
 
         -   **NOTE**: This assumes you have `python` 3 installed on your system.
-
--   [`uv`](https://docs.astral.sh/uv/): A fast Python package manager.
-    -   Notably, `uv` supports automatic management of even complex Python
-        dependencies for scripts: https://docs.astral.sh/uv/guides/scripts/
-    -   Installation: https://docs.astral.sh/uv/getting-started/installation/
 
 #### Jujutsu (`jj`)
 
