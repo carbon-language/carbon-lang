@@ -57,10 +57,10 @@ The `:!` syntax for generics and templates has several issues:
 
 The `:!` syntax was originally chosen to evoke the idea of "phase", using `!` to
 mark parameters that belong to an earlier (compile-time) phase of evaluation.
-Similarly, the `:?` syntax was used to mark deduced _form bindings_: parameters
-that capture extended type information (what was called a "form") about an
-expression, such as its value category and phase, rather than just its object
-type.
+Similarly, the `:?` syntax in the current revision of proposal #5389 is intended to
+mark deduced _form bindings_: parameters that capture extended type information
+(what was called a "form") about an expression, such as its value category and
+phase, rather than just its object type.
 
 These issues were discussed in leads issue #6932, and a direction was decided to
 move away from punctuation and towards keywords and contextual defaults.
@@ -72,9 +72,9 @@ We propose to:
 1.  Remove `:!` syntax for generics and templates.
 2.  Introduce contextual defaults for phase:
     -   Parameters to compile-time entities (interfaces, impls, classes) are
-        `generic` by default.
-    -   Deduced function parameters are `generic` by default.
-    -   Explicit function parameters are `runtime` by default.
+        checked by default.
+    -   Deduced function parameters are checked by default.
+    -   Explicit function parameters are runtime by default.
 3.  Allow overriding defaults with keywords `template`, `generic`, and
     `runtime`.
 4.  Disallow keywords that match the contextual default to ensure consistency.
@@ -183,7 +183,7 @@ punctuated syntax for advanced generic programming.
 Example:
 
 ```carbon
-fn F[fwd T: exttype](arg: T) -> fwd T;
+fn F[T: exttype](fwd arg: T) -> fwd T;
 ```
 
 ## Rationale

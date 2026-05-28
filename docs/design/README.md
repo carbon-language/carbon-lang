@@ -2713,10 +2713,12 @@ not itself a type.
 
 ### Checked and template parameters
 
-Compile-time parameters like types may either be _checked_ (marked `generic` or
-defaulting to it) or _template_ (marked `template` and never the default).
-Parameters in the deduced parameter list of functions `[]` default to being
-checked generic parameters without a `generic` keyword.
+Compile-time bindings may either be _checked_ or _template_ bindings. A binding
+pattern declares a checked binding if it's marked `generic`, or appears in 
+a context that only supports compile-time bindings, such as the deduced
+parameter list `[]` of a function, the parameter list of a `class` or `interface`,
+or an associated constant declaration. A binding pattern declares a template
+binding if it's marked `template`.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name

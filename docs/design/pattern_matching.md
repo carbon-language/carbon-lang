@@ -158,9 +158,7 @@ compile-time binding pattern cannot appear inside a `var` pattern. It is either
 a _symbolic binding pattern_ or a _template binding pattern_, depending on
 whether it is prefixed with `template`.
 
-> **TODO:** Document the `fwd` binding modifier (which replaces the former `:?`
-> syntax and converts the binding's type expression to `exttype` rather than
-> `type`) and the explicit `runtime` phase keyword, both adopted in
+> **TODO:** Document the explicit `runtime` phase keyword adopted in
 > [p7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md).
 
 The binding declared by a binding pattern has a
