@@ -51,6 +51,7 @@ jobs:
             raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
+            releases.astral.sh:443
             releases.bazel.build:443
             storage.googleapis.com:443
             uploads.github.com:443
