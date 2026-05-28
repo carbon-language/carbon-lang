@@ -131,11 +131,7 @@ fn G[var T:! type]();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+4]]:12: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn F[var self: Self]();
-  // CHECK:STDERR:            ^~~~~~~~~~
-  // CHECK:STDERR:
-  fn F[var self: Self]();
+  fn F(var self);
 }
 
 // --- nested_match.carbon
