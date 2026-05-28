@@ -2113,7 +2113,7 @@ fn Render(w: Window) {
 
 ```carbon
 fn Render(w: Window) {
-  let DrawInWindow: Draw = Window;
+  let generic DrawInWindow: Draw = Window;
   // Implicit conversion to `w as DrawInWindow`.
   let d: DrawInWindow = w;
   d.SetPen(...);

@@ -304,7 +304,7 @@ interface I {
   let X: type;
   let Y: type;
 }
-let Bad: auto = (I where .X = .Y) & (I where .Y = .X);
+let generic Bad: auto = (I where .X = .Y) & (I where .Y = .X);
 // Bad is not used here.
 ```
 
