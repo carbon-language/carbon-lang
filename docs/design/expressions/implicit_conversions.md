@@ -16,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Semantics-preserving](#semantics-preserving)
     -   [Examples](#examples)
 -   [Built-in types](#built-in-types)
-    -   [Data types](#data-types)
+    -   [Numeric data types](#numeric-data-types)
+    -   [Character types](#character-types)
     -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
     -   [Facet types](#facet-types)
@@ -98,7 +99,7 @@ salient part of a `StringView`'s value.
 
 ## Built-in types
 
-### Data types
+### Numeric data types
 
 The following implicit numeric conversions are available:
 
@@ -155,6 +156,12 @@ var a: u32 = ^0;
 // ^4 == -5 is negative, but we want to allow it to convert to u32 here.
 var b: u32 = a & ^4;
 ```
+
+### Character types
+
+The only implicit conversion available for character types is `Core.CharLiteral`
+-> `char`. No other implicit conversions (such as converting `char` to/from
+integer types or `Core.CharLiteral` to integers) are permitted.
 
 ### Same type
 
@@ -244,3 +251,5 @@ types.
     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
