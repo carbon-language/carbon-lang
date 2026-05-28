@@ -27,8 +27,8 @@ impl forall [N:! IntLiteral()] Float(N) as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-// Conversions between floating-point types.
-// TODO: Support mixed-size conversions.
+// Conversions between floating-point types. Implicit if all the source values
+// can be represented exactly in the target type, otherwise explicit.
 impl forall [N:! IntLiteral()] FloatLiteral() as ImplicitAs(Float(N)) {
   fn Convert[self: Self]() -> Float(N) = "float.convert_checked";
 }
@@ -37,6 +37,43 @@ impl forall [N:! IntLiteral()] FloatLiteral() as ImplicitAs(Float(N)) {
 impl forall [N:! IntLiteral()] FloatLiteral() as As(Float(N)) {
   fn Convert[self: Self]() -> Float(N) = "float.convert_checked";
 }
+
+final impl forall [From:! IntLiteral(), To:! IntLiteral()]
+    Float(From) as As(Float(To)) {
+  fn Convert[self: Self]() -> Float(To) = "float.convert";
+}
+
+// AnyFloat exists to work around the inability to apply constraints to an impl
+// that is only parameterized by integers.
+// TODO: Remove these once possible.
+private interface AnyFloat {
+  let Width:! IntLiteral();
+  fn AsFloat[self: Self]() -> Float(Width);
+  fn Make(src: Float(Width)) -> Self;
+}
+
+impl forall [N:! IntLiteral()] Float(N) as AnyFloat where .Width = N {
+  fn AsFloat[self: Self]() -> Self { return self; }
+  fn Make(src: Self) -> Self { return src; }
+}
+
+// Use `Float(?) as ImplicitAs(?)` to avoid a collision with the
+// `? as ImplicitAs(Float(?))` type structure used by int -> float conversion.
+// TODO: Use `match_first` to resolve this instead once it is available.
+impl forall [From:! IntLiteral(), To:! AnyFloat where Float(From) impls FloatFitsIn(.Self)]
+    Float(From) as ImplicitAs(To) {
+  fn Convert[self: Self]() -> To {
+    fn Impl(src: Float(From)) -> Float(To.Width) = "float.convert";
+    return To.Make(Impl(self));
+  }
+}
+
+// Desired workaround-free version of the above:
+// impl forall [From:! IntLiteral(), To:! IntLiteral()
+//              where Float(From) impls FloatFitsIn(Float(To))]
+//     Float(From) as ImplicitAs(Float(To)) {
+//   fn Convert[self: Self]() -> Float(To) = "float.convert";
+// }
 
 // Conversions from floating-point to integer type. Always unsafe: not all
 // source values fit in the target type.

@@ -111,3 +111,34 @@ fn F(f: f32) {
   // CHECK:STDERR:
   let _: i32 = f as i32;
 }
+
+// --- float_to_float.carbon
+library "[[@TEST_NAME]]";
+
+import library "test_helpers";
+
+fn F(x: f32) {
+  // Implicit conversion (widening f32 -> f64)
+  let y: f64 = x;
+
+  // Explicit conversion (widening f32 -> f64)
+  let _: f64 = x as f64;
+
+  // Explicit conversion (narrowing f64 -> f32)
+  let _: f32 = y as f32;
+}
+
+// --- fail_float_to_float_narrowing.carbon
+library "[[@TEST_NAME]]";
+
+fn F(x: f64) {
+  // Implicit narrowing conversion (f64 -> f32) is not permitted.
+  // CHECK:STDERR: fail_float_to_float_narrowing.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `f64` to `f32` [ConversionFailure]
+  // CHECK:STDERR:   let _: f32 = x;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_float_to_float_narrowing.carbon:[[@LINE+4]]:16: note: type `f64` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let _: f32 = x;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
+  let _: f32 = x;
+}

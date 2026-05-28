@@ -74,3 +74,4 @@ impl FloatLiteral() as UnsafeAs(IntLiteral()) {
 }
 
 interface IntFitsIn(Dest:! type) {}
+interface FloatFitsIn(Src:! type) {}

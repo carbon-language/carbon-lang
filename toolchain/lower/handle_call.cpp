@@ -441,6 +441,13 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                        : context.builder().CreateUIToFP(operand, dest_type));
       return;
     }
+    case SemIR::BuiltinFunctionKind::FloatConvert: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      context.SetLocal(inst_id,
+                       context.builder().CreateFPCast(operand, dest_type));
+      return;
+    }
     case SemIR::BuiltinFunctionKind::FloatConvertInt: {
       auto* operand = context.GetValue(arg_ids[0]);
       auto* dest_type = context.GetTypeOfInst(inst_id);

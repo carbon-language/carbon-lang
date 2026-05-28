@@ -740,6 +740,78 @@ static auto MakeIntFitsInWitness(
                             query_specific_interface_id, {});
 }
 
+static auto MakeFloatFitsInWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+
+  auto args_id = query_specific_interface.specific_id;
+  if (!args_id.has_value()) {
+    return std::nullopt;
+  }
+  auto args_block_id = context.specifics().Get(args_id).args_id;
+  auto args_block = context.inst_blocks().Get(args_block_id);
+  if (args_block.size() != 1) {
+    return std::nullopt;
+  }
+
+  auto dest_const_id = context.constant_values().Get(args_block[0]);
+  if (!dest_const_id.is_constant()) {
+    return std::nullopt;
+  }
+
+  auto src_type_id = GetFacetAsType(context, query_self_const_id);
+  auto dest_type_id = GetFacetAsType(context, dest_const_id);
+
+  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
+  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
+      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+    return std::nullopt;
+  }
+
+  // Ensure both are actually floating-point types.
+  auto src_object_rep_id = context.types().GetObjectRepr(src_type_id);
+  auto src_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(src_object_rep_id);
+  if (!src_float_type) {
+    return std::nullopt;
+  }
+
+  auto dest_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+  auto dest_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(dest_object_rep_id);
+  if (!dest_float_type) {
+    return std::nullopt;
+  }
+
+  // Get their bit widths.
+  auto src_width_opt =
+      context.sem_ir().GetZExtIntValue(src_float_type->bit_width_id);
+  auto dest_width_opt =
+      context.sem_ir().GetZExtIntValue(dest_float_type->bit_width_id);
+
+  if (!src_width_opt || !dest_width_opt) {
+    // If the bit width is unknown (e.g. symbolic), we can't decide yet.
+    return std::nullopt;
+  }
+
+  const auto& src_semantics = src_float_type->float_kind.Semantics();
+  const auto& dest_semantics = dest_float_type->float_kind.Semantics();
+  if (!llvm::APFloat::isRepresentableBy(src_semantics, dest_semantics)) {
+    return std::nullopt;
+  }
+
+  if (!build_witness) {
+    return SemIR::InstId::None;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {});
+}
+
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
@@ -749,6 +821,9 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Destroy:
       return LookupDestroyWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
+    case SemIR::CoreInterface::FloatFitsIn:
+      return MakeFloatFitsInWitness(context, loc_id, query_self_const_id,
+                                    query_specific_interface_id, build_witness);
     case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);

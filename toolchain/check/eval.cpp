@@ -1282,10 +1282,10 @@ static auto RealToAPFloat(Context& context, RealId real_id,
 }
 
 // Performs a conversion between floating-point types, diagnosing if the value
-// doesn't fit in the destination type.
-static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
-                                       SemIR::InstId arg_id,
-                                       SemIR::TypeId dest_type_id)
+// doesn't fit in the destination type when check_overflow is true.
+static auto PerformFloatConvert(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId arg_id,
+                                SemIR::TypeId dest_type_id, bool check_overflow)
     -> SemIR::ConstantId {
   auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
   CARBON_CHECK(dest_type_object_rep_id.has_value(),
@@ -1316,7 +1316,7 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
     llvm::APFloat result =
         RealToAPFloat(context, literal->real_id,
                       dest_float_type->float_kind.Semantics(), &status);
-    if (status & llvm::APFloat::opOverflow) {
+    if (check_overflow && (status & llvm::APFloat::opOverflow)) {
       CARBON_DIAGNOSTIC(FloatLiteralTooLargeForType, Error,
                         "value {0} too large for floating-point type {1}",
                         RealId, SemIR::TypeId);
@@ -1338,7 +1338,7 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
   bool loses_info;
   auto status = result.convert(dest_float_type->float_kind.Semantics(),
                                llvm::APFloat::rmNearestTiesToEven, &loses_info);
-  if (status & llvm::APFloat::opOverflow) {
+  if (check_overflow && (status & llvm::APFloat::opOverflow)) {
     CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
                       "value {0} too large for floating-point type {1}",
                       llvm::APFloat, SemIR::TypeId);
@@ -2390,12 +2390,19 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     // Floating-point conversions.
+    case SemIR::BuiltinFunctionKind::FloatConvert: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                 /*check_overflow=*/false);
+    }
     case SemIR::BuiltinFunctionKind::FloatConvertChecked: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedFloatConvert(context, loc_id, arg_ids[0],
-                                        call.type_id);
+      return PerformFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                 /*check_overflow=*/true);
     }
     case SemIR::BuiltinFunctionKind::FloatConvertInt: {
       if (phase != Phase::Concrete) {

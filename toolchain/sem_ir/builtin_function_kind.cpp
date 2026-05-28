@@ -702,6 +702,10 @@ constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
     ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
+// Converts between floating-point types, without checking.
+constexpr BuiltinInfo FloatConvert = {"float.convert",
+                                      ValidateSignature<auto(FloatT)->FloatU>};
+
 // Converts between floating-point types, with a diagnostic if the value doesn't
 // fit.
 constexpr BuiltinInfo FloatConvertChecked = {
@@ -859,6 +863,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // Checked conversions are compile-time only.
       return true;
 
+    case FloatConvert:
     case FloatConvertInt:
     case IntConvert:
     case IntConvertChar:
