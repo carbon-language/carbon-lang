@@ -47,8 +47,7 @@ Adding a builtin function involves a 5-step integration:
 4. **LLVM IR Lowering Support**: Connect target machine generation in
    [handle_call.cpp](../../../toolchain/lower/handle_call.cpp).
 5. **Prelude Library Mapping**: Bind primitive interfaces to named builtins
-   under
-   [core/prelude/](../../../core/prelude/).
+   under [core/prelude/](../../../core/prelude/).
 
 ---
 
@@ -107,9 +106,8 @@ Inside
 
 ### Step 3: Constant Evaluation Support
 
-Wire the interpreter inside
-[eval.cpp](../../../toolchain/check/eval.cpp)
-to execute compile-time computations:
+Wire the interpreter inside [eval.cpp](../../../toolchain/check/eval.cpp) to
+execute compile-time computations:
 
 1. **Implement Constant Evaluation Logic**:
 
@@ -161,8 +159,7 @@ to execute compile-time computations:
 
 ### Step 4: Machine Code Generation (LLVM Lowering)
 
-Inside
-[handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
+Inside [handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
 
 1. **Map to Native LLVM Instructions**: For runtime-eligible builtins, map the
    call inside `HandleBuiltinCall` to native LLVM IR builder methods:
@@ -197,8 +194,7 @@ Inside
 ### Step 5: Standard Library Prelude Integration
 
 Map the standard library primitive interfaces to your newly minted named
-builtins under
-[core/prelude/](../../../core/prelude/):
+builtins under [core/prelude/](../../../core/prelude/):
 
 -   **Primitive Mappings**: Bind Carbon methods directly to string-literal
     builtin equivalents:
@@ -214,20 +210,17 @@ builtins under
         literal types must reside inside `as.carbon` itself.
     -   **Sized Conversions**: Implementations targeting sized primitives (e.g.
         `Int(N)`, `Float(N)`) must reside in their respective type source files
-        (such as
-        [int.carbon](../../../core/prelude/types/int.carbon)
-        or
-        [float.carbon](../../../core/prelude/types/float.carbon))
-        where the backing target type resides to prevent duplicate symbols and
-        structural recursion loops.
+        (such as [int.carbon](../../../core/prelude/types/int.carbon) or
+        [float.carbon](../../../core/prelude/types/float.carbon)) where the
+        backing target type resides to prevent duplicate symbols and structural
+        recursion loops.
 
 ---
 
 ## High-Fidelity Validation & Test Authoring
 
-Follow the
-[Toolchain tests](../toolchain_tests/SKILL.md)
-skill with specialized patterns for builtins:
+Follow the [Toolchain tests](../toolchain_tests/SKILL.md) skill with specialized
+patterns for builtins:
 
 ### 1. Checker Builtin File Splits
 

@@ -32,9 +32,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         comprehensive list of patterns (for example, `ValueStore`, formatting
         `.def` files, struct reflection) used throughout the implementation.
 -   **Builtin Functions**: Refer to the **Builtin functions** skill
-    ([SKILL.md](../builtins/SKILL.md)) for guidelines on
-    registering, mapping, constant evaluating, and lowering compiler builtin
-    primitives (e.g. `"int.convert_float"`).
+    ([SKILL.md](../builtins/SKILL.md)) for guidelines on registering, mapping,
+    constant evaluating, and lowering compiler builtin primitives (e.g.
+    `"int.convert_float"`).
 -   **Phases**: Lex -> Parse -> Check -> Lower.
 -   **Definitions**: Many kinds (tokens, parse nodes, SemIR instructions) are
     defined in `.def` files and expanded by way of macros.
@@ -73,9 +73,9 @@ script:
 ## Debugging and diagnostics
 
 -   **Compiler Diagnostics**: Refer to the **Diagnostics** skill
-    ([SKILL.md](../diagnostics/SKILL.md)) for strict rules
-    on declaring, formatting, emitting, testing, and styling compiler diagnostic
-    messages (errors, warnings, notes).
+    ([SKILL.md](../diagnostics/SKILL.md)) for strict rules on declaring,
+    formatting, emitting, testing, and styling compiler diagnostic messages
+    (errors, warnings, notes).
 -   **Printing to stderr**: Use `llvm::errs() << "debug info\n";`.
     -   Avoid `std::cout` (it may interfere with tool output).
 -   **SemIR Stringification**:
@@ -104,10 +104,9 @@ context:
     use `RealLiteralTooLargeForUnsizedInt` instead of a diagnostic referencing
     an "integer type".
 -   **Wording Consistency**: Before declaring a new diagnostic in
-    [kind.def](../../../toolchain/diagnostics/kind.def),
-    search for existing diagnostics in the targeted implementation files (for
-    example, other uses of `MaxIntWidth`) to align message structures and
-    parameter expectations.
+    [kind.def](../../../toolchain/diagnostics/kind.def), search for existing
+    diagnostics in the targeted implementation files (for example, other uses of
+    `MaxIntWidth`) to align message structures and parameter expectations.
 
 ### Casting (LLVM style)
 

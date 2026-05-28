@@ -109,8 +109,8 @@ using strongly-typed arguments to preserve translation capability.
 ### Format Selectors (`format_providers.h`)
 
 Use specialized formatting wrappers under
-[format_providers.h](../../../toolchain/diagnostics/format_providers.h)
-to express clean inline options in format strings:
+[format_providers.h](../../../toolchain/diagnostics/format_providers.h) to
+express clean inline options in format strings:
 
 | Wrapper                    | Target Format Style             | Example Usage                  | Output                                                              |
 | :------------------------- | :------------------------------ | :----------------------------- | :------------------------------------------------------------------ |
@@ -190,34 +190,47 @@ scopes:
 
 ## 4. Diagnostics Wording Style Guide
 
+Refer to the official
+[Diagnostic message style guide](../../../toolchain/docs/diagnostics.md#diagnostic-message-style-guide)
+for complete details.
+
 To maintain message consistency and integrate cleanly with Clang diagnostics in
 interoperable code, adhere strictly to these rules:
 
--   **Start with lowercase**: Start diagnostic messages with a lowercase letter
-    or quoted code (e.g., `"cannot convert..."` or ``"`self` declared..."``).
--   **Omit Trailing Periods**: Diagnostics must **not** end with a period.
--   **Phrase as Bullet Points**: Phrase diagnostics as descriptive bullet points
-    or sentence fragments rather than full, conversational sentences.
--   **Omit Articles**: Exclude standard articles (`a`, `an`, `the`) unless
-    necessary for logical clarity.
--   **Use Backticks**: Enclose identifiers, code constructs, and types inside
-    standard backticks (e.g., ``"`{0}` is bad"``). Use semicolons for separating
-    fragments within a single message.
--   **Direct Situational Description**: Describe the exact failure situation the
-    compiler observed. Do not state the obvious.
--   **Avoid Forbidden Verbose Phrases**: Avoid standard passive authorization
-    words.
-    -   **Do NOT use**: `"allowed"`, `"legal"`, `"permitted"`, `"valid"`, or
-        `"cannot"`.
-    -   **Examples**:
-        -   _Correct_: ``"`export` in `impl` file"``
-        -   _Incorrect_: ``"`export` is only allowed in API files"``
-        -   _Correct_: ``"`extern library` specifies current library"``
-        -   _Incorrect_:
-            ``"`extern library` cannot specify the current library"``
--   **Target Hints**: An optional developer hint may be appended, but only after
-    clarifying the actual violation. (e.g.,
-    ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``).
+-   **Start with lowercase and omit periods**: Start diagnostic messages with a
+    lowercase letter or quoted code, and do **not** end them with a period
+    (e.g., `"cannot convert..."` or ``"`self` declared..."``).
+-   **Use backticks for quoted code**: Enclose identifiers, code constructs, and
+    types inside standard backticks (e.g., ``"`{0}` is bad"``).
+-   **Phrase as bullet points without articles**: Phrase diagnostics as
+    descriptive bullet points or sentence fragments rather than full sentences.
+    Leave out standard articles (`a`, `an`, `the`) unless necessary for logical
+    clarity. Semicolons can be used to separate fragments within a message.
+-   **Describe the situation and language rule**: Diagnostics should describe
+    the exact situation the toolchain observed. The language rule violated can
+    be mentioned if it wouldn't otherwise be clear:
+    -   _Situation-only_: `"redeclaration of X"` (implies that redeclaration is
+        not permitted).
+    -   _Rule-inclusion_:
+        ``"`self` declared in invalid context; can only be declared in implicit parameter list"``.
+-   **Wording Choice ("cannot" vs "allowed")**: Explicitly avoid `"allowed"`,
+    `"legal"`, `"permitted"`, `"valid"`, and related passive wording. You may
+    use `"cannot"` if needed, but try to use phrasing that does not require it:
+    -   _Correct_: ``"`export` in `impl` file"`` (Avoids `"allowed"`)
+    -   _Incorrect_: ``"`export` is only allowed in API files"``
+    -   _Correct_: ``"`extern library` specifies current library"`` (Avoids
+        `"cannot"`)
+    -   _Incorrect_: ``"`extern library` cannot specify the current library"``
+-   **Developer Intent Hints**: It is acceptable for a diagnostic to guess at
+    the developer's intent and provide a hint _after_ explaining the situation
+    and the rule, but never as a substitute for that:
+    -   _Correct_:
+        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
+    -   _Incorrect_: ``"add `as String` to convert `i32` to `String`"`` (Lacks
+        the core violation message).
+-   **Structure for Tooling API**: Try to structure diagnostics such that
+    parameter inputs can be programmatically extracted without string parsing
+    (prefer strongly-typed parameters over format placeholders where possible).
 
 ---
 
