@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Semantics-preserving](#semantics-preserving)
     -   [Examples](#examples)
 -   [Built-in types](#built-in-types)
-    -   [Numeric data types](#numeric-data-types)
+    -   [Numeric types](#numeric-types)
     -   [Character types](#character-types)
     -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
@@ -99,7 +99,7 @@ salient part of a `StringView`'s value.
 
 ## Built-in types
 
-### Numeric data types
+### Numeric types
 
 The following implicit numeric conversions are available:
 
@@ -159,9 +159,16 @@ var b: u32 = a & ^4;
 
 ### Character types
 
-The only implicit conversion available for character types is `Core.CharLiteral`
--> `char`. No other implicit conversions (such as converting `char` to/from
-integer types or `Core.CharLiteral` to integers) are permitted.
+The only implicit conversion available for character types is from
+`Core.CharLiteral` to other character types. This conversion is only valid for
+code points that can be represented in the target character type.
+
+For now we have only defined `char`, which represents a single UTF-8 code unit
+in a single byte, and so implicit conversion from `Core.CharLiteral` to `char`
+is only valid for values in the range `0x00`..`0x7F`.
+
+No other implicit conversions (such as converting `char` to/from integer types
+or `Core.CharLiteral` to integers) are permitted.
 
 ### Same type
 

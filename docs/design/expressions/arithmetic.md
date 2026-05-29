@@ -106,7 +106,7 @@ converted as follows:
 -   If one type is `iN` and the other type is `uM`, and `M` < `N`, the `uM`
     operand is converted to `iN`.
 -   If one type is `fN` and the other type is `iM` or `uM`, and there is an
-    [implicit conversion](implicit_conversions.md#numeric-data-types) from the
+    [implicit conversion](implicit_conversions.md#numeric-types) from the
     integer type to `fN`, then the integer operand is converted to `fN`.
 
 More broadly, if one operand is of built-in type and the other operand can be

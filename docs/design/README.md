@@ -3609,7 +3609,7 @@ provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
 namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
 `Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
 considers them different, so C++ overloads are resolved the same way. Carbon
-[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#data-types)
+[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#numeric-types)
 apply here, allowing them whenever the numerical value for all inputs may be
 preserved by the conversion.
 

@@ -262,6 +262,10 @@ a single Unicode code point. This type supports addition and subtraction, see
 `Core.CharLiteral` with value `'b'`. Operations that result in invalid Unicode
 code points (such as `'a' + 0xFFFFFF`) are compile-time errors.
 
+A `Core.CharLiteral` will implicitly convert to `char` if its value is in the
+range `0x00`..`0x7F`, see
+[implicit conversions](implicit_conversions.md#character-types).
+
 ## Character type literals
 
 Carbon defines `char` as a type literal, which is the same type as `Core.Char`,

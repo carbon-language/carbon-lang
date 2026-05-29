@@ -33,10 +33,10 @@ A character literal consists of a sequence of characters enclosed in single
 quotes (`'`).
 
 -   The contents must represent precisely one Unicode code point.
--   Hex escape sequences (`\xHH`) are supported but limited to values up to `0x7F`
-    (where the UTF-8 code unit and Unicode code point values are identical).
-    Values `0x80` and above are disallowed in character literals to avoid
-    ambiguity between arbitrary byte values and Unicode code points.
+-   Hex escape sequences (`\xHH`) are supported but limited to values up to
+    `0x7F` (where the UTF-8 code unit and Unicode code point values are
+    identical). Values `0x80` and above are disallowed in character literals to
+    avoid ambiguity between arbitrary byte values and Unicode code points.
 -   Grapheme clusters (sequences of multiple code points representing a single
     visual character) are **not** supported in character literals.
 
