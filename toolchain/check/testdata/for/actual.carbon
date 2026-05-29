@@ -920,8 +920,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Main.import_ref.a3e: <witness> = import_ref Main//lib, loc24_1, loaded [symbolic = @IntRange.%complete_type (constants.%complete_type.426)]
 // CHECK:STDOUT:   %Main.import_ref.bea = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3d6 = import_ref Main//lib, loc5_57, unloaded
-// CHECK:STDOUT:   %Main.import_ref.964 = import_ref Main//lib, loc22_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b5d = import_ref Main//lib, loc23_18, unloaded
+// CHECK:STDOUT:   %Main.import_ref.898 = import_ref Main//lib, loc22_20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b04 = import_ref Main//lib, loc23_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.6b552a.2: Core.IntLiteral = import_ref Main//lib, loc4_17, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.347: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.ca9) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.768)]
@@ -972,8 +972,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.bea
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.3d6
-// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.964
-// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.b5d
+// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.898
+// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.b04
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

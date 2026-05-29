@@ -148,11 +148,11 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.f91: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type.c38]
 // CHECK:STDOUT:   %Main.import_ref.1be = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.56b: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.e34]
+// CHECK:STDOUT:   %Main.import_ref.beb: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.77b]
 // CHECK:STDOUT:   %a.patt: %pattern_type.8ce = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:   %a.var_patt: %pattern_type.8ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.e34: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %.77b: %Cycle.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.13c: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.b03) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.aed)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.760 = impl_witness_table (%Core.import_ref.13c), @ptr.as.Copy.impl [concrete]
@@ -175,7 +175,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.1be
-// CHECK:STDOUT:   .c = imports.%Main.import_ref.56b
+// CHECK:STDOUT:   .c = imports.%Main.import_ref.beb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -186,7 +186,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref %ptr.719 = struct_access %a.ref.loc7_11, element0 [concrete = constants.%.524]
 // CHECK:STDOUT:   %.loc7_12.2: %ptr.719 = acquire_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%Main.import_ref.56b [concrete = imports.%.e34]
+// CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%Main.import_ref.beb [concrete = imports.%.77b]
 // CHECK:STDOUT:   %.loc7_15: ref %struct_type.b = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref %ptr.719 = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: %ptr.719 = acquire_value %.loc7_17.1

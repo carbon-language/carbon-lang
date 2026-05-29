@@ -218,7 +218,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst5000001F:    {kind: StructValue, arg0: inst_block_empty, type: type(inst5000001D)}
 // CHECK:STDOUT:     inst50000020:    {kind: PointerType, arg0: inst50000014, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000021:    {kind: UnboundElementType, arg0: inst50000014, arg1: inst50000020, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000022:    {kind: FieldDecl, arg0: name5, arg1: element0, type: type(inst50000021)}
+// CHECK:STDOUT:     inst50000022:    {kind: FieldDecl, arg0: name5, arg1: field50000000, type: type(inst50000021)}
 // CHECK:STDOUT:     inst50000023:    {kind: CustomLayoutType, arg0: struct_type_fields50000001, arg1: custom_layout50000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000024:    {kind: CustomLayoutType, arg0: struct_type_fields50000002, arg1: custom_layout50000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000025:    {kind: CompleteTypeWitness, arg0: inst50000023, type: type(inst(WitnessType))}

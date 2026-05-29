@@ -256,11 +256,11 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.121 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bc4: <witness> = import_ref Main//a, loc9_1, loaded [concrete = constants.%complete_type.9ec]
 // CHECK:STDOUT:   %Main.import_ref.475 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.3e4: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.3b6]
+// CHECK:STDOUT:   %Main.import_ref.488: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.c73]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.7f1: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.ca9) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.768)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bc3 = impl_witness_table (%Core.import_ref.7f1), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %.3b6: %Field.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.c73: %Field.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.1dc190.1 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e20: %ForwardDeclared.F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%ForwardDeclared.F]
@@ -304,7 +304,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.475
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.3e4
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.488
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.1 [from "a.carbon"] {
@@ -361,7 +361,7 @@ fn Run() {
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%Main.Field [concrete = constants.%Field]
 // CHECK:STDOUT:   %b: ref %Field = ref_binding b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
-// CHECK:STDOUT:   %x.ref: %Field.elem = name_ref x, imports.%Main.import_ref.3e4 [concrete = imports.%.3b6]
+// CHECK:STDOUT:   %x.ref: %Field.elem = name_ref x, imports.%Main.import_ref.488 [concrete = imports.%.c73]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc10: %.634 = impl_witness_access constants.%ImplicitAs.impl_witness.1e6, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.924]
