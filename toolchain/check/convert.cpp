@@ -906,12 +906,10 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     // constant.
     auto field_inst_id =
         dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
-    auto field_decl = context.insts().TryGetAs<SemIR::FieldDecl>(field_inst_id);
-    // TODO: handle imports.
-    if (!field_decl) {
-      return SemIR::InstId::None;
-    }
-    auto field = context.fields().Get(field_decl->field_id);
+    LoadImportRef(context, field_inst_id);
+    field_inst_id = context.constant_values().GetConstantInstId(field_inst_id);
+    auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+    auto field = context.fields().Get(field_decl.field_id);
     if (!field.initializer_id.has_value()) {
       return SemIR::InstId::None;
     }

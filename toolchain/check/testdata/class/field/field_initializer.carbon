@@ -21,15 +21,11 @@ class Class {
 var C: Class = {};
 //@dump-sem-ir-end
 
-// --- fail_todo_field_initializer_import.carbon
+// --- field_initializer_import.carbon
 library "[[@TEST_NAME]]";
 
 import library "field_initializer";
 
-// CHECK:STDERR: fail_todo_field_initializer_import.carbon:[[@LINE+4]]:17: error: missing value for field `field` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: var C2: Class = {};
-// CHECK:STDERR:                 ^~
-// CHECK:STDERR:
 var C2: Class = {};
 
 // --- field_initializer_generic.carbon
