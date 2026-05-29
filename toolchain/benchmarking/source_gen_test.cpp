@@ -300,5 +300,116 @@ TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
   EXPECT_TRUE(TestCompile(SourceGen::Language::Cpp, source));
 }
 
+static auto CountLines(llvm::StringRef source) -> ssize_t {
+  return llvm::count(source, '\n');
+}
+
+// Generates a file with each of `num_seeds` independently seeded generators,
+// and expects all of the files to have the same byte and line counts. Also
+// expects the first file to compile, and the content to vary so that the size
+// check isn't vacuous.
+static auto ExpectSeedIndependentSize(SourceGen::Language language,
+                                      int target_lines,
+                                      const SourceGen::DenseDeclParams& params,
+                                      int num_seeds) -> void {
+  SCOPED_TRACE(
+      llvm::formatv("language={0}, target_lines={1}",
+                    language == SourceGen::Language::Carbon ? "Carbon" : "C++",
+                    target_lines)
+          .str());
+  std::string first;
+  bool any_different = false;
+  for (int i : llvm::seq(num_seeds)) {
+    SourceGen gen(language);
+    std::string source = gen.GenApiFileDenseDecls(target_lines, params);
+    if (i == 0) {
+      EXPECT_TRUE(TestCompile(language, source));
+      first = std::move(source);
+      continue;
+    }
+    EXPECT_THAT(source.size(), Eq(first.size()));
+    EXPECT_THAT(CountLines(source), Eq(CountLines(first)));
+    any_different = any_different || source != first;
+  }
+  EXPECT_TRUE(any_different);
+}
+
+// Benchmarks are only comparable if the generated source has the same size for
+// any seed.
+TEST(SourceGenTest, GenApiFileDenseDeclsStableSizeAcrossSeeds) {
+  for (SourceGen::Language language :
+       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+    // From barely enough lines for one class up to a large file.
+    for (int target_lines : {200, 1000, 5000, 20000}) {
+      ExpectSeedIndependentSize(language, target_lines,
+                                SourceGen::DenseDeclParams{}, /*num_seeds=*/16);
+    }
+  }
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsStableSizeWithVariedParams) {
+  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
+  // Function declarations only: no methods and no fields.
+  param_set.push_back({.class_params = {.public_function_decls = 20,
+                                        .public_method_decls = 0,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 0}});
+  // Large parameter counts, which wrap onto several lines.
+  param_set.push_back(
+      {.class_params = {.public_function_decls = 2,
+                        .public_function_decl_params = {.max_params = 16},
+                        .public_method_decls = 4,
+                        .public_method_decl_params = {.max_params = 16},
+                        .private_function_decls = 0,
+                        .private_method_decls = 0,
+                        .private_field_decls = 0}});
+  // The default shape scaled up 2x.
+  param_set.push_back({.class_params = {.public_function_decls = 8,
+                                        .public_method_decls = 20,
+                                        .private_function_decls = 4,
+                                        .private_method_decls = 16,
+                                        .private_field_decls = 12}});
+
+  for (const SourceGen::DenseDeclParams& params : param_set) {
+    for (SourceGen::Language language :
+         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+      ExpectSeedIndependentSize(language, /*target_lines=*/5000, params,
+                                /*num_seeds=*/12);
+    }
+  }
+}
+
+// A class's fields can't reference it or any later class, so field-heavy
+// classes leave few type uses for references to a class. Whether the valid type
+// names run out depends on the shuffle, so use many seeds.
+TEST(SourceGenTest, GenApiFileDenseDeclsRobustForFieldHeavyParams) {
+  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
+  param_set.push_back({.class_params = {.public_function_decls = 1,
+                                        .public_method_decls = 1,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 30}});
+  param_set.push_back({.class_params = {.public_function_decls = 0,
+                                        .public_method_decls = 1,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 50}});
+  // No functions or methods, so every type use is a fixed type.
+  param_set.push_back({.class_params = {.public_function_decls = 0,
+                                        .public_method_decls = 0,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 16}});
+
+  for (const SourceGen::DenseDeclParams& params : param_set) {
+    for (SourceGen::Language language :
+         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+      ExpectSeedIndependentSize(language, /*target_lines=*/3000, params,
+                                /*num_seeds=*/32);
+    }
+  }
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
