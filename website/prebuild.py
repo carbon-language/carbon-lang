@@ -127,7 +127,7 @@ def label_subdir(
 
         if subdir_str == "proposals":
             # Use proposal numbers as part of the title and ordering.
-            m = re.match(r"p(\d+).md", child.name)
+            m = re.match(r"p(\d+)(?:-.*)?\.md", child.name)
             # Skip files that aren't proposals.
             if not m:
                 continue

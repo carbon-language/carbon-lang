@@ -231,11 +231,11 @@ types.
 
 ## Alternatives considered
 
--   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p0820.md#c-conversions)
--   [Provide no implicit conversions](/proposals/p0820.md#no-conversions)
--   [Provide no extensibility](/proposals/p0820.md#no-extensibility)
--   [Apply implicit conversions transitively](/proposals/p0820.md#transitivity)
--   [Do not allow negative constants to convert to unsigned types](/proposals/p1191.md#converting-complements-to-unsigned-types)
+-   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p000820-implicit-conversions.md#c-conversions)
+-   [Provide no implicit conversions](/proposals/p000820-implicit-conversions.md#no-conversions)
+-   [Provide no extensibility](/proposals/p000820-implicit-conversions.md#no-extensibility)
+-   [Apply implicit conversions transitively](/proposals/p000820-implicit-conversions.md#transitivity)
+-   [Do not allow negative constants to convert to unsigned types](/proposals/p001191-bitwise-and-shift-operators.md#converting-complements-to-unsigned-types)
 
 ## References
 

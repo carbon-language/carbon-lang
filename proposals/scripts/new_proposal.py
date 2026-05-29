@@ -22,6 +22,10 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+# Add repo root to sys.path to allow importing from proposals.scripts
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from proposals.scripts.utils import slugify  # noqa: E402
+
 _PROMPT = """This will:
   - Create and switch to a new branch named '%s'.
   - Create a new proposal titled '%s'.
@@ -252,9 +256,9 @@ def main() -> None:
         ]
     )
 
-    # Remove the temp file, create p####.md, and fill in PR information.
+    # Remove the temp file, create p######-title.md, and fill in PR information.
     os.remove(temp_path)
-    final_path = "proposals/p%04d.md" % pr_num
+    final_path = "proposals/p%06d-%s.md" % (pr_num, slugify(title))
     content = _fill_template(template_path, title, pr_num)
     with open(final_path, "w") as final_file:
         final_file.write(content)

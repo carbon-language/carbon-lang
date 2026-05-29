@@ -101,7 +101,7 @@ source file:
 
 ## Alternatives considered
 
-[Alternatives from proposal #601](/proposals/p0601.md#alternatives-considered):
+[Alternatives from proposal #601](/proposals/p000601-operator-tokens.md#alternatives-considered):
 
 -   lex the longest sequence of symbolic characters rather than lexing only the
     longest known operator
