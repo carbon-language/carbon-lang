@@ -2173,11 +2173,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
+  const auto& import_field = resolver.import_ir().fields().Get(inst.field_id);
+  auto field_id =
+      resolver.local_ir().fields().Add({.index = import_field.index,
+                                        // TODO: import initializers.
+                                        .initializer_id = SemIR::InstId::None});
   return ResolveResult::Unique<SemIR::FieldDecl>(
       resolver, import_inst_id,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(const_id),
        .name_id = GetLocalNameId(resolver, inst.name_id),
-       .index = inst.index});
+       .field_id = field_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

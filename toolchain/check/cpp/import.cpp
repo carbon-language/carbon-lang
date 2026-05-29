@@ -798,6 +798,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
+    auto field_id =
+        context.fields().Add({.index = SemIR::ElementIndex(fields.size()),
+                              // TODO: import initializers.
+                              .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst(
         context, SemIR::LocIdAndInst::RuntimeVerified(
                      context.sem_ir(), import_ir_inst_id,
@@ -805,7 +809,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
                          .name_id = field_name_id,
-                         .index = SemIR::ElementIndex(fields.size())}));
+                         .field_id = field_id,
+                     }));
     // The imported SemIR::FieldDecl represents the original declaration `decl`,
     // which is either the field or the indirect field declaration.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
