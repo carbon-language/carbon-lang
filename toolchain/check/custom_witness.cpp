@@ -585,6 +585,8 @@ auto BuildPrimitiveCopyWitness(
                             query_specific_interface_id, {op_id});
 }
 
+// Builds and returns a custom witness that performs the specified kind of
+// destruction for the given type.
 static auto BuildDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -607,7 +609,9 @@ static auto BuildDestroyWitness(
                             query_specific_interface_id, {op_id});
 }
 
-static auto MakeDestroyWitness(
+// Returns the custom witness to use for destruction of the given type. See
+// `LookupCustomWitness`.
+static auto LookupDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
@@ -717,8 +721,8 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
     case SemIR::CoreInterface::Destroy:
-      return MakeDestroyWitness(context, loc_id, query_self_const_id,
-                                query_specific_interface_id, build_witness);
+      return LookupDestroyWitness(context, loc_id, query_self_const_id,
+                                  query_specific_interface_id, build_witness);
     case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
