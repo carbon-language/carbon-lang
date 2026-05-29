@@ -3520,8 +3520,8 @@ fn Contains_SameType_Equivalent
 
 ### Constraints must use a designator
 
-We don't allow a `where` constraint unless it applies a restriction to the
-current type. This means referring to some
+We don't allow a constraint in a `where` clause unless it applies a restriction
+to the current type. This means referring to some
 [designator](#kinds-of-where-constraints), like `.MemberName`, or
 [`.Self`](#recursive-constraints). Examples:
 
@@ -3558,6 +3558,37 @@ impl forall [T:! B] T as A {}
 This clarifies the meaning of the `where` clause and reduces the number of
 redundant ways to express a restriction, following the
 [one-way principle](/docs/project/principles/one_way.md).
+
+Note that multiple constraints can be combined in a single `where` expression,
+but this does not change their meaning. Likewise, each constraint in a `where`
+clause must contain a designator.
+
+```carbon
+// ✅ Allowed
+fn F(T:! type where C(.Self) impls (A & B));
+// Which is the same as:
+fn F(T:! (type where C(.Self) impls A) and (type where C(.Self) impls B));
+
+// ✅ Allowed
+fn F(T:! type where C impls (A(.Self) & B(.Self)));
+// Which is the same as:
+fn F(T:! (type where C impls A(.Self)) and (type where C impls B(.Self)));
+
+// ❌ Error: `where C impls A` does not use `.Self` or a designator
+fn F(T:! type where C impls (A & B(.Self)));
+// Which is the same as:
+fn F(T:! (type where C impls A) & (type where C impls B(.Self)));
+
+// ✅ Allowed
+fn F(T:! type where C impls A(.Self) and X == .Self);
+// Which is the same as:
+fn F(T:! (type where C impls A(.Self)) & (type where X == .Self));
+
+// ❌ Error: `where X == Y` does not use `.Self` or a designator
+fn F(T:! type where C impls A(.Self) and X == Y);
+// Which is the same as:
+fn F(T:! (type where C impls A(.Self)) & (type where X == Y));
+```
 
 **Alternative considered:** This rule was added in proposal
 [#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
