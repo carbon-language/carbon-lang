@@ -229,8 +229,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Core.Iterate: type = import_ref Core//prelude/iterate, Iterate, loaded [concrete = constants.%Iterate.type]
 // CHECK:STDOUT:   %Core.import_ref.157: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0.dbd]
 // CHECK:STDOUT:   %Core.import_ref.c0e: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc1.338]
-// CHECK:STDOUT:   %Core.import_ref.dc18: @Optional.%Optional.None.type (%Optional.None.type.961) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.c55)]
-// CHECK:STDOUT:   %Core.import_ref.abf: @Optional.%Optional.Some.type (%Optional.Some.type.b38) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.49b)]
+// CHECK:STDOUT:   %Core.import_ref.4c6: @Optional.%Optional.None.type (%Optional.None.type.961) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.c55)]
+// CHECK:STDOUT:   %Core.import_ref.b92: @Optional.%Optional.Some.type (%Optional.Some.type.b38) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.49b)]
 // CHECK:STDOUT:   %Core.import_ref.3b3: type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [concrete = %CursorType]
 // CHECK:STDOUT:   %CursorType: type = assoc_const_decl @CursorType [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.d75: %facet_type.16f = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
@@ -670,7 +670,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %OptionalStorage.facet.loc15_41: %OptionalStorage.type = facet_value %Int.loc15, (constants.%OptionalStorage.lookup_impl_witness.993) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.ee4)]
 // CHECK:STDOUT:     %.loc15_41: %OptionalStorage.type = converted %Int.loc15, %OptionalStorage.facet.loc15_41 [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.ee4)]
 // CHECK:STDOUT:     %Optional.loc15: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.loc11_75.1 (constants.%Optional.328)]
-// CHECK:STDOUT:     %.loc15_42: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.953) = specific_constant imports.%Core.import_ref.abf, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.Some (constants.%Optional.Some.393)]
+// CHECK:STDOUT:     %.loc15_42: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.953) = specific_constant imports.%Core.import_ref.b92, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.Some (constants.%Optional.Some.393)]
 // CHECK:STDOUT:     %Some.ref: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.953) = name_ref Some, %.loc15_42 [symbolic = %Optional.Some (constants.%Optional.Some.393)]
 // CHECK:STDOUT:     %value.ref.loc15: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.2b1d38.1) = name_ref value, %value
 // CHECK:STDOUT:     %OptionalStorage.facet.loc15_53: %OptionalStorage.type = facet_value constants.%Int.2b1d38.1, (constants.%OptionalStorage.lookup_impl_witness.993) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.ee4)]
@@ -696,7 +696,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %OptionalStorage.facet.loc17: %OptionalStorage.type = facet_value %Int.loc17, (constants.%OptionalStorage.lookup_impl_witness.993) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.ee4)]
 // CHECK:STDOUT:     %.loc17_41: %OptionalStorage.type = converted %Int.loc17, %OptionalStorage.facet.loc17 [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.ee4)]
 // CHECK:STDOUT:     %Optional.loc17: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.loc11_75.1 (constants.%Optional.328)]
-// CHECK:STDOUT:     %.loc17_42: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.c4d) = specific_constant imports.%Core.import_ref.dc18, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.None (constants.%Optional.None.fb0)]
+// CHECK:STDOUT:     %.loc17_42: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.c4d) = specific_constant imports.%Core.import_ref.4c6, @Optional(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.None (constants.%Optional.None.fb0)]
 // CHECK:STDOUT:     %None.ref: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.c4d) = name_ref None, %.loc17_42 [symbolic = %Optional.None (constants.%Optional.None.fb0)]
 // CHECK:STDOUT:     %Optional.None.specific_fn.loc17_42.1: <specific function> = specific_function %None.ref, @Optional.None(constants.%OptionalStorage.facet.ee4) [symbolic = %Optional.None.specific_fn.loc17_42.2 (constants.%Optional.None.specific_fn)]
 // CHECK:STDOUT:     %.loc11_75.2: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.328) = splice_block %return.param {}

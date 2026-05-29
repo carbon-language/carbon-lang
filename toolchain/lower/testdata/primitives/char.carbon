@@ -117,13 +117,13 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: define void @_CConvert.Main(i8 %c, i8 %u) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CDiscard.Main.fad95e12c92be0f9(i8 %c), !dbg !18
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc23 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.77cbcfed73f0426e"(i8 %c), !dbg !19
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc23 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.7e0d73b3e9b416e0"(i8 %c), !dbg !19
 // CHECK:STDOUT:   call void @_CDiscard.Main.3f15d0fba6dcdcf8(i16 %char.as.As.impl.Convert.call.loc23), !dbg !20
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc24 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.86077157eff86015"(i8 %c), !dbg !21
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc24 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.4ea8a00ff42d136b"(i8 %c), !dbg !21
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.As.impl.Convert.call.loc24), !dbg !22
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc26 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.0b57861e97f42464"(i8 %c), !dbg !23
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc26 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.6504fab7c876f692"(i8 %c), !dbg !23
 // CHECK:STDOUT:   call void @_CDiscard.Main.3f15d0fba6dcdcf8(i16 %char.as.As.impl.Convert.call.loc26), !dbg !24
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc27 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.351558f0611bfe01"(i8 %c), !dbg !25
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc27 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.b920d74ee295eeb0"(i8 %c), !dbg !25
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.As.impl.Convert.call.loc27), !dbg !26
 // CHECK:STDOUT:   call void @_CDiscard.Main.fad95e12c92be0f9(i8 %u), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
@@ -133,13 +133,13 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: define void @_CConvertConstant.Main() #0 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CDiscard.Main.fad95e12c92be0f9(i8 120), !dbg !32
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc33 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.77cbcfed73f0426e"(i8 120), !dbg !33
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc33 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.7e0d73b3e9b416e0"(i8 120), !dbg !33
 // CHECK:STDOUT:   call void @_CDiscard.Main.3f15d0fba6dcdcf8(i16 %char.as.As.impl.Convert.call.loc33), !dbg !34
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc34 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.86077157eff86015"(i8 120), !dbg !35
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc34 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.4ea8a00ff42d136b"(i8 120), !dbg !35
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.As.impl.Convert.call.loc34), !dbg !36
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc35 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.0b57861e97f42464"(i8 120), !dbg !37
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc35 = call i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.6504fab7c876f692"(i8 120), !dbg !37
 // CHECK:STDOUT:   call void @_CDiscard.Main.3f15d0fba6dcdcf8(i16 %char.as.As.impl.Convert.call.loc35), !dbg !38
-// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc36 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.351558f0611bfe01"(i8 120), !dbg !39
+// CHECK:STDOUT:   %char.as.As.impl.Convert.call.loc36 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.b920d74ee295eeb0"(i8 120), !dbg !39
 // CHECK:STDOUT:   call void @_CDiscard.Main.330c3c15b12986eb(i32 %char.as.As.impl.Convert.call.loc36), !dbg !40
 // CHECK:STDOUT:   call void @_CDiscard.Main.fad95e12c92be0f9(i8 123), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !42
@@ -300,8 +300,8 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.77cbcfed73f0426e"(i8 %self) #0 !dbg !196 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.994d4702892753a8"(i8 %self), !dbg !202
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.7e0d73b3e9b416e0"(i8 %self) #0 !dbg !196 {
+// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.ded6ffa8f6b3bdea"(i8 %self), !dbg !202
 // CHECK:STDOUT:   ret i16 %1, !dbg !202
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,8 +312,8 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.86077157eff86015"(i8 %self) #0 !dbg !209 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.64b4667e7a8330a2"(i8 %self), !dbg !214
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.4ea8a00ff42d136b"(i8 %self) #0 !dbg !209 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.962eb6a262508733"(i8 %self), !dbg !214
 // CHECK:STDOUT:   ret i32 %1, !dbg !214
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,14 +324,14 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.0b57861e97f42464"(i8 %self) #0 !dbg !221 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.8f451100d489870f"(i8 %self), !dbg !226
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.6504fab7c876f692"(i8 %self) #0 !dbg !221 {
+// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.33882e53c452e3af"(i8 %self), !dbg !226
 // CHECK:STDOUT:   ret i16 %1, !dbg !226
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.351558f0611bfe01"(i8 %self) #0 !dbg !227 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.e93d66b98eccc18b"(i8 %self), !dbg !232
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.b920d74ee295eeb0"(i8 %self) #0 !dbg !227 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.a119523454aef44f"(i8 %self), !dbg !232
 // CHECK:STDOUT:   ret i32 %1, !dbg !232
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,16 +343,16 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_COp.Char.Core:SubWith.bc6f0b889317533c.Core.fdda5ce961c25016"(i8 %self, i8 %other) #0 !dbg !239 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764"(i8 %self), !dbg !245
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764"(i8 %other), !dbg !246
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda"(i8 %self), !dbg !245
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda"(i8 %other), !dbg !246
 // CHECK:STDOUT:   %3 = sub i32 %1, %2, !dbg !247
 // CHECK:STDOUT:   ret i32 %3, !dbg !248
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_COp.20e1d1146f520ad7:SubWith.c874720ad95c181a.Core.fdda5ce961c25016"(i8 %self, i8 %other) #0 !dbg !249 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764"(i8 %self), !dbg !253
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764"(i8 %other), !dbg !254
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda"(i8 %self), !dbg !253
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda"(i8 %other), !dbg !254
 // CHECK:STDOUT:   %3 = sub i32 %1, %2, !dbg !255
 // CHECK:STDOUT:   ret i32 %3, !dbg !256
 // CHECK:STDOUT: }
@@ -480,66 +480,66 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: declare i32 @"_COp.Char.Core:SubWith.031ad137713ca04f.Core"(i8, i8)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.994d4702892753a8"(i8 %self) #0 !dbg !399 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.fddfa84476127786"(i8 %self), !dbg !403
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.ded6ffa8f6b3bdea"(i8 %self) #0 !dbg !399 {
+// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.b694d71d042c3286"(i8 %self), !dbg !403
 // CHECK:STDOUT:   ret i16 %1, !dbg !404
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.64b4667e7a8330a2"(i8 %self) #0 !dbg !405 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.c6b172d3bcfae810"(i8 %self), !dbg !408
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.962eb6a262508733"(i8 %self) #0 !dbg !405 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.1362f26ac5092fd7"(i8 %self), !dbg !408
 // CHECK:STDOUT:   ret i32 %1, !dbg !409
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.8f451100d489870f"(i8 %self) #0 !dbg !410 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.a3f50ebf2ea1deee"(i8 %self), !dbg !413
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.33882e53c452e3af"(i8 %self) #0 !dbg !410 {
+// CHECK:STDOUT:   %1 = call i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.0119874bfe081f47"(i8 %self), !dbg !413
 // CHECK:STDOUT:   ret i16 %1, !dbg !414
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.e93d66b98eccc18b"(i8 %self) #0 !dbg !415 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.368a5d04bd03d311"(i8 %self), !dbg !418
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.a119523454aef44f"(i8 %self) #0 !dbg !415 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.bcddf3f6c749bf51"(i8 %self), !dbg !418
 // CHECK:STDOUT:   ret i32 %1, !dbg !419
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764"(i8 %self) #0 !dbg !420 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.de6876616761edb8"(i8 %self), !dbg !423
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda"(i8 %self) #0 !dbg !420 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.1fb20d5e414a7765"(i8 %self), !dbg !423
 // CHECK:STDOUT:   ret i32 %1, !dbg !423
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.fddfa84476127786"(i8 %from) #0 !dbg !424 {
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.b694d71d042c3286"(i8 %from) #0 !dbg !424 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !427
 // CHECK:STDOUT:   %2 = zext i8 %1 to i16, !dbg !428
 // CHECK:STDOUT:   ret i16 %2, !dbg !429
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.c6b172d3bcfae810"(i8 %from) #0 !dbg !430 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.1362f26ac5092fd7"(i8 %from) #0 !dbg !430 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !433
 // CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !434
 // CHECK:STDOUT:   ret i32 %2, !dbg !435
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.a3f50ebf2ea1deee"(i8 %from) #0 !dbg !436 {
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.0119874bfe081f47"(i8 %from) #0 !dbg !436 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !439
 // CHECK:STDOUT:   %2 = zext i8 %1 to i16, !dbg !440
 // CHECK:STDOUT:   ret i16 %2, !dbg !441
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.368a5d04bd03d311"(i8 %from) #0 !dbg !442 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.bcddf3f6c749bf51"(i8 %from) #0 !dbg !442 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !445
 // CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !446
 // CHECK:STDOUT:   ret i32 %2, !dbg !447
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.de6876616761edb8"(i8 %self) #0 !dbg !448 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.c7eb6c69af70f679"(i8 %self), !dbg !451
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.1fb20d5e414a7765"(i8 %self) #0 !dbg !448 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.518fc6abdcc82b41"(i8 %self), !dbg !451
 // CHECK:STDOUT:   ret i32 %1, !dbg !452
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -549,7 +549,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.c7eb6c69af70f679"(i8 %from) #0 !dbg !459 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.518fc6abdcc82b41"(i8 %from) #0 !dbg !459 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !462
 // CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !463
 // CHECK:STDOUT:   ret i32 %2, !dbg !464
@@ -557,14 +557,14 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CDiscard.Main.fad95e12c92be0f9, { 21, 0, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.77cbcfed73f0426e", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.7e0d73b3e9b416e0", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CDiscard.Main.3f15d0fba6dcdcf8, { 3, 0, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.86077157eff86015", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.4ea8a00ff42d136b", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CDiscard.Main.330c3c15b12986eb, { 6, 0, 5, 1, 2, 3, 4 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.0b57861e97f42464", { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.351558f0611bfe01", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.6504fab7c876f692", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.b920d74ee295eeb0", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CDiscard.Main.a4c7fafe8a72cac4, { 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764", { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8", { 0, 4, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -768,7 +768,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !193 = !{!194}
 // CHECK:STDOUT: !194 = !DILocalVariable(arg: 1, scope: !190, type: !7)
 // CHECK:STDOUT: !195 = !DILocation(line: 19, column: 1, scope: !190)
-// CHECK:STDOUT: !196 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.77cbcfed73f0426e", scope: null, file: !197, line: 46, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !200)
+// CHECK:STDOUT: !196 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.7e0d73b3e9b416e0", scope: null, file: !197, line: 46, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !200)
 // CHECK:STDOUT: !197 = !DIFile(filename: "{{.*}}/prelude/types/char.carbon", directory: "")
 // CHECK:STDOUT: !198 = !DISubroutineType(types: !199)
 // CHECK:STDOUT: !199 = !{!165, !7}
@@ -781,7 +781,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !206 = !{!207}
 // CHECK:STDOUT: !207 = !DILocalVariable(arg: 1, scope: !203, type: !165)
 // CHECK:STDOUT: !208 = !DILocation(line: 19, column: 1, scope: !203)
-// CHECK:STDOUT: !209 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.86077157eff86015", scope: null, file: !197, line: 46, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !212)
+// CHECK:STDOUT: !209 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.4ea8a00ff42d136b", scope: null, file: !197, line: 46, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !212)
 // CHECK:STDOUT: !210 = !DISubroutineType(types: !211)
 // CHECK:STDOUT: !211 = !{!179, !7}
 // CHECK:STDOUT: !212 = !{!213}
@@ -793,13 +793,13 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !218 = !{!219}
 // CHECK:STDOUT: !219 = !DILocalVariable(arg: 1, scope: !215, type: !179)
 // CHECK:STDOUT: !220 = !DILocation(line: 19, column: 1, scope: !215)
-// CHECK:STDOUT: !221 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.0b57861e97f42464", scope: null, file: !197, line: 46, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !224)
+// CHECK:STDOUT: !221 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.6504fab7c876f692", scope: null, file: !197, line: 46, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !224)
 // CHECK:STDOUT: !222 = !DISubroutineType(types: !223)
 // CHECK:STDOUT: !223 = !{!126, !7}
 // CHECK:STDOUT: !224 = !{!225}
 // CHECK:STDOUT: !225 = !DILocalVariable(arg: 1, scope: !221, type: !7)
 // CHECK:STDOUT: !226 = !DILocation(line: 47, column: 5, scope: !221)
-// CHECK:STDOUT: !227 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.351558f0611bfe01", scope: null, file: !197, line: 46, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !230)
+// CHECK:STDOUT: !227 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.b920d74ee295eeb0", scope: null, file: !197, line: 46, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !230)
 // CHECK:STDOUT: !228 = !DISubroutineType(types: !229)
 // CHECK:STDOUT: !229 = !{!140, !7}
 // CHECK:STDOUT: !230 = !{!231}
@@ -971,56 +971,56 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !396 = !DILocation(line: 116, column: 29, scope: !392)
 // CHECK:STDOUT: !397 = !DILocation(line: 116, column: 13, scope: !392)
 // CHECK:STDOUT: !398 = !DILocation(line: 116, column: 5, scope: !392)
-// CHECK:STDOUT: !399 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.994d4702892753a8", scope: null, file: !400, line: 86, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !401)
+// CHECK:STDOUT: !399 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.ded6ffa8f6b3bdea", scope: null, file: !400, line: 86, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !401)
 // CHECK:STDOUT: !400 = !DIFile(filename: "{{.*}}/prelude/types/uint.carbon", directory: "")
 // CHECK:STDOUT: !401 = !{!402}
 // CHECK:STDOUT: !402 = !DILocalVariable(arg: 1, scope: !399, type: !7)
 // CHECK:STDOUT: !403 = !DILocation(line: 87, column: 12, scope: !399)
 // CHECK:STDOUT: !404 = !DILocation(line: 87, column: 5, scope: !399)
-// CHECK:STDOUT: !405 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.64b4667e7a8330a2", scope: null, file: !400, line: 86, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !406)
+// CHECK:STDOUT: !405 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.962eb6a262508733", scope: null, file: !400, line: 86, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !406)
 // CHECK:STDOUT: !406 = !{!407}
 // CHECK:STDOUT: !407 = !DILocalVariable(arg: 1, scope: !405, type: !7)
 // CHECK:STDOUT: !408 = !DILocation(line: 87, column: 12, scope: !405)
 // CHECK:STDOUT: !409 = !DILocation(line: 87, column: 5, scope: !405)
-// CHECK:STDOUT: !410 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.8f451100d489870f", scope: null, file: !400, line: 86, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !411)
+// CHECK:STDOUT: !410 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.33882e53c452e3af", scope: null, file: !400, line: 86, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !411)
 // CHECK:STDOUT: !411 = !{!412}
 // CHECK:STDOUT: !412 = !DILocalVariable(arg: 1, scope: !410, type: !7)
 // CHECK:STDOUT: !413 = !DILocation(line: 87, column: 12, scope: !410)
 // CHECK:STDOUT: !414 = !DILocation(line: 87, column: 5, scope: !410)
-// CHECK:STDOUT: !415 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.e93d66b98eccc18b", scope: null, file: !400, line: 86, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !416)
+// CHECK:STDOUT: !415 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.eb42cc3f9529ca95.Core.a119523454aef44f", scope: null, file: !400, line: 86, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !416)
 // CHECK:STDOUT: !416 = !{!417}
 // CHECK:STDOUT: !417 = !DILocalVariable(arg: 1, scope: !415, type: !7)
 // CHECK:STDOUT: !418 = !DILocation(line: 87, column: 12, scope: !415)
 // CHECK:STDOUT: !419 = !DILocation(line: 87, column: 5, scope: !415)
-// CHECK:STDOUT: !420 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.097aed9a7080a764", scope: null, file: !197, line: 46, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !421)
+// CHECK:STDOUT: !420 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Char.Core:As.5d7343568c0b5715.Core.37d9bb07d6682eda", scope: null, file: !197, line: 46, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !421)
 // CHECK:STDOUT: !421 = !{!422}
 // CHECK:STDOUT: !422 = !DILocalVariable(arg: 1, scope: !420, type: !7)
 // CHECK:STDOUT: !423 = !DILocation(line: 47, column: 5, scope: !420)
-// CHECK:STDOUT: !424 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.fddfa84476127786", scope: null, file: !400, line: 70, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !425)
+// CHECK:STDOUT: !424 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.b694d71d042c3286", scope: null, file: !400, line: 70, type: !198, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !425)
 // CHECK:STDOUT: !425 = !{!426}
 // CHECK:STDOUT: !426 = !DILocalVariable(arg: 1, scope: !424, type: !7)
 // CHECK:STDOUT: !427 = !DILocation(line: 72, column: 17, scope: !424)
 // CHECK:STDOUT: !428 = !DILocation(line: 72, column: 12, scope: !424)
 // CHECK:STDOUT: !429 = !DILocation(line: 72, column: 5, scope: !424)
-// CHECK:STDOUT: !430 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.c6b172d3bcfae810", scope: null, file: !400, line: 70, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !431)
+// CHECK:STDOUT: !430 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.088bd64c513b33dc.Core.1362f26ac5092fd7", scope: null, file: !400, line: 70, type: !210, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !431)
 // CHECK:STDOUT: !431 = !{!432}
 // CHECK:STDOUT: !432 = !DILocalVariable(arg: 1, scope: !430, type: !7)
 // CHECK:STDOUT: !433 = !DILocation(line: 72, column: 17, scope: !430)
 // CHECK:STDOUT: !434 = !DILocation(line: 72, column: 12, scope: !430)
 // CHECK:STDOUT: !435 = !DILocation(line: 72, column: 5, scope: !430)
-// CHECK:STDOUT: !436 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.a3f50ebf2ea1deee", scope: null, file: !400, line: 78, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !437)
+// CHECK:STDOUT: !436 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.0119874bfe081f47", scope: null, file: !400, line: 78, type: !222, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !437)
 // CHECK:STDOUT: !437 = !{!438}
 // CHECK:STDOUT: !438 = !DILocalVariable(arg: 1, scope: !436, type: !7)
 // CHECK:STDOUT: !439 = !DILocation(line: 80, column: 17, scope: !436)
 // CHECK:STDOUT: !440 = !DILocation(line: 80, column: 12, scope: !436)
 // CHECK:STDOUT: !441 = !DILocation(line: 80, column: 5, scope: !436)
-// CHECK:STDOUT: !442 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.368a5d04bd03d311", scope: null, file: !400, line: 78, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !443)
+// CHECK:STDOUT: !442 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.aa5cb3646d41b0a6.Core.bcddf3f6c749bf51", scope: null, file: !400, line: 78, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !443)
 // CHECK:STDOUT: !443 = !{!444}
 // CHECK:STDOUT: !444 = !DILocalVariable(arg: 1, scope: !442, type: !7)
 // CHECK:STDOUT: !445 = !DILocation(line: 80, column: 17, scope: !442)
 // CHECK:STDOUT: !446 = !DILocation(line: 80, column: 12, scope: !442)
 // CHECK:STDOUT: !447 = !DILocation(line: 80, column: 5, scope: !442)
-// CHECK:STDOUT: !448 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.de6876616761edb8", scope: null, file: !400, line: 86, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !449)
+// CHECK:STDOUT: !448 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.595ce389a3104d21.Core.1fb20d5e414a7765", scope: null, file: !400, line: 86, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !449)
 // CHECK:STDOUT: !449 = !{!450}
 // CHECK:STDOUT: !450 = !DILocalVariable(arg: 1, scope: !448, type: !7)
 // CHECK:STDOUT: !451 = !DILocation(line: 87, column: 12, scope: !448)
@@ -1031,7 +1031,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !456 = !{!457}
 // CHECK:STDOUT: !457 = !DILocalVariable(arg: 1, scope: !453, type: !7)
 // CHECK:STDOUT: !458 = !DILocation(line: 58, column: 37, scope: !453)
-// CHECK:STDOUT: !459 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.c7eb6c69af70f679", scope: null, file: !400, line: 78, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !460)
+// CHECK:STDOUT: !459 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.f7828c4b027f9dc8.Core.518fc6abdcc82b41", scope: null, file: !400, line: 78, type: !228, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !460)
 // CHECK:STDOUT: !460 = !{!461}
 // CHECK:STDOUT: !461 = !DILocalVariable(arg: 1, scope: !459, type: !7)
 // CHECK:STDOUT: !462 = !DILocation(line: 80, column: 17, scope: !459)
