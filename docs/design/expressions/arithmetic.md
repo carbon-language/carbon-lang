@@ -267,21 +267,21 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Use a sufficiently wide result type to avoid overflow](/proposals/p1083.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
--   [Guarantee that the program never proceeds with an incorrect value after overflow](/proposals/p1083.md#guarantee-that-the-program-never-proceeds-with-an-incorrect-value-after-overflow)
--   [Guarantee that all integer arithmetic is two's complement](/proposals/p1083.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
--   [Treat overflow as an error but don't optimize on it](/proposals/p1083.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
--   [Don't let `Unsigned` arithmetic wrap](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap)
--   [Provide separate wrapping types](/proposals/p1083.md#provide-separate-wrapping-types)
--   [Do not provide an ordering or division for `uN`](/proposals/p1083.md#do-not-provide-an-ordering-or-division-for-un)
--   [Give unary `-` lower precedence](/proposals/p1083.md#give-unary---lower-precedence)
--   [Include a unary plus operator](/proposals/p1083.md#include-a-unary-plus-operator)
--   [Floating-point modulo operator](/proposals/p1083.md#floating-point-modulo-operator)
--   [Provide different division operators](/proposals/p1083.md#provide-different-division-operators)
--   [Use different division and modulo semantics](/proposals/p1083.md#use-different-division-and-modulo-semantics)
--   [Use different precedence groups for division and multiplication](/proposals/p1083.md#use-different-precedence-groups-for-division-and-multiplication)
--   [Use the same precedence group for modulo and multiplication](/proposals/p1083.md#use-the-same-precedence-group-for-modulo-and-multiplication)
--   [Use a different spelling for modulo](/proposals/p1083.md#use-a-different-spelling-for-modulo)
+-   [Use a sufficiently wide result type to avoid overflow](/proposals/p001083-arithmetic-expressions.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
+-   [Guarantee that the program never proceeds with an incorrect value after overflow](/proposals/p001083-arithmetic-expressions.md#guarantee-that-the-program-never-proceeds-with-an-incorrect-value-after-overflow)
+-   [Guarantee that all integer arithmetic is two's complement](/proposals/p001083-arithmetic-expressions.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
+-   [Treat overflow as an error but don't optimize on it](/proposals/p001083-arithmetic-expressions.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
+-   [Don't let `Unsigned` arithmetic wrap](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap)
+-   [Provide separate wrapping types](/proposals/p001083-arithmetic-expressions.md#provide-separate-wrapping-types)
+-   [Do not provide an ordering or division for `uN`](/proposals/p001083-arithmetic-expressions.md#do-not-provide-an-ordering-or-division-for-un)
+-   [Give unary `-` lower precedence](/proposals/p001083-arithmetic-expressions.md#give-unary---lower-precedence)
+-   [Include a unary plus operator](/proposals/p001083-arithmetic-expressions.md#include-a-unary-plus-operator)
+-   [Floating-point modulo operator](/proposals/p001083-arithmetic-expressions.md#floating-point-modulo-operator)
+-   [Provide different division operators](/proposals/p001083-arithmetic-expressions.md#provide-different-division-operators)
+-   [Use different division and modulo semantics](/proposals/p001083-arithmetic-expressions.md#use-different-division-and-modulo-semantics)
+-   [Use different precedence groups for division and multiplication](/proposals/p001083-arithmetic-expressions.md#use-different-precedence-groups-for-division-and-multiplication)
+-   [Use the same precedence group for modulo and multiplication](/proposals/p001083-arithmetic-expressions.md#use-the-same-precedence-group-for-modulo-and-multiplication)
+-   [Use a different spelling for modulo](/proposals/p001083-arithmetic-expressions.md#use-a-different-spelling-for-modulo)
 
 ## References
 

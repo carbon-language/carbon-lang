@@ -417,15 +417,6 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
                                  clang::CXXRecordDecl* /*class_decl*/,
                                  SemIR::ConstantId query_self_const_id)
     -> SemIR::InstId {
-  auto lookup_result = clang_sema.CreateUnresolvedLookupExpr(
-      /*NamingClass=*/nullptr, clang::NestedNameSpecifierLoc(), name_info,
-      clang::UnresolvedSet<0>());
-  if (lookup_result.isInvalid()) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  auto* function = llvm::cast<clang::UnresolvedLookupExpr>(lookup_result.get());
-
   auto candidate_set = clang::OverloadCandidateSet(
       clang::SourceLocation(),
       clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
@@ -466,7 +457,7 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
       auto decl_info = DeclInfo{
           .decl = best_candidate->Function,
           .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
-              context, best_candidate, function, args),
+              context, best_candidate, nullptr, args),
       };
       return GetFunctionId(context, loc_id, decl_info);
     }

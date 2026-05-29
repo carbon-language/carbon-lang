@@ -112,6 +112,17 @@ repos:
         entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
+      - id: check-proposal-names
+        name: Check proposal names
+        entry: proposals/scripts/check_proposal_names.py
+        language: python
+        files: ^proposals/p.*\.md$
+        # This edits files other than the ones passed to it, so we need each
+        # chunk of files to be run through the script serially.
+        require_serial: true
+        # This also renames files, invalidating the list of files provided to
+        # subsequent checks so we fail-fast if this makes changes.
+        fail_fast: true
       - id: check-toolchain-diagnostics
         name: Check toolchain diagnostics
         entry: toolchain/diagnostics/check_diagnostics.py

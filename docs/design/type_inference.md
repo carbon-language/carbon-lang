@@ -48,7 +48,7 @@ return types.
 
 ## Alternatives considered
 
--   [Use `_` instead of `auto`](/proposals/p0851.md#use-_-instead-of-auto)
+-   [Use `_` instead of `auto`](/proposals/p000851-variable-type-inference.md#use-_-instead-of-auto)
 
 ## References
 

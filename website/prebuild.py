@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
 
 """Updates files in preparation for a jekyll build.
 
@@ -123,7 +127,7 @@ def label_subdir(
 
         if subdir_str == "proposals":
             # Use proposal numbers as part of the title and ordering.
-            m = re.match(r"p(\d+).md", child.name)
+            m = re.match(r"p(\d+)(?:-.*)?\.md", child.name)
             # Skip files that aren't proposals.
             if not m:
                 continue

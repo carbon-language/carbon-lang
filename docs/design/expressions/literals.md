@@ -189,10 +189,10 @@ var v: i8 = OneHigher(255);
 
 ### Alternatives Considered
 
--   [Use an ordinary integer or floating-point type for literals](/proposals/p0144.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
--   [Use same type for all literals](/proposals/p0144.md#use-same-type-for-all-literals)
--   [Allow leading `-` in literal tokens](/proposals/p0144.md#allow-leading---in-literal-tokens)
--   [Forbidding floating-point ties](/proposals/p0866.md#alternatives-considered)
+-   [Use an ordinary integer or floating-point type for literals](/proposals/p000144-numeric-literal-semantics.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
+-   [Use same type for all literals](/proposals/p000144-numeric-literal-semantics.md#use-same-type-for-all-literals)
+-   [Allow leading `-` in literal tokens](/proposals/p000144-numeric-literal-semantics.md#allow-leading---in-literal-tokens)
+-   [Forbidding floating-point ties](/proposals/p000866-allow-ties-in-floating-literals.md#alternatives-considered)
 
 ## Numeric type literals
 
@@ -237,10 +237,10 @@ as a 32-bit two's complement signed integer. `Main` then returns the output of
 
 ### Alternatives considered
 
--   [C++ LP64 convention](/proposals/p2015.md#c-lp64-convention)
--   [Type name with length suffix](/proposals/p2015.md#type-name-with-length-suffix)
--   [Uppercase suffixes](/proposals/p2015.md#uppercase-suffixes)
--   [Additional bit sizes](/proposals/p2015.md#additional-bit-sizes)
+-   [C++ LP64 convention](/proposals/p002015-numeric-type-literal-syntax.md#c-lp64-convention)
+-   [Type name with length suffix](/proposals/p002015-numeric-type-literal-syntax.md#type-name-with-length-suffix)
+-   [Uppercase suffixes](/proposals/p002015-numeric-type-literal-syntax.md#uppercase-suffixes)
+-   [Additional bit sizes](/proposals/p002015-numeric-type-literal-syntax.md#additional-bit-sizes)
 
 ## String literals
 
