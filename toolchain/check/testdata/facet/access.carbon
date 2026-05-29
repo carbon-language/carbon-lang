@@ -424,7 +424,7 @@ fn F(U:! W, V:! Z(.Self) where .Z0 impls (Y where .Y1 impls (X where .X1 = ()))
   V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
 }
 
- // --- fail_todo_find_access_value_in_facet_from_specific_interface.carbon
+// --- fail_todo_find_access_value_in_facet_from_specific_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
