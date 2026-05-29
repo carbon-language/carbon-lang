@@ -442,6 +442,12 @@ struct Worklist {
     }
   }
 
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
+  }
+
   auto Add(VtableId vtable_id) -> void {
     const auto& vtable = sem_ir->vtables().Get(vtable_id);
     if (vtable.class_id.has_value()) {
