@@ -398,6 +398,10 @@ constraint W(T:! type) {
 fn F(B:! W(E), C:! type where E impls V(.Self)) {
   // These find a witness for `E as X(E)` from the facet `B`.
   E as (V(C) where B impls X(.Self));
+  // CHECK:STDERR: find_witness_from_facet_in_lookup_target_facet_type.carbon:[[@LINE+4]]:20: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+  // CHECK:STDERR:   E as (V(C) where B impls X(E));
+  // CHECK:STDERR:                    ^~~~~~~~~~~~
+  // CHECK:STDERR:
   E as (V(C) where B impls X(E));
 }
 
@@ -416,6 +420,10 @@ constraint W(T:! type) {
 fn F(B:! W(E), C:! type where E impls V(.Self)) {
   // These find a witness for `E as X(E)` from the facet `B`.
   E as (V(C) where D(B) impls X(.Self));
+  // CHECK:STDERR: find_witness_from_facet_in_specific_in_lookup_target_facet_type.carbon:[[@LINE+4]]:20: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+  // CHECK:STDERR:   E as (V(C) where D(B) impls X(E));
+  // CHECK:STDERR:                    ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   E as (V(C) where D(B) impls X(E));
 }
 
