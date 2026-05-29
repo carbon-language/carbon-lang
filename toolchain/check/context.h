@@ -336,6 +336,7 @@ class Context {
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
+  auto fields() -> SemIR::FieldStore& { return sem_ir().fields(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
   auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
   auto named_constraints() -> SemIR::NamedConstraintStore& {
