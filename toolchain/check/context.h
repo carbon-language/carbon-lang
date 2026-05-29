@@ -354,9 +354,6 @@ class Context {
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
-  auto field_initializers() -> SemIR::File::FieldInitializerMap& {
-    return sem_ir().field_initializers();
-  }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }

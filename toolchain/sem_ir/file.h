@@ -211,11 +211,6 @@ class File : public Printable<File> {
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
   auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
 
-  using FieldInitializerMap = Map<SemIR::InstId, SemIR::InstId>;
-  auto field_initializers() -> FieldInitializerMap& {
-    return field_initializers_;
-  }
-
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves
   // `out` unchanged.
@@ -375,13 +370,6 @@ class File : public Printable<File> {
 
   // Storage for class fields.
   FieldStore fields_;
-
-  // Map containing initializers for class fields. The map keys are
-  // `InstId`s corresponding to `FielDecl`s.
-  //
-  // TODO: consider replacing this map with a separate store for fields
-  // and tracking a new `FieldId` in the `FieldDecl`.
-  FieldInitializerMap field_initializers_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;
