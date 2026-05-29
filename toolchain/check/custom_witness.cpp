@@ -151,25 +151,10 @@ static auto CanDestroyClass(
     return DestroyFormat::NoDestroy;
   }
 
-  // Evaluate the class definition block under the specific so `GetObjectRepr`
-  // is able to correctly determine whether the type can be destroyed.
-  if (class_type.specific_id.has_value() &&
-      class_info.complete_type_witness_id.has_value()) {
-    auto witness_const_id = context.constant_values().GetAttached(
-        class_info.complete_type_witness_id);
-    if (witness_const_id.is_symbolic()) {
-      const auto& symbolic =
-          context.constant_values().GetSymbolicConstant(witness_const_id);
-      TryEvalBlockForSpecific(context, loc_id, class_type.specific_id,
-                              symbolic.index.region());
-    }
-  }
-
-  auto object_repr_id =
-      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface_id);
+  return HasWitnessForOneField(
+      context, loc_id,
+      context.types().GetTypeInstId(complete_info.value_repr.type_id),
+      query_specific_interface_id);
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl

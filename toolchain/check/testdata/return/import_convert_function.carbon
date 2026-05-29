@@ -749,6 +749,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.494: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.155: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.82d: type = class_type @C, @C(%int_0.155) [concrete]
+// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C.val.be7: %C.82d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.a47: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
 // CHECK:STDOUT:   %int_1.d5e: %i32 = int_value 1 [concrete]
@@ -1331,7 +1332,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.1 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_26.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_26.1(%self.param: ref %ptr.c28) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_26.2(%self.param: ref %C.82d) {
 // CHECK:STDOUT: !entry:

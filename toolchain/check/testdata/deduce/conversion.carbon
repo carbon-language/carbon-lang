@@ -107,6 +107,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.4ec: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.44de79.2: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_45.2 [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.27ca65.2: %A.as.ImplicitAs.impl.Convert.type.44de79.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -144,7 +145,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc16_8.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc16_8.1(%self.param: ref %ptr.c28) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc16_8.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
@@ -166,6 +167,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.786: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%B, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %.29b: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.786, %ImplicitAs.facet [concrete]
@@ -193,7 +195,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc16_9.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc16_9.1(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc16_9.2(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:

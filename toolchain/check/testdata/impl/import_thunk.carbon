@@ -135,6 +135,7 @@ fn G() {
 // CHECK:STDOUT:   %I.WithSelf.F.080: %I.WithSelf.F.type.35d = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.d9ee69.2: type = fn_type @C.as.I.impl.F.loc8_24.2, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.d51b7c.2: %C.as.I.impl.F.type.d9ee69.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.3bcfc5.2 [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn: <specific function> = specific_function %C.as.I.impl.F.d51b7c.1, @C.as.I.impl.F.loc8_24.1(%Y) [symbolic]
 // CHECK:STDOUT:   %C.val: %C.3bcfc5.2 = struct_value () [symbolic]
@@ -332,7 +333,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X.loc5_10.1 => constants.%X
@@ -439,6 +440,7 @@ fn G() {
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.c89202.1: <specific function> = specific_function %C.as.I.impl.F.e7ba19.2, @C.as.I.impl.F.1(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %pattern_type.003: type = pattern_type %C.552 [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.c89202.2: <specific function> = specific_function %C.as.I.impl.F.e7ba19.1, @C.as.I.impl.F.2(%empty_tuple) [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C.val.f31: %C.552 = struct_value () [concrete]
 // CHECK:STDOUT:   %.33d: ref %C.552 = temporary invalid, %C.val.f31 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.43d658.2: type = fn_type @Destroy.Op.loc7_16.2 [concrete]
@@ -596,7 +598,7 @@ fn G() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_16.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_16.1(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_16.2(%self.param: ref %C.552) {
 // CHECK:STDOUT: !entry:

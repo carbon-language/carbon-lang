@@ -113,6 +113,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Class.242: type = class_type @Class, @Class(%Destroy.facet.322) [concrete]
 // CHECK:STDOUT:   %Class.elem.8f1: type = unbound_element_type %Class.242, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.k.fae: type = struct_type {.k: %i32} [concrete]
+// CHECK:STDOUT:   %ptr.2d4: type = ptr_type %struct_type.k.fae [concrete]
 // CHECK:STDOUT:   %pattern_type.0c8: type = pattern_type %Class.242 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -320,10 +321,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %struct_type.k.fae) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.2d4) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.2(%self.param: ref %Class.242) {
 // CHECK:STDOUT: !entry:

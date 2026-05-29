@@ -128,14 +128,14 @@ fn Test() {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3fe7740c8ce31fb1:core.Destroy.Core", scope: null, file: !12, line: 148, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !16)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3fe7740c8ce31fb1:core.Destroy.Core", scope: null, file: !12, line: 164, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !16)
 // CHECK:STDOUT: !12 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !15}
 // CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !11, type: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 148, column: 19, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 164, column: 19, scope: !11)
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !6, line: 24, type: !20, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{null}
