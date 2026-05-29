@@ -304,12 +304,10 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
-                              bool check_syntax,
-                              SemIR::TypeId self_type_override_id,
-                              bool diagnose) -> bool {
+                              bool check_syntax, bool diagnose) -> bool {
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), prev_specific_id,
-                              diagnose, check_syntax, self_type_override_id)) {
+                              diagnose, check_syntax)) {
     return false;
   }
   if (!CheckFunctionReturnTypeMatches(context, new_function, prev_function,

@@ -31,6 +31,11 @@ auto EmitAggregateInitializer(FunctionContext& context,
                               SemIR::InstBlockId refs_id, llvm::Twine name)
     -> llvm::Value*;
 
+// Computes the offset of an aggregate element from the start of the aggregate.
+auto GetElementOffset(FunctionContext& context,
+                      FunctionContext::TypeInFile aggr_type,
+                      SemIR::ElementIndex index) -> llvm::APInt;
+
 }  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWER_AGGREGATE_H_

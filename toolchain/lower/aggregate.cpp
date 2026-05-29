@@ -124,6 +124,28 @@ auto GetAggregateElement(FunctionContext& context, SemIR::InstId aggr_inst_id,
   }
 }
 
+auto GetElementOffset(FunctionContext& context,
+                      FunctionContext::TypeInFile aggr_type,
+                      SemIR::ElementIndex index) -> llvm::APInt {
+  auto object_repr = FunctionContext::TypeInFile{
+      .file = aggr_type.file,
+      .type_id = aggr_type.file->types().GetObjectRepr(aggr_type.type_id)};
+  auto* ptr_type =
+      llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+  auto* dummy_aggr = llvm::ConstantPointerNull::get(ptr_type);
+  auto* dummy_gep = context.builder().CreateStructGEP(
+      context.GetType(object_repr), dummy_aggr,
+      GetElementIndex(object_repr, index));
+
+  const auto& data_layout = context.llvm_module().getDataLayout();
+  llvm::APInt offset(data_layout.getIndexTypeSizeInBits(ptr_type), /*val=*/0,
+                     /*isSigned=*/true);
+  dummy_gep->stripAndAccumulateConstantOffsets(
+      context.llvm_module().getDataLayout(), offset,
+      /*AllowNonInbounds=*/false);
+  return offset;
+}
+
 auto EmitAggregateValueRepr(FunctionContext& context,
                             SemIR::InstId value_inst_id,
                             SemIR::InstBlockId refs_id) -> llvm::Value* {
