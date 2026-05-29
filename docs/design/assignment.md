@@ -331,14 +331,14 @@ impl MyString as AddAssignWith(like MyString) {
 
 ## Alternatives considered
 
--   [Allow assignment as a subexpression](/proposals/p2511.md#allow-assignment-as-a-subexpression)
--   [Allow chained assignment](/proposals/p2511.md#allow-chained-assignment)
--   [Do not provide increment and decrement](/proposals/p2511.md#do-not-provide-increment-and-decrement)
--   [Treat increment as syntactic sugar for adding `1`](/proposals/p2511.md#treat-increment-as-syntactic-sugar-for-adding-1)
--   [Define `$` in terms of `$=`](/proposals/p2511.md#define--in-terms-of-)
--   [Do not allow overloading the behavior of `=`](/proposals/p2511.md#do-not-allow-overloading-the-behavior-of-)
--   [Treat the left hand side of `=` as a pattern](/proposals/p2511.md#treat-the-left-hand-side-of--as-a-pattern)
--   [Different names for interfaces](/proposals/p2511.md#different-names-for-interfaces)
+-   [Allow assignment as a subexpression](/proposals/p002511-assignment-statements.md#allow-assignment-as-a-subexpression)
+-   [Allow chained assignment](/proposals/p002511-assignment-statements.md#allow-chained-assignment)
+-   [Do not provide increment and decrement](/proposals/p002511-assignment-statements.md#do-not-provide-increment-and-decrement)
+-   [Treat increment as syntactic sugar for adding `1`](/proposals/p002511-assignment-statements.md#treat-increment-as-syntactic-sugar-for-adding-1)
+-   [Define `$` in terms of `$=`](/proposals/p002511-assignment-statements.md#define--in-terms-of-)
+-   [Do not allow overloading the behavior of `=`](/proposals/p002511-assignment-statements.md#do-not-allow-overloading-the-behavior-of-)
+-   [Treat the left hand side of `=` as a pattern](/proposals/p002511-assignment-statements.md#treat-the-left-hand-side-of--as-a-pattern)
+-   [Different names for interfaces](/proposals/p002511-assignment-statements.md#different-names-for-interfaces)
 
 ## References
 

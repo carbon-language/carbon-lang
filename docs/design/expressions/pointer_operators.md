@@ -50,8 +50,8 @@ full details, see the [precedence graph](README.md#precedence).
 
 ## Alternatives considered
 
--   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
+-   [Alternative pointer syntaxes](/proposals/p002006-values-variables-pointers-and-references.md#alternative-pointer-syntaxes)
 
 ## References
 
--   [Proposal #2006: Values, variables, and pointers](/proposals/p2006.md)
+-   [Proposal #2006: Values, variables, and pointers](/proposals/p002006-values-variables-pointers-and-references.md)

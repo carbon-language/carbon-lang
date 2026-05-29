@@ -32,4 +32,4 @@ indentation, that is not yet implemented.
 
 ## Alternatives considered
 
--   [Bracket matching in parser](/proposals/p6716.md#bracket-matching-in-parser)
+-   [Bracket matching in parser](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#bracket-matching-in-parser)

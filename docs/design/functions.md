@@ -26,10 +26,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 > **TODO:** Update this document to reflect the introduction of function values,
 > function types, and the `Call` interface in
-> [p2875: Functions, function types, and function calls](/proposals/p2875.md).
+> [#2875: Functions, function types, and function calls](/proposals/p002875-functions-function-types-and-function-calls.md).
 
 > **TODO:** Update this document to reflect the changes to named functions in
-> [p3848: Lambdas](/proposals/p3848.md).
+> [#3848: Lambdas](/proposals/p003848-lambdas.md).
 
 Functions are the core building block for applications. Carbon's basic function
 syntax is:
@@ -170,10 +170,10 @@ Other designs build upon basic function syntax to add advanced features:
 
 ## Alternatives considered
 
--   [Function keyword](/proposals/p0438.md#function-keyword)
--   [Only allow `auto` return types if parameters are compile-time](/proposals/p0826.md#only-allow-auto-return-types-if-parameters-are-generic)
--   [Provide alternate function syntax for concise return type inference](/proposals/p0826.md#provide-alternate-function-syntax-for-concise-return-type-inference)
--   [Allow separate declaration and definition](/proposals/p0826.md#allow-separate-declaration-and-definition)
+-   [Function keyword](/proposals/p000438-functions.md#function-keyword)
+-   [Only allow `auto` return types if parameters are compile-time](/proposals/p000826-function-return-type-inference.md#only-allow-auto-return-types-if-parameters-are-generic)
+-   [Provide alternate function syntax for concise return type inference](/proposals/p000826-function-return-type-inference.md#provide-alternate-function-syntax-for-concise-return-type-inference)
+-   [Allow separate declaration and definition](/proposals/p000826-function-return-type-inference.md#allow-separate-declaration-and-definition)
 
 ## References
 
