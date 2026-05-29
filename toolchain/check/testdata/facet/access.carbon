@@ -370,7 +370,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls Y(U)) {
   V.(Z(V).Z1).(Y(U).Y1).(X.X1) as W;
 }
 
-// --- find_access_value_in_second_nested_access.carbon
+// --- fail_todo_find_access_value_in_second_nested_access.carbon
 library "[[@TEST_NAME]]";
 
 interface W {}
@@ -378,18 +378,28 @@ interface X {
   let X1:! type;
 }
 interface Y(T:! type) {
+  let Y0:! type;
   let Y1:! type;
+  let Y2:! type;
 }
 interface Z(U:! type, PeriodSelf:! type) {
-  let Z1:! Y(PeriodSelf) where .Y1 impls (X where .X1 = U);
+  // TODO: When we look for .Y1.X1 we currently only look for a rewrite of .X1,
+  // but there are three, and we can pick the wrong one.
+  let Z1:! Y(PeriodSelf) where .Y0 impls (X where .X1 = ())
+                           and .Y1 impls (X where .X1 = U)
+                           and .Y2 impls (X where .X1 = ()) ;
 }
 
 fn F(U:! W, V:! Z(U, .Self)) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, where
-  // it finds the rewrite of `.X1 = U`.
+  // it finds the rewrite of `.Y1.X1 = U`.
   //
   // Only U impls W so we use `as W` to test that the LHS is U.
+  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+4]]:3: error: cannot convert type `V.(Z(U, V).Z1).(Y(V).Y1).(X.X1)` into type implementing `W` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
 }
 
