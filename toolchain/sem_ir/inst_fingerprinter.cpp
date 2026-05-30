@@ -12,9 +12,11 @@
 #include "common/concepts.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
@@ -429,6 +431,15 @@ struct Worklist {
 
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
+    // Imported C++ classes are not uniquely identified by their name and parent
+    // scope, so we also include the Clang mangled type name, which is computed
+    // on demand. The Clang type name is unique, as it is the canonical C++
+    // identity. Carbon classes rely on the name and scope from `AddEntity`.
+    llvm::SmallString<128> cpp_mangled_name;
+    llvm::raw_svector_ostream os(cpp_mangled_name);
+    if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
+      AddString(cpp_mangled_name);
+    }
   }
 
   auto Add(VtableId vtable_id) -> void {

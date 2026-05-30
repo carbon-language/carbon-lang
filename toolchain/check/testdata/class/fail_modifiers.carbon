@@ -90,7 +90,7 @@ abstract class AbstractWithDefinition {
   // CHECK:STDERR:                                      ^
   // CHECK:STDERR:
   abstract fn F[unused self: Self]() {}
-  abstract fn G[unused self: Self]();
+  abstract fn G[self: Self]();
 }
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:50: error: definition of `abstract` function [DefinedAbstractFunction]
 // CHECK:STDERR: fn AbstractWithDefinition.G[unused self: Self]() {

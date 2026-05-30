@@ -140,7 +140,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %ptr.9e9: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %ptr.055: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %Cpp.void: type = class_type @VoidBase [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %Cpp.void [concrete]
 // CHECK:STDOUT:   %pattern_type.c0f: type = pattern_type %ptr.838 [concrete]
@@ -148,13 +148,13 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.bdb: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.984(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.7e2: %ptr.as.ImplicitAs.impl.Convert.type.bdb = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.e3b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bfc, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
-// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.5da: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
-// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.9d2: %ptr.as.ImplicitAs.impl.Convert.type.5da = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.1d5: %ImplicitAs.type.919 = facet_value %ptr.9e9, (%ImplicitAs.impl_witness.e3b) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.076: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.838, %ImplicitAs.facet.1d5) [concrete]
-// CHECK:STDOUT:   %.d01: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.076, %ImplicitAs.facet.1d5 [concrete]
-// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn.222: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.9d2, @ptr.as.ImplicitAs.impl.Convert.1(%S) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.ffe: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bfc, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.734: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.5ce: %ptr.as.ImplicitAs.impl.Convert.type.734 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.82f: %ImplicitAs.type.919 = facet_value %ptr.055, (%ImplicitAs.impl_witness.ffe) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.f9b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%ptr.838, %ImplicitAs.facet.82f) [concrete]
+// CHECK:STDOUT:   %.dd7: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.f9b, %ImplicitAs.facet.82f [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn.ff6: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.5ce, @ptr.as.ImplicitAs.impl.Convert.1(%S) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -168,20 +168,20 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bfc = impl_witness_table (%Core.import_ref.a68), @ptr.as.ImplicitAs.impl.984 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%input.param: %ptr.9e9) {
+// CHECK:STDOUT: fn @F(%input.param: %ptr.055) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.c0f = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %input.ref: %ptr.9e9 = name_ref input, %input
+// CHECK:STDOUT:   %input.ref: %ptr.055 = name_ref input, %input
 // CHECK:STDOUT:   %.loc10_25: type = splice_block %ptr.loc10 [concrete = constants.%ptr.838] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.838]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0: %.d01 = impl_witness_access constants.%ImplicitAs.impl_witness.e3b, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.9d2]
+// CHECK:STDOUT:   %impl.elem0: %.dd7 = impl_witness_access constants.%ImplicitAs.impl_witness.ffe, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.5ce]
 // CHECK:STDOUT:   %bound_method.loc10_29.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%S) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.222]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%S) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.ff6]
 // CHECK:STDOUT:   %bound_method.loc10_29.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %ptr.838 = call %bound_method.loc10_29.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_29.1: %ptr.838 = value_of_initializer %ptr.as.ImplicitAs.impl.Convert.call
@@ -246,7 +246,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %ptr.9e9: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %ptr.055: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %Cpp.void: type = class_type @VoidBase [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %Cpp.void [concrete]
 // CHECK:STDOUT:   %pattern_type.c0f: type = pattern_type %ptr.838 [concrete]
@@ -260,15 +260,15 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ImplicitAs.type.919: type = facet_type <@ImplicitAs, @ImplicitAs(%ptr.838)> [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.bdb: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.984(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.7e2: %ptr.as.ImplicitAs.impl.Convert.type.bdb = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.e3b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bfc, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.1d5: %ImplicitAs.type.919 = facet_value %ptr.9e9, (%ImplicitAs.impl_witness.e3b) [concrete]
-// CHECK:STDOUT:   %As.impl_witness.72f: <witness> = impl_witness imports.%As.impl_witness_table.dad, @T.as_type.as.As.impl(%ptr.838, %ImplicitAs.facet.1d5) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.db3: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.838, %ImplicitAs.facet.1d5) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.35b: %T.as_type.as.As.impl.Convert.type.db3 = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet: %As.type.8e0 = facet_value %ptr.9e9, (%As.impl_witness.72f) [concrete]
-// CHECK:STDOUT:   %As.WithSelf.Convert.type.b23: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%ptr.838, %As.facet) [concrete]
-// CHECK:STDOUT:   %.b17: type = fn_type_with_self_type %As.WithSelf.Convert.type.b23, %As.facet [concrete]
-// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.35b, @T.as_type.as.As.impl.Convert(%ptr.838, %ImplicitAs.facet.1d5) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.ffe: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bfc, @ptr.as.ImplicitAs.impl.984(%S) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.82f: %ImplicitAs.type.919 = facet_value %ptr.055, (%ImplicitAs.impl_witness.ffe) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.3f8: <witness> = impl_witness imports.%As.impl_witness_table.dad, @T.as_type.as.As.impl(%ptr.838, %ImplicitAs.facet.82f) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.type.38e: type = fn_type @T.as_type.as.As.impl.Convert, @T.as_type.as.As.impl(%ptr.838, %ImplicitAs.facet.82f) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.984: %T.as_type.as.As.impl.Convert.type.38e = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.8e0 = facet_value %ptr.055, (%As.impl_witness.3f8) [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.ee0: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%ptr.838, %As.facet) [concrete]
+// CHECK:STDOUT:   %.8d1: type = fn_type_with_self_type %As.WithSelf.Convert.type.ee0, %As.facet [concrete]
+// CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.specific_fn: <specific function> = specific_function %T.as_type.as.As.impl.Convert.984, @T.as_type.as.As.impl.Convert(%ptr.838, %ImplicitAs.facet.82f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -284,18 +284,18 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bfc = impl_witness_table (%Core.import_ref.a68), @ptr.as.ImplicitAs.impl.984 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%input.param: %ptr.9e9) {
+// CHECK:STDOUT: fn @F(%input.param: %ptr.055) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.c0f = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %input.ref: %ptr.9e9 = name_ref input, %input
+// CHECK:STDOUT:   %input.ref: %ptr.055 = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc10_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %void.ref.loc10_41: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:   %ptr.loc10_46: type = ptr_type %void.ref.loc10_41 [concrete = constants.%ptr.838]
-// CHECK:STDOUT:   %impl.elem0: %.b17 = impl_witness_access constants.%As.impl_witness.72f, element0 [concrete = constants.%T.as_type.as.As.impl.Convert.35b]
+// CHECK:STDOUT:   %impl.elem0: %.8d1 = impl_witness_access constants.%As.impl_witness.3f8, element0 [concrete = constants.%T.as_type.as.As.impl.Convert.984]
 // CHECK:STDOUT:   %bound_method.loc10_35.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.838, constants.%ImplicitAs.facet.1d5) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.as_type.as.As.impl.Convert(constants.%ptr.838, constants.%ImplicitAs.facet.82f) [concrete = constants.%T.as_type.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %T.as_type.as.As.impl.Convert.call: init %ptr.838 = call %bound_method.loc10_35.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_35.1: %ptr.838 = value_of_initializer %T.as_type.as.As.impl.Convert.call
@@ -380,8 +380,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.void: type = class_type @VoidBase [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %Cpp.void [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %ptr.9e9: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %ptr.9e9 [concrete]
+// CHECK:STDOUT:   %ptr.055: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %pattern_type.f1e: type = pattern_type %ptr.055 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -396,19 +396,19 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT: fn @F(%input.param: %ptr.838) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.761 = value_binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.f1e = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.838 = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc17_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc17_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc17_40: type = ptr_type %S.ref.loc17_38 [concrete = constants.%ptr.9e9]
-// CHECK:STDOUT:   %.loc17_32: %ptr.9e9 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_22: type = splice_block %ptr.loc17_22 [concrete = constants.%ptr.9e9] {
+// CHECK:STDOUT:   %ptr.loc17_40: type = ptr_type %S.ref.loc17_38 [concrete = constants.%ptr.055]
+// CHECK:STDOUT:   %.loc17_32: %ptr.055 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_22: type = splice_block %ptr.loc17_22 [concrete = constants.%ptr.055] {
 // CHECK:STDOUT:     %Cpp.ref.loc17_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc17_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc17_22: type = ptr_type %S.ref.loc17_20 [concrete = constants.%ptr.9e9]
+// CHECK:STDOUT:     %ptr.loc17_22: type = ptr_type %S.ref.loc17_20 [concrete = constants.%ptr.055]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.9e9 = value_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p: %ptr.055 = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,20 +445,20 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.void: type = class_type @VoidBase [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %Cpp.void [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %ptr.9e9: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %ptr.9e9 [concrete]
-// CHECK:STDOUT:   %UnsafeAs.type.e37: type = facet_type <@UnsafeAs, @UnsafeAs(%ptr.9e9)> [concrete]
+// CHECK:STDOUT:   %ptr.055: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %pattern_type.f1e: type = pattern_type %ptr.055 [concrete]
+// CHECK:STDOUT:   %UnsafeAs.type.6c9: type = facet_type <@UnsafeAs, @UnsafeAs(%ptr.055)> [concrete]
 // CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.ed0: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%T.67d, %U.091) [symbolic]
 // CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.8b4: %ptr.as.UnsafeAs.impl.Convert.type.ed0 = struct_value () [symbolic]
-// CHECK:STDOUT:   %UnsafeAs.impl_witness.4bb: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.546, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.83e: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.a6b: %ptr.as.UnsafeAs.impl.Convert.type.83e = struct_value () [concrete]
-// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.e37 = facet_value %ptr.838, (%UnsafeAs.impl_witness.4bb) [concrete]
-// CHECK:STDOUT:   %UnsafeAs.WithSelf.Convert.type.96c: type = fn_type @UnsafeAs.WithSelf.Convert, @UnsafeAs.WithSelf(%ptr.9e9, %UnsafeAs.facet) [concrete]
-// CHECK:STDOUT:   %.7a8: type = fn_type_with_self_type %UnsafeAs.WithSelf.Convert.type.96c, %UnsafeAs.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.a6b, @ptr.as.UnsafeAs.impl.Convert(%Cpp.void, %S) [concrete]
+// CHECK:STDOUT:   %UnsafeAs.impl_witness.b35: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.546, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.484: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.444: %ptr.as.UnsafeAs.impl.Convert.type.484 = struct_value () [concrete]
+// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.6c9 = facet_value %ptr.838, (%UnsafeAs.impl_witness.b35) [concrete]
+// CHECK:STDOUT:   %UnsafeAs.WithSelf.Convert.type.169: type = fn_type @UnsafeAs.WithSelf.Convert, @UnsafeAs.WithSelf(%ptr.055, %UnsafeAs.facet) [concrete]
+// CHECK:STDOUT:   %.8a4: type = fn_type_with_self_type %UnsafeAs.WithSelf.Convert.type.169, %UnsafeAs.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.444, @ptr.as.UnsafeAs.impl.Convert(%Cpp.void, %S) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -475,25 +475,25 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT: fn @F(%input.param: %ptr.838) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.761 = value_binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.f1e = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.838 = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc10_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc10_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc10_47: type = ptr_type %S.ref.loc10_45 [concrete = constants.%ptr.9e9]
-// CHECK:STDOUT:   %impl.elem0: %.7a8 = impl_witness_access constants.%UnsafeAs.impl_witness.4bb, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.a6b]
+// CHECK:STDOUT:   %ptr.loc10_47: type = ptr_type %S.ref.loc10_45 [concrete = constants.%ptr.055]
+// CHECK:STDOUT:   %impl.elem0: %.8a4 = impl_witness_access constants.%UnsafeAs.impl_witness.b35, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.444]
 // CHECK:STDOUT:   %bound_method.loc10_39.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%S) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_39.2: <bound method> = bound_method %input.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.9e9 = call %bound_method.loc10_39.2(%input.ref)
-// CHECK:STDOUT:   %.loc10_39.1: %ptr.9e9 = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc10_39.2: %ptr.9e9 = converted %input.ref, %.loc10_39.1
-// CHECK:STDOUT:   %.loc10_22: type = splice_block %ptr.loc10_22 [concrete = constants.%ptr.9e9] {
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.055 = call %bound_method.loc10_39.2(%input.ref)
+// CHECK:STDOUT:   %.loc10_39.1: %ptr.055 = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc10_39.2: %ptr.055 = converted %input.ref, %.loc10_39.1
+// CHECK:STDOUT:   %.loc10_22: type = splice_block %ptr.loc10_22 [concrete = constants.%ptr.055] {
 // CHECK:STDOUT:     %Cpp.ref.loc10_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc10_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc10_22: type = ptr_type %S.ref.loc10_20 [concrete = constants.%ptr.9e9]
+// CHECK:STDOUT:     %ptr.loc10_22: type = ptr_type %S.ref.loc10_20 [concrete = constants.%ptr.055]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.9e9 = value_binding p, %.loc10_39.2
+// CHECK:STDOUT:   %p: %ptr.055 = value_binding p, %.loc10_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

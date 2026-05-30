@@ -171,7 +171,7 @@ auto DoThing() -> void {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.9262bcc12ced4e1e:core.Destroy.Core"(ptr %self) #5 !dbg !33 {
+// CHECK:STDOUT: define weak_odr void @"_COp.47e6e98bb48502be:core.Destroy.Core"(ptr %self) #5 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -297,7 +297,7 @@ auto DoThing() -> void {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !21)
 // CHECK:STDOUT: !32 = !DILocation(line: 22, column: 1, scope: !29)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9262bcc12ced4e1e:core.Destroy.Core", scope: null, file: !6, line: 22, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.47e6e98bb48502be:core.Destroy.Core", scope: null, file: !6, line: 22, type: !19, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !21)
 // CHECK:STDOUT: !36 = !DILocation(line: 22, column: 1, scope: !33)

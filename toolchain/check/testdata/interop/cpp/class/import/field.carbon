@@ -205,9 +205,9 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.84d: type = tuple_type (%i32, %i32, %i32, %i32, %i32) [concrete]
-// CHECK:STDOUT:   %Struct.elem.34b: type = unbound_element_type %Struct, %i32 [concrete]
+// CHECK:STDOUT:   %Struct.elem.fdc: type = unbound_element_type %Struct, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.143: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Struct.elem.c9f: type = unbound_element_type %Struct, %ptr.143 [concrete]
+// CHECK:STDOUT:   %Struct.elem.b4d: type = unbound_element_type %Struct, %ptr.143 [concrete]
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
 // CHECK:STDOUT:   %T.390: %OptionalStorage.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Optional.Get.type.dbe: type = fn_type @Optional.Get, @Optional(%T.390) [symbolic]
@@ -224,9 +224,9 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.477: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.b80, @ptr.as.OptionalStorage.impl(%i32) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.143, (%OptionalStorage.impl_witness.477) [concrete]
 // CHECK:STDOUT:   %Optional.efe: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
-// CHECK:STDOUT:   %Struct.elem.373: type = unbound_element_type %Struct, %Optional.efe [concrete]
+// CHECK:STDOUT:   %Struct.elem.686: type = unbound_element_type %Struct, %Optional.efe [concrete]
 // CHECK:STDOUT:   %const.d48: type = const_type %ptr.143 [concrete]
-// CHECK:STDOUT:   %Struct.elem.169: type = unbound_element_type %Struct, %const.d48 [concrete]
+// CHECK:STDOUT:   %Struct.elem.ca7: type = unbound_element_type %Struct, %const.d48 [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.114: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Get.fdc: %Optional.Get.type.114 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.fdc, @Optional.Get(%OptionalStorage.facet) [concrete]
@@ -257,20 +257,20 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @F(%s.param: %Struct) -> out %return.param: %tuple.type.84d {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref.loc8_11: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %a.ref: %Struct.elem.34b = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
+// CHECK:STDOUT:   %a.ref: %Struct.elem.fdc = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
 // CHECK:STDOUT:   %.loc8_12.1: ref %i32 = class_element_access %s.ref.loc8_11, element0
 // CHECK:STDOUT:   %.loc8_12.2: %i32 = acquire_value %.loc8_12.1
 // CHECK:STDOUT:   %s.ref.loc8_16: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %b.ref: %Struct.elem.34b = name_ref b, @Struct.%.2 [concrete = @Struct.%.2]
+// CHECK:STDOUT:   %b.ref: %Struct.elem.fdc = name_ref b, @Struct.%.2 [concrete = @Struct.%.2]
 // CHECK:STDOUT:   %.loc8_17.1: ref %i32 = class_element_access %s.ref.loc8_16, element1
 // CHECK:STDOUT:   %.loc8_17.2: %i32 = acquire_value %.loc8_17.1
 // CHECK:STDOUT:   %s.ref.loc8_22: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %p.ref: %Struct.elem.c9f = name_ref p, @Struct.%.3 [concrete = @Struct.%.3]
+// CHECK:STDOUT:   %p.ref: %Struct.elem.b4d = name_ref p, @Struct.%.3 [concrete = @Struct.%.3]
 // CHECK:STDOUT:   %.loc8_23.1: ref %ptr.143 = class_element_access %s.ref.loc8_22, element2
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.143 = acquire_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
 // CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %q.ref: %Struct.elem.373 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
+// CHECK:STDOUT:   %q.ref: %Struct.elem.686 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
 // CHECK:STDOUT:   %.loc8_29.1: ref %Optional.efe = class_element_access %s.ref.loc8_28, element3
 // CHECK:STDOUT:   %.loc8_29.2: %Optional.efe = acquire_value %.loc8_29.1
 // CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.114 = specific_constant imports.%Core.import_ref.2ae, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.fdc]
@@ -283,7 +283,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_36.2: %ptr.143 = converted %Optional.Get.call, %.loc8_36.1
 // CHECK:STDOUT:   %.loc8_27.1: ref %i32 = deref %.loc8_36.2
 // CHECK:STDOUT:   %s.ref.loc8_40: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %r.ref: %Struct.elem.169 = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
+// CHECK:STDOUT:   %r.ref: %Struct.elem.ca7 = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
 // CHECK:STDOUT:   %.loc8_41.1: ref %const.d48 = class_element_access %s.ref.loc8_40, element4
 // CHECK:STDOUT:   %.loc8_41.2: %const.d48 = acquire_value %.loc8_41.1
 // CHECK:STDOUT:   %.loc8_39.1: ref %i32 = deref %.loc8_41.2
@@ -338,9 +338,9 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Union.elem.674: type = unbound_element_type %Union, %i32 [concrete]
+// CHECK:STDOUT:   %Union.elem.e97: type = unbound_element_type %Union, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.143: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Union.elem.594: type = unbound_element_type %Union, %ptr.143 [concrete]
+// CHECK:STDOUT:   %Union.elem.6fd: type = unbound_element_type %Union, %ptr.143 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -361,7 +361,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @F(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %a.ref: %Union.elem.674 = name_ref a, @Union.%.1 [concrete = @Union.%.1]
+// CHECK:STDOUT:   %a.ref: %Union.elem.e97 = name_ref a, @Union.%.1 [concrete = @Union.%.1]
 // CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %u.ref, element0
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = acquire_value %.loc8_11.1
 // CHECK:STDOUT:   %impl.elem0: %.98b = impl_witness_access constants.%Copy.impl_witness.ab4, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
@@ -375,7 +375,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @G(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %b.ref: %Union.elem.674 = name_ref b, @Union.%.2 [concrete = @Union.%.2]
+// CHECK:STDOUT:   %b.ref: %Union.elem.e97 = name_ref b, @Union.%.2 [concrete = @Union.%.2]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %u.ref, element1
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
 // CHECK:STDOUT:   %impl.elem0: %.98b = impl_witness_access constants.%Copy.impl_witness.ab4, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
@@ -389,7 +389,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @H(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %p.ref: %Union.elem.594 = name_ref p, @Union.%.3 [concrete = @Union.%.3]
+// CHECK:STDOUT:   %p.ref: %Union.elem.6fd = name_ref p, @Union.%.3 [concrete = @Union.%.3]
 // CHECK:STDOUT:   %.loc20_12.1: ref %ptr.143 = class_element_access %u.ref, element2
 // CHECK:STDOUT:   %.loc20_12.2: %ptr.143 = acquire_value %.loc20_12.1
 // CHECK:STDOUT:   %.loc20_10.1: ref %i32 = deref %.loc20_12.2

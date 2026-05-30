@@ -570,7 +570,7 @@ CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 // Unused diagnostics.
 CARBON_DIAGNOSTIC_KIND(UnusedButUsed)
 CARBON_DIAGNOSTIC_KIND(UnusedButUsedHere)
-CARBON_DIAGNOSTIC_KIND(UnusedModifierOnDeclaration)
+CARBON_DIAGNOSTIC_KIND(UnusedModifierWithoutDefinition)
 CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
 CARBON_DIAGNOSTIC_KIND(UnusedBinding)
 

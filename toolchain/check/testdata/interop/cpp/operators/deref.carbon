@@ -135,9 +135,9 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %ConstDeref.Op.type: type = fn_type @ConstDeref.Op [concrete]
 // CHECK:STDOUT:   %ConstDeref.Op: %ConstDeref.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.261: <witness> = custom_witness (%i32, %ConstDeref.Op), @CppUnsafeDeref [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.facet.960: %CppUnsafeDeref.type = facet_value %ConstDeref, (%custom_witness.261) [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.f6c: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.960) [concrete]
-// CHECK:STDOUT:   %.632: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.f6c, %CppUnsafeDeref.facet.960 [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.facet.f59: %CppUnsafeDeref.type = facet_value %ConstDeref, (%custom_witness.261) [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.2e3: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.f59) [concrete]
+// CHECK:STDOUT:   %.e15: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.2e3, %CppUnsafeDeref.facet.f59 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -171,7 +171,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Op.ref.loc13_38: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.ca6 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant @ConstDeref.cpp_operator.%i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem1: %.632 = impl_witness_access constants.%custom_witness.261, element1 [concrete = constants.%ConstDeref.Op]
+// CHECK:STDOUT:   %impl.elem1: %.e15 = impl_witness_access constants.%custom_witness.261, element1 [concrete = constants.%ConstDeref.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
 // CHECK:STDOUT:   %Op.ref.loc13_43: %ConstDeref.cpp_operator.type = name_ref Op, imports.%ConstDeref.cpp_operator.decl [concrete = constants.%ConstDeref.cpp_operator]
 // CHECK:STDOUT:   %ConstDeref.cpp_operator.bound: <bound method> = bound_method %int_ptr.ref, %Op.ref.loc13_43
@@ -196,9 +196,9 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %MutableDeref.cpp_operator.type: type = fn_type @MutableDeref.cpp_operator [concrete]
 // CHECK:STDOUT:   %MutableDeref.cpp_operator: %MutableDeref.cpp_operator.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.0b1: <witness> = custom_witness (%i32, %MutableDeref.cpp_operator), @CppUnsafeDeref [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.facet.ebc: %CppUnsafeDeref.type = facet_value %MutableDeref, (%custom_witness.0b1) [concrete]
-// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.473: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.ebc) [concrete]
-// CHECK:STDOUT:   %.2ed: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.473, %CppUnsafeDeref.facet.ebc [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.facet.b48: %CppUnsafeDeref.type = facet_value %MutableDeref, (%custom_witness.0b1) [concrete]
+// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.f94: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.b48) [concrete]
+// CHECK:STDOUT:   %.300: type = fn_type_with_self_type %CppUnsafeDeref.WithSelf.Op.type.f94, %CppUnsafeDeref.facet.b48 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -221,7 +221,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %CppUnsafeDeref.ref: type = name_ref CppUnsafeDeref, imports.%Core.CppUnsafeDeref [concrete = constants.%CppUnsafeDeref.type]
 // CHECK:STDOUT:   %Op.ref: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.ca6 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant @MutableDeref.cpp_operator.%i32.2 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem1: %.2ed = impl_witness_access constants.%custom_witness.0b1, element1 [concrete = constants.%MutableDeref.cpp_operator]
+// CHECK:STDOUT:   %impl.elem1: %.300 = impl_witness_access constants.%custom_witness.0b1, element1 [concrete = constants.%MutableDeref.cpp_operator]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
 // CHECK:STDOUT:   %MutableDeref.cpp_operator.call: ref %i32 = call %bound_method(%int_ptr.ref)
 // CHECK:STDOUT:   return %MutableDeref.cpp_operator.call
