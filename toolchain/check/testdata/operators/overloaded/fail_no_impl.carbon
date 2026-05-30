@@ -186,7 +186,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc36_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc36_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

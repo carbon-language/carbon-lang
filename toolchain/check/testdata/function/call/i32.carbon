@@ -33,6 +33,7 @@ fn Main() {
 // CHECK:STDOUT:   %.70c: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %Echo.type: type = fn_type @Echo [concrete]
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -146,7 +147,7 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:

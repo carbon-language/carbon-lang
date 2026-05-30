@@ -48,6 +48,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.37f: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
@@ -272,7 +273,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc21(%self.param: ref %ptr.143) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc18_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:

@@ -804,6 +804,7 @@ fn F() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %As.type.fa8: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.fa8 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.457: type = facet_type <@As, @As(%i16)> [concrete]
@@ -923,7 +924,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @bar__carbon_thunk(%a.param: %ptr.971);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_13.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_13.1(%self.param: ref %i16.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_13.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:
@@ -1061,6 +1062,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.f55227.1: %foo.type.95b203.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %As.type.457: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %As.impl_witness.bca: <witness> = impl_witness imports.%As.impl_witness_table.2e6, @Core.IntLiteral.as.As.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.36d: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_16) [concrete]
@@ -1201,7 +1203,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.971);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_13.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_13.1(%self.param: ref %i16.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_13.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:
@@ -1392,6 +1394,7 @@ fn F() {
 // CHECK:STDOUT:   %int_9223372036854775807.bd7: %i64 = int_value 9223372036854775807 [concrete]
 // CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
 // CHECK:STDOUT:   %i128: type = class_type @Int, @Int(%int_128) [concrete]
+// CHECK:STDOUT:   %i128.builtin: type = int_type signed, %int_128 [concrete]
 // CHECK:STDOUT:   %pattern_type.df8: type = pattern_type %i128 [concrete]
 // CHECK:STDOUT:   %int_9223372036854775808.293: Core.IntLiteral = int_value 9223372036854775808 [concrete]
 // CHECK:STDOUT:   %ptr.fa6: type = ptr_type %i128 [concrete]
@@ -1783,7 +1786,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.fa6, %return.param: %ptr.fa6);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc31_71.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc31_71.1(%self.param: ref %i128.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc31_71.2(%self.param: ref %i128) {
 // CHECK:STDOUT: !entry:
@@ -2084,6 +2087,7 @@ fn F() {
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.794: type = float_type %int_64, f64 [concrete]
 // CHECK:STDOUT:   %pattern_type.f4f: type = pattern_type %f64.9a0 [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -2227,7 +2231,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.c6e, %return.param: %ptr.c6e);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_34.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_34.1(%self.param: ref %f64.794) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_34.2(%self.param: ref %f64.9a0) {
 // CHECK:STDOUT: !entry:
@@ -2252,6 +2256,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.161: type = pattern_type %ptr.c6e [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %f64.794: type = float_type %int_64, f64 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.731: type = facet_type <@ImplicitAs, @ImplicitAs(%f64.9a0)> [concrete]
@@ -2374,7 +2379,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.c6e, %return.param: %ptr.c6e);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15_19.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc15_19.1(%self.param: ref %f64.794) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_19.2(%self.param: ref %f64.9a0) {
 // CHECK:STDOUT: !entry:

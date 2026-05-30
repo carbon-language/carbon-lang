@@ -151,9 +151,16 @@ static auto CanDestroyClass(
     return DestroyFormat::NoDestroy;
   }
 
-  return HasWitnessForOneField(
-      context, loc_id, context.types().GetTypeInstId(class_type.type_id),
-      query_specific_interface_id);
+  auto object_repr_id =
+      class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
+  if (!object_repr_id.has_value()) {
+    object_repr_id =
+        class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+  }
+
+  return HasWitnessForOneField(context, loc_id,
+                               context.types().GetTypeInstId(object_repr_id),
+                               query_specific_interface_id);
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl

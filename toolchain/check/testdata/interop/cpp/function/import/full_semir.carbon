@@ -79,6 +79,7 @@ fn F() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %As.type.fa8: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.fa8 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.457: type = facet_type <@As, @As(%i16)> [concrete]
@@ -198,7 +199,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.971);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_13.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_13.1(%self.param: ref %i16.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_13.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:
@@ -310,6 +311,7 @@ fn F() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %pattern_type.0cb: type = pattern_type %i16 [concrete]
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.type: type = cpp_overload_set_type @foo_short.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.value: %foo_short.cpp_overload_set.type = cpp_overload_set_value @foo_short.cpp_overload_set [concrete]
@@ -387,7 +389,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short__carbon_thunk(%return.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_37.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_37.1(%self.param: ref %i16.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_37.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:

@@ -77,6 +77,14 @@ class Derived {
 
 fn DestroyClassWithProtectedBaseDestructor() {
   //@dump-sem-ir-begin
+  // CHECK:STDERR: destroy_protected_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: destroy_protected_base_destructor.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~ProtectedDestructor();
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
 }
@@ -94,6 +102,14 @@ class Derived {
 fn DestroyClassWithPrivateBaseDestructor() {
   //@dump-sem-ir-begin
   // TODO: We should not allow this, as the destructor of the base class is private.
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~PrivateDestructor();
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
 }
@@ -342,6 +358,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %ProtectedDestructor: type = class_type @ProtectedDestructor [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %struct_type.base.ebf: type = struct_type {.base: %ProtectedDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
@@ -377,7 +394,10 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc12_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc12_3.1(%self.param: ref %struct_type.base.ebf) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc12_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
@@ -391,6 +411,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %PrivateDestructor: type = class_type @PrivateDestructor [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %struct_type.base.59d: type = struct_type {.base: %PrivateDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.377: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
@@ -426,7 +447,10 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %struct_type.base.59d) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:

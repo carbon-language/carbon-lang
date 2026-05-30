@@ -132,7 +132,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %Class) {
 // CHECK:STDOUT: !entry:

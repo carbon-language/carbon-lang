@@ -988,6 +988,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.d1c: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakeVar.type: type = fn_type @TakeVar [concrete]
@@ -1024,7 +1025,7 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_12.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_12.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_12.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
@@ -1038,6 +1039,7 @@ fn Call() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %TakeVar.type: type = fn_type @TakeVar [concrete]
 // CHECK:STDOUT:   %TakeVar: %TakeVar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_123.fff: Core.IntLiteral = int_value 123 [concrete]
@@ -1095,7 +1097,7 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc5_12.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc5_12.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_12.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:

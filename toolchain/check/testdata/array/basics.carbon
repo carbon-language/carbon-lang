@@ -170,6 +170,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.ff9 = tuple_value (%C, %C, %C) [concrete]
 // CHECK:STDOUT:   %tuple.type.281: type = tuple_type (%C, %C, %C) [concrete]
@@ -224,7 +225,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

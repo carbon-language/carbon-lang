@@ -1331,7 +1331,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.1 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_26.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_26.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_26.2(%self.param: ref %C.82d) {
 // CHECK:STDOUT: !entry:

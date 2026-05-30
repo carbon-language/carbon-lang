@@ -294,7 +294,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUsed [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc34_15.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc34_15.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc34_15.2(%self.param: ref %D) {
 // CHECK:STDOUT: !entry:

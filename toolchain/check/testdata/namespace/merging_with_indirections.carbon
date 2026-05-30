@@ -272,7 +272,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:

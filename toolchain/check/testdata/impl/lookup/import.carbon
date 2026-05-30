@@ -1848,7 +1848,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.f01) {
 // CHECK:STDOUT: !entry:
@@ -2085,7 +2085,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_interface.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.f01) {
 // CHECK:STDOUT: !entry:
@@ -2335,7 +2335,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.8ee) {
 // CHECK:STDOUT: !entry:
@@ -2566,7 +2566,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_class.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.8ee) {
 // CHECK:STDOUT: !entry:
