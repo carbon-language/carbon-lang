@@ -93,9 +93,9 @@ fn CallF() {
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where {} impls Core.ImplicitAs(.Self) and .(I.V) = {}` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F({});
 }
@@ -750,8 +750,8 @@ fn CallF() {
 // CHECK:STDOUT:   %ImplicitAs.type.7ec: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.5fc: <witness> = lookup_impl_witness %.Self.908, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: %.Self.as_type = impl_witness_access %I.lookup_impl_witness.5fc, element0 [symbolic_self]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type) and %impl.elem0 = %empty_struct> [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.010: type = pattern_type %I_where.type [symbolic_self]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type) and %impl.elem0 = %empty_struct> [concrete]
+// CHECK:STDOUT:   %pattern_type.010: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %T: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -780,7 +780,7 @@ fn CallF() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.010 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %.Self.loc8_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.loc8_12: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.908]
@@ -800,7 +800,7 @@ fn CallF() {
 // CHECK:STDOUT:       %.loc8_60.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc8_60.2: %empty_struct_type = converted %.loc8_60.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc8_12.2: type = where_expr [symbolic_self = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc8_12.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %I.ref
 // CHECK:STDOUT:         requirement_impls %.loc8_19.2, %ImplicitAs.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc8_60.2

@@ -168,10 +168,10 @@ avoid copies.
 
 ## Alternatives considered
 
--   [Implicit or expression returns](/proposals/p0415.md#implicit-or-expression-returns)
--   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
--   [Retain the C++ rule](/proposals/p0538.md#retain-the-c-rule)
--   [Fully divorce functions and procedures](/proposals/p0538.md#fully-divorce-functions-and-procedures)
+-   [Implicit or expression returns](/proposals/p000415-syntax-return.md#implicit-or-expression-returns)
+-   [Named return variable in place of a return type](/proposals/p000257-initialization-of-memory-and-variables.md#named-return-variable-in-place-of-a-return-type)
+-   [Retain the C++ rule](/proposals/p000538-return-with-no-argument.md#retain-the-c-rule)
+-   [Fully divorce functions and procedures](/proposals/p000538-return-with-no-argument.md#fully-divorce-functions-and-procedures)
 
 ## References
 

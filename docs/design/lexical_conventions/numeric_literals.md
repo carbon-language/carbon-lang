@@ -138,17 +138,17 @@ cases for the goal of not leaving room for a lower level language:
 
 ## Alternatives considered
 
--   [Integer bases](/proposals/p0143.md#integer-bases)
-    -   [Octal literals](/proposals/p0143.md#octal-literals)
-    -   [Decimal literals](/proposals/p0143.md#decimal-literals)
-    -   [Case sensitivity](/proposals/p0143.md#case-sensitivity)
--   [Real number syntax](/proposals/p0143.md#real-number-syntax)
-    -   [Disallow ties](/proposals/p0866.md)
--   [Digit separator syntax](/proposals/p0143.md#digit-separator-syntax)
-    -   [3-digit decimal groupings](/proposals/p1983.md#3-digit-decimal-groupings)
-    -   [2-digit or 4-digit hexadecimal digit groupings](/proposals/p1983.md#2-digit-or-4-digit-hexadecimal-digit-groupings)
-    -   [Disallow digit separators in fractions](/proposals/p1983.md#disallow-digit-separators-in-fractions)
--   [No octal literals](/proposals/p6910.md#no-octal-literals)
+-   [Integer bases](/proposals/p000143-numeric-literals.md#integer-bases)
+    -   [Octal literals](/proposals/p000143-numeric-literals.md#octal-literals)
+    -   [Decimal literals](/proposals/p000143-numeric-literals.md#decimal-literals)
+    -   [Case sensitivity](/proposals/p000143-numeric-literals.md#case-sensitivity)
+-   [Real number syntax](/proposals/p000143-numeric-literals.md#real-number-syntax)
+    -   [Disallow ties](/proposals/p000866-allow-ties-in-floating-literals.md)
+-   [Digit separator syntax](/proposals/p000143-numeric-literals.md#digit-separator-syntax)
+    -   [3-digit decimal groupings](/proposals/p001983-weaken-digit-separator-placement-rules.md#3-digit-decimal-groupings)
+    -   [2-digit or 4-digit hexadecimal digit groupings](/proposals/p001983-weaken-digit-separator-placement-rules.md#2-digit-or-4-digit-hexadecimal-digit-groupings)
+    -   [Disallow digit separators in fractions](/proposals/p001983-weaken-digit-separator-placement-rules.md#disallow-digit-separators-in-fractions)
+-   [No octal literals](/proposals/p006910-support-octal-literals.md#no-octal-literals)
 
 ## References
 

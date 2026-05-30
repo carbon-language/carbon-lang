@@ -11,8 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import datetime
 import hashlib
-import os
 import importlib.util
+import os
 import textwrap
 from typing import Any, Callable, Optional
 
@@ -25,7 +25,7 @@ except ImportError:
         os.path.join(os.path.dirname(__file__), "github_helpers.py"),
     )
     assert github_helpers_spec is not None
-    github_helpers = importlib.util.module_from_spec(github_helpers_spec)
+    github_helpers: Any = importlib.util.module_from_spec(github_helpers_spec)
     github_helpers_spec.loader.exec_module(github_helpers)  # type: ignore
 
 

@@ -804,4 +804,4 @@ An independent description of our approach:
 
 ## Alternatives considered
 
--   [Restrictive parsing](/proposals/p6716.md#restrictive-parsing)
+-   [Restrictive parsing](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#restrictive-parsing)

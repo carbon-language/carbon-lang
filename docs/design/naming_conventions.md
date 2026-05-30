@@ -95,8 +95,8 @@ will make decisions on future naming.
 
 ## Alternatives considered
 
--   [Other naming conventions](/proposals/p0861.md#other-naming-conventions)
--   [Other conventions for naming Carbon types](/proposals/p0861.md#other-conventions-for-naming-carbon-types)
+-   [Other naming conventions](/proposals/p000861-naming-conventions.md#other-naming-conventions)
+-   [Other conventions for naming Carbon types](/proposals/p000861-naming-conventions.md#other-conventions-for-naming-carbon-types)
 
 ## References
 

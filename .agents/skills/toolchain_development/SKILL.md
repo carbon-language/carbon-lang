@@ -31,6 +31,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   Refer to [Toolchain Idioms](/toolchain/docs/idioms.md) for a
         comprehensive list of patterns (for example, `ValueStore`, formatting
         `.def` files, struct reflection) used throughout the implementation.
+-   **Builtin Functions**: Refer to the **Builtin functions** skill
+    ([SKILL.md](../builtins/SKILL.md)) for guidelines on registering, mapping,
+    constant evaluating, and lowering compiler builtin primitives (e.g.
+    `"int.convert_float"`).
 -   **Phases**: Lex -> Parse -> Check -> Lower.
 -   **Definitions**: Many kinds (tokens, parse nodes, SemIR instructions) are
     defined in `.def` files and expanded by way of macros.
@@ -68,6 +72,10 @@ script:
 
 ## Debugging and diagnostics
 
+-   **Compiler Diagnostics**: Refer to the **Diagnostics** skill
+    ([SKILL.md](../diagnostics/SKILL.md)) for strict rules on declaring,
+    formatting, emitting, testing, and styling compiler diagnostic messages
+    (errors, warnings, notes).
 -   **Printing to stderr**: Use `llvm::errs() << "debug info\n";`.
     -   Avoid `std::cout` (it may interfere with tool output).
 -   **SemIR Stringification**:
@@ -86,12 +94,36 @@ script:
 -   **`llvm::Expected<T>`**: Similar to `ErrorOr`, used when interfacing with
     LLVM.
 
+### Context-Aware Diagnostics
+
+When declaring and emitting errors, ensure semantic wording matches the exact
+context:
+
+-   **Semantic Precision**: Do not reference "types" when raising errors for
+    unsized expressions like `IntLiteral()` or `FloatLiteral()`. For example,
+    use `RealLiteralTooLargeForUnsizedInt` instead of a diagnostic referencing
+    an "integer type".
+-   **Wording Consistency**: Before declaring a new diagnostic in
+    [kind.def](../../../toolchain/diagnostics/kind.def), search for existing
+    diagnostics in the targeted implementation files (for example, other uses of
+    `MaxIntWidth`) to align message structures and parameter expectations.
+
 ### Casting (LLVM style)
 
 -   Use `llvm::cast<T>(obj)` (checked, asserts on failure).
 -   Use `llvm::dyn_cast<T>(obj)` (returns null on failure).
 -   Use `llvm::isa<T>(obj)` (boolean check).
 -   **Avoid** `dynamic_cast` and standard RTTI.
+
+### Leverage LLVM APIs
+
+Before implementing custom algorithms for mathematical, logical, or bitwise
+operations, inspect target LLVM ADT class APIs:
+
+-   **Builtin APIs**: Verify if LLVM classes (such as `APInt`, `APFloat`, or
+    `APSInt`) already offer native equivalents (for example, `.pow()`,
+    `ilogb()`, `.changeSign()`, `convertFromAPInt()`). Avoid duplicate, naive,
+    or inefficient custom loops.
 
 ### Data structures
 
@@ -113,3 +145,16 @@ script:
     `clang-format`).
 5.  **Parse node order**: Semantics processes parse nodes in post-order; ensure
     your parser transitions support this.
+6.  **Builtin implementation gaps**: If adding a primitive builtin function,
+    make sure you address all phases of the lifecycle: macro definition
+    registration, signature validation, compile-time constant evaluation
+    (interpreter), LLVM IR lowering, and prelude modular implementation bindings
+    (avoiding orphan rules). Refer to the **Builtin functions** skill
+    ([SKILL.md](../builtins/SKILL.md)) for details.
+7.  **Premature helper abstraction**: Avoid extracting tiny helper functions
+    that are called from exactly one place and do not significantly modularize
+    complex code. Prefer inlining directly to keep the implementation compact,
+    readable, and localized.
+8.  **Redundant bounds calculations**: Avoid repeating calculations of complex
+    boundary estimations (such as lower and upper bound estimations). Refactor
+    the logic to calculate unified values once, preserving compactness.

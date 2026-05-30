@@ -1,4 +1,4 @@
-# Gemini & AI assistant guide for Carbon
+# Gemini & AI Assistant Guide for Carbon
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,24 +6,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This document provides high-density technical context for AI assistants (and
-humans!) contributing to the Carbon Language project. If you are an AI
-assistant, **read this first** to avoid common pitfalls.
-
-## Table of contents
-
--   [General instructions](#general-instructions)
--   [Project structure](#project-structure)
--   [Bazel usage](#bazel-usage)
--   [Toolchain development](#toolchain-development)
+This document provides high-density technical context for AI assistants
+contributing to the Carbon Language project.
 
 ## General instructions
 
 -   **Communication**: Be concise, professional, and technical. Use GitHub-style
     markdown.
 -   **Verification**: Always run relevant tests.
--   **Tool usage**: Use web search for any research outside the immediate
-    codebase or KIs.
 
 ## Project structure
 
@@ -36,23 +26,8 @@ assistant, **read this first** to avoid common pitfalls.
 -   **[`toolchain/`](toolchain/)**: The C++ implementation of the compiler
     (Toolchain).
 
-## Tool usage
-
-See the "Tool usage" skill for instructions on what tools to use in the
-carbon-lang project.
-
 ## Bazel usage
 
 > [!IMPORTANT] Always use `bazelisk` instead of `bazel` for all commands in the
 > Carbon project. Refer to the
 > [Bazel usage skill](/.agents/skills/bazel/SKILL.md) for detailed instructions.
-
-## Code style
-
-See the "Code style" skill for instructions on formatting, style guides, and
-code conventions to follow.
-
-## Toolchain development
-
-See the "Toolchain Development" skill for instructions on architecture,
-building, testing, debugging, C++ patterns, and common pitfalls.

@@ -11,13 +11,12 @@ inputs:
 runs:
   using: composite
   steps:
-    # Setup Python and related tools.
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    # Setup Python and related tools with uv.
+    - name: Set up uv and Python
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
-        # Match the min version listed in docs/project/contribution_tools.md
-        # or the oldest version available on the OS.
-        python-version:
-          ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.10' }}
+        enable-cache: true
+        version: '0.11.15'
 
     - uses: ./.github/actions/build-setup-macos
       if: startsWith(inputs.matrix_runner, 'macos')
@@ -38,9 +37,10 @@ runs:
         bazelisk --version
         echo '*** run_bazel.py'
         ./scripts/run_bazel.py --version
-        echo '*** python'
-        which python
-        python --version
+        echo '*** uv'
+        which uv
+        uv --version
+        uv python list --only-installed
         echo '*** clang'
         which clang
         clang --version

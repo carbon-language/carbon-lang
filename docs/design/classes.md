@@ -646,7 +646,7 @@ class types when:
     same field names.
 
 For example, since
-[comparison between `i32` and `u32` is defined](/proposals/p0702.md#built-in-comparisons-and-implicit-conversions),
+[comparison between `i32` and `u32` is defined](/proposals/p000702-comparison-operators.md#built-in-comparisons-and-implicit-conversions),
 equality comparison between values of types `{.x: i32, .y: i32}` and
 `{.y: u32, .x: u32}` is as well. Equality and inequality comparisons compare
 fields using the field order of the left-hand operand and stop once the outcome
@@ -804,7 +804,7 @@ type has not yet been decided.
 
 > **TODO:** Document that qualified names can be looked up in an incomplete
 > type, as adopted in
-> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+> [#5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
 
 ### `Self`
 
@@ -1144,7 +1144,7 @@ interface would then be part of our
 [strategy for defining how other interfaces are implemented for data classes](#interfaces-implemented-for-data-classes).
 
 **References:** Rationale for this approach is given in proposal
-[#722](/proposals/p0722.md#nominal-data-class).
+[#722](/proposals/p000722-nominal-classes-and-methods.md#nominal-data-class).
 
 ### Member type
 
@@ -1422,9 +1422,9 @@ constructor functions should return the constructed value without copying, as in
 proposal
 [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
 This means either
-[creating the object in the return statement itself](/proposals/p0257.md#function-returns-and-initialization),
+[creating the object in the return statement itself](/proposals/p000257-initialization-of-memory-and-variables.md#function-returns-and-initialization),
 or in
-[a `returned var` declaration](/proposals/p0257.md#declared-returned-variable).
+[a `returned var` declaration](/proposals/p000257-initialization-of-memory-and-variables.md#declared-returned-variable).
 As before, instances can be created by casting a struct value into the class
 type, this time with a `.base` member to initialize the members of the immediate
 base type.
@@ -1710,8 +1710,8 @@ the destructor is virtual or non-virtual, determines which
     actually pointing to a derived class.
 
 **Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
-conform to the decision on
+[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
+they do not conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 | Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
@@ -1793,14 +1793,14 @@ Unhandled failure during a destructor call will abort the program.
 
 **Alternatives considered:**
 
--   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
--   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
--   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
--   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
--   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
--   [Don't distinguish safe and unsafe delete operations](/proposals/p1154.md#dont-distinguish-safe-and-unsafe-delete-operations)
--   [Don't allow unsafe delete](/proposals/p1154.md#dont-allow-unsafe-delete)
--   [Allow final destructors](/proposals/p1154.md#allow-final-destructors)
+-   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
+-   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
+-   [Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
+-   [Allow private destructors](/proposals/p001154-destructors.md#allow-private-destructors)
+-   [Allow multiple conditional destructors](/proposals/p001154-destructors.md#allow-multiple-conditional-destructors)
+-   [Don't distinguish safe and unsafe delete operations](/proposals/p001154-destructors.md#dont-distinguish-safe-and-unsafe-delete-operations)
+-   [Don't allow unsafe delete](/proposals/p001154-destructors.md#dont-allow-unsafe-delete)
+-   [Allow final destructors](/proposals/p001154-destructors.md#allow-final-destructors)
 
 ### Access control
 
@@ -1842,7 +1842,7 @@ and [D](https://wiki.dlang.org/Access_specifiers_and_visibility).
 **References:** Proposal
 [#561: Basic classes](https://github.com/carbon-language/carbon-lang/pull/561)
 included the decision that
-[members default to publicly accessible](/proposals/p0561.md#access-control)
+[members default to publicly accessible](/proposals/p000561-basic-classes-use-cases-struct-literals-struct-types-and-future-work.md#access-control)
 originally asked in issue
 [#665](https://github.com/carbon-language/carbon-lang/issues/665).
 
@@ -1869,7 +1869,7 @@ C++ and is more orthogonal.
 **Future work:** `private` will give the member internal linkage unless it needs
 to be external because it is used in an inline method or template. We may in the
 future
-[add a way to specify internal linkage explicitly](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier).
+[add a way to specify internal linkage explicitly](/proposals/p000722-nominal-classes-and-methods.md#specifying-linkage-as-part-of-the-access-modifier).
 
 **Open questions:** Using `private` to mean "restricted to this class" matches
 C++. Other languages support restricting to different scopes:
@@ -2278,104 +2278,104 @@ the type of `U.x`."
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 
-    -   [Require compile-time-proven initialization](/proposals/p0257.md#require-compile-time-proven-initialization)
-    -   [C and C++ uninitialized](/proposals/p0257.md#c-and-c-uninitialized)
-    -   [Allow passing unformed objects to parameters or returning them?](/proposals/p0257.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
-    -   [Allow assigning an unformed object to another unformed object?](/proposals/p0257.md#allow-assigning-an-unformed-object-to-another-unformed-object)
-    -   [Fully destructive move (Rust)](/proposals/p0257.md#fully-destructive-move-rust)
-    -   [Completely non-destructive move (C++)](/proposals/p0257.md#completely-non-destructive-move-c)
-    -   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
-    -   [Allow unformed members](/proposals/p0257.md#allow-unformed-members)
+    -   [Require compile-time-proven initialization](/proposals/p000257-initialization-of-memory-and-variables.md#require-compile-time-proven-initialization)
+    -   [C and C++ uninitialized](/proposals/p000257-initialization-of-memory-and-variables.md#c-and-c-uninitialized)
+    -   [Allow passing unformed objects to parameters or returning them?](/proposals/p000257-initialization-of-memory-and-variables.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
+    -   [Allow assigning an unformed object to another unformed object?](/proposals/p000257-initialization-of-memory-and-variables.md#allow-assigning-an-unformed-object-to-another-unformed-object)
+    -   [Fully destructive move (Rust)](/proposals/p000257-initialization-of-memory-and-variables.md#fully-destructive-move-rust)
+    -   [Completely non-destructive move (C++)](/proposals/p000257-initialization-of-memory-and-variables.md#completely-non-destructive-move-c)
+    -   [Named return variable in place of a return type](/proposals/p000257-initialization-of-memory-and-variables.md#named-return-variable-in-place-of-a-return-type)
+    -   [Allow unformed members](/proposals/p000257-initialization-of-memory-and-variables.md#allow-unformed-members)
 
 -   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 
     -   [Early proposal #98](https://github.com/carbon-language/carbon-lang/pull/98)
-    -   [Interfaces implemented for anonymous data classes](/proposals/p0561.md#interfaces-implemented-for-anonymous-data-classes)
-    -   [Access control](/proposals/p0561.md#access-control)
-    -   [Introducer for structural data class types](/proposals/p0561.md#introducer-for-structural-data-class-types)
-    -   [Terminology](/proposals/p0561.md#terminology)
+    -   [Interfaces implemented for anonymous data classes](/proposals/p000561-basic-classes-use-cases-struct-literals-struct-types-and-future-work.md#interfaces-implemented-for-anonymous-data-classes)
+    -   [Access control](/proposals/p000561-basic-classes-use-cases-struct-literals-struct-types-and-future-work.md#access-control)
+    -   [Introducer for structural data class types](/proposals/p000561-basic-classes-use-cases-struct-literals-struct-types-and-future-work.md#introducer-for-structural-data-class-types)
+    -   [Terminology](/proposals/p000561-basic-classes-use-cases-struct-literals-struct-types-and-future-work.md#terminology)
 
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 
-    -   [Method syntax](/proposals/p0722.md#method-syntax)
-    -   [Marking mutating methods at the call site](/proposals/p0722.md#marking-mutating-methods-at-the-call-site)
-    -   [Differences between functions and methods](/proposals/p0722.md#differences-between-functions-and-methods)
-    -   [Specifying linkage as part of the access modifier](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier)
-    -   [Nominal data class](/proposals/p0722.md#nominal-data-class)
-    -   [Let constants](/proposals/p0722.md#let-constants)
+    -   [Method syntax](/proposals/p000722-nominal-classes-and-methods.md#method-syntax)
+    -   [Marking mutating methods at the call site](/proposals/p000722-nominal-classes-and-methods.md#marking-mutating-methods-at-the-call-site)
+    -   [Differences between functions and methods](/proposals/p000722-nominal-classes-and-methods.md#differences-between-functions-and-methods)
+    -   [Specifying linkage as part of the access modifier](/proposals/p000722-nominal-classes-and-methods.md#specifying-linkage-as-part-of-the-access-modifier)
+    -   [Nominal data class](/proposals/p000722-nominal-classes-and-methods.md#nominal-data-class)
+    -   [Let constants](/proposals/p000722-nominal-classes-and-methods.md#let-constants)
 
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 
-    -   [Classes are final by default](/proposals/p0777.md#classes-are-final-by-default)
-    -   [Allow keywords to be written when they would have no effect](/proposals/p0777.md#allow-keywords-to-be-written-when-they-would-have-no-effect)
-    -   [Different virtual override keywords](/proposals/p0777.md#different-virtual-override-keywords)
-    -   [Different virtual override keyword placement](/proposals/p0777.md#different-virtual-override-keyword-placement)
-    -   [Final methods](/proposals/p0777.md#final-methods)
-    -   [Constructors](/proposals/p0777.md#constructors)
-    -   [Implicit abstract classes](/proposals/p0777.md#implicit-abstract-classes)
-    -   [No extensible objects with non-virtual destructors](/proposals/p0777.md#no-extensible-objects-with-non-virtual-destructors)
-    -   [Separate "exact" and "or derived" variations on types](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-types)
-    -   [Separate "exact" and "or derived" variations on pointers](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-pointers)
+    -   [Classes are final by default](/proposals/p000777-inheritance.md#classes-are-final-by-default)
+    -   [Allow keywords to be written when they would have no effect](/proposals/p000777-inheritance.md#allow-keywords-to-be-written-when-they-would-have-no-effect)
+    -   [Different virtual override keywords](/proposals/p000777-inheritance.md#different-virtual-override-keywords)
+    -   [Different virtual override keyword placement](/proposals/p000777-inheritance.md#different-virtual-override-keyword-placement)
+    -   [Final methods](/proposals/p000777-inheritance.md#final-methods)
+    -   [Constructors](/proposals/p000777-inheritance.md#constructors)
+    -   [Implicit abstract classes](/proposals/p000777-inheritance.md#implicit-abstract-classes)
+    -   [No extensible objects with non-virtual destructors](/proposals/p000777-inheritance.md#no-extensible-objects-with-non-virtual-destructors)
+    -   [Separate "exact" and "or derived" variations on types](/proposals/p000777-inheritance.md#separate-exact-and-or-derived-variations-on-types)
+    -   [Separate "exact" and "or derived" variations on pointers](/proposals/p000777-inheritance.md#separate-exact-and-or-derived-variations-on-pointers)
 
 -   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
 
     -   Allow information to be used before it is provided
-        [globally](/proposals/p0875.md#strict-global-consistency),
-        [within a file](/proposals/p0875.md#context-sensitive-local-consistency),
+        [globally](/proposals/p000875-principle-information-accumulation.md#strict-global-consistency),
+        [within a file](/proposals/p000875-principle-information-accumulation.md#context-sensitive-local-consistency),
         or
-        [within a top-level declaration](/proposals/p0875.md#top-down-with-minimally-deferred-type-checking).
-    -   [Do not allow inline method bodies to use members before they are declared](/proposals/p0875.md#strict-top-down)
-    -   [Do not allow separate declaration and definition](/proposals/p0875.md#disallow-separate-declaration-and-definition)
+        [within a top-level declaration](/proposals/p000875-principle-information-accumulation.md#top-down-with-minimally-deferred-type-checking).
+    -   [Do not allow inline method bodies to use members before they are declared](/proposals/p000875-principle-information-accumulation.md#strict-top-down)
+    -   [Do not allow separate declaration and definition](/proposals/p000875-principle-information-accumulation.md#disallow-separate-declaration-and-definition)
 
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
-    -   [Field order is not significant](/proposals/p0981.md#field-order-is-not-significant)
-    -   [Different field orders are incompatible](/proposals/p0981.md#different-field-orders-are-incompatible)
-    -   [Explicit instead of implicit conversions](/proposals/p0981.md#explicit-instead-of-implicit-conversions)
+    -   [Field order is not significant](/proposals/p000981-implicit-conversions-for-aggregates.md#field-order-is-not-significant)
+    -   [Different field orders are incompatible](/proposals/p000981-implicit-conversions-for-aggregates.md#different-field-orders-are-incompatible)
+    -   [Explicit instead of implicit conversions](/proposals/p000981-implicit-conversions-for-aggregates.md#explicit-instead-of-implicit-conversions)
 
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
-    -   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
-    -   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
-    -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
-    -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
-    -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
-    -   [Facet type naming](/proposals/p1154.md#type-of-type-naming)
-    -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
+    -   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
+    -   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
+    -   [Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
+    -   [Allow private destructors](/proposals/p001154-destructors.md#allow-private-destructors)
+    -   [Allow multiple conditional destructors](/proposals/p001154-destructors.md#allow-multiple-conditional-destructors)
+    -   [Facet type naming](/proposals/p001154-destructors.md#type-of-type-naming)
+    -   [Other approaches to extensible classes without vtables](/proposals/p001154-destructors.md#other-approaches-to-extensible-classes-without-vtables)
 
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 
-    -   [`Self` not a keyword](/proposals/p2107.md#self-not-a-keyword)
-    -   [Make `Self` a member of all types](/proposals/p2107.md#make-self-a-member-of-all-types)
-    -   [`where` operator could be associative](/proposals/p2107.md#where-operator-could-be-associative)
+    -   [`Self` not a keyword](/proposals/p002107-clarify-rules-around-self-and-self.md#self-not-a-keyword)
+    -   [Make `Self` a member of all types](/proposals/p002107-clarify-rules-around-self-and-self.md#make-self-a-member-of-all-types)
+    -   [`where` operator could be associative](/proposals/p002107-clarify-rules-around-self-and-self.md#where-operator-could-be-associative)
 
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 
-    -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
+    -   [No unqualified lookup when defining outside a scope](/proposals/p002287-allow-unqualified-name-lookup.md#no-unqualified-lookup-when-defining-outside-a-scope)
 
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 
-    -   [Use `extends` instead of `extend`](/proposals/p2760.md#use-extends-instead-of-extend)
-    -   [List base class in class declaration](/proposals/p2760.md#list-base-class-in-class-declaration)
+    -   [Use `extends` instead of `extend`](/proposals/p002760-consistent-class-and-interface-syntax.md#use-extends-instead-of-extend)
+    -   [List base class in class declaration](/proposals/p002760-consistent-class-and-interface-syntax.md#list-base-class-in-class-declaration)
 
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 
-    -   [Destructor syntax options](/proposals/p5017.md#destructor-syntax-options)
-    -   [Destructor name options](/proposals/p5017.md#destructor-name-options)
+    -   [Destructor syntax options](/proposals/p005017-destructor-syntax.md#destructor-syntax-options)
+    -   [Destructor name options](/proposals/p005017-destructor-syntax.md#destructor-name-options)
 
 -   [#6008: Replace `impl fn` with `override fn`](https://github.com/carbon-language/carbon-lang/pull/6008)
 
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
 
-    -   [Don't put `self` in either parameter list](/proposals/p7016.md#dont-put-self-in-either-parameter-list)
-    -   [`self` syntax in the deduced parameter list `[]`](/proposals/p7016.md#self-syntax-in-the-deduced-parameter-list-)
-    -   [`class` modifier for non-instance member variables and functions](/proposals/p7016.md#class-modifier-for-non-instance-member-variables-and-functions)
-    -   [Alternative keywords for non-instance member variables](/proposals/p7016.md#alternative-keywords-for-non-instance-member-variables)
-        -   [`shared`](/proposals/p7016.md#shared)
-        -   [`global`](/proposals/p7016.md#global)
-    -   [`static` for non-instance member functions](/proposals/p7016.md#static-for-non-instance-member-functions)
-    -   [`static` for package- and namespace-scope variables](/proposals/p7016.md#static-for-package--and-namespace-scope-variables)
-    -   [Distinct `method` introducer](/proposals/p7016.md#distinct-method-introducer)
+    -   [Don't put `self` in either parameter list](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#dont-put-self-in-either-parameter-list)
+    -   [`self` syntax in the deduced parameter list `[]`](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#self-syntax-in-the-deduced-parameter-list-)
+    -   [`class` modifier for non-instance member variables and functions](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#class-modifier-for-non-instance-member-variables-and-functions)
+    -   [Alternative keywords for non-instance member variables](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#alternative-keywords-for-non-instance-member-variables)
+        -   [`shared`](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#shared)
+        -   [`global`](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#global)
+    -   [`static` for non-instance member functions](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#static-for-non-instance-member-functions)
+    -   [`static` for package- and namespace-scope variables](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#static-for-package--and-namespace-scope-variables)
+    -   [Distinct `method` introducer](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#distinct-method-introducer)
 
 ## References
 

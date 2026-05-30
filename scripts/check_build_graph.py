@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 
 """Verify that the bazel build graph is in a valid state, for pre-commit."""
 

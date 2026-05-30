@@ -245,11 +245,14 @@ static auto BuildDestroyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Destroy` for enums and other trivially
-  // destructible types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
     return SemIR::InstId::None;
+  }
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface_id);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
@@ -417,15 +420,6 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
                                  clang::CXXRecordDecl* /*class_decl*/,
                                  SemIR::ConstantId query_self_const_id)
     -> SemIR::InstId {
-  auto lookup_result = clang_sema.CreateUnresolvedLookupExpr(
-      /*NamingClass=*/nullptr, clang::NestedNameSpecifierLoc(), name_info,
-      clang::UnresolvedSet<0>());
-  if (lookup_result.isInvalid()) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  auto* function = llvm::cast<clang::UnresolvedLookupExpr>(lookup_result.get());
-
   auto candidate_set = clang::OverloadCandidateSet(
       clang::SourceLocation(),
       clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
@@ -466,7 +460,7 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
       auto decl_info = DeclInfo{
           .decl = best_candidate->Function,
           .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
-              context, best_candidate, function, args),
+              context, best_candidate, nullptr, args),
       };
       return GetFunctionId(context, loc_id, decl_info);
     }
