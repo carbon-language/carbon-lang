@@ -125,7 +125,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %struct_type.base.c.657: type = struct_type {.base: %B, .c: %i32} [concrete]
 // CHECK:STDOUT:   %ptr.4af: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.109: type = pattern_type %ptr.4af [concrete]
 // CHECK:STDOUT:   %ptr.c86: type = ptr_type %B [concrete]
@@ -133,7 +132,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %pattern_type.155: type = pattern_type %ptr.c86 [concrete]
 // CHECK:STDOUT:   %ConvertCToB.type: type = fn_type @ConvertCToB [concrete]
 // CHECK:STDOUT:   %ConvertCToB: %ConvertCToB.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.f00: type = ptr_type %struct_type.base.c.657 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.b03: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
@@ -438,7 +436,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_66.1(%self.param: ref %ptr.f00) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc32_66.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

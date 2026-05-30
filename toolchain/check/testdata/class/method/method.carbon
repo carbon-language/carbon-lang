@@ -82,7 +82,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.k.fae: type = struct_type {.k: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.cfa: <witness> = complete_type_witness %struct_type.k.fae [concrete]
-// CHECK:STDOUT:   %ptr.2d4: type = ptr_type %struct_type.k.fae [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -415,7 +414,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_20.1(%self.param: ref %ptr.2d4) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc39_20.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc39_20.2(%self.param: ref %Class) {
 // CHECK:STDOUT: !entry:

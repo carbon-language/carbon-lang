@@ -70,7 +70,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Class.Get.5ef: %Class.Get.type.2e1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.GetNoDeduce.type.f58: type = fn_type @Class.GetNoDeduce, @Class(%A) [concrete]
 // CHECK:STDOUT:   %Class.GetNoDeduce.b4d: %Class.GetNoDeduce.type.f58 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Class.Get.specific_fn.08b: <specific function> = specific_function %Class.Get.5ef, @Class.Get(%A, %B) [concrete]
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.type: type = fn_type @CallGenericMethodWithNonDeducedParam [concrete]
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam: %CallGenericMethodWithNonDeducedParam.type = struct_value () [concrete]
@@ -323,7 +322,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc28_25.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc28_25.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc28_25.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:

@@ -559,7 +559,6 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c81: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.d65: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%A) [concrete]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %.6f1: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -667,7 +666,7 @@ fn F() {
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11_37.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc11_37.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_37.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:

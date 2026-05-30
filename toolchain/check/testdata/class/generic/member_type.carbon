@@ -111,7 +111,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.elem.e1c: type = unbound_element_type %Inner.4b6, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n.179: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.059: <witness> = complete_type_witness %struct_type.n.179 [concrete]
-// CHECK:STDOUT:   %ptr.7d8: type = ptr_type %struct_type.n.179 [concrete]
 // CHECK:STDOUT:   %pattern_type.f69: type = pattern_type %Inner.4b6 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.470: <witness> = impl_witness imports.%Copy.impl_witness_table.73d [concrete]
@@ -340,7 +339,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %ptr.7d8) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %Inner.4b6) {
 // CHECK:STDOUT: !entry:
@@ -447,7 +446,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.WithSelf.F.c96: %Inner.WithSelf.F.type.5aa = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.7c6: <witness> = require_complete_type %C.2eb [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Inner.lookup_impl_witness: <witness> = lookup_impl_witness %C.2eb, @Inner, @Inner(%T) [symbolic]
@@ -805,7 +803,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   return %C.as.Inner.impl.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_3.2(%self.param: ref %C.8e0) {
 // CHECK:STDOUT: !entry:

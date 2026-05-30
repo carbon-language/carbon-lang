@@ -343,7 +343,6 @@ fn F() {
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.60c = facet_value %C, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.519: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.c24: %IndexWith.WithSelf.At.type.519 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -497,7 +496,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15_15.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc15_15.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_15.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

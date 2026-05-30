@@ -123,7 +123,6 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value: %facet_type.d65 = facet_value %C, (%Empty.impl_witness, %A.impl_witness, %B.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type.d7b: type = pattern_type %C [concrete]
@@ -400,7 +399,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc45_8.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc45_8.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc45_8.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

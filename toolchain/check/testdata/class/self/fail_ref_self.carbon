@@ -52,7 +52,6 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %pattern_type.9b1: type = pattern_type %ptr.bd7 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc35_8.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
@@ -147,7 +146,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_8.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc35_8.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_8.2(%self.param: ref %Class) {
 // CHECK:STDOUT: !entry:

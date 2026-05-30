@@ -454,7 +454,6 @@ fn G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %GenericParam.val: %GenericParam = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.bd1: type = pattern_type %Generic.type.464 [concrete]
 // CHECK:STDOUT:   %pattern_type.c60: type = pattern_type %GenericParam [concrete]
@@ -622,7 +621,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_38.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc18_38.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_38.2(%self.param: ref %GenericParam) {
 // CHECK:STDOUT: !entry:

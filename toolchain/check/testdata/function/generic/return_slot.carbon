@@ -70,7 +70,6 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make.839: %Wrap.Make.type.665 = struct_value () [concrete]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Wrap.Make.specific_fn.5cb: <specific function> = specific_function %Wrap.Make.839, @Wrap.Make(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %ptr.70e: type = ptr_type %struct_type.arr.d8b [concrete]
 // CHECK:STDOUT:   %pattern_type.d7b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Wrap.53a: type = class_type @Wrap, @Wrap(%C) [concrete]
 // CHECK:STDOUT:   %Wrap.Make.type.59e: type = fn_type @Wrap.Make, @Wrap(%C) [concrete]
@@ -82,8 +81,8 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.3: type = fn_type @Destroy.Op.loc23 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.5: type = fn_type @Destroy.Op.loc22_3.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1dc86d.5: %Destroy.Op.type.af7ec0.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.4: type = fn_type @Destroy.Op.loc22 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.4: %Destroy.Op.type.af7ec0.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.782: <witness> = complete_type_witness %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,12 +233,12 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%c.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %b.var, constants.%Destroy.Op.1dc86d.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.5
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc24_3.1(%self.param: ref %ptr.70e) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc24_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc24_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
@@ -248,9 +247,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22_3.1(%self.param: ref %i32.builtin) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc22(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

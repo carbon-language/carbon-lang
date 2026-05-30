@@ -57,7 +57,6 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [concrete]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [concrete]
@@ -187,7 +186,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc36_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc36_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:

@@ -856,7 +856,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %struct_type.base.1b9: type = struct_type {.base: %A} [concrete]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
 // CHECK:STDOUT:   %X.impl_witness: <witness> = impl_witness @A.as.X.impl.%X.impl_witness_table [concrete]
 // CHECK:STDOUT:   %.25e: Core.Form = init_form %B [concrete]
@@ -866,7 +865,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %X.facet: %X.type = facet_value %A, (%X.impl_witness) [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.type.258e31.2: type = fn_type @A.as.X.impl.F.loc23_14.2 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.919643.2: %A.as.X.impl.F.type.258e31.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.7d1: type = ptr_type %struct_type.base.1b9 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc23_14.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -912,7 +910,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_14.1(%self.param: ref %ptr.7d1) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_14.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_14.2(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:

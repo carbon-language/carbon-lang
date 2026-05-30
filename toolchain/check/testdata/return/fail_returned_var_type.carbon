@@ -40,7 +40,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %f64.794: type = float_type %int_64, f64 [concrete]
 // CHECK:STDOUT:   %pattern_type.f4f: type = pattern_type %f64.9a0 [concrete]
 // CHECK:STDOUT:   %float.1f7: Core.FloatLiteral = float_literal_value 0e-1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
@@ -121,7 +120,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   return %.loc23_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref %f64.794) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_12.2(%self.param: ref %f64.9a0) {
 // CHECK:STDOUT: !entry:

@@ -84,7 +84,6 @@ class A {
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.72d: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.fd3: <witness> = complete_type_witness %struct_type.a.72d [concrete]
-// CHECK:STDOUT:   %ptr.452: type = ptr_type %struct_type.a.72d [concrete]
 // CHECK:STDOUT:   %pattern_type.a07: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
@@ -106,7 +105,6 @@ class A {
 // CHECK:STDOUT:   %bound_method.33d: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.d5e: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.d5e) [concrete]
-// CHECK:STDOUT:   %ptr.d26: type = ptr_type %struct_type.b.177 [concrete]
 // CHECK:STDOUT:   %pattern_type.e4c: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [concrete]
@@ -115,7 +113,6 @@ class A {
 // CHECK:STDOUT:   %bound_method.cc3: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.4ff: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_2.4ff) [concrete]
-// CHECK:STDOUT:   %ptr.67d: type = ptr_type %struct_type.c.e9c [concrete]
 // CHECK:STDOUT:   %pattern_type.f0e: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.c.5b8: type = struct_type {.c: Core.IntLiteral} [concrete]
@@ -124,7 +121,6 @@ class A {
 // CHECK:STDOUT:   %bound_method.353: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.49a: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_3.49a) [concrete]
-// CHECK:STDOUT:   %ptr.b3e: type = ptr_type %struct_type.d.966 [concrete]
 // CHECK:STDOUT:   %pattern_type.0bf: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.d.3ea: type = struct_type {.d: Core.IntLiteral} [concrete]
@@ -136,12 +132,12 @@ class A {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc36_7.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.4: type = fn_type @Destroy.Op.loc35_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.3: type = fn_type @Destroy.Op.loc35 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.4: type = fn_type @Destroy.Op.loc34 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.4: %Destroy.Op.type.af7ec0.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.6: type = fn_type @Destroy.Op.loc34_7.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1dc86d.6: %Destroy.Op.type.af7ec0.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.8: type = fn_type @Destroy.Op.loc33_7.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1dc86d.8: %Destroy.Op.type.af7ec0.8 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.5: type = fn_type @Destroy.Op.loc33 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1dc86d.5: %Destroy.Op.type.af7ec0.5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -338,11 +334,11 @@ class A {
 // CHECK:STDOUT:   %D.DF.call: init %empty_tuple.type = call %DF.ref()
 // CHECK:STDOUT:   %Destroy.Op.bound.loc36: <bound method> = bound_method %d.var, constants.%Destroy.Op.1dc86d.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc36: init %empty_tuple.type = call %Destroy.Op.bound.loc36(%d.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc35: <bound method> = bound_method %c.var, constants.%Destroy.Op.1dc86d.4
+// CHECK:STDOUT:   %Destroy.Op.bound.loc35: <bound method> = bound_method %c.var, constants.%Destroy.Op.1dc86d.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc35: init %empty_tuple.type = call %Destroy.Op.bound.loc35(%c.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %b.var, constants.%Destroy.Op.1dc86d.6
+// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %b.var, constants.%Destroy.Op.1dc86d.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.8
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %a.var, constants.%Destroy.Op.1dc86d.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -351,30 +347,24 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.AF();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_7.1(%self.param: ref %ptr.b3e) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc36_7.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc36_7.2(%self.param: ref %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_7.1(%self.param: ref %ptr.67d) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_7.2(%self.param: ref %C) {
+// CHECK:STDOUT: fn @Destroy.Op.loc35(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc34_7.1(%self.param: ref %ptr.d26) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc34_7.2(%self.param: ref %B) {
+// CHECK:STDOUT: fn @Destroy.Op.loc34(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc33_7.1(%self.param: ref %ptr.452) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc33_7.2(%self.param: ref %A) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

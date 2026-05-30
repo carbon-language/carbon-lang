@@ -62,7 +62,6 @@ fn Test() {
 // CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert: %i32.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.b33: %ImplicitAs.type.e51 = facet_value %i32, (%ImplicitAs.impl_witness.952) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.cb0: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %ImplicitAs.facet.b33) [concrete]
-// CHECK:STDOUT:   %ptr.7d8: type = ptr_type %struct_type.n [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -332,7 +331,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_20.1(%self.param: ref %ptr.7d8) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc35_20.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:

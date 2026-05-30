@@ -1674,7 +1674,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.f01, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.6fc: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Y.facet) [concrete]
 // CHECK:STDOUT:   %Y.WithSelf.K.821: %Y.WithSelf.K.type.6fc = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %L.type: type = fn_type @L [concrete]
 // CHECK:STDOUT:   %L: %L.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -1849,7 +1848,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.f01) {
 // CHECK:STDOUT: !entry:
@@ -1922,7 +1921,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.5af: %GenericInterface.type.faf = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ab1: type = pattern_type %GenericInterface.type.c0f [concrete]
 // CHECK:STDOUT:   %AnyParam.f01: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.c0f, %GenericInterface.generic) [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.559: type = pattern_type %AnyParam.f01 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %AnyParam.val: %AnyParam.f01 = struct_value () [concrete]
@@ -2087,7 +2085,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_interface.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.f01) {
 // CHECK:STDOUT: !entry:
@@ -2168,7 +2166,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.8ee, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %Y.WithSelf.K.type.685: type = fn_type @Y.WithSelf.K, @Y.WithSelf(%Y.facet) [concrete]
 // CHECK:STDOUT:   %Y.WithSelf.K.078: %Y.WithSelf.K.type.685 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %L.type: type = fn_type @L [concrete]
 // CHECK:STDOUT:   %L: %L.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -2338,7 +2335,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.8ee) {
 // CHECK:STDOUT: !entry:
@@ -2407,7 +2404,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.da1: type = pattern_type %GenericClass.type [concrete]
 // CHECK:STDOUT:   %AnyParam.8ee: type = class_type @AnyParam, @AnyParam(%GenericClass.type, %GenericClass.generic) [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.67d: type = pattern_type %AnyParam.8ee [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %AnyParam.val: %AnyParam.8ee = struct_value () [concrete]
@@ -2570,7 +2566,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_class.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.8ee) {
 // CHECK:STDOUT: !entry:

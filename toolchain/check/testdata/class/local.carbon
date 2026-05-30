@@ -51,7 +51,6 @@ class A {
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n.179: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.059: <witness> = complete_type_witness %struct_type.n.179 [concrete]
-// CHECK:STDOUT:   %ptr.7d8: type = ptr_type %struct_type.n.179 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.n.44a: type = struct_type {.n: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.n.44a = struct_value (%int_1.5b8) [concrete]
@@ -198,7 +197,7 @@ class A {
 // CHECK:STDOUT:   return %b to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.1(%self.param: ref %ptr.7d8) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc26_19.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.2(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:

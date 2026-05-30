@@ -516,6 +516,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref type) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @IntRange.as.Iterate.impl.NewCursor(@IntRange.%N.loc4_17.2: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.58b)]
@@ -881,7 +883,6 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %IntRange.elem.5fc: type = unbound_element_type %IntRange.e8b, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.start.end.c18: type = struct_type {.start: %i32, .end: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.d17: <witness> = complete_type_witness %struct_type.start.end.c18 [concrete]
-// CHECK:STDOUT:   %ptr.8e1: type = ptr_type %struct_type.start.end.c18 [concrete]
 // CHECK:STDOUT:   %pattern_type.826: type = pattern_type %IntRange.e8b [concrete]
 // CHECK:STDOUT:   %Range.type: type = fn_type @Range [concrete]
 // CHECK:STDOUT:   %Range: %Range.type = struct_value () [concrete]
@@ -1042,7 +1043,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Range [from "lib.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref %ptr.8e1) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %IntRange.e8b) {
 // CHECK:STDOUT: !entry:

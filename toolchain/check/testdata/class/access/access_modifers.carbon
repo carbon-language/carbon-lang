@@ -191,7 +191,6 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b98: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b [concrete]
 // CHECK:STDOUT:   %bound_method.494: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.155: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.radius.6bf [concrete]
 // CHECK:STDOUT:   %struct_type.radius.f47: type = struct_type {.radius: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.radius.f47 = struct_value (%int_5.64b) [concrete]
 // CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.c41) [concrete]
@@ -334,7 +333,7 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_36.1(%self.param: ref %ptr) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc18_36.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_36.2(%self.param: ref %Circle) {
 // CHECK:STDOUT: !entry:

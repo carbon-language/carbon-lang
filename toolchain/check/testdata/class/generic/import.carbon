@@ -486,7 +486,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.elem.352: type = unbound_element_type %CompleteClass.b60, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.6c2: type = fn_type @CompleteClass.F, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.a9a: %CompleteClass.F.type.6c2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.7d8: type = ptr_type %struct_type.n [concrete]
 // CHECK:STDOUT:   %pattern_type.b10: type = pattern_type %CompleteClass.b60 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -618,7 +617,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc6_3.1(%self.param: ref %ptr.7d8) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc6_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc6_3.2(%self.param: ref %CompleteClass.b60) {
 // CHECK:STDOUT: !entry:
@@ -706,7 +705,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.elem.e34: type = unbound_element_type %CompleteClass.665, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.113: type = fn_type @CompleteClass.F, @CompleteClass(%ptr.c86) [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.16d: %CompleteClass.F.type.113 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.db2: type = ptr_type %struct_type.n [concrete]
 // CHECK:STDOUT:   %pattern_type.faa: type = pattern_type %CompleteClass.665 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -807,7 +805,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %ptr.db2) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %CompleteClass.665) {
 // CHECK:STDOUT: !entry:

@@ -152,8 +152,7 @@ static auto CanDestroyClass(
   }
 
   return HasWitnessForOneField(
-      context, loc_id,
-      context.types().GetTypeInstId(complete_info.value_repr.type_id),
+      context, loc_id, context.types().GetTypeInstId(class_type.type_id),
       query_specific_interface_id);
 }
 

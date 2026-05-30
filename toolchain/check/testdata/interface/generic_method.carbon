@@ -136,7 +136,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.type.0d0: type = tuple_type (type, %A.type.7cb, type) [concrete]
 // CHECK:STDOUT:   %tuple.605: %tuple.type.0d0 = tuple_value (%X, %A.facet.659, %ptr.e8f8f9.1) [symbolic]
 // CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [symbolic]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.ef0: <witness> = require_complete_type %tuple.type.d6f [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.dd2: type = tuple_type (%empty_struct_type, %empty_struct_type, %ptr.e8f8f9.1) [symbolic]
@@ -537,7 +536,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_22.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_22.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_22.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
@@ -894,7 +893,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %.d08: Core.Form = init_form %tuple.type.e84 [concrete]
 // CHECK:STDOUT:   %pattern_type.a16: type = pattern_type %tuple.type.e84 [concrete]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.specific_fn.35a: <specific function> = specific_function %tuple.type.as.A.impl.F.133, @tuple.type.as.A.impl.F(%Y1, %Y2, %X, %Z) [concrete]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Z.val: %Z = struct_value () [concrete]
 // CHECK:STDOUT:   %.2ae: ref %Z = temporary invalid, %Z.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -1269,7 +1267,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc24_39.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc24_39.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc24_39.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:

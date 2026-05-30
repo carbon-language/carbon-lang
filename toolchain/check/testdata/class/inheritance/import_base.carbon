@@ -143,7 +143,6 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.e4d: <witness> = complete_type_witness %struct_type.x.unused_y.b4b [concrete]
 // CHECK:STDOUT:   %struct_type.base.1b1: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.043: <witness> = complete_type_witness %struct_type.base.1b1 [concrete]
-// CHECK:STDOUT:   %ptr.901: type = ptr_type %struct_type.base.1b1 [concrete]
 // CHECK:STDOUT:   %pattern_type.710: type = pattern_type %Child [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -309,7 +308,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.F [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.1(%self.param: ref %ptr.901) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_3.2(%self.param: ref %Child) {
 // CHECK:STDOUT: !entry:

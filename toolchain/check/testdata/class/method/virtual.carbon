@@ -655,7 +655,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.89b: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.1f2: <witness> = complete_type_witness %struct_type.base.89b [concrete]
-// CHECK:STDOUT:   %ptr.bf9: type = ptr_type %struct_type.base.89b [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
@@ -748,7 +747,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.bf9) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
@@ -761,8 +760,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
-// CHECK:STDOUT:   %ptr.b74: type = ptr_type %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %pattern_type.615: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -810,7 +807,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %ptr.b74) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
@@ -827,7 +824,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.e5e: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.454, .m1: %i32, .m2: %i32} [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.544: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -843,7 +839,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.353: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.49a: %i32 = int_value 3 [concrete]
-// CHECK:STDOUT:   %ptr.9bc: type = ptr_type %struct_type.vptr.m1.m2 [concrete]
 // CHECK:STDOUT:   %struct_type.m2.m1.625: type = struct_type {.m2: %i32, .m1: %i32} [concrete]
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -953,7 +948,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.9bc) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.2(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
@@ -1058,7 +1053,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.a3a: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
@@ -1067,7 +1061,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert: %T2.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.a3a = facet_value %T2, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.e9b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T1, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %.6b5: Core.Form = init_form %T2 [concrete]
 // CHECK:STDOUT:   %Derived.F.type.8c13ec.1: type = fn_type @Derived.F.loc27 [concrete]
@@ -1137,7 +1130,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   return %.loc23_36.4 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_36.1(%self.param: ref %ptr.c28) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_36.1(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_36.2(%self.param: ref %T2) {
 // CHECK:STDOUT: !entry:
