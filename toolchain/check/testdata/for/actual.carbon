@@ -216,7 +216,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .Iterate = %Core.Iterate
 // CHECK:STDOUT:     .Optional = %Core.Optional
-// CHECK:STDOUT:     .Copy = %Core.Copy
+// CHECK:STDOUT:     .Copy = %Core.Copy.326
 // CHECK:STDOUT:     .OrderedWith = %Core.OrderedWith
 // CHECK:STDOUT:     .Inc = %Core.Inc
 // CHECK:STDOUT:     .Destroy = %Core.Destroy
@@ -238,7 +238,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Core.import_ref.d9d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.193 = impl_witness_table (%Core.import_ref.d9d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Optional: %Optional.type = import_ref Core//prelude/types/optional, Optional, loaded [concrete = constants.%Optional.generic]
-// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
+// CHECK:STDOUT:   %Core.Copy.326: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.9f4 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.08c: @OrderedWith.WithSelf.%OrderedWith.assoc_type (%OrderedWith.assoc_type.72f) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%assoc0 (constants.%assoc0.d47)]
 // CHECK:STDOUT:   %Core.import_ref.250: @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less.type (%OrderedWith.WithSelf.Less.type.010) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less (constants.%OrderedWith.WithSelf.Less.828)]

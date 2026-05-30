@@ -250,19 +250,15 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_23.1.temp = alloca {}, align 8, !dbg !27
 // CHECK:STDOUT:   %.loc22_23.3.temp = alloca {}, align 8, !dbg !27
-// CHECK:STDOUT:   %.loc22_23.7.temp = alloca {}, align 8, !dbg !27
 // CHECK:STDOUT:   %.loc22_22.1.temp = alloca {}, align 8, !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.1.temp), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.3.temp), !dbg !27
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %.loc22_23.3.temp, ptr %b), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.7.temp), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_22.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %.loc22_22.1.temp, ptr %b), !dbg !28
-// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc22_23.7.temp, ptr %c, ptr %.loc22_22.1.temp), !dbg !27
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %return, ptr %.loc22_23.7.temp), !dbg !29
-// CHECK:STDOUT:   call void @"_COp.7ce54547ef4d499a:core.Destroy.Core"(ptr %.loc22_23.7.temp), !dbg !27
+// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc22_23.3.temp, ptr %c, ptr %.loc22_22.1.temp), !dbg !27
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %return, ptr %.loc22_23.3.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.7ce54547ef4d499a:core.Destroy.Core"(ptr %.loc22_23.3.temp), !dbg !27
 // CHECK:STDOUT:   call void @"_COp.c14becfc5db4251e:core.Destroy.Core"(ptr %.loc22_22.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_COp.c14becfc5db4251e:core.Destroy.Core"(ptr %.loc22_23.3.temp), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,23 +293,19 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.a61d280f5ea4bfd8.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_38.2.temp = alloca {}, align 8, !dbg !51
-// CHECK:STDOUT:   %.loc18_38.6.temp = alloca {}, align 8, !dbg !51
 // CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 8, !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_38.2.temp), !dbg !51
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %.loc18_38.2.temp, ptr %x), !dbg !51
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_38.6.temp), !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_21.1.temp), !dbg !52
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %.loc12_21.1.temp, ptr %x), !dbg !52
-// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_38.6.temp, ptr %self, ptr %.loc12_21.1.temp), !dbg !51
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %return, ptr %.loc18_38.6.temp), !dbg !51
-// CHECK:STDOUT:   call void @"_COp.7ce54547ef4d499a:core.Destroy.Core"(ptr %.loc18_38.6.temp), !dbg !51
+// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_38.2.temp, ptr %self, ptr %.loc12_21.1.temp), !dbg !51
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %return, ptr %.loc18_38.2.temp), !dbg !51
+// CHECK:STDOUT:   call void @"_COp.7ce54547ef4d499a:core.Destroy.Core"(ptr %.loc18_38.2.temp), !dbg !51
 // CHECK:STDOUT:   call void @"_COp.c14becfc5db4251e:core.Destroy.Core"(ptr %.loc12_21.1.temp), !dbg !52
-// CHECK:STDOUT:   call void @"_COp.c14becfc5db4251e:core.Destroy.Core"(ptr %.loc18_38.2.temp), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 6, 5, 4, 3 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 4, 3, 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

@@ -1735,6 +1735,8 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
     case SemIR::ExprCategory::Pattern:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
                    sem_ir_.insts().Get(expr_id));
+    case SemIR::ExprCategory::RefTagged:
+      CARBON_FATAL("Should have stripped ref tags already");
 
     case SemIR::ExprCategory::Error:
       return Done{SemIR::ErrorInst::InstId};
@@ -1784,41 +1786,10 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                         .category = SemIR::ExprCategory::EphemeralRef};
       }
 
-    case SemIR::ExprCategory::RefTagged: {
-      auto tagged_expr_id =
-          sem_ir_.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
-      auto tagged_expr_category =
-          SemIR::GetExprCategory(sem_ir_, tagged_expr_id);
-      if (target_.diagnose &&
-          tagged_expr_category != SemIR::ExprCategory::DurableRef) {
-        CARBON_DIAGNOSTIC(
-            RefTagNotDurableRef, Error,
-            "expression tagged with `ref` is not a durable reference");
-        context_.emitter().Emit(tagged_expr_id, RefTagNotDurableRef);
-      }
-
-      if (target_.kind == ConversionTarget::RefParam) {
-        return Done{expr_id};
-      }
-
-      // If the target isn't a reference parameter, ignore the `ref` tag.
-      // Unnecessary `ref` tags are diagnosed earlier.
-      return NextStep{.expr_id = tagged_expr_id,
-                      .category = tagged_expr_category};
-    }
-
     case SemIR::ExprCategory::DurableRef:
       if (target_.kind == ConversionTarget::DurableRef ||
-          target_.kind == ConversionTarget::UnmarkedRefParam) {
-        return Done{expr_id};
-      }
-      if (target_.kind == ConversionTarget::RefParam) {
-        if (target_.diagnose) {
-          CARBON_DIAGNOSTIC(
-              RefParamNoRefTag, Error,
-              "argument to `ref` parameter not marked with `ref`");
-          context_.emitter().Emit(expr_id, RefParamNoRefTag);
-        }
+          target_.kind == ConversionTarget::UnmarkedRefParam ||
+          target_.kind == ConversionTarget::RefParam) {
         return Done{expr_id};
       }
       [[fallthrough]];
@@ -1946,14 +1917,27 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // Diagnose unnecessary `ref` tags early, so that they're not obscured by
-  // conversions.
-  if (starting_category == SemIR::ExprCategory::RefTagged &&
-      target.kind != ConversionTarget::RefParam && target.diagnose) {
-    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                      "`ref` tag is not an argument to a `ref` parameter");
-    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  // Handle `ref`-tagged expressions.
+  if (starting_category == SemIR::ExprCategory::RefTagged) {
+    if (target.kind != ConversionTarget::RefParam) {
+      if (target.diagnose) {
+        CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                          "`ref` tag is not an argument to a `ref` parameter");
+        context.emitter().Emit(expr_id, RefTagNoRefParam);
+      }
+      return SemIR::ErrorInst::InstId;
+    }
+    expr_id = sem_ir.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
+    starting_category = SemIR::GetExprCategory(sem_ir, expr_id);
+  } else if (target.kind == ConversionTarget::RefParam) {
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                        "argument to `ref` parameter not marked with `ref`");
+      context.emitter().Emit(expr_id, RefParamNoRefTag);
+    }
+    return SemIR::ErrorInst::InstId;
   }
+  auto original_inner_expr_id = expr_id;
 
   // TODO: Allow abstract but complete types if the conversion is just a
   // same-type value acqisition.
@@ -2089,7 +2073,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Track that we performed a type conversion, if we did so.
-  if (orig_expr_id != expr_id) {
+  if (original_inner_expr_id != expr_id) {
     expr_id = AddInst<SemIR::Converted>(context, loc_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,

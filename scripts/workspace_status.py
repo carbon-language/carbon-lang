@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
+# NOTE: The `uv` shebang and inline metadata above are only used for direct
+# execution of this script outside of Bazel. When executed by Bazel (e.g., as a
+# workspace_status_command), Bazel uses its own hermetic Python toolchain
+# and ignores this metadata.
+
 
 """Bazel `--workspace_status_command` script.
 

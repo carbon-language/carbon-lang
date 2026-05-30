@@ -72,9 +72,9 @@ This code will:
 
 ## Alternatives considered
 
--   [Optional braces](/proposals/p0623.md#optional-braces)
--   [Optional parentheses](/proposals/p0623.md#optional-parentheses)
--   [`elif`](/proposals/p0623.md#elif)
+-   [Optional braces](/proposals/p000623-require-braces.md#optional-braces)
+-   [Optional parentheses](/proposals/p000623-require-braces.md#optional-parentheses)
+-   [`elif`](/proposals/p000623-require-braces.md#elif)
 
 ## References
 

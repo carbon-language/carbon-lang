@@ -666,4 +666,4 @@ interfere with checking later valid lines in the same function.
 
 ## Alternatives considered
 
--   [Using a traditional AST representation](/proposals/p6716.md#using-a-traditional-ast-representation)
+-   [Using a traditional AST representation](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#using-a-traditional-ast-representation)

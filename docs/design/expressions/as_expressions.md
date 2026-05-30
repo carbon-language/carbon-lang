@@ -176,11 +176,11 @@ type `type`. The program is invalid if this conversion is not possible.
 
 ## Alternatives considered
 
--   [Allow `as` to perform some unsafe conversions](/proposals/p0845.md#allow-as-to-perform-some-unsafe-conversions)
--   [Allow `as` to perform two's complement truncation](/proposals/p0845.md#allow-as-to-perform-twos-complement-truncation)
--   [`as` only performs implicit conversions](/proposals/p0845.md#as-only-performs-implicit-conversions)
--   [Integer to bool conversions](/proposals/p0845.md#integer-to-bool-conversions)
--   [Bool to integer conversions](/proposals/p0845.md#bool-to-integer-conversions)
+-   [Allow `as` to perform some unsafe conversions](/proposals/p000845-as-expressions.md#allow-as-to-perform-some-unsafe-conversions)
+-   [Allow `as` to perform two's complement truncation](/proposals/p000845-as-expressions.md#allow-as-to-perform-twos-complement-truncation)
+-   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
+-   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
+-   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
 
 ## References
 

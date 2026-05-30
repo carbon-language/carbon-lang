@@ -2,7 +2,38 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-[tool.black]
+[project]
+requires-python = ">=3.11"
+
+[tool.ruff]
 line-length = 80
-target-version = ['py310']
-include = '\.pyi?$'
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "ANN"]
+ignore = ["ANN401", "ANN204"]
+
+[tool.ruff.lint.per-file-ignores]
+"*_test.py" = ["ANN"]
+"proposals/**" = ["ANN"]
+"examples/bazel_test_runner.py" = ["ANN"]
+"**/lit.cfg.py" = ["ANN"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.ty.rules]
+all = "error"
+possibly-unresolved-reference = "ignore"
+
+[tool.ty.src]
+exclude = [
+    "proposals/p0555/figures.py",
+    "proposals/__init__.py",
+    "**/lit.cfg.py",
+    "examples/bazel_test_runner.py",
+    "**/*_test.py",
+]
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["rich.**", "requests", "bazel_tools.**"]
