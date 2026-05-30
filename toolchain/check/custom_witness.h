@@ -25,6 +25,12 @@ auto BuildPrimitiveCopyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
 
+// Builds a witness that the given type is trivially destroyable.
+auto BuildTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
+
 // Given an interface, returns the corresponding enum if it's covered by
 // `CoreInterface`, or `Unknown` if it's some other interface.
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)

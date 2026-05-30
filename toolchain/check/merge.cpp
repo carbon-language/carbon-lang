@@ -517,7 +517,7 @@ static auto CheckRedeclParamSyntax(Context& context,
         continue;
       }
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
-      // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+      // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003763.md#redeclarations
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
           prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(prev_iter[1]) ==

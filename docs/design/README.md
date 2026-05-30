@@ -486,7 +486,7 @@ intended for bit manipulation or modular arithmetic as often found in
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
 make sense
-[should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
+[should use signed integer types](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap).
 
 Identifiers of the form `iN` and `uN` are _type literals_, resulting in the
 corresponding type.
@@ -864,7 +864,7 @@ or restrictions on casts between pointers and integers.
 ### Arrays and slices
 
 > **TODO:** The provisional array syntax documented here has been superseded by
-> [p4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p4682.md).
+> [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md).
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to
@@ -3521,7 +3521,7 @@ ABI compatibility.
 > References:
 >
 > -   [Goals: Stable language and library ABI non-goal](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
-> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
+> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p000175-c-interoperability-goals.md#support-mixing-carbon-and-c-toolchains)
 
 ### Operator overloading
 

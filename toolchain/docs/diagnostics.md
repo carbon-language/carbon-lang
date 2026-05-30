@@ -320,9 +320,9 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
 
 ## Alternatives considered
 
--   [Don't sort diagnostics](/proposals/p6699.md#dont-sort-diagnostics)
--   [Sort by line and column](/proposals/p6699.md#sort-by-line-and-column)
--   [Sort by last processed token](/proposals/p6699.md#sort-by-last-processed-token)
+-   [Don't sort diagnostics](/proposals/p006699-diagnostic-sorting.md#dont-sort-diagnostics)
+-   [Sort by line and column](/proposals/p006699-diagnostic-sorting.md#sort-by-line-and-column)
+-   [Sort by last processed token](/proposals/p006699-diagnostic-sorting.md#sort-by-last-processed-token)
 
 ## References
 

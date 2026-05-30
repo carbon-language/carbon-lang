@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import json
 import unittest
-from unittest import mock
 from typing import Any
+from unittest import mock
 
 import check_dependent_pr
 import github_helpers

@@ -431,10 +431,10 @@ struct Worklist {
 
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
-    // An imported C++ class is not uniquely identified by its name and parent
-    // scope, so include its Clang mangled type name (the canonical C++
-    // identity), computed on demand. Carbon classes rely on the name and scope
-    // from `AddEntity`.
+    // Imported C++ classes are not uniquely identified by their name and parent
+    // scope, so we also include the Clang mangled type name, which is computed
+    // on demand. The Clang type name is unique, as it is the canonical C++
+    // identity. Carbon classes rely on the name and scope from `AddEntity`.
     llvm::SmallString<128> cpp_mangled_name;
     llvm::raw_svector_ostream os(cpp_mangled_name);
     if (sem_ir->AppendCppMangledTypeName(class_id, os)) {

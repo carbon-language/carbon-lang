@@ -49,9 +49,9 @@ fn F(ref x: i32);
 
 fn G() {
   let y: i32 = 0;
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+7]]:9: error: expression tagged with `ref` is not a durable reference [RefTagNotDurableRef]
+  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+7]]:5: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR:   F(ref y);
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:     ^~~~~
   // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE-7]]:6: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn F(ref x: i32);
   // CHECK:STDERR:      ^~~~~~~~~~
@@ -100,6 +100,16 @@ fn G() {
   // CHECK:STDERR:
   F(ref y);
 }
+
+// --- converted_ref_arg.carbon
+
+library "[[@TEST_NAME]]";
+
+base class C {}
+class D { extend base: C; }
+
+fn F(ref c: C);
+fn G(ref d: D) { F(ref d); }
 
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
@@ -171,7 +181,7 @@ fn G() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, %y
 // CHECK:STDOUT:   %.loc10: %i32 = ref_tag %y.ref
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc10)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%y.ref)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op.1dc86d.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%y.var)
 // CHECK:STDOUT:   return

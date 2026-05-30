@@ -13,12 +13,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import collections
-from concurrent import futures
 import itertools
 import os
-from pathlib import Path
 import re
 import sys
+from concurrent import futures
+from pathlib import Path
 from typing import Dict, List, NamedTuple, Set
 
 # Example or test diagnostics, ignored because they're expected to not pass.

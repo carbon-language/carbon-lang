@@ -77,8 +77,8 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
   auto GetRange(const Diagnostics::Loc& loc) -> clang::clangd::Range {
     return {.start = {.line = loc.line_number - 1,
                       .character = loc.column_number - 1},
-            .end = {.line = loc.line_number,
-                    .character = loc.column_number + loc.length}};
+            .end = {.line = loc.line_number - 1,
+                    .character = loc.column_number + loc.length - 1}};
   }
 
   // Converts a diagnostic level to an LSP severity.

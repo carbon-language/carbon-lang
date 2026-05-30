@@ -439,8 +439,8 @@ fn F() {
 // CHECK:STDOUT:   %K.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.cb7, @K [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: %L.type = impl_witness_access %K.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0 [symbolic_self]
-// CHECK:STDOUT:   %K_where.type: type = facet_type <@K where %impl.elem0 impls @M> [symbolic_self]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %K_where.type [symbolic_self]
+// CHECK:STDOUT:   %K_where.type: type = facet_type <@K where %impl.elem0 impls @M> [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %K_where.type [concrete]
 // CHECK:STDOUT:   %W: %K_where.type = symbolic_binding W, 0 [symbolic]
 // CHECK:STDOUT:   %AssociatedTypeImpls.type: type = fn_type @AssociatedTypeImpls [concrete]
 // CHECK:STDOUT:   %AssociatedTypeImpls: %AssociatedTypeImpls.type = struct_value () [concrete]
@@ -450,7 +450,7 @@ fn F() {
 // CHECK:STDOUT:   %AssociatedTypeImpls.decl: %AssociatedTypeImpls.type = fn_decl @AssociatedTypeImpls [concrete = constants.%AssociatedTypeImpls] {
 // CHECK:STDOUT:     %W.patt: %pattern_type = symbolic_binding_pattern W, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_30.1: type = splice_block %.loc12_30.2 [symbolic_self = constants.%K_where.type] {
+// CHECK:STDOUT:     %.loc12_30.1: type = splice_block %.loc12_30.2 [concrete = constants.%K_where.type] {
 // CHECK:STDOUT:       %.Self.loc12_25: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %K.ref: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
 // CHECK:STDOUT:       %.Self.loc12_30: %K.type = symbolic_binding .Self [symbolic_self = constants.%.Self.cb7]
@@ -462,7 +462,7 @@ fn F() {
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
 // CHECK:STDOUT:       %as_type: type = facet_access_type %impl.elem0 [symbolic_self = constants.%as_type]
 // CHECK:STDOUT:       %.loc12_36.2: type = converted %impl.elem0, %as_type [symbolic_self = constants.%as_type]
-// CHECK:STDOUT:       %.loc12_30.2: type = where_expr [symbolic_self = constants.%K_where.type] {
+// CHECK:STDOUT:       %.loc12_30.2: type = where_expr [concrete = constants.%K_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %K.ref
 // CHECK:STDOUT:         requirement_impls %.loc12_36.2, %M.ref
 // CHECK:STDOUT:       }

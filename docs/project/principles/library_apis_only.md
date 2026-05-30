@@ -97,4 +97,4 @@ class definitions.
 
 ## Alternatives considered
 
--   [Built-in primitive types](/proposals/p1280.md#built-in-primitive-types)
+-   [Built-in primitive types](/proposals/p001280-principle-all-apis-are-library-apis.md#built-in-primitive-types)

@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-
-__copyright__ = """
-Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-Exceptions. See /LICENSE for license information.
-SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""
-
 """Script to apply a set of defines to a CMake-style configure file.
 
 This serves as the action implementation for `configure_cmake_file.bzl`. See the
 documentation in the rule of that file for more details about how to use this,
 or `--help` on the script.
+"""
+
+__copyright__ = """
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse

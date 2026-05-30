@@ -11,6 +11,110 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/range_for.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/range_for.carbon
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:46:14: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Convert[self: Self]() -> T {
+// CHECK:STDERR:              ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:54:12: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Equal[self: Self](other: Char) -> bool = "int.eq";
+// CHECK:STDERR:            ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:55:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn NotEqual[self: Self](other: Char) -> bool = "int.neq";
+// CHECK:STDERR:               ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:59:11: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Less[self: Self](other: Char) -> bool = "int.less";
+// CHECK:STDERR:           ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:60:23: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn LessOrEquivalent[self: Self](other: Char) -> bool = "int.less_eq";
+// CHECK:STDERR:                       ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:61:14: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Greater[self: Self](other: Char) -> bool = "int.greater";
+// CHECK:STDERR:              ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:62:26: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn GreaterOrEquivalent[self: Self](other: Char) -> bool = "int.greater_eq";
+// CHECK:STDERR:                          ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:66:12: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Equal[self: Self](other: Char) -> bool = "int.eq";
+// CHECK:STDERR:            ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:67:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn NotEqual[self: Self](other: Char) -> bool = "int.neq";
+// CHECK:STDERR:               ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:71:11: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Less[self: Self](other: Char) -> bool = "int.less";
+// CHECK:STDERR:           ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:72:23: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn LessOrEquivalent[self: Self](other: Char) -> bool = "int.less_eq";
+// CHECK:STDERR:                       ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:73:14: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Greater[self: Self](other: Char) -> bool = "int.greater";
+// CHECK:STDERR:              ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:74:26: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn GreaterOrEquivalent[self: Self](other: Char) -> bool = "int.greater_eq";
+// CHECK:STDERR:                          ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:78:12: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Equal[self: Char](other: Char) -> bool = "int.eq";
+// CHECK:STDERR:            ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:79:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn NotEqual[self: Char](other: Char) -> bool = "int.neq";
+// CHECK:STDERR:               ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:83:11: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Less[self: Char](other: Char) -> bool = "int.less";
+// CHECK:STDERR:           ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:84:23: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn LessOrEquivalent[self: Char](other: Char) -> bool = "int.less_eq";
+// CHECK:STDERR:                       ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:85:14: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Greater[self: Char](other: Char) -> bool = "int.greater";
+// CHECK:STDERR:              ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:86:26: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn GreaterOrEquivalent[self: Char](other: Char) -> bool = "int.greater_eq";
+// CHECK:STDERR:                          ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:98:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Self](other: T) -> Self {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:106:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Self](other: Char) -> Char {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:114:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Self](other: T) -> Self {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:121:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Self](other: Char) -> i32 {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:127:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Char](other: Char) -> i32 {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/char.carbon:133:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Char](other: Char) -> i32 {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: {{.*}}/prelude/types/optional.carbon:50:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+// CHECK:STDERR:   fn Op[self: Self]() -> Self {
+// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:
 
 // --- methods_return_same_type.carbon
 
@@ -477,7 +581,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.354: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element0 [symbolic_self]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %impl.elem1.fdc: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element1 [symbolic_self]
-// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [symbolic_self]
+// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [concrete]
 // CHECK:STDOUT:   %R: %CppRangeForIterate_where.type = symbolic_binding R, 0 [symbolic]
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff859f.2: type = pattern_type %R.as_type [symbolic]
@@ -524,7 +628,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterator.Op.type.134: type = fn_type @Iterator.Op.1 [concrete]
 // CHECK:STDOUT:   %Iterator.Op.f05: %Iterator.Op.type.134 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.a97: <witness> = custom_witness (%Iterator.Op.f05), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.a96: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.ea2, %custom_witness.a97) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.a96: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.ea2, %custom_witness.a97) [concrete]
 // CHECK:STDOUT:   %Iterator.4f0: type = class_type @Iterator.2 [concrete]
 // CHECK:STDOUT:   %ConstRange.Begin.type: type = fn_type @ConstRange.Begin [concrete]
 // CHECK:STDOUT:   %ConstRange.Begin: %ConstRange.Begin.type = struct_value () [concrete]
@@ -535,7 +639,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterator.Op.type.9f2: type = fn_type @Iterator.Op.2 [concrete]
 // CHECK:STDOUT:   %Iterator.Op.7b7: %Iterator.Op.type.9f2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.569: <witness> = custom_witness (%Iterator.Op.7b7), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.bc0: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.e4e, %custom_witness.569) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.bc0: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.e4e, %custom_witness.569) [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.Begin.type.5c8: type = fn_type @CppRangeForIterate.WithSelf.Begin, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.9d3) [concrete]
 // CHECK:STDOUT:   %.a3d: type = fn_type_with_self_type %CppRangeForIterate.WithSelf.Begin.type.5c8, %CppRangeForIterate.facet.9d3 [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.End.type.a6b: type = fn_type @CppRangeForIterate.WithSelf.End, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.9d3) [concrete]
@@ -714,7 +818,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.354: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element0 [symbolic_self]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %impl.elem1.fdc: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element1 [symbolic_self]
-// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [symbolic_self]
+// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [concrete]
 // CHECK:STDOUT:   %R: %CppRangeForIterate_where.type = symbolic_binding R, 0 [symbolic]
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff859f.2: type = pattern_type %R.as_type [symbolic]
@@ -765,7 +869,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Sentinel.Op.type.134: type = fn_type @Sentinel.Op.1 [concrete]
 // CHECK:STDOUT:   %Sentinel.Op.f05: %Sentinel.Op.type.134 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.a9753d.2: <witness> = custom_witness (%Sentinel.Op.f05), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.d71: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.556, %custom_witness.a9753d.1, %custom_witness.a9753d.2) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.d71: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.556, %custom_witness.a9753d.1, %custom_witness.a9753d.2) [concrete]
 // CHECK:STDOUT:   %Iterator.4f0: type = class_type @Iterator.2 [concrete]
 // CHECK:STDOUT:   %Sentinel.45e: type = class_type @Sentinel.2 [concrete]
 // CHECK:STDOUT:   %ConstRange.Begin.type: type = fn_type @ConstRange.Begin [concrete]
@@ -780,7 +884,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Sentinel.Op.type.9f2: type = fn_type @Sentinel.Op.2 [concrete]
 // CHECK:STDOUT:   %Sentinel.Op.7b7: %Sentinel.Op.type.9f2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.569415.2: <witness> = custom_witness (%Sentinel.Op.7b7), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.2eb: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.d7a, %custom_witness.569415.1, %custom_witness.569415.2) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.2eb: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.d7a, %custom_witness.569415.1, %custom_witness.569415.2) [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.Begin.type.1ae: type = fn_type @CppRangeForIterate.WithSelf.Begin, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.aae) [concrete]
 // CHECK:STDOUT:   %.f5c: type = fn_type_with_self_type %CppRangeForIterate.WithSelf.Begin.type.1ae, %CppRangeForIterate.facet.aae [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.End.type.16f: type = fn_type @CppRangeForIterate.WithSelf.End, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.aae) [concrete]
@@ -965,7 +1069,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.354: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element0 [symbolic_self]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %impl.elem1.fdc: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element1 [symbolic_self]
-// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [symbolic_self]
+// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [concrete]
 // CHECK:STDOUT:   %R: %CppRangeForIterate_where.type = symbolic_binding R, 0 [symbolic]
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff859f.2: type = pattern_type %R.as_type [symbolic]
@@ -1012,7 +1116,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterator.Op.type.910: type = fn_type @Iterator.Op.1 [concrete]
 // CHECK:STDOUT:   %Iterator.Op.cbb: %Iterator.Op.type.910 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.d6a: <witness> = custom_witness (%Iterator.Op.cbb), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.eb2: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.92f, %custom_witness.d6a) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.eb2: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.92f, %custom_witness.d6a) [concrete]
 // CHECK:STDOUT:   %Iterator.080: type = class_type @Iterator.2 [concrete]
 // CHECK:STDOUT:   %Begin.type.793876.2: type = fn_type @Begin.2 [concrete]
 // CHECK:STDOUT:   %Begin.1544bb.2: %Begin.type.793876.2 = struct_value () [concrete]
@@ -1023,7 +1127,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterator.Op.type.587: type = fn_type @Iterator.Op.2 [concrete]
 // CHECK:STDOUT:   %Iterator.Op.dc6: %Iterator.Op.type.587 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b57: <witness> = custom_witness (%Iterator.Op.dc6), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.5d5: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.532, %custom_witness.b57) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.5d5: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.532, %custom_witness.b57) [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.Begin.type.949: type = fn_type @CppRangeForIterate.WithSelf.Begin, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.068) [concrete]
 // CHECK:STDOUT:   %.b32: type = fn_type_with_self_type %CppRangeForIterate.WithSelf.Begin.type.949, %CppRangeForIterate.facet.068 [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.End.type.e7a: type = fn_type @CppRangeForIterate.WithSelf.End, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.068) [concrete]
@@ -1202,7 +1306,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.354: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element0 [symbolic_self]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %impl.elem1.fdc: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element1 [symbolic_self]
-// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [symbolic_self]
+// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [concrete]
 // CHECK:STDOUT:   %R: %CppRangeForIterate_where.type = symbolic_binding R, 0 [symbolic]
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff859f.2: type = pattern_type %R.as_type [symbolic]
@@ -1253,7 +1357,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Sentinel.Op.type.910: type = fn_type @Sentinel.Op.1 [concrete]
 // CHECK:STDOUT:   %Sentinel.Op.cbb: %Sentinel.Op.type.910 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.d6afef.2: <witness> = custom_witness (%Sentinel.Op.cbb), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.388: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.480, %custom_witness.d6afef.1, %custom_witness.d6afef.2) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.388: %CppRangeForIterate_where.type = facet_value %MutableRange, (%custom_witness.480, %custom_witness.d6afef.1, %custom_witness.d6afef.2) [concrete]
 // CHECK:STDOUT:   %Iterator.080: type = class_type @Iterator.2 [concrete]
 // CHECK:STDOUT:   %Sentinel.a47: type = class_type @Sentinel.2 [concrete]
 // CHECK:STDOUT:   %Begin.type.793876.2: type = fn_type @Begin.2 [concrete]
@@ -1268,7 +1372,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Sentinel.Op.type.587: type = fn_type @Sentinel.Op.2 [concrete]
 // CHECK:STDOUT:   %Sentinel.Op.dc6: %Sentinel.Op.type.587 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b57f0b.2: <witness> = custom_witness (%Sentinel.Op.dc6), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value.38d: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.7a2, %custom_witness.b57f0b.1, %custom_witness.b57f0b.2) [symbolic_self]
+// CHECK:STDOUT:   %facet_value.38d: %CppRangeForIterate_where.type = facet_value %ConstRange, (%custom_witness.7a2, %custom_witness.b57f0b.1, %custom_witness.b57f0b.2) [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.Begin.type.c44: type = fn_type @CppRangeForIterate.WithSelf.Begin, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.1f7) [concrete]
 // CHECK:STDOUT:   %.a44: type = fn_type_with_self_type %CppRangeForIterate.WithSelf.Begin.type.c44, %CppRangeForIterate.facet.1f7 [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.End.type.d16: type = fn_type @CppRangeForIterate.WithSelf.End, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.1f7) [concrete]
@@ -1453,7 +1557,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.354: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element0 [symbolic_self]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %impl.elem1.fdc: type = impl_witness_access %CppRangeForIterate.lookup_impl_witness.ae8, element1 [symbolic_self]
-// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [symbolic_self]
+// CHECK:STDOUT:   %CppRangeForIterate_where.type: type = facet_type <@CppRangeForIterate where %impl.elem0.354 impls @Destroy and %impl.elem1.fdc impls @Destroy> [concrete]
 // CHECK:STDOUT:   %R: %CppRangeForIterate_where.type = symbolic_binding R, 0 [symbolic]
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff859f.2: type = pattern_type %R.as_type [symbolic]
@@ -1498,7 +1602,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterator.Op.type: type = fn_type @Iterator.Op [concrete]
 // CHECK:STDOUT:   %Iterator.Op: %Iterator.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b15: <witness> = custom_witness (%Iterator.Op), @Destroy [concrete]
-// CHECK:STDOUT:   %facet_value: %CppRangeForIterate_where.type = facet_value %MutableAndConstRange, (%custom_witness.0f5, %custom_witness.b15) [symbolic_self]
+// CHECK:STDOUT:   %facet_value: %CppRangeForIterate_where.type = facet_value %MutableAndConstRange, (%custom_witness.0f5, %custom_witness.b15) [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.Begin.type.92e: type = fn_type @CppRangeForIterate.WithSelf.Begin, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.4ed) [concrete]
 // CHECK:STDOUT:   %.da6: type = fn_type_with_self_type %CppRangeForIterate.WithSelf.Begin.type.92e, %CppRangeForIterate.facet.4ed [concrete]
 // CHECK:STDOUT:   %CppRangeForIterate.WithSelf.End.type.576: type = fn_type @CppRangeForIterate.WithSelf.End, @CppRangeForIterate.WithSelf(%CppRangeForIterate.facet.4ed) [concrete]
