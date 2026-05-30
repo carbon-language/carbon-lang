@@ -11,7 +11,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import os
 import pathlib
-
 import re
 import sys
 from typing import List, Optional, Tuple

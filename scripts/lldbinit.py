@@ -9,10 +9,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 # This script is only meant to be used from LLDB.
-import lldb  # type: ignore
 import os
 import re
 from typing import Any
+
+import lldb  # type: ignore
 
 project_root = os.path.dirname(os.path.realpath(__file__))
 

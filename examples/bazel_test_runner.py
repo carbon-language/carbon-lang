@@ -12,8 +12,9 @@ import os
 import sys
 import time
 import unittest
-from bazel_tools.tools.python.runfiles import runfiles
+
 from bazel_integration_test.py import test_base
+from bazel_tools.tools.python.runfiles import runfiles
 
 
 class BazelExampleTest(test_base.TestBase):

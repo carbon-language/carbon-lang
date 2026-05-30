@@ -49,10 +49,29 @@ repos:
         pass_filenames: false
 
   # Formatters should be run late so that they can re-format any prior changes.
-  - repo: https://github.com/psf/black
-    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9 # frozen: 26.3.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.13
     hooks:
-      - id: black
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        entry: ty check --no-progress
+        language: python
+        additional_dependencies:
+          - ty
+          - rich
+          - 'gql>=2.0.0,<3.0.0'
+          - PyGitHub
+          - types-requests
+          - requests
+        types: [python]
+        pass_filenames: false
+
   - repo: local
     hooks:
       - id: prettier
@@ -69,7 +88,7 @@ repos:
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
         # Beyond just formatting, explicitly fix lint warnings.
-        args: ['--lint=fix', '--warnings=all', '-r', '.']
+        args: ['--lint=fix', '--warnings=all']
         language: python
         files: |
           (?x)^(
@@ -145,36 +164,6 @@ repos:
         language: python
         files: ^.*/BUILD$
         pass_filenames: false
-  - repo: https://github.com/PyCQA/flake8
-    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f # frozen: 7.3.0
-    hooks:
-      - id: flake8
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'fc0f09a29bb495f4a91f00266155d6282d52485d' # frozen: v1.20.2
-    hooks:
-      - id: mypy
-        # Use setup.cfg to match the command line.
-        args:
-          - --config-file=setup.cfg
-        # This should match the requirements added in the WORKSPACE pip_install.
-        additional_dependencies:
-          - gql >= 2.0.0, < 3.0.0
-          - PyGitHub
-          - rich
-          - types-requests
-        # Exclusions are:
-        # - p#### scripts because they're not tested or maintained.
-        # - lit.cfg.py because it has multiple copies, breaking mypy.
-        # - `bazel_test_runner.py` which depends on Bazel-specific imports.
-        # - Unit tests because they sometimes violate typing, such as by
-        #   assigning a mock to a function.
-        exclude: |
-          (?x)^(
-              proposals/(?!scripts/).*|
-              .*/lit\.cfg\.py|
-              examples/bazel_test_runner\.py|
-              .*_test\.py
-          )$
   - repo: https://github.com/codespell-project/codespell
     rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # frozen: v2.4.2
     hooks:
@@ -269,6 +258,7 @@ repos:
 # This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      \.jj/.*|
       MODULE.bazel.lock|
       .*package-lock\.json|
       bazel/bazel_clang_tidy/.*\.patch|

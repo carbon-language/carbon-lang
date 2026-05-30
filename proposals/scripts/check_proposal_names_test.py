@@ -13,7 +13,6 @@ import pathlib
 import tempfile
 import unittest
 
-
 from proposals.scripts import check_proposal_names
 
 

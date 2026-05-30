@@ -12,8 +12,8 @@ structure prior to the jekyll build.
 
 import dataclasses
 import os
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Optional
 
 __copyright__ = """

@@ -6,17 +6,17 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from enum import Enum
 import fcntl
 import hashlib
 import os
-from pathlib import Path
 import platform
 import shutil
 import tempfile
 import time
-from typing import NamedTuple, Optional
 import urllib.request
+from enum import Enum
+from pathlib import Path
+from typing import NamedTuple, Optional
 
 
 # The tools we track releases for.
