@@ -13,6 +13,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 
 namespace Carbon::Check {
 
@@ -220,6 +221,19 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
       context.var_storage_map().Insert(
           inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
     }
+  }
+}
+
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind {
+  auto param = context.insts().Get(param_inst_id);
+  CARBON_CHECK(param.Is<SemIR::AnyParamPattern>());
+  if (param.Is<SemIR::RefParamPattern>()) {
+    return ParamPatternKind::Ref;
+  } else if (param.Is<SemIR::VarParamPattern>()) {
+    return ParamPatternKind::Var;
+  } else {
+    return ParamPatternKind::Value;
   }
 }
 

@@ -46,7 +46,7 @@ int F(int n) {
   return Carbon::arr[n];
 }
 ''';
-  
+
 // --- export.carbon
 library "[[@TEST_NAME]]";
 

@@ -1330,8 +1330,7 @@ static auto MapReferenceType(Context& context, clang::QualType type,
 }
 
 // Maps a C++ array type to a Carbon array type.
-static auto MapArrayType(Context& context,
-                         const clang::ArrayType* array_type,
+static auto MapArrayType(Context& context, const clang::ArrayType* array_type,
                          TypeExpr element_type_expr) -> TypeExpr {
   if (const auto* constant_array_type =
           llvm::dyn_cast<clang::ConstantArrayType>(array_type)) {
