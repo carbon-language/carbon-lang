@@ -920,9 +920,6 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''
 struct Struct {
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+3]]:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
-  // CHECK:STDERR:   int arr[3];
-  // CHECK:STDERR:       ^
   int arr[3];
 };
 Struct s;
@@ -930,20 +927,19 @@ Struct s;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+14]]:3: error: semantics TODO: `lvalue path contains an array type` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `unsupported field in lvalue path: &s.arr[1]` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `array(i32, 3)` [ConversionFailure]
   // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(array(i32, 3))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   Cpp.m = 2;
 }
