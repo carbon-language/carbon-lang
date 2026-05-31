@@ -254,3 +254,16 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR:
   ws.F();
 }
+
+// --- fail_self_not_first.carbon
+
+library "[[@TEST_NAME]]";
+
+class Class {
+  // `self` must be the first explicit parameter.
+  // CHECK:STDERR: fail_self_not_first.carbon:[[@LINE+4]]:22: error: `self` must be the first explicit parameter [SelfNotFirstParam]
+  // CHECK:STDERR:   fn F(other: Class, self: Self);
+  // CHECK:STDERR:                      ^~~~~~~~~~
+  // CHECK:STDERR:
+  fn F(other: Class, self: Self);
+}

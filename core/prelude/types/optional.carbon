@@ -47,7 +47,7 @@ class Optional(T:! OptionalStorage) {
 impl forall [T:! OptionalStorage & UnformedInit] Optional(T) as UnformedInit {}
 
 impl forall [T:! OptionalStorage] Optional(T) as Copy {
-  fn Op[self: Self]() -> Self {
+  fn Op(self) -> Self {
     return T.Copy(self as T.Type) as Optional(T);
   }
 }

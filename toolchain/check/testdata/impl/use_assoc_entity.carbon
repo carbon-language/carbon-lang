@@ -193,35 +193,35 @@ class E {
   }
 }
 
-// --- call_extend_method.carbon
+// --- fail_call_extend_method.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
   fn F(self);
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE+15]]:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE+15]]:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
   // CHECK:STDERR:   fn F[unused self: Self]();
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
   // CHECK:STDERR:   fn F[unused self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE-8]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE-8]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
   // CHECK:STDERR:   fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE+4]]:15: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE+4]]:15: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
   // CHECK:STDERR:   fn F[unused self: Self]();
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
   fn F[unused self: Self]();
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE+11]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE+11]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE+7]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE+7]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: call_extend_method.carbon:[[@LINE-24]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
+  // CHECK:STDERR: fail_call_extend_method.carbon:[[@LINE-24]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
   // CHECK:STDERR:   fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:

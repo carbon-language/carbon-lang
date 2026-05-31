@@ -12,7 +12,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/export/thunk_ast.carbon
 // CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
-// CHECK:STDOUT: | `-RecordType {{0x[a-f0-9]+}} 'std::__va_list' canonical
 // CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> referenced Carbon external-linkage
 
 // --- thunk_with_args_and_return.carbon
