@@ -48,7 +48,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 }
 
 // Returns whether `function_id` is an instance method: in other words, whether
-// it has an implicit `self` parameter.
+// it has a `self` parameter (the first explicit parameter).
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);

@@ -275,7 +275,10 @@ static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
 static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params)
     -> double {
   // Currently model a uniform distribution [0, max] parameters. Assume a line
-  // break before the first parameter for >2 and after every 4th.
+  // break before the first parameter for >2 and after every 4th. A Carbon
+  // method also emits a leading `self`, but `self` only rarely tips a method
+  // onto an additional wrapped line, so the estimate ignores it; this stays
+  // calibrated against the emitter (see `source_gen_test`).
   int param_lines = 0;
   for (int num_params : llvm::seq_inclusive(0, params.max_params)) {
     if (num_params > NumSingleLineMethodParams) {

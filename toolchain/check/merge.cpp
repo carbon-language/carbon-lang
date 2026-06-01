@@ -354,7 +354,10 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
     return true;
   }
 
-  // If exactly one of the parameter lists was present, they differ.
+  // If exactly one of the parameter lists was present, they differ. An absent
+  // parameter list (`None`) and a present-but-empty one (`Empty`) are
+  // intentionally treated as different, following the syntactic redeclaration
+  // matching design.
   if (new_param_patterns_id.has_value() != prev_param_patterns_id.has_value()) {
     if (!diagnose) {
       return false;
@@ -482,40 +485,13 @@ static auto CheckRedeclParamSyntax(Context& context,
       prev_node_kind = context.parse_tree().node_kind(prev_node_id);
     }
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
-      // A `self` binding must spell its type the same way (`self` vs.
-      // `self: Self`) in a redeclaration as in the previous declaration. The
-      // omitted form is a single `SelfBindingPattern`; the explicit form is a
-      // `SelfTypeNameExpr` followed by a `LetBindingPattern`. A mismatch is
-      // diagnosed, but we recover by treating the two forms as matching,
-      // skipping the extra type node on the explicit side. Other type
-      // mismatches between two explicit self bindings (e.g. `self: Self` vs.
-      // `self: C`) fall through to the generic "syntax differs" diagnostic.
-      bool new_self_omits_type =
-          new_node_kind == Parse::NodeKind::SelfBindingPattern &&
-          prev_node_kind == Parse::NodeKind::SelfTypeNameExpr;
-      bool prev_self_omits_type =
-          prev_node_kind == Parse::NodeKind::SelfBindingPattern &&
-          new_node_kind == Parse::NodeKind::SelfTypeNameExpr;
-      if (new_self_omits_type != prev_self_omits_type) {
-        if (diagnose) {
-          CARBON_DIAGNOSTIC(
-              RedeclParamSelfSyntaxDiffers, Error,
-              "redeclaration differs in whether the `self` type is written "
-              "explicitly");
-          CARBON_DIAGNOSTIC(RedeclParamSelfSyntaxPrevious, Note,
-                            "comparing with previous declaration here");
-          context.emitter()
-              .Build(new_node_id, RedeclParamSelfSyntaxDiffers)
-              .Note(prev_node_id, RedeclParamSelfSyntaxPrevious)
-              .Emit();
-        }
-        if (new_self_omits_type) {
-          ++prev_iter;
-        } else {
-          ++new_iter;
-        }
-        continue;
-      }
+      // The `self` parameter's type must be spelled the same way (`self` vs.
+      // `self: Self`) in a redeclaration as in the previous declaration. This
+      // is not a special case: like any other parameter-type spelling
+      // difference (e.g. `self: Self` vs. `self: C`), it falls through to the
+      // generic "syntax differs" diagnostic below, following the token-based
+      // redeclaration matching rule from proposal #3763.
+      //
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003763.md#redeclarations
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
@@ -578,8 +554,9 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
     return false;
   }
   // `self` is the first explicit parameter, so forward `self_type_override_id`
-  // here. `CheckRedeclParam` identifies the `self` parameter by name, so this
-  // applies the override wherever `self` appears.
+  // to the explicit parameter check. `CheckRedeclParam` identifies the `self`
+  // parameter by name and applies the override to its type (used for C++
+  // virtual overrides, where the override's `self` type is the derived class).
   if (!CheckRedeclParams(context, new_entity.loc_id,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,

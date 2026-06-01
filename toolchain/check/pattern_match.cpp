@@ -988,18 +988,18 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
   llvm::SmallVector<SemIR::InstId> inner_args;
   inner_args.reserve(outer_call_args.size() + 1);
 
+  // A thunk always forwards `self` as the receiver, so when the function has a
+  // `self` parameter we match it here and exclude it from the explicit
+  // parameter loop below (mirroring `CallerPatternMatch`).
   if (self_pattern_id.has_value()) {
     inner_args.push_back(match.MatchWithResult(
         &state,
         {.pattern_id = self_pattern_id,
          .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None},
          .allow_unmarked_ref = true}));
+    param_pattern_ids =
+        SemIR::ParamPatternsWithoutSelf(context.sem_ir(), param_pattern_ids);
   }
-
-  // `self` is matched separately above; if it is also the first explicit
-  // parameter, skip it in the parameter loop.
-  param_pattern_ids =
-      SemIR::ParamPatternsWithoutSelf(context.sem_ir(), param_pattern_ids);
 
   for (SemIR::InstId inst_id : param_pattern_ids) {
     inner_args.push_back(match.MatchWithResult(

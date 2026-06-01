@@ -43,21 +43,20 @@ class Class {
   fn G(self);
 }
 
-// A redeclaration must spell `self` the same way as the original; mismatches
-// are diagnosed but recovered from as if the forms matched.
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:19: error: redeclaration differs in whether the `self` type is written explicitly [RedeclParamSelfSyntaxDiffers]
+// A redeclaration must spell `self` the same way as the original.
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Class.F(unused self) {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-9]]:14: note: comparing with previous declaration here [RedeclParamSelfSyntaxPrevious]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-8]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F(self: Self);
 // CHECK:STDERR:              ^~~~
 // CHECK:STDERR:
 fn Class.F(unused self) {}
 
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:25: error: redeclaration differs in whether the `self` type is written explicitly [RedeclParamSelfSyntaxDiffers]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Class.G(unused self: Self) {}
 // CHECK:STDERR:                         ^~~~
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-17]]:8: note: comparing with previous declaration here [RedeclParamSelfSyntaxPrevious]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-16]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn G(self);
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
@@ -72,13 +71,11 @@ class Class {
 }
 
 // Two explicit `self` types that differ syntactically (here `Class` instead of
-// `Self`, even though they refer to the same type) hit the generic
-// "redeclaration syntax differs" diagnostic, not the more specific
-// "differs in whether the `self` type is written explicitly" one.
+// `Self`, even though they refer to the same type).
 // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+7]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Class.F(unused self: Class) {}
 // CHECK:STDERR:                         ^~~~~
-// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-10]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-8]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F(self: Self);
 // CHECK:STDERR:              ^~~~
 // CHECK:STDERR:
@@ -253,12 +250,16 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [concrete]
-// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
-// CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G [concrete]
-// CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.F.type.97ee74.1: type = fn_type @Class.F.loc5 [concrete]
+// CHECK:STDOUT:   %Class.F.ea1d61.1: %Class.F.type.97ee74.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.G.type.39edc7.1: type = fn_type @Class.G.loc6 [concrete]
+// CHECK:STDOUT:   %Class.G.ce063b.1: %Class.G.type.39edc7.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Class.F.type.97ee74.2: type = fn_type @Class.F.loc17 [concrete]
+// CHECK:STDOUT:   %Class.F.ea1d61.2: %Class.F.type.97ee74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.G.type.39edc7.2: type = fn_type @Class.G.loc26 [concrete]
+// CHECK:STDOUT:   %Class.G.ce063b.2: %Class.G.type.39edc7.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -275,40 +276,40 @@ class Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.97ee74.2 = fn_decl @Class.F.loc17 [concrete = constants.%Class.F.ea1d61.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc18: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
+// CHECK:STDOUT:     %self.param: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self: %Class = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
+// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.39edc7.2 = fn_decl @Class.G.loc26 [concrete = constants.%Class.G.ce063b.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc27: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc27: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc27: %Class = value_binding self, %self.param.loc27
+// CHECK:STDOUT:     %self.param: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self: %Class = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.97ee74.1 = fn_decl @Class.F.loc5 [concrete = constants.%Class.F.ea1d61.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc5: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc5: %Class = value_binding self, %self.param.loc5
+// CHECK:STDOUT:     %self.param: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self: %Class = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
+// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.39edc7.1 = fn_decl @Class.G.loc6 [concrete = constants.%Class.G.ce063b.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc6: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc6: %Class = value_binding self, %self.param.loc6
+// CHECK:STDOUT:     %self.param: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self: %Class = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -319,12 +320,16 @@ class Class {
 // CHECK:STDOUT:   .G = %Class.G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc18: %Class) {
+// CHECK:STDOUT: fn @Class.F.loc5(%self.param: %Class);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Class.G.loc6(%self.param: %Class);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Class.F.loc17(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%self.param.loc27: %Class) {
+// CHECK:STDOUT: fn @Class.G.loc26(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -338,7 +343,7 @@ class Class {
 // CHECK:STDOUT:   %Class.F.e6b639.1: %Class.F.type.14d3c0.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Class.F.type.14d3c0.2: type = fn_type @Class.F.loc19 [concrete]
+// CHECK:STDOUT:   %Class.F.type.14d3c0.2: type = fn_type @Class.F.loc17 [concrete]
 // CHECK:STDOUT:   %Class.F.e6b639.2: %Class.F.type.14d3c0.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,7 +361,7 @@ class Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.14d3c0.2 = fn_decl @Class.F.loc19 [concrete = constants.%Class.F.e6b639.2] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.14d3c0.2 = fn_decl @Class.F.loc17 [concrete = constants.%Class.F.e6b639.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -386,7 +391,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F.loc5(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F.loc19(%self.param: %Class) {
+// CHECK:STDOUT: fn @Class.F.loc17(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

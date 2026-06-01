@@ -674,8 +674,8 @@ static auto DiagnoseUnusedMarkersWithoutDefinition(
   const auto& function = context.functions().Get(function_id);
   // The `unused` modifier requires a definition, so it is not valid on any
   // parameter when there is none. This applies to implicit parameters (such as
-  // `self`) too, so check the implicit parameter list as well as the explicit
-  // one.
+  // `T:! type` introduced by `[...]`) too, so check the implicit parameter list
+  // as well as the explicit one. (`self` lives in the explicit list.)
   for (auto param_patterns_id :
        {function.implicit_param_patterns_id, function.param_patterns_id}) {
     if (param_patterns_id.has_value()) {
