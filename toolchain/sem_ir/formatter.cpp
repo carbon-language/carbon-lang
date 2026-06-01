@@ -1566,7 +1566,7 @@ auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
   out() << field.index;
   if (field.initializer_id.has_value()) {
-    out() << ", initializer=";
+    out() << ", initializer = ";
     out() << field.initializer_id;
   }
 }
