@@ -183,15 +183,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %pattern_type.7f0: type = pattern_type %TwoNonType [concrete]
+// CHECK:STDOUT:   %pattern_type.69d: type = pattern_type %TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %TwoNonType.val: %TwoNonType = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7f0 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.7f0 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.69d = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.69d = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoNonType = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
@@ -215,18 +215,18 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %DependentNonType.f1e65a.1: type = class_type @DependentNonType.1 [concrete]
+// CHECK:STDOUT:   %DependentNonType.c38: type = class_type @DependentNonType.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %pattern_type.844c90.1: type = pattern_type %DependentNonType.f1e65a.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.b08: type = pattern_type %DependentNonType.c38 [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.type: type = cpp_overload_set_type @MakeDependentNonType123.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.value: %MakeDependentNonType123.cpp_overload_set.type = cpp_overload_set_value @MakeDependentNonType123.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.89d: type = ptr_type %DependentNonType.f1e65a.1 [concrete]
+// CHECK:STDOUT:   %ptr.38c: type = ptr_type %DependentNonType.c38 [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.type: type = fn_type @MakeDependentNonType123__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DependentNonType.f1e65a.2: type = class_type @DependentNonType.2 [concrete]
-// CHECK:STDOUT:   %pattern_type.844c90.2: type = pattern_type %DependentNonType.f1e65a.2 [concrete]
+// CHECK:STDOUT:   %DependentNonType.930: type = class_type @DependentNonType.2 [concrete]
+// CHECK:STDOUT:   %pattern_type.544: type = pattern_type %DependentNonType.930 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %DependentNonType.val: %DependentNonType.f1e65a.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DependentNonType.val: %DependentNonType.930 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -250,31 +250,31 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.844c90.1 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.844c90.1 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.b08 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.b08 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %DependentNonType.f1e65a.1 = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %DependentNonType.f1e65a.1 = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x.var: ref %DependentNonType.c38 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %DependentNonType.c38 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.844c90.2 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.844c90.2 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.544 = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.544 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %DependentNonType.f1e65a.2 = var %y.var_patt [concrete]
-// CHECK:STDOUT:   %y: ref %DependentNonType.f1e65a.2 = ref_binding y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   %y.var: ref %DependentNonType.930 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %y: ref %DependentNonType.930 = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MakeDependentNonType123.ref: %MakeDependentNonType123.cpp_overload_set.type = name_ref MakeDependentNonType123, imports.%MakeDependentNonType123.cpp_overload_set.value [concrete = constants.%MakeDependentNonType123.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType.f1e65a.1 = splice_block file.%x.var [concrete = file.%x.var] {}
-// CHECK:STDOUT:   %addr: %ptr.89d = addr_of %.loc7_1
+// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType.c38 = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %addr: %ptr.38c = addr_of %.loc7_1
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeDependentNonType123__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc7_69: init %DependentNonType.f1e65a.1 to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
+// CHECK:STDOUT:   %.loc7_69: init %DependentNonType.c38 to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_69
 // CHECK:STDOUT:   %.loc8_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_54.2: init %DependentNonType.f1e65a.2 to file.%y.var = class_init () [concrete = constants.%DependentNonType.val]
-// CHECK:STDOUT:   %.loc8_1: init %DependentNonType.f1e65a.2 = converted %.loc8_54.1, %.loc8_54.2 [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   %.loc8_54.2: init %DependentNonType.930 to file.%y.var = class_init () [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   %.loc8_1: init %DependentNonType.930 = converted %.loc8_54.1, %.loc8_54.2 [concrete = constants.%DependentNonType.val]
 // CHECK:STDOUT:   assign file.%y.var, %.loc8_1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
