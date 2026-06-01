@@ -360,9 +360,14 @@ struct Worklist {
     }
   }
 
+  auto AddPackage(const SemIR::File* file) -> void {
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    Add(file->package_id());
+  }
+
   auto AddPackage(NameScopeId name_scope_id) -> void {
     if (name_scope_id == NameScopeId::Package) {
-      AddLibrary(sem_ir);
+      AddPackage(sem_ir);
       return;
     }
 
@@ -370,7 +375,7 @@ struct Worklist {
     CARBON_CHECK(scope.is_imported_package());
     if (!scope.import_ir_scopes().empty()) {
       auto import_ir_id = scope.import_ir_scopes().front().first;
-      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
+      AddPackage(sem_ir->import_irs().Get(import_ir_id).sem_ir);
     } else {
       AddInvalid();
     }
@@ -593,12 +598,15 @@ struct Worklist {
 
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
-    Add(file->package_id());
     Add(file->library_id());
   }
 
   auto Add(ImportIRId ir_id) -> void {
-    AddLibrary(sem_ir->import_irs().Get(ir_id).sem_ir);
+    // TODO: Is the ImportIRId for an ImportRef always the same IR for the same
+    // entity (eg, always the owning IR, or always the first-declaring IR)?
+    const auto* file = sem_ir->import_irs().Get(ir_id).sem_ir;
+    AddPackage(file);
+    AddLibrary(file);
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
