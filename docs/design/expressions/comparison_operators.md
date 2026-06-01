@@ -247,27 +247,35 @@ resulting in unexpected behavior if they are violated.
 #### Equality
 
 Comparison operators can be provided for user-defined types by implementing the
-`EqWith` and `OrderedWith` interfaces.
+`EqWithPrimitive` and `OrderedWithPrimitive` interfaces, or the higher-level
+`EqWith` and `OrderedWith` constraints.
 
-The `EqWith` interface is used to define the semantics of the `==` and `!=`
-operators for a given pair of types:
+The `EqWithPrimitive` interface is used to define the semantics of the `==` and
+`!=` operators for a given pair of types:
 
 ```
-interface EqWith(U:! type) {
-  fn Equal(self, u: U) -> bool;
-  default fn NotEqual(self, u: U) -> bool {
+interface EqWithPrimitive
+    [implicit_into Self:! Core.Form]
+    (implicit_into U:! Core.Form) {
+  fn Equal(self:? Self, u:? U) -> bool;
+  default fn NotEqual(self:? Self, u:? U) -> bool {
     return not (self == u);
   }
 }
+constraint EqWith(U:! type) {
+  extend require impls
+      LetSelf(EqWithPrimitive(form(val U)));
+}
+# FIXME: anchor
 constraint Eq {
   extend EqWith(Self);
 }
 ```
 
-Given `x: T` and `y: U`:
+The `==` and `!=` operators are rewritten as follows:
 
--   The expression `x == y` calls `x.(EqWith(U).Equal)(y)`.
--   The expression `x != y` calls `x.(EqWith(U).NotEqual)(y)`.
+-   The expression `x == y` calls `x.(EqWithPrimitive(formof(y)).Equal)(y)`.
+-   The expression `x != y` calls `x.(EqWithPrimitive(formof(y)).NotEqual)(y)`.
 
 ```
 class Path {
@@ -283,6 +291,10 @@ class Path {
   }
 }
 ```
+
+TODO: The following needs to be updated to reflect
+[proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389), to
+use `anchor` instead of `like`.
 
 The `EqWith` overload is selected without considering possible implicit
 conversions. To permit implicit conversions in the operands of an `==` overload,
@@ -353,23 +365,34 @@ choice Ordering {
   Greater,
   Incomparable
 }
-interface OrderedWith(U:! type) {
-  fn Compare(self, u: U) -> Ordering;
-  default fn Less(self, u: U) -> bool {
+interface OrderedWithPrimitive
+    [implicit_into Self:! Core.Form]
+    (implicit_into U:! Core.Form) {
+  fn Compare(self:? Self, u:? U) -> Ordering;
+  default fn Less(self:? Self, u:? U) -> bool {
     return self.Compare(u) == Ordering.Less;
   }
-  default fn LessOrEquivalent(self, u: U) -> bool {
+  default fn LessOrEquivalent
+      (self:? Self, u:? U) -> bool {
     let c: Ordering = self.Compare(u);
-    return c == Ordering.Less or c == Ordering.Equivalent;
+    return c == Ordering.Less
+        or c == Ordering.Equivalent;
   }
-  default fn Greater(self, u: U) -> bool {
+  default fn Greater(self:? Self, u:? U) -> bool {
     return self.Compare(u) == Ordering.Greater;
   }
-  default fn GreaterOrEquivalent(self, u: U) -> bool {
+  default fn GreaterOrEquivalent
+      (self:? Self, u:? U) -> bool {
     let c: Ordering = self.Compare(u);
-    return c == Ordering.Greater or c == Ordering.Equivalent;
+    return c == Ordering.Greater
+        or c == Ordering.Equivalent;
   }
 }
+constraint OrderedWith(U:! type) {
+  extend require impls
+      LetSelf(OrderedWithPrimitive(form(val U)));
+}
+// FIXME: anchor
 constraint Ordered {
   extend OrderedWith(Self);
 }
@@ -381,12 +404,15 @@ impl Ordering as Ordered;
 
 **TODO:** Revise the above when we have a concrete design for enumerated types.
 
-Given `x: T` and `y: U`:
+The comparison operators are rewritten as follows:
 
--   The expression `x < y` calls `x.(OrderedWith(U).Less)(y)`.
--   The expression `x <= y` calls `x.(OrderedWith(U).LessOrEquivalent)(y)`.
--   The expression `x > y` calls `x.(OrderedWith(U).Greater)(y)`.
--   The expression `x >= y` calls `x.(OrderedWith(U).GreaterOrEquivalent)(y)`.
+-   The expression `x < y` calls `x.(OrderedWithPrimitive(formof(y)).Less)(y)`.
+-   The expression `x <= y` calls
+    `x.(OrderedWithPrimitive(formof(y)).LessOrEquivalent)(y)`.
+-   The expression `x > y` calls
+    `x.(OrderedWithPrimitive(formof(y)).Greater)(y)`.
+-   The expression `x >= y` calls
+    `x.(OrderedWithPrimitive(formof(y)).GreaterOrEquivalent)(y)`.
 
 For example:
 
@@ -526,3 +552,5 @@ in general. That decision is left to a future proposal.
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

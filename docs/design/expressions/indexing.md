@@ -21,27 +21,33 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon supports indexing using the conventional `a[i]` subscript syntax. When
-`a` is a
-[durable reference expression](/docs/design/values.md#durable-reference-expressions),
-the result of subscripting is also a durable reference expression, but when `a`
-is a [value expression](/docs/design/values.md#value-expressions), the result
-can be a durable reference expression or a value expression, depending on which
-interface the type implements:
+`a` is a [value expression](/docs/design/values.md#value-expressions), the
+result can be a durable reference expression or a value expression, depending on
+which constraints the type implements:
 
 -   If subscripting a value expression produces a value expression, as with an
-    array, the type should implement `IndexWith`.
+    array, the type should implement `IndexValWith` and `IndexRefWith`. Types
+    that implement both satisfy the `IndexWith` constraint.
 -   If subscripting a value expression produces a durable reference expression,
     as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
 
-`IndirectIndexWith` is a subtype of `IndexWith`, and subscript expressions are
-rewritten to method calls on `IndirectIndexWith` if the type is known to
-implement that interface, or to method calls on `IndexWith` otherwise.
+When `a` is a
+[durable reference expression](/docs/design/values.md#durable-reference-expressions),
+the result of subscripting is also a durable reference expression in either
+case.
 
-`IndirectIndexWith` provides a final blanket `impl` of `IndexWith`, so a type
-can implement at most one of those two interfaces.
+Any type that implements `IndirectIndexWith` automatically also implements
+`IndexWith`.
 
-The `Ref` methods of these interfaces, which are used to form durable reference
-expressions on indexing, must return by `ref`.
+Other behaviors can be accomplished by implementing the underlying interface
+`IndexWithPrimitive`.
+
+`IndirectIndexWith` overlaps and conflicts with `IndexValWith`, so a type can
+implement at most one of those two constraints.
+
+The `Ref` methods of `IndexRefWith` and `IndirectIndexWith`, which are used to
+form durable reference expressions on indexing, return by `ref`. The
+`IndexValWith` interface has an `At` method that returns by value.
 
 ## Details
 
@@ -49,52 +55,91 @@ A subscript expression has the form "_lhs_ `[` _index_ `]`". As in C++, this
 syntax has the same precedence as `.`, `->`, and function calls, and associates
 left-to-right with all of them.
 
-Its semantics are defined in terms of the following interfaces:
+Its semantics are defined in terms of the following form interface:
 
+```carbon
+package Core;
+
+interface IndexWithPrimitive
+    [implicit_into anchor Self:! Form]
+    (implicit_into Subscript:! Form) {
+  let implicit_from ResultForm:! Form;
+  fn Op(bound self:? Self, subscript:? Subscript)
+      ->? ResultForm;
+}
 ```
-interface IndexWith(SubscriptType:! type) {
+
+The expression "_lhs_ `[` _index_ `]`" is rewritten to "_lhs_
+`.(IndexWithPrimitive(formof(` _index_ `)).Op)(` _index_ `)`".
+
+The named constraint `IndexWith` covers the case of indexing into an object that
+owns the storage for its elements, like an array or C++'s `std::vector`:
+
+```carbon
+// `lhs[index]` is a value expression when `lhs`
+// is a value expression.
+constraint IndexValWith(SubscriptType:! type) {
   let ElementType:! type;
-  fn At(bound self, subscript: SubscriptType) -> val ElementType;
-  fn Ref(bound ref self, subscript: SubscriptType) -> ref ElementType;
+
+  require form(val Self) impls
+     IndexWithPrimitive(form(val SubscriptType))
+     where .ResultForm = form(val ElementType);
+  alias At = LetSelf(IndexWithPrimitive(
+      form(val SubscriptType))).Op;
 }
 
-interface IndirectIndexWith(SubscriptType:! type) {
-  require Self impls IndexWith(SubscriptType);
-  fn Ref(bound self, subscript: SubscriptType) -> ref ElementType;
+// `lhs[index]` is a ref expression when `lhs`
+// is a ref expression.
+constraint IndexRefWith(SubscriptType:! type) {
+  let ElementType:! type;
+
+  require form(ref Self) impls
+     IndexWithPrimitive(form(val SubscriptType))
+     where .ResultForm = form(ref ElementType);
+  alias Ref = RefSelf(IndexWithPrimitive(
+      form(val SubscriptType))).Op;
 }
-```
 
-A subscript expression where _lhs_ has type `T` and _index_ has type `I` is
-rewritten based on the expression category of _lhs_ and whether `T` is known to
-implement `IndirectIndexWith(I)`:
-
--   If `T` implements `IndirectIndexWith(I)`, the expression is rewritten to
-    "`(` _lhs_ `).(IndirectIndexWith(I).Ref)(` _index_ `)`".
--   Otherwise, if _lhs_ is a
-    [_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
-    the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).Ref)(` _index_
-    `)`".
--   Otherwise, the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).At)(`
-    _index_ `)`".
-
-`IndirectIndexWith` provides a blanket `final impl` for `IndexWith`:
-
-```
-final impl forall
-    [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
-    T as IndexWith(SubscriptType) {
-  where ElementType = T.(IndirectIndexWith(SubscriptType).ElementType);
-  fn At(bound self, subscript: SubscriptType) -> val ElementType {
-    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
-  }
-  fn Ref(bound ref self, subscript: SubscriptType) -> ref ElementType {
-    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
+// `lhs[index]` is a reference expression or value
+// depending on the category of `lhs`.
+constraint IndexWith
+    [Self:! NoVarForm](SubscriptType:! type) {
+  let ElementType:! type;
+  match_first {
+    extend require impls IndexRefWith(SubscriptType)
+        where .ElementType = ElementType;
+    extend require impls IndexValWith(SubscriptType)
+        where .ElementType = ElementType;
   }
 }
 ```
 
-Thus, a type that implements `IndirectIndexWith` need not, and cannot, provide
-its own definitions of `IndexWith.At` and `IndexWith.Ref`.
+Note that `IndexWith` may be used as parameter's constraint, but can't be
+directly implemented, since Carbon doesn't support implementing multiple
+interfaces together (see
+[leads issue #4566: Implementing multiple interfaces with a single `impl` definition](https://github.com/carbon-language/carbon-lang/issues/4566)
+and
+[proposal #5168: Forward `impl` declaration of an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/5168)).
+
+```carbon
+// `lhs[index]` is always reference expression, even
+// when `lhs` is a value.
+constraint IndirectIndexWith(SubscriptType:! type) {
+  let ElementType:! type;
+
+  require form(val Self) impls
+     IndexWithPrimitive(form(val SubscriptType))
+     where .ResultForm = form(ref ElementType);
+  alias Ref = LetSelf(IndexWithPrimitive(
+      form(val SubscriptType))).Op;
+}
+```
+
+Note that both `IndexValWith` and `IndexIndirectWith` require
+`form(val Self) as IndexWithPrimitive(form(val SubscriptType))`, with different
+result forms, and so conflict. However, a type that defines an `impl` of
+`IndirectIndexWith` will also satisfy the `IndexValWith`, `IndexRefWith`, and
+`IndexWith` constraints due to implicit conversions.
 
 ### Examples
 
@@ -102,9 +147,12 @@ An array type could implement subscripting like so:
 
 ```
 class Array(template T:! type) {
-  impl as IndexWith(like i64) {
-    let ElementType:! type = T;
+  impl as IndexValWith(i64) {
+    where ElementType = T;
     fn At(bound self, subscript: i64) -> val T;
+  }
+  impl as IndexRefWith(i64) {
+    where ElementType = T;
     fn Ref(bound ref self, subscript: i64) -> ref T;
   }
 }
@@ -114,9 +162,9 @@ And a type such as `std::span` could look like this:
 
 ```
 class Span(T:! type) {
-  impl as IndirectIndexWith(like i64) {
-    let ElementType:! type = T;
-    fn Ref(bound ref self, subscript: i64) -> ref T;
+  impl as IndirectIndexWith(i64) {
+    where ElementType = T;
+    fn Ref(bound self, subscript: i64) -> ref T;
   }
 }
 ```
@@ -135,3 +183,5 @@ class Span(T:! type) {
     [#2274: Subscript syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2274)
 -   Proposal
     [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

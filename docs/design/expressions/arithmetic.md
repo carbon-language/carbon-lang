@@ -191,18 +191,39 @@ Arithmetic operators can be provided for user-defined types by implementing the
 following family of interfaces:
 
 ```
+package Core;
+
 // Unary `-`.
-interface Negate {
-  default let Result:! type = Self;
-  fn Op(self) -> Result;
+interface NegatePrimitive[implicit_into anchor Self:! Form] {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(bound self:? Self)
+      ->? ResultForm;
+
+}
+constraint Negate {
+  let Result:! type;
+  extend require form(val Self) impls
+      NegatePrimitive
+      where .ResultForm = form(var Result);
 }
 ```
 
 ```
 // Binary `+`.
-interface AddWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op(self, other: U) -> Result;
+interface AddWithPrimitive
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(self:? Self, other:? U)
+      ->? ResultForm;
+}
+constraint AddWith(U:! type) {
+  let Result:! type;
+  extend require form(val Self) impls
+      AddWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Add {
   extend AddWith(Self) where .Result = Self;
@@ -211,9 +232,19 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op(self, other: U) -> Result;
+interface SubWithPrimitive
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(self:? Self, other:? U)
+      ->? ResultForm;
+}
+constraint SubWith(U:! type) {
+  let Result:! type;
+  extend require form(val Self) impls
+      SubWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Sub {
   extend SubWith(Self) where .Result = Self;
@@ -222,9 +253,19 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op(self, other: U) -> Result;
+interface MulWithPrimitive
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(self:? Self, other:? U)
+      ->? ResultForm;
+}
+constraint MulWith(U:! type) {
+  let Result:! type;
+  extend require form(val Self) impls
+      MulWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Mul {
   extend MulWith(Self) where .Result = Self;
@@ -233,9 +274,19 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op(self, other: U) -> Result;
+interface DivWithPrimitive
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(self:? Self, other:? U)
+      ->? ResultForm;
+}
+constraint DivWith(U:! type) {
+  let Result:! type;
+  extend require form(val Self) impls
+      DivWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Div {
   extend DivWith(Self) where .Result = Self;
@@ -244,23 +295,38 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op(self, other: U) -> Result;
+interface ModWithPrimitive
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
+      = form(var Self.type);
+  fn Op(self:? Self, other:? U)
+      ->? ResultForm;
+}
+constraint ModWith(U:! type) {
+  let Result:! type;
+  extend require form(val Self) impls
+      ModWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Mod {
   extend ModWith(Self) where .Result = Self;
 }
 ```
 
-Given `x: T` and `y: U`:
+These interfaces are used to rewrite uses of arithmetic operators:
 
--   The expression `-x` is rewritten to `x.(Negate.Op)()`.
--   The expression `x + y` is rewritten to `x.(AddWith(U).Op)(y)`.
--   The expression `x - y` is rewritten to `x.(SubWith(U).Op)(y)`.
--   The expression `x * y` is rewritten to `x.(MulWith(U).Op)(y)`.
--   The expression `x / y` is rewritten to `x.(DivWith(U).Op)(y)`.
--   The expression `x % y` is rewritten to `x.(ModWith(U).Op)(y)`.
+-   The expression `-x` is rewritten to `x.(NegatePrimitive.Op)()`.
+-   The expression `x + y` is rewritten to
+    `x.(AddWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x - y` is rewritten to
+    `x.(SubWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x * y` is rewritten to
+    `x.(MulWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x / y` is rewritten to
+    `x.(DivWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x % y` is rewritten to
+    `x.(ModWithPrimitive(formof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -289,3 +355,5 @@ to give the semantics described above.
     [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

@@ -154,6 +154,20 @@ The following conversion is supported by `as`:
 -   `T` -> `U` if `T` is
     [compatible](../generics/terminology.md#compatible-types) with `U`.
 
+This conversion preserves category. In this example,
+
+```carbon
+class C {}
+class A {
+  adapt C;
+}
+
+var x: C = {};
+```
+
+since `x` is a reference expression of type `C` and `A` is an adapter for `C`,
+`x as A` is a reference expression as well.
+
 **Future work:** We may need a mechanism to restrict which conversions between
 adapters are permitted and which code can perform them. Some of the conversions
 permitted by this rule may only be allowed in certain contexts.
@@ -161,15 +175,32 @@ permitted by this rule may only be allowed in certain contexts.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `As` interface:
+[classes](../classes.md) by implementing the `AsPrimitive` form interface or
+`As` named constraint:
 
-```
-interface As(Dest:! type) {
-  fn Convert(self) -> Dest;
+```carbon
+package Core;
+
+interface AsPrimitive[implicit_into Self:! Form]
+    (Dest:! type) {
+  // FIXME: Need to get the unqualified version
+  // of `Dest` without `const`/`partial` here.
+  let implicit_from ResultForm:! Form where .type = Dest;
+  fn Convert(bound self:? Self)
+      ->? ResultForm;
+}
+constraint As(Dest:! type) {
+  extend require form(val Self) as
+      AsPrimitive(Dest)
+      where .ResultForm = form(var Dest);
 }
 ```
 
-The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
+The expression `x as U` is rewritten to `x.(AsPrimitive(U).Convert)()`. Observe
+that the destination type is specified as an input parameter, but the resulting
+form is specified as an associated constant by the `impl` (though it is required
+to have a matching type). This allows
+[conversion between compatible types](#compatible-types) to preserve category.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
@@ -187,3 +218,5 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

@@ -207,15 +207,29 @@ conversion.
 ## Extensibility
 
 Implicit conversions can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `ImplicitAs` interface, which
-extends
-[the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
+[classes](../classes.md) by implementing the `ImplicitAsPrimitive` interface,
+which extends
+[the `AsPrimitive` interface used to implement `as` expressions](as_expressions.md#extensibility),
+or the `ImplicitAs` named constraint:
 
 ```
-interface ImplicitAs(Dest:! type) {
-  extend As(Dest);
-  // Inherited from As(Dest):
-  // fn Convert(self) -> Dest;
+package Core;
+
+// FIXME: `implicit_into` is concerning here, since we
+// generally only want to perform a single implicit
+// type conversion. Perhaps it should have `anchor`?
+interface ImplicitAsPrimitive
+    [implicit_into Self:! Form](Dest:! type) {
+  final extend impl as AsPrimitive(Dest);
+  // Inherited from AsPrimitive(Dest):
+  // let implicit_from ResultForm:! Form where .type = Dest;
+  // fn Convert(bound self:? Self)
+  //     ->? ResultForm;
+}
+constraint ImplicitAs(Dest:! type) {
+  extend require form(val Self) as
+      ImplicitAsPrimitive(Dest)
+      where .ResultForm = form(var Dest);
 }
 ```
 
@@ -244,3 +258,5 @@ types.
     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

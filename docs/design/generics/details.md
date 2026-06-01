@@ -4672,7 +4672,9 @@ of type structures, which is resolved using this rule:
 >     prioritization block are required to have the same type structure, at a
 >     cost in expressivity. This option was not chosen since it wouldn't support
 >     the different type structures created by the
->     [`like` operator](#like-operator-for-implicit-conversions).
+>     [`like` operator](#like-operator-for-implicit-conversions). TODO: Update
+>     to reflect
+>     [proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389).
 >
 > To see the difference from the first option, consider two libraries with type
 > structures as follows:
@@ -6201,6 +6203,9 @@ if (positive > even) { ... }
 ```
 
 ### `like` operator for implicit conversions
+
+> **TODO:** Update to reflect
+> [proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389).
 
 Because the type of the operands is directly used to select the operator
 interface implementation, there are no automatic implicit conversions, unlike
