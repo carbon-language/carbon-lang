@@ -159,11 +159,9 @@ var b: u32 = a & ^4;
 
 ### Character types
 
-The only implicit conversion available for character types is from
-`Core.CharLiteral` to other character types. This conversion is only valid for
-code points that can be represented in the target character type.
-
-For now we have only defined `char`, which represents a single UTF-8 code unit
+A character constant can be implicitly converted to any non-literal character
+type in which that value can be exactly represented. For now the only non-literal
+character type is `char`, which represents a single UTF-8 code unit
 in a single byte, and so implicit conversion from `Core.CharLiteral` to `char`
 is only valid for values in the range `0x00`..`0x7F`.
 
