@@ -197,7 +197,7 @@ class E {
 library "[[@TEST_NAME]]";
 
 interface J {
-  fn F[unused self: Self]();
+  fn F[self: Self]();
 }
 
 class E {

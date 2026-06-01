@@ -245,11 +245,14 @@ static auto BuildDestroyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Destroy` for enums and other trivially
-  // destructible types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
     return SemIR::InstId::None;
+  }
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface_id);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 

@@ -213,6 +213,20 @@ class File : public Printable<File> {
     return field_initializers_;
   }
 
+  // If `class_id` is an imported C++ class, appends the Clang mangled name of
+  // its type to `out` and returns true. Otherwise returns false and leaves
+  // `out` unchanged.
+  //
+  // A Carbon class is uniquely identified by its name and parent scope, but
+  // that is not true of imported C++ classes: different class template
+  // specializations (and other cases such as types in anonymous namespaces)
+  // can share a Carbon name and scope. The Clang mangled name is the canonical
+  // identity of the C++ type, used to tell such classes apart when
+  // fingerprinting -- and hence mangling -- them. It is computed on demand
+  // rather than stored.
+  auto AppendCppMangledTypeName(ClassId class_id, llvm::raw_ostream& out) const
+      -> bool;
+
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }

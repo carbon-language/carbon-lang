@@ -248,9 +248,7 @@ def get_missing_deps(
                 if is_system_include:
                     # Don't error for unexpected system includes.
                     continue
-                exit(
-                    f"Missing rule for " f"'{full_include}' in '{source_file}'"
-                )
+                exit(f"Missing rule for '{full_include}' in '{source_file}'")
             rule_choice = header_to_rule_map[header]
             if not rule_choice.rules.intersection(rule.deps):
                 if len(rule_choice.rules) > 1:

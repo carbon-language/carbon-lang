@@ -1003,16 +1003,16 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_1.526: %Cpp.long_long = int_value 1 [concrete]
 // CHECK:STDOUT:   %LongLongResult: type = class_type @LongLongResult [concrete]
-// CHECK:STDOUT:   %pattern_type.a44: type = pattern_type %LongLongResult [concrete]
+// CHECK:STDOUT:   %pattern_type.f75: type = pattern_type %LongLongResult [concrete]
 // CHECK:STDOUT:   %PassLongLong.cpp_overload_set.type: type = cpp_overload_set_type @PassLongLong.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PassLongLong.cpp_overload_set.value: %PassLongLong.cpp_overload_set.type = cpp_overload_set_value @PassLongLong.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.a89: type = ptr_type %LongLongResult [concrete]
+// CHECK:STDOUT:   %ptr.d67: type = ptr_type %LongLongResult [concrete]
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.type.322742.1: type = fn_type @PassLongLong__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.ad287c.1: %PassLongLong__carbon_thunk.type.322742.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c8a: type = pattern_type %i64 [concrete]
 // CHECK:STDOUT:   %LongResult: type = class_type @LongResult [concrete]
-// CHECK:STDOUT:   %pattern_type.5f3: type = pattern_type %LongResult [concrete]
-// CHECK:STDOUT:   %ptr.618: type = ptr_type %LongResult [concrete]
+// CHECK:STDOUT:   %pattern_type.32c: type = pattern_type %LongResult [concrete]
+// CHECK:STDOUT:   %ptr.70a: type = ptr_type %LongResult [concrete]
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.type.322742.2: type = fn_type @PassLongLong__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.ad287c.2: %PassLongLong__carbon_thunk.type.322742.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
@@ -1135,13 +1135,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %.loc15_38.2: %Cpp.long_long = converted %int_1.loc15, %.loc15_38.1 [concrete = constants.%int_1.526]
 // CHECK:STDOUT:   %cpp_long_long: %Cpp.long_long = value_binding cpp_long_long, %.loc15_38.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_long_long_result.patt: %pattern_type.a44 = value_binding_pattern cpp_long_long_result [concrete]
+// CHECK:STDOUT:     %cpp_long_long_result.patt: %pattern_type.f75 = value_binding_pattern cpp_long_long_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16_57: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassLongLong.ref.loc16: %PassLongLong.cpp_overload_set.type = name_ref PassLongLong, imports.%PassLongLong.cpp_overload_set.value [concrete = constants.%PassLongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %cpp_long_long.ref.loc16: %Cpp.long_long = name_ref cpp_long_long, %cpp_long_long
 // CHECK:STDOUT:   %.loc16_87.1: ref %LongLongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc16: %ptr.a89 = addr_of %.loc16_87.1
+// CHECK:STDOUT:   %addr.loc16: %ptr.d67 = addr_of %.loc16_87.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.c1f2e9.1(%cpp_long_long.ref.loc16, %addr.loc16)
 // CHECK:STDOUT:   %.loc16_87.2: init %LongLongResult to %.loc16_87.1 = mark_in_place_init %PassLongLong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_39: type = splice_block %LongLongResult.ref.loc16 [concrete = constants.%LongLongResult] {
@@ -1162,13 +1162,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_compat_long_long: %Cpp.long_long = value_binding cpp_compat_long_long, %cpp_long_long.ref.loc18
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_compat_long_long_result.patt: %pattern_type.a44 = value_binding_pattern cpp_compat_long_long_result [concrete]
+// CHECK:STDOUT:     %cpp_compat_long_long_result.patt: %pattern_type.f75 = value_binding_pattern cpp_compat_long_long_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc19_64: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassLongLong.ref.loc19: %PassLongLong.cpp_overload_set.type = name_ref PassLongLong, imports.%PassLongLong.cpp_overload_set.value [concrete = constants.%PassLongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %cpp_compat_long_long.ref: %Cpp.long_long = name_ref cpp_compat_long_long, %cpp_compat_long_long
 // CHECK:STDOUT:   %.loc19_101.1: ref %LongLongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc19: %ptr.a89 = addr_of %.loc19_101.1
+// CHECK:STDOUT:   %addr.loc19: %ptr.d67 = addr_of %.loc19_101.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.c1f2e9.1(%cpp_compat_long_long.ref, %addr.loc19)
 // CHECK:STDOUT:   %.loc19_101.2: init %LongLongResult to %.loc19_101.1 = mark_in_place_init %PassLongLong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_46: type = splice_block %LongLongResult.ref.loc19 [concrete = constants.%LongLongResult] {
@@ -1188,13 +1188,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %i64.loc21_19: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %carbon_i64: %i64 = value_binding carbon_i64, %.loc21_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_i64_result.patt: %pattern_type.5f3 = value_binding_pattern carbon_i64_result [concrete]
+// CHECK:STDOUT:     %carbon_i64_result.patt: %pattern_type.32c = value_binding_pattern carbon_i64_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc22_50: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassLongLong.ref.loc22: %PassLongLong.cpp_overload_set.type = name_ref PassLongLong, imports.%PassLongLong.cpp_overload_set.value [concrete = constants.%PassLongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %carbon_i64.ref: %i64 = name_ref carbon_i64, %carbon_i64
 // CHECK:STDOUT:   %.loc22_77.1: ref %LongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc22: %ptr.618 = addr_of %.loc22_77.1
+// CHECK:STDOUT:   %addr.loc22: %ptr.70a = addr_of %.loc22_77.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.c1f2e9.2(%carbon_i64.ref, %addr.loc22)
 // CHECK:STDOUT:   %.loc22_77.2: init %LongResult to %.loc22_77.1 = mark_in_place_init %PassLongLong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_36: type = splice_block %LongResult.ref [concrete = constants.%LongResult] {
@@ -3556,10 +3556,10 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5d7: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.3ce [concrete]
 // CHECK:STDOUT:   %int_1.c4d: %Cpp.unsigned_long_long = int_value 1 [concrete]
 // CHECK:STDOUT:   %ULongLongResult: type = class_type @ULongLongResult [concrete]
-// CHECK:STDOUT:   %pattern_type.30b: type = pattern_type %ULongLongResult [concrete]
+// CHECK:STDOUT:   %pattern_type.b26: type = pattern_type %ULongLongResult [concrete]
 // CHECK:STDOUT:   %PassULongLong.cpp_overload_set.type: type = cpp_overload_set_type @PassULongLong.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PassULongLong.cpp_overload_set.value: %PassULongLong.cpp_overload_set.type = cpp_overload_set_value @PassULongLong.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.089: type = ptr_type %ULongLongResult [concrete]
+// CHECK:STDOUT:   %ptr.040: type = ptr_type %ULongLongResult [concrete]
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.type.5cbe77.1: type = fn_type @PassULongLong__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.fb9213.1: %PassULongLong__carbon_thunk.type.5cbe77.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.bb8: type = pattern_type %u64 [concrete]
@@ -3577,8 +3577,8 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %bound_method.818: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.21a: %u64 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ULongResult: type = class_type @ULongResult [concrete]
-// CHECK:STDOUT:   %pattern_type.423: type = pattern_type %ULongResult [concrete]
-// CHECK:STDOUT:   %ptr.cd3: type = ptr_type %ULongResult [concrete]
+// CHECK:STDOUT:   %pattern_type.66d: type = pattern_type %ULongResult [concrete]
+// CHECK:STDOUT:   %ptr.175: type = ptr_type %ULongResult [concrete]
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.type.5cbe77.2: type = fn_type @PassULongLong__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.fb9213.2: %PassULongLong__carbon_thunk.type.5cbe77.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
@@ -3703,13 +3703,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %.loc15_56.2: %Cpp.unsigned_long_long = converted %int_1.loc15, %.loc15_56.1 [concrete = constants.%int_1.c4d]
 // CHECK:STDOUT:   %cpp_unsigned_long_long: %Cpp.unsigned_long_long = value_binding cpp_unsigned_long_long, %.loc15_56.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_unsigned_long_long_result.patt: %pattern_type.30b = value_binding_pattern cpp_unsigned_long_long_result [concrete]
+// CHECK:STDOUT:     %cpp_unsigned_long_long_result.patt: %pattern_type.b26 = value_binding_pattern cpp_unsigned_long_long_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16_67: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassULongLong.ref.loc16: %PassULongLong.cpp_overload_set.type = name_ref PassULongLong, imports.%PassULongLong.cpp_overload_set.value [concrete = constants.%PassULongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %cpp_unsigned_long_long.ref.loc16: %Cpp.unsigned_long_long = name_ref cpp_unsigned_long_long, %cpp_unsigned_long_long
 // CHECK:STDOUT:   %.loc16_107.1: ref %ULongLongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc16: %ptr.089 = addr_of %.loc16_107.1
+// CHECK:STDOUT:   %addr.loc16: %ptr.040 = addr_of %.loc16_107.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.1b9bd8.1(%cpp_unsigned_long_long.ref.loc16, %addr.loc16)
 // CHECK:STDOUT:   %.loc16_107.2: init %ULongLongResult to %.loc16_107.1 = mark_in_place_init %PassULongLong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_48: type = splice_block %ULongLongResult.ref.loc16 [concrete = constants.%ULongLongResult] {
@@ -3730,13 +3730,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_compat_ulong_long: %Cpp.unsigned_long_long = value_binding cpp_compat_ulong_long, %cpp_unsigned_long_long.ref.loc18
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_compat_ulong_long_result.patt: %pattern_type.30b = value_binding_pattern cpp_compat_ulong_long_result [concrete]
+// CHECK:STDOUT:     %cpp_compat_ulong_long_result.patt: %pattern_type.b26 = value_binding_pattern cpp_compat_ulong_long_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc19_66: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassULongLong.ref.loc19: %PassULongLong.cpp_overload_set.type = name_ref PassULongLong, imports.%PassULongLong.cpp_overload_set.value [concrete = constants.%PassULongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %cpp_compat_ulong_long.ref: %Cpp.unsigned_long_long = name_ref cpp_compat_ulong_long, %cpp_compat_ulong_long
 // CHECK:STDOUT:   %.loc19_105.1: ref %ULongLongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc19: %ptr.089 = addr_of %.loc19_105.1
+// CHECK:STDOUT:   %addr.loc19: %ptr.040 = addr_of %.loc19_105.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.1b9bd8.1(%cpp_compat_ulong_long.ref, %addr.loc19)
 // CHECK:STDOUT:   %.loc19_105.2: init %ULongLongResult to %.loc19_105.1 = mark_in_place_init %PassULongLong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_47: type = splice_block %ULongLongResult.ref.loc19 [concrete = constants.%ULongLongResult] {
@@ -3760,13 +3760,13 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   %.loc21_25.2: %u64 = converted %int_1.loc21, %.loc21_25.1 [concrete = constants.%int_1.21a]
 // CHECK:STDOUT:   %carbon_u64: %u64 = value_binding carbon_u64, %.loc21_25.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_u64_result.patt: %pattern_type.423 = value_binding_pattern carbon_u64_result [concrete]
+// CHECK:STDOUT:     %carbon_u64_result.patt: %pattern_type.66d = value_binding_pattern carbon_u64_result [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc22_51: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %PassULongLong.ref.loc22: %PassULongLong.cpp_overload_set.type = name_ref PassULongLong, imports.%PassULongLong.cpp_overload_set.value [concrete = constants.%PassULongLong.cpp_overload_set.value]
 // CHECK:STDOUT:   %carbon_u64.ref: %u64 = name_ref carbon_u64, %carbon_u64
 // CHECK:STDOUT:   %.loc22_79.1: ref %ULongResult = temporary_storage
-// CHECK:STDOUT:   %addr.loc22: %ptr.cd3 = addr_of %.loc22_79.1
+// CHECK:STDOUT:   %addr.loc22: %ptr.175 = addr_of %.loc22_79.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.1b9bd8.2(%carbon_u64.ref, %addr.loc22)
 // CHECK:STDOUT:   %.loc22_79.2: init %ULongResult to %.loc22_79.1 = mark_in_place_init %PassULongLong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_36: type = splice_block %ULongResult.ref [concrete = constants.%ULongResult] {

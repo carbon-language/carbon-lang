@@ -8,13 +8,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from pathlib import Path
-import subprocess
 import os
 import platform
+import subprocess
 import sys
 import textwrap
 import unittest
+from pathlib import Path
+
 from bazel_tools.tools.python.runfiles import runfiles
 
 

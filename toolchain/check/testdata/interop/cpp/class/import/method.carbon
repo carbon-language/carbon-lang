@@ -273,7 +273,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.749: type = ptr_type %HasQualifiers [concrete]
+// CHECK:STDOUT:   %ptr.3f7: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.value: %HasQualifiers.const_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const_this__carbon_thunk.type: type = fn_type @const_this__carbon_thunk [concrete]
@@ -303,16 +303,16 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %HasQualifiers.HasQualifiers.type: type = fn_type @HasQualifiers.HasQualifiers [concrete]
 // CHECK:STDOUT:   %HasQualifiers.HasQualifiers: %HasQualifiers.HasQualifiers.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const.5f9: type = const_type %HasQualifiers [concrete]
-// CHECK:STDOUT:   %ptr.07f: type = ptr_type %const.5f9 [concrete]
+// CHECK:STDOUT:   %const.0c0: type = const_type %HasQualifiers [concrete]
+// CHECK:STDOUT:   %ptr.aa5: type = ptr_type %const.0c0 [concrete]
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk.type: type = fn_type @HasQualifiers__carbon_thunk [concrete]
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk: %HasQualifiers__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.Op.type.43d658.1: type = fn_type @HasQualifiers.Op.1 [concrete]
 // CHECK:STDOUT:   %HasQualifiers.Op.cc70d5.1: %HasQualifiers.Op.type.43d658.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b8d: <witness> = custom_witness (%HasQualifiers.Op.cc70d5.1), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.041: %Copy.type = facet_value %HasQualifiers, (%custom_witness.b8d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.1e0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.041) [concrete]
-// CHECK:STDOUT:   %.12f8: type = fn_type_with_self_type %Copy.WithSelf.Op.type.1e0, %Copy.facet.041 [concrete]
+// CHECK:STDOUT:   %Copy.facet.5ba: %Copy.type = facet_value %HasQualifiers, (%custom_witness.b8d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.9ed: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.5ba) [concrete]
+// CHECK:STDOUT:   %.c31: type = fn_type_with_self_type %Copy.WithSelf.Op.type.9ed, %Copy.facet.5ba [concrete]
 // CHECK:STDOUT:   %HasQualifiers.cpp_destructor.type: type = fn_type @HasQualifiers.cpp_destructor [concrete]
 // CHECK:STDOUT:   %HasQualifiers.cpp_destructor: %HasQualifiers.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.Op.type.43d658.2: type = fn_type @HasQualifiers.Op.2 [concrete]
@@ -378,7 +378,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%v.param: %HasQualifiers, %p.param: %ptr.749) {
+// CHECK:STDOUT: fn @F(%v.param: %HasQualifiers, %p.param: %ptr.3f7) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref.loc10: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %const_this.ref.loc10: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
@@ -392,23 +392,23 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %const_ref_ref_this.ref.loc12: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = name_ref const_ref_ref_this, imports.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %v.ref.loc12, %const_ref_ref_this.ref.loc12
 // CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%const_ref_ref_this__carbon_thunk.decl(%v.ref.loc12)
-// CHECK:STDOUT:   %p.ref.loc14: %ptr.749 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref.loc14: %ptr.3f7 = name_ref p, %p
 // CHECK:STDOUT:   %.loc14: ref %HasQualifiers = deref %p.ref.loc14
 // CHECK:STDOUT:   %plain.ref.loc14: %HasQualifiers.plain.cpp_overload_set.type = name_ref plain, imports.%HasQualifiers.plain.cpp_overload_set.value [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14, %plain.ref.loc14
 // CHECK:STDOUT:   %HasQualifiers.plain.call.loc14: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl.3a93fc.1(%.loc14)
-// CHECK:STDOUT:   %p.ref.loc15: %ptr.749 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref.loc15: %ptr.3f7 = name_ref p, %p
 // CHECK:STDOUT:   %.loc15: ref %HasQualifiers = deref %p.ref.loc15
 // CHECK:STDOUT:   %ref_this.ref: %HasQualifiers.ref_this.cpp_overload_set.type = name_ref ref_this, imports.%HasQualifiers.ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15, %ref_this.ref
 // CHECK:STDOUT:   %HasQualifiers.ref_this.call: init %empty_tuple.type = call imports.%HasQualifiers.ref_this.decl(%.loc15)
-// CHECK:STDOUT:   %p.ref.loc16: %ptr.749 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref.loc16: %ptr.3f7 = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_4.1: ref %HasQualifiers = deref %p.ref.loc16
 // CHECK:STDOUT:   %const_this.ref.loc16: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_4.1, %const_this.ref.loc16
 // CHECK:STDOUT:   %.loc16_4.2: %HasQualifiers = acquire_value %.loc16_4.1
 // CHECK:STDOUT:   %const_this__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc16_4.2)
-// CHECK:STDOUT:   %p.ref.loc17: %ptr.749 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref.loc17: %ptr.3f7 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_4.1: ref %HasQualifiers = deref %p.ref.loc17
 // CHECK:STDOUT:   %const_ref_this.ref.loc17: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %.loc17_4.1, %const_ref_this.ref.loc17
@@ -446,16 +446,16 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc22_9: <bound method> = bound_method %.loc22_8.2, %ref_ref_this.ref
 // CHECK:STDOUT:   %.loc22_8.3: %HasQualifiers = acquire_value %.loc22_8.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc22: %.12f8 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%HasQualifiers.Op.cc70d5.1]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.c31 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%HasQualifiers.Op.cc70d5.1]
 // CHECK:STDOUT:   %bound_method.loc22_8: <bound method> = bound_method %.loc22_8.3, %impl.elem0.loc22
 // CHECK:STDOUT:   %.loc22_8.4: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Op.ref.loc22_8.1: %HasQualifiers.HasQualifiers.type = name_ref Op, imports.%HasQualifiers.HasQualifiers.decl [concrete = constants.%HasQualifiers.HasQualifiers]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc22_8.5: ref %HasQualifiers = value_as_ref %.loc22_8.3
-// CHECK:STDOUT:   %addr.loc22_8.1: %ptr.749 = addr_of %.loc22_8.5
-// CHECK:STDOUT:   %.loc22_8.6: %ptr.07f = as_compatible %addr.loc22_8.1
-// CHECK:STDOUT:   %.loc22_8.7: %ptr.07f = converted %addr.loc22_8.1, %.loc22_8.6
-// CHECK:STDOUT:   %addr.loc22_8.2: %ptr.749 = addr_of %self.var
+// CHECK:STDOUT:   %addr.loc22_8.1: %ptr.3f7 = addr_of %.loc22_8.5
+// CHECK:STDOUT:   %.loc22_8.6: %ptr.aa5 = as_compatible %addr.loc22_8.1
+// CHECK:STDOUT:   %.loc22_8.7: %ptr.aa5 = converted %addr.loc22_8.1, %.loc22_8.6
+// CHECK:STDOUT:   %addr.loc22_8.2: %ptr.3f7 = addr_of %self.var
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk.call: init %empty_tuple.type = call imports.%HasQualifiers__carbon_thunk.decl(%.loc22_8.7, %addr.loc22_8.2)
 // CHECK:STDOUT:   %.loc22_8.8: init %HasQualifiers to %self.var = mark_in_place_init %HasQualifiers__carbon_thunk.call
 // CHECK:STDOUT:   <elided>
@@ -497,7 +497,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NoRefQualifier: type = class_type @NoRefQualifier [concrete]
-// CHECK:STDOUT:   %ptr.3e3: type = ptr_type %NoRefQualifier [concrete]
+// CHECK:STDOUT:   %ptr.909: type = ptr_type %NoRefQualifier [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -516,7 +516,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.3: type = fn_type @Destroy.Op.loc8_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.3: %Destroy.Op.type.af7ec0.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %WithRefQualifier: type = class_type @WithRefQualifier [concrete]
-// CHECK:STDOUT:   %ptr.934: type = ptr_type %WithRefQualifier [concrete]
+// CHECK:STDOUT:   %ptr.c4e: type = ptr_type %WithRefQualifier [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.value: %WithRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.715f07.2: type = fn_type @F__carbon_thunk.2 [concrete]
@@ -550,7 +550,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFNoRefQualifier(%v.param: %NoRefQualifier, %p.param: %ptr.3e3) {
+// CHECK:STDOUT: fn @CallFNoRefQualifier(%v.param: %NoRefQualifier, %p.param: %ptr.909) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c6b = ref_binding_pattern a [concrete]
@@ -569,7 +569,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.663 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.143 = var %b.var_patt
-// CHECK:STDOUT:   %p.ref: %ptr.3e3 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.909 = name_ref p, %p
 // CHECK:STDOUT:   %.loc9_25: ref %NoRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %NoRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%NoRefQualifier.F.cpp_overload_set.value [concrete = constants.%NoRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_25, %F.ref.loc9
@@ -596,7 +596,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFWithRefQualifier(%v.param: %WithRefQualifier, %p.param: %ptr.934) {
+// CHECK:STDOUT: fn @CallFWithRefQualifier(%v.param: %WithRefQualifier, %p.param: %ptr.c4e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c6b = ref_binding_pattern a [concrete]
@@ -615,7 +615,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.663 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.143 = var %b.var_patt
-// CHECK:STDOUT:   %p.ref: %ptr.934 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.c4e = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_25: ref %WithRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc16: %WithRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%WithRefQualifier.F.cpp_overload_set.value [concrete = constants.%WithRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_25, %F.ref.loc16
@@ -643,7 +643,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Another: type = class_type @Another [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.3d0: type = ptr_type %ExplicitObjectParam [concrete]
+// CHECK:STDOUT:   %ptr.3e0: type = ptr_type %ExplicitObjectParam [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type: type = fn_type @F__carbon_thunk [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk: %F__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.G.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.G.cpp_overload_set [concrete]
@@ -652,7 +652,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %G__carbon_thunk: %G__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.H.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.H.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.H.cpp_overload_set.value: %ExplicitObjectParam.H.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.H.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.99e: type = ptr_type %Another [concrete]
+// CHECK:STDOUT:   %ptr.368: type = ptr_type %Another [concrete]
 // CHECK:STDOUT:   %H__carbon_thunk.type: type = fn_type @H__carbon_thunk [concrete]
 // CHECK:STDOUT:   %H__carbon_thunk: %H__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -691,7 +691,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F.ref: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %e.ref, %F.ref
 // CHECK:STDOUT:   %.loc8: ref %ExplicitObjectParam = value_as_ref %e.ref
-// CHECK:STDOUT:   %addr.loc8: %ptr.3d0 = addr_of %.loc8
+// CHECK:STDOUT:   %addr.loc8: %ptr.3e0 = addr_of %.loc8
 // CHECK:STDOUT:   %F__carbon_thunk.call: init %empty_tuple.type = call imports.%F__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -705,7 +705,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %H.ref: %ExplicitObjectParam.H.cpp_overload_set.type = name_ref H, imports.%ExplicitObjectParam.H.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.H.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %a.ref, %H.ref
 // CHECK:STDOUT:   %.loc10: ref %Another = value_as_ref %a.ref
-// CHECK:STDOUT:   %addr.loc10: %ptr.99e = addr_of %.loc10
+// CHECK:STDOUT:   %addr.loc10: %ptr.368 = addr_of %.loc10
 // CHECK:STDOUT:   %H__carbon_thunk.call: init %empty_tuple.type = call imports.%H__carbon_thunk.decl(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -720,12 +720,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Another: type = class_type @Another [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.3d0: type = ptr_type %ExplicitObjectParam [concrete]
+// CHECK:STDOUT:   %ptr.3e0: type = ptr_type %ExplicitObjectParam [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.715f07.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a50b67.1: %F__carbon_thunk.type.715f07.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.715f07.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a50b67.2: %F__carbon_thunk.type.715f07.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.99e: type = ptr_type %Another [concrete]
+// CHECK:STDOUT:   %ptr.368: type = ptr_type %Another [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.715f07.3: type = fn_type @F__carbon_thunk.3 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a50b67.3: %F__carbon_thunk.type.715f07.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -762,7 +762,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F.ref.loc8: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %e.ref, %F.ref.loc8
 // CHECK:STDOUT:   %.loc8: ref %ExplicitObjectParam = value_as_ref %e.ref
-// CHECK:STDOUT:   %addr.loc8: %ptr.3d0 = addr_of %.loc8
+// CHECK:STDOUT:   %addr.loc8: %ptr.3e0 = addr_of %.loc8
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.aca65c.1(%addr.loc8)
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -776,7 +776,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F.ref.loc10: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %a.ref, %F.ref.loc10
 // CHECK:STDOUT:   %.loc10: ref %Another = value_as_ref %a.ref
-// CHECK:STDOUT:   %addr.loc10: %ptr.99e = addr_of %.loc10
+// CHECK:STDOUT:   %addr.loc10: %ptr.368 = addr_of %.loc10
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.aca65c.3(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

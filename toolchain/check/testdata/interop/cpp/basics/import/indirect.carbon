@@ -218,9 +218,9 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %tuple.type.87c: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.e61: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.74a: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %ptr.bfb: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %ptr.4ff: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
 // CHECK:STDOUT:   %X__carbon_thunk: %X__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.544: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -277,8 +277,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.87c {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ax.patt: %pattern_type.e61 = ref_binding_pattern ax [concrete]
-// CHECK:STDOUT:     %ax.var_patt: %pattern_type.e61 = var_pattern %ax.patt [concrete]
+// CHECK:STDOUT:     %ax.patt: %pattern_type.74a = ref_binding_pattern ax [concrete]
+// CHECK:STDOUT:     %ax.var_patt: %pattern_type.74a = var_pattern %ax.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ax.var: ref %X = var %ax.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -290,7 +290,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_16.2(%int_1) [concrete = constants.%int_1.d5e]
 // CHECK:STDOUT:   %.loc9_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.d5e]
 // CHECK:STDOUT:   %.loc9_16.2: %i32 = converted %int_1, %.loc9_16.1 [concrete = constants.%int_1.d5e]
-// CHECK:STDOUT:   %addr: %ptr.bfb = addr_of %.loc9_3.1
+// CHECK:STDOUT:   %addr: %ptr.4ff = addr_of %.loc9_3.1
 // CHECK:STDOUT:   %X__carbon_thunk.call: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc9_16.2, %addr)
 // CHECK:STDOUT:   %.loc9_3.2: init %X to %.loc9_3.1 = mark_in_place_init %X__carbon_thunk.call
 // CHECK:STDOUT:   %.loc9_3.3: init %X = converted %int_1, %.loc9_3.2
@@ -331,8 +331,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Y.13e7b4.1: type = class_type @Y.1 [concrete]
-// CHECK:STDOUT:   %Y.elem.92b: type = unbound_element_type %Y.13e7b4.1, %i32 [concrete]
+// CHECK:STDOUT:   %Y.ef9: type = class_type @Y.1 [concrete]
+// CHECK:STDOUT:   %Y.elem.c50: type = unbound_element_type %Y.ef9, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
@@ -348,21 +348,21 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Y.13e7b4.2: type = class_type @Y.2 [concrete]
-// CHECK:STDOUT:   %Y.elem.8ad: type = unbound_element_type %Y.13e7b4.2, %Z [concrete]
+// CHECK:STDOUT:   %Y.235: type = class_type @Y.2 [concrete]
+// CHECK:STDOUT:   %Y.elem.f1e: type = unbound_element_type %Y.235, %Z [concrete]
 // CHECK:STDOUT:   %Z.Z.type: type = fn_type @Z.Z [concrete]
 // CHECK:STDOUT:   %Z.Z: %Z.Z.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const.dd4: type = const_type %Z [concrete]
-// CHECK:STDOUT:   %ptr.5fa: type = ptr_type %const.dd4 [concrete]
-// CHECK:STDOUT:   %ptr.6ce: type = ptr_type %Z [concrete]
+// CHECK:STDOUT:   %const.ab6: type = const_type %Z [concrete]
+// CHECK:STDOUT:   %ptr.bf9: type = ptr_type %const.ab6 [concrete]
+// CHECK:STDOUT:   %ptr.c6c: type = ptr_type %Z [concrete]
 // CHECK:STDOUT:   %Z__carbon_thunk.type: type = fn_type @Z__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Z__carbon_thunk: %Z__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.Op.type: type = fn_type @Z.Op [concrete]
 // CHECK:STDOUT:   %Z.Op: %Z.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.862: <witness> = custom_witness (%Z.Op), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.429: %Copy.type = facet_value %Z, (%custom_witness.862) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.873: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.429) [concrete]
-// CHECK:STDOUT:   %.5a8: type = fn_type_with_self_type %Copy.WithSelf.Op.type.873, %Copy.facet.429 [concrete]
+// CHECK:STDOUT:   %Copy.facet.916: %Copy.type = facet_value %Z, (%custom_witness.862) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8ae: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.916) [concrete]
+// CHECK:STDOUT:   %.158: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8ae, %Copy.facet.916 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.type.300273.2: type = fn_type @Y.cpp_destructor.2 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.6dd6f2.2: %Y.cpp_destructor.type.300273.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -387,10 +387,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT: fn @Use() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%Main.G [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc9_12.1: ref %Y.13e7b4.1 = temporary_storage
-// CHECK:STDOUT:   %G.call: init %Y.13e7b4.1 to %.loc9_12.1 = call %G.ref()
-// CHECK:STDOUT:   %.loc9_12.2: ref %Y.13e7b4.1 = temporary %.loc9_12.1, %G.call
-// CHECK:STDOUT:   %y.ref: %Y.elem.92b = name_ref y, @Y.1.%.1 [concrete = @Y.1.%.1]
+// CHECK:STDOUT:   %.loc9_12.1: ref %Y.ef9 = temporary_storage
+// CHECK:STDOUT:   %G.call: init %Y.ef9 to %.loc9_12.1 = call %G.ref()
+// CHECK:STDOUT:   %.loc9_12.2: ref %Y.ef9 = temporary %.loc9_12.1, %G.call
+// CHECK:STDOUT:   %y.ref: %Y.elem.c50 = name_ref y, @Y.1.%.1 [concrete = @Y.1.%.1]
 // CHECK:STDOUT:   %.loc9_13.1: ref %i32 = class_element_access %.loc9_12.2, element0
 // CHECK:STDOUT:   %.loc9_13.2: %i32 = acquire_value %.loc9_13.1
 // CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
@@ -406,23 +406,23 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT: fn @UseZ() -> out %return.param: %Z {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, imports.%Main.H [concrete = constants.%H]
-// CHECK:STDOUT:   %.loc15_12.1: ref %Y.13e7b4.2 = temporary_storage
-// CHECK:STDOUT:   %H.call: init %Y.13e7b4.2 to %.loc15_12.1 = call %H.ref()
-// CHECK:STDOUT:   %.loc15_12.2: ref %Y.13e7b4.2 = temporary %.loc15_12.1, %H.call
-// CHECK:STDOUT:   %y.ref: %Y.elem.8ad = name_ref y, @Y.2.%.1 [concrete = @Y.2.%.1]
+// CHECK:STDOUT:   %.loc15_12.1: ref %Y.235 = temporary_storage
+// CHECK:STDOUT:   %H.call: init %Y.235 to %.loc15_12.1 = call %H.ref()
+// CHECK:STDOUT:   %.loc15_12.2: ref %Y.235 = temporary %.loc15_12.1, %H.call
+// CHECK:STDOUT:   %y.ref: %Y.elem.f1e = name_ref y, @Y.2.%.1 [concrete = @Y.2.%.1]
 // CHECK:STDOUT:   %.loc15_13.1: ref %Z = class_element_access %.loc15_12.2, element0
 // CHECK:STDOUT:   %.loc15_13.2: %Z = acquire_value %.loc15_13.1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.5a8 = impl_witness_access constants.%custom_witness.862, element0 [concrete = constants.%Z.Op]
+// CHECK:STDOUT:   %impl.elem0: %.158 = impl_witness_access constants.%custom_witness.862, element0 [concrete = constants.%Z.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_13.2, %impl.elem0
 // CHECK:STDOUT:   %.loc15_13.3: ref %Z = temporary_storage
 // CHECK:STDOUT:   %Op.ref: %Z.Z.type = name_ref Op, imports.%Z.Z.decl [concrete = constants.%Z.Z]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc15_13.4: ref %Z = value_as_ref %.loc15_13.2
-// CHECK:STDOUT:   %addr.loc15_13.1: %ptr.6ce = addr_of %.loc15_13.4
-// CHECK:STDOUT:   %.loc15_13.5: %ptr.5fa = as_compatible %addr.loc15_13.1
-// CHECK:STDOUT:   %.loc15_13.6: %ptr.5fa = converted %addr.loc15_13.1, %.loc15_13.5
-// CHECK:STDOUT:   %addr.loc15_13.2: %ptr.6ce = addr_of %.loc13_19.1
+// CHECK:STDOUT:   %addr.loc15_13.1: %ptr.c6c = addr_of %.loc15_13.4
+// CHECK:STDOUT:   %.loc15_13.5: %ptr.bf9 = as_compatible %addr.loc15_13.1
+// CHECK:STDOUT:   %.loc15_13.6: %ptr.bf9 = converted %addr.loc15_13.1, %.loc15_13.5
+// CHECK:STDOUT:   %addr.loc15_13.2: %ptr.c6c = addr_of %.loc13_19.1
 // CHECK:STDOUT:   %Z__carbon_thunk.call: init %empty_tuple.type = call imports.%Z__carbon_thunk.decl(%.loc15_13.6, %addr.loc15_13.2)
 // CHECK:STDOUT:   %.loc15_13.7: init %Z to %.loc13_19.1 = mark_in_place_init %Z__carbon_thunk.call
 // CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%Y.cpp_destructor.6dd6f2.2

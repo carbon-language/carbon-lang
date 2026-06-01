@@ -39,16 +39,16 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %First.template: %First.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %pattern_type.b54: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.aa6: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %A.A.cpp_overload_set.type: type = cpp_overload_set_type @A.A.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %A.A.cpp_overload_set.value: %A.A.cpp_overload_set.type = cpp_overload_set_value @A.A.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.bce: type = ptr_type %A [concrete]
+// CHECK:STDOUT:   %ptr.9f7: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %A__carbon_thunk.type: type = fn_type @A__carbon_thunk [concrete]
 // CHECK:STDOUT:   %A__carbon_thunk: %A__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.676: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %pattern_type.bbe: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %B.B.cpp_overload_set.type: type = cpp_overload_set_type @B.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %B.B.cpp_overload_set.value: %B.B.cpp_overload_set.type = cpp_overload_set_value @B.B.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.13d: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %ptr.fab: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Second.type: type = cpp_type_template_type Second [concrete]
@@ -83,26 +83,26 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a1.patt: %pattern_type.b54 = ref_binding_pattern a1 [concrete]
-// CHECK:STDOUT:     %a1.var_patt: %pattern_type.b54 = var_pattern %a1.patt [concrete]
+// CHECK:STDOUT:     %a1.patt: %pattern_type.aa6 = ref_binding_pattern a1 [concrete]
+// CHECK:STDOUT:     %a1.var_patt: %pattern_type.aa6 = var_pattern %a1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a1.var: ref %A = var %a1.var_patt [concrete]
 // CHECK:STDOUT:   %a1: ref %A = ref_binding a1, %a1.var [concrete = %a1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b1.patt: %pattern_type.676 = ref_binding_pattern b1 [concrete]
-// CHECK:STDOUT:     %b1.var_patt: %pattern_type.676 = var_pattern %b1.patt [concrete]
+// CHECK:STDOUT:     %b1.patt: %pattern_type.bbe = ref_binding_pattern b1 [concrete]
+// CHECK:STDOUT:     %b1.var_patt: %pattern_type.bbe = var_pattern %b1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b1.var: ref %B = var %b1.var_patt [concrete]
 // CHECK:STDOUT:   %b1: ref %B = ref_binding b1, %b1.var [concrete = %b1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b2.patt: %pattern_type.676 = ref_binding_pattern b2 [concrete]
-// CHECK:STDOUT:     %b2.var_patt: %pattern_type.676 = var_pattern %b2.patt [concrete]
+// CHECK:STDOUT:     %b2.patt: %pattern_type.bbe = ref_binding_pattern b2 [concrete]
+// CHECK:STDOUT:     %b2.var_patt: %pattern_type.bbe = var_pattern %b2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b2.var: ref %B = var %b2.var_patt [concrete]
 // CHECK:STDOUT:   %b2: ref %B = ref_binding b2, %b2.var [concrete = %b2.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a2.patt: %pattern_type.b54 = ref_binding_pattern a2 [concrete]
-// CHECK:STDOUT:     %a2.var_patt: %pattern_type.b54 = var_pattern %a2.patt [concrete]
+// CHECK:STDOUT:     %a2.patt: %pattern_type.aa6 = ref_binding_pattern a2 [concrete]
+// CHECK:STDOUT:     %a2.var_patt: %pattern_type.aa6 = var_pattern %a2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a2.var: ref %A = var %a2.var_patt [concrete]
 // CHECK:STDOUT:   %a2: ref %A = ref_binding a2, %a2.var [concrete = %a2.var]
@@ -114,7 +114,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %A.ref.loc7_38: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.ref.loc7_40: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
-// CHECK:STDOUT:   %addr.loc7: %ptr.bce = addr_of %.loc7_1
+// CHECK:STDOUT:   %addr.loc7: %ptr.9f7 = addr_of %.loc7_1
 // CHECK:STDOUT:   %A__carbon_thunk.call.loc7: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc7)
 // CHECK:STDOUT:   %.loc7_43: init %A to %.loc7_1 = mark_in_place_init %A__carbon_thunk.call.loc7
 // CHECK:STDOUT:   assign file.%a1.var, %.loc7_43
@@ -122,7 +122,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %B.ref.loc8_38: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.ref.loc8_40: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc8_1: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
-// CHECK:STDOUT:   %addr.loc8: %ptr.13d = addr_of %.loc8_1
+// CHECK:STDOUT:   %addr.loc8: %ptr.fab = addr_of %.loc8_1
 // CHECK:STDOUT:   %B__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_43: init %B to %.loc8_1 = mark_in_place_init %B__carbon_thunk.call.loc8
 // CHECK:STDOUT:   assign file.%b1.var, %.loc8_43
@@ -130,7 +130,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %B.ref.loc9_39: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.ref.loc9_41: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc9_1: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
-// CHECK:STDOUT:   %addr.loc9: %ptr.13d = addr_of %.loc9_1
+// CHECK:STDOUT:   %addr.loc9: %ptr.fab = addr_of %.loc9_1
 // CHECK:STDOUT:   %B__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_44: init %B to %.loc9_1 = mark_in_place_init %B__carbon_thunk.call.loc9
 // CHECK:STDOUT:   assign file.%b2.var, %.loc9_44
@@ -138,7 +138,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %A.ref.loc10_39: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.ref.loc10_41: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc10_1: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
-// CHECK:STDOUT:   %addr.loc10: %ptr.bce = addr_of %.loc10_1
+// CHECK:STDOUT:   %addr.loc10: %ptr.9f7 = addr_of %.loc10_1
 // CHECK:STDOUT:   %A__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc10)
 // CHECK:STDOUT:   %.loc10_44: init %A to %.loc10_1 = mark_in_place_init %A__carbon_thunk.call.loc10
 // CHECK:STDOUT:   assign file.%a2.var, %.loc10_44

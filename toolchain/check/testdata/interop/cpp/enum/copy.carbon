@@ -14,7 +14,7 @@
 
 enum Enum : short { a, b, c };
 
-// --- fail_todo_copy_enum.carbon
+// --- copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -22,34 +22,33 @@ import Cpp library "enum.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  // CHECK:STDERR: fail_todo_copy_enum.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `Cpp.Enum` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   var a: Cpp.Enum = Cpp.Enum.a;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var a: Cpp.Enum = Cpp.Enum.a;
 
   a = Cpp.Enum.b;
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
+// CHECK:STDOUT: --- copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Enum: type = class_type @Enum [concrete]
-// CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Enum [concrete]
+// CHECK:STDOUT:   %pattern_type.361: type = pattern_type %Enum [concrete]
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Enum.Op.type: type = fn_type @Enum.Op [concrete]
 // CHECK:STDOUT:   %Enum.Op: %Enum.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b8d: <witness> = custom_witness (%Enum.Op), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.ae7: %Copy.type = facet_value %Enum, (%custom_witness.b8d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.100: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.ae7) [concrete]
-// CHECK:STDOUT:   %.e06: type = fn_type_with_self_type %Copy.WithSelf.Op.type.100, %Copy.facet.ae7 [concrete]
-// CHECK:STDOUT:   %Enum.Op.bound.7be: <bound method> = bound_method %int_0, %Enum.Op [concrete]
+// CHECK:STDOUT:   %Copy.facet.4ef: %Copy.type = facet_value %Enum, (%custom_witness.b8d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bb4: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.4ef) [concrete]
+// CHECK:STDOUT:   %.a09: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bb4, %Copy.facet.4ef [concrete]
+// CHECK:STDOUT:   %Enum.Op.bound.c3d: <bound method> = bound_method %int_0, %Enum.Op [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
-// CHECK:STDOUT:   %Enum.Op.bound.c35: <bound method> = bound_method %int_1, %Enum.Op [concrete]
+// CHECK:STDOUT:   %Enum.Op.bound.6f8: <bound method> = bound_method %int_1, %Enum.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,32 +68,36 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9f7 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.9f7 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.361 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.361 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Enum = var %a.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc12_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
-// CHECK:STDOUT:   %a.ref.loc12: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %impl.elem0.loc12: %.e06 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12 [concrete = constants.%Enum.Op.bound.7be]
-// CHECK:STDOUT:   %Enum.Op.call.loc12: init %Enum = call %bound_method.loc12(%a.ref.loc12) [concrete = constants.%int_0]
-// CHECK:STDOUT:   assign %a.var, %Enum.Op.call.loc12
-// CHECK:STDOUT:   %.loc12: type = splice_block %Enum.ref.loc12_13 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc12_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.a09 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %a.ref.loc8, %impl.elem0.loc8 [concrete = constants.%Enum.Op.bound.c3d]
+// CHECK:STDOUT:   %Enum.Op.call.loc8: init %Enum = call %bound_method.loc8(%a.ref.loc8) [concrete = constants.%int_0]
+// CHECK:STDOUT:   assign %a.var, %Enum.Op.call.loc8
+// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %Enum = ref_binding a, %a.var
-// CHECK:STDOUT:   %a.ref.loc14: ref %Enum = name_ref a, %a
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc14: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %a.ref.loc10: ref %Enum = name_ref a, %a
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc10: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc14: %.e06 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %b.ref, %impl.elem0.loc14 [concrete = constants.%Enum.Op.bound.c35]
-// CHECK:STDOUT:   %Enum.Op.call.loc14: init %Enum = call %bound_method.loc14(%b.ref) [concrete = constants.%int_1]
-// CHECK:STDOUT:   assign %a.ref.loc14, %Enum.Op.call.loc14
+// CHECK:STDOUT:   %impl.elem0.loc10: %.a09 = impl_witness_access constants.%custom_witness.b8d, element0 [concrete = constants.%Enum.Op]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %b.ref, %impl.elem0.loc10 [concrete = constants.%Enum.Op.bound.6f8]
+// CHECK:STDOUT:   %Enum.Op.call.loc10: init %Enum = call %bound_method.loc10(%b.ref) [concrete = constants.%int_1]
+// CHECK:STDOUT:   assign %a.ref.loc10, %Enum.Op.call.loc10
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Enum.Op(%self.param: %Enum) -> out %return.param: %Enum = "primitive_copy";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Enum) = "no_op";
 // CHECK:STDOUT:

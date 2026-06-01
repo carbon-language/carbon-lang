@@ -222,7 +222,7 @@ considering if they fit your workflow.
 -   [Visual Studio Code](https://code.visualstudio.com/): A code editor.
     -   We provide [recommended extensions](/.vscode/extensions.json) to assist
         Carbon development. Some settings changes must be made separately:
-        -   Python › Formatting: Provider: `black`
+        -   Python › Formatting: Provider: `ruff`
     -   **WARNING:** Visual Studio Code modifies the `PATH` environment
         variable, particularly in the terminals it creates. The `PATH`
         difference can cause `bazel` to detect different startup options,

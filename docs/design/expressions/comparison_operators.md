@@ -208,8 +208,8 @@ if (integer as f64 == float) {
 ```
 
 The two kinds of mixed-type comparison may be
-[less efficient](/proposals/p0702.md#performance) than the other kinds due to
-the slightly wider domain.
+[less efficient](/proposals/p000702-comparison-operators.md#performance) than
+the other kinds due to the slightly wider domain.
 
 Note that this approach diverges from C++, which would convert both operands to
 a common type first, sometimes performing a lossy conversion potentially giving
@@ -511,12 +511,12 @@ in general. That decision is left to a future proposal.
 
 ## Alternatives considered
 
--   [Alternative symbols](/proposals/p0702.md#alternative-symbols)
--   [Chained comparisons](/proposals/p0702.md#chained-comparisons-1)
--   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
--   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
--   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
--   [Rename `OrderedWith` to `ComparableWith`](/proposals/p1178.md#use-comparablewith-instead-of-orderedwith)
+-   [Alternative symbols](/proposals/p000702-comparison-operators.md#alternative-symbols)
+-   [Chained comparisons](/proposals/p000702-comparison-operators.md#chained-comparisons-1)
+-   [Convert operands like C++](/proposals/p000702-comparison-operators.md#convert-operands-like-c)
+-   [Provide a three-way comparison operator](/proposals/p000702-comparison-operators.md#provide-a-three-way-comparison-operator)
+-   [Allow comparisons as the operand of `not`](/proposals/p000702-comparison-operators.md#allow-comparisons-as-the-operand-of-not)
+-   [Rename `OrderedWith` to `ComparableWith`](/proposals/p001178-rework-operator-interfaces.md#use-comparablewith-instead-of-orderedwith)
 
 ## References
 

@@ -5,11 +5,15 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CPP_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_FILE_H_
 
+#include <memory>
+
+#include "clang/AST/Mangle.h"
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/PreprocessorOptions.h"
+#include "common/check.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
@@ -51,6 +55,17 @@ class CppFile {
     return clang_->getASTContext();
   }
 
+  // Creates the mangle context for this file's C++ AST. Must be called once the
+  // AST context is available (after the frontend begins the source file) and
+  // before `mangle_context()` is used.
+  auto CreateMangleContext() -> void {
+    CARBON_CHECK(!mangle_context_);
+    mangle_context_.reset(ast_context().createMangleContext());
+  }
+  auto mangle_context() const -> clang::MangleContext& {
+    return *mangle_context_;
+  }
+
   auto llvm_context() const -> llvm::LLVMContext* { return llvm_context_; }
   auto SetCodeGenerator(clang::CodeGenerator* code_generator) -> void {
     code_generator_ = code_generator;
@@ -65,6 +80,8 @@ class CppFile {
   std::unique_ptr<clang::CompilerInstance> clang_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_ = nullptr;
+  // Created by `CreateMangleContext()` once the AST context is available.
+  std::unique_ptr<clang::MangleContext> mangle_context_;
 };
 
 }  // namespace Carbon::SemIR

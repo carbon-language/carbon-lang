@@ -333,7 +333,7 @@ and doesn't change afterwards.
 **References:** Carbon's interface implementation syntax was first defined in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
 particular, see
-[the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
+[the alternatives considered](/proposals/p000553-generics-details-part-1.md#interface-implementation-syntax).
 This syntax was changed to use `extend` in
 [proposal #2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
 
@@ -450,7 +450,7 @@ impl Point_ExtendForward as Vector {
 
 > **TODO:** The second `impl` in this example is no longer a valid redeclaration
 > of the first after
-> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
+> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
 
 More about forward declaring implementations in
 [its dedicated section](#declaring-implementations).
@@ -1346,7 +1346,7 @@ fn DoHashAndEquals[T:! Hashable](x: T) {
 
 > **TODO:** Update this section as needed to reflect the fact that an impl of an
 > interface doesn't impl the interfaces it extends, as adopted in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1376,7 +1376,7 @@ We expect this concept to be common enough to warrant dedicated `interface`
 syntax:
 
 > **TODO:** Update this section to reflect the new syntax adopted in
-> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
 
 ```carbon
 interface Equatable { fn Equals(self, rhs: Self) -> bool; }
@@ -1588,7 +1588,7 @@ interface MovieCodec {
 #### Diamond dependency issue
 
 > **TODO:** Update this section to reflect the changes in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 Consider this set of interfaces, simplified from
 [this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
@@ -2144,7 +2144,7 @@ keyword `private` before `adapt`, so you might write
 
 > **TODO:** Update this section to reflect the new rules and guidance on
 > associated constants in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
@@ -2275,7 +2275,7 @@ type.
 
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 ## Associated facets
 
@@ -2344,7 +2344,7 @@ impl VeryLongTypeName as Add
 ```
 
 > **Alternatives considered:** See
-> [other syntax options considered in #731 for specifying associated facets](/proposals/p0731.md#syntax-for-associated-constants).
+> [other syntax options considered in #731 for specifying associated facets](/proposals/p000731-generics-details-2-adapters-associated-types-parameterized-interfaces.md#syntax-for-associated-constants).
 > In particular, it was deemed that
 > [Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
 > was unneeded complexity.
@@ -2727,15 +2727,15 @@ Implements constraints switched to using the `impls` keyword in
 
 **Alternatives considered:**
 
--   [Different equality constraint operators for symbolic and constants](/proposals/p2173.md#status-quo)
--   [Single one-step equality constraint operators that merges constraints](/proposals/p2173.md#equal-types-with-different-interfaces)
--   [Restrict constraints to allow computable type equality](/proposals/p2173.md#restrict-constraints-to-allow-computable-type-equality)
--   [Find a fully transitive approach to type equality](/proposals/p2173.md#find-a-fully-transitive-approach-to-type-equality)
--   [Different syntax for rewrite constraint](/proposals/p2173.md#different-syntax-for-rewrite-constraint)
--   [Different syntax for same-type constraint](/proposals/p2173.md#different-syntax-for-same-type-constraint)
--   [Required ordering for rewrites](/proposals/p2173.md#required-ordering-for-rewrites)
--   [Multi-constraint `where` clauses](/proposals/p2173.md#multi-constraint-where-clauses)
--   [Rewrite constraints in `require` constraints](/proposals/p2173.md#rewrite-constraints-in-impl-as-constraints)
+-   [Different equality constraint operators for symbolic and constants](/proposals/p002173-associated-constant-assignment-versus-equality.md#status-quo)
+-   [Single one-step equality constraint operators that merges constraints](/proposals/p002173-associated-constant-assignment-versus-equality.md#equal-types-with-different-interfaces)
+-   [Restrict constraints to allow computable type equality](/proposals/p002173-associated-constant-assignment-versus-equality.md#restrict-constraints-to-allow-computable-type-equality)
+-   [Find a fully transitive approach to type equality](/proposals/p002173-associated-constant-assignment-versus-equality.md#find-a-fully-transitive-approach-to-type-equality)
+-   [Different syntax for rewrite constraint](/proposals/p002173-associated-constant-assignment-versus-equality.md#different-syntax-for-rewrite-constraint)
+-   [Different syntax for same-type constraint](/proposals/p002173-associated-constant-assignment-versus-equality.md#different-syntax-for-same-type-constraint)
+-   [Required ordering for rewrites](/proposals/p002173-associated-constant-assignment-versus-equality.md#required-ordering-for-rewrites)
+-   [Multi-constraint `where` clauses](/proposals/p002173-associated-constant-assignment-versus-equality.md#multi-constraint-where-clauses)
+-   [Rewrite constraints in `require` constraints](/proposals/p002173-associated-constant-assignment-versus-equality.md#rewrite-constraints-in-impl-as-constraints)
 
 #### Recursive constraints
 
@@ -2927,21 +2927,22 @@ Note that `T:! C where .R = i32` can result in a type `T.R` whose behavior is
 different from the behavior of `T.R` given `T:! C`. For example, member lookup
 into `T.R` can find different results and operations can therefore have
 different behavior. However, this does not violate
-[coherence](/proposals/p2173.md#coherence) because the facet types `C` and
-`C where .R = i32` don't differ by merely having more type information; rather,
-they are different facet types that have an isomorphic set of values, somewhat
-like `i32` and `u32`. An `=` constraint is not merely learning a new fact about
-a type, it is requesting different behavior.
+[coherence](/proposals/p002173-associated-constant-assignment-versus-equality.md#coherence)
+because the facet types `C` and `C where .R = i32` don't differ by merely having
+more type information; rather, they are different facet types that have an
+isomorphic set of values, somewhat like `i32` and `u32`. An `=` constraint is
+not merely learning a new fact about a type, it is requesting different
+behavior.
 
 This approach has some good properties that
 [same-type constraints](#same-type-constraints) have problems with:
 
--   [Equal types with different interfaces](/proposals/p2173.md#equal-types-with-different-interfaces):
+-   [Equal types with different interfaces](/proposals/p002173-associated-constant-assignment-versus-equality.md#equal-types-with-different-interfaces):
     When an associated facet is constrained to be a concrete type, it is
     desirable for the associated facet to behave like that concrete type.
--   [Type canonicalization](/proposals/p2173.md#type-canonicalization): to
-    enable efficient type equality.
--   [Transitivity of equality of types](/proposals/p2173.md#transitivity-of-equality)
+-   [Type canonicalization](/proposals/p002173-associated-constant-assignment-versus-equality.md#type-canonicalization):
+    to enable efficient type equality.
+-   [Transitivity of equality of types](/proposals/p002173-associated-constant-assignment-versus-equality.md#transitivity-of-equality)
 
 The precise rules governing rewrite constraints are described in
 [an appendix](appendix-rewrite-constraints.md).
@@ -3560,7 +3561,7 @@ redundant ways to express a restriction, following the
 
 **Alternative considered:** This rule was added in proposal
 [#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
-[considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
+[considered whether this rule should be added](/proposals/p002376-constraints-must-use-self.md#alternatives-considered).
 
 ### Referencing names in the interface being defined
 
@@ -4094,8 +4095,8 @@ There are four facet types related to
     specific optimizations.
 
 **Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
-conform to the decision on
+[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
+they do not conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
@@ -4598,7 +4599,7 @@ unambiguously picking one as most specific.
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
 sufficient since it
-[need not be imported](/proposals/p0920.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
+[need not be imported](/proposals/p000920-generic-blanket-impls-details-5.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
 Since Carbon in addition requires there be no cyclic library dependencies, we
 conclude that there is at most one library that can contain `impl` definitions
@@ -4631,7 +4632,7 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
 
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
@@ -4856,7 +4857,7 @@ count decreases. So `Optional(Optional(i32))` is strictly more complicated than
 
 This rule, when combined with [the acyclic rule](#acyclic-rule) that a query
 can't repeat exactly,
-[guarantees termination](/proposals/p2687.md#proof-of-termination).
+[guarantees termination](/proposals/p002687-termination-algorithm-for-impl-selection.md#proof-of-termination).
 
 Consider the example from before,
 
@@ -4920,12 +4921,12 @@ let V:! B = i32;
 
 > **Alternatives considered:**
 >
->     -   [Recursion limit](/proposals/p2687.md#problem)
->     -   [Measure complexity using type tree depth](/proposals/p2687.md#measure-complexity-using-type-tree-depth)
->     -   [Consider each type parameter in an `impl` declaration separately](/proposals/p2687.md#consider-each-type-parameter-in-an-impl-declaration-separately)
->     -   [Consider types in the interface being implemented as distinct](/proposals/p2687.md#consider-types-in-the-interface-being-implemented-as-distinct)
->     -   [Require some count to decrease](/proposals/p2687.md#require-some-count-to-decrease)
->     -   [Require non-type values to stay the same](/proposals/p2687.md#require-non-type-values-to-stay-the-same)
+>     -   [Recursion limit](/proposals/p002687-termination-algorithm-for-impl-selection.md#problem)
+>     -   [Measure complexity using type tree depth](/proposals/p002687-termination-algorithm-for-impl-selection.md#measure-complexity-using-type-tree-depth)
+>     -   [Consider each type parameter in an `impl` declaration separately](/proposals/p002687-termination-algorithm-for-impl-selection.md#consider-each-type-parameter-in-an-impl-declaration-separately)
+>     -   [Consider types in the interface being implemented as distinct](/proposals/p002687-termination-algorithm-for-impl-selection.md#consider-types-in-the-interface-being-implemented-as-distinct)
+>     -   [Require some count to decrease](/proposals/p002687-termination-algorithm-for-impl-selection.md#require-some-count-to-decrease)
+>     -   [Require non-type values to stay the same](/proposals/p002687-termination-algorithm-for-impl-selection.md#require-non-type-values-to-stay-the-same)
 
 > **References:** This algorithm is from proposal
 > [#2687: Termination algorithm for impl selection](https://github.com/carbon-language/carbon-lang/pull/2687),
@@ -5033,7 +5034,7 @@ class Optional(T:! type) {
 
 > **TODO:** Update the following passage to reflect the relaxed overlap rule
 > adopted in
-> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
 
 This prevents any higher-priority impl that overlaps a final impl from being
 defined unless it agrees with the `final` impl on the overlap. Overlap is
@@ -5074,13 +5075,13 @@ fn F[T:! type](x: T) {
 
 > **Alternatives considered:**
 >
-> -   [Allow interfaces with member functions to compare equal](/proposals/p2868.md#allow-interfaces-with-member-functions-to-compare-equal)
+> -   [Allow interfaces with member functions to compare equal](/proposals/p002868-allow-overlap-with-a-final-impl-if-identical.md#allow-interfaces-with-member-functions-to-compare-equal)
 > -   Mark associated constants as `final` instead of an `impl` declaration, in
 >     proposals
->     [#983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls)
+>     [#983](/proposals/p000983-generics-details-7-final-impls.md#final-associated-constants-instead-of-final-impls)
 >     and
->     [#2868](/proposals/p2868.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
-> -   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p2868.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
+>     [#2868](/proposals/p002868-allow-overlap-with-a-final-impl-if-identical.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
+> -   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p002868-allow-overlap-with-a-final-impl-if-identical.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
 
 #### Libraries that can contain a `final` impl
 
@@ -5169,7 +5170,7 @@ differences between the Carbon design and Rust plans:
 
 > **TODO:** Update this section to distinguish between _defined_ and _complete_,
 > as adopted in
-> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+> [#5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
 
 Interfaces, named constraints, and their implementations may be forward declared
 and then later defined. This is needed to allow cyclic references, for example
@@ -5191,7 +5192,7 @@ used.
 
 > **TODO:** Update this section to reflect the additional things you can do with
 > a defined but incomplete type, as adoped in
-> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+> [#5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
 
 The declaration for an interface or named constraint consists of:
 
@@ -5280,7 +5281,7 @@ An incomplete `C` cannot be used in the following contexts:
 ### Declaring implementations
 
 > **TODO:** Update this section to reflect the new rules adopted in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 The declaration of an interface implementation consists of:
 
@@ -5298,7 +5299,7 @@ The declaration of an interface implementation consists of:
     [associated facets](#associated-facets).
 
 > **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
+> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
 
 **Note:** The type before the `as` is required except in class scope, where it
 defaults to `Self` as described in the
@@ -5340,9 +5341,10 @@ these rules:
 ### Matching and agreeing
 
 > **TODO:** Update this section to reflect the new terminology and rules adopted
-> in [p3763: Matching redeclarations](/proposals/p3763.md), and the new rules
-> adopted in
-> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+> in
+> [#3763: Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
+> and the new rules adopted in
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
 Carbon needs to determine if two declarations match in order to say which
 definition a forward declaration corresponds to and to verify that nothing is
@@ -5381,7 +5383,7 @@ expressions match along with
 
 > **TODO:** Document the matching rules for the redeclaration syntax
 > `impl C.(as I)` adopted in
-> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
+> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
 
 For implementations to agree:
 
@@ -5921,7 +5923,7 @@ interface B(T:! type) {
 An implementation of `B` for a set of types can only be valid if there is a
 visible implementation of `A` with the same `T` parameter for those types with
 the `.Result` associated facet set to `i32`. That is
-[not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
+[not sufficient](/proposals/p001088-generic-details-10-interface-implemented-requirements.md#less-strict-about-requirements-with-where-clauses),
 though, unless the implementation of `A` can't be specialized, either because it
 is [marked `final`](#final-impl-declarations) or is not
 [parameterized](#parameterized-impl-declarations). Implementations in other
@@ -6636,7 +6638,8 @@ class Optional(T:! Movable) {
 ```
 
 > **Alternative considered:** Direct support for specialization of types was
-> considered in [proposal #1146](/proposals/p1146.md#alternatives-considered).
+> considered in
+> [proposal #1146](/proposals/p001146-generic-details-12-parameterized-types.md#alternatives-considered).
 
 ## Future work
 
@@ -6737,7 +6740,7 @@ template parameters. For example, we might support a predicate that constrains
 an integer to live inside a specified range. See
 [question-for-leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153)
 and
-[future work in proposal #2200: Template generics](/proposals/p2200.md#predicates-constraints-on-values).
+[future work in proposal #2200: Template generics](/proposals/p002200-template-generics.md#predicates-constraints-on-values).
 
 ## References
 
