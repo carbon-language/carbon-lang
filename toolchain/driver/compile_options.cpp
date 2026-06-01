@@ -106,6 +106,17 @@ Whether to run the LLVM verifier on modules.
         arg_b.Default(true);
         arg_b.Set(&options->run_llvm_verifier);
       });
+  b.AddFlag(
+      {
+          .name = "prelude-import",
+          .help = R"""(
+Whether to use the implicit prelude import. Enabled by default.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&options->prelude_import);
+      });
 }
 
 }  // namespace
@@ -320,17 +331,6 @@ Dumps the duration of each phase for each compilation unit.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_timings); });
-  b.AddFlag(
-      {
-          .name = "prelude-import",
-          .help = R"""(
-Whether to use the implicit prelude import. Enabled by default.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&prelude_import);
-      });
   b.AddFlag(
       {
           .name = "custom-core",

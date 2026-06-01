@@ -15,22 +15,7 @@
 
 namespace Carbon {
 
-class CompilationUnit;
 class MultiUnitCache;
-
-class CompileDriver {
- public:
-  explicit CompileDriver(CompileOptions* options);
-
-  auto Initialize(DriverEnv& driver_env) -> bool;
-  auto Compile(DriverEnv& driver_env) -> DriverResult;
-
- private:
-  CompileOptions* options_;
-  llvm::SmallVector<std::unique_ptr<CompilationUnit>, 256> units_;
-  std::unique_ptr<MultiUnitCache> cache_;
-  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
-};
 
 // Ties together information for a file being compiled.
 class CompilationUnit {
@@ -40,6 +25,7 @@ class CompilationUnit {
                            DriverEnv* driver_env, const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename,
+                           std::string output_filename,
                            const llvm::Target* target);
 
   // Sets the multi-unit cache and initializes dependent member state.
@@ -79,6 +65,7 @@ class CompilationUnit {
   auto FlushForStackTrace() -> void { consumer_->Flush(); }
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
+  auto output_filename() -> llvm::StringRef { return output_filename_; }
   auto has_include_in_dumps() -> bool {
     return tokens_ && tokens_->has_include_in_dumps();
   }
@@ -126,6 +113,7 @@ class CompilationUnit {
   // translation. However, logging and some diagnostics use the command line
   // argument.
   std::string input_filename_;
+  std::string output_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_;
@@ -230,6 +218,28 @@ class MultiUnitCache {
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
   std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
+};
+
+class CompileDriver {
+ public:
+  explicit CompileDriver(CompileOptions* options);
+
+  auto Initialize(
+      DriverEnv& driver_env,
+      llvm::function_ref<auto(llvm::StringRef)->std::string> map_input) -> bool;
+  auto Compile(DriverEnv& driver_env) -> DriverResult;
+
+  auto first_input_index() -> size_t { return input_filenames_index_; }
+  auto units() -> llvm::ArrayRef<std::unique_ptr<CompilationUnit>> {
+    return units_;
+  }
+
+ private:
+  CompileOptions* options_;
+  size_t input_filenames_index_ = 0;
+  llvm::SmallVector<std::unique_ptr<CompilationUnit>, 256> units_;
+  std::unique_ptr<MultiUnitCache> cache_;
+  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 };
 
 }  // namespace Carbon

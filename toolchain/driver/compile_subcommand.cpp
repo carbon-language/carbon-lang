@@ -68,7 +68,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   auto compile_driver = CompileDriver(&options_);
 
-  if (!compile_driver.Initialize(driver_env)) {
+  if (!compile_driver.Initialize(driver_env,
+                                 [&](llvm::StringRef) -> std::string {
+                                   return options_.output_filename.str();
+                                 })) {
     return {.success = false};
   }
 

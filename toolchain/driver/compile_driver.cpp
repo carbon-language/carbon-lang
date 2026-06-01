@@ -44,6 +44,7 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
                                  const CompileOptions* options,
                                  Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename,
+                                 std::string output_filename,
                                  const llvm::Target* target)
     : check_ir_id_(check_ir_id),
       total_ir_count_(total_ir_count),
@@ -51,6 +52,7 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
       options_(options),
       target_(target),
       input_filename_(input_filename),
+      output_filename_(std::move(output_filename)),
       vlog_stream_(driver_env_->vlog_stream) {
   if (vlog_stream_ != nullptr || options_->stream_errors) {
     consumer_ = consumer;
@@ -342,7 +344,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     codegen.EmitAssembly(*vlog_stream_);
   }
 
-  if (options_->output_filename == "-") {
+  if (output_filename_ == "-") {
     // TODO: The output file name, forcing object output, and requesting
     // textual assembly output are all somewhat linked flags. We should add
     // some validation that they are used correctly.
@@ -356,7 +358,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       }
     }
   } else {
-    llvm::SmallString<256> output_filename = options_->output_filename;
+    llvm::SmallString<256> output_filename = llvm::StringRef(output_filename_);
     if (output_filename.empty()) {
       if (!source_->is_regular_file()) {
         // Don't invent file names like `-.o` or `/dev/stdin.o`.
@@ -427,7 +429,9 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 
 CompileDriver::CompileDriver(CompileOptions* options) : options_(options) {}
 
-auto CompileDriver::Initialize(DriverEnv& driver_env) -> bool {
+auto CompileDriver::Initialize(
+    DriverEnv& driver_env,
+    llvm::function_ref<auto(llvm::StringRef)->std::string> map_input) -> bool {
   if (!options_->ValidatePhase(driver_env.emitter)) {
     return false;
   }
@@ -471,9 +475,10 @@ auto CompileDriver::Initialize(DriverEnv& driver_env) -> bool {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, options_,
-        &driver_env.consumer, filename, target);
+        &driver_env.consumer, filename, map_input(filename), target);
   };
   llvm::append_range(units_, llvm::map_range(prelude, unit_builder));
+  input_filenames_index_ = units_.size();
   llvm::append_range(units_,
                      llvm::map_range(options_->input_filenames, unit_builder));
   CARBON_CHECK(units_.size() == static_cast<size_t>(total_unit_count));
