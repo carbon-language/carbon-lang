@@ -120,7 +120,6 @@ static auto AddStructTypeFields(
     auto& field = context.fields().Get(field_decl.field_id);
     field.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    ReplaceInstPreservingConstantValue(context, field_decl_id, field_decl);
     if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
