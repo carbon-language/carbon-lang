@@ -65,7 +65,7 @@ fn TrivialDestroy() {
   var unused a: Cpp.TrivialDestructor = {};
 }
 
-// --- destroy_protected_base_destructor.carbon
+// --- fail_todo_destroy_protected_base_destructor.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -351,7 +351,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- destroy_protected_base_destructor.carbon
+// CHECK:STDOUT: --- fail_todo_destroy_protected_base_destructor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
