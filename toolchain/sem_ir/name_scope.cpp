@@ -163,8 +163,9 @@ auto NameScopeStore::GetScopeNameAndParent(NameScopeId scope_id) const
         const auto& impl_info = file_->impls().Get(impl_decl.impl_id);
         return {impl_info.name_id, impl_info.parent_scope_id};
       }
-      default:
-        break;
+      default: {
+        CARBON_FATAL("Unexpected name scope inst {0}", *inst);
+      }
     }
   }
   return {NameId::None, scope.parent_scope_id()};
