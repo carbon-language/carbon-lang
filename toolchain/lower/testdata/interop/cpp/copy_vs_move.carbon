@@ -162,52 +162,41 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN8CopyableD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.4fa5f88fad0b1504.Core:Copyable.Cpp"(ptr %self) #3 !dbg !23 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN8CopyableD1Ev(ptr %self), !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !29
+// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !30 {
+// CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !31 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !33
-// CHECK:STDOUT:   ret void, !dbg !34
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !35 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !38
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !34
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !40 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !41
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1) #5
+// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass8Copyable(ptr noundef) #5
+// CHECK:STDOUT: declare void @_Z4pass8Copyable(ptr noundef) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN8CopyableC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN8CopyableD1Ev, { 1, 0, 2 }
+// CHECK:STDOUT: declare void @_ZN8CopyableC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -236,26 +225,22 @@ fn PassTemporary() {
 // CHECK:STDOUT: !20 = !DILocation(line: 21, column: 12, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 21, column: 3, scope: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 20, column: 1, scope: !19)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.4fa5f88fad0b1504.Core:Copyable.Cpp", scope: null, file: !6, line: 8, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !6, line: 24, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{null, !26}
 // CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !23, type: !26)
-// CHECK:STDOUT: !29 = !DILocation(line: 8, column: 3, scope: !23)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !6, line: 24, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
-// CHECK:STDOUT: !31 = !{!32}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !26)
-// CHECK:STDOUT: !33 = !DILocation(line: 25, column: 3, scope: !30)
-// CHECK:STDOUT: !34 = !DILocation(line: 24, column: 1, scope: !30)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "PassRef", linkageName: "_CPassRef.Main", scope: null, file: !6, line: 28, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
-// CHECK:STDOUT: !36 = !{!37}
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !26)
-// CHECK:STDOUT: !38 = !DILocation(line: 29, column: 3, scope: !35)
-// CHECK:STDOUT: !39 = !DILocation(line: 28, column: 1, scope: !35)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !41 = !DILocation(line: 14, column: 23, scope: !40)
-// CHECK:STDOUT: !42 = !DILocation(line: 0, scope: !40)
+// CHECK:STDOUT: !29 = !DILocation(line: 25, column: 3, scope: !23)
+// CHECK:STDOUT: !30 = !DILocation(line: 24, column: 1, scope: !23)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "PassRef", linkageName: "_CPassRef.Main", scope: null, file: !6, line: 28, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !32)
+// CHECK:STDOUT: !32 = !{!33}
+// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !26)
+// CHECK:STDOUT: !34 = !DILocation(line: 29, column: 3, scope: !31)
+// CHECK:STDOUT: !35 = !DILocation(line: 28, column: 1, scope: !31)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !37 = !DILocation(line: 14, column: 23, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 0, scope: !36)
 // CHECK:STDOUT: ; ModuleID = 'copy_or_move.carbon'
 // CHECK:STDOUT: source_filename = "copy_or_move.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -323,55 +308,47 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN10CopyOrMoveD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.41aecd7922d65128.Core:CopyOrMove.Cpp"(ptr %self) #3 !dbg !24 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN10CopyOrMoveD1Ev(ptr %self), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !30
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !31 {
+// CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !34
-// CHECK:STDOUT:   ret void, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !36 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !39
-// CHECK:STDOUT:   ret void, !dbg !40
+// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !35
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !41 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1) #5
+// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass10CopyOrMove(ptr noundef) #5
+// CHECK:STDOUT: declare void @_Z4pass10CopyOrMove(ptr noundef) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN10CopyOrMoveC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN10CopyOrMoveC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN10CopyOrMoveC1EOS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN10CopyOrMoveC1EOS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN10CopyOrMoveD1Ev, { 2, 1, 3, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN10CopyOrMoveD1Ev, { 1, 2, 0 }
 // CHECK:STDOUT: uselistorder ptr @_Z4pass10CopyOrMove, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -401,26 +378,22 @@ fn PassTemporary() {
 // CHECK:STDOUT: !21 = !DILocation(line: 23, column: 12, scope: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 23, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 22, column: 1, scope: !19)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.41aecd7922d65128.Core:CopyOrMove.Cpp", scope: null, file: !6, line: 10, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !6, line: 26, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{null, !27}
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 10, column: 3, scope: !24)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !6, line: 26, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !32)
-// CHECK:STDOUT: !32 = !{!33}
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !27)
-// CHECK:STDOUT: !34 = !DILocation(line: 27, column: 3, scope: !31)
-// CHECK:STDOUT: !35 = !DILocation(line: 26, column: 1, scope: !31)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "PassRef", linkageName: "_CPassRef.Main", scope: null, file: !6, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
-// CHECK:STDOUT: !37 = !{!38}
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !27)
-// CHECK:STDOUT: !39 = !DILocation(line: 31, column: 3, scope: !36)
-// CHECK:STDOUT: !40 = !DILocation(line: 30, column: 1, scope: !36)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !42 = !DILocation(line: 16, column: 25, scope: !41)
-// CHECK:STDOUT: !43 = !DILocation(line: 0, scope: !41)
+// CHECK:STDOUT: !30 = !DILocation(line: 27, column: 3, scope: !24)
+// CHECK:STDOUT: !31 = !DILocation(line: 26, column: 1, scope: !24)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "PassRef", linkageName: "_CPassRef.Main", scope: null, file: !6, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !27)
+// CHECK:STDOUT: !35 = !DILocation(line: 31, column: 3, scope: !32)
+// CHECK:STDOUT: !36 = !DILocation(line: 30, column: 1, scope: !32)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !38 = !DILocation(line: 16, column: 25, scope: !37)
+// CHECK:STDOUT: !39 = !DILocation(line: 0, scope: !37)
 // CHECK:STDOUT: ; ModuleID = 'move_only.carbon'
 // CHECK:STDOUT: source_filename = "move_only.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -474,38 +447,30 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN8MoveOnlyD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.3fdf0603d6385a53.Core:MoveOnly.Cpp"(ptr %self) #3 !dbg !23 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN8MoveOnlyD1Ev(ptr %self), !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !29
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !30 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1) #5
+// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass8MoveOnly(ptr noundef) #5
+// CHECK:STDOUT: declare void @_Z4pass8MoveOnly(ptr noundef) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN8MoveOnlyC1EOS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN8MoveOnlyC1EOS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN8MoveOnlyD1Ev, { 1, 2, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN8MoveOnlyD1Ev, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -534,13 +499,6 @@ fn PassTemporary() {
 // CHECK:STDOUT: !20 = !DILocation(line: 28, column: 12, scope: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 28, column: 3, scope: !18)
 // CHECK:STDOUT: !22 = !DILocation(line: 27, column: 1, scope: !18)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.3fdf0603d6385a53.Core:MoveOnly.Cpp", scope: null, file: !6, line: 14, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
-// CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !25 = !{null, !26}
-// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !27 = !{!28}
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !23, type: !26)
-// CHECK:STDOUT: !29 = !DILocation(line: 14, column: 3, scope: !23)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !31 = !DILocation(line: 20, column: 23, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 0, scope: !30)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !24 = !DILocation(line: 20, column: 23, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 0, scope: !23)

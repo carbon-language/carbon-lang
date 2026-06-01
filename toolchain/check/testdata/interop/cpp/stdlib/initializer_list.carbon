@@ -112,12 +112,8 @@ fn F() {
 // CHECK:STDOUT:   %initializer_list.initializer_list.ba6adf.3: %initializer_list.initializer_list.type.b3aef3.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.type: type = fn_type @InitListConstructor.cpp_destructor [concrete]
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor: %InitListConstructor.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %InitListConstructor.Op.type: type = fn_type @InitListConstructor.Op [concrete]
-// CHECK:STDOUT:   %InitListConstructor.Op: %InitListConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.type: type = fn_type @initializer_list.cpp_destructor [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor: %initializer_list.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %initializer_list.Op.type: type = fn_type @initializer_list.Op [concrete]
-// CHECK:STDOUT:   %initializer_list.Op: %initializer_list.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.af7ec0.4: type = fn_type @Destroy.Op.loc12_44.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1dc86d.4: %Destroy.Op.type.af7ec0.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.753, %Destroy.Op.1dc86d.4 [concrete]
@@ -145,16 +141,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitListConstructor.decl: type = class_decl @InitListConstructor [concrete = constants.%InitListConstructor] {} {}
 // CHECK:STDOUT:   %InitListConstructor__carbon_thunk.decl: %InitListConstructor__carbon_thunk.type = fn_decl @InitListConstructor__carbon_thunk [concrete = constants.%InitListConstructor__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %InitListConstructor.cpp_destructor.decl: %InitListConstructor.cpp_destructor.type = fn_decl @InitListConstructor.cpp_destructor [concrete = constants.%InitListConstructor.cpp_destructor] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %initializer_list.cpp_destructor.decl: %initializer_list.cpp_destructor.type = fn_decl @initializer_list.cpp_destructor [concrete = constants.%initializer_list.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -364,25 +350,15 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.24: ref %InitListConstructor = temporary %.loc12_44.2, %.loc12_44.23
 // CHECK:STDOUT:   %.loc12_44.25: %InitListConstructor = acquire_value %.loc12_44.24
 // CHECK:STDOUT:   %_.loc12: %InitListConstructor = value_binding _, %.loc12_44.25
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %InitListConstructor.Op.bound: <bound method> = bound_method %.loc12_44.24, constants.%InitListConstructor.Op
-// CHECK:STDOUT:   %Op.ref.loc12_44.1: %InitListConstructor.cpp_destructor.type = name_ref Op, imports.%InitListConstructor.cpp_destructor.decl [concrete = constants.%InitListConstructor.cpp_destructor]
-// CHECK:STDOUT:   %InitListConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc12_44.24, %Op.ref.loc12_44.1
+// CHECK:STDOUT:   %InitListConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc12_44.24, constants.%InitListConstructor.cpp_destructor
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.call: init %empty_tuple.type = call %InitListConstructor.cpp_destructor.bound(%.loc12_44.24)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %initializer_list.Op.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.Op
-// CHECK:STDOUT:   %Op.ref.loc12_44.2: %initializer_list.cpp_destructor.type = name_ref Op, imports.%initializer_list.cpp_destructor.decl [concrete = constants.%initializer_list.cpp_destructor]
-// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, %Op.ref.loc12_44.2
+// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc12: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc12(%.loc12_44.19)
 // CHECK:STDOUT:   %Destroy.Op.call.loc12: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.753)
-// CHECK:STDOUT:   %initializer_list.Op.bound.loc10: <bound method> = bound_method %.loc10_23.18, constants.%initializer_list.Op
-// CHECK:STDOUT:   %Op.ref.loc10: %initializer_list.cpp_destructor.type = name_ref Op, imports.%initializer_list.cpp_destructor.decl [concrete = constants.%initializer_list.cpp_destructor]
-// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_23.18, %Op.ref.loc10
+// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_23.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc10: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc10(%.loc10_23.18)
 // CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.753)
-// CHECK:STDOUT:   %initializer_list.Op.bound.loc8: <bound method> = bound_method %.loc8_50.18, constants.%initializer_list.Op
-// CHECK:STDOUT:   %Op.ref.loc8: %initializer_list.cpp_destructor.type = name_ref Op, imports.%initializer_list.cpp_destructor.decl [concrete = constants.%initializer_list.cpp_destructor]
-// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_50.18, %Op.ref.loc8
+// CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_50.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc8: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc8(%.loc8_50.18)
 // CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.753)
 // CHECK:STDOUT:   return

@@ -72,8 +72,6 @@ fn F() {
 // CHECK:STDOUT:   %ptr.055: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %S.Op.type: type = fn_type @S.Op [concrete]
-// CHECK:STDOUT:   %S.Op: %S.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -94,11 +92,6 @@ fn F() {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %TakesConstS.cpp_overload_set.value: %TakesConstS.cpp_overload_set.type = cpp_overload_set_value @TakesConstS.cpp_overload_set [concrete = constants.%TakesConstS.cpp_overload_set.value]
 // CHECK:STDOUT:   %TakesConstS__carbon_thunk.decl: %TakesConstS__carbon_thunk.type = fn_decl @TakesConstS__carbon_thunk [concrete = constants.%TakesConstS__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -141,10 +134,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_20.1: %ptr.26e = as_compatible %addr
 // CHECK:STDOUT:   %.loc11_20.2: %ptr.26e = converted %addr, %.loc11_20.1
 // CHECK:STDOUT:   %TakesConstS__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesConstS__carbon_thunk.decl(%.loc11_20.2)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %S.Op.bound: <bound method> = bound_method %s.var, constants.%S.Op
-// CHECK:STDOUT:   %Op.ref: %S.cpp_destructor.type = name_ref Op, imports.%S.cpp_destructor.decl [concrete = constants.%S.cpp_destructor]
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, %Op.ref
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

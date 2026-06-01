@@ -232,19 +232,13 @@ fn GetRefs() {
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp"(ptr %self) #2 !dbg !43 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !48
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret({}) %return) #0 !dbg !49 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !51
-// CHECK:STDOUT:   ret void, !dbg !52
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret({}) %return) #0 !dbg !43 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !45
+// CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -316,16 +310,10 @@ fn GetRefs() {
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !39)
 // CHECK:STDOUT: !42 = !DILocation(line: 25, column: 23, scope: !36)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp", scope: null, file: !6, line: 5, type: !44, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
-// CHECK:STDOUT: !44 = !DISubroutineType(types: !45)
-// CHECK:STDOUT: !45 = !{null, !32}
-// CHECK:STDOUT: !46 = !{!47}
-// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !43, type: !32)
-// CHECK:STDOUT: !48 = !DILocation(line: 5, column: 7, scope: !43)
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !50, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !50 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !51 = !DILocation(line: 9, column: 28, scope: !49)
-// CHECK:STDOUT: !52 = !DILocation(line: 9, column: 21, scope: !49)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !44, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !44 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !45 = !DILocation(line: 9, column: 28, scope: !43)
+// CHECK:STDOUT: !46 = !DILocation(line: 9, column: 21, scope: !43)
 // CHECK:STDOUT: ; ModuleID = 'pass_references_via_thunk.carbon'
 // CHECK:STDOUT: source_filename = "pass_references_via_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -454,19 +442,13 @@ fn GetRefs() {
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp"(ptr %self) #2 !dbg !45 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !50
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret({}) %return) #0 !dbg !51 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !53
-// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c"(ptr sret({}) %return) #0 !dbg !45 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.08e786f435a99766.Core:C.Cpp"(ptr %return), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z8TakeCRefR1C10ForceThunk(ptr noundef nonnull align 1 dereferenceable(1)) #5
@@ -541,16 +523,10 @@ fn GetRefs() {
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !38, type: !41)
 // CHECK:STDOUT: !44 = !DILocation(line: 26, column: 23, scope: !38)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.2595b867f6b6e1cc.Core:C.Cpp", scope: null, file: !6, line: 5, type: !46, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !48)
-// CHECK:STDOUT: !46 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !47 = !{null, !32}
-// CHECK:STDOUT: !48 = !{!49}
-// CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !45, type: !32)
-// CHECK:STDOUT: !50 = !DILocation(line: 5, column: 7, scope: !45)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !52, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !52 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !53 = !DILocation(line: 9, column: 28, scope: !51)
-// CHECK:STDOUT: !54 = !DILocation(line: 9, column: 21, scope: !51)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.4fdc745d4b6d0e3c", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !46 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !45)
+// CHECK:STDOUT: !48 = !DILocation(line: 9, column: 21, scope: !45)
 // CHECK:STDOUT: ; ModuleID = 'return_references.carbon'
 // CHECK:STDOUT: source_filename = "return_references.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

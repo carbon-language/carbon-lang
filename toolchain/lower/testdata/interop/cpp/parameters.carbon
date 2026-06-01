@@ -412,19 +412,13 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp"(ptr %self) #2 !dbg !30 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.1cc04ab0b0144e39"(ptr sret([12 x i8]) %return) #0 !dbg !36 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.73a6c13427a59137.Core:X.Cpp"(ptr %return), !dbg !38
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.1cc04ab0b0144e39"(ptr sret([12 x i8]) %return) #0 !dbg !30 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.73a6c13427a59137.Core:X.Cpp"(ptr %return), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z11pass_struct1X(i64, i32) #5
@@ -476,16 +470,10 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !DILocation(line: 2, column: 8, scope: !23)
 // CHECK:STDOUT: !29 = !{i64 0, i64 4, !7, i64 4, i64 4, !7, i64 8, i64 4, !7}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp", scope: null, file: !24, line: 2, type: !31, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
-// CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
-// CHECK:STDOUT: !32 = !{null, !27}
-// CHECK:STDOUT: !33 = !{!34}
-// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !30, type: !27)
-// CHECK:STDOUT: !35 = !DILocation(line: 2, column: 8, scope: !30)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.1cc04ab0b0144e39", scope: null, file: !37, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !37 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !38 = !DILocation(line: 9, column: 28, scope: !36)
-// CHECK:STDOUT: !39 = !DILocation(line: 9, column: 21, scope: !36)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.1cc04ab0b0144e39", scope: null, file: !31, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !32 = !DILocation(line: 9, column: 28, scope: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 9, column: 21, scope: !30)
 // CHECK:STDOUT: ; ModuleID = 'import_class_with_nontrivial_copy.carbon'
 // CHECK:STDOUT: source_filename = "import_class_with_nontrivial_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -520,46 +508,39 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.cf3982a5e015782f.Core:Y.Cpp"(ptr %self) #2 !dbg !23 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !30
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.Main(ptr sret([12 x i8]))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassInitExpr.Main() #0 !dbg !31 {
+// CHECK:STDOUT: define void @_CPassInitExpr.Main() #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_24.1.temp = alloca [12 x i8], align 1, !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !32
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !32
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !33
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   %.loc17_24.1.temp = alloca [12 x i8], align 1, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !24
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !24
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !35 {
+// CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y), !dbg !38
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr noundef dead_on_return) #4
+// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr noundef dead_on_return) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1YC1ERKS_(ptr noundef nonnull align 4 dereferenceable(12), ptr noundef nonnull align 4 dereferenceable(12)) unnamed_addr #4
+// CHECK:STDOUT: declare void @_ZN1YC1ERKS_(ptr noundef nonnull align 4 dereferenceable(12), ptr noundef nonnull align 4 dereferenceable(12)) unnamed_addr #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -588,20 +569,15 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS1Y", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.cf3982a5e015782f.Core:Y.Cpp", scope: null, file: !24, line: 2, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
-// CHECK:STDOUT: !24 = !DIFile(filename: "./class_with_nontrivial_copy.h", directory: "")
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
-// CHECK:STDOUT: !26 = !{null, !27}
-// CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !28 = !{!29}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !23, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 2, column: 7, scope: !23)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "PassInitExpr", linkageName: "_CPassInitExpr.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !32 = !DILocation(line: 17, column: 19, scope: !31)
-// CHECK:STDOUT: !33 = !DILocation(line: 17, column: 3, scope: !31)
-// CHECK:STDOUT: !34 = !DILocation(line: 16, column: 1, scope: !31)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !6, line: 20, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
-// CHECK:STDOUT: !36 = !{!37}
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !27)
-// CHECK:STDOUT: !38 = !DILocation(line: 21, column: 3, scope: !35)
-// CHECK:STDOUT: !39 = !DILocation(line: 20, column: 1, scope: !35)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassInitExpr", linkageName: "_CPassInitExpr.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !24 = !DILocation(line: 17, column: 19, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 17, column: 3, scope: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 16, column: 1, scope: !23)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !6, line: 20, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !29 = !{null, !30}
+// CHECK:STDOUT: !30 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !31 = !{!32}
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 21, column: 3, scope: !27)
+// CHECK:STDOUT: !34 = !DILocation(line: 20, column: 1, scope: !27)

@@ -581,16 +581,14 @@ fn F() {
 // CHECK:STDOUT:   %T.4ca: %Default.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.4ca) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.25a: %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c = struct_value () [symbolic]
-// CHECK:STDOUT:   %U.Op.type.bd116f.1: type = fn_type @U.Op.1 [concrete]
-// CHECK:STDOUT:   %U.Op.1edc3c.1: %U.Op.type.bd116f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.3d0: <witness> = custom_witness (%U.Op.1edc3c.1), @Default [concrete]
+// CHECK:STDOUT:   %U.Op.type: type = fn_type @U.Op [concrete]
+// CHECK:STDOUT:   %U.Op: %U.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.3d0: <witness> = custom_witness (%U.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.f66: %Default.type = facet_value %U, (%custom_witness.3d0) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.9ec: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.b72, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.f66) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %U, (%DefaultOrUnformed.impl_witness.9ec) [concrete]
 // CHECK:STDOUT:   %U.cpp_destructor.type: type = fn_type @U.cpp_destructor [concrete]
 // CHECK:STDOUT:   %U.cpp_destructor: %U.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %U.Op.type.bd116f.2: type = fn_type @U.Op.2 [concrete]
-// CHECK:STDOUT:   %U.Op.1edc3c.2: %U.Op.type.bd116f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -612,11 +610,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.dfa: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.47c) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.25a)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.b72 = impl_witness_table (%Core.import_ref.dfa), @T.as_type.as.DefaultOrUnformed.impl [concrete]
-// CHECK:STDOUT:   %U.cpp_destructor.decl: %U.cpp_destructor.type = fn_decl @U.cpp_destructor [concrete = constants.%U.cpp_destructor] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
@@ -646,10 +639,7 @@ fn F() {
 // CHECK:STDOUT:     %U.ref.loc10: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %U = ref_binding x, %x.var
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %U.Op.bound: <bound method> = bound_method %x.var, constants.%U.Op.1edc3c.2
-// CHECK:STDOUT:   %Op.ref: %U.cpp_destructor.type = name_ref Op, imports.%U.cpp_destructor.decl [concrete = constants.%U.cpp_destructor]
-// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %x.var, %Op.ref
+// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%U.cpp_destructor
 // CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -718,16 +708,14 @@ fn F() {
 // CHECK:STDOUT:   %T.4ca: %Default.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.4ca) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.25a: %T.as_type.as.DefaultOrUnformed.impl.Op.type.47c = struct_value () [symbolic]
-// CHECK:STDOUT:   %O.Op.type.43d658.1: type = fn_type @O.Op.1 [concrete]
-// CHECK:STDOUT:   %O.Op.cc70d5.1: %O.Op.type.43d658.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.213: <witness> = custom_witness (%O.Op.cc70d5.1), @Default [concrete]
+// CHECK:STDOUT:   %O.Op.type: type = fn_type @O.Op [concrete]
+// CHECK:STDOUT:   %O.Op: %O.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.213: <witness> = custom_witness (%O.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.478: %Default.type = facet_value %O, (%custom_witness.213) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.1cc: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.b72, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.478) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %O, (%DefaultOrUnformed.impl_witness.1cc) [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor.type: type = fn_type @O.cpp_destructor [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor: %O.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %O.Op.type.43d658.2: type = fn_type @O.Op.2 [concrete]
-// CHECK:STDOUT:   %O.Op.cc70d5.2: %O.Op.type.43d658.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -745,11 +733,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.dfa: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.47c) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.25a)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.b72 = impl_witness_table (%Core.import_ref.dfa), @T.as_type.as.DefaultOrUnformed.impl [concrete]
-// CHECK:STDOUT:   %O.cpp_destructor.decl: %O.cpp_destructor.type = fn_decl @O.cpp_destructor [concrete = constants.%O.cpp_destructor] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %U) {
@@ -778,10 +761,7 @@ fn F() {
 // CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %O.Op.bound: <bound method> = bound_method %x.var, constants.%O.Op.cc70d5.2
-// CHECK:STDOUT:   %Op.ref: %O.cpp_destructor.type = name_ref Op, imports.%O.cpp_destructor.decl [concrete = constants.%O.cpp_destructor]
-// CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, %Op.ref
+// CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -966,8 +946,6 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U.cpp_destructor.type: type = fn_type @U.cpp_destructor [concrete]
 // CHECK:STDOUT:   %U.cpp_destructor: %U.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %U.Op.type: type = fn_type @U.Op [concrete]
-// CHECK:STDOUT:   %U.Op: %U.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -977,11 +955,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U.cpp_destructor.decl: %U.cpp_destructor.type = fn_decl @U.cpp_destructor [concrete = constants.%U.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -997,10 +970,7 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %U to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %U = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %U.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%U.Op
-// CHECK:STDOUT:   %Op.ref: %U.cpp_destructor.type = name_ref Op, imports.%U.cpp_destructor.decl [concrete = constants.%U.cpp_destructor]
-// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, %Op.ref
+// CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%U.cpp_destructor
 // CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

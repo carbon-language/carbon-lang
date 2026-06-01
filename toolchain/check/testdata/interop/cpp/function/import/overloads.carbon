@@ -2401,7 +2401,6 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.type: type = cpp_overload_set_type @PassNoFields.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.value: %PassNoFields.cpp_overload_set.type = cpp_overload_set_value @PassNoFields.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %NoFields: type = class_type @NoFields [concrete]
-// CHECK:STDOUT:   %pattern_type.eb8: type = pattern_type %NoFields [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %NoFields [concrete]
 // CHECK:STDOUT:   %pattern_type.730: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.type: type = fn_type @PassNoFields__carbon_thunk [concrete]
@@ -2410,15 +2409,6 @@ fn F() {
 // CHECK:STDOUT:   %NoFields.val: %NoFields = struct_value () [concrete]
 // CHECK:STDOUT:   %.759: ref %NoFields = temporary invalid, %NoFields.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Self: %Destroy.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.12b: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.73c: %Destroy.WithSelf.Op.type.12b = struct_value () [symbolic]
-// CHECK:STDOUT:   %NoFields.cpp_destructor.type: type = fn_type @NoFields.cpp_destructor [concrete]
-// CHECK:STDOUT:   %NoFields.cpp_destructor: %NoFields.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.cc4: <witness> = custom_witness (), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.ca4: %Destroy.type = facet_value %NoFields, (%custom_witness.cc4) [concrete]
-// CHECK:STDOUT:   %NoFields.Op.type: type = fn_type @NoFields.Op [concrete]
-// CHECK:STDOUT:   %NoFields.Op: %NoFields.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2442,14 +2432,6 @@ fn F() {
 // CHECK:STDOUT:     %s: %ptr.e71 = value_binding s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.12b = fn_decl @Destroy.WithSelf.Op [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.73c)] {} {}
-// CHECK:STDOUT:   %NoFields.cpp_destructor.decl: %NoFields.cpp_destructor.type = fn_decl @NoFields.cpp_destructor [concrete = constants.%NoFields.cpp_destructor] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.eb8 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.eb8 = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %NoFields = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %NoFields = ref_binding self, %self.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2554,19 +2536,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_30.8: ref %NoFields = value_as_ref %.loc15_30.7
 // CHECK:STDOUT:   %addr.loc15: %ptr.e71 = addr_of %.loc15_30.8
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc15)
-// CHECK:STDOUT:   %NoFields.Op.decl: %NoFields.Op.type = fn_decl @NoFields.Op [concrete = constants.%NoFields.Op] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.eb8 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.eb8 = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %NoFields = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %NoFields = ref_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Op.ref.loc15: %NoFields.cpp_destructor.type = name_ref Op, imports.%NoFields.cpp_destructor.decl [concrete = constants.%NoFields.cpp_destructor]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_30.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_30.2)
-// CHECK:STDOUT:   %Op.ref.loc13: %NoFields.cpp_destructor.type = name_ref Op, imports.%NoFields.cpp_destructor.decl [concrete = constants.%NoFields.cpp_destructor]
-// CHECK:STDOUT:   %Op.ref.loc11: %NoFields.cpp_destructor.type = name_ref Op, imports.%NoFields.cpp_destructor.decl [concrete = constants.%NoFields.cpp_destructor]
-// CHECK:STDOUT:   %Op.ref.loc9: %NoFields.cpp_destructor.type = name_ref Op, imports.%NoFields.cpp_destructor.decl [concrete = constants.%NoFields.cpp_destructor]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2575,14 +2546,6 @@ fn F() {
 // CHECK:STDOUT: fn @PassNoFields__carbon_thunk(%s.param: %ptr.e71);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoFields.cpp_destructor(%self.param: ref %NoFields) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @NoFields.Op(%self.param: ref %NoFields) [thunk imports.%NoFields.cpp_destructor.decl for imports.%Destroy.WithSelf.Op.decl, @Destroy.WithSelf.Op(constants.%Destroy.facet.ca4)] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Op.ref: %NoFields.cpp_destructor.type = name_ref Op, imports.%NoFields.cpp_destructor.decl [concrete = constants.%NoFields.cpp_destructor]
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call: init %empty_tuple.type = call %NoFields.cpp_destructor.bound(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:

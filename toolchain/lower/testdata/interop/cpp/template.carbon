@@ -286,19 +286,13 @@ fn Call3() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp"(ptr %self) #2 !dbg !20 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !26
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !27 {
+// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !28
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -316,12 +310,12 @@ fn Call3() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !31 {
+// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !32
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !33
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
+// CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -342,22 +336,21 @@ fn Call3() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #4
+// CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #4
+// CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3fooIJiiEEv1XDpT_(i32 noundef, i32 noundef) #4
+// CHECK:STDOUT: declare void @_Z3fooIJiiEEv1XDpT_(i32 noundef, i32 noundef) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -383,18 +376,11 @@ fn Call3() {
 // CHECK:STDOUT: !17 = !{!18, !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"p1 _ZTS1X", !19, i64 0}
 // CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.4fb43f1b860fd0d0.Core:X.Cpp", scope: null, file: !6, line: 5, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
-// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !22 = !{null, !23}
-// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !24 = !{!25}
-// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
-// CHECK:STDOUT: !26 = !DILocation(line: 5, column: 7, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !28 = !DILocation(line: 18, column: 11, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 18, column: 3, scope: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 1, scope: !27)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !32 = !DILocation(line: 24, column: 11, scope: !31)
-// CHECK:STDOUT: !33 = !DILocation(line: 24, column: 3, scope: !31)
-// CHECK:STDOUT: !34 = !DILocation(line: 22, column: 1, scope: !31)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 11, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !20)
+// CHECK:STDOUT: !23 = !DILocation(line: 16, column: 1, scope: !20)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !25 = !DILocation(line: 24, column: 11, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 24, column: 3, scope: !24)
+// CHECK:STDOUT: !27 = !DILocation(line: 22, column: 1, scope: !24)
