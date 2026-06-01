@@ -43,7 +43,7 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_21.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc18_21.1.temp = alloca { i32, i32, i32 }, align 4, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_21.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc18_21.1.temp, { i32 } { i32 1 }, ptr @tuple.c4c.loc18_20.6), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.9eed32d146d768a4:core.Destroy.Core"(ptr %.loc18_21.1.temp), !dbg !19

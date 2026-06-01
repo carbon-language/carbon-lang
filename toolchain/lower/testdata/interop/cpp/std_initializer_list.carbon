@@ -134,7 +134,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitDirectly.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !14
 // CHECK:STDOUT:   %.loc13_50.3.temp = alloca [3 x i32], align 4, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_50.3.temp), !dbg !15
@@ -166,7 +166,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitVectorLike.Main() #0 !dbg !32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !33
-// CHECK:STDOUT:   %.loc18_36.2.temp = alloca [16 x i8], align 1, !dbg !34
+// CHECK:STDOUT:   %.loc18_36.2.temp = alloca [16 x i8], align 8, !dbg !34
 // CHECK:STDOUT:   %.loc18_36.4.temp = alloca [3 x i32], align 4, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_36.2.temp), !dbg !34
@@ -216,7 +216,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitNontrivialDtor.Main() #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !46
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !46
 // CHECK:STDOUT:   %.loc23_69.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.17.temp), !dbg !47
@@ -382,7 +382,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitDirectly.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !14
 // CHECK:STDOUT:   %.loc13_50.3.temp = alloca [3 x i32], align 4, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_50.3.temp), !dbg !15
@@ -414,7 +414,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitVectorLike.Main() #0 !dbg !32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !33
-// CHECK:STDOUT:   %.loc18_36.2.temp = alloca [16 x i8], align 1, !dbg !34
+// CHECK:STDOUT:   %.loc18_36.2.temp = alloca [16 x i8], align 8, !dbg !34
 // CHECK:STDOUT:   %.loc18_36.4.temp = alloca [3 x i32], align 4, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_36.2.temp), !dbg !34
@@ -464,7 +464,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitNontrivialDtor.Main() #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !48
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !48
 // CHECK:STDOUT:   %.loc23_69.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.17.temp), !dbg !49

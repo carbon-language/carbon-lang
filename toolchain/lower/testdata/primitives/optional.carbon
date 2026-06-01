@@ -86,14 +86,14 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAddOrRemoveConst.Main(i32 %a, i32 %b) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc11 = alloca <{ i32, i1 }>, align 8, !dbg !30
-// CHECK:STDOUT:   %_.var.loc12 = alloca <{ i32, i1 }>, align 8, !dbg !31
-// CHECK:STDOUT:   %_.var.loc13 = alloca <{ i32, i1 }>, align 8, !dbg !32
-// CHECK:STDOUT:   %_.var.loc14 = alloca <{ i32, i1 }>, align 8, !dbg !33
-// CHECK:STDOUT:   %_.var.loc15 = alloca <{ i32, i1 }>, align 8, !dbg !34
-// CHECK:STDOUT:   %_.var.loc16 = alloca <{ i32, i1 }>, align 8, !dbg !35
-// CHECK:STDOUT:   %_.var.loc17 = alloca <{ i32, i1 }>, align 8, !dbg !36
-// CHECK:STDOUT:   %_.var.loc18 = alloca <{ i32, i1 }>, align 8, !dbg !37
+// CHECK:STDOUT:   %_.var.loc11 = alloca <{ i32, i1 }>, align 4, !dbg !30
+// CHECK:STDOUT:   %_.var.loc12 = alloca <{ i32, i1 }>, align 4, !dbg !31
+// CHECK:STDOUT:   %_.var.loc13 = alloca <{ i32, i1 }>, align 4, !dbg !32
+// CHECK:STDOUT:   %_.var.loc14 = alloca <{ i32, i1 }>, align 4, !dbg !33
+// CHECK:STDOUT:   %_.var.loc15 = alloca <{ i32, i1 }>, align 4, !dbg !34
+// CHECK:STDOUT:   %_.var.loc16 = alloca <{ i32, i1 }>, align 4, !dbg !35
+// CHECK:STDOUT:   %_.var.loc17 = alloca <{ i32, i1 }>, align 4, !dbg !36
+// CHECK:STDOUT:   %_.var.loc18 = alloca <{ i32, i1 }>, align 4, !dbg !37
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc11), !dbg !30
 // CHECK:STDOUT:   call void @"_CConvert.6391a65a70757668:ImplicitAs.116c0b3f4fb552e2.Core.d356e073ce1a5b35"(ptr %_.var.loc11, i32 %a), !dbg !30
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc12), !dbg !31

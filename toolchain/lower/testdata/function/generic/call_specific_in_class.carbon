@@ -63,7 +63,7 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !16
 // CHECK:STDOUT:   %var_i32.var = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %var_f64.var = alloca double, align 8, !dbg !18
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !14
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc34_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !20
@@ -138,7 +138,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr ptr @_CG.Main.3890ad819211e245(ptr %x) #0 !dbg !67 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !70
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !70
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !70
 // CHECK:STDOUT:   %C.Cfn.call = call ptr @_CCfn.C.Main.3890ad819211e245(ptr %c.var, ptr %x), !dbg !71
 // CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !70
@@ -148,7 +148,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.980bd46fd9fb5b99(i32 %x) #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !76
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !76
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !76
 // CHECK:STDOUT:   %C.Cfn.call = call i32 @_CCfn.C.Main.980bd46fd9fb5b99(ptr %c.var, i32 %x), !dbg !77
 // CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !76
@@ -158,7 +158,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr double @_CG.Main.3eb991d272a034fb(double %x) #0 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !82
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !82
 // CHECK:STDOUT:   %C.Cfn.call = call double @_CCfn.C.Main.3eb991d272a034fb(ptr %c.var, double %x), !dbg !83
 // CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !82
@@ -168,7 +168,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr %type @_CG.Main.22a6f624d7af1d76(%type %x) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !88
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !88
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !88
 // CHECK:STDOUT:   %C.Cfn.call = call %type @_CCfn.C.Main.22a6f624d7af1d76(ptr %c.var, %type %x), !dbg !89
 // CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !88

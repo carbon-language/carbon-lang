@@ -89,7 +89,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUse.Main() #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !24
+// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 4, !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !24
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !25
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !26

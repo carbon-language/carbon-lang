@@ -59,8 +59,8 @@ fn M() {
 // CHECK:STDOUT:   %m.var = alloca double, align 8, !dbg !15
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !16
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !17
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc40_9.2.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !18
+// CHECK:STDOUT:   %.loc40_9.2.temp = alloca {}, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !15

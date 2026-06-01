@@ -40,8 +40,8 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !8
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca {}, align 1, !dbg !8
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %m.var = alloca double, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7

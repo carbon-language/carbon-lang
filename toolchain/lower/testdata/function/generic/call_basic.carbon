@@ -131,8 +131,8 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !55
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !56
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !57
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !58
-// CHECK:STDOUT:   %.loc43_6.2.temp = alloca {}, align 8, !dbg !59
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !58
+// CHECK:STDOUT:   %.loc43_6.2.temp = alloca {}, align 1, !dbg !59
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_6.2.temp), !dbg !51
 // CHECK:STDOUT:   %H.call.loc29 = call i32 @_CH.Main.980bd46fd9fb5b99(i32 %x), !dbg !51
 // CHECK:STDOUT:   store i32 %H.call.loc29, ptr %.loc29_6.2.temp, align 4, !dbg !51
@@ -188,8 +188,8 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !81
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !82
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !83
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !84
-// CHECK:STDOUT:   %.loc43_6.2.temp = alloca {}, align 8, !dbg !85
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !84
+// CHECK:STDOUT:   %.loc43_6.2.temp = alloca {}, align 1, !dbg !85
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_6.2.temp), !dbg !77
 // CHECK:STDOUT:   %H.call.loc29 = call double @_CH.Main.3eb991d272a034fb(double %x), !dbg !77
 // CHECK:STDOUT:   store double %H.call.loc29, ptr %.loc29_6.2.temp, align 8, !dbg !77

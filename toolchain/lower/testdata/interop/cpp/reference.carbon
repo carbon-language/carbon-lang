@@ -138,8 +138,8 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   %_.var.1 = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !14
+// CHECK:STDOUT:   %_.var.1 = alloca {}, align 1, !dbg !15
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
 // CHECK:STDOUT:   %_.var.2 = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc25_23.2.temp = alloca i32, align 4, !dbg !18
@@ -327,8 +327,8 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !14
+// CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 1, !dbg !15
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !18

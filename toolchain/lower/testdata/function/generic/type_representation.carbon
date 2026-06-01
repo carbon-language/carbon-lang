@@ -211,7 +211,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.e4214cdf04e44ea0(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !94
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !94
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !94
 // CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %_.var, ptr %a), !dbg !95
 // CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %return, ptr %a), !dbg !96
@@ -222,7 +222,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.6942691454f579cd() #0 !dbg !98 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !99
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !99
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !99
 // CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !100
 // CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !101
@@ -232,7 +232,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.52eb52f0ffbd1db6(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !103 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !106
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !106
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !106
 // CHECK:STDOUT:   call void @"_COp.87cc08e781602b22:Copy.Main"(ptr %_.var, ptr %a), !dbg !107
 // CHECK:STDOUT:   call void @"_COp.87cc08e781602b22:Copy.Main"(ptr %return, ptr %a), !dbg !108
@@ -243,7 +243,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.cbd425227ee9ed4b(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !110 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !113
+// CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 4, !dbg !113
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !113
 // CHECK:STDOUT:   call void @"_COp.b1957bb3c5dab115:Copy.Main"(ptr %_.var, ptr %a), !dbg !114
 // CHECK:STDOUT:   call void @"_COp.b1957bb3c5dab115:Copy.Main"(ptr %return, ptr %a), !dbg !115

@@ -94,7 +94,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !33
+// CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 1, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.3dbfed2bcb44ac1d.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33

@@ -68,12 +68,12 @@ fn Call() {
 // CHECK:STDOUT: define void @_CCall.Main() #0 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var.loc15 = alloca i32, align 4, !dbg !38
-// CHECK:STDOUT:   %_.var.loc16 = alloca {}, align 8, !dbg !39
+// CHECK:STDOUT:   %_.var.loc16 = alloca {}, align 1, !dbg !39
 // CHECK:STDOUT:   %_.var.loc18_12 = alloca i32, align 4, !dbg !40
-// CHECK:STDOUT:   %_.var.loc18_24 = alloca {}, align 8, !dbg !41
+// CHECK:STDOUT:   %_.var.loc18_24 = alloca {}, align 1, !dbg !41
 // CHECK:STDOUT:   %_.var.loc20 = alloca i32, align 4, !dbg !42
-// CHECK:STDOUT:   %.loc27_18.2.temp = alloca {}, align 8, !dbg !43
-// CHECK:STDOUT:   %_.var.loc21 = alloca {}, align 8, !dbg !44
+// CHECK:STDOUT:   %.loc27_18.2.temp = alloca {}, align 1, !dbg !43
+// CHECK:STDOUT:   %_.var.loc21 = alloca {}, align 1, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc15), !dbg !38
 // CHECK:STDOUT:   store i32 1, ptr %_.var.loc15, align 4, !dbg !38
 // CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %_.var.loc15), !dbg !45

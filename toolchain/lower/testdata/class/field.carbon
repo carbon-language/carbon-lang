@@ -168,7 +168,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %o.var = alloca {}, align 8, !dbg !8
+// CHECK:STDOUT:   %o.var = alloca {}, align 1, !dbg !8
 // CHECK:STDOUT:   %_.var = alloca { ptr, {} }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
@@ -249,7 +249,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %o.var = alloca { i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   %o.var = alloca { i32 }, align 4, !dbg !8
 // CHECK:STDOUT:   %_.var = alloca <{ ptr, { i32 } }>, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9

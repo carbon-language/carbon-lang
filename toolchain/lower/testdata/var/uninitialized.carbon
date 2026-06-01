@@ -27,8 +27,8 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   %b.var = alloca double, align 8, !dbg !9
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !10
-// CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !11
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !10
+// CHECK:STDOUT:   %d.var = alloca {}, align 1, !dbg !11
 // CHECK:STDOUT:   %e.var = alloca i1, align 1, !dbg !12
 // CHECK:STDOUT:   %f.var = alloca ptr, align 8, !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !8

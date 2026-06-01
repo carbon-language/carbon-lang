@@ -201,7 +201,7 @@ auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
+auto FunctionContext::CreateAlloca(TypeInFile type, const llvm::Twine& name)
     -> llvm::AllocaInst* {
   // Position the first alloca right before the start of the executable code in
   // the function.
@@ -221,9 +221,8 @@ auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
     builder().SetCurrentDebugLocation(debug_loc);
 
     // Create an alloca for this variable in the entry block.
-    // TODO: Compute alignment of the type, which may be greater than the
-    // alignment computed by LLVM.
-    alloca = builder().CreateAlloca(type, /*ArraySize=*/nullptr, name);
+    alloca = builder().CreateAlloca(GetType(type), /*ArraySize=*/nullptr, name);
+    alloca->setAlignment(GetAlignment(type));
   }
 
   // Create a lifetime start intrinsic here to indicate where its scope really
@@ -345,9 +344,11 @@ auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
   auto* llvm_type = GetType(type);
   auto* load_type = GetWidenedMemoryType(llvm_type);
 
-  // TODO: Include alias and alignment information.
-  llvm::Value* value = builder().CreateLoad(load_type, addr, name);
+  // TODO: Include alias information.
+  auto* load = builder().CreateLoad(load_type, addr, name);
+  load->setAlignment(GetAlignment(type));
 
+  llvm::Value* value = load;
   if (load_type != llvm_type) {
     value = builder().CreateTrunc(value, llvm_type);
   }
@@ -356,7 +357,6 @@ auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
 
 auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
                                   llvm::Value* addr) -> void {
-  // TODO: Include alias and alignment information.
   auto* llvm_type = GetType(type);
   CARBON_CHECK(value->getType() == llvm_type);
 
@@ -367,7 +367,9 @@ auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
     value = builder().CreateZExt(value, store_type);
   }
 
-  builder().CreateStore(value, addr);
+  // TODO: Include alias information.
+  auto* store = builder().CreateStore(value, addr);
+  store->setAlignment(GetAlignment(type));
 }
 
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
@@ -394,9 +396,7 @@ auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
                                  SemIR::InstId dest_id) -> void {
   const auto& layout = llvm_module().getDataLayout();
   auto* llvm_type = GetType(type);
-  // TODO: Compute known alignment of the source and destination, which may
-  // be greater than the alignment computed by LLVM.
-  auto align = layout.getABITypeAlign(llvm_type);
+  auto align = GetAlignment(type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.

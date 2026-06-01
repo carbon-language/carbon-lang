@@ -34,7 +34,7 @@ fn Run() {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc16_18.1.temp = alloca { i32, i32 }, align 8, !dbg !15
+// CHECK:STDOUT:   %.loc16_18.1.temp = alloca { i32, i32 }, align 4, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_18.1.temp), !dbg !15
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_18.1.temp), !dbg !15

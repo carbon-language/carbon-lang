@@ -106,8 +106,8 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:I.01f5c37cad34e90b.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !28
-// CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !29
+// CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
+// CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !29
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.8b79c6c1932e58f6.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !29
@@ -139,9 +139,9 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_20.1.temp = alloca { i32 }, align 8, !dbg !50
-// CHECK:STDOUT:   %.loc24_20.2.temp = alloca { i32 }, align 8, !dbg !50
-// CHECK:STDOUT:   %.loc24_19.1.temp = alloca { i32 }, align 8, !dbg !51
+// CHECK:STDOUT:   %.loc24_20.1.temp = alloca { i32 }, align 4, !dbg !50
+// CHECK:STDOUT:   %.loc24_20.2.temp = alloca { i32 }, align 4, !dbg !50
+// CHECK:STDOUT:   %.loc24_19.1.temp = alloca { i32 }, align 4, !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_20.1.temp), !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_20.2.temp), !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_19.1.temp), !dbg !51
@@ -248,9 +248,9 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr sret({}) %return, ptr %c, ptr %b) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_23.1.temp = alloca {}, align 8, !dbg !27
-// CHECK:STDOUT:   %.loc22_23.3.temp = alloca {}, align 8, !dbg !27
-// CHECK:STDOUT:   %.loc22_22.1.temp = alloca {}, align 8, !dbg !28
+// CHECK:STDOUT:   %.loc22_23.1.temp = alloca {}, align 1, !dbg !27
+// CHECK:STDOUT:   %.loc22_23.3.temp = alloca {}, align 1, !dbg !27
+// CHECK:STDOUT:   %.loc22_22.1.temp = alloca {}, align 1, !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.1.temp), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.3.temp), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_22.1.temp), !dbg !28
@@ -292,8 +292,8 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.a61d280f5ea4bfd8.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_38.2.temp = alloca {}, align 8, !dbg !51
-// CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 8, !dbg !52
+// CHECK:STDOUT:   %.loc18_38.2.temp = alloca {}, align 1, !dbg !51
+// CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 1, !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_38.2.temp), !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_21.1.temp), !dbg !52
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.46f7e99dd8f31ccb.Core"(ptr %.loc12_21.1.temp, ptr %x), !dbg !52

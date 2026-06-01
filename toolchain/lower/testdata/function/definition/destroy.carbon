@@ -89,7 +89,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr @C.val.loc12_6.6), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
@@ -150,7 +150,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @C.val.loc6, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !15
@@ -223,7 +223,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitVar.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !17
@@ -240,7 +240,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 8, !dbg !26
+// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 1, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_16.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_16.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !27
