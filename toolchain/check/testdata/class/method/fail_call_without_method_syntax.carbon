@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/method/fail_call_without_method_syntax.carbon
 
 // --- fail_call_without_method_syntax.carbon
-
 library "[[@TEST_NAME]]";
 
 class Point {

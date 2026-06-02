@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_self_param.carbon
 
 // --- fail_self_param.carbon
-
 library "[[@TEST_NAME]]";
 
 // `self` is not a valid parameter of a class declaration even when placed in
@@ -31,7 +30,6 @@ class C(self:! type, x:! self) {}
 var v: C(());
 
 // --- fail_self_param_implicit.carbon
-
 library "[[@TEST_NAME]]";
 
 // `self` in the implicit parameter list of a class declaration is reported as

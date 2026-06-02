@@ -91,66 +91,6 @@ abstract class AbstractWithDefinition {
   // CHECK:STDERR:
   abstract fn F(unused self) {}
   abstract fn G(self);
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:24: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:                        ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE-9]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   abstract fn F(unused self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:38: error: definition of `abstract` function [DefinedAbstractFunction]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:                                      ^
-  // CHECK:STDERR:
-  abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:24: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   abstract fn G[unused self: Self]();
-  // CHECK:STDERR:                        ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   abstract fn G[unused self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE-24]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   abstract fn G(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:24: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
-  // CHECK:STDERR:   abstract fn G[unused self: Self]();
-  // CHECK:STDERR:                        ^~~~~~~~~~
-  // CHECK:STDERR:
-  abstract fn G[unused self: Self]();
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:24: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:                        ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE-41]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   abstract fn F(unused self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:38: error: definition of `abstract` function [DefinedAbstractFunction]
-  // CHECK:STDERR:   abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR:                                      ^
-  // CHECK:STDERR:
-  abstract fn F[unused self: Self]() {}
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:17: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   abstract fn G[self: Self]();
-  // CHECK:STDERR:                 ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   abstract fn G[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE-56]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   abstract fn G(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  abstract fn G[self: Self]();
 }
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:42: error: definition of `abstract` function [DefinedAbstractFunction]
 // CHECK:STDERR: fn AbstractWithDefinition.G(unused self) {

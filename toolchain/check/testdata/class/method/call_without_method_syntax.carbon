@@ -13,7 +13,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/method/call_without_method_syntax.carbon
 
 // --- call_without_method_syntax.carbon
-
 library "[[@TEST_NAME]]";
 
 class Point {
@@ -108,9 +107,9 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc14: Core.Form = init_form %i32 [concrete = constants.%.70c]
+// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %p.param: %Point = value_param call_param0
-// CHECK:STDOUT:     %Point.ref.loc14: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:     %Point.ref.loc13: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:     %p: %Point = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -124,12 +123,12 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc19: Core.Form = init_form %i32 [concrete = constants.%.70c]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %p.param: %Point = value_param call_param0
-// CHECK:STDOUT:     %Point.ref.loc19_17: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:     %Point.ref.loc18_17: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:     %p: %Point = value_binding p, %p.param
 // CHECK:STDOUT:     %q.param: %Point = value_param call_param1
-// CHECK:STDOUT:     %Point.ref.loc19_27: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:     %Point.ref.loc18_27: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:     %q: %Point = value_binding q, %q.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -141,9 +140,9 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc24: Core.Form = init_form %i32 [concrete = constants.%.70c]
+// CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %p.param: %Point = value_param call_param0
-// CHECK:STDOUT:     %Point.ref.loc24: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:     %Point.ref.loc23: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:     %p: %Point = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -158,7 +157,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc5_19: Core.Form = init_form %i32 [concrete = constants.%.70c]
+// CHECK:STDOUT:     %.loc4_19: Core.Form = init_form %i32 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %self.param: %Point = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %self: %Point = value_binding self, %self.param
@@ -174,7 +173,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c6b = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_42: Core.Form = init_form %i32 [concrete = constants.%.70c]
+// CHECK:STDOUT:     %.loc5_42: Core.Form = init_form %i32 [concrete = constants.%.70c]
 // CHECK:STDOUT:     %self.param: %Point = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %self: %Point = value_binding self, %self.param
@@ -184,7 +183,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: %Point.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.loc7: %Point.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.fa5]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -193,40 +192,40 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   .Get = %Point.Get.decl
 // CHECK:STDOUT:   .Point = <poisoned>
 // CHECK:STDOUT:   .First = %Point.First.decl
-// CHECK:STDOUT:   .x = %.loc8
+// CHECK:STDOUT:   .x = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Point.Get(%self.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Point = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc8 [concrete = @Point.%.loc8]
-// CHECK:STDOUT:   %.loc5_36.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc5_36.2: %i32 = acquire_value %.loc5_36.1
+// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
+// CHECK:STDOUT:   %.loc4_36.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc4_36.2: %i32 = acquire_value %.loc4_36.1
 // CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
-// CHECK:STDOUT:   %bound_method.loc5_36.1: <bound method> = bound_method %.loc5_36.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc4_36.1: <bound method> = bound_method %.loc4_36.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_36.2: <bound method> = bound_method %.loc5_36.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_36.2(%.loc5_36.2)
+// CHECK:STDOUT:   %bound_method.loc4_36.2: <bound method> = bound_method %.loc4_36.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc4_36.2(%.loc4_36.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Point.First(%self.param: %Point, %other.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Point = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc8 [concrete = @Point.%.loc8]
-// CHECK:STDOUT:   %.loc6_59.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc6_59.2: %i32 = acquire_value %.loc6_59.1
+// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
+// CHECK:STDOUT:   %.loc5_59.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc5_59.2: %i32 = acquire_value %.loc5_59.1
 // CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
-// CHECK:STDOUT:   %bound_method.loc6_59.1: <bound method> = bound_method %.loc6_59.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc5_59.1: <bound method> = bound_method %.loc5_59.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc6_59.2: <bound method> = bound_method %.loc6_59.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_59.2(%.loc6_59.2)
+// CHECK:STDOUT:   %bound_method.loc5_59.2: <bound method> = bound_method %.loc5_59.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_59.2(%.loc5_59.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGet(%p.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Point.ref.loc15: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %Point.ref.loc14: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:   %Get.ref: %Point.Get.type = name_ref Get, @Point.%Point.Get.decl [concrete = constants.%Point.Get]
 // CHECK:STDOUT:   %p.ref: %Point = name_ref p, %p
 // CHECK:STDOUT:   %Point.Get.call: init %i32 = call %Get.ref(%p.ref)
@@ -235,7 +234,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFirst(%p.param: %Point, %q.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Point.ref.loc20: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %Point.ref.loc19: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:   %First.ref: %Point.First.type = name_ref First, @Point.%Point.First.decl [concrete = constants.%Point.First]
 // CHECK:STDOUT:   %p.ref: %Point = name_ref p, %p
 // CHECK:STDOUT:   %q.ref: %Point = name_ref q, %q
@@ -245,7 +244,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallViaAlias(%p.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Point.ref.loc25: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
+// CHECK:STDOUT:   %Point.ref.loc24: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:   %Get.ref: %Point.Get.type = name_ref Get, @Point.%Point.Get.decl [concrete = constants.%Point.Get]
 // CHECK:STDOUT:   %A: %Point.Get.type = alias_binding A, %Get.ref [concrete = constants.%Point.Get]
 // CHECK:STDOUT:   %A.ref: %Point.Get.type = name_ref A, %A [concrete = constants.%Point.Get]

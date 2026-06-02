@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_self.carbon
 
 // --- fail_self_implicit_list.carbon
-
 library "[[@TEST_NAME]]";
 
 // `self` is not permitted in the implicit parameter list, regardless of how
@@ -45,7 +44,6 @@ class Class {
 }
 
 // --- fail_self_outside_class.carbon
-
 library "[[@TEST_NAME]]";
 
 // `self` outside any class scope has no `Self` to default to.
@@ -63,7 +61,6 @@ fn F(self);
 fn G(ref self);
 
 // --- fail_self_repeated.carbon
-
 library "[[@TEST_NAME]]";
 
 class Class {
@@ -186,7 +183,6 @@ class Class {
 }
 
 // --- fail_var_self.carbon
-
 library "[[@TEST_NAME]]";
 
 class Class {
@@ -216,29 +212,15 @@ fn Class.G() -> Self {
 }
 
 // --- fail_self_wrong_type.carbon
-
 library "[[@TEST_NAME]]";
 
-// The receiver's type can be any type, but `self` is still required to live in
-// the explicit parameter list.
-class Class {
-  fn F();
-}
+// The receiver's type can be any type, not just the enclosing class. Here `self`
+// has a type that differs from the class the method is declared in, which is
+// diagnosed when the method is called with a receiver of the class's type.
+class Class {}
 
 class WrongSelf {
-  // CHECK:STDERR: fail_self_wrong_type.carbon:[[@LINE+4]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn F[self: Class]();
-  // CHECK:STDERR:        ^~~~~~~~~~~
-  // CHECK:STDERR:
-  fn F[self: Class]();
-
-  // `self` in the implicit list alongside an explicit parameter is diagnosed
-  // only as being in the implicit list, not also as being out of position.
-  // CHECK:STDERR: fail_self_wrong_type.carbon:[[@LINE+4]]:8: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn G[self: Class](n: Class);
-  // CHECK:STDERR:        ^~~~~~~~~~~
-  // CHECK:STDERR:
-  fn G[self: Class](n: Class);
+  fn F(self: Class);
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
@@ -248,15 +230,14 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self_wrong_type.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self_wrong_type.carbon:[[@LINE-18]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[self: Class]();
+  // CHECK:STDERR: fail_self_wrong_type.carbon:[[@LINE-10]]:8: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn F(self: Class);
   // CHECK:STDERR:        ^~~~~~~~~~~
   // CHECK:STDERR:
   ws.F();
 }
 
 // --- fail_self_not_first.carbon
-
 library "[[@TEST_NAME]]";
 
 class Class {

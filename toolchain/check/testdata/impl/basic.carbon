@@ -32,34 +32,6 @@ library "[[@TEST_NAME]]";
 
 interface I {
   fn Op(self);
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE+15]]:16: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn Op[unused self: Self]();
-  // CHECK:STDERR:                ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE+11]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   fn Op[unused self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE-8]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   fn Op(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE+4]]:16: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
-  // CHECK:STDERR:   fn Op[unused self: Self]();
-  // CHECK:STDERR:                ^~~~~~~~~~
-  // CHECK:STDERR:
-  fn Op[unused self: Self]();
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE+11]]:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-  // CHECK:STDERR:   fn Op[self: Self]();
-  // CHECK:STDERR:         ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE+7]]:3: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
-  // CHECK:STDERR:   fn Op[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_invalid_impl.carbon:[[@LINE-24]]:3: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-  // CHECK:STDERR:   fn Op(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  fn Op[self: Self]();
 }
 
 class C {}
