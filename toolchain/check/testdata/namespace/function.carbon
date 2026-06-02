@@ -28,11 +28,11 @@ fn Bar() {
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Baz.type.710: type = fn_type @Baz.loc18 [concrete]
+// CHECK:STDOUT:   %Baz.type.ae5: type = fn_type @Baz.loc18 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Baz.142: %Baz.type.710 = struct_value () [concrete]
-// CHECK:STDOUT:   %Baz.type.bf9: type = fn_type @Baz.loc21 [concrete]
-// CHECK:STDOUT:   %Baz.5e7: %Baz.type.bf9 = struct_value () [concrete]
+// CHECK:STDOUT:   %Baz.6df: %Baz.type.ae5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Baz.type.c26: type = fn_type @Baz.loc21 [concrete]
+// CHECK:STDOUT:   %Baz.6ad: %Baz.type.c26 = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -55,8 +55,8 @@ fn Bar() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc18: %Baz.type.710 = fn_decl @Baz.loc18 [concrete = constants.%Baz.142] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc21: %Baz.type.bf9 = fn_decl @Baz.loc21 [concrete = constants.%Baz.5e7] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc18: %Baz.type.ae5 = fn_decl @Baz.loc18 [concrete = constants.%Baz.6df] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc21: %Baz.type.c26 = fn_decl @Baz.loc21 [concrete = constants.%Baz.6ad] {} {}
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,7 +73,7 @@ fn Bar() {
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [concrete = file.%Foo]
-// CHECK:STDOUT:   %Baz.ref: %Baz.type.bf9 = name_ref Baz, file.%Baz.decl.loc21 [concrete = constants.%Baz.5e7]
+// CHECK:STDOUT:   %Baz.ref: %Baz.type.c26 = name_ref Baz, file.%Baz.decl.loc21 [concrete = constants.%Baz.6ad]
 // CHECK:STDOUT:   %Baz.call: init %empty_tuple.type = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

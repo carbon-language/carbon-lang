@@ -89,16 +89,16 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr @C.val.loc12_6.6), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.57935d7d52dba7f8:core.Destroy.Core"(ptr @C.val), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr @C.val), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.57935d7d52dba7f8:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT: define weak_odr void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
@@ -130,7 +130,7 @@ fn InitLet() {
 // CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.57935d7d52dba7f8:core.Destroy.Core", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.907c496eccf2294c:core.Destroy.Core", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 12, column: 5, scope: !18)
@@ -150,17 +150,17 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @C.val.loc6, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.8fb7588d6e88b8dd:core.Destroy.Core"(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8fb7588d6e88b8dd:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT: define weak_odr void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
@@ -195,7 +195,7 @@ fn InitLet() {
 // CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8fb7588d6e88b8dd:core.Destroy.Core", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.907c496eccf2294c:core.Destroy.Core", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 6, scope: !18)
@@ -223,16 +223,16 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitVar.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !17
-// CHECK:STDOUT:   call void @"_COp.8cd80818be5829b9:core.Destroy.Core"(ptr %_.var), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8cd80818be5829b9:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
@@ -240,11 +240,11 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 8, !dbg !26
+// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 1, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_16.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_16.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !27
-// CHECK:STDOUT:   call void @"_COp.8cd80818be5829b9:core.Destroy.Core"(ptr %.loc22_16.1.temp), !dbg !26
+// CHECK:STDOUT:   call void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %.loc22_16.1.temp), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,7 +282,7 @@ fn InitLet() {
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 14, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 18, column: 3, scope: !12)
 // CHECK:STDOUT: !18 = !DILocation(line: 16, column: 1, scope: !12)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8cd80818be5829b9:core.Destroy.Core", scope: null, file: !3, line: 17, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.907c496eccf2294c:core.Destroy.Core", scope: null, file: !3, line: 17, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{null, !7}
 // CHECK:STDOUT: !22 = !{!23}

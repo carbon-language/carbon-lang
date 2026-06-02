@@ -110,8 +110,8 @@ fn NS.Bar() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Example.NS.86d: <namespace> = import_ref Example//namespace, NS, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS.86d, [concrete] {
+// CHECK:STDOUT:   %Example.NS.677: <namespace> = import_ref Example//namespace, NS, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %Example.NS.677, [concrete] {
 // CHECK:STDOUT:     .Foo = %Example.Foo
 // CHECK:STDOUT:     .Bar = file.%Bar.decl
 // CHECK:STDOUT:   }

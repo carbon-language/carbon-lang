@@ -33,7 +33,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %struct: %struct_type.discriminant = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic]
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [symbolic]
-// CHECK:STDOUT:   %.78f: ref %Always = temporary invalid, %Always.val [symbolic]
+// CHECK:STDOUT:   %.b8b: ref %Always = temporary invalid, %Always.val [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -55,7 +55,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc14_16.1) [symbolic = %Always (constants.%Always)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Always.val: @Always.%Always (%Always) = struct_value (constants.%empty_tuple) [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:   %.loc16_1.13: ref @Always.%Always (%Always) = temporary invalid, %Always.val [symbolic = %.loc16_1.13 (constants.%.78f)]
+// CHECK:STDOUT:   %.loc16_1.13: ref @Always.%Always (%Always) = temporary invalid, %Always.val [symbolic = %.loc16_1.13 (constants.%.b8b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
@@ -70,7 +70,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.8: init %empty_tuple.type to %.loc16_1.5 = in_place_init %.loc16_1.7 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_1.9: init @Always.%Always (%Always) to %.loc16_1.4 = class_init (%.loc16_1.8) [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %.loc16_1.10: init @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.78f)]
+// CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.b8b)]
 // CHECK:STDOUT:     %.loc16_1.12: @Always.%Always (%Always) = acquire_value %.loc16_1.11 [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.12
 // CHECK:STDOUT:     complete_type_witness = %complete_type

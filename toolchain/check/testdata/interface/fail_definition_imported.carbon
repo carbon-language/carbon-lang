@@ -51,13 +51,13 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.df32a6.1: type = facet_type <@I.1> [concrete]
-// CHECK:STDOUT:   %I.type.df32a6.2: type = facet_type <@I.loc13> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.df32a6.2 = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.4048ab.1: type = facet_type <@I.1> [concrete]
+// CHECK:STDOUT:   %I.type.4048ab.2: type = facet_type <@I.loc13> [concrete]
+// CHECK:STDOUT:   %Self: %I.type.4048ab.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type.df32a6.1]
+// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type.4048ab.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -65,13 +65,13 @@ interface I {}
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc13 [concrete = constants.%I.type.df32a6.2] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc13 [concrete = constants.%I.type.4048ab.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc13 {
-// CHECK:STDOUT:   %Self: %I.type.df32a6.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type.4048ab.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc13 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

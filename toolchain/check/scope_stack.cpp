@@ -72,9 +72,15 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
-    // specifics, we'll need to somehow track them in lookup.
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Lexical scope should not have an associated specific.");
+    // specifics, we'll need to somehow track them in lookup. The self specific
+    // is an exception to this, as its generic will always lexically enclose the
+    // point of use of any looked up name.
+    CARBON_CHECK(!specific_id.has_value() ||
+                     sem_ir().generics().GetSelfSpecific(
+                         sem_ir().specifics().Get(specific_id).generic_id) ==
+                         specific_id,
+                 "Lexical scopes can only have an associated specific if it is "
+                 "a self specific.");
   } else {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
@@ -111,8 +117,11 @@ auto ScopeStack::PushForSameRegion() -> void {
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
-  CARBON_DCHECK(sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
-  Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+  const auto& function_decl =
+      sem_ir().insts().GetAs<SemIR::FunctionDecl>(scope_inst_id);
+  const auto& function = sem_ir().functions().Get(function_decl.function_id);
+  auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
+  Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
        /*lexical_lookup_has_load_error=*/false);
 
   return_scope_stack_.push_back({.decl_id = scope_inst_id});

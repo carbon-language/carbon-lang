@@ -269,7 +269,7 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !14
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
@@ -289,7 +289,7 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 1, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
@@ -312,7 +312,7 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
+// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 1, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27

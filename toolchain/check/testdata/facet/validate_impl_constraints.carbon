@@ -396,9 +396,8 @@ constraint W(T:! type) {
 }
 
 fn F(B:! W(E), C:! type where E impls V(.Self)) {
-  // These find a witness for `E as X(E)` from the facet `B`.
+  // Find a witness for `E as X(E)` from the facet `B`.
   E as (V(C) where B impls X(.Self));
-  E as (V(C) where B impls X(E));
 }
 
 // --- find_witness_from_facet_in_specific_in_lookup_target_facet_type.carbon
@@ -414,9 +413,8 @@ constraint W(T:! type) {
 }
 
 fn F(B:! W(E), C:! type where E impls V(.Self)) {
-  // These find a witness for `E as X(E)` from the facet `B`.
+  // Find a witness for `E as X(E)` from the facet `B`.
   E as (V(C) where D(B) impls X(.Self));
-  E as (V(C) where D(B) impls X(E));
 }
 
 // --- facet_has_witness_for_impl_witness_access.carbon

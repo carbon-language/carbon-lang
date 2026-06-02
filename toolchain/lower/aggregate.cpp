@@ -154,13 +154,14 @@ auto EmitAggregateValueRepr(FunctionContext& context,
     }
 
     case SemIR::ValueRepr::Pointer: {
-      auto* llvm_value_rep_type = context.GetType(GetPointeeType(value_type));
+      auto pointee_type = GetPointeeType(value_type);
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
-      auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
+      auto* alloca = context.CreateAlloca(pointee_type);
       for (auto [i, ref_id] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
+        auto* llvm_value_rep_type = context.GetType(pointee_type);
         context.StoreObject(
             context.GetValueRepr(context.GetTypeIdOfInst(ref_id)).type(),
             context.GetValue(ref_id),

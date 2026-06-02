@@ -96,9 +96,9 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:27: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:38: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(U:! type, unused T:! type where U impls I) {}
-// CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, unused T:! type where U impls I) {}
 
@@ -109,9 +109,9 @@ interface I {
   let X:! type;
 }
 
-// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:24: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(U:! I, unused T:! type where U.X == ()) {}
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                   ^~~~~~~~~
 // CHECK:STDERR:
 fn F(U:! I, unused T:! type where U.X == ()) {}
 
@@ -122,9 +122,13 @@ interface I {
   let X:! type;
 }
 
-// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:24: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+8]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                   ^~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
+// CHECK:STDERR:                                                 ^~~~~~~~~
 // CHECK:STDERR:
 fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
 
@@ -152,9 +156,9 @@ class C;
 // facet type `type where...`. We should not consider the designator in the
 // nested where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_impls_with_nested_facet_type_with_rewrite_does_not_constrain_self.carbon:[[@LINE+4]]:18: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_impls_with_nested_facet_type_with_rewrite_does_not_constrain_self.carbon:[[@LINE+4]]:29: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F1(unused T:! type where C impls (I where .I1 = C)) {}
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F1(unused T:! type where C impls (I where .I1 = C)) {}
 
@@ -171,9 +175,9 @@ class C;
 // facet type `type where...`. We should not consider the designator in the
 // nested where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_impls_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:18: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_impls_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:29: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F2(unused T:! type where C impls (I where .I1 == C)) {}
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F2(unused T:! type where C impls (I where .I1 == C)) {}
 
@@ -191,9 +195,9 @@ class C;
 // facet type `type where...`. We should not consider the designator in the
 // nested where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_impls_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:56: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_impls_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:29: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F3(unused T:! type where C impls (I where .I1 impls J(.Self))) {}
-// CHECK:STDERR:                                                        ^~~~~~~~
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F3(unused T:! type where C impls (I where .I1 impls J(.Self))) {}
 
@@ -210,9 +214,9 @@ class C;
 // facet type `I where...`. We should not consider the designator in the nested
 // where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_rewrite_does_not_constrain_self.carbon:[[@LINE+4]]:17: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_rewrite_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where C == (I where .I1 = C)) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where C == (I where .I1 = C)) {}
 
@@ -229,9 +233,9 @@ class C;
 // facet type `I where...`. We should not consider the designator in the nested
 // where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:17: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where C == (I where .I1 == C)) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where C == (I where .I1 == C)) {}
 
@@ -249,11 +253,102 @@ class C;
 // facet type `I where...`. We should not consider the designator in the nested
 // where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:17: error: `where` clause without a designator that constrains the current type; did not find `.Self` or a member access like `.M` that refers to the current type [WhereWithoutDesignator]
+// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
+
+// --- fail_impls_with_nested_facet_type_does_not_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+interface J(T:! type) {}
+class C;
+
+// The `.I1` satisfies constraining the "current type" of the inner nested facet
+// type `I where ...`. But it does not constrain the current type of the outer
+// facet type `I where...`. We should not consider the designator in the nested
+// where expression as making the `(I where ...) impls ...` constraint valid.
+
+// CHECK:STDERR: fail_impls_with_nested_facet_type_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! type where (I where .I1 impls J(.Self)) impls I) {}
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! type where (I where .I1 impls J(.Self)) impls I) {}
+
+// --- fail_where_without_designator_in_one_equiv_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+interface J(T:! type) {}
+class A(T:! type);
+class B;
+class C;
+
+// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:46: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! type where A(.Self) == B and A(B) == B) {}
+// CHECK:STDERR:                                              ^~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! type where A(.Self) == B and A(B) == B) {}
+
+interface Z {
+  let Z0:! type;
+}
+
+// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:41: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn G(unused T:! Z where A(.Z0) == B and A(B) == B) {}
+// CHECK:STDERR:                                         ^~~~~~~~~
+// CHECK:STDERR:
+fn G(unused T:! Z where A(.Z0) == B and A(B) == B) {}
+
+// --- fail_where_without_designator_in_one_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+interface J(T:! type) {}
+class C;
+
+// CHECK:STDERR: fail_where_without_designator_in_one_impls_interface.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! type where C impls (I & J(.Self))) {}
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! type where C impls (I & J(.Self))) {}
+
+interface Z {
+  let Z0:! type;
+}
+
+// CHECK:STDERR: fail_where_without_designator_in_one_impls_interface.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn G(unused T:! Z where C impls (I & J(.Z0))) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(unused T:! Z where C impls (I & J(.Z0))) {}
+
+// --- fail_where_without_designator_in_one_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+constraint I {}
+constraint J(T:! type) {}
+class C;
+
+// CHECK:STDERR: fail_where_without_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! type where C impls (I & J(.Self))) {}
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! type where C impls (I & J(.Self))) {}
+
+interface Z {
+  let Z0:! type;
+}
+
+// CHECK:STDERR: fail_where_without_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn G(unused T:! Z where C impls (I & J(.Z0))) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(unused T:! Z where C impls (I & J(.Z0))) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
@@ -263,23 +358,23 @@ fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%Member [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.46b: %I.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.0a6: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
-// CHECK:STDOUT:   %pattern_type.1b6: type = pattern_type %I_where.type [concrete]
+// CHECK:STDOUT:   %pattern_type.616: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %T: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [concrete]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.as_type.793: type = facet_access_type %.Self.46b [symbolic_self]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.46b, @I [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type.6e9: type = facet_access_type %.Self.0a6 [symbolic_self]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.0a6, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %U: %I_where.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [concrete]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.Self.as_type.246: type = facet_access_type %.Self.c39 [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @I> [concrete]
-// CHECK:STDOUT:   %pattern_type.749: type = pattern_type %type_where [concrete]
+// CHECK:STDOUT:   %pattern_type.be3: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %V: %type_where = symbolic_binding V, 0 [symbolic]
 // CHECK:STDOUT:   %TypeSelfImpls.type: type = fn_type @TypeSelfImpls [concrete]
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [concrete]
@@ -287,13 +382,13 @@ fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.1b6 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.616 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_21.1: type = splice_block %.loc9_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %.Self.loc9_16: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.loc9_21: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.46b]
-// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.loc9_21 [symbolic_self = constants.%.Self.46b]
+// CHECK:STDOUT:       %.Self.loc9_21: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.0a6]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.loc9_21 [symbolic_self = constants.%.Self.0a6]
 // CHECK:STDOUT:       %.loc9_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc9_21.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %I.ref
@@ -303,15 +398,15 @@ fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
 // CHECK:STDOUT:     %T.loc9_16.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.1b6 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.616 = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_23.1: type = splice_block %.loc11_23.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %.Self.loc11_18: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.loc11_23: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.46b]
-// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.loc11_23 [symbolic_self = constants.%.Self.46b]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.793]
-// CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.793]
+// CHECK:STDOUT:       %.Self.loc11_23: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.0a6]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.loc11_23 [symbolic_self = constants.%.Self.0a6]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.6e9]
+// CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.6e9]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -323,7 +418,7 @@ fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
 // CHECK:STDOUT:     %U.loc11_18.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_18.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [concrete = constants.%TypeSelfImpls] {
-// CHECK:STDOUT:     %V.patt: %pattern_type.749 = symbolic_binding_pattern V, 0 [concrete]
+// CHECK:STDOUT:     %V.patt: %pattern_type.be3 = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_27.1: type = splice_block %.loc13_27.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self.loc13_19: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]

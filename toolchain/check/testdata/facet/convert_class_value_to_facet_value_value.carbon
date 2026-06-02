@@ -27,13 +27,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self.d73: %Animal.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.1ff: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %pattern_type.5a8: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %T: %Animal.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.106: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.94e: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [concrete]
@@ -47,13 +47,13 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.332: type = pattern_type %Goat [concrete]
+// CHECK:STDOUT:   %pattern_type.bea: type = pattern_type %Goat [concrete]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal, @WalkAnimal(%Animal.facet) [concrete]
-// CHECK:STDOUT:   %.385: ref %Goat = temporary invalid, %Goat.val [concrete]
+// CHECK:STDOUT:   %.e6d: ref %Goat = temporary invalid, %Goat.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc23_17.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.385, %Destroy.Op.1dc86d.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.790b3b.2: type = fn_type @Destroy.Op.loc23_17.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.2dd605.2: %Destroy.Op.type.790b3b.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.e6d, %Destroy.Op.2dd605.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,9 +76,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.69f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.106) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.106) = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.5a8 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.94e) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.94e) = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -102,7 +102,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d73]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.1ff]
 // CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -132,7 +132,7 @@ fn F() {
 // CHECK:STDOUT: generic fn @WalkAnimal(%T.loc17_16.2: %Animal.type) {
 // CHECK:STDOUT:   %T.loc17_16.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc17_16.1 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc17_37.1: type = facet_access_type %T.loc17_16.1 [symbolic = %T.as_type.loc17_37.1 (constants.%T.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_37.1 [symbolic = %pattern_type (constants.%pattern_type.106)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_37.1 [symbolic = %pattern_type (constants.%pattern_type.94e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_37.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -154,10 +154,10 @@ fn F() {
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc23_24: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
-// CHECK:STDOUT:   %.loc23_17.2: ref %Goat = temporary %.loc23_15.2, %.loc23_17.1 [concrete = constants.%.385]
+// CHECK:STDOUT:   %.loc23_17.2: ref %Goat = temporary %.loc23_15.2, %.loc23_17.1 [concrete = constants.%.e6d]
 // CHECK:STDOUT:   %.loc23_17.3: %Goat = acquire_value %.loc23_17.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.3)
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.385)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.e6d)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,14 +168,14 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.d73) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.1ff) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_16.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc17_37.1 => constants.%T.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.106
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.94e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Animal.WithSelf(constants.%Animal.facet) {
@@ -185,7 +185,7 @@ fn F() {
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc17_16.1 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.as_type.loc17_37.1 => constants.%Goat
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.332
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.bea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
