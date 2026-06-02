@@ -60,33 +60,33 @@ void delete_new_Base() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon4BaseC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN1AC2Ev = comdat any
-// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon5FinalD0Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon4BaseD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon4BaseD0Ev = comdat any
 // CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN1AC2Ev = comdat any
+// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTVN6Carbon5FinalE = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZTVN6Carbon4BaseE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTIN6Carbon5FinalE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTSN6Carbon5FinalE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTVN6Carbon4BaseE = comdat any
-// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTIN6Carbon4BaseE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTSN6Carbon4BaseE = comdat any
 // CHECK:STDOUT:
+// CHECK:STDOUT: @_ZTV1A = available_externally unnamed_addr constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTI1A, ptr @__cxa_pure_virtual, ptr @__cxa_pure_virtual, ptr @_ZNK1A1FEv] }, align 8
 // CHECK:STDOUT: @_ZTVN6Carbon5FinalE = linkonce_odr dso_local unnamed_addr constant { [6 x ptr] } { [6 x ptr] [ptr null, ptr @_ZTIN6Carbon5FinalE, ptr @_ZN6Carbon5FinalD2Ev, ptr @_ZN6Carbon5FinalD0Ev, ptr @_ZNK1A1FEv, ptr @_ZN6Carbon5Final1FEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon4BaseE = linkonce_odr dso_local unnamed_addr constant { [6 x ptr] } { [6 x ptr] [ptr null, ptr @_ZTIN6Carbon4BaseE, ptr @_ZN6Carbon4BaseD2Ev, ptr @_ZN6Carbon4BaseD0Ev, ptr @_ZNK1A1FEv, ptr @_ZN6Carbon4Base1FEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1A = external constant ptr
 // CHECK:STDOUT: @_ZTIN6Carbon5FinalE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon5FinalE, ptr @_ZTI1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTSN6Carbon5FinalE = linkonce_odr dso_local constant [16 x i8] c"N6Carbon5FinalE\00", comdat, align 1
-// CHECK:STDOUT: @_ZTI1A = external constant ptr
-// CHECK:STDOUT: @_ZTV1A = available_externally unnamed_addr constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTI1A, ptr @__cxa_pure_virtual, ptr @__cxa_pure_virtual, ptr @_ZNK1A1FEv] }, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon4BaseE = linkonce_odr dso_local unnamed_addr constant { [6 x ptr] } { [6 x ptr] [ptr null, ptr @_ZTIN6Carbon4BaseE, ptr @_ZN6Carbon4BaseD2Ev, ptr @_ZN6Carbon4BaseD0Ev, ptr @_ZNK1A1FEv, ptr @_ZN6Carbon4Base1FEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTIN6Carbon4BaseE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon4BaseE, ptr @_ZTI1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTSN6Carbon4BaseE = linkonce_odr dso_local constant [15 x i8] c"N6Carbon4BaseE\00", comdat, align 1
 // CHECK:STDOUT:
@@ -254,15 +254,9 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #9
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !18
-// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTV1A, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !14
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
+// CHECK:STDOUT: declare void @__cxa_pure_virtual() unnamed_addr
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZNK1A1FEv(ptr noundef nonnull align 8 dereferenceable(8)) unnamed_addr #10
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
@@ -275,8 +269,6 @@ void delete_new_Base() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZNK1A1FEv(ptr noundef nonnull align 8 dereferenceable(8)) unnamed_addr #10
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define internal void @_ZN6Carbon5Final1FEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #5 align 2 {
 // CHECK:STDOUT: entry:
@@ -286,11 +278,6 @@ void delete_new_Base() {
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.Final.Main(ptr noundef nonnull align 8 dereferenceable(8) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @__cxa_pure_virtual() unnamed_addr
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: declare void @_ZN1AD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8)) unnamed_addr #7
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
@@ -325,13 +312,27 @@ void delete_new_Base() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTV1A, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !14
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: declare void @_ZN1AD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8)) unnamed_addr #7
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon5FinalD2Ev, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.load.relative.i32, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN1AC2Ev, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZNK1A1FEv, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @__cxa_pure_virtual, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZNK1A1FEv, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4BaseD2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1AC2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1AD2Ev, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

@@ -687,7 +687,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   static_assert(SemIR::CustomLayoutId::FirstFieldIndex == 2);
 
-  // TODO: Import vptr(s).
+  if (context.ast_context().getASTRecordLayout(clang_def).hasOwnVFPtr()) {
+    // Add a virtual function pointer to the beginning of the layout.
+    layout.push_back(SemIR::ObjectSize::Bytes(0));
+    fields.push_back(
+        {.name_id = SemIR::NameId::Vptr,
+         .type_inst_id = context.types().GetTypeInstId(
+             GetPointerType(context, SemIR::VtableType::TypeInstId))});
+  }
 
   // The kind of base class we've picked so far. These are ordered in increasing
   // preference order.

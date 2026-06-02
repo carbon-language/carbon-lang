@@ -712,6 +712,9 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
   class_decl->completeDefinition();
+  // Compute the record layout now so it isn't done lazily during lower when
+  // check is no longer available.
+  context_->ast_context().getASTRecordLayout(class_decl);
 }
 
 auto CarbonExternalASTSource::layoutRecordType(

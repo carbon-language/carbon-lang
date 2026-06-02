@@ -71,6 +71,10 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTV1D = comdat any
 // CHECK:STDOUT:
+// CHECK:STDOUT: $_ZTV1C = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZTV1B = comdat any
+// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTT1D = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTC1D0_1B = comdat any
@@ -93,7 +97,13 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTS1D = comdat any
 // CHECK:STDOUT:
+// CHECK:STDOUT: $_ZTT1C = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZTT1B = comdat any
+// CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV1D = linkonce_odr dso_local unnamed_addr constant { [3 x ptr], [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 32 to ptr), ptr null, ptr @_ZTI1D], [3 x ptr] [ptr inttoptr (i64 16 to ptr), ptr inttoptr (i64 -16 to ptr), ptr @_ZTI1D] }, comdat, align 8
+// CHECK:STDOUT: @_ZTV1C = linkonce_odr dso_local unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 12 to ptr), ptr null, ptr @_ZTI1C] }, comdat, align 8
+// CHECK:STDOUT: @_ZTV1B = linkonce_odr dso_local unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 12 to ptr), ptr null, ptr @_ZTI1B] }, comdat, align 8
 // CHECK:STDOUT: @_ZTT1D = linkonce_odr dso_local unnamed_addr constant [4 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTC1D0_1B, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTC1D16_1C, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3)], comdat, align 8
 // CHECK:STDOUT: @_ZTC1D0_1B = linkonce_odr dso_local unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 32 to ptr), ptr null, ptr @_ZTI1B] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI1B = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64 } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2), ptr @_ZTS1B, i32 0, i32 1, ptr @_ZTI1A, i64 -6141 }, comdat, align 8
@@ -107,6 +117,8 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: @_ZTS1C = linkonce_odr dso_local constant [3 x i8] c"1C\00", comdat, align 1
 // CHECK:STDOUT: @_ZTI1D = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64, ptr, i64 } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2), ptr @_ZTS1D, i32 2, i32 2, ptr @_ZTI1B, i64 2, ptr @_ZTI1C, i64 4098 }, comdat, align 8
 // CHECK:STDOUT: @_ZTS1D = linkonce_odr dso_local constant [3 x i8] c"1D\00", comdat, align 1
+// CHECK:STDOUT: @_ZTT1C = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV1C, i32 0, i32 0, i32 3)], comdat, align 8
+// CHECK:STDOUT: @_ZTT1B = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV1B, i32 0, i32 0, i32 3)], comdat, align 8
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !11 {
@@ -164,8 +176,8 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr inttoptr (i64 32 to ptr), { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr inttoptr (i64 16 to ptr), { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZTI1B, { 1, 0, 2 }
+// CHECK:STDOUT: uselistorder ptr @_ZTI1C, { 1, 0, 2 }
 // CHECK:STDOUT: uselistorder ptr @_ZTI1D, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

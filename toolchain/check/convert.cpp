@@ -543,16 +543,19 @@ static auto PerformVptrAccess(Context& context, SemIR::LocId loc_id,
     if (object_repr_id == SemIR::ErrorInst::TypeId) {
       return SemIR::ErrorInst::InstId;
     }
-    if (context.types().Is<SemIR::CustomLayoutType>(object_repr_id)) {
-      context.TODO(loc_id, "accessing vptr of custom layout class");
-      return SemIR::ErrorInst::InstId;
+
+    SemIR::StructTypeFieldsId struct_type_fields_id =
+        SemIR::StructTypeFieldsId::None;
+    if (const auto& custom_layout_type =
+            context.types().TryGetAs<SemIR::CustomLayoutType>(object_repr_id)) {
+      struct_type_fields_id = custom_layout_type->fields_id;
+    } else {
+      struct_type_fields_id =
+          context.types().GetAs<SemIR::StructType>(object_repr_id).fields_id;
     }
 
     // Check to see if this class introduces the vptr.
-    auto repr_struct_type =
-        context.types().GetAs<SemIR::StructType>(object_repr_id);
-    auto repr_fields =
-        context.struct_type_fields().Get(repr_struct_type.fields_id);
+    auto repr_fields = context.struct_type_fields().Get(struct_type_fields_id);
     if (auto vptr_field_index = GetVptrFieldIndex(repr_fields);
         vptr_field_index.has_value()) {
       return AddInst<SemIR::ClassElementAccess>(
