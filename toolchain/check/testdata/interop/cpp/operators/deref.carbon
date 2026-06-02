@@ -123,8 +123,8 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %CppUnsafeDeref.type: type = facet_type <@CppUnsafeDeref> [concrete]
-// CHECK:STDOUT:   %Self: %CppUnsafeDeref.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.393: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %Self.a61: %CppUnsafeDeref.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.393: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%Self.a61) [symbolic]
 // CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.0fa: %CppUnsafeDeref.WithSelf.Op.type.393 = struct_value () [symbolic]
 // CHECK:STDOUT:   %CppUnsafeDeref.assoc_type: type = assoc_entity_type @CppUnsafeDeref [concrete]
 // CHECK:STDOUT:   %assoc1: %CppUnsafeDeref.assoc_type = assoc_entity element1, imports.%Core.import_ref.a48 [concrete]
@@ -134,6 +134,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %operator_Star__carbon_thunk: %operator_Star__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ConstDeref.Op.type: type = fn_type @ConstDeref.Op [concrete]
 // CHECK:STDOUT:   %ConstDeref.Op: %ConstDeref.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %custom_witness.000: <witness> = custom_witness (%i32, %ConstDeref.Op), @CppUnsafeDeref [concrete]
 // CHECK:STDOUT:   %CppUnsafeDeref.facet.909: %CppUnsafeDeref.type = facet_value %ConstDeref, (%custom_witness.000) [concrete]
 // CHECK:STDOUT:   %CppUnsafeDeref.WithSelf.Op.type.6a5: type = fn_type @CppUnsafeDeref.WithSelf.Op, @CppUnsafeDeref.WithSelf(%CppUnsafeDeref.facet.909) [concrete]
@@ -171,7 +172,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %CppUnsafeDeref.ref: type = name_ref CppUnsafeDeref, imports.%Core.CppUnsafeDeref [concrete = constants.%CppUnsafeDeref.type]
 // CHECK:STDOUT:   %Op.ref.loc13_38: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.05c [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant @ConstDeref.cpp_operator.%i32.2 [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem1: %.b71 = impl_witness_access constants.%custom_witness.000, element1 [concrete = constants.%ConstDeref.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
@@ -223,7 +224,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %CppUnsafeDeref.ref: type = name_ref CppUnsafeDeref, imports.%Core.CppUnsafeDeref [concrete = constants.%CppUnsafeDeref.type]
 // CHECK:STDOUT:   %Op.ref: %CppUnsafeDeref.assoc_type = name_ref Op, imports.%Core.import_ref.05c [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant @MutableDeref.cpp_operator.%i32.2 [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %impl.elem1: %.a97 = impl_witness_access constants.%custom_witness.91c, element1 [concrete = constants.%MutableDeref.cpp_operator]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_ptr.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc13: %MutableDeref = acquire_value %int_ptr.ref
