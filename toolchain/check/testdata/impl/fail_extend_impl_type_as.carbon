@@ -62,8 +62,8 @@ class E {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %E: type = class_type @E [concrete]
-// CHECK:STDOUT:   %I.impl_witness.00c: <witness> = impl_witness @E.as.I.impl.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %E, (%I.impl_witness.00c) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.74a: <witness> = impl_witness @E.as.I.impl.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %E, (%I.impl_witness.74a) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -111,7 +111,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @E.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.00c]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.74a]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %I.ref

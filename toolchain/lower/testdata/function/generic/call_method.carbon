@@ -37,20 +37,20 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.980bd46fd9fb5b99(ptr %c.var, i32 %.loc22_14), !dbg !11
-// CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %n.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.4bee6dcdea6ba756(ptr %c.var, i32 %.loc22_14), !dbg !11
+// CHECK:STDOUT:   call void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %n.var), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !13 {
+// CHECK:STDOUT: define weak_odr void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.b8b1f433ad216ca6:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_COp.907c496eccf2294c:core.Destroy.Core"(ptr %self) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -62,7 +62,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.980bd46fd9fb5b99(ptr %self, i32 %x) #0 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.4bee6dcdea6ba756(ptr %self, i32 %x) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !32
 // CHECK:STDOUT: }
@@ -89,20 +89,20 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !10 = !DILocation(line: 22, column: 14, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1fa36cd3e044ac37:core.Destroy.Core", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{null, !7}
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !13, type: !7)
 // CHECK:STDOUT: !18 = !DILocation(line: 21, column: 3, scope: !13)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b8b1f433ad216ca6:core.Destroy.Core", scope: null, file: !3, line: 20, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.907c496eccf2294c:core.Destroy.Core", scope: null, file: !3, line: 20, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{null, !22}
 // CHECK:STDOUT: !22 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !22)
 // CHECK:STDOUT: !25 = !DILocation(line: 20, column: 3, scope: !19)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.980bd46fd9fb5b99", scope: null, file: !3, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.4bee6dcdea6ba756", scope: null, file: !3, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{!7, !22, !7}
 // CHECK:STDOUT: !29 = !{!30, !31}

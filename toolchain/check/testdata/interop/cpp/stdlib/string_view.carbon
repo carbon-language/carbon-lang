@@ -80,20 +80,20 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.type: type = cpp_overload_set_type @Consume.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %str.91f: type = class_type @String [concrete]
+// CHECK:STDOUT:   %str.abf: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.cb7: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %str.5de: %ptr.cb7 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %ptr.9b7: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %str.18a: %ptr.9b7 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %str.91f = struct_value (%str.5de, %int_5) [concrete]
-// CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %str.91f [concrete]
-// CHECK:STDOUT:   %ptr.169: type = ptr_type %str.91f [concrete]
+// CHECK:STDOUT:   %String.val: %str.abf = struct_value (%str.18a, %int_5) [concrete]
+// CHECK:STDOUT:   %pattern_type.3d7: type = pattern_type %str.abf [concrete]
+// CHECK:STDOUT:   %ptr.a98: type = ptr_type %str.abf [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk: %Consume__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.6a4: Core.Form = init_form %str.91f [concrete]
+// CHECK:STDOUT:   %.1fd: Core.Form = init_form %str.abf [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Produce.cpp_overload_set.type: type = cpp_overload_set_type @Produce.cpp_overload_set [concrete]
@@ -125,13 +125,13 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.ff8 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.ff8 = return_slot_pattern %return.param_patt, %str [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3d7 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3d7 = return_slot_pattern %return.param_patt, %str [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %str: type = type_literal constants.%str.91f [concrete = constants.%str.91f]
-// CHECK:STDOUT:     %.loc13_11.2: Core.Form = init_form %str [concrete = constants.%.6a4]
-// CHECK:STDOUT:     %return.param: ref %str.91f = out_param call_param0
-// CHECK:STDOUT:     %return: ref %str.91f = return_slot %return.param
+// CHECK:STDOUT:     %str: type = type_literal constants.%str.abf [concrete = constants.%str.abf]
+// CHECK:STDOUT:     %.loc13_11.2: Core.Form = init_form %str [concrete = constants.%.1fd]
+// CHECK:STDOUT:     %return.param: ref %str.abf = out_param call_param0
+// CHECK:STDOUT:     %return: ref %str.abf = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,23 +139,23 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %Consume.cpp_overload_set.type = name_ref Consume, imports.%Consume.cpp_overload_set.value [concrete = constants.%Consume.cpp_overload_set.value]
-// CHECK:STDOUT:   %str: %ptr.cb7 = string_literal "hello" [concrete = constants.%str.5de]
+// CHECK:STDOUT:   %str: %ptr.9b7 = string_literal "hello" [concrete = constants.%str.18a]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %String.val: %str.91f = struct_value (%str, %int_5) [concrete = constants.%String.val]
-// CHECK:STDOUT:   %.loc8: ref %str.91f = value_as_ref %String.val
-// CHECK:STDOUT:   %addr: %ptr.169 = addr_of %.loc8
+// CHECK:STDOUT:   %String.val: %str.abf = struct_value (%str, %int_5) [concrete = constants.%String.val]
+// CHECK:STDOUT:   %.loc8: ref %str.abf = value_as_ref %String.val
+// CHECK:STDOUT:   %addr: %ptr.a98 = addr_of %.loc8
 // CHECK:STDOUT:   %Consume__carbon_thunk.call: init %empty_tuple.type = call imports.%Consume__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> out %return.param: %str.91f {
+// CHECK:STDOUT: fn @G() -> out %return.param: %str.abf {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %Produce.cpp_overload_set.type = name_ref Produce, imports.%Produce.cpp_overload_set.value [concrete = constants.%Produce.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc13_11.1: ref %str.91f = splice_block %return.param {}
-// CHECK:STDOUT:   %addr: %ptr.169 = addr_of %.loc13_11.1
+// CHECK:STDOUT:   %.loc13_11.1: ref %str.abf = splice_block %return.param {}
+// CHECK:STDOUT:   %addr: %ptr.a98 = addr_of %.loc13_11.1
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc14: init %str.91f to %.loc13_11.1 = mark_in_place_init %Produce__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14: init %str.abf to %.loc13_11.1 = mark_in_place_init %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,7 +164,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %str: type = class_type @String [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %str [concrete]
+// CHECK:STDOUT:   %pattern_type.3d7: type = pattern_type %str [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %StarstWith.type: type = fn_type @StarstWith [concrete]
@@ -172,7 +172,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %DerivedFromStringView: type = class_type @DerivedFromStringView [concrete]
 // CHECK:STDOUT:   %DerivedFromStringView.starts_with.cpp_overload_set.type: type = cpp_overload_set_type @DerivedFromStringView.starts_with.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DerivedFromStringView.starts_with.cpp_overload_set.value: %DerivedFromStringView.starts_with.cpp_overload_set.type = cpp_overload_set_value @DerivedFromStringView.starts_with.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.169: type = ptr_type %str [concrete]
+// CHECK:STDOUT:   %ptr.a98: type = ptr_type %str [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %starts_with__carbon_thunk.type: type = fn_type @starts_with__carbon_thunk [concrete]
 // CHECK:STDOUT:   %starts_with__carbon_thunk: %starts_with__carbon_thunk.type = struct_value () [concrete]
@@ -194,10 +194,10 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %StarstWith.decl: %StarstWith.type = fn_decl @StarstWith [concrete = constants.%StarstWith] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.ff8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.ff8 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.ff8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.ff8 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3d7 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.3d7 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.3d7 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3d7 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc7_34.1 [concrete]
 // CHECK:STDOUT:   } {
@@ -223,7 +223,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %starts_with.ref
 // CHECK:STDOUT:   %b.ref: %str = name_ref b, %b
 // CHECK:STDOUT:   %.loc8_52: ref %str = value_as_ref %b.ref
-// CHECK:STDOUT:   %addr.loc8_53.1: %ptr.169 = addr_of %.loc8_52
+// CHECK:STDOUT:   %addr.loc8_53.1: %ptr.a98 = addr_of %.loc8_52
 // CHECK:STDOUT:   %.loc8_53.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_53.2: %ptr.bb2 = addr_of %.loc8_53.1
 // CHECK:STDOUT:   %starts_with__carbon_thunk.call: init %empty_tuple.type = call imports.%starts_with__carbon_thunk.decl(%a.ref, %addr.loc8_53.1, %addr.loc8_53.2)

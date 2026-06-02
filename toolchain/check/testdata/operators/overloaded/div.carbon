@@ -44,40 +44,40 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %DivWith.type.82f: type = facet_type <@DivWith, @DivWith(%C)> [concrete]
+// CHECK:STDOUT:   %DivWith.type.ba4: type = facet_type <@DivWith, @DivWith(%C)> [concrete]
 // CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness @C.as.DivWith.impl.%DivWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op.type: type = fn_type @C.as.DivWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op: %C.as.DivWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.82f = facet_value %C, (%DivWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %DivWith.WithSelf.Op.type.c7f: type = fn_type @DivWith.WithSelf.Op, @DivWith.WithSelf(%C, %DivWith.facet) [concrete]
-// CHECK:STDOUT:   %DivAssignWith.type.bbb: type = facet_type <@DivAssignWith, @DivAssignWith(%C)> [concrete]
+// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.ba4 = facet_value %C, (%DivWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %DivWith.WithSelf.Op.type.26a: type = fn_type @DivWith.WithSelf.Op, @DivWith.WithSelf(%C, %DivWith.facet) [concrete]
+// CHECK:STDOUT:   %DivAssignWith.type.22d: type = facet_type <@DivAssignWith, @DivAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %DivAssignWith.impl_witness: <witness> = impl_witness @C.as.DivAssignWith.impl.%DivAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type: type = fn_type @C.as.DivAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op: %C.as.DivAssignWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.bbb = facet_value %C, (%DivAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %DivAssignWith.WithSelf.Op.type.339: type = fn_type @DivAssignWith.WithSelf.Op, @DivAssignWith.WithSelf(%C, %DivAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.c74: type = fn_type_with_self_type %DivWith.WithSelf.Op.type.c7f, %DivWith.facet [concrete]
-// CHECK:STDOUT:   %ptr.ec1: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.c1a: type = fn_type_with_self_type %DivAssignWith.WithSelf.Op.type.339, %DivAssignWith.facet [concrete]
+// CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.22d = facet_value %C, (%DivAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %DivAssignWith.WithSelf.Op.type.86a: type = fn_type @DivAssignWith.WithSelf.Op, @DivAssignWith.WithSelf(%C, %DivAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.b0e: type = fn_type_with_self_type %DivWith.WithSelf.Op.type.26a, %DivWith.facet [concrete]
+// CHECK:STDOUT:   %ptr.9a8: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %.caf: type = fn_type_with_self_type %DivAssignWith.WithSelf.Op.type.86a, %DivAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.c74 = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%C.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.b0e = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%C.as.DivWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.DivWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.ec1, %b.param: %C) {
+// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.9a8, %b.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %ptr.ec1 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %ptr.9a8 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.c1a = impl_witness_access constants.%DivAssignWith.impl_witness, element0 [concrete = constants.%C.as.DivAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.caf = impl_witness_access constants.%DivAssignWith.impl_witness, element0 [concrete = constants.%C.as.DivAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>

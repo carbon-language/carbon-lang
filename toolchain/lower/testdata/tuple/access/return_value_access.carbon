@@ -19,14 +19,14 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'return_value_access.carbon'
 // CHECK:STDOUT: source_filename = "return_value_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.a53.loc13_39 = internal constant { i32, i32 } { i32 12, i32 24 }
+// CHECK:STDOUT: @tuple.d4e.loc13_39 = internal constant { i32, i32 } { i32 12, i32 24 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.a53.loc13_39, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.d4e.loc13_39, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -41,19 +41,19 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !15
 // CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !15
 // CHECK:STDOUT:   store i32 %.loc16_19, ptr %_.var, align 4, !dbg !14
-// CHECK:STDOUT:   call void @"_COp.26f166843e861eec:core.Destroy.Core"(ptr %.loc16_18.1.temp), !dbg !15
-// CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.11d8dd9278293aa3:core.Destroy.Core"(ptr %.loc16_18.1.temp), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   ret i32 0, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define weak_odr void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.26f166843e861eec:core.Destroy.Core"(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT: define weak_odr void @"_COp.11d8dd9278293aa3:core.Destroy.Core"(ptr %self) #0 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
@@ -90,13 +90,13 @@ fn Run() {
 // CHECK:STDOUT: !14 = !DILocation(line: 16, column: 3, scope: !10)
 // CHECK:STDOUT: !15 = !DILocation(line: 16, column: 16, scope: !10)
 // CHECK:STDOUT: !16 = !DILocation(line: 15, column: 1, scope: !10)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1fa36cd3e044ac37:core.Destroy.Core", scope: null, file: !3, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{null, !13}
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !17, type: !13)
 // CHECK:STDOUT: !22 = !DILocation(line: 16, column: 16, scope: !17)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.26f166843e861eec:core.Destroy.Core", scope: null, file: !3, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.11d8dd9278293aa3:core.Destroy.Core", scope: null, file: !3, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{null, !7}
 // CHECK:STDOUT: !26 = !{!27}

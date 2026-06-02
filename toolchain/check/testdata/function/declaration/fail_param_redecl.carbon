@@ -28,7 +28,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.104: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -49,10 +49,10 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.c6b = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.c6b = at_binding_pattern n, %n.param_patt.loc22_7 [concrete]
-// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.c6b = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.c6b = at_binding_pattern n, %n.param_patt.loc22_15 [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.104 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.104 = at_binding_pattern n, %n.param_patt.loc22_7 [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.104 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.104 = at_binding_pattern n, %n.param_patt.loc22_15 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]
