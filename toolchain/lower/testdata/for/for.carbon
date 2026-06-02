@@ -259,7 +259,7 @@ fn For() {
 // CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !14, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 65, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 39, scope: !14)
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.bc4985fcac159a9a:core.Destroy.Core", scope: null, file: !3, line: 21, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !18)
