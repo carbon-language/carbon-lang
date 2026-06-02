@@ -4686,7 +4686,7 @@ sufficient since it
 [need not be imported](/proposals/p000920-generic-blanket-impls-details-5.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
 Since Carbon in addition requires there be no cyclic library dependencies, we
-conclude that there is at most one library that can contain owning `impl`
+conclude that there is at most one source file that can contain owning `impl`
 declarations with a particular type structure.
 
 > **References:** Implementation coherence is
