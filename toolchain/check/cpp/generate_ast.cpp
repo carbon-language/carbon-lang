@@ -446,15 +446,34 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
-  const SemIR::Function& function = context_->functions().Get(function_id);
+  SemIR::Function& function = context_->functions().Get(function_id);
   auto clang_decl_id = context_->clang_decls().Lookup(function.first_decl_id());
   if (clang_decl_id.has_value()) {
     return cast<clang::FunctionDecl>(
         context_->clang_decls().Get(clang_decl_id).key.decl);
   }
 
-  return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
-                             function_id);
+  auto* clang_function_decl =
+      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
+
+  if (!clang_function_decl) {
+    return nullptr;
+  }
+
+  SemIR::ClangDeclSignature thunk_signature;
+  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
+  thunk_signature.num_params =
+      static_cast<int32_t>(clang_function_decl->getNumParams());
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  context_->clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+           clang_function_decl,
+           context_->clang_decl_signatures().Add(std::move(thunk_signature))),
+       .inst_id = function.first_decl_id()});
+
+  return clang_function_decl;
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {

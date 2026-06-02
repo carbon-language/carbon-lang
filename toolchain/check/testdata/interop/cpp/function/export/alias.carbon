@@ -19,9 +19,5 @@ fn F();
 alias G = F;
 
 inline Cpp '''
-// CHECK:STDERR: alias_identical_address.carbon:[[@LINE+4]]:15: error: static assertion failed due to requirement '&Carbon::F == &Carbon::F' [CppInteropParseError]
-// CHECK:STDERR:     9 | static_assert(&Carbon::F == &Carbon::G);
-// CHECK:STDERR:       |               ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 static_assert(&Carbon::F == &Carbon::G);
 ''';
