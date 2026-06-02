@@ -331,7 +331,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8b4: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.bd4]
 // CHECK:STDOUT:   %Main.import_ref.459 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b51 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5a3 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.21e = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
@@ -406,7 +406,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.459
-// CHECK:STDOUT:     .n = imports.%Main.import_ref.b51
+// CHECK:STDOUT:     .n = imports.%Main.import_ref.5a3
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.21e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -523,11 +523,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Main.import_ref.8b4: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.059]
 // CHECK:STDOUT:   %Main.import_ref.459 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.4de: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.91f) = import_ref Main//foo, loc7_8, loaded [concrete = %.903]
+// CHECK:STDOUT:   %Main.import_ref.96b: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.91f) = import_ref Main//foo, loc7_8, loaded [concrete = %.363]
 // CHECK:STDOUT:   %Main.import_ref.6ec: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.f8c) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%CompleteClass.F (constants.%CompleteClass.F.c58)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %.903: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.91f) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.363: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.91f) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
@@ -578,7 +578,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.459
-// CHECK:STDOUT:     .n = imports.%Main.import_ref.4de
+// CHECK:STDOUT:     .n = imports.%Main.import_ref.96b
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.6ec
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -653,7 +653,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %CompleteClass.b60 = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.b60 = name_ref v, %v
-// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.352 = name_ref n, imports.%Main.import_ref.4de [concrete = imports.%.903]
+// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.352 = name_ref n, imports.%Main.import_ref.96b [concrete = imports.%.363]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc12_11.2: %i32 = acquire_value %.loc12_11.1
 // CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
@@ -745,7 +745,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8b4: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.bd4]
 // CHECK:STDOUT:   %Main.import_ref.459 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b51 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5a3 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.21e = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
@@ -780,7 +780,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.459
-// CHECK:STDOUT:     .n = imports.%Main.import_ref.b51
+// CHECK:STDOUT:     .n = imports.%Main.import_ref.5a3
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.21e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -28,6 +28,7 @@ A _lexical element_ is one of the following:
 
     -   a [numeric literal](numeric_literals.md)
     -   a [string literal](string_literals.md)
+    -   a [character literal](character_literals.md)
 
 -   a [comment](comments.md)
 -   a [symbolic token](symbolic_tokens.md)

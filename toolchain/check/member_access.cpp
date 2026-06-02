@@ -39,7 +39,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
     -> SemIR::ElementIndex {
   auto element_inst = context.insts().Get(element_id);
   if (auto field = element_inst.TryAs<SemIR::FieldDecl>()) {
-    return field->index;
+    return context.fields().Get(field->field_id).index;
   }
   if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
     return base->index;

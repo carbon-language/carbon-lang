@@ -541,7 +541,7 @@ auto MatchContext::DoPostWork(State /*state*/,
                               WorkItem /*entry*/) -> void {}
 
 auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
-                             SemIR::InstId scrutinee_id, WorkItem entry)
+                             SemIR::InstId scrutinee_id, WorkItem /*entry*/)
     -> void {
   if (!scrutinee_id.has_value()) {
     return;
@@ -559,8 +559,8 @@ auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
     return;
   }
 
-  // Store a mapping to the field's initializer.
-  context_.field_initializers().Insert(entry.pattern_id, converted_id);
+  // Store the field's initializer.
+  context_.fields().Get(field_decl.field_id).initializer_id = converted_id;
 }
 
 auto MatchContext::DoPreWork(State state,

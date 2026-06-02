@@ -128,8 +128,9 @@ var e: i32 as GetType();
 
 ### Data types
 
-In addition to the [implicit conversions](implicit_conversions.md#data-types),
-the following numeric conversions are supported by `as`:
+In addition to the
+[implicit conversions](implicit_conversions.md#numeric-types), the following
+numeric conversions are supported by `as`:
 
 -   `iN`, `uN`, or `fN` -> `fM`, for any `N` and `M`. Values that cannot be
     exactly represented are suitably rounded to one of the two nearest

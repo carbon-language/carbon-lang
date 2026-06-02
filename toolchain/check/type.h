@@ -113,6 +113,10 @@ auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 
+// Returns an array type with the given `bound_id` and `element_type_inst_id`.
+auto GetArrayType(Context& context, SemIR::InstId bound_id,
+                  SemIR::TypeInstId element_type_inst_id) -> SemIR::TypeId;
+
 // Returns a struct type with the given fields.
 auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
     -> SemIR::TypeId;

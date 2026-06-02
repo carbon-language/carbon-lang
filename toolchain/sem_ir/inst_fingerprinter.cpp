@@ -23,6 +23,7 @@
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -281,6 +282,11 @@ struct Worklist {
       Add(entity_name.name_id);
     }
     Add(entity_name.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity_name.name_id, entity_name.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -406,6 +412,11 @@ struct Worklist {
     if (entity.parent_scope_id.has_value()) {
       Add(entity.parent_scope_id);
     }
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity.name_id, entity.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto Add(FunctionId function_id) -> void {
@@ -440,6 +451,12 @@ struct Worklist {
     if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
       AddString(cpp_mangled_name);
     }
+  }
+
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
   }
 
   auto Add(VtableId vtable_id) -> void {

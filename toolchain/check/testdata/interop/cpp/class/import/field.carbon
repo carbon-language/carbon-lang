@@ -221,15 +221,15 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %MaybeUnformed.4fe: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.0b6) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Get.type.890: type = fn_type @ptr.as.OptionalStorage.impl.Get, @ptr.as.OptionalStorage.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Get.1b0: %ptr.as.OptionalStorage.impl.Get.type.890 = struct_value () [symbolic]
-// CHECK:STDOUT:   %OptionalStorage.impl_witness.477: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.b80, @ptr.as.OptionalStorage.impl(%i32) [concrete]
-// CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.143, (%OptionalStorage.impl_witness.477) [concrete]
-// CHECK:STDOUT:   %Optional.efe: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
-// CHECK:STDOUT:   %Struct.elem.686: type = unbound_element_type %Struct, %Optional.efe [concrete]
+// CHECK:STDOUT:   %OptionalStorage.impl_witness.624: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.64b, @ptr.as.OptionalStorage.impl(%i32) [concrete]
+// CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.143, (%OptionalStorage.impl_witness.624) [concrete]
+// CHECK:STDOUT:   %Optional.cb7: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
+// CHECK:STDOUT:   %Struct.elem.406: type = unbound_element_type %Struct, %Optional.cb7 [concrete]
 // CHECK:STDOUT:   %const.d48: type = const_type %ptr.143 [concrete]
 // CHECK:STDOUT:   %Struct.elem.ca7: type = unbound_element_type %Struct, %const.d48 [concrete]
-// CHECK:STDOUT:   %Optional.Get.type.114: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet) [concrete]
-// CHECK:STDOUT:   %Optional.Get.fdc: %Optional.Get.type.114 = struct_value () [concrete]
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.fdc, @Optional.Get(%OptionalStorage.facet) [concrete]
+// CHECK:STDOUT:   %Optional.Get.type.761: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet) [concrete]
+// CHECK:STDOUT:   %Optional.Get.76e: %Optional.Get.type.761 = struct_value () [concrete]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.76e, @Optional.Get(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.ab4: <witness> = impl_witness imports.%Copy.impl_witness_table.193, @Int.as.Copy.impl(%int_32) [concrete]
@@ -242,14 +242,14 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.2ae: @Optional.%Optional.Get.type (%Optional.Get.type.dbe) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.25b)]
+// CHECK:STDOUT:   %Core.import_ref.58f: @Optional.%Optional.Get.type (%Optional.Get.type.dbe) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.25b)]
 // CHECK:STDOUT:   %Core.import_ref.7ae: type = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%MaybeUnformed (constants.%MaybeUnformed.4fe)]
-// CHECK:STDOUT:   %Core.import_ref.efd = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5aa = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.4ad = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.37b8: @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get.type (%ptr.as.OptionalStorage.impl.Get.type.890) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get (constants.%ptr.as.OptionalStorage.impl.Get.1b0)]
-// CHECK:STDOUT:   %Core.import_ref.6b0 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.b80 = impl_witness_table (%Core.import_ref.7ae, %Core.import_ref.efd, %Core.import_ref.5aa, %Core.import_ref.4ad, %Core.import_ref.37b8, %Core.import_ref.6b0), @ptr.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.978 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.a098 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.017 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.ada: @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get.type (%ptr.as.OptionalStorage.impl.Get.type.890) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get (constants.%ptr.as.OptionalStorage.impl.Get.1b0)]
+// CHECK:STDOUT:   %Core.import_ref.c67 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.64b = impl_witness_table (%Core.import_ref.7ae, %Core.import_ref.978, %Core.import_ref.a098, %Core.import_ref.017, %Core.import_ref.ada, %Core.import_ref.c67), @ptr.as.OptionalStorage.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.d9d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.193 = impl_witness_table (%Core.import_ref.d9d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -270,11 +270,11 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.143 = acquire_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
 // CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %q.ref: %Struct.elem.686 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
-// CHECK:STDOUT:   %.loc8_29.1: ref %Optional.efe = class_element_access %s.ref.loc8_28, element3
-// CHECK:STDOUT:   %.loc8_29.2: %Optional.efe = acquire_value %.loc8_29.1
-// CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.114 = specific_constant imports.%Core.import_ref.2ae, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.fdc]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.114 = name_ref Get, %.loc8_31 [concrete = constants.%Optional.Get.fdc]
+// CHECK:STDOUT:   %q.ref: %Struct.elem.406 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
+// CHECK:STDOUT:   %.loc8_29.1: ref %Optional.cb7 = class_element_access %s.ref.loc8_28, element3
+// CHECK:STDOUT:   %.loc8_29.2: %Optional.cb7 = acquire_value %.loc8_29.1
+// CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.761 = specific_constant imports.%Core.import_ref.58f, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.76e]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.761 = name_ref Get, %.loc8_31 [concrete = constants.%Optional.Get.76e]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc8_29.2, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_36: <bound method> = bound_method %.loc8_29.2, %Optional.Get.specific_fn

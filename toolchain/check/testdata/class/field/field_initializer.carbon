@@ -21,15 +21,11 @@ class Class {
 var C: Class = {};
 //@dump-sem-ir-end
 
-// --- fail_todo_field_initializer_import.carbon
+// --- field_initializer_import.carbon
 library "[[@TEST_NAME]]";
 
 import library "field_initializer";
 
-// CHECK:STDERR: fail_todo_field_initializer_import.carbon:[[@LINE+4]]:17: error: missing value for field `field` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: var C2: Class = {};
-// CHECK:STDERR:                 ^~
-// CHECK:STDERR:
 var C2: Class = {};
 
 // --- field_initializer_generic.carbon
@@ -135,7 +131,7 @@ var C: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc5_12: %Class.elem = field_decl field, element0 [concrete]
+// CHECK:STDOUT:   %.loc5_12: %Class.elem = field_decl field, element0, initializer = inst640000D4 [concrete]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
 // CHECK:STDOUT:   %impl.elem0: %.205 = impl_witness_access constants.%ImplicitAs.impl_witness.fb6, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b]
 // CHECK:STDOUT:   %bound_method.loc5_20.1: <bound method> = bound_method %int_123, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
