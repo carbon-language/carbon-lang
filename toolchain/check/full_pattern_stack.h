@@ -40,6 +40,9 @@ class FullPatternStack {
     // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
 
+    // A `var` field declaration inside a class.
+    ClassScopeVarDecl,
+
     // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
 
@@ -62,6 +65,11 @@ class FullPatternStack {
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
+  // Whether the kind of the current full-pattern is a class `var` decl.
+  auto IsCurrentKindClassScopeVarDecl() -> bool {
+    return !empty() && CurrentKind() == Kind::ClassScopeVarDecl;
+  }
+
   // Marks the start of a new full-pattern for a parameterized entity
   // declaration, such as a function or impl. The kind is initially
   // NotInEitherParamList.
@@ -73,6 +81,12 @@ class FullPatternStack {
   // Marks the start of a new full-pattern for a name binding declaration.
   auto PushNameBindingDecl() -> void {
     kind_stack_.push_back(Kind::NameBindingDecl);
+    bind_name_stack_.PushArray();
+  }
+
+  // Marks the start of a new full-pattern for a class `var` declaration.
+  auto PushClassScopeVarDecl() -> void {
+    kind_stack_.push_back(Kind::ClassScopeVarDecl);
     bind_name_stack_.PushArray();
   }
 
@@ -110,7 +124,8 @@ class FullPatternStack {
 
   // Marks the start of the initializer for the current name binding decl.
   auto StartPatternInitializer() -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::NameBindingDecl);
+    CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
+                 kind_stack_.back() == Kind::NameBindingDecl);
     for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
       CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
       auto& lookup_result = lookup_->Get(name_id);

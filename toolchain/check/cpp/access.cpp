@@ -51,6 +51,7 @@ auto MapToCppAccess(SemIR::AccessKind access) -> clang::AccessSpecifier {
     case SemIR::AccessKind::Protected:
       return clang::AS_protected;
     case SemIR::AccessKind::Private:
+    case SemIR::AccessKind::Hidden:
       return clang::AS_private;
   }
 }

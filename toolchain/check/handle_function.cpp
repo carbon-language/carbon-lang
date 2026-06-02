@@ -184,9 +184,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                            SemIR::FunctionDecl& function_decl,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
+  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
+  // impl scope: if the name was referenced before being declared, we will have
+  // produced an error already.
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         name_context.poisoning_loc_id, name_context.loc_id);
+    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
+            name_context.parent_scope_id)) {
+      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                           name_context.poisoning_loc_id, name_context.loc_id);
+    }
     return;
   }
 
@@ -200,8 +206,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
     case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope (see
-      // NameScope::is_interface_definition()).
+      // This is a function in an interface definition scope.
       auto function_decl =
           context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
       prev_function_id = function_decl.function_id;
@@ -260,7 +265,7 @@ static auto MaybeAddToNameLookup(Context& context,
                                  const KeywordModifierSet& modifier_set,
                                  SemIR::NameScopeId parent_scope_id,
                                  SemIR::InstId decl_id) -> void {
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       name_context.prev_inst_id().has_value()) {
     return;
   }
@@ -269,12 +274,11 @@ static auto MaybeAddToNameLookup(Context& context,
   // function.
   auto lookup_result_id = decl_id;
   if (parent_scope_id.has_value() && !name_context.has_qualifiers) {
-    const auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-    if (parent_scope.is_interface_definition()) {
-      auto interface_decl = context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
-          parent_scope.inst_id());
+    if (auto interface_decl =
+            context.name_scopes().TryGetInstAs<SemIR::InterfaceWithSelfDecl>(
+                parent_scope_id)) {
       lookup_result_id =
-          BuildAssociatedEntity(context, interface_decl.interface_id, decl_id);
+          BuildAssociatedEntity(context, interface_decl->interface_id, decl_id);
     }
   }
 
@@ -605,8 +609,8 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-// Checks that "unused" marker is only used in definitions, and emits a
-// diagnostic for every binding that is marked unused.
+// Checks that the `unused` modifier is only used when there is a definition,
+// and emits a diagnostic for every binding that is marked `unused`.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
@@ -622,12 +626,12 @@ static auto CheckUnusedBindingsInPattern(Context& context,
       case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         // We need special treatment for the name "_" which is implicitly
-        // unused but actually permitted in declarations.
+        // unused but actually permitted without a definition.
         if (entity_name.is_unused &&
             entity_name.name_id != SemIR::NameId::Underscore) {
-          CARBON_DIAGNOSTIC(UnusedModifierOnDeclaration, Error,
-                            "`unused` modifier on declaration");
-          context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
+          CARBON_DIAGNOSTIC(UnusedModifierWithoutDefinition, Error,
+                            "`unused` modifier without a definition");
+          context.emitter().Emit(current_id, UnusedModifierWithoutDefinition);
         }
         if (bind.kind == SemIR::WrapperBindingPattern::Kind) {
           work_list.push_back(bind.subpattern_id);
@@ -651,14 +655,19 @@ static auto CheckUnusedBindingsInPattern(Context& context,
   }
 }
 
-static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
-                                               SemIR::FunctionId function_id)
-    -> void {
+static auto DiagnoseUnusedMarkersWithoutDefinition(
+    Context& context, SemIR::FunctionId function_id) -> void {
   const auto& function = context.functions().Get(function_id);
-  if (function.param_patterns_id.has_value()) {
-    for (auto pattern_id :
-         context.inst_blocks().Get(function.param_patterns_id)) {
-      CheckUnusedBindingsInPattern(context, pattern_id);
+  // The `unused` modifier requires a definition, so it is not valid on any
+  // parameter when there is none. This applies to implicit parameters (such as
+  // `self`) too, so check the implicit parameter list as well as the explicit
+  // one.
+  for (auto param_patterns_id :
+       {function.implicit_param_patterns_id, function.param_patterns_id}) {
+    if (param_patterns_id.has_value()) {
+      for (auto pattern_id : context.inst_blocks().Get(param_patterns_id)) {
+        CheckUnusedBindingsInPattern(context, pattern_id);
+      }
     }
   }
 }
@@ -666,7 +675,7 @@ static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/false);
-  DiagnoseUnusedMarkersInDeclaration(context, function_id);
+  DiagnoseUnusedMarkersWithoutDefinition(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }

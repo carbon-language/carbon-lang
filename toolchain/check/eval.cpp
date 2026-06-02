@@ -475,33 +475,6 @@ static auto RequireConstantValue(EvalContext& eval_context,
   return SemIR::ErrorInst::InstId;
 }
 
-// If the given instruction is constant, returns its constant value. Otherwise,
-// produces an error diagnostic. When determining the phase of the result,
-// ignore any dependence on `.Self`.
-//
-// This is used when evaluating facet types, for which `where` expressions using
-// `.Self` should not be considered symbolic
-// - `Interface where .Self impls I and .A = bool` -> concrete
-// - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
-//   is symbolic and not due to `.Self`.
-static auto RequireConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
-                                                   SemIR::InstId inst_id,
-                                                   Phase* phase)
-    -> SemIR::InstId {
-  if (!inst_id.has_value()) {
-    return SemIR::InstId::None;
-  }
-  Phase constant_phase = *phase;
-  auto const_inst_id =
-      RequireConstantValue(eval_context, inst_id, &constant_phase);
-  // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
-  // Phase::PeriodSelfSymbolic with Phase::Concrete.
-  if (constant_phase != Phase::PeriodSelfSymbolic) {
-    *phase = LatestPhase(*phase, constant_phase);
-  }
-  return const_inst_id;
-}
-
 // Gets a constant value for an `inst_id`, diagnosing when the input is not
 // constant, and CHECKing that it is concrete. Should only be used in contexts
 // where non-concrete constants cannot appear.
@@ -723,6 +696,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
   SemIR::FacetTypeInfo info = {};
 
+  // Phase of constraints whose `.Self` refers to the type constrained by this
+  // facet type.
+  Phase self_phase = Phase::Concrete;
+
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
     // TODO: Add GetConstantValue for SpecificInterface.
@@ -737,8 +714,8 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     // TODO: Add GetConstantValue for SpecificInterface.
     info.self_impls_constraints.push_back(
         {.interface_id = self_impls.interface_id,
-         .specific_id =
-             GetConstantValue(eval_context, self_impls.specific_id, phase)});
+         .specific_id = GetConstantValue(eval_context, self_impls.specific_id,
+                                         &self_phase)});
   }
 
   info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
@@ -756,21 +733,21 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     // TODO: Add GetConstantValue for SpecificNamedConstraint.
     info.self_impls_named_constraints.push_back(
         {.named_constraint_id = self_impls.named_constraint_id,
-         .specific_id =
-             GetConstantValue(eval_context, self_impls.specific_id, phase)});
+         .specific_id = GetConstantValue(eval_context, self_impls.specific_id,
+                                         &self_phase)});
   }
 
   info.type_impls_interfaces.reserve(orig.type_impls_interfaces.size());
   for (const auto& type_impls : orig.type_impls_interfaces) {
     info.type_impls_interfaces.push_back(
         {.self_type =
-             GetConstantValue(eval_context, type_impls.self_type, phase),
+             GetConstantValue(eval_context, type_impls.self_type, &self_phase),
          // TODO: Add GetConstantValue for SpecificInterface.
          .specific_interface = {
              .interface_id = type_impls.specific_interface.interface_id,
              .specific_id = GetConstantValue(
                  eval_context, type_impls.specific_interface.specific_id,
-                 phase)}});
+                 &self_phase)}});
   }
 
   info.type_impls_named_constraints.reserve(
@@ -778,14 +755,14 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   for (const auto& type_impls : orig.type_impls_named_constraints) {
     info.type_impls_named_constraints.push_back(
         {.self_type =
-             GetConstantValue(eval_context, type_impls.self_type, phase),
+             GetConstantValue(eval_context, type_impls.self_type, &self_phase),
          // TODO: Add GetConstantValue for SpecificNamedConstraint.
          .specific_named_constraint = {
              .named_constraint_id =
                  type_impls.specific_named_constraint.named_constraint_id,
              .specific_id = GetConstantValue(
                  eval_context, type_impls.specific_named_constraint.specific_id,
-                 phase)}});
+                 &self_phase)}});
   }
 
   // Rewrite constraints are resolved first before replacing them with their
@@ -806,12 +783,17 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   }
 
   for (auto& rewrite : info.rewrite_constraints) {
-    // `where` requirements using `.Self` should not be considered symbolic.
-    auto lhs_id = RequireConstantValueIgnoringPeriodSelf(eval_context,
-                                                         rewrite.lhs_id, phase);
-    auto rhs_id = RequireConstantValueIgnoringPeriodSelf(eval_context,
-                                                         rewrite.rhs_id, phase);
+    auto lhs_id =
+        RequireConstantValue(eval_context, rewrite.lhs_id, &self_phase);
+    auto rhs_id =
+        RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase);
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
+  }
+
+  // Update phase, ignoring `.Self` dependence from constraints whose `.Self` is
+  // scoped to this facet type.
+  if (self_phase > Phase::PeriodSelfSymbolic) {
+    *phase = LatestPhase(*phase, self_phase);
   }
 
   // TODO: Process other requirements.
@@ -2642,32 +2624,37 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
     // references are to the same top-level value for `.Self` and can all be
     // replaced together later.
 
-    SubstPeriodSelfCallbacks callbacks(
-        &context, loc_id, context.constant_values().Get(lhs_facet_or_type),
-        SubstPeriodSelfCallbacks::Behaviour::ImplicitOnly);
+    auto period_self_replacement_id =
+        context.constant_values().Get(lhs_facet_or_type);
 
     auto self_impls_interface = [&](SemIR::SpecificInterface si) {
-      return SubstPeriodSelf(context, callbacks, si);
+      return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id,
+                             SubstPeriodSelfBehaviour::ImplicitOnly);
     };
     auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-      return SubstPeriodSelf(context, callbacks, sc);
+      return SubstPeriodSelf(context, loc_id, sc, period_self_replacement_id,
+                             SubstPeriodSelfBehaviour::ImplicitOnly);
     };
     auto type_impls_interface =
         [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
         -> SemIR::FacetTypeInfo::TypeImplsInterface {
       auto self = SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(impls.self_type));
-      auto interface =
-          SubstPeriodSelf(context, callbacks, impls.specific_interface);
+          context, loc_id, context.constant_values().Get(impls.self_type),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      auto interface = SubstPeriodSelf(
+          context, loc_id, impls.specific_interface, period_self_replacement_id,
+          SubstPeriodSelfBehaviour::ImplicitOnly);
       return {context.constant_values().GetInstId(self), interface};
     };
     auto type_impls_constraint =
         [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
         -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
       auto self = SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(impls.self_type));
-      auto constraint =
-          SubstPeriodSelf(context, callbacks, impls.specific_named_constraint);
+          context, loc_id, context.constant_values().Get(impls.self_type),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
+      auto constraint = SubstPeriodSelf(
+          context, loc_id, impls.specific_named_constraint,
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
       return {context.constant_values().GetInstId(self), constraint};
     };
 
@@ -2688,9 +2675,11 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
         [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
         -> SemIR::FacetTypeInfo::RewriteConstraint {
       auto lhs_id = SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(rewrite.lhs_id));
+          context, loc_id, context.constant_values().Get(rewrite.lhs_id),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
       auto rhs_id = SubstPeriodSelf(
-          context, callbacks, context.constant_values().Get(rewrite.rhs_id));
+          context, loc_id, context.constant_values().Get(rewrite.rhs_id),
+          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
       return {context.constant_values().GetInstId(lhs_id),
               context.constant_values().GetInstId(rhs_id)};
     };

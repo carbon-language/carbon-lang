@@ -214,4 +214,11 @@ auto GetTypeOfInstInSpecific(const File& specific_ir, SpecificId specific_id,
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::GenericId, SemIR::Generic,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::SpecificId, SemIR::Specific,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_

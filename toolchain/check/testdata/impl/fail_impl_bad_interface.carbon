@@ -65,8 +65,8 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,7 +77,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -94,6 +94,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.<error>.impl: %i32 as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,8 +125,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc8_6 as %.loc8_14 {
+// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc8_6 as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -170,8 +172,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @f64.as.<error>.impl: %f64 as %.loc8_18 {
+// CHECK:STDOUT: impl @f64.as.<error>.impl: %f64 as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,8 +235,9 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as %.loc10_25 {
+// CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

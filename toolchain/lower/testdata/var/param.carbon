@@ -58,16 +58,16 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   call void @_CMake.C.Main(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(ptr %c.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !7
+// CHECK:STDOUT:   call void @"_COp.bb4015b09b4ec8d8:core.Destroy.Core"(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
+// CHECK:STDOUT: define weak_odr void @"_COp.bb4015b09b4ec8d8:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -92,7 +92,7 @@ fn G() {
 // CHECK:STDOUT: !8 = !DILocation(line: 16, column: 5, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !3, line: 13, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.bb4015b09b4ec8d8:core.Destroy.Core", scope: null, file: !3, line: 13, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -111,16 +111,16 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc11, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main(ptr %c.var), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %c.var), !dbg !7
+// CHECK:STDOUT:   call void @"_COp.ad7e2d77f29afefe:core.Destroy.Core"(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.71e25083d63c4d6c:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ad7e2d77f29afefe:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -128,12 +128,11 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -148,7 +147,7 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 6, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 13, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71e25083d63c4d6c:core.Destroy.Core", scope: null, file: !3, line: 11, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ad7e2d77f29afefe:core.Destroy.Core", scope: null, file: !3, line: 11, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
 // CHECK:STDOUT: !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)

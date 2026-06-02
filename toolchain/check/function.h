@@ -71,14 +71,16 @@ auto CheckFunctionReturnTypeMatches(Context& context,
 //
 // `check_syntax` is false if the redeclaration can be called via a thunk with
 // implicit conversions from the original declaration.
-// `check_self` is false if the self declaration does not have to match (for
-// instance in impls of virtual functions).
-auto CheckFunctionTypeMatches(Context& context,
-                              const SemIR::Function& new_function,
-                              const SemIR::Function& prev_function,
-                              SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self,
-                              bool diagnose = true) -> bool;
+//
+// If `self_type_override_id` is specified, the self type is checked against
+// that type instead of the type from `prev_function`. This is used to check
+// virtual function overrides.
+auto CheckFunctionTypeMatches(
+    Context& context, const SemIR::Function& new_function,
+    const SemIR::Function& prev_function, SemIR::SpecificId prev_specific_id,
+    bool check_syntax,
+    SemIR::TypeId self_type_override_id = SemIR::TypeId::None,
+    bool diagnose = true) -> bool;
 
 inline auto CheckFunctionTypeMatches(Context& context,
                                      const SemIR::Function& new_function,
@@ -86,7 +88,7 @@ inline auto CheckFunctionTypeMatches(Context& context,
     -> bool {
   return CheckFunctionTypeMatches(context, new_function, prev_function,
                                   SemIR::SpecificId::None,
-                                  /*check_syntax=*/true, /*check_self=*/true);
+                                  /*check_syntax=*/true);
 }
 
 // Checks that the scrutinee type of `return_pattern_id` in `specific_id` is

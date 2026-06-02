@@ -32,6 +32,7 @@
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
@@ -74,7 +75,7 @@
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:

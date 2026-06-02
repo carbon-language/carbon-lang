@@ -144,8 +144,8 @@ static constexpr auto DeclIntroducers = [] {
                  StateKind::AssociatedConstant);
   set_contextual(Lex::TokenKind::Var, RegularContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
-  set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
-                 StateKind::FieldDecl);
+  set_contextual(Lex::TokenKind::Var, ClassContext,
+                 NodeKind::VariableIntroducer, StateKind::VarAsRegular);
 
   set(Lex::TokenKind::Inline, NodeKind::InlineIntroducer,
       StateKind::InlineDeclAfterIntroducer);

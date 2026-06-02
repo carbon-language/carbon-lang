@@ -323,7 +323,7 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 };
 
 // Provides clang AST nodes representing Carbon SemIR entities.
-class CarbonExternalASTSource : public clang::ExternalASTSource {
+class CarbonExternalASTSource : public clang::ExternalSemaSource {
  public:
   explicit CarbonExternalASTSource(Context* context) : context_(context) {}
 
@@ -355,6 +355,9 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   auto MapInstIdToClangDeclOrType(LookupResult lookup)
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
+  auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
+                                SemIR::FunctionId function_id)
+      -> clang::FunctionDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -426,15 +429,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
         return nullptr;
       }
 
-      const SemIR::Function& function =
-          context_->functions().Get(callee_function->function_id);
-      if (function.clang_decl_id.has_value()) {
-        return cast<clang::NamedDecl>(
-            context_->clang_decls().Get(function.clang_decl_id).key.decl);
-      }
-
-      return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
-                                 callee_function->function_id);
+      return GetOrExportFunctionToCpp(target_inst_id,
+                                      callee_function->function_id);
     }
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);
@@ -442,6 +438,19 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     default:
       return nullptr;
   }
+}
+
+auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
+    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
+    -> clang::FunctionDecl* {
+  const SemIR::Function& function = context_->functions().Get(function_id);
+  if (function.clang_decl_id.has_value()) {
+    return cast<clang::FunctionDecl>(
+        context_->clang_decls().Get(function.clang_decl_id).key.decl);
+  }
+
+  return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
+                             function_id);
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
@@ -491,7 +500,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
           context_->constant_values().Get(decl_context_inst_id),
-          SemIR::ConstantId::None, &lookup_scopes)) {
+          SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
 
@@ -616,6 +625,15 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->startDefinition();
   CARBON_CHECK(class_decl->hasDefinition());
 
+  // If the Carbon class is final, mark the C++ class as also being `final`.
+  // Abstract classes are handled when generating the destructor declaration.
+  if (class_info.inheritance_kind == SemIR::Class::InheritanceKind::Final) {
+    // TODO: Find the location of the `final` modifier and use it here.
+    class_decl->addAttr(clang::FinalAttr::Create(
+        context_->ast_context(),
+        GetCppLocation(*context_, SemIR::LocId(class_info.definition_id))));
+  }
+
   // If the Carbon class has a base class that we can map into C++, add that as
   // a C++ base class.
   auto base_type_id =
@@ -644,6 +662,33 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
 
   // TODO: Import any special member functions that affect class properties.
+
+  if (class_info.vtable_decl_id.has_value()) {
+    auto vtable_inst_block = context_->inst_blocks().Get(
+        context_->vtables()
+            .Get(context_->insts()
+                     .GetAs<SemIR::VtableDecl>(class_info.vtable_decl_id)
+                     .vtable_id)
+            .virtual_functions_id);
+    for (auto vtable_entry_id : vtable_inst_block) {
+      if (!vtable_entry_id.has_value()) {
+        continue;
+      }
+
+      auto callee_function =
+          GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function.function_id);
+
+      // If this is a member of a base class, nothing to do here.
+      if (function.parent_scope_id != class_info.scope_id) {
+        continue;
+      }
+      auto* method_decl = cast<clang::CXXMethodDecl>(GetOrExportFunctionToCpp(
+          vtable_entry_id, callee_function.function_id));
+      context_->clang_sema().AddOverriddenMethods(class_decl, method_decl);
+    }
+  }
   class_decl->completeDefinition();
 }
 
@@ -837,6 +882,13 @@ auto GenerateAst(Context& context,
   context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
       std::move(clang_instance_ptr), llvm_context));
 
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
+  // that diagnostics created here don't interleave with later Carbon
+  // diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
   clang_instance.setDiagnostics(diags);
   clang_instance.setVirtualFileSystem(fs);
   clang_instance.createFileManager();
@@ -850,14 +902,22 @@ auto GenerateAst(Context& context,
     return false;
   }
 
+  // The AST context is now available, so the mangle context (used to compute
+  // stable identities for imported C++ types) can be created.
+  context.sem_ir().cpp_file()->CreateMangleContext();
+
   auto& ast = clang_instance.getASTContext();
-  // TODO: Clang's modules support is implemented as an ExternalASTSource
-  // (ASTReader) and there's no multiplexing support for ExternalASTSources at
-  // the moment - so registering CarbonExternalASTSource breaks Clang modules
-  // support. Implement multiplexing support (possibly in Clang) to restore
-  // modules functionality.
-  ast.setExternalSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
+  llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+  if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
+          ast.getExternalSource())) {
+    auto multiplex_source =
+        llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>(
+            existing_source, std::move(carbon_source));
+    ast.setExternalSource(std::move(multiplex_source));
+  } else {
+    ast.setExternalSource(std::move(carbon_source));
+  }
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
@@ -865,10 +925,6 @@ auto GenerateAst(Context& context,
                                          llvm::toString(std::move(error)));
     return false;
   }
-
-  // Flush any diagnostics. We know we're not part-way through emitting a
-  // diagnostic now.
-  context.emitter().Flush();
 
   return true;
 }

@@ -201,7 +201,6 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
@@ -215,15 +214,13 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5_8
+// CHECK:STDOUT:   .x = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
@@ -296,8 +293,8 @@ alias C = Other.C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -312,8 +309,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.640
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_copy.carbon
@@ -328,8 +325,8 @@ alias C = Other.C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -344,8 +341,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.640
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_indirect.carbon
@@ -360,8 +357,8 @@ alias C = Other.C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.3c4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.249 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -376,8 +373,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.3c4
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.249
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import.carbon
@@ -390,7 +387,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.e26: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,8 +399,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -428,15 +425,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.640
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.e26]
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %empty_tuple.type to %.loc6_26.2 = in_place_init %.loc6_26.3 [concrete = constants.%empty_tuple]
@@ -456,7 +453,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.3de: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,8 +466,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -495,15 +492,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.640
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.1: %struct_type.x = struct_literal (%.loc7_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.3de]
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type to %.loc7_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %empty_tuple.type to %.loc7_26.2 = in_place_init %.loc7_26.3 [concrete = constants.%empty_tuple]
@@ -523,7 +520,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.6e6: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,8 +533,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.42d = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.640 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -562,15 +559,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.56d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.42d
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.640
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.6e6]
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %empty_tuple.type to %.loc6_26.2 = in_place_init %.loc6_26.3 [concrete = constants.%empty_tuple]
@@ -590,7 +587,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.e18: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,8 +598,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.3c4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.249 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -627,15 +624,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.3c4
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.249
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.e18]
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %empty_tuple.type to %.loc6_26.2 = in_place_init %.loc6_26.3 [concrete = constants.%empty_tuple]
@@ -655,7 +652,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.c1f: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -667,8 +664,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.3c4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.249 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -693,15 +690,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.3c4
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.249
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.1: %struct_type.x = struct_literal (%.loc7_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.c1f]
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type to %.loc7_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %empty_tuple.type to %.loc7_26.2 = in_place_init %.loc7_26.3 [concrete = constants.%empty_tuple]
@@ -721,7 +718,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.fe9: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -732,8 +729,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name_indirect, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.328: <witness> = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.c1f = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.3e3 = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.61a = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.aef = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -758,15 +755,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.328
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.c1f
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.3e3
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.61a
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.aef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.fe9]
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %empty_tuple.type to %.loc6_26.2 = in_place_init %.loc6_26.3 [concrete = constants.%empty_tuple]
@@ -786,7 +783,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.dd7: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.b89: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -803,8 +800,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.3c4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.249 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -829,15 +826,15 @@ alias C = Other.C;
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.3c4
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.249
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.1: %struct_type.x = struct_literal (%.loc11_25.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc11_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
+// CHECK:STDOUT:   %.loc11_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b89]
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type to %.loc11_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.3: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.4: init %empty_tuple.type to %.loc11_26.2 = in_place_init %.loc11_26.3 [concrete = constants.%empty_tuple]
@@ -905,7 +902,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Other.C [concrete = constants.%C]
-// CHECK:STDOUT:   %C: %C.type = alias_binding C, imports.%Other.C [concrete = constants.%C]
+// CHECK:STDOUT:   %C: %C.type = alias_binding C, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C [from "conflict.carbon"];
@@ -927,8 +924,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.3c4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.249 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -939,14 +936,14 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
-// CHECK:STDOUT:   %C: type = alias_binding C, imports.%Other.C [concrete = constants.%C]
+// CHECK:STDOUT:   %C: type = alias_binding C, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.ad3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.3c4
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.249
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

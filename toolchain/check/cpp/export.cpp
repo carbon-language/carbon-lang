@@ -11,10 +11,14 @@
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
+#include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::Check {
 
@@ -116,8 +120,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 }
 
 auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
-                      SemIR::InstId class_inst_id, SemIR::ClassType class_type)
-    -> clang::TagDecl* {
+                      SemIR::ClassType class_type) -> clang::TagDecl* {
   // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
   // This should be refactored.
 
@@ -131,9 +134,11 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
   // That could either be a CXXRecordDecl or an EnumDecl.
-  if (auto* decl_context =
-          GetClangDeclContextForScope(context, class_info.scope_id)) {
-    return cast<clang::TagDecl>(decl_context);
+  if (auto clang_decl_id =
+          context.clang_decls().Lookup(class_info.first_decl_id());
+      clang_decl_id.has_value()) {
+    return cast<clang::TagDecl>(
+        context.clang_decls().Get(clang_decl_id).key.decl);
   }
 
   auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
@@ -157,8 +162,8 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
   auto key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(cast<clang::Decl>(record_decl));
-  auto clang_decl_id =
-      context.clang_decls().Add({.key = key, .inst_id = class_inst_id});
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = class_info.first_decl_id()});
   if (class_info.scope_id.has_value()) {
     // TODO: Record the Carbon class -> clang declaration mapping for incomplete
     // classes too.
@@ -182,6 +187,9 @@ static auto GetStructTypeFields(Context& context,
 
   auto object_repr_type_id =
       class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
+    return {};
+  }
   auto struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_type_id);
   return context.struct_type_fields().Get(struct_type.fields_id);
@@ -335,13 +343,13 @@ struct FunctionInfo {
     Param(Context& context, SemIR::InstId param_inst_id)
         : type_id(ExtractScrutineeType(
               context.sem_ir(), context.insts().Get(param_inst_id).type_id())),
-          is_ref(context.insts().Is<SemIR::RefParamPattern>(param_inst_id)) {}
+          kind(GetParamPatternKind(context, param_inst_id)) {}
 
     // Type of the parameter's scrutinee.
     SemIR::TypeId type_id;
 
-    // Whether this is a `ref` param.
-    bool is_ref;
+    // Kind of the parameter pattern.
+    ParamPatternKind kind;
   };
 
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
@@ -408,6 +416,22 @@ struct FunctionInfo {
 };
 }  // namespace
 
+// Converts a Carbon parameter type to the parameter type that should be used
+// for the C++ declaration of the Carbon -> Carbon thunk. This is always a
+// reference type.
+static auto MapToCppThunkParamType(Context& context, SemIR::TypeId type_id)
+    -> clang::QualType {
+  auto cpp_type = MapToCppType(context, type_id);
+  if (cpp_type.isNull()) {
+    return clang::QualType();
+  }
+  // The function exposed to C++ may have a `const&` parameter type for a value
+  // parameter. Always use a const reference here so we accept the argument,
+  // even though we might not need the `const`.
+  return context.ast_context().getLValueReferenceType(
+      context.ast_context().getConstType(cpp_type));
+}
+
 // Create a `clang::FunctionDecl` for the given Carbon function. This
 // can be used to call the Carbon function from C++. The Carbon
 // function's ABI must be compatible with C++.
@@ -426,22 +450,20 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   // Get parameters types.
   llvm::SmallVector<clang::QualType> cpp_param_types;
   if (callee.self_param) {
-    auto cpp_type = MapToCppType(context, callee.self_param->type_id);
+    auto cpp_type = MapToCppThunkParamType(context, callee.self_param->type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon self type to C++");
       return nullptr;
     }
-    cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
     cpp_param_types.push_back(cpp_type);
   }
   for (auto param : callee.explicit_params) {
-    auto cpp_type = MapToCppType(context, param.type_id);
+    auto cpp_type = MapToCppThunkParamType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
     }
-    auto ref_type = context.ast_context().getLValueReferenceType(cpp_type);
-    cpp_param_types.push_back(ref_type);
+    cpp_param_types.push_back(cpp_type);
   }
 
   CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
@@ -472,7 +494,8 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   function_decl->setParams(param_var_decls);
 
   // Mangle the function name and attach it to the `FunctionDecl`.
-  SemIR::Mangler m(context.sem_ir(), context.total_ir_count());
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
   std::string mangled_name = m.Mangle(function_id, SemIR::SpecificId::None);
   function_decl->addAttr(
       clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
@@ -499,12 +522,17 @@ static auto BuildCppToCarbonThunkDecl(
       context.TODO(loc_id, "failed to map Carbon return type to C++ type");
       return nullptr;
     }
+    if (cpp_return_type->isArrayType()) {
+      // C++ doesn't support returning arrays by value.
+      context.TODO(loc_id, "array return type");
+      return nullptr;
+    }
   }
 
   clang::DeclarationNameInfo name_info(thunk_name, clang_loc);
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
-  if (target.self_param && target.self_param->is_ref) {
+  if (target.self_param && target.self_param->kind == ParamPatternKind::Ref) {
     ext_proto_info.RefQualifier = clang::RQ_LValue;
   }
   clang::QualType thunk_function_type = ast_context.getFunctionType(
@@ -527,6 +555,9 @@ static auto BuildCppToCarbonThunkDecl(
         constexpr_kind, clang_loc, trailing_requires_clause);
     // TODO: Map Carbon access to C++ access.
     thunk_function_decl->setAccess(clang::AS_public);
+    thunk_function_decl->setVirtualAsWritten(
+        target.function.virtual_modifier !=
+        SemIR::Function::VirtualModifier::None);
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info,
@@ -645,6 +676,39 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
                                      clang_loc);
 }
 
+// Returns whether the given Carbon parameter should be passed as a C++ const
+// reference.
+static auto PassAsConstRef(Context& /*context*/,
+                           const FunctionInfo::Param& param,
+                           clang::QualType cpp_type) -> bool {
+  // Use pass-by-const-ref for value parameters of array type.
+  // TODO: Should we do this for value parameters of any type that uses a
+  // pointer value representation?
+  return param.kind == ParamPatternKind::Value && cpp_type->isArrayType();
+}
+
+// Converts a Carbon parameter type to the parameter type that should be exposed
+// to C++ callers.
+static auto MapToCppParamType(Context& context, SemIR::LocId loc_id,
+                              const FunctionInfo::Param& param)
+    -> clang::QualType {
+  auto cpp_type = MapToCppType(context, param.type_id);
+  if (cpp_type.isNull()) {
+    return clang::QualType();
+  }
+  if (param.kind == Check::ParamPatternKind::Ref) {
+    cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
+  } else if (PassAsConstRef(context, param, cpp_type)) {
+    cpp_type = context.ast_context().getLValueReferenceType(
+        context.ast_context().getConstType(cpp_type));
+  } else if (cpp_type->isArrayType()) {
+    // C++ doesn't support passing arrays by value.
+    context.TODO(loc_id, "by-var array parameter");
+    return clang::QualType();
+  }
+  return cpp_type;
+}
+
 // Create a C++ thunk that calls the Carbon thunk. The C++ thunk's
 // parameter types are mapped from the parameters of the target function
 // with `MapToCppType`. (Note that the target function here is the
@@ -658,19 +722,19 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<clang::QualType> param_types;
   for (auto param : target.explicit_params) {
-    auto cpp_type = MapToCppType(context, param.type_id);
+    auto cpp_type = MapToCppParamType(context, loc_id, param);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map C++ type to Carbon");
       return nullptr;
-    }
-    if (param.is_ref) {
-      cpp_type = context.ast_context().getLValueReferenceType(cpp_type);
     }
     param_types.push_back(cpp_type);
   }
 
   auto* thunk_function_decl = BuildCppToCarbonThunkDecl(
       context, loc_id, target, &thunk_ident, param_types);
+  if (!thunk_function_decl) {
+    return nullptr;
+  }
 
   // Build the thunk function body.
   clang::Sema& sema = context.clang_sema();
@@ -770,11 +834,44 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                carbon_function_decl);
 }
 
+// Returns whether the given class has any abstract methods.
+static auto HasAnyAbstractMethods(Context& context,
+                                  const SemIR::Class& class_info,
+                                  SemIR::SpecificId class_specific_id) -> bool {
+  if (class_info.vtable_decl_id == SemIR::InstId::None) {
+    return false;
+  }
+
+  LoadImportRef(context, class_info.vtable_decl_id);
+  auto vtable_decl_const_id = GetConstantValueInSpecific(
+      context.sem_ir(), class_specific_id, class_info.vtable_decl_id);
+  if (vtable_decl_const_id == SemIR::ErrorInst::ConstantId) {
+    return false;
+  }
+  auto vtable_id = context.constant_values()
+                       .GetInstAs<SemIR::VtableDecl>(vtable_decl_const_id)
+                       .vtable_id;
+  const auto& vtable = context.vtables().Get(vtable_id);
+  for (auto virtual_fn_id :
+       context.inst_blocks().Get(vtable.virtual_functions_id)) {
+    auto virtual_fn = DecomposeVirtualFunction(context.sem_ir(), virtual_fn_id,
+                                               class_specific_id);
+    if (context.functions().Get(virtual_fn.function_id).virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl* {
   SemIR::LocId loc_id(class_info.first_decl_id());
   auto clang_loc = record_decl->getLocation();
+
+  // TODO: Add support for exporting specific classes.
+  const auto specific_id = SemIR::SpecificId::None;
 
   // Create C++ destructor decl.
   auto class_type = context.ast_context().getCanonicalTagType(record_decl);
@@ -783,7 +880,8 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   clang::DeclarationNameInfo name_info(name, clang_loc);
   clang::QualType type = context.ast_context().getFunctionType(
       context.ast_context().VoidTy, llvm::ArrayRef<clang::QualType>(),
-      clang::FunctionProtoType::ExtProtoInfo());
+      clang::FunctionProtoType::ExtProtoInfo().withExceptionSpec(
+          clang::EST_BasicNoexcept));
   auto* cpp_destructor_decl = clang::CXXDestructorDecl::Create(
       context.ast_context(), record_decl,
       /*StartLoc=*/clang_loc, name_info, type, /*TInfo=*/nullptr,
@@ -791,13 +889,35 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
       clang::ConstexprSpecKind::Unspecified);
   cpp_destructor_decl->setAccess(clang::AS_public);
 
+  clang::Sema& sema = context.clang_sema();
+
+  // Find and register any base class virtual destructors that this destructor
+  // overrides. This marks the destructor as implicitly virtual if needed.
+  sema.AddOverriddenMethods(record_decl, cpp_destructor_decl);
+
+  // If the class is abstract and has no abstract methods, we need to mark the
+  // destructor as pure virtual.
+  if (class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract &&
+      !HasAnyAbstractMethods(context, class_info, specific_id)) {
+    if (cpp_destructor_decl->isVirtual()) {
+      cpp_destructor_decl->setIsPureVirtual(true);
+    } else {
+      context.TODO(class_info.definition_id,
+                   "exporting abstract class with no abstract methods and "
+                   "non-virtual destructor to C++");
+    }
+  }
+
   // Create Carbon thunk that destroys the object, and get a C++
   // function decl for calling it.
+  // TODO: Once we support exporting specific classes, export the specific
+  // destructor here rather than a generic one.
   auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
   auto* cpp_function_decl =
       BuildCppFunctionDeclForCarbonFn(context, loc_id, thunk_function_id);
-
-  clang::Sema& sema = context.clang_sema();
+  if (!cpp_function_decl) {
+    return nullptr;
+  }
 
   // Build the destructor body.
   clang::Sema::ContextRAII context_raii(sema, cpp_destructor_decl);

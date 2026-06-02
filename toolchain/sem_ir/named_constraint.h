@@ -64,4 +64,9 @@ using NamedConstraintStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::NamedConstraintId,
+                                 SemIR::NamedConstraint, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_NAMED_CONSTRAINT_H_

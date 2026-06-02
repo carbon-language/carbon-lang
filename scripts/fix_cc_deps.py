@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 
 """Automatically fixes bazel C++ dependencies.
 
@@ -38,29 +43,38 @@ class RuleChoice(NamedTuple):
     rules: set[str]
 
 
+# Compiled regexes for external repo remapping.
+LLVM_PREFIX_REGEX = re.compile(r"^(.*:(lib|include))/")
+COLON_REGEX = re.compile(r":")
+GOOGLE_TEST_PREFIX_REGEX = re.compile(r":google(?:mock|test)/include/")
+BOOST_INCLUDE_PREFIX_REGEX = re.compile(r"^(.*:include)/")
+
+# Regex for finding #include directives.
+INCLUDE_REGEX = re.compile(r'^(#include (?:(["<])([^">]+)[">]))', re.MULTILINE)
+
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
 EXTERNAL_REPOS: dict[str, ExternalRepo] = {
     # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
     # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
     "@llvm-project": ExternalRepo(
-        lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
+        lambda x: COLON_REGEX.sub("/", LLVM_PREFIX_REGEX.sub("", x)),
         "...",
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
-    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    "@bazel_tools": ExternalRepo(lambda x: COLON_REGEX.sub("/", x), "..."),
     # absl/flags:flag.h -> absl/flags/flag.h
-    "@abseil-cpp": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    "@abseil-cpp": ExternalRepo(lambda x: COLON_REGEX.sub("/", x), "..."),
     # :re2/re2.h -> re2/re2.h
-    "@re2": ExternalRepo(lambda x: re.sub(":", "", x), ":re2"),
+    "@re2": ExternalRepo(lambda x: COLON_REGEX.sub("", x), ":re2"),
     # :googletest/include/gtest/gtest.h -> gtest/gtest.h
     "@googletest": ExternalRepo(
-        lambda x: re.sub(":google(?:mock|test)/include/", "", x),
+        lambda x: GOOGLE_TEST_PREFIX_REGEX.sub("", x),
         ":gtest",
         use_system_include=True,
     ),
     "@boost.unordered": ExternalRepo(
-        lambda x: re.sub("^(.*:include)/", "", x),
+        lambda x: BOOST_INCLUDE_PREFIX_REGEX.sub("", x),
         ":boost.unordered",
         use_system_include=True,
     ),
@@ -126,6 +140,7 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> dict[str, Rule]:
     args = [
         bazel,
         "query",
+        "--curses=no",
         "--output=xml",
         f"kind('(cc_binary|cc_library|cc_test|genrule)', set({targets}))",
     ]
@@ -222,12 +237,9 @@ def get_missing_deps(
             file_content = f.read()
         file_content_changed = False
 
-        for header_groups in re.findall(
-            r'^(#include (?:(["<])([^">]+)[">]))',
-            file_content,
-            re.MULTILINE,
+        for full_include, include_open, header in INCLUDE_REGEX.findall(
+            file_content
         ):
-            full_include, include_open, header = header_groups
             is_system_include = include_open == "<"
 
             if header in rule_files:
@@ -236,9 +248,7 @@ def get_missing_deps(
                 if is_system_include:
                     # Don't error for unexpected system includes.
                     continue
-                exit(
-                    f"Missing rule for " f"'{full_include}' in '{source_file}'"
-                )
+                exit(f"Missing rule for '{full_include}' in '{source_file}'")
             rule_choice = header_to_rule_map[header]
             if not rule_choice.rules.intersection(rule.deps):
                 if len(rule_choice.rules) > 1:

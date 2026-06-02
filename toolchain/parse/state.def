@@ -408,10 +408,6 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~
 //   1. VarAsRegular
 //
-// var ...        (variant is Class)
-// ^~~
-//   1. FieldDecl
-//
 // ;
 // ^
 //   (state done)
@@ -1630,14 +1626,14 @@ CARBON_PARSE_STATE(ObserveDecl)
 // var ...             (variant is Regular)
 //    ^
 //   1. Pattern
-//   2. VarAfterPatternAsVar
-//   3. VarFinishAsRegular
+//   2. VarAfterPattern
+//   3. VarFinish
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. Pattern
-//   2. VarAfterPatternAsVar
-//   3. VarFinishAsRegular
+//   2. VarAfterPattern
+//   3. VarFinish
 //
 // returned ??? ;      (variant is Returned)
 // ^~~~~~~~~~~~~~
@@ -1656,7 +1652,7 @@ CARBON_PARSE_STATE_VARIANTS2(Var, Regular, Returned)
 // var ... ...
 //        ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
+CARBON_PARSE_STATE(VarAfterPattern)
 
 // Handles `var` parsing at the end.
 //
@@ -1665,22 +1661,7 @@ CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
 // var ... ??? ;
 //         ^~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Regular, Field)
-
-// Handles the beginning of a field declaration (`var` in a class context).
-//
-// var name : type
-//     ^~~~~~
-//   1. Expr
-//   2. VarAfterPatternAsField
-//   3. VarFinishAsField
-//
-// var ??? ;
-//     ^~~~~
-// var name ??? ;
-//     ^~~~~~~~~
-//   (state done)
-CARBON_PARSE_STATE(FieldDecl)
+CARBON_PARSE_STATE(VarFinish)
 
 // Handles the start of a `let`.
 //

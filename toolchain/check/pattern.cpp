@@ -6,11 +6,14 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 
 namespace Carbon::Check {
 
@@ -134,6 +137,33 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   }
   auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
 
+  // Handle non-static `var` decls in a class by creating a `FieldDecl`.
+  if (InNonStaticFieldDecl(context)) {
+    auto class_decl =
+        context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
+    auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    auto field_type_id = GetUnboundElementType(
+        context, context.types().GetTypeInstId(class_info.self_type_id),
+        context.types().GetTypeInstId(type_id));
+
+    if (name_id == SemIR::NameId::Underscore) {
+      CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
+                        "expected identifier in field declaration");
+      context.emitter().Emit(name_loc, FieldNamedUnderscore);
+    }
+
+    auto field_id =
+        context.fields().Add({.index = SemIR::ElementIndex::None,
+                              .initializer_id = SemIR::InstId::None});
+    auto field_decl_id = AddInst<SemIR::FieldDecl>(
+        context, name_loc,
+        {.type_id = field_type_id, .name_id = name_id, .field_id = field_id});
+    context.field_decls_stack().AppendToTop(field_decl_id);
+
+    return {.pattern_id = field_decl_id, .bind_id = field_decl_id};
+  }
+
   auto bind_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), name_loc,
@@ -192,6 +222,19 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
       context.var_storage_map().Insert(
           inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
     }
+  }
+}
+
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind {
+  auto param = context.insts().Get(param_inst_id);
+  CARBON_CHECK(param.Is<SemIR::AnyParamPattern>());
+  if (param.Is<SemIR::RefParamPattern>()) {
+    return ParamPatternKind::Ref;
+  } else if (param.Is<SemIR::VarParamPattern>()) {
+    return ParamPatternKind::Var;
+  } else {
+    return ParamPatternKind::Value;
   }
 }
 

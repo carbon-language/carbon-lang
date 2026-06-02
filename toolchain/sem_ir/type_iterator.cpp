@@ -254,10 +254,8 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
       // We return FacetValues as a separate iterative step, then also recurse
       // into the the self value being accessed.
       //
-      // Witness access of a concrete value would have evaluated to the accessed
-      // value, so we only see ImplWitnessAccess in a type when it's a symbolic
-      // value, which implies it contains a LookupImplWitness.
-      CARBON_CHECK(sem_ir_->constant_values().Get(inst_id).is_symbolic());
+      // If ImplWitnessAccess did not evaluate to some other value, it must
+      // contain a non-final witness.
       auto witness =
           sem_ir_->insts().GetAs<LookupImplWitness>(access.witness_id);
       // Recurse into symbolic ImplWitnessAccess, replacing it with the self

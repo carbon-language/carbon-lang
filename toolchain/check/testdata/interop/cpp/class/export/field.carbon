@@ -121,3 +121,20 @@ void F() {
   a.x = 12;
 }
 ''';
+
+// --- fail_invalid.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+// This should not cause a crash.
+class A {
+  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:16: error: name `Whoops` not found [NameNotFound]
+  // CHECK:STDERR:   extend base: Whoops;
+  // CHECK:STDERR:                ^~~~~~
+  // CHECK:STDERR:
+  extend base: Whoops;
+}
+
+inline Cpp '''
+Carbon::A x;
+''';

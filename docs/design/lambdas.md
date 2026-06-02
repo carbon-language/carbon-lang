@@ -465,8 +465,8 @@ To mirror C++'s use of capturing `this`, `self` should always come from the
 outer scope as a capture. `self: Self` is never permitted on lambdas.
 
 ```carbon
-// ❌ Not allowed
-let lambda: auto = fn [self: Self] { self.F(); };
+// ❌ Not allowed, lambdas can't be methods.
+let lambda: auto = fn (self) { self.F(); };
 
 // ✅ Captures `self` from outer scope
 let lambda: auto = fn [self] { self.F(); };
@@ -481,7 +481,7 @@ function fields with a `self` parameter.
 
 ## Alternatives considered
 
--   [Terse vs Elaborated](/proposals/p3848.md#alternative-considered-terse-vs-elaborated)
--   [Sigil](/proposals/p3848.md#alternative-considered-sigil)
--   [Additional Positional Parameter Restriction](/proposals/p3848.md#alternative-considered-additional-positional-parameter-restriction)
--   [Recursive Self](/proposals/p3848.md#alternative-considered-recursive-self)
+-   [Terse vs Elaborated](/proposals/p003848-lambdas.md#alternative-considered-terse-vs-elaborated)
+-   [Sigil](/proposals/p003848-lambdas.md#alternative-considered-sigil)
+-   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
+-   [Recursive Self](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)

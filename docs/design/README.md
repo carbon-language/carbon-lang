@@ -64,7 +64,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
-        -   [Class functions and factory functions](#class-functions-and-factory-functions)
+        -   [Non-instance member functions](#non-instance-member-functions)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
@@ -486,7 +486,7 @@ intended for bit manipulation or modular arithmetic as often found in
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
 make sense
-[should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
+[should use signed integer types](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap).
 
 Identifiers of the form `iN` and `uN` are _type literals_, resulting in the
 corresponding type.
@@ -864,7 +864,7 @@ or restrictions on casts between pointers and integers.
 ### Arrays and slices
 
 > **TODO:** The provisional array syntax documented here has been superseded by
-> [p4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p4682.md).
+> [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md).
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to
@@ -972,7 +972,7 @@ _incomplete_, and in some cases there are limitations on what can be done with
 an incomplete name. Within a definition, the defined name is incomplete until
 the end of the definition is reached, but is complete in the bodies of member
 functions because they are
-[parsed as if they appeared after the definition](#class-functions-and-factory-functions).
+[parsed as if they appeared after the definition](classes.md#deferred-member-function-definitions).
 
 A name is valid until the end of the innermost enclosing
 [_scope_](<https://en.wikipedia.org/wiki/Scope_(computer_science)>). There are a
@@ -1655,12 +1655,12 @@ The order of the field declarations determines the fields' memory-layout order.
 
 Classes may have other kinds of members beyond fields declared in its scope:
 
--   [Class functions](#class-functions-and-factory-functions)
+-   [Non-instance member functions](#non-instance-member-functions)
 -   [Methods](#methods)
 -   [`alias`](#aliases)
 -   [`let`](#constant-let-declarations) to define class constants. **TODO:**
     Another syntax to define constants associated with the class like
-    `class let` or `static let`?
+    `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
@@ -1705,20 +1705,20 @@ sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
-#### Class functions and factory functions
+#### Non-instance member functions
 
-Classes may also contain _class functions_. These are functions that are
-accessed as members of the type, like
+Classes may also contain _non-instance member functions_. These are functions
+that are accessed as members of the type, like
 [static member functions in C++](<https://en.wikipedia.org/wiki/Method_(computer_programming)#Static_methods>),
 as opposed to [methods](#methods) that are members of instances. They are
-commonly used to define a function that creates instances. Carbon does not have
-separate
+commonly used to define a function that creates instances (sometimes called
+factory functions). Carbon does not have separate
 [constructors](<https://en.wikipedia.org/wiki/Constructor_(object-oriented_programming)>)
 like C++ does.
 
 ```carbon
 class Point {
-  // Class function that instantiates `Point`.
+  // Non-instance member function that instantiates `Point`.
   // `Self` in class scope means the class currently being defined.
   fn Origin() -> Self {
     return {.x = 0, .y = 0};
@@ -1762,20 +1762,20 @@ Class type definitions can include methods:
 ```carbon
 class Point {
   // Method defined inline
-  fn Distance[self: Self](x2: i32, y2: i32) -> f32 {
+  fn Distance(self, x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - self.x;
     var dy: i32 = y2 - self.y;
     return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
-  fn Offset[ref self: Self](dx: i32, dy: i32);
+  fn Offset(ref self, dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
 // Out-of-line definition of method declared inline
-fn Point.Offset[ref self: Self](dx: i32, dy: i32) {
+fn Point.Offset(ref self, dx: i32, dy: i32) {
   self.x += dx;
   self.y += dy;
 }
@@ -1789,17 +1789,16 @@ Assert(origin.Distance(3, 4) == 0.0);
 This defines a `Point` class type with two integer data members `x` and `y` and
 two methods `Distance` and `Offset`:
 
--   Methods are defined as class functions with a `self` parameter inside square
-    brackets `[`...`]` before the regular explicit parameter list in parens
-    `(`...`)`.
+-   Methods are defined by declaring `self` as the first parameter in the
+    parameter list in parens `(`...`)`.
 -   Methods are called using the member syntax, `origin.Distance(`...`)` and
     `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
-    modifying the `Point`. This is signified using `[self: Self]` in the method
+    modifying the `Point`. This is signified using `self` in the method
     declaration.
 -   `origin.Offset(`...`)` _does_ modify the value of `origin`. This is
-    signified using `[ref self: Self]` in the method declaration. It may only be
-    called on [reference expressions](#expression-categories).
+    signified using `ref self` in the method declaration. It may only be called
+    on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1808,6 +1807,8 @@ two methods `Distance` and `Offset`:
 > -   [Methods](classes.md#methods)
 > -   Proposal
 >     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+> -   Proposal
+>     [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
 
 #### Inheritance
 
@@ -1954,13 +1955,13 @@ names resolvable by the compiler, and don't act like forward declarations.
 #### Destructors
 
 A destructor for a class is custom code executed when the lifetime of a value of
-that type ends. They are defined with `fn destroy` followed by either
-`[self: Self]` or `[ref self: Self]` (as is done with [methods](#methods)) and
-the block of code in the class definition, as in:
+that type ends. They are defined with `fn destroy` followed by either `self` or
+`ref self` in the parameter list (as is done with [methods](#methods)) and the
+block of code in the class definition, as in:
 
 ```carbon
 class MyClass {
-  fn destroy[self: Self]() { ... }
+  fn destroy(self) { ... }
 }
 ```
 
@@ -1969,7 +1970,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[ref self: Self]() { ... }
+  fn destroy(ref self) { ... }
 }
 ```
 
@@ -2169,7 +2170,7 @@ names earlier in the source than they are declared. In executable scopes such as
 function bodies, names declared later are not found. In declarative scopes such
 as packages, classes, and interfaces, it is an error to refer to names declared
 later, except that inline class member function bodies are
-[parsed as if they appeared after the class](#class-functions-and-factory-functions).
+[parsed as if they appeared after the class](classes.md#deferred-member-function-definitions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
 and starts with a letter. We intend to follow
@@ -2792,7 +2793,7 @@ be assumed of types that satisfy that constraint.
 interface Printable {
   // Inside an interface definition `Self` means
   // "the type implementing this interface".
-  fn Print[self: Self]();
+  fn Print(self);
 }
 ```
 
@@ -2817,7 +2818,7 @@ sufficient.
 ```carbon
 // Class `Text` does not implement the `Printable` interface.
 class Text {
-  fn Print[self: Self]();
+  fn Print(self);
 }
 
 class Circle {
@@ -2826,7 +2827,7 @@ class Circle {
   // This `impl` declaration establishes that `Circle` implements
   // `Printable`.
   impl as Printable {
-    fn Print[self: Self]() {
+    fn Print(self) {
       Core.Print("Circle with radius: {0}", self.radius);
     }
   }
@@ -2944,9 +2945,9 @@ semantics similar to C++ templates.
 
 ```carbon
 class Game {
-  fn Draw[self: Self]() -> bool;
+  fn Draw(self) -> bool;
   impl as Renderable {
-    fn Draw[self: Self]();
+    fn Draw(self);
   }
 }
 
@@ -2996,9 +2997,9 @@ associated constant to represent the type of elements stored in the stack.
 ```
 interface StackInterface {
   let ElementType:! Movable;
-  fn Push[ref self: Self](value: ElementType);
-  fn Pop[ref self: Self]() -> ElementType;
-  fn IsEmpty[self: Self]() -> bool;
+  fn Push(ref self, value: ElementType);
+  fn Pop(ref self) -> ElementType;
+  fn IsEmpty(self) -> bool;
 }
 ```
 
@@ -3008,14 +3009,14 @@ for the `ElementType` member of the interface using a `where` clause:
 ```carbon
 class IntStack {
   extend impl as StackInterface where .ElementType = i32 {
-    fn Push[ref self: Self](value: i32);
+    fn Push(ref self, value: i32);
     // ...
   }
 }
 
 class FruitStack {
   extend impl as StackInterface where .ElementType = Fruit {
-    fn Push[ref self: Self](value: Fruit);
+    fn Push(ref self, value: Fruit);
     // ...
   }
 }
@@ -3043,8 +3044,8 @@ values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
-  fn Push[ref self: Self](value: T);
-  fn Pop[ref self: Self]() -> T;
+  fn Push(ref self, value: T);
+  fn Pop(ref self) -> T;
 
   var storage: Array(T);
 }
@@ -3251,7 +3252,7 @@ types in the `impl` declaration, as in:
 ```carbon
 impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
-  fn Op[self: Self](other: U) -> V { ... }
+  fn Op(self, other: U) -> V { ... }
 }
 ```
 
@@ -3260,7 +3261,7 @@ implementing the `Add` interface:
 
 ```carbon
 impl T as Add {
-  fn Op[self: Self](other: Self) -> Self { ... }
+  fn Op(self, other: Self) -> Self { ... }
 }
 ```
 
@@ -3520,7 +3521,7 @@ ABI compatibility.
 > References:
 >
 > -   [Goals: Stable language and library ABI non-goal](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
-> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
+> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p000175-c-interoperability-goals.md#support-mixing-carbon-and-c-toolchains)
 
 ### Operator overloading
 
@@ -3608,7 +3609,7 @@ provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
 namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
 `Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
 considers them different, so C++ overloads are resolved the same way. Carbon
-[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#data-types)
+[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#numeric-types)
 apply here, allowing them whenever the numerical value for all inputs may be
 preserved by the conversion.
 

@@ -46,12 +46,17 @@ Checks:
   # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
   # unlikely to find real issues.
   - '-bugprone-exception-escape'
+  # Doesn't respect `[[clang::enum_extensibility(open)]]`.
+  - '-bugprone-invalid-enum-default-initialization'
   # Has false positives in places such as using an argument to declare a name,
   # which cannot have parentheses. For our limited use of macros, this is a
   # common conflict.
   - '-bugprone-macro-parentheses'
   # Conflicts with integer type C++ style.
   - '-bugprone-narrowing-conversions'
+  # Complains about reasonable code like `1 << 20` and would push us away from
+  # our integer type C++ style rules.
+  - '-bugprone-signed-bitwise'
   # Has false positives for `enum_base.h`. Clang's built-in switch warnings
   # cover most of our risk of bugs here.
   - '-bugprone-switch-missing-default-case'

@@ -115,28 +115,13 @@ auto FileContext::LowerDefinitions() -> void {
   // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
   // map is redundant.
-  for (auto inst_id :
-       sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
-    // Only `VarStorage` indicates a global variable declaration in the
-    // top instruction block.
-    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      // Get the global variable declaration. We created this when lowering the
-      // constant unless the variable is unnamed, in which case we need to
-      // create it now.
-      llvm::GlobalVariable* llvm_var = nullptr;
-      if (auto const_id = sem_ir().constant_values().Get(inst_id);
-          const_id.is_constant()) {
-        llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
-      } else {
-        // We should never be emitting a definition for a C++ global variable.
-        llvm_var = BuildNonCppGlobalVariableDecl(*var);
-      }
+  LowerGlobalVariables(sem_ir().top_inst_block_id());
 
-      // Convert the declaration of this variable into a definition by adding an
-      // initializer.
-      global_variables_.Insert(inst_id, llvm_var);
-      llvm_var->setInitializer(
-          llvm::Constant::getNullValue(llvm_var->getValueType()));
+  // Lower static class variable definitions.
+  for (auto class_info : sem_ir().classes().values()) {
+    auto inst_block_id = class_info.body_block_id;
+    if (inst_block_id.has_value()) {
+      LowerGlobalVariables(inst_block_id);
     }
   }
 
@@ -264,6 +249,33 @@ auto FileContext::GetOrCreateFunctionInfo(
   return result;
 }
 
+auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
+    -> void {
+  for (auto inst_id : sem_ir().inst_blocks().Get(inst_block_id)) {
+    // Only `VarStorage` indicates a global variable declaration in the
+    // top instruction block.
+    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+      // Get the global variable declaration. We created this when lowering the
+      // constant unless the variable is unnamed, in which case we need to
+      // create it now.
+      llvm::GlobalVariable* llvm_var = nullptr;
+      if (auto const_id = sem_ir().constant_values().Get(inst_id);
+          const_id.is_constant()) {
+        llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
+      } else {
+        // We should never be emitting a definition for a C++ global variable.
+        llvm_var = BuildNonCppGlobalVariableDecl(*var);
+      }
+
+      // Convert the declaration of this variable into a definition by adding an
+      // initializer.
+      global_variables_.Insert(inst_id, llvm_var);
+      llvm_var->setInitializer(
+          llvm::Constant::getNullValue(llvm_var->getValueType()));
+    }
+  }
+}
+
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
     -> llvm::Function* {
   // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
@@ -310,7 +322,8 @@ auto FileContext::GetOrCreateLLVMFunction(
         sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   std::string mangled_name = m.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
@@ -679,7 +692,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
@@ -709,9 +723,13 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
     -> llvm::GlobalVariable* {
+  if (!vtable.carbon_native_vtable) {
+    return nullptr;
+  }
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count());
+  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
+                   context().mangle_string_fingerprint());
   std::string mangled_name = m.MangleVTable(class_info, specific_id);
 
   if (sem_ir()

@@ -127,6 +127,14 @@ class FunctionContext {
     return llvm_type;
   }
 
+  // Returns the alignment of the given type_id. This adds the alignment to the
+  // fingerprint.
+  auto GetAlignment(TypeInFile type) -> llvm::Align {
+    auto align = GetFileContext(type.file).GetAlignment(type.type_id);
+    AddIntToCurrentFingerprint(align.value());
+    return align;
+  }
+
   // Returns the type of the given instruction in the current specific.
   auto GetTypeOfInst(SemIR::InstId inst_id) -> llvm::Type* {
     return GetType(GetTypeIdOfInst(inst_id));
@@ -166,7 +174,7 @@ class FunctionContext {
 
   // Creates an alloca instruction of the given type, adds it to the entry
   // block, and starts the lifetime of the corresponding storage.
-  auto CreateAlloca(llvm::Type* type, const llvm::Twine& name = llvm::Twine())
+  auto CreateAlloca(TypeInFile type, const llvm::Twine& name = llvm::Twine())
       -> llvm::AllocaInst*;
 
   // Returns the debug location to associate with the specified instruction.

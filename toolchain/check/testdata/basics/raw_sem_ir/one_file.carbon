@@ -255,6 +255,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_instD6: {ir_id: import_ir78000004, inst_id: inst70000259}
 // CHECK:STDOUT:     import_ir_instD7: {ir_id: import_ir78000004, inst_id: inst7000025A}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst78000011, name0: inst7800003E}}
 // CHECK:STDOUT:     name_scope78000001: {inst: inst78000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name3: inst7800004E}}
@@ -506,9 +507,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     facet_type78000000: {}
 // CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000010:    {kind: ImportDecl, arg0: name(Core)}
-// CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, arg1: inst78000010, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: facet_type78000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000013:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000014:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}

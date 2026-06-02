@@ -339,7 +339,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       break;
     }
 
-    case FullPatternStack::Kind::NameBindingDecl: {
+    case FullPatternStack::Kind::NameBindingDecl:
+    case FullPatternStack::Kind::ClassScopeVarDecl: {
       if (node_kind == Parse::NodeKind::FormBindingPattern) {
         return context.TODO(node_id, "support local form bindings");
       }
@@ -484,54 +485,6 @@ auto HandleParseNode(Context& context,
   ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 
   context.node_stack().Push(node_id, decl_id);
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
-    -> bool {
-  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto [cast_type_inst_id, cast_type_id] =
-      ExprAsType(context, type_node, parsed_type_id);
-  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
-
-  auto parent_class_decl =
-      context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
-  CARBON_CHECK(parent_class_decl);
-  if (!RequireConcreteType(
-          context, cast_type_id, type_node,
-          [&](auto& builder) {
-            CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Context,
-                              "field has incomplete type {0}", SemIR::TypeId);
-            builder.Context(type_node, IncompleteTypeInFieldDecl, cast_type_id);
-          },
-          [&](auto& builder) {
-            CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Context,
-                              "field has abstract type {0}", SemIR::TypeId);
-            builder.Context(type_node, AbstractTypeInFieldDecl, cast_type_id);
-          })) {
-    cast_type_id = SemIR::ErrorInst::TypeId;
-  }
-  if (cast_type_id == SemIR::ErrorInst::TypeId) {
-    cast_type_inst_id = SemIR::ErrorInst::TypeInstId;
-  }
-  auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  auto field_type_id = GetUnboundElementType(
-      context, context.types().GetTypeInstId(class_info.self_type_id),
-      cast_type_inst_id);
-  auto field_id =
-      AddInst<SemIR::FieldDecl>(context, node_id,
-                                {.type_id = field_type_id,
-                                 .name_id = name_id,
-                                 .index = SemIR::ElementIndex::None});
-  context.field_decls_stack().AppendToTop(field_id);
-
-  auto name_context =
-      context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
-  context.decl_name_stack().AddNameOrDiagnose(
-      name_context, field_id,
-      context.decl_introducer_state_stack()
-          .innermost()
-          .modifier_set.GetAccessKind());
   return true;
 }
 

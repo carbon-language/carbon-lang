@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 
 """Verify that the bazel build graph is in a valid state, for pre-commit."""
 
@@ -16,7 +21,7 @@ import scripts_utils
 def main() -> None:
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
-    subprocess.check_call([bazel, "build", "--nobuild", "//..."])
+    subprocess.check_call([bazel, "build", "--curses=no", "--nobuild", "//..."])
 
 
 if __name__ == "__main__":

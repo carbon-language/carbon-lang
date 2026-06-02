@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
@@ -18,6 +19,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -66,7 +68,12 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushNameBindingDecl();
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
+      Kind == Lex::TokenKind::Var) {
+    context.full_pattern_stack().PushClassScopeVarDecl();
+  } else {
+    context.full_pattern_stack().PushNameBindingDecl();
+  }
   BeginSubpattern(context);
   return true;
 }
@@ -86,13 +93,6 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
     -> bool {
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
-}
-
-auto HandleParseNode(Context& context, Parse::FieldIntroducerId node_id)
-    -> bool {
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
-  context.node_stack().Push(node_id);
-  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
@@ -120,6 +120,19 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
+    case FullPatternStack::Kind::ClassScopeVarDecl:
+      if (InStaticClassScopeVar(context)) {
+        // Handle static class fields the same as NameBindingDecls.
+        pattern_id = AddInst<SemIR::VarPattern>(
+            context, node_id,
+            {.type_id = type_id, .subpattern_id = subpattern_id});
+      } else {
+        // For non-static class fields, a `FieldDecl` was created in
+        // `AddBindingPattern`. Use that as the `pattern_id` so that
+        // it's available when handling initializers.
+        pattern_id = context.field_decls_stack().PeekArray().back();
+      }
+      break;
     case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
@@ -132,15 +145,21 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
   EndSubpattern(context, context.node_stack());
-  auto scope_id = context.scope_stack().PeekNameScopeId();
-  if (scope_id.has_value() &&
-      context.name_scopes().Get(scope_id).is_interface_definition()) {
+  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+          context.scope_stack().PeekNameScopeId())) {
     // Don't emit NameBindingDecl for an associated constant, because it will
     // always be empty.
     context.pattern_block_stack().PopAndDiscard();
     return;
   }
   auto pattern_block_id = context.pattern_block_stack().Pop();
+
+  // For non-static class fields, a `FieldDecl` has been created; skip
+  // creating a name binding and var storage.
+  if (InNonStaticFieldDecl(context)) {
+    return;
+  }
+
   AddInst<SemIR::NameBindingDecl>(context, context.node_stack().PeekNodeId(),
                                   {.pattern_block_id = pattern_block_id});
 
@@ -152,7 +171,7 @@ static auto EndFullPattern(Context& context) -> void {
 }
 
 static auto StartPatternInitializer(Context& context) -> bool {
-  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+  if (UseGlobalInit(context)) {
     context.global_init().Resume();
   }
   context.full_pattern_stack().StartPatternInitializer();
@@ -160,7 +179,7 @@ static auto StartPatternInitializer(Context& context) -> bool {
 }
 
 static auto EndPatternInitializer(Context& context) -> void {
-  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+  if (UseGlobalInit(context)) {
     context.global_init().Suspend();
   }
   context.full_pattern_stack().EndPatternInitializer();
@@ -192,12 +211,6 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
   return HandleInitializer(context, node_id);
-}
-
-auto HandleParseNode(Context& context, Parse::FieldInitializerId node_id)
-    -> bool {
-  context.node_stack().Push(node_id);
-  return true;
 }
 
 // Make a default initialization expression for a `var` declaration.
@@ -249,6 +262,7 @@ template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& InitializerNodeKind>
 static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
+  bool in_non_static_field_decl = InNonStaticFieldDecl(context);
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
@@ -268,16 +282,17 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
       EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
     }
 
-    // A variable declaration without an explicit initializer is initialized by
-    // calling `(T as Core.DefaultOrUnformed).Op()`.
-    if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
-      StartPatternInitializer(context);
-      decl_info.init_id =
-          MakeDefaultInit(context, node_id, context.node_stack().PeekPattern());
-      EndPatternInitializer(context);
+    // A non-class variable declaration without an explicit initializer
+    // is initialized by calling `(T as Core.DefaultOrUnformed).Op()`.
+    if (!in_non_static_field_decl) {
+      if constexpr (IntroducerNodeKind == Parse::NodeKind::VariableIntroducer) {
+        StartPatternInitializer(context);
+        decl_info.init_id = MakeDefaultInit(context, node_id,
+                                            context.node_stack().PeekPattern());
+        EndPatternInitializer(context);
+      }
     }
   }
-  context.full_pattern_stack().PopFullPattern();
 
   decl_info.pattern_id = context.node_stack().PopPattern();
 
@@ -290,8 +305,7 @@ static auto HandleDecl(Context& context, Parse::NodeId node_id) -> DeclInfo {
       context.name_scopes()
           .GetInstIfValid(context.scope_stack().PeekNameScopeId())
           .second;
-  decl_info.introducer =
-      context.decl_introducer_state_stack().Pop<IntroducerTokenKind>();
+  decl_info.introducer = context.decl_introducer_state_stack().innermost();
   CheckAccessModifiersOnDecl(context, decl_info.introducer, parent_scope_inst);
 
   return decl_info;
@@ -301,6 +315,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
+  context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -330,6 +346,8 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
                               Parse::NodeKind::AssociatedConstantIntroducer,
                               Parse::NodeKind::AssociatedConstantInitializer>(
       context, node_id);
+  context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -382,34 +400,16 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context, node_id);
 
-  LimitModifiersOnDecl(
-      context, decl_info.introducer,
-      KeywordModifierSet::Access | KeywordModifierSet::Returned);
+  LimitModifiersOnDecl(context, decl_info.introducer,
+                       KeywordModifierSet::Access |
+                           KeywordModifierSet::Returned |
+                           KeywordModifierSet::Static);
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
-  return true;
-}
 
-auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
-  if (context.node_stack().PeekNextIs(Parse::NodeKind::FieldInitializer)) {
-    // TODO: In a class scope, we should instead save the initializer
-    // somewhere so that we can use it as a default.
-    context.TODO(node_id, "Field initializer");
-    context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldInitializer>();
-  }
+  context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
 
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldIntroducer>();
-  auto parent_scope_inst =
-      context.name_scopes()
-          .GetInstIfValid(context.scope_stack().PeekNameScopeId())
-          .second;
-  auto introducer =
-      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   return true;
 }
 

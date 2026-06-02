@@ -492,8 +492,9 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as %.loc13_14 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -558,8 +559,9 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as %.loc13_14 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as <error> {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

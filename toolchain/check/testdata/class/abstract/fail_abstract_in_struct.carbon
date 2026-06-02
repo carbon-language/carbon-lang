@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 abstract class Abstract1 {}
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: field has abstract type `{.m1: Abstract1}` [AbstractTypeInFieldDecl]
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `{.m1: Abstract1}` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var a: {.m1: Abstract1};
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
@@ -129,7 +129,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
-// CHECK:STDOUT:   %struct_type.m1.ea7: type = struct_type {.m1: %Abstract1} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -150,8 +149,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
-// CHECK:STDOUT:   %struct_type.m1: type = struct_type {.m1: %Abstract1} [concrete = constants.%struct_type.m1.ea7]
 // CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -168,7 +165,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract2: type = class_type @Abstract2 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %struct_type.m2.779: type = struct_type {.m2: %Abstract2} [concrete]
+// CHECK:STDOUT:   %struct_type.m2.9be: type = struct_type {.m2: %Abstract2} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -182,9 +179,9 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12: type = splice_block %struct_type.m2 [concrete = constants.%struct_type.m2.779] {
+// CHECK:STDOUT:   %.loc12: type = splice_block %struct_type.m2 [concrete = constants.%struct_type.m2.9be] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, %Abstract2.decl [concrete = constants.%Abstract2]
-// CHECK:STDOUT:     %struct_type.m2: type = struct_type {.m2: %Abstract2} [concrete = constants.%struct_type.m2.779]
+// CHECK:STDOUT:     %struct_type.m2: type = struct_type {.m2: %Abstract2} [concrete = constants.%struct_type.m2.9be]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -209,11 +206,11 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.7de: type = pattern_type %Abstract3 [concrete]
+// CHECK:STDOUT:   %pattern_type.d98: type = pattern_type %Abstract3 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %struct_type.m3.b1b: type = struct_type {.m3: %Abstract3} [concrete]
-// CHECK:STDOUT:   %pattern_type.816: type = pattern_type %struct_type.m3.b1b [concrete]
+// CHECK:STDOUT:   %struct_type.m3.e25: type = struct_type {.m3: %Abstract3} [concrete]
+// CHECK:STDOUT:   %pattern_type.7eb: type = pattern_type %struct_type.m3.e25 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -223,8 +220,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7de = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.7de = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.d98 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d98 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -243,15 +240,15 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.816 = value_binding_pattern l [concrete]
+// CHECK:STDOUT:     %l.patt: %pattern_type.7eb = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc14_44: %struct_type.m3.b1b = struct_literal (%a.ref)
-// CHECK:STDOUT:   %.loc14_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.b1b] {
+// CHECK:STDOUT:   %.loc14_44: %struct_type.m3.e25 = struct_literal (%a.ref)
+// CHECK:STDOUT:   %.loc14_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.e25] {
 // CHECK:STDOUT:     %Abstract3.ref.loc14: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
-// CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.b1b]
+// CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.e25]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %l: %struct_type.m3.b1b = value_binding l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %struct_type.m3.e25 = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -262,7 +259,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Abstract5: type = class_type @Abstract5 [concrete]
-// CHECK:STDOUT:   %struct_type.m4.m5.2d0: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete]
+// CHECK:STDOUT:   %struct_type.m4.m5.3b4: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -278,10 +275,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var %v2.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m4.m5 [concrete = constants.%struct_type.m4.m5.2d0] {
+// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m4.m5 [concrete = constants.%struct_type.m4.m5.3b4] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, %Abstract4.decl [concrete = constants.%Abstract4]
 // CHECK:STDOUT:     %Abstract5.ref: type = name_ref Abstract5, %Abstract5.decl [concrete = constants.%Abstract5]
-// CHECK:STDOUT:     %struct_type.m4.m5: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete = constants.%struct_type.m4.m5.2d0]
+// CHECK:STDOUT:     %struct_type.m4.m5: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete = constants.%struct_type.m4.m5.3b4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref <error> = ref_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -316,7 +313,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %struct_type.m6.c1.69b: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %struct_type.m6.c1.7c5: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -330,11 +327,11 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var %v3.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.69b] {
+// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.7c5] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, %Abstract6.decl [concrete = constants.%Abstract6]
 // CHECK:STDOUT:     %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %.loc12_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %struct_type.m6.c1: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete = constants.%struct_type.m6.c1.69b]
+// CHECK:STDOUT:     %struct_type.m6.c1: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete = constants.%struct_type.m6.c1.7c5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: ref <error> = ref_binding v3, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -361,7 +358,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %struct_type.c2.m7.e94: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete]
+// CHECK:STDOUT:   %struct_type.c2.m7.f5d: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -375,11 +372,11 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var %v4.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.e94] {
+// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.f5d] {
 // CHECK:STDOUT:     %.loc12_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %.loc12_16.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Abstract7.ref: type = name_ref Abstract7, %Abstract7.decl [concrete = constants.%Abstract7]
-// CHECK:STDOUT:     %struct_type.c2.m7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete = constants.%struct_type.c2.m7.e94]
+// CHECK:STDOUT:     %struct_type.c2.m7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete = constants.%struct_type.c2.m7.f5d]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: ref <error> = ref_binding v4, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -427,13 +424,13 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %struct_type.m.9e8: type = struct_type {.m: %Abstract} [concrete]
+// CHECK:STDOUT:   %struct_type.m.49e: type = struct_type {.m: %Abstract} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Abstract: type = import_ref Main//lib, Abstract, loaded [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//lib, loc3_26, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.141 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee8 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -447,9 +444,9 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var %v5.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.9e8] {
+// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.49e] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %struct_type.m: type = struct_type {.m: %Abstract} [concrete = constants.%struct_type.m.9e8]
+// CHECK:STDOUT:     %struct_type.m: type = struct_type {.m: %Abstract} [concrete = constants.%struct_type.m.49e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: ref <error> = ref_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -458,7 +455,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.141
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.ee8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

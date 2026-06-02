@@ -37,6 +37,7 @@ fn B() {
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
 // CHECK:STDOUT:   entity_names:    {}
@@ -90,7 +91,7 @@ fn B() {
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000010:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block_empty, type: type(inst50000011)}
 // CHECK:STDOUT:     inst50000011:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000012:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
@@ -141,6 +142,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000002, inst_id: inst50000010}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir70000002, inst_id: inst50000010}
 // CHECK:STDOUT:   clang_decls:     {}
+// CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000011, name0: inst70000012}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000017}}
@@ -197,9 +199,9 @@ fn B() {
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000010:    {kind: ImportDecl, arg0: name1}
-// CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, arg1: inst70000010, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000012:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block_empty, type: type(inst70000013)}
 // CHECK:STDOUT:     inst70000013:    {kind: FunctionType, arg0: function70000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst70000014:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}

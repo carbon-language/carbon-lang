@@ -8,11 +8,16 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/block_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -40,6 +45,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       cpp_overload_sets_(check_ir_id),
       thunks_(check_ir_id),
       classes_(check_ir_id),
+      fields_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
       require_impls_(check_ir_id),
@@ -56,6 +62,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // `ImportIRId::{ApiForImpl,Cpp}`.
       import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
+      clang_decl_signatures_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
@@ -143,42 +150,43 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
   return Yaml::OutputMapping([this, include_singletons](
                                  Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("names", names().OutputYaml());
-              map.Add("import_irs", import_irs_.OutputYaml());
-              map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
-              map.Add("clang_decls", clang_decls_.OutputYaml());
-              map.Add("name_scopes", name_scopes_.OutputYaml());
-              map.Add("entity_names", entity_names_.OutputYaml());
-              map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
-              map.Add("functions", functions_.OutputYaml());
-              map.Add("classes", classes_.OutputYaml());
-              map.Add("interfaces", interfaces_.OutputYaml());
-              map.Add("associated_constants",
-                      associated_constants_.OutputYaml());
-              map.Add("impls", impls_.OutputYaml());
-              map.Add("generics", generics_.OutputYaml());
-              map.Add("specifics", specifics_.OutputYaml());
-              map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
-              map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
-              map.Add("types", types_.OutputYaml());
-              map.Add("facet_types", facet_types_.OutputYaml());
-              map.Add("insts",
-                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                        for (auto [id, inst] : insts_.enumerate()) {
-                          inst.CacheBundleDebugKinds(bundles_);
-                          if (!include_singletons && IsSingletonInstId(id)) {
-                            continue;
-                          }
-                          map.Add(PrintToString(id), Yaml::OutputScalar(inst));
-                        }
-                      }));
-              map.Add("bundles", bundles_.OutputYaml());
-              map.Add("constant_values",
-                      constant_values_.OutputYaml(include_singletons));
-              map.Add("inst_blocks", inst_blocks_.OutputYaml());
-              map.Add("value_stores", value_stores_->OutputYaml());
-            }));
+    map.Add(
+        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+          map.Add("names", names().OutputYaml());
+          map.Add("import_irs", import_irs_.OutputYaml());
+          map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+          map.Add("clang_decls", clang_decls_.OutputYaml());
+          map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
+          map.Add("name_scopes", name_scopes_.OutputYaml());
+          map.Add("entity_names", entity_names_.OutputYaml());
+          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
+          map.Add("functions", functions_.OutputYaml());
+          map.Add("classes", classes_.OutputYaml());
+          map.Add("interfaces", interfaces_.OutputYaml());
+          map.Add("associated_constants", associated_constants_.OutputYaml());
+          map.Add("impls", impls_.OutputYaml());
+          map.Add("generics", generics_.OutputYaml());
+          map.Add("specifics", specifics_.OutputYaml());
+          map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
+          map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
+          map.Add("types", types_.OutputYaml());
+          map.Add("facet_types", facet_types_.OutputYaml());
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    for (auto [id, inst] : insts_.enumerate()) {
+                      inst.CacheBundleDebugKinds(bundles_);
+                      if (!include_singletons && IsSingletonInstId(id)) {
+                        continue;
+                      }
+                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+                    }
+                  }));
+          map.Add("bundles", bundles_.OutputYaml());
+          map.Add("constant_values",
+                  constant_values_.OutputYaml(include_singletons));
+          map.Add("inst_blocks", inst_blocks_.OutputYaml());
+          map.Add("value_stores", value_stores_->OutputYaml());
+        }));
   });
 }
 
@@ -200,6 +208,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decl_signatures_"),
+                    clang_decl_signatures_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
@@ -215,4 +225,44 @@ auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
 }
 
+auto File::AppendCppMangledTypeName(ClassId class_id,
+                                    llvm::raw_ostream& out) const -> bool {
+  // Only classes imported *from* C++ need this. A C++ scope records the Clang
+  // declaration it came from; note that a Carbon class exported *to* C++ also
+  // has an associated Clang declaration, but its scope is not a C++ scope and
+  // it is already uniquely identified by its name and parent scope.
+  auto scope_id = classes().Get(class_id).scope_id;
+  if (!scope_id.has_value()) {
+    return false;
+  }
+  const auto& scope = name_scopes().Get(scope_id);
+  if (!scope.is_cpp_scope()) {
+    return false;
+  }
+  auto clang_decl_id = scope.clang_decl_context_id();
+  if (!clang_decl_id.has_value()) {
+    return false;
+  }
+  // A C++ class's scope always maps to a Clang tag declaration.
+  auto* tag_decl =
+      clang::cast<clang::TagDecl>(clang_decls().Get(clang_decl_id).key.decl);
+  cpp_file_->mangle_context().mangleCanonicalTypeName(
+      cpp_file_->ast_context().getCanonicalTagType(tag_decl), out);
+  return true;
+}
+
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::CustomLayoutId,
+                          llvm::MutableArrayRef<SemIR::ObjectSize>,
+                          Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                               Tag<SemIR::CheckIRId>>;
+template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
+                               Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

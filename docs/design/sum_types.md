@@ -111,7 +111,7 @@ interface Match {
   }
 
   let template Continuation:! type;
-  fn Op[self: Self, C:! Continuation](continuation: C*)
+  fn Op[C:! Continuation](self, continuation: C*)
     -> C.(BaseContinuation.ReturnType);
 }
 ```
@@ -146,11 +146,11 @@ class Optional(T:! type) {
   impl as Match {
     interface Continuation {
       extend Match.BaseContinuation;
-      fn Some[ref self: Self](value: T) -> ReturnType;
-      fn None[ref self: Self]() -> ReturnType;
+      fn Some(ref self, value: T) -> ReturnType;
+      fn None(ref self) -> ReturnType;
     }
 
-    fn Op[self: Self, C:! Continuation](continuation: C*) -> C.ReturnType {
+    fn Op[C:! Continuation](self, continuation: C*) -> C.ReturnType {
       if (self.has_value) {
         return continuation->Some(self.value);
       } else {
@@ -228,15 +228,15 @@ return an index that identifies the `case` body to be executed.
 
 ## Alternatives considered
 
--   [Providing `choice` types only](/proposals/p0157.md#choice-types-only), with
-    no support for user-defined sum types.
--   [Indexing alternatives by type](/proposals/p0157.md#indexing-by-type)
+-   [Providing `choice` types only](/proposals/p000157-design-direction-for-sum-types.md#choice-types-only),
+    with no support for user-defined sum types.
+-   [Indexing alternatives by type](/proposals/p000157-design-direction-for-sum-types.md#indexing-by-type)
     instead of by name.
 -   Implementing user-defined sum types in terms of
-    [`choice` type proxies](/proposals/p0157.md#pattern-matching-proxies) rather
-    than callbacks.
+    [`choice` type proxies](/proposals/p000157-design-direction-for-sum-types.md#pattern-matching-proxies)
+    rather than callbacks.
 -   Implementing user-defined sum types in terms of invertible
-    [pattern functions](/proposals/p0157.md#pattern-functions).
+    [pattern functions](/proposals/p000157-design-direction-for-sum-types.md#pattern-functions).
 
 ## References
 

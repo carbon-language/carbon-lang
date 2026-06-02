@@ -385,30 +385,30 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %value.var = alloca i32, align 4, !dbg !15
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk0(), !dbg !16
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk1(i32 3), !dbg !17
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk.(), !dbg !16
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk._(i32 3), !dbg !17
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 3, i32 4), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %value.var), !dbg !15
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc11 = call i32 @_Z17SimpleReturnValueii.carbon_thunk0(), !dbg !19
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc11 = call i32 @_Z17SimpleReturnValueii.carbon_thunk.(), !dbg !19
 // CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc11, ptr %value.var, align 4, !dbg !15
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc12 = call i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 3), !dbg !20
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc12 = call i32 @_Z17SimpleReturnValueii.carbon_thunk._(i32 3), !dbg !20
 // CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc12, ptr %value.var, align 4, !dbg !21
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !22
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !23
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !24
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %value.var), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %value.var), !dbg !15
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk0() #1 {
+// CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef 1, i32 noundef 2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk1(i32 noundef %a) #1 {
+// CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !7
@@ -420,14 +420,14 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: declare void @_Z13NoReturnValueii(i32 noundef, i32 noundef) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk0() #1 {
+// CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef 1, i32 noundef 2)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 noundef %a) #1 {
+// CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !7
@@ -439,7 +439,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: declare noundef i32 @_Z17SimpleReturnValueii(i32 noundef, i32 noundef) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
@@ -486,7 +486,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 3, scope: !11)
 // CHECK:STDOUT: !24 = !DILocation(line: 14, column: 10, scope: !11)
 // CHECK:STDOUT: !25 = !DILocation(line: 14, column: 3, scope: !11)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7e389eab4a7e5487:core.Destroy.Core", scope: null, file: !6, line: 11, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !6, line: 11, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{null, !14}
 // CHECK:STDOUT: !29 = !{!30}

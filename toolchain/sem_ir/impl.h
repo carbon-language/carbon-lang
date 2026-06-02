@@ -229,4 +229,9 @@ inline constexpr ImplStore::ImplOrLookupBucketId
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::ImplId, SemIR::Impl,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IMPL_H_

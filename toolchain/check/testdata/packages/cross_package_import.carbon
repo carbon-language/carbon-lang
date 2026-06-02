@@ -480,10 +480,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.a71006.1: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.680f0e.1: %F.type.a71006.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.a71006.2: type = fn_type @F.loc23 [concrete]
-// CHECK:STDOUT:   %F.680f0e.2: %F.type.a71006.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.eab4ea.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.14f67d.1: %F.type.eab4ea.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.eab4ea.2: type = fn_type @F.loc23 [concrete]
+// CHECK:STDOUT:   %F.14f67d.2: %F.type.eab4ea.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,7 +492,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.F: %F.type.a71006.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.680f0e.1]
+// CHECK:STDOUT:   %Other.F: %F.type.eab4ea.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.14f67d.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -501,7 +501,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.a71006.2 = fn_decl @F.loc23 [concrete = constants.%F.680f0e.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.eab4ea.2 = fn_decl @F.loc23 [concrete = constants.%F.14f67d.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
@@ -530,7 +530,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [concrete] {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }

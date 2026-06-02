@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 
 """Requires files be named for their SHA1.
 
@@ -16,8 +21,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import hashlib
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def main() -> None:

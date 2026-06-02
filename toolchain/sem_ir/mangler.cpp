@@ -10,6 +10,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
@@ -17,6 +18,17 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
+
+Mangler::Mangler(const SemIR::File& sem_ir, int total_ir_count,
+                 bool use_string_fingerprint)
+    : sem_ir_(sem_ir),
+      fingerprinter_(
+          use_string_fingerprint
+              ? std::variant<HashInstFingerprinter, StringInstFingerprinter>(
+                    std::in_place_type<StringInstFingerprinter>, total_ir_count)
+              : std::variant<HashInstFingerprinter, StringInstFingerprinter>(
+                    std::in_place_type<HashInstFingerprinter>,
+                    total_ir_count)) {}
 
 auto Mangler::MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id)
     -> void {
@@ -73,28 +85,14 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
-
-        auto facet_type = insts().GetAs<SemIR::FacetType>(
-            constant_values().GetConstantInstId(impl.constraint_id));
-
-        auto identified_facet_type_id =
-            sem_ir().identified_facet_types().Lookup(
-                {.facet_type_id = facet_type.facet_type_id,
-                 .self_const_id =
-                     sem_ir().constant_values().Get(impl.self_id)});
-        CARBON_CHECK(identified_facet_type_id.has_value(),
-                     "ImplDecl with unidentified facet type constraint");
-        const auto& identified =
-            sem_ir().identified_facet_types().Get(identified_facet_type_id);
-        auto impl_target = identified.impl_as_target_interface();
         const auto& interface =
-            sem_ir().interfaces().Get(impl_target.interface_id);
+            sem_ir().interfaces().Get(impl.interface.interface_id);
         names_to_render.push_back(
             // We mangle names in an interface without `Self` in the specific
             // since it would just add noise and `Self` is not part of how you
             // name the entities syntactically.
             {.name_scope_id = interface.scope_without_self_id,
-             .specific_id = impl_target.specific_id,
+             .specific_id = impl.interface.specific_id,
              .prefix = ':'});
 
         auto self_const_inst_id =
@@ -138,9 +136,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           }
           default: {
             // Fall back to including a fingerprint.
-            llvm::write_hex(
-                os, fingerprinter_.GetOrCompute(&sem_ir(), self_const_inst_id),
-                llvm::HexPrintStyle::Lower, 16);
+            MangleFingerprint(os, &sem_ir(), self_const_inst_id);
             break;
           }
         }
@@ -213,9 +209,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 
     case SemIR::Function::SpecialFunctionKind::CoreWitness:
       os << ".";
-      llvm::write_hex(
-          os, fingerprinter_.GetOrCompute(&sem_ir(), function.self_param_id),
-          llvm::HexPrintStyle::Lower, 16);
+      MangleFingerprint(os, &sem_ir(), function.self_param_id);
       os << ":core";
       break;
     case SemIR::Function::SpecialFunctionKind::Thunk:
@@ -243,10 +237,14 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
       CARBON_FATAL("C++ functions should have been handled earlier");
   }
 
-  // TODO: If the function is private, also include the library name as part of
-  // the mangling.
   MangleInverseQualifiedNameScope(os, function.parent_scope_id,
                                   SemIR::SpecificId::None, separator);
+
+  if (sem_ir().name_scopes().IsPrivateToLibrary(function.name_id,
+                                                function.parent_scope_id)) {
+    os << ".";
+    MangleFingerprint(os, &sem_ir(), function.first_decl_id());
+  }
 
   MangleSpecificId(os, specific_id);
 
@@ -260,11 +258,8 @@ auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
   // but isn't necessarily stable across toolchain changes.
   if (specific_id.has_value()) {
     os << ".";
-    llvm::write_hex(
-        os,
-        fingerprinter_.GetOrCompute(
-            &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
-        llvm::HexPrintStyle::Lower, 16);
+    MangleFingerprint(os, &sem_ir(),
+                      sem_ir().specifics().Get(specific_id).args_id);
   }
 }
 
@@ -287,9 +282,13 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
 
   auto var_name = sem_ir().entity_names().Get(var_name_id);
   MangleNameId(os, var_name.name_id);
-  // TODO: If the variable is private, also include the library name as part of
-  // the mangling.
   MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
+
+  if (sem_ir().name_scopes().IsPrivateToLibrary(var_name.name_id,
+                                                var_name.parent_scope_id)) {
+    os << ".";
+    MangleFingerprint(os, &sem_ir(), pattern_id);
+  }
   return os.TakeStr();
 }
 
@@ -299,9 +298,13 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
   os << "_C";
 
   MangleNameId(os, class_info.name_id);
-  // TODO: If the class is private, also include the library name as part of the
-  // mangling.
   MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
+
+  if (sem_ir().name_scopes().IsPrivateToLibrary(class_info.name_id,
+                                                class_info.parent_scope_id)) {
+    os << ".";
+    MangleFingerprint(os, &sem_ir(), class_info.first_decl_id());
+  }
 
   os << ".$vtable";
 

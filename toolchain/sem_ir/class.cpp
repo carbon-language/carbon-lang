@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/class.h"
 
+#include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -51,3 +52,7 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class ValueStore<SemIR::ClassId, SemIR::Class, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

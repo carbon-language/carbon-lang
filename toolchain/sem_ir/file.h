@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
 #include "common/error.h"
+#include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
@@ -26,6 +27,7 @@
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -179,6 +181,8 @@ class File : public Printable<File> {
   auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
+  auto fields() -> FieldStore& { return fields_; }
+  auto fields() const -> const FieldStore& { return fields_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
   auto named_constraints() -> NamedConstraintStore& {
@@ -206,6 +210,21 @@ class File : public Printable<File> {
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
   auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
+
+  // If `class_id` is an imported C++ class, appends the Clang mangled name of
+  // its type to `out` and returns true. Otherwise returns false and leaves
+  // `out` unchanged.
+  //
+  // A Carbon class is uniquely identified by its name and parent scope, but
+  // that is not true of imported C++ classes: different class template
+  // specializations (and other cases such as types in anonymous namespaces)
+  // can share a Carbon name and scope. The Clang mangled name is the canonical
+  // identity of the C++ type, used to tell such classes apart when
+  // fingerprinting -- and hence mangling -- them. It is computed on demand
+  // rather than stored.
+  auto AppendCppMangledTypeName(ClassId class_id, llvm::raw_ostream& out) const
+      -> bool;
+
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }
@@ -238,6 +257,12 @@ class File : public Printable<File> {
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
+  auto clang_decl_signatures() -> ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
+  auto clang_decl_signatures() const -> const ClangDeclSignatureStore& {
+    return clang_decl_signatures_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -343,6 +368,9 @@ class File : public Printable<File> {
   // Storage for classes.
   ClassStore classes_;
 
+  // Storage for class fields.
+  FieldStore fields_;
+
   // Storage for interfaces.
   InterfaceStore interfaces_;
 
@@ -393,6 +421,9 @@ class File : public Printable<File> {
   // not add multiple entries with the same `decl` and different `inst_id`.
   ClangDeclStore clang_decls_ = ClangDeclStore(check_ir_id());
 
+  // Storage for function signatures used in C++ interop.
+  ClangDeclSignatureStore clang_decl_signatures_;
+
   // All instructions. The first entries will always be the singleton
   // instructions.
   InstStore insts_;
@@ -440,5 +471,17 @@ class File : public Printable<File> {
 };
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::CustomLayoutId,
+                                 llvm::MutableArrayRef<SemIR::ObjectSize>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_

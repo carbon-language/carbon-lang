@@ -129,7 +129,7 @@ class CheckUnit {
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-      llvm::raw_ostream* vlog_stream);
+      llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint = false);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;

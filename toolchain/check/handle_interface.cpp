@@ -183,7 +183,7 @@ auto HandleParseNode(Context& context,
   // Set on the name scope that `M` is replaced by `Self.M`.
   context.name_scopes()
       .Get(interface_info.scope_with_self_id)
-      .set_is_interface_definition();
+      .set_self_type_id(interface_info.self_param_id);
 
   // Start the definition of interface-with-self.
   StartGenericDefinition(context, interface_info.generic_with_self_id);

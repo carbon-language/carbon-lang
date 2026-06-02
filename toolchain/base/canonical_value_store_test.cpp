@@ -11,7 +11,9 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/base/value_store_impl.h"
 
 namespace Carbon::Testing {
 namespace {

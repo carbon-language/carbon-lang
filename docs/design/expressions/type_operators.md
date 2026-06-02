@@ -58,10 +58,10 @@ with non-type operators.
 
 ## Alternatives considered
 
--   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
--   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
--   [Make `const` a postfix rather than prefix operator](/proposals/p2006.md#make-const-a-postfix-rather-than-prefix-operator)
+-   [Alternative pointer syntaxes](/proposals/p002006-values-variables-pointers-and-references.md#alternative-pointer-syntaxes)
+-   [Alternative syntaxes for locals](/proposals/p002006-values-variables-pointers-and-references.md#alternative-syntaxes-for-locals)
+-   [Make `const` a postfix rather than prefix operator](/proposals/p002006-values-variables-pointers-and-references.md#make-const-a-postfix-rather-than-prefix-operator)
 
 ## References
 
--   [Proposal #2006: Values, variables, and pointers](/proposals/p2006.md)
+-   [Proposal #2006: Values, variables, and pointers](/proposals/p002006-values-variables-pointers-and-references.md)

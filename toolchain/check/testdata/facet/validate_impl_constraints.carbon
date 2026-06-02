@@ -62,9 +62,9 @@ fn G(T:! L) {
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M and C(.Self).(M.M0) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE-10]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -107,9 +107,9 @@ fn G(T:! L) {
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M and C(.Self).(M.M0) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -137,9 +137,9 @@ fn G(T:! L) {
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M(.Self) and C.(M(.Self).M0) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE-10]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -182,9 +182,9 @@ fn G(T:! L) {
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M(.Self) and C.(M(.Self).M0) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -356,9 +356,9 @@ fn G() {
   // CHECK:STDERR: fail_concrete_witness_without_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I where .(I.I1) impls J` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_concrete_witness_without_impl.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_concrete_witness_without_impl.carbon:[[@LINE-16]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(_:! I where .I1 impls J) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C);
 }
@@ -451,4 +451,42 @@ interface Z {
 fn F(T:! Z) {
   T.Z1 as Y;
   C(T.Z1) as Y;
+}
+
+// --- period_self_in_type_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {}
+
+constraint GivesY {
+  require impls Y;
+}
+
+class C(T:! type);
+
+fn F(T:! Z where C(.Self) impls GivesY) {
+  C(T) as Y;
+}
+
+// --- impl_witness_access_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {}
+
+constraint GivesY {
+  require impls Y;
+}
+
+// This type places a `.Self` (in the .Z1) into the identified facet type as
+// `.Self impls Y` through the named constraint. It ensures that the `.Self` is
+// correctly replaced by `T` in order to compare equal with `T.Z1` in impl
+// lookup.
+fn F(T:! Z where .Z1 impls GivesY) {
+  T.Z1 as Y;
 }

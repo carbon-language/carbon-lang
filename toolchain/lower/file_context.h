@@ -103,6 +103,15 @@ class FileContext {
     return GetTypeAndDIType(type_id).llvm_ir_type;
   }
 
+  // Returns the alignment of the given type_id. This adds the alignment to the
+  // fingerprint.
+  auto GetAlignment(SemIR::TypeId type_id) -> llvm::Align {
+    return llvm::Align(sem_ir()
+                           .types()
+                           .GetCompleteTypeInfo(type_id)
+                           .object_layout.alignment.bytes());
+  }
+
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info
   // type for the given type_id.
   auto GetTypeAndDIType(SemIR::TypeId type_id) const -> LoweredTypes {
@@ -190,6 +199,9 @@ class FileContext {
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
  private:
+  // Lower global variables defined in `inst_block_id`.
+  auto LowerGlobalVariables(SemIR::InstBlockId inst_block_id) -> void;
+
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)

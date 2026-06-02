@@ -333,8 +333,9 @@ But deduced parameters aren't the same thing as template parameters. In
 particular, deduced parameters are never mentioned at the callsite, so those
 square brackets are never part of the expression syntax.
 
-See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
-background on how and why we chose our current compile-time parameter syntax.
+See [Proposal #676: `:!` generic syntax](/proposals/p000676-generic-syntax.md)
+for more background on how and why we chose our current compile-time parameter
+syntax.
 
 ### Why do variable declarations have to start with `var` or `let`?
 
@@ -386,8 +387,8 @@ match `42` with the value of the expression `the_answer`, which requires a
 variable named `the_answer` to already exist.
 
 The pattern matching proposal details alternative
-[shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto) and the tradeoffs
-that were considered.
+[shorthand for `auto`](/proposals/p002188-pattern-matching-syntax-and-semantics.md#shorthand-for-auto)
+and the tradeoffs that were considered.
 
 References:
 

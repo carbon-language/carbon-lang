@@ -707,7 +707,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   llvm::CallInst* call;
-  if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
+  if (function.virtual_index == -1) {
     auto* llvm_callee = function_info->llvm_function;
     auto describe_call = [&] {
       RawStringOstream out;

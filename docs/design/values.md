@@ -583,8 +583,8 @@ to the operation in question. For example:
 
 ```carbon
 class S {
-  fn ValueMemberFunction[self: Self]();
-  fn RefMemberFunction[ref self: const Self]();
+  fn ValueMemberFunction(self);
+  fn RefMemberFunction(ref self: const Self);
 }
 
 fn F(s_value: S) {
@@ -597,7 +597,7 @@ fn F(s_value: S) {
 ```
 
 The specific tradeoff here is covered in a proposal
-[alternative](/proposals/p2006.md#value-expression-escape-hatches).
+[alternative](/proposals/p002006-values-variables-pointers-and-references.md#value-expression-escape-hatches).
 
 ## Initializing expressions
 
@@ -727,10 +727,11 @@ proper.
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
-returns in [proposal #5434](/proposals/p5434.md). This section could be replaced
-by a statement that initializing returns may be replaced by value returns when
-that is safe and correct, moving much of this content into a description of how
-value returns works.
+returns in
+[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md).
+This section could be replaced by a statement that initializing returns may be
+replaced by value returns when that is safe and correct, moving much of this
+content into a description of how value returns works.
 
 Carbon also makes the evaluation of function calls and return statements tightly
 linked in order to enable more efficiency improvements. It allows the actual
@@ -1107,7 +1108,7 @@ specialized constructs given the specialized nature of these operations.
 ### Reference types
 
 TODO: This section needs to be updated to reflect
-[proposal #5434](/proposals/p5434.md).
+[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md).
 
 Unlike C++, Carbon does not currently have reference types. The only form of
 indirect access are pointers. There are a few aspects to this decision that need
@@ -1136,9 +1137,9 @@ distinction between indirect access and direct access.
 For a full discussion of the tradeoffs of these design decisions, see the
 alternatives considered section of [P2006]:
 
--   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
--   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
--   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
+-   [References in addition to pointers](/proposals/p002006-values-variables-pointers-and-references.md#references-in-addition-to-pointers)
+-   [Syntax-free or automatic dereferencing](/proposals/p002006-values-variables-pointers-and-references.md#syntax-free-or-automatic-dereferencing)
+-   [Exclusively using references](/proposals/p002006-values-variables-pointers-and-references.md#exclusively-using-references)
 
 ### Pointer syntax
 
@@ -1159,7 +1160,7 @@ pointer types as they are commonly written in code and are expected to be
 extremely common and a key anchor of syntactic similarity between the languages.
 The different alternatives and tradeoffs for this syntax issue were discussed
 extensively in [#523] and are summarized in the
-[proposal](/proposals/p2006.md#alternative-pointer-syntaxes).
+[proposal](/proposals/p002006-values-variables-pointers-and-references.md#alternative-pointer-syntaxes).
 
 [#523]: https://github.com/carbon-language/carbon-lang/issues/523
 
@@ -1192,7 +1193,7 @@ The interface might look like:
 ```carbon
 interface Pointer {
   let ValueT:! Type;
-  fn Dereference[self: Self]() -> ValueT*;
+  fn Dereference(self) -> ValueT*;
 }
 ```
 
@@ -1206,7 +1207,7 @@ class TaggedPtr(T:! Type) {
 }
 external impl [T:! Type] TaggedPtr(T) as Pointer {
   let ValueT:! T;
-  fn Dereference[self: Self]() -> T* { return self.ptr; }
+  fn Dereference(self) -> T* { return self.ptr; }
 }
 
 fn Test(arg: TaggedPtr(T), dest: TaggedPtr(TaggedPtr(T))) {
@@ -1224,7 +1225,7 @@ pointers as a no-op:
 ```carbon
 impl [T:! Type] T* as Pointer {
   let ValueT:! Type = T;
-  fn Dereference[self: Self]() -> T* { return self; }
+  fn Dereference(self) -> T* { return self; }
 }
 ```
 
@@ -1256,10 +1257,10 @@ meaningful distinction between a value expression of type `T` and type
 
 ```carbon
 class X {
-  fn Method[self: Self]();
-  fn ConstMethod[self: const Self]();
-  fn RefMethod[ref self: Self]();
-  fn RefConstMethod[ref self: const Self]();
+  fn Method(self);
+  fn ConstMethod(self: const Self);
+  fn RefMethod(ref self);
+  fn RefConstMethod(ref self: const Self);
 }
 ```
 
@@ -1381,7 +1382,7 @@ will require that the type containing that specifier satisfies the constraint
 ```carbon
 interface ReferenceImplicitAs {
   let T:! type;
-  fn Convert[ref self: const Self]() -> T;
+  fn Convert(ref self: const Self) -> T;
 }
 ```
 
@@ -1413,7 +1414,7 @@ class StringView {
   }
 
   // A typical readonly view of a string API...
-  fn ExampleMethod[self: Self]() { ... }
+  fn ExampleMethod(self) { ... }
 }
 
 class String {
@@ -1426,7 +1427,7 @@ class String {
   private var capacity: i64;
 
   impl as ReferenceImplicitAs where .T = StringView {
-    fn Op[ref self: const Self]() -> StringView {
+    fn Op(ref self: const Self) -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
@@ -1437,11 +1438,11 @@ class String {
   // We can directly declare methods that take `self` as a `StringView` which
   // will cause the caller to implicitly convert value expressions to
   // `StringView` prior to calling.
-  fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
+  fn ExampleMethod(self: StringView) { self.ExampleMethod(); }
 
   // Or we can use a value binding for `self` much like normal, but the
   // implementation will be constrained because of the custom value rep.
-  fn ExampleMethod2[self: String]() {
+  fn ExampleMethod2(self: String) {
     // Error due to custom value rep:
     self.data_ptr;
 
@@ -1452,7 +1453,7 @@ class String {
   // Note that even though the `Self` type is `const` qualified here, this
   // cannot be called on a `String` value! That would require us to convert to a
   // `StringView` that does not track the extra data member.
-  fn Capacity[ref self: const Self]() -> i64 {
+  fn Capacity(ref self: const Self) -> i64 {
     return self.capacity;
   }
 }
@@ -1486,33 +1487,33 @@ itself.
 
 ## Alternatives considered
 
--   [No `var` introducer keyword](/proposals/p0339.md#no-var-introducer-keyword)
--   [Name of the `var` statement introducer](/proposals/p0339.md#name-of-the-var-statement-introducer)
--   [Colon between type and identifier](/proposals/p0339.md#colon-between-type-and-identifier)
--   [Type elision](/proposals/p0339.md#type-elision)
--   [Type ordering](/proposals/p0618.md#type-ordering)
--   [Elide the type instead of using `auto`](/proposals/p0851.md#elide-the-type-instead-of-using-auto)
--   [Value expression escape hatches](/proposals/p2006.md#value-expression-escape-hatches)
--   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
--   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
--   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
--   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
--   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
--   [Mixed expression categories](/proposals/p5545.md#mixed-expression-categories)
--   [Don't implicitly convert to less-primitive forms](/proposals/p5545.md#dont-implicitly-convert-to-less-primitive-forms)
+-   [No `var` introducer keyword](/proposals/p000339-var-statement.md#no-var-introducer-keyword)
+-   [Name of the `var` statement introducer](/proposals/p000339-var-statement.md#name-of-the-var-statement-introducer)
+-   [Colon between type and identifier](/proposals/p000339-var-statement.md#colon-between-type-and-identifier)
+-   [Type elision](/proposals/p000339-var-statement.md#type-elision)
+-   [Type ordering](/proposals/p000618-var-ordering.md#type-ordering)
+-   [Elide the type instead of using `auto`](/proposals/p000851-variable-type-inference.md#elide-the-type-instead-of-using-auto)
+-   [Value expression escape hatches](/proposals/p002006-values-variables-pointers-and-references.md#value-expression-escape-hatches)
+-   [References in addition to pointers](/proposals/p002006-values-variables-pointers-and-references.md#references-in-addition-to-pointers)
+-   [Syntax-free or automatic dereferencing](/proposals/p002006-values-variables-pointers-and-references.md#syntax-free-or-automatic-dereferencing)
+-   [Exclusively using references](/proposals/p002006-values-variables-pointers-and-references.md#exclusively-using-references)
+-   [Alternative pointer syntaxes](/proposals/p002006-values-variables-pointers-and-references.md#alternative-pointer-syntaxes)
+-   [Alternative syntaxes for locals](/proposals/p002006-values-variables-pointers-and-references.md#alternative-syntaxes-for-locals)
+-   [Mixed expression categories](/proposals/p005545-expression-form-basics.md#mixed-expression-categories)
+-   [Don't implicitly convert to less-primitive forms](/proposals/p005545-expression-form-basics.md#dont-implicitly-convert-to-less-primitive-forms)
 
 ## References
 
--   [Proposal #257: Initialization of memory and values][p0257]
--   [Proposal #339: `var` statement][p0339]
--   [Proposal #618: `var` ordering][p0618]
--   [Proposal #851: auto keyword for vars][p0851]
--   [Proposal #2006: Values, variables, and pointers][p2006]
--   [Proposal #5545: Expression form basics][p5545]
+-   [Proposal #257: Initialization of memory and values][#257]
+-   [Proposal #339: `var` statement][#339]
+-   [Proposal #618: `var` ordering][#618]
+-   [Proposal #851: auto keyword for vars][#851]
+-   [Proposal #2006: Values, variables, and pointers][#2006]
+-   [Proposal #5545: Expression form basics][#5545]
 
-[p0257]: /proposals/p0257.md
-[p0339]: /proposals/p0339.md
-[p0618]: /proposals/p0618.md
-[p0851]: /proposals/p0851.md
-[p2006]: /proposals/p2006.md
-[p5545]: /proposals/p5545.md
+[#257]: /proposals/p000257-initialization-of-memory-and-variables.md
+[#339]: /proposals/p000339-var-statement.md
+[#618]: /proposals/p000618-var-ordering.md
+[#851]: /proposals/p000851-variable-type-inference.md
+[#2006]: /proposals/p002006-values-variables-pointers-and-references.md
+[#5545]: /proposals/p005545-expression-form-basics.md

@@ -112,7 +112,7 @@ if (m > 1 == n > 1) {
 
 ### Built-in comparisons and implicit conversions
 
-Built-in comparisons are permitted in three cases:
+Built-in comparisons are permitted in the following cases:
 
 1.  When both operands are of standard Carbon integer types (`Int(n)` or
     `Unsigned(n)`).
@@ -120,6 +120,7 @@ Built-in comparisons are permitted in three cases:
 3.  When one operand is of floating-point type and the other is of integer type,
     if all values of the integer type can be exactly represented in the
     floating-point type.
+4.  When both operands are of type `char` or `Core.CharLiteral`.
 
 In each case, the result is the mathematically-correct answer. This applies even
 when comparing `Int(n)` with `Unsigned(m)`.
@@ -208,8 +209,8 @@ if (integer as f64 == float) {
 ```
 
 The two kinds of mixed-type comparison may be
-[less efficient](/proposals/p0702.md#performance) than the other kinds due to
-the slightly wider domain.
+[less efficient](/proposals/p000702-comparison-operators.md#performance) than
+the other kinds due to the slightly wider domain.
 
 Note that this approach diverges from C++, which would convert both operands to
 a common type first, sometimes performing a lossy conversion potentially giving
@@ -225,7 +226,7 @@ We permit the following comparisons involving constants:
 -   Any two constants can be compared, even if there is no type that can
     represent both.
 
-As described in [implicit conversions](implicit_conversions.md#data-types),
+As described in [implicit conversions](implicit_conversions.md#numeric-types),
 integer constants can be implicitly converted to any integer or floating-point
 type that can represent their value, and floating-point constants can be
 implicitly converted to any floating-point type that can represent their value.
@@ -254,8 +255,8 @@ operators for a given pair of types:
 
 ```
 interface EqWith(U:! type) {
-  fn Equal[self: Self](u: U) -> bool;
-  default fn NotEqual[self: Self](u: U) -> bool {
+  fn Equal(self, u: U) -> bool;
+  default fn NotEqual(self, u: U) -> bool {
     return not (self == u);
   }
 }
@@ -273,10 +274,10 @@ Given `x: T` and `y: U`:
 class Path {
   private var drive: String;
   private var path: String;
-  private fn CanonicalPath[self: Self]() -> String;
+  private fn CanonicalPath(self) -> String;
 
   impl as Eq {
-    fn Equal[self: Self](other: Self) -> bool {
+    fn Equal(self, other: Self) -> bool {
       return (self.drive, self.CanonicalPath()) ==
              (other.drive, other.CanonicalPath());
     }
@@ -293,11 +294,11 @@ can be used:
 ```
 class MyInt {
   var value: i32;
-  fn Value[self: Self]() -> i32 { return self.value; }
+  fn Value(self) -> i32 { return self.value; }
 }
 impl i32 as ImplicitAs(MyInt);
 impl like MyInt as EqWith(like MyInt) {
-  fn Equal[self: Self](other: Self) -> bool {
+  fn Equal(self, other: Self) -> bool {
     return self.Value() == other.Value();
   }
 }
@@ -316,13 +317,13 @@ operations should have no observable side-effects.
 
 ```
 impl like MyFloat as EqWith(like MyFloat) {
-  fn Equal[self: MyFloat](other: MyFloat) -> bool {
+  fn Equal(self: MyFloat, other: MyFloat) -> bool {
     if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
     return self.Representation() == other.Representation();
   }
-  fn NotEqual[self: MyFloat](other: MyFloat) -> bool {
+  fn NotEqual(self: MyFloat, other: MyFloat) -> bool {
     if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
@@ -354,18 +355,18 @@ choice Ordering {
   Incomparable
 }
 interface OrderedWith(U:! type) {
-  fn Compare[self: Self](u: U) -> Ordering;
-  default fn Less[self: Self](u: U) -> bool {
+  fn Compare(self, u: U) -> Ordering;
+  default fn Less(self, u: U) -> bool {
     return self.Compare(u) == Ordering.Less;
   }
-  default fn LessOrEquivalent[self: Self](u: U) -> bool {
+  default fn LessOrEquivalent(self, u: U) -> bool {
     let c: Ordering = self.Compare(u);
     return c == Ordering.Less or c == Ordering.Equivalent;
   }
-  default fn Greater[self: Self](u: U) -> bool {
+  default fn Greater(self, u: U) -> bool {
     return self.Compare(u) == Ordering.Greater;
   }
-  default fn GreaterOrEquivalent[self: Self](u: U) -> bool {
+  default fn GreaterOrEquivalent(self, u: U) -> bool {
     let c: Ordering = self.Compare(u);
     return c == Ordering.Greater or c == Ordering.Equivalent;
   }
@@ -395,11 +396,11 @@ class MyWidget {
   var width: i32;
   var height: i32;
 
-  fn Size[self: Self]() -> i32 { return self.width * self.height; }
+  fn Size(self) -> i32 { return self.width * self.height; }
 
   // Widgets are normally ordered by size.
   impl as Ordered {
-    fn Compare[self: Self](other: Self) -> Ordering {
+    fn Compare(self, other: Self) -> Ordering {
       return self.Size().(Ordered.Compare)(other.Size());
     }
   }
@@ -420,7 +421,7 @@ fn ReverseOrdering(o: Ordering) -> Ordering {
 }
 impl like MyInt as OrderedWith(like MyFloat);
 impl like MyFloat as OrderedWith(like MyInt) {
-  fn Compare[self: Self](other: Self) -> Ordering {
+  fn Compare(self, other: Self) -> Ordering {
     return Reverse(other.(OrderedWith(Self).Compare)(self));
   }
 }
@@ -511,12 +512,12 @@ in general. That decision is left to a future proposal.
 
 ## Alternatives considered
 
--   [Alternative symbols](/proposals/p0702.md#alternative-symbols)
--   [Chained comparisons](/proposals/p0702.md#chained-comparisons-1)
--   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
--   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
--   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
--   [Rename `OrderedWith` to `ComparableWith`](/proposals/p1178.md#use-comparablewith-instead-of-orderedwith)
+-   [Alternative symbols](/proposals/p000702-comparison-operators.md#alternative-symbols)
+-   [Chained comparisons](/proposals/p000702-comparison-operators.md#chained-comparisons-1)
+-   [Convert operands like C++](/proposals/p000702-comparison-operators.md#convert-operands-like-c)
+-   [Provide a three-way comparison operator](/proposals/p000702-comparison-operators.md#provide-a-three-way-comparison-operator)
+-   [Allow comparisons as the operand of `not`](/proposals/p000702-comparison-operators.md#allow-comparisons-as-the-operand-of-not)
+-   [Rename `OrderedWith` to `ComparableWith`](/proposals/p001178-rework-operator-interfaces.md#use-comparablewith-instead-of-orderedwith)
 
 ## References
 
@@ -526,3 +527,5 @@ in general. That decision is left to a future proposal.
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

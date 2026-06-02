@@ -50,7 +50,7 @@ class C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.<error>.impl: %Self.ref as %i32;
+// CHECK:STDOUT: impl @C.as.<error>.impl: %Self.ref as <error>;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @C.as.<error>.impl [concrete] {} {

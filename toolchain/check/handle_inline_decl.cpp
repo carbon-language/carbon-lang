@@ -30,12 +30,22 @@ auto HandleParseNode(Context& context, Parse::InlineCppDeclId node_id) -> bool {
   // TODO: It'd be nice to produce a clearer error saying to insert an `import
   // Cpp` in a file that uses `inline Cpp` and doesn't otherwise import anything
   // from package `Cpp`.
-  if (context.constant_values().Get(
-          context.node_stack().Pop<Parse::NodeKind::CppNameExpr>()) ==
-      SemIR::ErrorInst::ConstantId) {
+  auto cpp_id = context.constant_values().Get(
+      context.node_stack().Pop<Parse::NodeKind::CppNameExpr>());
+  if (cpp_id == SemIR::ErrorInst::ConstantId) {
     return true;
   }
-  CARBON_CHECK(context.cpp_context(), "Have `Cpp` name but no Cpp context");
+
+  // If Clang initialization catastrophically failed, skip the inline fragment.
+  if (!context.cpp_context()) {
+    // We should have already diagnosed an error initializing Clang.
+    auto cpp_scope_id = context.constant_values()
+                            .GetInstAs<SemIR::Namespace>(cpp_id)
+                            .name_scope_id;
+    CARBON_CHECK(context.name_scopes().Get(cpp_scope_id).has_error(),
+                 "Have valid `Cpp` scope but no Cpp context");
+    return true;
+  }
 
   auto string_token = context.parse_tree().node_token(body_id);
   auto string_value_id = context.tokens().GetStringLiteralValue(string_token);

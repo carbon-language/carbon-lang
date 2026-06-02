@@ -19,6 +19,9 @@ private interface OptionalStorage {
   fn Some[self: Self]() -> Type;
   fn Has(value: Type) -> bool;
   fn Get(value: Type) -> Self;
+  // Copying can also be performed by Get(value).Some(), but Get returns by
+  // copy, so that performs two copies.
+  fn Copy(value: Type) -> Type;
 }
 
 // TODO: We don't have an approved design for an `Optional` type yet, but it's
@@ -42,6 +45,12 @@ class Optional(T:! OptionalStorage) {
 }
 
 impl forall [T:! OptionalStorage & UnformedInit] Optional(T) as UnformedInit {}
+
+impl forall [T:! OptionalStorage] Optional(T) as Copy {
+  fn Op[self: Self]() -> Self {
+    return T.Copy(self as T.Type) as Optional(T);
+  }
+}
 
 // Support for converting a `T` to an `Optional(U)` if `T` converts to `U`.
 // Once we have match_first, this can be rewritten more simply as:
@@ -135,6 +144,13 @@ impl forall [T:! Copy & Destroy] T as OptionalStorage
   fn Get(value: DefaultOptionalStorage(T)) -> T {
     return value.value unsafe as T;
   }
+  fn Copy(value: DefaultOptionalStorage(T)) -> DefaultOptionalStorage(T) {
+    if (Has(value)) {
+      return (value.value unsafe as T).(Some)();
+    } else {
+      return None();
+    }
+  }
 }
 
 private fn PointerIsNull[T:! type](value: MaybeUnformed(T*)) -> bool = "pointer.is_null";
@@ -159,4 +175,5 @@ final impl forall [T:! type] T* as OptionalStorage
   fn Get(value: MaybeUnformed(T*)) -> T* {
     return value unsafe as T*;
   }
+  fn Copy(value: MaybeUnformed(T*)) -> MaybeUnformed(T*) = "primitive_copy";
 }

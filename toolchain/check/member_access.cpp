@@ -39,7 +39,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
     -> SemIR::ElementIndex {
   auto element_inst = context.insts().Get(element_id);
   if (auto field = element_inst.TryAs<SemIR::FieldDecl>()) {
-    return field->index;
+    return context.fields().Get(field->field_id).index;
   }
   if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
     return base->index;
@@ -178,6 +178,26 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto PerformImplWitnessAccessAndSubstitute(
+    Context& context, SemIR::LocId loc_id, SemIR::ImplWitnessAccess access)
+    -> SemIR::InstId {
+  auto access_id =
+      GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
+
+  if (!context.where_stack().empty()) {
+    if (auto result = context.where_stack().back().rewrites.Lookup(
+            context.constant_values().Get(access_id))) {
+      return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
+          context, loc_id,
+          {.type_id = access.type_id,
+           .impl_witness_access_id = access_id,
+           .value_id = result.value()});
+    }
+  }
+
+  return access_id;
+}
+
 static auto AccessMemberOfImplWitness(
     Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
     SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId member_id)
@@ -203,10 +223,11 @@ static auto AccessMemberOfImplWitness(
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
       context, interface_with_self_specific_id, assoc_entity->decl_id);
 
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity->index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity->index});
 }
 
 // For an impl lookup query with a single interface in it, we can convert the
@@ -356,20 +377,6 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (!context.rewrites_stack().empty()) {
-    if (auto access =
-            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(member_id)) {
-      if (auto result = context.rewrites_stack().back().Lookup(
-              context.constant_values().Get(member_id))) {
-        return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
-            context, loc_id,
-            {.type_id = access->type_id,
-             .impl_witness_access_id = member_id,
-             .value_id = result.value()});
-      }
-    }
-  }
-
   return member_id;
 }
 
@@ -493,7 +500,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
     if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                      base_const_id, &lookup_scopes)) {
+                                      base_const_id, /*extended_scope=*/false,
+                                      &lookup_scopes)) {
       return LookupMemberNameInScope(
           context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
           /*lookup_in_type_of_base=*/false, required);
@@ -534,7 +542,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       auto base_type_const_id = context.types().GetConstantId(base_type_id);
       llvm::SmallVector<LookupScope> lookup_scopes;
       if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
-                                        base_const_id, &lookup_scopes)) {
+                                        base_const_id, /*extended_scope=*/false,
+                                        &lookup_scopes)) {
         // The name scope constant needs to be a type, but is currently a
         // FacetType, so perform `as type` to get a FacetAccessType.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
@@ -596,7 +605,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
           //
           // TODO: This can be replaced with `lookup_const_id` once we stop
           // having to look through the facet at its type for the scope.
-          context.types().GetConstantId(base_type_id), &lookup_scopes)) {
+          context.types().GetConstantId(base_type_id), /*extended_scope=*/false,
+          &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
         /*lookup_in_type_of_base=*/true, required);
@@ -712,10 +722,11 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context, interface_with_self_specific_id, assoc_entity.decl_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
-  return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
-                                                {.type_id = assoc_type_id,
-                                                 .witness_id = witness_id,
-                                                 .index = assoc_entity.index});
+  return PerformImplWitnessAccessAndSubstitute(
+      context, loc_id,
+      SemIR::ImplWitnessAccess{.type_id = assoc_type_id,
+                               .witness_id = witness_id,
+                               .index = assoc_entity.index});
 }
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,

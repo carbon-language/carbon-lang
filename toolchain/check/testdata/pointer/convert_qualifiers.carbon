@@ -125,48 +125,48 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %const.9ff: type = const_type %X [concrete]
-// CHECK:STDOUT:   %ptr.d4c: type = ptr_type %const.9ff [concrete]
+// CHECK:STDOUT:   %const.cef: type = const_type %X [concrete]
+// CHECK:STDOUT:   %ptr.9f2: type = ptr_type %const.cef [concrete]
 // CHECK:STDOUT:   %TakeConst.type: type = fn_type @TakeConst [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakeConst: %TakeConst.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.2a9: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %ptr.aa3: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %TakeNonConst.type: type = fn_type @TakeNonConst [concrete]
 // CHECK:STDOUT:   %TakeNonConst: %TakeNonConst.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const.1ce: type = const_type %ptr.d4c [concrete]
-// CHECK:STDOUT:   %ptr.a2c: type = ptr_type %const.1ce [concrete]
+// CHECK:STDOUT:   %const.966: type = const_type %ptr.9f2 [concrete]
+// CHECK:STDOUT:   %ptr.ea2: type = ptr_type %const.966 [concrete]
 // CHECK:STDOUT:   %TakeConstConst.type: type = fn_type @TakeConstConst [concrete]
 // CHECK:STDOUT:   %TakeConstConst: %TakeConstConst.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.0ab: type = ptr_type %ptr.d4c [concrete]
+// CHECK:STDOUT:   %ptr.eab: type = ptr_type %ptr.9f2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonConst(%p.param: %ptr.2a9) {
+// CHECK:STDOUT: fn @NonConst(%p.param: %ptr.aa3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeNonConst.ref: %TakeNonConst.type = name_ref TakeNonConst, file.%TakeNonConst.decl [concrete = constants.%TakeNonConst]
-// CHECK:STDOUT:   %p.ref.loc11: %ptr.2a9 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref.loc11: %ptr.aa3 = name_ref p, %p
 // CHECK:STDOUT:   %TakeNonConst.call: init %empty_tuple.type = call %TakeNonConst.ref(%p.ref.loc11)
 // CHECK:STDOUT:   %TakeConst.ref: %TakeConst.type = name_ref TakeConst, file.%TakeConst.decl [concrete = constants.%TakeConst]
-// CHECK:STDOUT:   %p.ref.loc12: %ptr.2a9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc12_13.1: %ptr.d4c = as_compatible %p.ref.loc12
-// CHECK:STDOUT:   %.loc12_13.2: %ptr.d4c = converted %p.ref.loc12, %.loc12_13.1
+// CHECK:STDOUT:   %p.ref.loc12: %ptr.aa3 = name_ref p, %p
+// CHECK:STDOUT:   %.loc12_13.1: %ptr.9f2 = as_compatible %p.ref.loc12
+// CHECK:STDOUT:   %.loc12_13.2: %ptr.9f2 = converted %p.ref.loc12, %.loc12_13.1
 // CHECK:STDOUT:   %TakeConst.call: init %empty_tuple.type = call %TakeConst.ref(%.loc12_13.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Const(%p.param: %ptr.d4c) {
+// CHECK:STDOUT: fn @Const(%p.param: %ptr.9f2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConst.ref: %TakeConst.type = name_ref TakeConst, file.%TakeConst.decl [concrete = constants.%TakeConst]
-// CHECK:STDOUT:   %p.ref: %ptr.d4c = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.9f2 = name_ref p, %p
 // CHECK:STDOUT:   %TakeConst.call: init %empty_tuple.type = call %TakeConst.ref(%p.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonConstConst(%p.param: %ptr.0ab) {
+// CHECK:STDOUT: fn @NonConstConst(%p.param: %ptr.eab) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstConst.ref: %TakeConstConst.type = name_ref TakeConstConst, file.%TakeConstConst.decl [concrete = constants.%TakeConstConst]
-// CHECK:STDOUT:   %p.ref: %ptr.0ab = name_ref p, %p
-// CHECK:STDOUT:   %.loc25_18.1: %ptr.a2c = as_compatible %p.ref
-// CHECK:STDOUT:   %.loc25_18.2: %ptr.a2c = converted %p.ref, %.loc25_18.1
+// CHECK:STDOUT:   %p.ref: %ptr.eab = name_ref p, %p
+// CHECK:STDOUT:   %.loc25_18.1: %ptr.ea2 = as_compatible %p.ref
+// CHECK:STDOUT:   %.loc25_18.2: %ptr.ea2 = converted %p.ref, %.loc25_18.1
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(%.loc25_18.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -175,33 +175,33 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %const.9ff: type = const_type %X [concrete]
-// CHECK:STDOUT:   %ptr.d4c: type = ptr_type %const.9ff [concrete]
-// CHECK:STDOUT:   %const.1ce: type = const_type %ptr.d4c [concrete]
-// CHECK:STDOUT:   %ptr.a2c: type = ptr_type %const.1ce [concrete]
+// CHECK:STDOUT:   %const.33d: type = const_type %X [concrete]
+// CHECK:STDOUT:   %ptr.cfd: type = ptr_type %const.33d [concrete]
+// CHECK:STDOUT:   %const.ce5: type = const_type %ptr.cfd [concrete]
+// CHECK:STDOUT:   %ptr.f12: type = ptr_type %const.ce5 [concrete]
 // CHECK:STDOUT:   %TakeConstConst.type: type = fn_type @TakeConstConst [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakeConstConst: %TakeConstConst.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.2a9: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %ptr.8a5: type = ptr_type %ptr.2a9 [concrete]
-// CHECK:STDOUT:   %const.cbb: type = const_type %ptr.2a9 [concrete]
-// CHECK:STDOUT:   %ptr.e9d: type = ptr_type %const.cbb [concrete]
+// CHECK:STDOUT:   %ptr.b19: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %ptr.c49: type = ptr_type %ptr.b19 [concrete]
+// CHECK:STDOUT:   %const.d5d: type = const_type %ptr.b19 [concrete]
+// CHECK:STDOUT:   %ptr.cb7: type = ptr_type %const.d5d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonConstNonConst(%p.param: %ptr.8a5) {
+// CHECK:STDOUT: fn @NonConstNonConst(%p.param: %ptr.c49) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstConst.ref: %TakeConstConst.type = name_ref TakeConstConst, file.%TakeConstConst.decl [concrete = constants.%TakeConstConst]
-// CHECK:STDOUT:   %p.ref: %ptr.8a5 = name_ref p, %p
-// CHECK:STDOUT:   %.loc22: %ptr.a2c = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p.ref: %ptr.c49 = name_ref p, %p
+// CHECK:STDOUT:   %.loc22: %ptr.f12 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstNonConst(%p.param: %ptr.e9d) {
+// CHECK:STDOUT: fn @ConstNonConst(%p.param: %ptr.cb7) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstConst.ref: %TakeConstConst.type = name_ref TakeConstConst, file.%TakeConstConst.decl [concrete = constants.%TakeConstConst]
-// CHECK:STDOUT:   %p.ref: %ptr.e9d = name_ref p, %p
-// CHECK:STDOUT:   %.loc38: %ptr.a2c = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p.ref: %ptr.cb7 = name_ref p, %p
+// CHECK:STDOUT:   %.loc38: %ptr.f12 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

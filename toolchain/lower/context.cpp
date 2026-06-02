@@ -20,7 +20,7 @@ Context::Context(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
     int total_ir_count, Lower::OptimizationLevel opt_level,
-    llvm::raw_ostream* vlog_stream)
+    bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
       clang_code_generator_(clang_code_generator),
       llvm_module_owner_(
@@ -39,6 +39,7 @@ Context::Context(
       tree_and_subtrees_getters_(tree_and_subtrees_getters),
       vlog_stream_(vlog_stream),
       total_ir_count_(total_ir_count),
+      mangle_string_fingerprint_(mangle_string_fingerprint),
       file_contexts_(
           FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
 }

@@ -95,6 +95,7 @@ fn F() {
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Animal.ref
 // CHECK:STDOUT:   witness = %Animal.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

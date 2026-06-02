@@ -134,7 +134,8 @@ struct FunctionFields {
   VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
-  // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
+  // is not in the vtable. A function with `virtual_modifier != None` may still
+  // have `virtual_index == -1` if the corresponding vtable entry is a thunk.
   int32_t virtual_index = -1;
 
   // Which, if any, evaluation modifier (eval or musteval) is applied to this
@@ -370,5 +371,10 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
     -> DecomposedVirtualFunction;
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::FunctionId, SemIR::Function,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_

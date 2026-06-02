@@ -22,6 +22,20 @@ runs:
         # to save time.
         large-packages: false
 
+    # Select the LLVM release - by the cache key and the download.
+    #
+    # x86-64 uses the LLVM 19 monolithic package. That release only
+    # published a smaller community build for Linux AArch64, so AArch64 uses
+    # the official monolithic package, first available in LLVM 20.
+    - name: Select LLVM release
+      shell: bash
+      run: |
+        if [[ "${{ runner.arch }}" == "ARM64" ]]; then
+          echo "LLVM_RELEASE=20.1.8" >> "$GITHUB_ENV"
+        else
+          echo "LLVM_RELEASE=19.1.7" >> "$GITHUB_ENV"
+        fi
+
     # Cache and install a recent version of LLVM. This uses the GitHub action
     # cache to avoid directly downloading on each iteration and improve
     # reliability.
@@ -30,15 +44,16 @@ runs:
       uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ~/llvm
-        key: LLVM-19.1.7-Cache-ubuntu-${{ runner.arch }}
+        key: LLVM-${{ env.LLVM_RELEASE }}-Cache-ubuntu-${{ runner.arch }}
 
     - name: Download LLVM and Clang installation
       if: steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
       shell: bash
       run: |
         cd ~
-        LLVM_RELEASE=19.1.7
-        LLVM_TARBALL_NAME=LLVM-$LLVM_RELEASE-Linux-X64
+        # `LLVM_RELEASE` comes from the "Select LLVM release" step; `runner.arch`
+        # (`X64`/`ARM64`) matches the package's arch suffix.
+        LLVM_TARBALL_NAME=LLVM-$LLVM_RELEASE-Linux-${{ runner.arch }}
         LLVM_PATH=~/llvm
         echo "*** Downloading $LLVM_RELEASE"
         wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_RELEASE/$LLVM_TARBALL_NAME.tar.xz"
@@ -50,10 +65,12 @@ runs:
         echo "*** Testing `clang++ --version`"
         $LLVM_PATH/bin/clang++ --version
         # The installation contains *huge* parts of LLVM we don't need for the
-        # toolchain. Prune them here to keep our cache small.
+        # toolchain. Prune them here to keep our cache small. x86-64 and
+        # AArch64 use different LLVM releases whose tool sets differ, so `-f`
+        # ignores entries that are absent from a given package.
         echo "*** Cleaning the 'llvm' directory"
-        rm $LLVM_PATH/lib/{*.a,*.so,*.so.*}
-        rm $LLVM_PATH/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
+        rm -f $LLVM_PATH/lib/{*.a,*.so,*.so.*}
+        rm -f $LLVM_PATH/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
         echo "*** Size of the 'llvm' directory"
         du -hs $LLVM_PATH
 

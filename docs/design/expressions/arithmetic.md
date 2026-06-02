@@ -17,6 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Overflow and other error conditions](#overflow-and-other-error-conditions)
     -   [Floating-point types](#floating-point-types)
     -   [Strings](#strings)
+    -   [Character types](#character-types)
+        -   [Overflow Semantics](#overflow-semantics)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -104,8 +106,8 @@ converted as follows:
 -   If one type is `iN` and the other type is `uM`, and `M` < `N`, the `uM`
     operand is converted to `iN`.
 -   If one type is `fN` and the other type is `iM` or `uM`, and there is an
-    [implicit conversion](implicit_conversions.md#data-types) from the integer
-    type to `fN`, then the integer operand is converted to `fN`.
+    [implicit conversion](implicit_conversions.md#numeric-types) from the
+    integer type to `fN`, then the integer operand is converted to `fN`.
 
 More broadly, if one operand is of built-in type and the other operand can be
 implicitly converted to that type, then it is, unless that behavior is
@@ -185,6 +187,30 @@ Because floating-point arithmetic follows IEEE 754 rules: overflow results in
 `+` for concatenation. See
 [#457](https://github.com/carbon-language/carbon-lang/issues/457).
 
+### Character types
+
+Character types (`char` and `Core.CharLiteral`) support arithmetic operations
+aligned with the concept of "characters" rather than raw integers. Operations
+with `Core.CharLiteral` and compile-time constants produce compile-time integer
+or `Core.CharLiteral` results. Operations with a `char` or a runtime integer
+argument produce `char` results.
+
+-   **Addition:** The sum of a character and an integer produces a character.
+-   **Subtraction:**
+    -   The difference of two characters produces an `i32`. This is preferred
+        even for `char` to be consistent with the range needed to represent the
+        difference of two `Core.CharLiteral` values.
+    -   A character minus an integer produces a character, much like adding a
+        character to a negative integer.
+
+#### Overflow Semantics
+
+Arithmetic operations on `char` and `Core.CharLiteral` use error overflow
+semantics [similar to signed integers](#overflow-and-other-error-conditions).
+For example, `(('a' as char) + 500)` is invalid code because it causes `char`
+overflow. That's why conversions are to signed values (for example,
+`char as i16`).
+
 ## Extensibility
 
 Arithmetic operators can be provided for user-defined types by implementing the
@@ -194,7 +220,7 @@ following family of interfaces:
 // Unary `-`.
 interface Negate {
   default let Result:! type = Self;
-  fn Op[self: Self]() -> Result;
+  fn Op(self) -> Result;
 }
 ```
 
@@ -202,7 +228,7 @@ interface Negate {
 // Binary `+`.
 interface AddWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint Add {
   extend AddWith(Self) where .Result = Self;
@@ -213,7 +239,7 @@ constraint Add {
 // Binary `-`.
 interface SubWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint Sub {
   extend SubWith(Self) where .Result = Self;
@@ -224,7 +250,7 @@ constraint Sub {
 // Binary `*`.
 interface MulWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint Mul {
   extend MulWith(Self) where .Result = Self;
@@ -235,7 +261,7 @@ constraint Mul {
 // Binary `/`.
 interface DivWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint Div {
   extend DivWith(Self) where .Result = Self;
@@ -246,7 +272,7 @@ constraint Div {
 // Binary `%`.
 interface ModWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint Mod {
   extend ModWith(Self) where .Result = Self;
@@ -267,21 +293,21 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Use a sufficiently wide result type to avoid overflow](/proposals/p1083.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
--   [Guarantee that the program never proceeds with an incorrect value after overflow](/proposals/p1083.md#guarantee-that-the-program-never-proceeds-with-an-incorrect-value-after-overflow)
--   [Guarantee that all integer arithmetic is two's complement](/proposals/p1083.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
--   [Treat overflow as an error but don't optimize on it](/proposals/p1083.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
--   [Don't let `Unsigned` arithmetic wrap](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap)
--   [Provide separate wrapping types](/proposals/p1083.md#provide-separate-wrapping-types)
--   [Do not provide an ordering or division for `uN`](/proposals/p1083.md#do-not-provide-an-ordering-or-division-for-un)
--   [Give unary `-` lower precedence](/proposals/p1083.md#give-unary---lower-precedence)
--   [Include a unary plus operator](/proposals/p1083.md#include-a-unary-plus-operator)
--   [Floating-point modulo operator](/proposals/p1083.md#floating-point-modulo-operator)
--   [Provide different division operators](/proposals/p1083.md#provide-different-division-operators)
--   [Use different division and modulo semantics](/proposals/p1083.md#use-different-division-and-modulo-semantics)
--   [Use different precedence groups for division and multiplication](/proposals/p1083.md#use-different-precedence-groups-for-division-and-multiplication)
--   [Use the same precedence group for modulo and multiplication](/proposals/p1083.md#use-the-same-precedence-group-for-modulo-and-multiplication)
--   [Use a different spelling for modulo](/proposals/p1083.md#use-a-different-spelling-for-modulo)
+-   [Use a sufficiently wide result type to avoid overflow](/proposals/p001083-arithmetic-expressions.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
+-   [Guarantee that the program never proceeds with an incorrect value after overflow](/proposals/p001083-arithmetic-expressions.md#guarantee-that-the-program-never-proceeds-with-an-incorrect-value-after-overflow)
+-   [Guarantee that all integer arithmetic is two's complement](/proposals/p001083-arithmetic-expressions.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
+-   [Treat overflow as an error but don't optimize on it](/proposals/p001083-arithmetic-expressions.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
+-   [Don't let `Unsigned` arithmetic wrap](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap)
+-   [Provide separate wrapping types](/proposals/p001083-arithmetic-expressions.md#provide-separate-wrapping-types)
+-   [Do not provide an ordering or division for `uN`](/proposals/p001083-arithmetic-expressions.md#do-not-provide-an-ordering-or-division-for-un)
+-   [Give unary `-` lower precedence](/proposals/p001083-arithmetic-expressions.md#give-unary---lower-precedence)
+-   [Include a unary plus operator](/proposals/p001083-arithmetic-expressions.md#include-a-unary-plus-operator)
+-   [Floating-point modulo operator](/proposals/p001083-arithmetic-expressions.md#floating-point-modulo-operator)
+-   [Provide different division operators](/proposals/p001083-arithmetic-expressions.md#provide-different-division-operators)
+-   [Use different division and modulo semantics](/proposals/p001083-arithmetic-expressions.md#use-different-division-and-modulo-semantics)
+-   [Use different precedence groups for division and multiplication](/proposals/p001083-arithmetic-expressions.md#use-different-precedence-groups-for-division-and-multiplication)
+-   [Use the same precedence group for modulo and multiplication](/proposals/p001083-arithmetic-expressions.md#use-the-same-precedence-group-for-modulo-and-multiplication)
+-   [Use a different spelling for modulo](/proposals/p001083-arithmetic-expressions.md#use-a-different-spelling-for-modulo)
 
 ## References
 
@@ -289,3 +315,5 @@ to give the semantics described above.
     [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

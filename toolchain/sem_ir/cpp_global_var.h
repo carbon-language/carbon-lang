@@ -54,4 +54,12 @@ using CppGlobalVarStore = CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey,
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class CanonicalValueStore<
+    SemIR::CppGlobalVarId, SemIR::CppGlobalVarKey, Tag<SemIR::CheckIRId>,
+    SemIR::CppGlobalVar>;
+extern template class ValueStore<SemIR::CppGlobalVarId, SemIR::CppGlobalVar,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_CPP_GLOBAL_VAR_H_

@@ -198,7 +198,7 @@ implementing the following family of interfaces:
 // Unary `^`.
 interface BitComplement {
   default let Result:! type = Self;
-  fn Op[self: Self]() -> Result;
+  fn Op(self) -> Result;
 }
 ```
 
@@ -206,7 +206,7 @@ interface BitComplement {
 // Binary `&`.
 interface BitAndWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint BitAnd {
   extend BitAndWith(Self) where .Result = Self;
@@ -217,7 +217,7 @@ constraint BitAnd {
 // Binary `|`.
 interface BitOrWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint BitOr {
   extend BitOrWith(Self) where .Result = Self;
@@ -228,7 +228,7 @@ constraint BitOr {
 // Binary `^`.
 interface BitXorWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint BitXor {
   extend BitXorWith(Self) where .Result = Self;
@@ -239,7 +239,7 @@ constraint BitXor {
 // Binary `<<`.
 interface LeftShiftWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint LeftShift {
   extend LeftShiftWith(Self) where .Result = Self;
@@ -250,7 +250,7 @@ constraint LeftShift {
 // Binary `>>`.
 interface RightShiftWith(U:! type) {
   default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+  fn Op(self, other: U) -> Result;
 }
 constraint RightShift {
   extend RightShiftWith(Self) where .Result = Self;
@@ -271,11 +271,11 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Use different symbols for bitwise operators](/proposals/p1191.md#use-different-symbols-for-bitwise-operators)
--   [Provide different operators for arithmetic and logical shifts](/proposals/p1191.md#provide-different-operators-for-arithmetic-and-logical-shifts)
--   [Provide rotate operators](/proposals/p1191.md#provide-rotate-operators)
--   [Guarantee the behavior of large shifts](/proposals/p1191.md#guarantee-behavior-of-large-shifts)
--   [Support shifting a constant by a variable](/proposals/p1191.md#support-shifting-a-constant-by-a-variable)
+-   [Use different symbols for bitwise operators](/proposals/p001191-bitwise-and-shift-operators.md#use-different-symbols-for-bitwise-operators)
+-   [Provide different operators for arithmetic and logical shifts](/proposals/p001191-bitwise-and-shift-operators.md#provide-different-operators-for-arithmetic-and-logical-shifts)
+-   [Provide rotate operators](/proposals/p001191-bitwise-and-shift-operators.md#provide-rotate-operators)
+-   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
+-   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
 
 ## References
 

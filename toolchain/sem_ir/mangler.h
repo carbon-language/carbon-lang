@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_MANGLER_H_
 
 #include <string>
+#include <variant>
 
 #include "clang/AST/Mangle.h"
 #include "toolchain/sem_ir/constant.h"
@@ -21,8 +22,8 @@ class Mangler {
  public:
   // Initialize a new Mangler instance for mangling entities within the
   // specified `File`.
-  Mangler(const SemIR::File& sem_ir, int total_ir_count)
-      : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {}
+  Mangler(const SemIR::File& sem_ir, int total_ir_count,
+          bool use_string_fingerprint = false);
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.
@@ -77,8 +78,24 @@ class Mangler {
     return sem_ir().constant_values();
   }
 
+  template <typename IdT>
+  auto MangleFingerprint(llvm::raw_ostream& os, const File* file, IdT id)
+      -> void {
+    std::visit(
+        [&](auto& f) -> void {
+          using ResultT = typename std::decay_t<decltype(f)>::ResultType;
+          if constexpr (std::is_same_v<ResultT, llvm::StringRef>) {
+            os << f.GetOrCompute(file, id);
+          } else {
+            llvm::write_hex(os, f.GetOrCompute(file, id),
+                            llvm::HexPrintStyle::Lower, 16);
+          }
+        },
+        fingerprinter_);
+  }
+
   const SemIR::File& sem_ir_;
-  SemIR::InstFingerprinter fingerprinter_;
+  std::variant<HashInstFingerprinter, StringInstFingerprinter> fingerprinter_;
 };
 
 }  // namespace Carbon::SemIR

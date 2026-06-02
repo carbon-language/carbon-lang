@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -36,22 +36,18 @@ interface I {
 
 class B {
   impl as I {
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+3]]:13: error: name `B` used before it was declared [NameUseBeforeDecl]
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+11]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
     // CHECK:STDERR:     fn A(x: B);
     // CHECK:STDERR:             ^
+    // CHECK:STDERR:
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `<type of B in B as I>` to `type` [ConversionFailureNonTypeToFacet]
+    // CHECK:STDERR:     fn A(x: B);
+    // CHECK:STDERR:             ^
+    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+4]]:13: note: type `<type of B in B as I>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:     fn A(x: B);
+    // CHECK:STDERR:             ^
+    // CHECK:STDERR:
     fn A(x: B);
-    // TODO: Avoid ImplMissingFunction for functions that were declared after they were poisoned.
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+11]]:8: note: declared here [NameUseBeforeDeclNote]
-    // CHECK:STDERR:     fn B();
-    // CHECK:STDERR:        ^
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-10]]:3: error: missing implementation of B in impl of interface I [ImplMissingFunction]
-    // CHECK:STDERR:   impl as I {
-    // CHECK:STDERR:   ^~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE-17]]:3: note: associated function B declared here [AssociatedFunctionHere]
-    // CHECK:STDERR:   fn B();
-    // CHECK:STDERR:   ^~~~~~~
-    // CHECK:STDERR:
     fn B();
   }
 }

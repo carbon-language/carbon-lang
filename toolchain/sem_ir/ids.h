@@ -330,6 +330,13 @@ struct ClassId : public IdBase<ClassId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `Field`.
+struct FieldId : public IdBase<FieldId> {
+  static constexpr llvm::StringLiteral Label = "field";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a `Vtable`.
 struct VtableId : public IdBase<VtableId> {
   static constexpr llvm::StringLiteral Label = "vtable";
@@ -489,6 +496,13 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
   static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ClangDeclSignature`.
+struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
 
   using IdBase::IdBase;
 };

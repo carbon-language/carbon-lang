@@ -57,6 +57,7 @@ fn F() {
 // CHECK:STDOUT:   <unexpected>.inst{{[0-9A-F]+}}.loc18_21: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend <unexpected>.inst{{[0-9A-F]+}}.loc18_14
 // CHECK:STDOUT:   witness = <unexpected>.inst{{[0-9A-F]+}}.loc18_21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
