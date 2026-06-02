@@ -72,7 +72,7 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i32.var), !dbg !8
 // CHECK:STDOUT:   store i32 poison, ptr %val_i32.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i64.var), !dbg !9
-// CHECK:STDOUT:   store i64 poison, ptr %val_i64.var, align 4, !dbg !9
+// CHECK:STDOUT:   store i64 poison, ptr %val_i64.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_f64.var), !dbg !10
 // CHECK:STDOUT:   store double poison, ptr %val_f64.var, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_bool.var), !dbg !11
@@ -98,7 +98,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc40_15 = load ptr, ptr %ptr_bool.var, align 8, !dbg !25
 // CHECK:STDOUT:   %.loc40_25 = load ptr, ptr %ptr_i16.var, align 8, !dbg !26
 // CHECK:STDOUT:   %F.call.loc40 = call i32 @_CF.Main.e1d834dc162d21b2(i1 %.loc40_51, ptr %.loc40_15, ptr %.loc40_25, i32 0), !dbg !27
-// CHECK:STDOUT:   %.loc41_5 = load i64, ptr %val_i64.var, align 4, !dbg !28
+// CHECK:STDOUT:   %.loc41_5 = load i64, ptr %val_i64.var, align 8, !dbg !28
 // CHECK:STDOUT:   %.loc41_14 = load i8, ptr %val_bool.var, align 1, !dbg !29
 // CHECK:STDOUT:   %.loc41_142 = trunc i8 %.loc41_14 to i1, !dbg !29
 // CHECK:STDOUT:   %.loc41_24 = load ptr, ptr %ptr_bool.var, align 8, !dbg !30

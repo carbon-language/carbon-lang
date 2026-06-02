@@ -19,13 +19,13 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import re
-import os
-import sys
 import base64
-import urllib.request
-import urllib.error
 import json
+import os
+import re
+import sys
+import urllib.error
+import urllib.request
 
 MODULE_NAME = "carbon_toolchain"
 MODULE_FILENAME = "MODULE.bazel"

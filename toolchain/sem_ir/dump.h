@@ -26,6 +26,7 @@ auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
 auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
 auto Dump(const File& file, FacetTypeId facet_type_id) -> std::string;
+auto Dump(const File& file, FieldId field_id) -> std::string;
 auto Dump(const File& file, FunctionId function_id) -> std::string;
 auto Dump(const File& file, GenericId generic_id) -> std::string;
 auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)

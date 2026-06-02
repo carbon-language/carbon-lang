@@ -14,7 +14,8 @@
 /examples/**/bazel-*
 /examples/**/MODULE.bazel.lock
 
-# Directories created by python.
+# Files and directories created by python.
+uv.lock
 **/__pycache__/
 
 # Ignore the user's VSCode settings and debug setup.

@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/type_mapping.h"
 
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <optional>
 
@@ -33,10 +34,9 @@
 namespace Carbon::Check {
 
 // A function that wraps a C++ type to form another C++ type. Note that this is
-// a raw function pointer; we don't currently use any lambda captures here. This
-// can be replaced by a `std::function` if captures are found to be needed.
-using WrapFn = auto (*)(Context& context, clang::QualType inner_type)
-    -> clang::QualType;
+// a std::function to allow lambda captures.
+using WrapFn = std::function<clang::QualType(Context& context,
+                                             clang::QualType inner_type)>;
 
 // Represents a type that requires a subtype to be mapped into a Clang type
 // before it can be mapped.
@@ -276,6 +276,27 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
                 clang::attr::TypeNonNull, pointer_type, pointer_type);
           }};
     }
+    case CARBON_KIND(SemIR::ArrayType array_type): {
+      auto bound_const_id = context.constant_values().Get(array_type.bound_id);
+      if (!bound_const_id.is_constant()) {
+        return clang::QualType();
+      }
+      auto bound_val_inst =
+          context.constant_values().TryGetInstAs<SemIR::IntValue>(
+              bound_const_id);
+      if (!bound_val_inst) {
+        return clang::QualType();
+      }
+      return WrappedType{
+          .inner_type_id = context.types().GetTypeIdForTypeInstId(
+              array_type.element_type_inst_id),
+          .wrap_fn = [int_id = bound_val_inst->int_id](
+                         Context& context, clang::QualType inner_type) {
+            return context.ast_context().getConstantArrayType(
+                inner_type, context.ints().Get(int_id), /*SizeExpr=*/nullptr,
+                clang::ArraySizeModifier::Normal, /*IndexTypeQuals=*/0);
+          }};
+    }
 
     default: {
       return clang::QualType();
@@ -291,7 +312,7 @@ auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
   while (true) {
     CARBON_KIND_SWITCH(TryMapType(context, type_id)) {
       case CARBON_KIND(clang::QualType type): {
-        for (auto wrap_fn : llvm::reverse(wrap_fns)) {
+        for (const auto& wrap_fn : llvm::reverse(wrap_fns)) {
           if (type.isNull()) {
             break;
           }

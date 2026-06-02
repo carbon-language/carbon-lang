@@ -102,8 +102,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:I.01f5c37cad34e90b.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !28
-// CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !29
+// CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
+// CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !29
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.8b79c6c1932e58f6.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !29
@@ -199,9 +199,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc7_20.2.temp = alloca { i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc7_19.1.temp = alloca { i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc7_20.2.temp = alloca { i32 }, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc7_19.1.temp = alloca { i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.1.temp), !dbg !11
@@ -298,8 +298,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:I.5df87795ec73cda9.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 8, !dbg !16
-// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 8
+// CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 4, !dbg !16
+// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.0b3b8a3403fe0e1d.Core"(ptr %.2.temp, ptr %a), !dbg !17
@@ -387,9 +387,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_18.1.temp), !dbg !11

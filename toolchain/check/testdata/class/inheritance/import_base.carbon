@@ -199,8 +199,8 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.e52 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e20: %Base.F.type = import_ref Main//a, loc5_21, loaded [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Main.import_ref.384 = import_ref Main//a, loc6_26, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fc2: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.98f]
-// CHECK:STDOUT:   %Main.import_ref.4cb = import_ref Main//a, loc9_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.899: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.dee]
+// CHECK:STDOUT:   %Main.import_ref.52e = import_ref Main//a, loc9_15, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e2d: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.043]
 // CHECK:STDOUT:   %Main.import_ref.ffc = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.2a5 = import_ref Main//a, loc13_20, unloaded
@@ -208,7 +208,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.7f1: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.ca9) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.768)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bc3 = impl_witness_table (%Core.import_ref.7f1), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %.98f: %Base.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.dee: %Base.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,8 +242,8 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e52
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e20
 // CHECK:STDOUT:   .Unused = imports.%Main.import_ref.384
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.fc2
-// CHECK:STDOUT:   .unused_y = imports.%Main.import_ref.4cb
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.899
+// CHECK:STDOUT:   .unused_y = imports.%Main.import_ref.52e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -283,7 +283,7 @@ fn Run() {
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]
 // CHECK:STDOUT:   %a: ref %Child = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.fc2 [concrete = imports.%.98f]
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.899 [concrete = imports.%.dee]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0

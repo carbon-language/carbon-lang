@@ -147,8 +147,8 @@ impl C(B) as I {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF1.Main(ptr %x, ptr %y) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca {}, align 8, !dbg !21
-// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !22
+// CHECK:STDOUT:   %a.var = alloca {}, align 1, !dbg !21
+// CHECK:STDOUT:   %b.var = alloca {}, align 1, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !21
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.837256a62795a301.Main"(ptr %a.var, ptr %x), !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !22

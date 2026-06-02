@@ -210,7 +210,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ptr.62d: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %ptr.d14: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -229,10 +229,10 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %b.ref: %X = name_ref b, %b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc11_10: ref %X = value_as_ref %a.ref
-// CHECK:STDOUT:   %addr.loc11_12.1: %ptr.62d = addr_of %.loc11_10
+// CHECK:STDOUT:   %addr.loc11_12.1: %ptr.d14 = addr_of %.loc11_10
 // CHECK:STDOUT:   %.loc11_14: ref %X = value_as_ref %b.ref
-// CHECK:STDOUT:   %addr.loc11_12.2: %ptr.62d = addr_of %.loc11_14
-// CHECK:STDOUT:   %addr.loc11_12.3: %ptr.62d = addr_of %.loc9_34.1
+// CHECK:STDOUT:   %addr.loc11_12.2: %ptr.d14 = addr_of %.loc11_14
+// CHECK:STDOUT:   %addr.loc11_12.3: %ptr.d14 = addr_of %.loc9_34.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
 // CHECK:STDOUT:   %.loc11_12: init %X to %.loc9_34.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc11_12 to %return.param

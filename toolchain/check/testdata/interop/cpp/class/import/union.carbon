@@ -312,8 +312,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.00b: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.00b [concrete]
+// CHECK:STDOUT:   %ptr.4d6: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.4d6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -324,7 +324,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
-// CHECK:STDOUT:   %foo.var: ref %ptr.00b = var %foo.var_patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %ptr.4d6 = var %foo.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
@@ -334,14 +334,14 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %foo.ref: ref %ptr.00b = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
-// CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:   %foo.ref: ref %ptr.4d6 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
+// CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.4d6] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.4d6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37: %ptr.00b = acquire_value %foo.ref
-// CHECK:STDOUT:   %bar: %ptr.00b = value_binding bar, %.loc8_37
+// CHECK:STDOUT:   %.loc8_37: %ptr.4d6 = acquire_value %foo.ref
+// CHECK:STDOUT:   %bar: %ptr.4d6 = value_binding bar, %.loc8_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,11 +349,11 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.00b: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.00b [concrete]
+// CHECK:STDOUT:   %ptr.4d6: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.4d6 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.00b [concrete]
+// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.4d6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -369,32 +369,32 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bar.param: %ptr.00b = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:     %bar.param: %ptr.4d6 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.4d6] {
 // CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.4d6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr.00b = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr.4d6 = value_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.00b) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.4d6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %bar.ref: %ptr.00b = name_ref bar, %bar
+// CHECK:STDOUT:   %bar.ref: %ptr.4d6 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
-// CHECK:STDOUT:   %.loc8_37.2: ref %ptr.00b = class_element_access %.loc8_37.1, element0
-// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.00b] {
+// CHECK:STDOUT:   %.loc8_37.2: ref %ptr.4d6 = class_element_access %.loc8_37.1, element0
+// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.4d6] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.00b]
+// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.4d6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37.3: %ptr.00b = acquire_value %.loc8_37.2
-// CHECK:STDOUT:   %foo_bar: %ptr.00b = value_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   %.loc8_37.3: %ptr.4d6 = acquire_value %.loc8_37.2
+// CHECK:STDOUT:   %foo_bar: %ptr.4d6 = value_binding foo_bar, %.loc8_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

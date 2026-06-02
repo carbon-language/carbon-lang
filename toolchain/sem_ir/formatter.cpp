@@ -1562,6 +1562,15 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
   out() << ">";
 }
 
+auto Formatter::FormatArg(FieldId id) -> void {
+  const auto& field = sem_ir_->fields().Get(id);
+  out() << field.index;
+  if (field.initializer_id.has_value()) {
+    out() << ", initializer = ";
+    out() << field.initializer_id;
+  }
+}
+
 auto Formatter::FormatArg(ImportIRId id) -> void {
   if (id.has_value()) {
     out() << GetImportIRLabel(id);

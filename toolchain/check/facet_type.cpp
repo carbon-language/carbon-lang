@@ -12,6 +12,7 @@
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -146,6 +147,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         rewrite_values_(rewrite_values) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) -> SubstResult override {
+    if (found_cycle_) {
+      return SubstResult::FullySubstituted;
+    }
+
     auto rhs_access =
         context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(rhs_inst_id);
     if (!rhs_access) {
@@ -212,6 +217,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       // locations here, which may imply heap allocations.
       context().emitter().Emit(loc_id_, FacetTypeConstraintCycle, rhs_inst_id);
       rhs_inst_id = SemIR::ErrorInst::InstId;
+      found_cycle_ = true;
       return SubstResult::FullySubstituted;
     } else if (rewrite_value->state == AccessRewriteValues::FullyRewritten) {
       rhs_inst_id = rewrite_value->inst_id;
@@ -230,9 +236,23 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     return SubstResult::SubstAgain;
   }
 
-  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    auto inst_id = RebuildNewInst(loc_id_, new_inst);
+    if (found_cycle_) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    // If we are substituting non-canonical instructions, some of them have no
+    // constant representation at all, and we want to preserve attachment of
+    // symbolic constants. So when we rebuild them, we must create a new
+    // non-canonical instruction.
+    bool is_canon = context().constant_values().GetConstantInstId(
+                        orig_inst_id) == orig_inst_id;
+    auto inst_id =
+        is_canon ? RebuildNewInst(loc_id_, new_inst)
+                 : AddInstInNoBlock(context(),
+                                    SemIR::LocIdAndInst::RuntimeVerified(
+                                        context().sem_ir(), loc_id_, new_inst));
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access =
             context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
@@ -246,6 +266,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   }
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    if (found_cycle_) {
+      return SemIR::ErrorInst::InstId;
+    }
+
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access =
             context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
@@ -284,6 +308,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   // Avoid heap allocations in common cases, if there are chains of instructions
   // in associated constants with a depth at most 16.
   llvm::SmallVector<SemIR::InstId, 16> substs_in_progress_;
+  // If a cycle was found, we stop trying to substitute.
+  bool found_cycle_ = false;
 };
 
 auto ResolveFacetTypeRewriteConstraints(
@@ -344,13 +370,13 @@ auto ResolveFacetTypeRewriteConstraints(
           // try to name the values in the same order they appear in the facet
           // type.
           auto source_order1 =
-              lhs_rewrite_value->inst_id.index < rhs_subst_inst_id.index
+              lhs_rewrite_value->inst_id.index < constraint.rhs_id.index
                   ? lhs_rewrite_value->inst_id
-                  : rhs_subst_inst_id;
+                  : constraint.rhs_id;
           auto source_order2 =
-              lhs_rewrite_value->inst_id.index >= rhs_subst_inst_id.index
+              lhs_rewrite_value->inst_id.index >= constraint.rhs_id.index
                   ? lhs_rewrite_value->inst_id
-                  : rhs_subst_inst_id;
+                  : constraint.rhs_id;
           // TODO: It would be nice to note the places where the values are
           // assigned but rewrite constraint instructions are from canonical
           // constant values, and have no locations. We'd need to store a

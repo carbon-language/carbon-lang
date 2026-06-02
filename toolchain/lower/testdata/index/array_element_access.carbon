@@ -48,7 +48,7 @@ fn Run() {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !17
-// CHECK:STDOUT:   %.loc17_28.1.temp = alloca { i32, i32 }, align 8, !dbg !18
+// CHECK:STDOUT:   %.loc17_28.1.temp = alloca { i32, i32 }, align 4, !dbg !18
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !19
 // CHECK:STDOUT:   %_.var.loc19 = alloca i32, align 4, !dbg !20
 // CHECK:STDOUT:   %_.var.loc20 = alloca i32, align 4, !dbg !21

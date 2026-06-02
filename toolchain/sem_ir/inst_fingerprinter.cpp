@@ -12,15 +12,18 @@
 #include "common/concepts.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -279,6 +282,11 @@ struct Worklist {
       Add(entity_name.name_id);
     }
     Add(entity_name.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity_name.name_id, entity_name.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -404,6 +412,11 @@ struct Worklist {
     if (entity.parent_scope_id.has_value()) {
       Add(entity.parent_scope_id);
     }
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity.name_id, entity.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto Add(FunctionId function_id) -> void {
@@ -429,6 +442,21 @@ struct Worklist {
 
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
+    // Imported C++ classes are not uniquely identified by their name and parent
+    // scope, so we also include the Clang mangled type name, which is computed
+    // on demand. The Clang type name is unique, as it is the canonical C++
+    // identity. Carbon classes rely on the name and scope from `AddEntity`.
+    llvm::SmallString<128> cpp_mangled_name;
+    llvm::raw_svector_ostream os(cpp_mangled_name);
+    if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
+      AddString(cpp_mangled_name);
+    }
+  }
+
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
   }
 
   auto Add(VtableId vtable_id) -> void {

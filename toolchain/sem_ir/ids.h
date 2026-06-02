@@ -330,6 +330,13 @@ struct ClassId : public IdBase<ClassId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `Field`.
+struct FieldId : public IdBase<FieldId> {
+  static constexpr llvm::StringLiteral Label = "field";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a `Vtable`.
 struct VtableId : public IdBase<VtableId> {
   static constexpr llvm::StringLiteral Label = "vtable";

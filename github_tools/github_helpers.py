@@ -10,13 +10,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
-from collections.abc import Generator
 import os
+from collections.abc import Generator
 from typing import Optional, cast
 
 # https://pypi.org/project/gql/
-import gql  # type: ignore
-import gql.transport.requests  # type: ignore
+import gql
+import gql.transport.requests
 
 _ENV_TOKEN = "GITHUB_ACCESS_TOKEN"
 

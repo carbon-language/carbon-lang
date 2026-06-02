@@ -178,11 +178,31 @@ fn F() -> i32 {
 // --- fail_unused_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` modifier on declaration [UnusedModifierOnDeclaration]
+// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
 // CHECK:STDERR: fn F(unused x: i32);
 // CHECK:STDERR:             ^~~~~~
 // CHECK:STDERR:
 fn F(unused x: i32);
+
+// --- fail_unused_implicit_param_decl.carbon
+library "[[@TEST_NAME]]";
+
+// The `unused` modifier is rejected without a definition for any implicit
+// parameter, both a compile-time binding and `self`.
+
+// CHECK:STDERR: fail_unused_implicit_param_decl.carbon:[[@LINE+4]]:13: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
+// CHECK:STDERR: fn F[unused T:! type]();
+// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR:
+fn F[unused T:! type]();
+
+class C {
+  // CHECK:STDERR: fail_unused_implicit_param_decl.carbon:[[@LINE+4]]:15: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
+  // CHECK:STDERR:   fn G[unused self: Self]();
+  // CHECK:STDERR:               ^~~~~~~~~~
+  // CHECK:STDERR:
+  fn G[unused self: Self]();
+}
 
 // --- fail_multiple_uses_of_unused.carbon
 library "[[@TEST_NAME]]";

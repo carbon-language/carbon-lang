@@ -336,12 +336,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.7e3: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.735)]
 // CHECK:STDOUT:   %Main.import_ref.668 = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.17f: @C.%C.elem (%C.elem.992) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.65d]
+// CHECK:STDOUT:   %Main.import_ref.2fa: @C.%C.elem (%C.elem.992) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.862]
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//adapt_specific_type, loc4_10, loaded [symbolic = @C.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Main.import_ref.bc4: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.9ec]
 // CHECK:STDOUT:   %Main.import_ref.bbb = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %.65d: @C.%C.elem (%C.elem.992) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.862: @C.%C.elem (%C.elem.992) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.8e5: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.c59) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.fb0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.03a = impl_witness_table (%Core.import_ref.8e5), @Int.as.Copy.impl [concrete]
@@ -395,7 +395,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.668
-// CHECK:STDOUT:     .x = imports.%Main.import_ref.17f
+// CHECK:STDOUT:     .x = imports.%Main.import_ref.2fa
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -407,7 +407,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.6b0]
 // CHECK:STDOUT:   %.loc7_13.1: %C.6b0 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc7_13.2: %C.6b0 = converted %a.ref, %.loc7_13.1
-// CHECK:STDOUT:   %x.ref: %C.elem.bed = name_ref x, imports.%Main.import_ref.17f [concrete = imports.%.65d]
+// CHECK:STDOUT:   %x.ref: %C.elem.bed = name_ref x, imports.%Main.import_ref.2fa [concrete = imports.%.862]
 // CHECK:STDOUT:   %.loc7_23.1: ref %i32 = class_element_access %.loc7_13.2, element0
 // CHECK:STDOUT:   %.loc7_23.2: %i32 = acquire_value %.loc7_23.1
 // CHECK:STDOUT:   %impl.elem0: %.cf6 = impl_witness_access constants.%Copy.impl_witness.c36, element0 [concrete = constants.%Int.as.Copy.impl.Op.123]
@@ -719,13 +719,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.7e3: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.735)]
 // CHECK:STDOUT:   %Main.import_ref.38a = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.58c: @C.%C.elem (%C.elem.a43) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.c5a]
+// CHECK:STDOUT:   %Main.import_ref.c5d: @C.%C.elem (%C.elem.a43) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.062]
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//extend_adapt_specific_type_library, loc7_10, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.bc4: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.9ec]
 // CHECK:STDOUT:   %Main.import_ref.d90 = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.2e2d92.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.e72]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %.c5a: @C.%C.elem (%C.elem.a43) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.062: @C.%C.elem (%C.elem.a43) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -778,14 +778,14 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.38a
-// CHECK:STDOUT:     .x = imports.%Main.import_ref.58c
+// CHECK:STDOUT:     .x = imports.%Main.import_ref.c5d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedAccess(%a.param: %Adapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %C.elem.5c5 = name_ref x, imports.%Main.import_ref.58c [concrete = imports.%.c5a]
+// CHECK:STDOUT:   %x.ref: %C.elem.5c5 = name_ref x, imports.%Main.import_ref.c5d [concrete = imports.%.062]
 // CHECK:STDOUT:   %.loc15_11.1: %C.e72 = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>

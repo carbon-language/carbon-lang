@@ -122,8 +122,8 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.e43630e9a6c38c3f() #0 !dbg !17 {
-// CHECK:STDOUT:   %temp = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %temp1 = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %temp = alloca {}, align 1, !dbg !18
+// CHECK:STDOUT:   %temp1 = alloca {}, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !18
 // CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.e43630e9a6c38c3f(), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !19
@@ -267,7 +267,7 @@ fn CallF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_9.2.temp = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc9_9.2.temp = alloca {}, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_9.2.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main.48caacd0cd7b6e0f(ptr @C.val.a51.loc9_11.3), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.a2f46f9b7e36af17:core.Destroy.Core"(ptr @C.val.a51), !dbg !7

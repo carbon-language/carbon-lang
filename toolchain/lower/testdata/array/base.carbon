@@ -31,8 +31,8 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var.loc14 = alloca [1 x i32], align 4, !dbg !8
 // CHECK:STDOUT:   %_.var.loc15 = alloca [2 x double], align 8, !dbg !9
-// CHECK:STDOUT:   %_.var.loc16 = alloca [5 x {}], align 8, !dbg !10
-// CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   %_.var.loc16 = alloca [5 x {}], align 1, !dbg !10
+// CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   %_.var.loc18 = alloca [3 x i32], align 4, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc14), !dbg !8
 // CHECK:STDOUT:   %.loc14_29.3.array.index = getelementptr inbounds [1 x i32], ptr %_.var.loc14, i32 0, i64 0, !dbg !13

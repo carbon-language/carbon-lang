@@ -294,7 +294,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.636 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -310,7 +310,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.636
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_copy.carbon
@@ -326,7 +326,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.636 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -342,7 +342,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.636
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_indirect.carbon
@@ -358,7 +358,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.c59 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -374,7 +374,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.c59
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import.carbon
@@ -400,7 +400,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.636 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -426,7 +426,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.636
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -467,7 +467,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.636 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -493,7 +493,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.636
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -534,7 +534,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0ba = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.636 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d40 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -560,7 +560,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0ba
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.636
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.d40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -599,7 +599,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.c59 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -625,7 +625,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.c59
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -665,7 +665,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.c59 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -691,7 +691,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.c59
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -730,7 +730,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name_indirect, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.328: <witness> = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.61a = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.37d = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.aef = import_ref Other//export_name_indirect, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -756,7 +756,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.61a
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.37d
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.aef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -801,7 +801,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.c59 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -827,7 +827,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.c59
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -925,7 +925,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0c8 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.c59 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.4a4 = import_ref Other//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -944,6 +944,6 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.0c8
-// CHECK:STDOUT:   .x = imports.%Other.import_ref.c59
+// CHECK:STDOUT:   .x = imports.%Other.import_ref.4a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

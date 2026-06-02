@@ -53,6 +53,12 @@ prelude file using `// INCLUDE-FILE`. Usually, include
 `primitives.carbon`. This significantly speeds up execution and minimizes STDOUT
 noise.
 
+-   **Builtin Primitive Testing**: Standard operators (such as `+`, `-`, `/`,
+    `<`, etc.) are **not** imported or available inside minimized preludes. To
+    write tests with a minimal prelude footprint, call primitive builtins
+    directly (e.g., `float.negate`, `float.div`) inside your test code to build
+    expressions.
+
 ### Split Tests and `[[@TEST_NAME]]`
 
 A single physical file can test multiple scenarios using split constraints:
@@ -96,6 +102,47 @@ may omit `fail_` if it contains a least one split that has a `fail_` prefix.
 
 Both the `fail_` and `todo_` prefixes are stripped from filename properties like
 `[[@TEST_NAME]]`.
+
+### Constant Evaluation Validation
+
+When testing constant evaluation in semantic checker tests, follow these
+conventions to ensure diagnostic stability and accuracy:
+
+-   **Literal Spelling Canonicalization**: In Semantic IR, real literals
+    (floating-point constants) with identical mathematical values can be
+    assigned distinct internal representation identifiers based on spelling
+    variations in source code. To completely prevent literal spelling mismatches
+    in expected output checks, validation tests must be performed using
+    canonical comparison methods (for example, passing converted values through
+    an `Expect(X as f64)` function).
+-   **Generic Parameters Validation**: To bypass compile-time constraints where
+    local runtime variables are rejected as generic function arguments, test
+    generic type conversions at runtime, and validate compile-time conversions
+    by passing static literal values directly into primitive builtin calls.
+-   **Exhaustive Edge Case Verification**: For complex mathematical algorithms
+    (such as floating-point to integer truncation and rounding), map and execute
+    test constraints covering every code branch, conditional exit, and fallback
+    evaluation path.
+-   **Rounding Threshold Boundaries**: Test cases that land extremely close to
+    mathematical boundaries (for example, floating-point literals representing a
+    tiny fraction above 1.0, such as $2^{30} \times 2^{-30}$ or
+    $10^{10} \times 10^{-10}$, verifying correct exact truncation down to 1 or
+    0).
+-   **Precise Float Literal Spelling**: Spell floating-point literals in test
+    code with exact mathematical precision targeting target thresholds. For
+    example, if testing the smallest fractional increment above 1.0, use the
+    exact hex fractional representation (e.g. `0x1.0000000000001p0`) or a highly
+    precise decimal fractional spelling (e.g. `1.0000000000000001`) instead of
+    coarse fractions like `1.1` to ensure correct boundary assertions.
+-   **Representation Capacity Boundaries**: Explicitly target edge cases near
+    representation limits of target types. Test combinations of mantissas and
+    exponents that yield values exactly on, just below, or just above the
+    capacity limits of fixed-size destination types (e.g. signed/unsigned
+    targets like `i32` or `u32`).
+-   **Zero-Value Sizing Bounds**: Verify boundary inputs of `0` and `0.0`
+    explicitly. Assert that zero inputs are sized and simplified correctly
+    without triggering calculation underflows, division-by-zero errors, or
+    underestimating required bit allocations.
 
 ### Test Code Comments
 

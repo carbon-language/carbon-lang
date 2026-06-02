@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 
 """Computes the potentially differing rules from some git commit.
 
@@ -20,10 +25,10 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import subprocess
 import argparse
-import tempfile
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import scripts_utils

@@ -262,7 +262,7 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCreate.Create() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc7 = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %_.var.loc7 = alloca {}, align 1, !dbg !7
 // CHECK:STDOUT:   %_.var.loc8 = alloca { ptr, {} }, align 8, !dbg !8
 // CHECK:STDOUT:   %_.var.loc9 = alloca { { ptr, {} } }, align 8, !dbg !9
 // CHECK:STDOUT:   %_.var.loc12 = alloca { { ptr, {} } }, align 8, !dbg !10
@@ -528,7 +528,7 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 0, !dbg !20
 // CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 1, !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @Base.val.loc13_3, i64 12, i1 false), !dbg !16
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Base.val.loc13_3, i64 12, i1 false), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.c06798f3d09e8cc8:core.Destroy.Core"(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.c06798f3d09e8cc8:core.Destroy.Core"(ptr %v.var), !dbg !15
 // CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %i.var), !dbg !14
@@ -907,7 +907,7 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.9ddc77f6d5c74933(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !42
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !42
 // CHECK:STDOUT:   call void @"_COp.07a02b3c29b03141:core.Destroy.Core"(ptr %_.var), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !43
@@ -916,7 +916,7 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.dc3f1ae930f86538(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { {} }, align 8, !dbg !47
+// CHECK:STDOUT:   %_.var = alloca { {} }, align 1, !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !47
 // CHECK:STDOUT:   call void @"_COp.64de2e862a836f25:core.Destroy.Core"(ptr %_.var), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !48
@@ -1095,8 +1095,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_58.1.temp = alloca {}, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc12_33.1.temp = alloca {}, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc17_58.1.temp = alloca {}, align 1, !dbg !16
+// CHECK:STDOUT:   %.loc12_33.1.temp = alloca {}, align 1, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_58.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_33.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.9040cf91eef70a75.Core"(ptr %.loc12_33.1.temp, ptr %n), !dbg !17
@@ -1123,8 +1123,8 @@ fn Use() {
 // CHECK:STDOUT: define void @_CUse.Main() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %d.var = alloca { { ptr } }, align 8, !dbg !31
-// CHECK:STDOUT:   %.loc25_10.1.temp = alloca {}, align 8, !dbg !32
-// CHECK:STDOUT:   %.loc25_9.2.temp = alloca {}, align 8, !dbg !33
+// CHECK:STDOUT:   %.loc25_10.1.temp = alloca {}, align 1, !dbg !32
+// CHECK:STDOUT:   %.loc25_9.2.temp = alloca {}, align 1, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !31
 // CHECK:STDOUT:   %.loc23_31.2.base = getelementptr inbounds nuw { { ptr } }, ptr %d.var, i32 0, i32 0, !dbg !34
 // CHECK:STDOUT:   %.loc23_30.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc23_31.2.base, i32 0, i32 0, !dbg !35

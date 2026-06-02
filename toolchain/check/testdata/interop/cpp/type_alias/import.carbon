@@ -165,19 +165,19 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ptr.dbb: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %ptr.dbb [concrete]
+// CHECK:STDOUT:   %ptr.3a8: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.0d0: type = pattern_type %ptr.3a8 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.b03: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.aed: %ptr.as.Copy.impl.Op.type.b03 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.5ca: <witness> = impl_witness imports.%Copy.impl_witness_table.760, @ptr.as.Copy.impl(%C) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.804: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.b0c: %ptr.as.Copy.impl.Op.type.804 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.dbb, (%Copy.impl_witness.5ca) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.296: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.2df: type = fn_type_with_self_type %Copy.WithSelf.Op.type.296, %Copy.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.b0c, @ptr.as.Copy.impl.Op(%C) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.a6b: <witness> = impl_witness imports.%Copy.impl_witness_table.760, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.040: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.721: %ptr.as.Copy.impl.Op.type.040 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.3a8, (%Copy.impl_witness.a6b) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.85b: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.18e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.85b, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.721, @ptr.as.Copy.impl.Op(%C) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -196,43 +196,43 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT: fn @H(%c.param: ref %C, %d.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pd.patt: %pattern_type.8f3 = ref_binding_pattern pd [concrete]
-// CHECK:STDOUT:     %pd.var_patt: %pattern_type.8f3 = var_pattern %pd.patt [concrete]
+// CHECK:STDOUT:     %pd.patt: %pattern_type.0d0 = ref_binding_pattern pd [concrete]
+// CHECK:STDOUT:     %pd.var_patt: %pattern_type.0d0 = var_pattern %pd.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pd.var: ref %ptr.dbb = var %pd.var_patt
+// CHECK:STDOUT:   %pd.var: ref %ptr.3a8 = var %pd.var_patt
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %addr.loc9: %ptr.dbb = addr_of %c.ref
-// CHECK:STDOUT:   %impl.elem0.loc9: %.2df = impl_witness_access constants.%Copy.impl_witness.5ca, element0 [concrete = constants.%ptr.as.Copy.impl.Op.b0c]
+// CHECK:STDOUT:   %addr.loc9: %ptr.3a8 = addr_of %c.ref
+// CHECK:STDOUT:   %impl.elem0.loc9: %.18e = impl_witness_access constants.%Copy.impl_witness.a6b, element0 [concrete = constants.%ptr.as.Copy.impl.Op.721]
 // CHECK:STDOUT:   %bound_method.loc9_27.1: <bound method> = bound_method %addr.loc9, %impl.elem0.loc9
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_27.2: <bound method> = bound_method %addr.loc9, %specific_fn.loc9
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc9: init %ptr.dbb = call %bound_method.loc9_27.2(%addr.loc9)
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc9: init %ptr.3a8 = call %bound_method.loc9_27.2(%addr.loc9)
 // CHECK:STDOUT:   assign %pd.var, %ptr.as.Copy.impl.Op.call.loc9
-// CHECK:STDOUT:   %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.dbb] {
+// CHECK:STDOUT:   %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.3a8] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %D.ref.loc9 [concrete = constants.%ptr.dbb]
+// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %D.ref.loc9 [concrete = constants.%ptr.3a8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pd: ref %ptr.dbb = ref_binding pd, %pd.var
+// CHECK:STDOUT:   %pd: ref %ptr.3a8 = ref_binding pd, %pd.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pc.patt: %pattern_type.8f3 = ref_binding_pattern pc [concrete]
-// CHECK:STDOUT:     %pc.var_patt: %pattern_type.8f3 = var_pattern %pc.patt [concrete]
+// CHECK:STDOUT:     %pc.patt: %pattern_type.0d0 = ref_binding_pattern pc [concrete]
+// CHECK:STDOUT:     %pc.var_patt: %pattern_type.0d0 = var_pattern %pc.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pc.var: ref %ptr.dbb = var %pc.var_patt
+// CHECK:STDOUT:   %pc.var: ref %ptr.3a8 = var %pc.var_patt
 // CHECK:STDOUT:   %d.ref: ref %C = name_ref d, %d
-// CHECK:STDOUT:   %addr.loc10: %ptr.dbb = addr_of %d.ref
-// CHECK:STDOUT:   %impl.elem0.loc10: %.2df = impl_witness_access constants.%Copy.impl_witness.5ca, element0 [concrete = constants.%ptr.as.Copy.impl.Op.b0c]
+// CHECK:STDOUT:   %addr.loc10: %ptr.3a8 = addr_of %d.ref
+// CHECK:STDOUT:   %impl.elem0.loc10: %.18e = impl_witness_access constants.%Copy.impl_witness.a6b, element0 [concrete = constants.%ptr.as.Copy.impl.Op.721]
 // CHECK:STDOUT:   %bound_method.loc10_27.1: <bound method> = bound_method %addr.loc10, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_27.2: <bound method> = bound_method %addr.loc10, %specific_fn.loc10
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc10: init %ptr.dbb = call %bound_method.loc10_27.2(%addr.loc10)
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc10: init %ptr.3a8 = call %bound_method.loc10_27.2(%addr.loc10)
 // CHECK:STDOUT:   assign %pc.var, %ptr.as.Copy.impl.Op.call.loc10
-// CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.dbb] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.3a8] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc10: type = ptr_type %C.ref.loc10 [concrete = constants.%ptr.dbb]
+// CHECK:STDOUT:     %ptr.loc10: type = ptr_type %C.ref.loc10 [concrete = constants.%ptr.3a8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pc: ref %ptr.dbb = ref_binding pc, %pc.var
+// CHECK:STDOUT:   %pc: ref %ptr.3a8 = ref_binding pc, %pc.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %pc.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%pc.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %pd.var, constants.%Destroy.Op
@@ -240,5 +240,5 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.dbb) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.3a8) = "no_op";
 // CHECK:STDOUT:
