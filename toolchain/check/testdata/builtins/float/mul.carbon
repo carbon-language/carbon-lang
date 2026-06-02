@@ -81,17 +81,17 @@ fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.b55: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.9a0, %b.param: %f64.9a0) -> out %return.param: %f64.9a0 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.b55, %b.param: %f64.b55) -> out %return.param: %f64.b55 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
-// CHECK:STDOUT:   %a.ref: %f64.9a0 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.9a0 = name_ref b, %b
-// CHECK:STDOUT:   %Mul.call: init %f64.9a0 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %a.ref: %f64.b55 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.b55 = name_ref b, %b
+// CHECK:STDOUT:   %Mul.call: init %f64.b55 = call %Mul.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Mul.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

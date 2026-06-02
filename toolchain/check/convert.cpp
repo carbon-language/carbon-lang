@@ -906,16 +906,18 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     // constant.
     auto field_inst_id =
         dest_class_scope.GetEntry(*entry_id).result.target_inst_id();
-    auto lookup = context.field_initializers().Lookup(field_inst_id);
-    if (!lookup) {
+    LoadImportRef(context, field_inst_id);
+    field_inst_id = context.constant_values().GetConstantInstId(field_inst_id);
+    auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+    auto field = context.fields().Get(field_decl.field_id);
+    if (!field.initializer_id.has_value()) {
       return SemIR::InstId::None;
     }
-    auto initializer_id = lookup.value();
     SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
     const_id = GetConstantValueInSpecific(
-        context.sem_ir(), dest_type.specific_id, initializer_id);
+        context.sem_ir(), dest_type.specific_id, field.initializer_id);
     if (const_id == SemIR::ConstantId::NotConstant) {
-      context.TODO(initializer_id, "field initializer is not constant");
+      context.TODO(field.initializer_id, "field initializer is not constant");
       return SemIR::ErrorInst::InstId;
     }
 

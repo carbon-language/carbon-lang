@@ -27,6 +27,7 @@
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -180,6 +181,8 @@ class File : public Printable<File> {
   auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
+  auto fields() -> FieldStore& { return fields_; }
+  auto fields() const -> const FieldStore& { return fields_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
   auto named_constraints() -> NamedConstraintStore& {
@@ -207,11 +210,6 @@ class File : public Printable<File> {
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
   auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
-
-  using FieldInitializerMap = Map<SemIR::InstId, SemIR::InstId>;
-  auto field_initializers() -> FieldInitializerMap& {
-    return field_initializers_;
-  }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves
@@ -370,12 +368,8 @@ class File : public Printable<File> {
   // Storage for classes.
   ClassStore classes_;
 
-  // Map containing initializers for class fields. The map keys are
-  // `InstId`s corresponding to `FielDecl`s.
-  //
-  // TODO: consider replacing this map with a separate store for fields
-  // and tracking a new `FieldId` in the `FieldDecl`.
-  FieldInitializerMap field_initializers_;
+  // Storage for class fields.
+  FieldStore fields_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;

@@ -30,10 +30,10 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Baz.type.bf9f17.1: type = fn_type @Baz.loc17 [concrete]
-// CHECK:STDOUT:   %Baz.5e7afa.1: %Baz.type.bf9f17.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Baz.type.bf9f17.2: type = fn_type @Baz.loc27 [concrete]
-// CHECK:STDOUT:   %Baz.5e7afa.2: %Baz.type.bf9f17.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Baz.type.c26d77.1: type = fn_type @Baz.loc17 [concrete]
+// CHECK:STDOUT:   %Baz.6ada30.1: %Baz.type.c26d77.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Baz.type.c26d77.2: type = fn_type @Baz.loc27 [concrete]
+// CHECK:STDOUT:   %Baz.6ada30.2: %Baz.type.c26d77.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,8 +52,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.bf9f17.1 = fn_decl @Baz.loc17 [concrete = constants.%Baz.5e7afa.1] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc27: %Baz.type.bf9f17.2 = fn_decl @Baz.loc27 [concrete = constants.%Baz.5e7afa.2] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.c26d77.1 = fn_decl @Baz.loc17 [concrete = constants.%Baz.6ada30.1] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc27: %Baz.type.c26d77.2 = fn_decl @Baz.loc27 [concrete = constants.%Baz.6ada30.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.loc17() {

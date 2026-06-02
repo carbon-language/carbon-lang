@@ -70,14 +70,14 @@ library "[[@TEST_NAME]]";
 
 var x: type;
 
-interface Z {}
+interface Z(T:! type) {}
 
 class D {
   // CHECK:STDERR: fail_unexpected_runtime_impls_lhs.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   extend impl as type where x impls Z {}
+  // CHECK:STDERR:   extend impl as type where x impls Z(.Self) {}
   // CHECK:STDERR:                             ^
   // CHECK:STDERR:
-  extend impl as type where x impls Z {}
+  extend impl as type where x impls Z(.Self) {}
 }
 
 // --- fail_unexpected_runtime_impls_rhs.carbon

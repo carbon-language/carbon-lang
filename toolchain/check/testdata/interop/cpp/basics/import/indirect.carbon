@@ -145,15 +145,15 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.32d: <witness> = impl_witness imports.%Copy.impl_witness_table.07a, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.4a0: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c4a: %Int.as.Copy.impl.Op.type.4a0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.32d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.afe: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.a5f: type = fn_type_with_self_type %Copy.WithSelf.Op.type.afe, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.2f2: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.a64: %Int.as.Copy.impl.Op.type.2f2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.1a4: <witness> = impl_witness imports.%Copy.impl_witness_table.0ac, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.422: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.ce7: %Int.as.Copy.impl.Op.type.422 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.1a4) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.7e2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.604: type = fn_type_with_self_type %Copy.WithSelf.Op.type.7e2, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.ce7, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.type: type = cpp_overload_set_type @X.g.cpp_overload_set [concrete]
@@ -164,8 +164,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//direct_import, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.55f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.2f2) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.a64)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.0ac = impl_witness_table (%Core.import_ref.55f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.value: %X.g.cpp_overload_set.type = cpp_overload_set_value @X.g.cpp_overload_set [concrete = constants.%X.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.g.decl: %X.g.type = fn_decl @X.g [concrete = constants.%X.g] {
 // CHECK:STDOUT:     <elided>
@@ -183,7 +183,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%.1 [concrete = @X.%.1]
 // CHECK:STDOUT:   %.loc9_13.1: ref %i32 = class_element_access %.loc9_12.2, element0
 // CHECK:STDOUT:   %.loc9_13.2: %i32 = acquire_value %.loc9_13.1
-// CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
+// CHECK:STDOUT:   %impl.elem0: %.604 = impl_witness_access constants.%Copy.impl_witness.1a4, element0 [concrete = constants.%Int.as.Copy.impl.Op.ce7]
 // CHECK:STDOUT:   %bound_method.loc9_13.1: <bound method> = bound_method %.loc9_13.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_13.2: <bound method> = bound_method %.loc9_13.2, %specific_fn
@@ -215,7 +215,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.87c: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.e5a: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.74a: type = pattern_type %X [concrete]
@@ -223,34 +223,34 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %ptr.4ff: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
 // CHECK:STDOUT:   %X__carbon_thunk: %X__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.544: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.360: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.ec3: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.fb6: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1a5, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.ef7: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.ef7 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.544 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.fb6) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.367: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.205: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.367, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.048: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e2c: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.048 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.3d6: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.0bd, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0a4: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.ab1: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0a4 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.360 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.3d6) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.da5: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.474: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.da5, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.ab1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.ab1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_1.d5e: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_1.d9c: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.type: type = cpp_overload_set_type @X.g.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.value: %X.g.cpp_overload_set.type = cpp_overload_set_value @X.g.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.g.type: type = fn_type @X.g [concrete]
 // CHECK:STDOUT:   %X.g: %X.g.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.32d: <witness> = impl_witness imports.%Copy.impl_witness_table.07a, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.4a0: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c4a: %Int.as.Copy.impl.Op.type.4a0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.32d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.afe: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.a5f: type = fn_type_with_self_type %Copy.WithSelf.Op.type.afe, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.2f2: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.a64: %Int.as.Copy.impl.Op.type.2f2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.1a4: <witness> = impl_witness imports.%Copy.impl_witness_table.0ac, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.422: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.ce7: %Int.as.Copy.impl.Op.type.422 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.1a4) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.7e2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.604: type = fn_type_with_self_type %Copy.WithSelf.Op.type.7e2, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.ce7, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -262,19 +262,19 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.dd3: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.ec3)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1a5 = impl_witness_table (%Core.import_ref.dd3), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b42: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.048) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e2c)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.0bd = impl_witness_table (%Core.import_ref.b42), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %X.g.cpp_overload_set.value: %X.g.cpp_overload_set.type = cpp_overload_set_value @X.g.cpp_overload_set [concrete = constants.%X.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.g.decl: %X.g.type = fn_decl @X.g [concrete = constants.%X.g] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.55f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.2f2) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.a64)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.0ac = impl_witness_table (%Core.import_ref.55f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.87c {
+// CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.e5a {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ax.patt: %pattern_type.74a = ref_binding_pattern ax [concrete]
@@ -283,13 +283,13 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %ax.var: ref %X = var %ax.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_3.1: ref %X = splice_block %ax.var {}
-// CHECK:STDOUT:   %impl.elem0.loc9: %.205 = impl_witness_access constants.%ImplicitAs.impl_witness.fb6, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e6b]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.474 = impl_witness_access constants.%ImplicitAs.impl_witness.3d6, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.ab1]
 // CHECK:STDOUT:   %bound_method.loc9_16.1: <bound method> = bound_method %int_1, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_16.2: <bound method> = bound_method %int_1, %specific_fn.loc9 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_16.2(%int_1) [concrete = constants.%int_1.d5e]
-// CHECK:STDOUT:   %.loc9_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.d5e]
-// CHECK:STDOUT:   %.loc9_16.2: %i32 = converted %int_1, %.loc9_16.1 [concrete = constants.%int_1.d5e]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_16.2(%int_1) [concrete = constants.%int_1.d9c]
+// CHECK:STDOUT:   %.loc9_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.d9c]
+// CHECK:STDOUT:   %.loc9_16.2: %i32 = converted %int_1, %.loc9_16.1 [concrete = constants.%int_1.d9c]
 // CHECK:STDOUT:   %addr: %ptr.4ff = addr_of %.loc9_3.1
 // CHECK:STDOUT:   %X__carbon_thunk.call: init %empty_tuple.type = call imports.%X__carbon_thunk.decl(%.loc9_16.2, %addr)
 // CHECK:STDOUT:   %.loc9_3.2: init %X to %.loc9_3.1 = mark_in_place_init %X__carbon_thunk.call
@@ -304,9 +304,9 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %g.ref: %X.g.cpp_overload_set.type = name_ref g, imports.%X.g.cpp_overload_set.value [concrete = constants.%X.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc10_19: <bound method> = bound_method %ax.ref.loc10_17, %g.ref
 // CHECK:STDOUT:   %X.g.call: init %i32 = call imports.%X.g.decl(%ax.ref.loc10_17)
-// CHECK:STDOUT:   %.loc10_23.1: %tuple.type.87c = tuple_literal (%.loc10_13.1, %X.g.call)
+// CHECK:STDOUT:   %.loc10_23.1: %tuple.type.e5a = tuple_literal (%.loc10_13.1, %X.g.call)
 // CHECK:STDOUT:   %.loc10_13.2: %i32 = acquire_value %.loc10_13.1
-// CHECK:STDOUT:   %impl.elem0.loc10: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.604 = impl_witness_access constants.%Copy.impl_witness.1a4, element0 [concrete = constants.%Int.as.Copy.impl.Op.ce7]
 // CHECK:STDOUT:   %bound_method.loc10_13.1: <bound method> = bound_method %.loc10_13.2, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_13.2: <bound method> = bound_method %.loc10_13.2, %specific_fn.loc10
@@ -315,8 +315,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc10_23.2: init %i32 to %tuple.elem0 = in_place_init %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
 // CHECK:STDOUT:   %.loc10_23.3: init %i32 to %tuple.elem1 = in_place_init %X.g.call
-// CHECK:STDOUT:   %.loc10_23.4: init %tuple.type.87c to %return.param = tuple_init (%.loc10_23.2, %.loc10_23.3)
-// CHECK:STDOUT:   %.loc10_24: init %tuple.type.87c = converted %.loc10_23.1, %.loc10_23.4
+// CHECK:STDOUT:   %.loc10_23.4: init %tuple.type.e5a to %return.param = tuple_init (%.loc10_23.2, %.loc10_23.3)
+// CHECK:STDOUT:   %.loc10_24: init %tuple.type.e5a = converted %.loc10_23.1, %.loc10_23.4
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %ax.var, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%ax.var)
 // CHECK:STDOUT:   return %.loc10_24 to %return.param
@@ -332,17 +332,17 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Y.ef9: type = class_type @Y.1 [concrete]
-// CHECK:STDOUT:   %Y.elem.c50: type = unbound_element_type %Y.ef9, %i32 [concrete]
+// CHECK:STDOUT:   %Y.elem.530: type = unbound_element_type %Y.ef9, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.b5d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c85: %Int.as.Copy.impl.Op.type.b5d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.32d: <witness> = impl_witness imports.%Copy.impl_witness_table.07a, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.4a0: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.c4a: %Int.as.Copy.impl.Op.type.4a0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.66a: %Copy.type = facet_value %i32, (%Copy.impl_witness.32d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.afe: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.66a) [concrete]
-// CHECK:STDOUT:   %.a5f: type = fn_type_with_self_type %Copy.WithSelf.Op.type.afe, %Copy.facet.66a [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.c4a, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.2f2: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.a64: %Int.as.Copy.impl.Op.type.2f2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.1a4: <witness> = impl_witness imports.%Copy.impl_witness_table.0ac, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.422: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.ce7: %Int.as.Copy.impl.Op.type.422 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.14d: %Copy.type = facet_value %i32, (%Copy.impl_witness.1a4) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.7e2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.14d) [concrete]
+// CHECK:STDOUT:   %.604: type = fn_type_with_self_type %Copy.WithSelf.Op.type.7e2, %Copy.facet.14d [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.ce7, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.type.300273.1: type = fn_type @Y.cpp_destructor.1 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.6dd6f2.1: %Y.cpp_destructor.type.300273.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
@@ -359,10 +359,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Z__carbon_thunk: %Z__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.Op.type: type = fn_type @Z.Op [concrete]
 // CHECK:STDOUT:   %Z.Op: %Z.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.862: <witness> = custom_witness (%Z.Op), @Copy [concrete]
-// CHECK:STDOUT:   %Copy.facet.916: %Copy.type = facet_value %Z, (%custom_witness.862) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8ae: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.916) [concrete]
-// CHECK:STDOUT:   %.158: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8ae, %Copy.facet.916 [concrete]
+// CHECK:STDOUT:   %custom_witness.069: <witness> = custom_witness (%Z.Op), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.ede: %Copy.type = facet_value %Z, (%custom_witness.069) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f30: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.ede) [concrete]
+// CHECK:STDOUT:   %.8e1: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f30, %Copy.facet.ede [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.type.300273.2: type = fn_type @Y.cpp_destructor.2 [concrete]
 // CHECK:STDOUT:   %Y.cpp_destructor.6dd6f2.2: %Y.cpp_destructor.type.300273.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -370,8 +370,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.G: %G.type = import_ref Main//direct_import, G, loaded [concrete = constants.%G]
 // CHECK:STDOUT:   %Main.H: %H.type = import_ref Main//direct_import, H, loaded [concrete = constants.%H]
-// CHECK:STDOUT:   %Core.import_ref.809: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.b5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c85)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.07a = impl_witness_table (%Core.import_ref.809), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.55f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.2f2) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.a64)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.0ac = impl_witness_table (%Core.import_ref.55f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Z.Z.decl: %Z.Z.type = fn_decl @Z.Z [concrete = constants.%Z.Z] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -390,10 +390,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc9_12.1: ref %Y.ef9 = temporary_storage
 // CHECK:STDOUT:   %G.call: init %Y.ef9 to %.loc9_12.1 = call %G.ref()
 // CHECK:STDOUT:   %.loc9_12.2: ref %Y.ef9 = temporary %.loc9_12.1, %G.call
-// CHECK:STDOUT:   %y.ref: %Y.elem.c50 = name_ref y, @Y.1.%.1 [concrete = @Y.1.%.1]
+// CHECK:STDOUT:   %y.ref: %Y.elem.530 = name_ref y, @Y.1.%.1 [concrete = @Y.1.%.1]
 // CHECK:STDOUT:   %.loc9_13.1: ref %i32 = class_element_access %.loc9_12.2, element0
 // CHECK:STDOUT:   %.loc9_13.2: %i32 = acquire_value %.loc9_13.1
-// CHECK:STDOUT:   %impl.elem0: %.a5f = impl_witness_access constants.%Copy.impl_witness.32d, element0 [concrete = constants.%Int.as.Copy.impl.Op.c4a]
+// CHECK:STDOUT:   %impl.elem0: %.604 = impl_witness_access constants.%Copy.impl_witness.1a4, element0 [concrete = constants.%Int.as.Copy.impl.Op.ce7]
 // CHECK:STDOUT:   %bound_method.loc9_13.1: <bound method> = bound_method %.loc9_13.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_13.2: <bound method> = bound_method %.loc9_13.2, %specific_fn
@@ -413,7 +413,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc15_13.1: ref %Z = class_element_access %.loc15_12.2, element0
 // CHECK:STDOUT:   %.loc15_13.2: %Z = acquire_value %.loc15_13.1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.158 = impl_witness_access constants.%custom_witness.862, element0 [concrete = constants.%Z.Op]
+// CHECK:STDOUT:   %impl.elem0: %.8e1 = impl_witness_access constants.%custom_witness.069, element0 [concrete = constants.%Z.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_13.2, %impl.elem0
 // CHECK:STDOUT:   %.loc15_13.3: ref %Z = temporary_storage
 // CHECK:STDOUT:   %Op.ref: %Z.Z.type = name_ref Op, imports.%Z.Z.decl [concrete = constants.%Z.Z]

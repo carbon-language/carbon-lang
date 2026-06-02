@@ -23,6 +23,7 @@
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -281,6 +282,11 @@ struct Worklist {
       Add(entity_name.name_id);
     }
     Add(entity_name.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity_name.name_id, entity_name.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -354,9 +360,14 @@ struct Worklist {
     }
   }
 
+  auto AddPackage(const SemIR::File* file) -> void {
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    Add(file->package_id());
+  }
+
   auto AddPackage(NameScopeId name_scope_id) -> void {
     if (name_scope_id == NameScopeId::Package) {
-      AddLibrary(sem_ir);
+      AddPackage(sem_ir);
       return;
     }
 
@@ -364,7 +375,7 @@ struct Worklist {
     CARBON_CHECK(scope.is_imported_package());
     if (!scope.import_ir_scopes().empty()) {
       auto import_ir_id = scope.import_ir_scopes().front().first;
-      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
+      AddPackage(sem_ir->import_irs().Get(import_ir_id).sem_ir);
     } else {
       AddInvalid();
     }
@@ -403,8 +414,11 @@ struct Worklist {
   template <typename EntityT = EntityWithParamsBase>
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
-    if (entity.parent_scope_id.has_value()) {
-      Add(entity.parent_scope_id);
+    Add(entity.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity.name_id, entity.parent_scope_id)) {
+      AddLibrary(sem_ir);
     }
   }
 
@@ -416,9 +430,7 @@ struct Worklist {
     const CppOverloadSet& cpp_overload_set =
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
-    if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(cpp_overload_set.parent_scope_id);
-    }
+    Add(cpp_overload_set.parent_scope_id);
   }
 
   auto Add(ClangDeclId /*decl_id*/) -> void {
@@ -439,13 +451,23 @@ struct Worklist {
     llvm::raw_svector_ostream os(cpp_mangled_name);
     if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
       AddString(cpp_mangled_name);
+    } else {
+      AddInvalid();
     }
+  }
+
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
   }
 
   auto Add(VtableId vtable_id) -> void {
     const auto& vtable = sem_ir->vtables().Get(vtable_id);
     if (vtable.class_id.has_value()) {
       Add(vtable.class_id);
+    } else {
+      AddInvalid();
     }
     Add(vtable.virtual_functions_id);
   }
@@ -554,10 +576,12 @@ struct Worklist {
 
   auto Add(PackageNameId package_id) -> void {
     if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      // Add a marker to prevent collisions between user package names and
+      // special package names, and to delimit `NameScopeId` fingerprints.
+      AddString("<package>");
       AddString(sem_ir->identifiers().Get(ident_id));
     } else {
-      // TODO: May collide with a user package of the same name. Consider using
-      // a different value.
+      AddString("<special package>");
       AddString(package_id.AsSpecialName());
     }
   }
@@ -574,14 +598,22 @@ struct Worklist {
     }
   }
 
+  // Adds just the library name to the fingerprint. Does not add the package
+  // name, as it is typically already included as the outermost scope name. The
+  // caller is responsible for ensuring the package name is added somehow.
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
-    Add(file->package_id());
+    // Add a marker to prevent collisions with scope names.
+    AddString("<library>");
     Add(file->library_id());
   }
 
   auto Add(ImportIRId ir_id) -> void {
-    AddLibrary(sem_ir->import_irs().Get(ir_id).sem_ir);
+    // TODO: Is the ImportIRId for an ImportRef always the same IR for the same
+    // entity (eg, always the owning IR, or always the first-declaring IR)?
+    const auto* file = sem_ir->import_irs().Get(ir_id).sem_ir;
+    AddPackage(file);
+    AddLibrary(file);
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {

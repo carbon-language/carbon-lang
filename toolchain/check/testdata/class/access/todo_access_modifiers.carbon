@@ -37,7 +37,7 @@ class Access {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Access.elem: type = unbound_element_type %Access, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0fd: <witness> = complete_type_witness %struct_type.k.l [concrete]
+// CHECK:STDOUT:   %complete_type.c7d: <witness> = complete_type_witness %struct_type.k.l [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -63,7 +63,7 @@ class Access {
 // CHECK:STDOUT:   %Access.G.decl: %Access.G.type = fn_decl @Access.G [concrete = constants.%Access.G] {} {}
 // CHECK:STDOUT:   %.loc21: %Access.elem = field_decl k, element0 [concrete]
 // CHECK:STDOUT:   %.loc23: %Access.elem = field_decl l, element1 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.l [concrete = constants.%complete_type.0fd]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.l [concrete = constants.%complete_type.c7d]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

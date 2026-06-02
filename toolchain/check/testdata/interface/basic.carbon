@@ -25,10 +25,10 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
-// CHECK:STDOUT:   %Self.63a: %Empty.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.2f3: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
-// CHECK:STDOUT:   %Self.b75: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared.WithSelf(%Self.b75) [symbolic]
+// CHECK:STDOUT:   %Self.c9a: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared.WithSelf(%Self.c9a) [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F: %ForwardDeclared.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.decl [concrete]
@@ -45,7 +45,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.63a]
+// CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.2f3]
 // CHECK:STDOUT:   %Empty.WithSelf.decl = interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -56,7 +56,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.b75]
+// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c9a]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.decl = interface_with_self_decl @ForwardDeclared [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
@@ -75,9 +75,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.63a) {}
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.2f3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self.b75) {}
+// CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self.c9a) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.b75) {}
+// CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.c9a) {}
 // CHECK:STDOUT:

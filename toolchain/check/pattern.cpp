@@ -13,6 +13,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 
 namespace Carbon::Check {
 
@@ -153,13 +154,14 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     }
 
     auto field_id =
-        AddInst<SemIR::FieldDecl>(context, name_loc,
-                                  {.type_id = field_type_id,
-                                   .name_id = name_id,
-                                   .index = SemIR::ElementIndex::None});
-    context.field_decls_stack().AppendToTop(field_id);
+        context.fields().Add({.index = SemIR::ElementIndex::None,
+                              .initializer_id = SemIR::InstId::None});
+    auto field_decl_id = AddInst<SemIR::FieldDecl>(
+        context, name_loc,
+        {.type_id = field_type_id, .name_id = name_id, .field_id = field_id});
+    context.field_decls_stack().AppendToTop(field_decl_id);
 
-    return {.pattern_id = field_id, .bind_id = field_id};
+    return {.pattern_id = field_decl_id, .bind_id = field_decl_id};
   }
 
   auto bind_id = AddInstInNoBlock(
@@ -220,6 +222,19 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
       context.var_storage_map().Insert(
           inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
     }
+  }
+}
+
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind {
+  auto param = context.insts().Get(param_inst_id);
+  CARBON_CHECK(param.Is<SemIR::AnyParamPattern>());
+  if (param.Is<SemIR::RefParamPattern>()) {
+    return ParamPatternKind::Ref;
+  } else if (param.Is<SemIR::VarParamPattern>()) {
+    return ParamPatternKind::Var;
+  } else {
+    return ParamPatternKind::Value;
   }
 }
 
