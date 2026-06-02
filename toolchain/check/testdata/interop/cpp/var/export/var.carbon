@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/var/export/var.carbon
 
-// --- fail_todo_var.carbon
+// --- var.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp;
@@ -19,10 +19,6 @@ var x: i32 = 123;
 
 inline Cpp '''
 int Get() {
-  // CHECK:STDERR: fail_todo_var.carbon:[[@LINE+4]]:18: error: no member named 'x' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    13 |   return Carbon::x;
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR:
   return Carbon::x;
 }
 ''';
@@ -32,12 +28,16 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
+// CHECK:STDERR: fail_var_unsupported_type.carbon:[[@LINE+4]]:5: error: semantics TODO: `failed to map Carbon type to C++` [SemanticsTodo]
+// CHECK:STDERR: var x: () = ();
+// CHECK:STDERR:     ^~~~~
+// CHECK:STDERR:
 var x: () = ();
 
 inline Cpp '''
 void F() {
   // CHECK:STDERR: fail_var_unsupported_type.carbon:[[@LINE+4]]:11: error: no member named 'x' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    13 |   Carbon::x;
+  // CHECK:STDERR:    17 |   Carbon::x;
   // CHECK:STDERR:       |           ^
   // CHECK:STDERR:
   Carbon::x;
