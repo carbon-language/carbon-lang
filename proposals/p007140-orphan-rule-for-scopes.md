@@ -31,7 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Abstract
 
 Extend the orphan rule to require that at least one name in the type structure
-of an `impl` declaration is defined in, or by, the same scope as the `impl`
+of an `impl` declaration is introduced in, or by, the same scope as the `impl`
 declaration, or in a scope nested within the scope of the `impl` declaration.
 
 ## Problem
@@ -56,7 +56,7 @@ The goal of the orphan rule is:
 > [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
 
 However with its current wording, it is possible to violate this ambition by
-placing a type definition (and owning declaration) in a library api file, then
+placing a type definition (an owning declaration) in a library api file, then
 placing an `impl` decl referring to it in the same library's impl file. This
 satisfies the rule that the `impl` is in the same library as the definition of
 the type, and that users performing `impl` lookup can import the definition of
@@ -117,16 +117,15 @@ known. This makes the `impl` declaration available, but unusable.
 
 We propose to change the orphan rule to:
 
-> Some name from the type structure of an `impl` declaration must have an owning
-> declaration that is in the same file as the `impl` declaration, and either:
+> Some name from the type structure of an `impl` declaration must be an _anchor
+> name_, which is a name that names an entity whose first
+> [owning declaration](/docs/design/declaring_entities.md) is in the same file
+> as the first owning declaration of the `impl`, and either:
 >
-> -   the owning declaration is a definition whose scope directly contains the
->     `impl` declaration, or
-> -   the owning declaration is withinin the scope containing the `impl`
+> -   the scope of the owning declaration directly contains the `impl`
+>     declaration, or
+> -   the owning declaration is within the scope containing the `impl`
 >     declaration, including nested scopes.
-
-In this proposal, we refer the name in an `impl` declaration, which satisfies
-this rule for the declaration, as the _anchor name_.
 
 ## Details
 
@@ -148,8 +147,8 @@ follows from the fact that all users of `class C` will see its owning
 declaration.
 
 In exchange, the new rule disallows placing an `impl` declaration in a library
-impl file that only refers to names from the library api file, since this
-creates coherence issues.
+impl file that only refers to names whose first owning declaration is in the
+library api file, since this creates coherence issues.
 
 The new rule further restricts other `impl` declarations so that they can not
 only refer to names unrelated to the scope containing the `impl` declaration.
@@ -163,7 +162,7 @@ interface Z {}
 
 There are three cases allowed by the new rule:
 
-1. An anchor name is defined by the scope containing the `impl` declaration.
+1. An anchor name is introduced by the scope containing the `impl` declaration.
 
 ```carbon
 fn F() {
@@ -173,7 +172,7 @@ fn F() {
 }
 ```
 
-Here the `Self` is resolved to `C`, and `C` is being defined by the scope
+Here the `Self` is resolved to `C`, and `C` is being introduced by the scope
 containing the `impl` declaration. If `C` is generic, any use of the impl will
 require naming a specific `C`.
 
@@ -186,13 +185,13 @@ fn F() {
 }
 ```
 
-Here the `impl` declaration is in the scope of `fn F`, and the owning
+Here the `impl` declaration is in the scope of `fn F`, and the first owning
 declaration of `C` is within the same scope. All users of the `impl` declaration
-will have to be inside `F` since it uses the name `C` which is declared inside
+will have to be inside `F` since it uses the name `C` which is introduced inside
 the scope of `F`. Thus if `F` is generic, all users of the `impl` will share a
 consistent view of any generic bindings used by the `impl` declaration.
 
-3. A name is defined in a scope nested within the scope containing the `impl`
+3. A name is introduced in a scope nested within the scope containing the `impl`
    declaration.
 
 ```carbon
@@ -204,12 +203,12 @@ fn F() {
 }
 ```
 
-Here the `impl` declaration is in the same scope as the owning declaration of
-`C`. The owning declaration of `D` is within the nested scope of `C`. Any user
-of the `impl` declaration will need to see the owning declaration of both `C`
-and `D`, which means it will have to be inside `F`. Thus if `F` is generic, all
-users of the `impl` will share a consistent view of any generic bindings used by
-the `impl` declaration.
+Here the `impl` declaration is in the same scope as the first owning declaration
+of `C`. The first owning declaration of `D` is within the nested scope of `C`.
+Any user of the `impl` declaration will need to see the first owning declaration
+of both `C` and `D`, which means it will have to be inside `F`. Thus if `F` is
+generic, all users of the `impl` will share a consistent view of any generic
+bindings used by the `impl` declaration.
 
 ### What the orphan rule disallows
 

@@ -4560,23 +4560,24 @@ declarations that can match must be imported along with some name in that type
 or interface.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
-be an _anchor name_, which is an
-[owning declaration](/docs/design/declaring_entities.md) that is in the same
-file as the `impl` declaration, and either:
+be an _anchor name_, which is a name that names an entity whose first
+[owning declaration](/docs/design/declaring_entities.md) is in the same file as
+the first owning declaration of the `impl`, and either:
 
--   the owning declaration is a definition whose scope directly contains the
-    `impl` declaration, or
+-   the scope of the owning declaration directly contains the `impl`
+    declaration, or
 -   the owning declaration is within the scope containing the `impl`
     declaration, including nested scopes.
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
-defined in a file where one of the names `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`,
-or `E` is introduced by its owning declaration. This ensures that if the name is
-imported, the `impl` will be imported along with it. We further require that the
-`impl` be anchored by a name in its type structure to its current scope in some
-way. This ensures that when declared within a generic context, the `impl` is
-only accessible through a specific of the enclosing generic.
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl`'s first
+owning declaration must be in a file where one of the names `I`, `T`, `U`, `V`,
+`A`, `B`, `C`, `D`, or `E` is introduced by its first owning declaration. This
+ensures that if the name is imported, the `impl` will be imported along with it.
+We further require that the `impl` be anchored by a name in its type structure
+to its current scope in some way. This ensures that when declared within a
+generic context, the `impl` is only accessible through a specific of the
+enclosing generic.
 
 ```carbon
 interface Z {}
@@ -4644,6 +4645,23 @@ fn F(T:! type) {
 }
 ```
 
+```carbon
+// api file.
+library "lib";
+
+class C;
+interface Z {}
+
+// impl file.
+impl library "lib";
+
+class C {}
+
+// ❌ Rejected, no anchor name. The names `C` and `Z` are introduced in the api
+// file.
+impl C as Z {}
+```
+
 This rule accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
@@ -4668,8 +4686,8 @@ sufficient since it
 [need not be imported](/proposals/p000920-generic-blanket-impls-details-5.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
 Since Carbon in addition requires there be no cyclic library dependencies, we
-conclude that there is at most one library api file that can contain owning
-`impl` declarations with a particular type structure.
+conclude that there is at most one library that can contain owning `impl`
+declarations with a particular type structure.
 
 > **References:** Implementation coherence is
 > [defined in terminology](terminology.md#coherence), and is
@@ -4679,9 +4697,9 @@ conclude that there is at most one library api file that can contain owning
 > **Alternatives considered:** Alternative choices for the orphan rule were
 > considered:
 >
-> -   [A syntactic check, instead of applying the rule after evaluation](/proposals/p7140.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
-> -   [Disallowing the anchor name to be in a nested scope](/proposals/p7140.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
-> -   [Anchoring to a definition](/proposals/p7140.md#anchoring-to-a-definition)
+> -   [A syntactic check, instead of applying the rule after evaluation](/proposals/p007140-orphan-rule-for-scopes.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
+> -   [Disallowing the anchor name to be in a nested scope](/proposals/p007140-orphan-rule-for-scopes.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
+> -   [Anchoring to a definition](/proposals/p007140-orphan-rule-for-scopes.md#anchoring-to-a-definition)
 
 #### Overlap rule
 

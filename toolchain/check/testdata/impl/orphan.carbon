@@ -23,40 +23,46 @@ constraint ImportedN(T:! type) {}
 
 class ImportedAnyParam[T:! type](X:! T) {}
 
-// --- fail_class_definition_missing.carbon
+// --- fail_todo_class_definition_missing.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
 
+// This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// CHECK:STDERR: fail_class_definition_missing.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
+// TODO: This should be accepted.
+// CHECK:STDERR: fail_todo_class_definition_missing.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
 // CHECK:STDERR: impl C as ImportedY {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as ImportedY {}
 
-// --- fail_class_definition_missing_for_self_specific.carbon
+// --- fail_todo_class_definition_missing_for_self_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
 
+// This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// CHECK:STDERR: fail_class_definition_missing_for_self_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
+// TODO: This should be accepted.
+// CHECK:STDERR: fail_todo_class_definition_missing_for_self_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
 // CHECK:STDERR: impl ImportedD(C) as ImportedY {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl ImportedD(C) as ImportedY {}
 
-// --- fail_class_definition_missing_for_interface_specific.carbon
+// --- fail_todo_class_definition_missing_for_interface_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
 
+// This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// CHECK:STDERR: fail_class_definition_missing_for_interface_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
+// TODO: This should be accepted.
+// CHECK:STDERR: fail_todo_class_definition_missing_for_interface_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
 // CHECK:STDERR: impl ImportedC as ImportedZ(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -368,3 +374,53 @@ class C {
 impl C.D as ImportedY {}
 
 class C.D {}
+
+// --- fail_todo_extern_class.carbon
+library "[[@TEST_NAME]]";
+
+import library "use_extern_class";
+
+// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE+4]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE-5]]:1: in import [InImport]
+extern class C;
+
+// --- fail_use_extern_class.carbon
+library "[[@TEST_NAME]]";
+
+import library "imports";
+
+// A non-owning decl of C.
+// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+8]]:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern library "extern_class" class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+4]]:1: error: semantics TODO: `extern library` [SemanticsTodo]
+// CHECK:STDERR: extern library "extern_class" class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+extern library "extern_class" class C;
+
+// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
+// CHECK:STDERR: impl C as ImportedY {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as ImportedY {}
+
+// --- imported_first_owning_decl.carbon
+library "[[@TEST_NAME]]";
+
+class ImportedClassDecl;
+
+interface ImportedInterface {}
+
+// --- todo_fail_imported_first_owning_decl.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+// This is an owning decl, but not the first owning decl, which is in the api
+// file. So it can not be an anchor name.
+class ImportedClassDecl {}
+
+// TODO: This should fail, there is no anchor name.
+impl ImportedClassDecl as ImportedInterface {}
