@@ -70,24 +70,12 @@ fn G() {
 // Tests that a lambda without a body used as a binary operator operand
 // inside a function body does not cause a FATAL verification error.
 
-// CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+4]]:3: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn{
-// CHECK:STDERR:   ^
-// CHECK:STDERR:
-fn{
-    // CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+4]]:6: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
-    // CHECK:STDERR:     p>fn()
-    // CHECK:STDERR:      ^
+fn H() {
+    // CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+4]]:14: error: expected `->`, `=>`, or `{` [ExpectedLambdaBody]
+    // CHECK:STDERR:     p > fn() ;
+    // CHECK:STDERR:              ^
     // CHECK:STDERR:
-    p>fn()
-// CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+8]]:1: error: expected `->`, `=>`, or `{` [ExpectedLambdaBody]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+4]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
+    p > fn() ;
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
@@ -213,15 +201,17 @@ fn{
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '{', has_error: yes},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'p'},
 // CHECK:STDOUT:             {kind: 'LambdaIntroducer', text: 'fn'},
 // CHECK:STDOUT:               {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'InfixOperatorGreater', text: '>', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
