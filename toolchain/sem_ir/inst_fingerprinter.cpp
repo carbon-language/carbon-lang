@@ -414,9 +414,7 @@ struct Worklist {
   template <typename EntityT = EntityWithParamsBase>
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
-    if (entity.parent_scope_id.has_value()) {
-      Add(entity.parent_scope_id);
-    }
+    Add(entity.parent_scope_id);
 
     if (sem_ir->name_scopes().IsPrivateWithinNamespace(
             entity.name_id, entity.parent_scope_id)) {
@@ -432,9 +430,7 @@ struct Worklist {
     const CppOverloadSet& cpp_overload_set =
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
-    if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(cpp_overload_set.parent_scope_id);
-    }
+    Add(cpp_overload_set.parent_scope_id);
   }
 
   auto Add(ClangDeclId /*decl_id*/) -> void {
@@ -455,6 +451,8 @@ struct Worklist {
     llvm::raw_svector_ostream os(cpp_mangled_name);
     if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
       AddString(cpp_mangled_name);
+    } else {
+      AddInvalid();
     }
   }
 
@@ -468,6 +466,8 @@ struct Worklist {
     const auto& vtable = sem_ir->vtables().Get(vtable_id);
     if (vtable.class_id.has_value()) {
       Add(vtable.class_id);
+    } else {
+      AddInvalid();
     }
     Add(vtable.virtual_functions_id);
   }
@@ -576,10 +576,12 @@ struct Worklist {
 
   auto Add(PackageNameId package_id) -> void {
     if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      // Add a marker to prevent collisions between user package names and
+      // special package names, and to delimit `NameScopeId` fingerprints.
+      AddString("<package>");
       AddString(sem_ir->identifiers().Get(ident_id));
     } else {
-      // TODO: May collide with a user package of the same name. Consider using
-      // a different value.
+      AddString("<special package>");
       AddString(package_id.AsSpecialName());
     }
   }
@@ -601,6 +603,8 @@ struct Worklist {
   // caller is responsible for ensuring the package name is added somehow.
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
+    // Add a marker to prevent collisions with scope names.
+    AddString("<library>");
     Add(file->library_id());
   }
 
