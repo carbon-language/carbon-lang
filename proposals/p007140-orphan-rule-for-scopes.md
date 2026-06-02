@@ -120,7 +120,7 @@ We propose to change the orphan rule to:
 > Some name from the type structure of an `impl` declaration must be an _anchor
 > name_, which is a name that names an entity whose first
 > [owning declaration](/docs/design/declaring_entities.md) is in the same file
-> as the first owning declaration of the `impl`, and either:
+> as each owning declaration of the `impl`, and either:
 >
 > -   the scope of the owning declaration directly contains the `impl`
 >     declaration, or
