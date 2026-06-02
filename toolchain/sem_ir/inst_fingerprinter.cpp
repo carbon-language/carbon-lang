@@ -596,6 +596,9 @@ struct Worklist {
     }
   }
 
+  // Adds just the library name to the fingerprint. Does not add the package
+  // name, as it is typically already included as the outermost scope name. The
+  // caller is responsible for ensuring the package name is added somehow.
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
     Add(file->library_id());
