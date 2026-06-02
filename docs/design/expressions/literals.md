@@ -23,6 +23,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Usage](#usage)
     -   [Alternatives considered](#alternatives-considered-1)
 -   [String literals](#string-literals)
+-   [Character literals](#character-literals)
+-   [Character type literals](#character-type-literals)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -249,6 +251,31 @@ String literal syntax is covered in the
 
 No design for string types has been through the proposal process yet.
 
+## Character literals
+
+Character literals are defined in the
+[character literals lexical conventions](../lexical_conventions/character_literals.md).
+
+In Carbon, character literals have the type `Core.CharLiteral`, which represents
+a single Unicode code point. This type supports addition and subtraction, see
+[arithmetic](arithmetic.md#character-types). For example, `'a' + 1` results in a
+`Core.CharLiteral` with value `'b'`. Operations that result in invalid Unicode
+code points (such as `'a' + 0xFFFFFF`) are compile-time errors.
+
+A `Core.CharLiteral` will implicitly convert to `char` if its value is in the
+range `0x00`..`0x7F`, see
+[implicit conversions](implicit_conversions.md#character-types).
+
+## Character type literals
+
+Carbon defines `char` as a type literal, which is the same type as `Core.Char`,
+an adapter for `u8`.
+
+-   `char` notionally represents a single UTF-8 code unit.
+-   It can contain invalid UTF-8 code units, as long as it remains 8 bits. No
+    runtime validation is guaranteed.
+-   Carbon's string types use `char` for elements.
+
 ## References
 
 -   Proposal
@@ -260,6 +287,10 @@ No design for string types has been through the proposal process yet.
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 -   Proposal
+    [#1964: Character Literals](https://github.com/carbon-language/carbon-lang/pull/1964)
+-   Proposal
     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 -   Question-for-leads issue
     [#2113: Structure, scope, and naming of the prelude and syntax aliases](https://github.com/carbon-language/carbon-lang/issues/2113)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

@@ -798,6 +798,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
+    auto field_id =
+        context.fields().Add({.index = SemIR::ElementIndex(fields.size()),
+                              // TODO: import initializers.
+                              .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst(
         context, SemIR::LocIdAndInst::RuntimeVerified(
                      context.sem_ir(), import_ir_inst_id,
@@ -805,7 +809,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
                          .name_id = field_name_id,
-                         .index = SemIR::ElementIndex(fields.size())}));
+                         .field_id = field_id,
+                     }));
     // The imported SemIR::FieldDecl represents the original declaration `decl`,
     // which is either the field or the indirect field declaration.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
@@ -1329,6 +1334,26 @@ static auto MapReferenceType(Context& context, clang::QualType type,
   return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
+// Maps a C++ array type to a Carbon array type.
+static auto MapArrayType(Context& context, const clang::ArrayType* array_type,
+                         TypeExpr element_type_expr) -> TypeExpr {
+  if (const auto* constant_array_type =
+          llvm::dyn_cast<clang::ConstantArrayType>(array_type)) {
+    auto bound_const_id = TryEvalInst(
+        context,
+        SemIR::IntValue{.type_id = GetSingletonType(
+                            context, SemIR::IntLiteralType::TypeInstId),
+                        .int_id = context.ints().AddUnsigned(
+                            constant_array_type->getSize())});
+    auto bound_inst_id = context.constant_values().GetInstId(bound_const_id);
+    auto array_type_id =
+        GetArrayType(context, bound_inst_id, element_type_expr.inst_id);
+    return TypeExpr::ForUnsugared(context, array_type_id);
+  }
+
+  return TypeExpr::None;
+}
+
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
 // we check for pointer nullability and nullability will be lost by
 // canonicalization.
@@ -1344,6 +1369,8 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
       type = type->getPointeeType();
     } else if (type->isReferenceType()) {
       type = type.getNonReferenceType();
+    } else if (const auto* array_type = type->getAsArrayTypeUnsafe()) {
+      type = array_type->getElementType();
     } else {
       break;
     }
@@ -1364,6 +1391,8 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
       mapped = MapPointerType(context, loc_id, wrapper, mapped);
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
+    } else if (const auto* array_type = wrapper->getAsArrayTypeUnsafe()) {
+      mapped = MapArrayType(context, array_type, mapped);
     } else {
       CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
     }

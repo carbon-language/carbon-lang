@@ -28,7 +28,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [TODO: Struct literals](#todo-struct-literals)
 -   [TODO: Accessing C++ classes, structs, and members](#todo-accessing-c-classes-structs-and-members)
 -   [TODO: Accessing global variables](#todo-accessing-global-variables)
--   [TODO: Bi-directional type mapping: primitives and core types](#todo-bi-directional-type-mapping-primitives-and-core-types)
+-   [Bi-directional type mapping: primitives and core types](#bi-directional-type-mapping-primitives-and-core-types)
+    -   [TODO: Integers](#todo-integers)
+    -   [Character types](#character-types)
+        -   [References](#references)
 -   [TODO: Advanced type mapping: pointers, references, and `const`](#todo-advanced-type-mapping-pointers-references-and-const)
 -   [TODO: Bi-directional type mapping: standard library types](#todo-bi-directional-type-mapping-standard-library-types)
 -   [TODO: The operator interoperability model](#todo-the-operator-interoperability-model)
@@ -206,7 +209,22 @@ fn Run() {
 
 ## TODO: Accessing global variables
 
-## TODO: Bi-directional type mapping: primitives and core types
+## Bi-directional type mapping: primitives and core types
+
+### TODO: Integers
+
+### Character types
+
+Carbon's `char` type transparently maps to C++'s `char` type. Carbon's `char`
+type is always unsigned. When compiling C++ using Carbon's toolchain, C++ `char`
+is treated as `unsigned` by default (`-funsigned-char`). When interoperating
+with a signed C++ `char` type (`-fno-unsigned-char`), Carbon will maintain
+interoperability, though bits will be interpreted differently in each language.
+
+#### References
+
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 
 ## TODO: Advanced type mapping: pointers, references, and `const`
 

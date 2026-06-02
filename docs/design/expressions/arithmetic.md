@@ -17,6 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Overflow and other error conditions](#overflow-and-other-error-conditions)
     -   [Floating-point types](#floating-point-types)
     -   [Strings](#strings)
+    -   [Character types](#character-types)
+        -   [Overflow Semantics](#overflow-semantics)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -104,8 +106,8 @@ converted as follows:
 -   If one type is `iN` and the other type is `uM`, and `M` < `N`, the `uM`
     operand is converted to `iN`.
 -   If one type is `fN` and the other type is `iM` or `uM`, and there is an
-    [implicit conversion](implicit_conversions.md#data-types) from the integer
-    type to `fN`, then the integer operand is converted to `fN`.
+    [implicit conversion](implicit_conversions.md#numeric-types) from the
+    integer type to `fN`, then the integer operand is converted to `fN`.
 
 More broadly, if one operand is of built-in type and the other operand can be
 implicitly converted to that type, then it is, unless that behavior is
@@ -184,6 +186,30 @@ Because floating-point arithmetic follows IEEE 754 rules: overflow results in
 **TODO:** Decide whether strings are built-in types, and whether they support
 `+` for concatenation. See
 [#457](https://github.com/carbon-language/carbon-lang/issues/457).
+
+### Character types
+
+Character types (`char` and `Core.CharLiteral`) support arithmetic operations
+aligned with the concept of "characters" rather than raw integers. Operations
+with `Core.CharLiteral` and compile-time constants produce compile-time integer
+or `Core.CharLiteral` results. Operations with a `char` or a runtime integer
+argument produce `char` results.
+
+-   **Addition:** The sum of a character and an integer produces a character.
+-   **Subtraction:**
+    -   The difference of two characters produces an `i32`. This is preferred
+        even for `char` to be consistent with the range needed to represent the
+        difference of two `Core.CharLiteral` values.
+    -   A character minus an integer produces a character, much like adding a
+        character to a negative integer.
+
+#### Overflow Semantics
+
+Arithmetic operations on `char` and `Core.CharLiteral` use error overflow
+semantics [similar to signed integers](#overflow-and-other-error-conditions).
+For example, `(('a' as char) + 500)` is invalid code because it causes `char`
+overflow. That's why conversions are to signed values (for example,
+`char as i16`).
 
 ## Extensibility
 
@@ -289,3 +315,5 @@ to give the semantics described above.
     [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

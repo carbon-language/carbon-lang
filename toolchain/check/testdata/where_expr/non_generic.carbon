@@ -30,15 +30,15 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
-// CHECK:STDOUT:   %pattern_type.bdb: type = pattern_type %I_where.type [concrete]
+// CHECK:STDOUT:   %pattern_type.616: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [concrete]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
-// CHECK:STDOUT:     %U.param_patt: %pattern_type.bdb = value_param_pattern [concrete]
-// CHECK:STDOUT:     %U.patt: %pattern_type.bdb = at_binding_pattern U, %U.param_patt [concrete]
+// CHECK:STDOUT:     %U.param_patt: %pattern_type.616 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.616 = at_binding_pattern U, %U.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
 // CHECK:STDOUT:     %.loc17_28.1: type = splice_block %.loc17_28.2 [concrete = constants.%I_where.type] {
