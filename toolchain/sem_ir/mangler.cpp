@@ -276,11 +276,11 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
-  CARBON_CHECK(!sem_ir()
-                    .cpp_global_vars()
-                    .Lookup({.entity_name_id = var_name_id})
-                    .has_value(),
-               "Mangling a C++ variable");
+  auto clang_decl_id = sem_ir().clang_decls().Lookup(pattern_id);
+  if (clang_decl_id.has_value()) {
+    CARBON_CHECK(!sem_ir().clang_decls().Get(clang_decl_id).is_imported,
+                 "Mangling a C++ variable");
+  }
 
   RawStringOstream os;
   os << "_C";
