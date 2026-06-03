@@ -303,11 +303,12 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
             .GetAs<SemIR::FunctionDecl>(thunk_callee_inst_id)
             .function_id);
 
-    function_decl =
-        cast<clang::FunctionDecl>(context.clang_decls()
-                                      .Get(thunk_callee_function.clang_decl_id)
-                                      .GetAsKey()
-                                      .decl);
+    function_decl = cast<clang::FunctionDecl>(
+        context.clang_decls()
+            .Get(context.clang_decls().Lookup(
+                thunk_callee_function.first_decl_id()))
+            .GetAsKey()
+            .decl);
 
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
       return;

@@ -245,11 +245,17 @@ struct CalleeFunctionInfo {
 
 auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     -> bool {
-  if (!function.clang_decl_id.has_value()) {
+  auto clang_decl_id = context.clang_decls().Lookup(function.first_decl_id());
+  if (!clang_decl_id.has_value()) {
     return false;
   }
 
-  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
+  const auto& decl_info = context.clang_decls().Get(clang_decl_id);
+
+  if (!decl_info.is_external) {
+    return false;
+  }
+
   const auto& signature =
       context.clang_decl_signatures().Get(decl_info.key.signature_id);
   auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
@@ -646,7 +652,9 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
   auto clang_decl_key =
-      context.clang_decls().Get(callee_function.clang_decl_id).key;
+      context.clang_decls()
+          .Get(context.clang_decls().Lookup(callee_function.first_decl_id()))
+          .key;
   clang::FunctionDecl* callee_function_decl =
       clang_decl_key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);

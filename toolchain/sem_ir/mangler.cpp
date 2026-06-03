@@ -192,8 +192,13 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   // Clang should emit C++ function declarations for us.
-  CARBON_CHECK(!function.clang_decl_id.has_value(),
-               "Shouldn't mangle C++ function");
+  if (function_id != sem_ir().global_ctor_id()) {
+    auto clang_decl_id =
+        sem_ir().clang_decls().Lookup(function.first_decl_id());
+    CARBON_CHECK(!clang_decl_id.has_value() ||
+                     !sem_ir().clang_decls().Get(clang_decl_id).is_external,
+                 "Shouldn't mangle C++ function");
+  }
 
   RawStringOstream os;
   os << "_C";

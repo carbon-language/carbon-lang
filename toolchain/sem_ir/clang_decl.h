@@ -180,6 +180,10 @@ struct ClangDecl : public Printable<ClangDecl> {
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;
 
+  // True if this declaration originated from C++. False if this declaration was
+  // created by exporting some Carbon declaration to C++.
+  bool is_external = false;
+
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 

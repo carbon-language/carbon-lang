@@ -1888,10 +1888,10 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
           }});
   context.imports().push_back(decl_id);
 
-  context.functions().Get(function_id).clang_decl_id =
-      context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
-                                     clang_decl, signature_id),
-                                 .inst_id = decl_id});
+  context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id),
+       .inst_id = decl_id,
+       .is_external = true});
 
   return function_id;
 }

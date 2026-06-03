@@ -347,12 +347,21 @@ auto FileContext::GetOrCreateLLVMFunction(
     const FunctionTypeInfo& function_type_info, SemIR::FunctionId function_id,
     SemIR::SpecificId specific_id) -> llvm::Function* {
   // If this is a C++ function, tell Clang that we referenced it.
-  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-      clang_decl_id.has_value()) {
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Specific functions cannot have C++ definitions");
-    return HandleReferencedCppFunction(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
+  // The global_ctor function can't be a C++ function (but doesn't have any
+  // decl_id so it doesn't fall out naturally from the handling below)
+  if (function_id != sem_ir().global_ctor_id()) {
+    const auto& function = sem_ir().functions().Get(function_id);
+    auto clang_decl_id =
+        sem_ir().clang_decls().Lookup(function.first_decl_id());
+    if (clang_decl_id.has_value()) {
+      const auto& clang_decl = sem_ir().clang_decls().Get(clang_decl_id);
+      if (clang_decl.is_external) {
+        CARBON_CHECK(!specific_id.has_value(),
+                     "Specific functions cannot have C++ definitions");
+        return HandleReferencedCppFunction(
+            clang_decl.key.decl->getAsFunction());
+      }
+    }
   }
 
   SemIR::Mangler m(sem_ir(), context().total_ir_count(),
