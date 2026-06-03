@@ -981,6 +981,13 @@ auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
        .inst_id = var_storage.pattern_id});
 
+  auto scope_inst = context.insts().Get(
+      context.name_scopes().Get(entity_name.parent_scope_id).inst_id());
+  if (scope_inst.Is<SemIR::ClassDecl>()) {
+    // TODO: Map Carbon access to C++ access.
+    var_decl->setAccess(clang::AS_public);
+  }
+
   // Set the Carbon mangled variable name.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
