@@ -83,9 +83,9 @@ can contain:
     ```
 
     However, note that this macro behaves differently in Carbon when used inside
-    an expression. The following C++ program prints `7`, since the macro is
-    expanded before the multiplication operation, `2 * 1 + 2 + 3` is evaluated
-    as `(2 * 1) + 2 + 3`:
+    an expression. [The following C++ program](https://godbolt.org/z/6ndzv764n)
+    prints `7`, since the macro is expanded before the multiplication operation;
+    `2 * 1 + 2 + 3` is evaluated as `(2 * 1) + 2 + 3`:
 
     ```cpp
     #include <iostream>
@@ -97,8 +97,8 @@ can contain:
     }
     ```
 
-    While the following Carbon program prints `12`, since `Cpp.ADDITION` is
-    treated as a constant with value `6`:
+    While [the following Carbon program](https://godbolt.org/z/WxvrjYGn6) prints
+    `12`, since `Cpp.ADDITION` is treated as a constant with value `6`:
 
     ```carbon
     import Core library "io";
