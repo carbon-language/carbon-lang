@@ -82,6 +82,34 @@ For example:
 #define ADDITION 1+2+3
 ```
 
+However, note that this macro behaves differently in Carbon when used inside an
+expression. The following C++ program prints `7`, since the macro is expanded
+before the multiplication operation, `2 * 1 + 2 + 3` is evaluated as
+`(2 * 1) + 2 + 3`:
+
+```cpp
+#include <iostream>
+
+#define ADDITION 1+2+3
+
+int main() {
+  std::cout << (2 * ADDITION) << '\n';
+}
+```
+
+While the following Carbon program prints `12`, since `Cpp.ADDITION` is treated
+as a constant with value `6`:
+
+```carbon
+import Core library "io";
+
+import Cpp inline "#define ADDITION 1+2+3";
+
+fn Run() {
+  Core.Print(2 * Cpp.ADDITION);
+}
+```
+
 -   **Chained macros**: macros that expand to another macro which evaluates to a
     constant.
 
