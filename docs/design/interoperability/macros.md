@@ -76,49 +76,49 @@ can contain:
     logical: `||, &&`; comparison: `<, >, <=, >=, ==`; casts etc, with arbitrary
     number of operands.
 
-For example:
+    For example:
 
-```cpp
-#define ADDITION 1+2+3
-```
+    ```cpp
+    #define ADDITION 1+2+3
+    ```
 
-However, note that this macro behaves differently in Carbon when used inside an
-expression. The following C++ program prints `7`, since the macro is expanded
-before the multiplication operation, `2 * 1 + 2 + 3` is evaluated as
-`(2 * 1) + 2 + 3`:
+    However, note that this macro behaves differently in Carbon when used inside
+    an expression. The following C++ program prints `7`, since the macro is
+    expanded before the multiplication operation, `2 * 1 + 2 + 3` is evaluated
+    as `(2 * 1) + 2 + 3`:
 
-```cpp
-#include <iostream>
+    ```cpp
+    #include <iostream>
 
-#define ADDITION 1+2+3
+    #define ADDITION 1+2+3
 
-int main() {
-  std::cout << (2 * ADDITION) << '\n';
-}
-```
+    int main() {
+    std::cout << (2 * ADDITION) << '\n';
+    }
+    ```
 
-While the following Carbon program prints `12`, since `Cpp.ADDITION` is treated
-as a constant with value `6`:
+    While the following Carbon program prints `12`, since `Cpp.ADDITION` is
+    treated as a constant with value `6`:
 
-```carbon
-import Core library "io";
+    ```carbon
+    import Core library "io";
 
-import Cpp inline "#define ADDITION 1+2+3";
+    import Cpp inline "#define ADDITION 1+2+3";
 
-fn Run() {
-  Core.Print(2 * Cpp.ADDITION);
-}
-```
+    fn Run() {
+    Core.Print(2 * Cpp.ADDITION);
+    }
+    ```
 
 -   **Chained macros**: macros that expand to another macro which evaluates to a
     constant.
 
-For example:
+    For example:
 
-```cpp
-#define VALUE 123
-#define MY_VALUE VALUE
-```
+    ```cpp
+    #define VALUE 123
+    #define MY_VALUE VALUE
+    ```
 
 -   **Enum constants and `constexpr` variables**: if a macro's replacement list
     refers to a named constant, such as an enum constant or a `constexpr`
@@ -128,27 +128,27 @@ For example:
     alias also preserves addressability (that the constant is an lvalue), which
     would be lost if only the value were imported.
 
-For example:
+    For example:
 
-**C++**:
+    **C++**:
 
-```cpp
-enum class Color { Red = 1, Green = 2 };
-#define GREEN_COLOR Color::Green
+    ```cpp
+    enum class Color { Red = 1, Green = 2 };
+    #define GREEN_COLOR Color::Green
 
-constexpr int kValue = 123;
-#define VALUE kValue
-```
+    constexpr int kValue = 123;
+    #define VALUE kValue
+    ```
 
-**Carbon**:
+    **Carbon**:
 
-```carbon
-// Cpp.GREEN_COLOR is an alias to Cpp.Color.Green which has a type Cpp.Color.
-let b: Cpp.Color = Cpp.GREEN_COLOR;
+    ```carbon
+    // Cpp.GREEN_COLOR is an alias to Cpp.Color.Green which has a type Cpp.Color.
+    let b: Cpp.Color = Cpp.GREEN_COLOR;
 
-// Cpp.VALUE is an alias to kValue.
-let a: i32 = Cpp.VALUE;
-```
+    // Cpp.VALUE is an alias to kValue.
+    let a: i32 = Cpp.VALUE;
+    ```
 
 Macro are evaluated in the global namespace (for example `Cpp.VALUE`).
 
