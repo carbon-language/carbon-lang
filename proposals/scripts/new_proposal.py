@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # ///
 
 """Prepares a new proposal file and PR."""
@@ -21,6 +21,10 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional
+
+# Add repo root to sys.path to allow importing from proposals.scripts
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from proposals.scripts.utils import slugify  # noqa: E402
 
 _PROMPT = """This will:
   - Create and switch to a new branch named '%s'.
@@ -167,7 +171,7 @@ def main() -> None:
     else:
         git_bin = _find_tool("git")
         jj_bin = None
-    precommit_bin = _find_tool("pre-commit")
+    prek_bin = _find_tool("prek")
 
     # Verify there are no uncommitted changes (jj has no equivalent).
     if git_bin:
@@ -252,18 +256,18 @@ def main() -> None:
         ]
     )
 
-    # Remove the temp file, create p####.md, and fill in PR information.
+    # Remove the temp file, create p######-title.md, and fill in PR information.
     os.remove(temp_path)
-    final_path = "proposals/p%04d.md" % pr_num
+    final_path = "proposals/p%06d-%s.md" % (pr_num, slugify(title))
     content = _fill_template(template_path, title, pr_num)
     with open(final_path, "w") as final_file:
         final_file.write(content)
 
-    # Run pre-commit for a ToC update, then push the PR update.
+    # Run prek for a ToC update, then push the PR update.
     final_desc = "Filling out template with PR %d" % pr_num
     if git_bin:
         _run([git_bin, "add", temp_path, final_path])
-        _run([precommit_bin, "run"], check=False)
+        _run([prek_bin, "run"], check=False)
         _run([git_bin, "commit", "--amend", "-m", final_desc])
 
         _run([git_bin, "push", "--force-with-lease"])
@@ -271,7 +275,7 @@ def main() -> None:
         assert jj_bin  # For mypy.
 
         _run(
-            [precommit_bin, "run", "--files", "$(jj diff --name-only)"],
+            [prek_bin, "run", "--files", "$(jj diff --name-only)"],
             check=False,
         )
         _run([jj_bin, "describe", "-m", final_desc])

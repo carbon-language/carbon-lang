@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # ///
 
 
@@ -25,10 +25,10 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import subprocess
 import argparse
-import tempfile
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import scripts_utils

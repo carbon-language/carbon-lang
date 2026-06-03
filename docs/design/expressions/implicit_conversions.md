@@ -16,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Semantics-preserving](#semantics-preserving)
     -   [Examples](#examples)
 -   [Built-in types](#built-in-types)
-    -   [Data types](#data-types)
+    -   [Numeric types](#numeric-types)
+    -   [Character types](#character-types)
     -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
     -   [Facet types](#facet-types)
@@ -98,7 +99,7 @@ salient part of a `StringView`'s value.
 
 ## Built-in types
 
-### Data types
+### Numeric types
 
 The following implicit numeric conversions are available:
 
@@ -155,6 +156,17 @@ var a: u32 = ^0;
 // ^4 == -5 is negative, but we want to allow it to convert to u32 here.
 var b: u32 = a & ^4;
 ```
+
+### Character types
+
+A character constant can be implicitly converted to any non-literal character
+type in which that value can be exactly represented. For now the only
+non-literal character type is `char`, which represents a single UTF-8 code unit
+in a single byte, and so implicit conversion from `Core.CharLiteral` to `char`
+is only valid for values in the range `0x00`..`0x7F`.
+
+No other implicit conversions (such as converting `char` to/from integer types
+or `Core.CharLiteral` to integers) are permitted.
 
 ### Same type
 
@@ -231,11 +243,11 @@ types.
 
 ## Alternatives considered
 
--   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p0820.md#c-conversions)
--   [Provide no implicit conversions](/proposals/p0820.md#no-conversions)
--   [Provide no extensibility](/proposals/p0820.md#no-extensibility)
--   [Apply implicit conversions transitively](/proposals/p0820.md#transitivity)
--   [Do not allow negative constants to convert to unsigned types](/proposals/p1191.md#converting-complements-to-unsigned-types)
+-   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p000820-implicit-conversions.md#c-conversions)
+-   [Provide no implicit conversions](/proposals/p000820-implicit-conversions.md#no-conversions)
+-   [Provide no extensibility](/proposals/p000820-implicit-conversions.md#no-extensibility)
+-   [Apply implicit conversions transitively](/proposals/p000820-implicit-conversions.md#transitivity)
+-   [Do not allow negative constants to convert to unsigned types](/proposals/p001191-bitwise-and-shift-operators.md#converting-complements-to-unsigned-types)
 
 ## References
 
@@ -244,3 +256,5 @@ types.
     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

@@ -35,15 +35,15 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc19_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !10
-// CHECK:STDOUT:   %F.call.loc19 = call ptr @_CF.Main.3890ad819211e245(ptr %.loc19_5), !dbg !11
+// CHECK:STDOUT:   %F.call.loc19 = call ptr @_CF.Main.a87c59609561b819(ptr %.loc19_5), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_f64.var, align 8, !dbg !8
 // CHECK:STDOUT:   %.loc21_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !12
-// CHECK:STDOUT:   %F.call.loc21 = call ptr @_CF.Main.3890ad819211e245(ptr %.loc21_5), !dbg !13
+// CHECK:STDOUT:   %F.call.loc21 = call ptr @_CF.Main.a87c59609561b819(ptr %.loc21_5), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !9
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_i8.var, align 8, !dbg !9
 // CHECK:STDOUT:   %.loc23_5 = load ptr, ptr %ptr_i8.var, align 8, !dbg !14
-// CHECK:STDOUT:   %F.call.loc23 = call ptr @_CF.Main.3890ad819211e245(ptr %.loc23_5), !dbg !15
+// CHECK:STDOUT:   %F.call.loc23 = call ptr @_CF.Main.a87c59609561b819(ptr %.loc23_5), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,14 +51,14 @@ fn M() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.3890ad819211e245(ptr %x) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.a87c59609561b819(ptr %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CF.Main.3890ad819211e245, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.a87c59609561b819, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -83,7 +83,7 @@ fn M() {
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 5, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 3, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !4)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.3890ad819211e245", scope: null, file: !3, line: 13, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a87c59609561b819", scope: null, file: !3, line: 13, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{!20, !20}
 // CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)

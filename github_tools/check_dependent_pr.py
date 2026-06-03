@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12"
 # dependencies = [
 #   "gql==2.0.0",
 #   "requests",
@@ -32,8 +32,9 @@ import datetime
 import json
 import re
 import sys
-import requests
 from typing import Any, Optional
+
+import requests
 
 try:
     from github_tools import github_helpers

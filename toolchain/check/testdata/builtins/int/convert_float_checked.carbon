@@ -47,8 +47,8 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %f32.750: type = class_type @Float, @Float(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %f32.750 [concrete]
+// CHECK:STDOUT:   %f32.a26: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.f3b: type = pattern_type %f32.a26 [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToF32.type: type = fn_type @ConvertIntLiteralToF32 [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToF32: %ConvertIntLiteralToF32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_123456789: Core.IntLiteral = int_value 123456789 [concrete]
@@ -60,19 +60,19 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %lossy.patt: %pattern_type.9a5 = value_binding_pattern lossy [concrete]
+// CHECK:STDOUT:     %lossy.patt: %pattern_type.f3b = value_binding_pattern lossy [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.750 [concrete = constants.%f32.750]
-// CHECK:STDOUT:   %.loc9_50.1: %f32.750 = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc9_50.2: %f32.750 = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc9_50.1 [concrete = <error>]
-// CHECK:STDOUT:   %lossy: %f32.750 = value_binding lossy, %.loc9_50.2 [concrete = <error>]
+// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.a26 [concrete = constants.%f32.a26]
+// CHECK:STDOUT:   %.loc9_50.1: %f32.a26 = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc9_50.2: %f32.a26 = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc9_50.1 [concrete = <error>]
+// CHECK:STDOUT:   %lossy: %f32.a26 = value_binding lossy, %.loc9_50.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ConvertIntLiteralToF32.ref: %ConvertIntLiteralToF32.type = name_ref ConvertIntLiteralToF32, imports.%Main.ConvertIntLiteralToF32 [concrete = constants.%ConvertIntLiteralToF32]
 // CHECK:STDOUT:   %int_123456789: Core.IntLiteral = int_value 123456789 [concrete = constants.%int_123456789]
-// CHECK:STDOUT:   %ConvertIntLiteralToF32.call: init %f32.750 = call %ConvertIntLiteralToF32.ref(%int_123456789) [concrete = <error>]
+// CHECK:STDOUT:   %ConvertIntLiteralToF32.call: init %f32.a26 = call %ConvertIntLiteralToF32.ref(%int_123456789) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

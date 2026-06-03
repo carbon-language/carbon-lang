@@ -435,6 +435,10 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);
     }
+    case CARBON_KIND(SemIR::VarStorage var_storage): {
+      return ExportVarToCpp(*context_, SemIR::LocId(target_inst_id),
+                            var_storage);
+    }
     default:
       return nullptr;
   }
@@ -901,6 +905,10 @@ auto GenerateAst(Context& context,
   if (!action.BeginSourceFile(clang_instance, inputs[0])) {
     return false;
   }
+
+  // The AST context is now available, so the mangle context (used to compute
+  // stable identities for imported C++ types) can be created.
+  context.sem_ir().cpp_file()->CreateMangleContext();
 
   auto& ast = clang_instance.getASTContext();
   llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =

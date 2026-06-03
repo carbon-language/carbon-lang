@@ -31,7 +31,7 @@ impl C as Simple {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Op[unused self: Self]();
+  fn Op[self: Self]();
 }
 
 class C {}

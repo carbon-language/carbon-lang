@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # ///
 
 
@@ -21,8 +21,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import hashlib
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def main() -> None:

@@ -481,7 +481,7 @@ function fields with a `self` parameter.
 
 ## Alternatives considered
 
--   [Terse vs Elaborated](/proposals/p3848.md#alternative-considered-terse-vs-elaborated)
--   [Sigil](/proposals/p3848.md#alternative-considered-sigil)
--   [Additional Positional Parameter Restriction](/proposals/p3848.md#alternative-considered-additional-positional-parameter-restriction)
--   [Recursive Self](/proposals/p3848.md#alternative-considered-recursive-self)
+-   [Terse vs Elaborated](/proposals/p003848-lambdas.md#alternative-considered-terse-vs-elaborated)
+-   [Sigil](/proposals/p003848-lambdas.md#alternative-considered-sigil)
+-   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
+-   [Recursive Self](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)

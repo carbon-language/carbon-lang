@@ -23,6 +23,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Usage](#usage)
     -   [Alternatives considered](#alternatives-considered-1)
 -   [String literals](#string-literals)
+-   [Character literals](#character-literals)
+-   [Character type literals](#character-type-literals)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -189,10 +191,10 @@ var v: i8 = OneHigher(255);
 
 ### Alternatives Considered
 
--   [Use an ordinary integer or floating-point type for literals](/proposals/p0144.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
--   [Use same type for all literals](/proposals/p0144.md#use-same-type-for-all-literals)
--   [Allow leading `-` in literal tokens](/proposals/p0144.md#allow-leading---in-literal-tokens)
--   [Forbidding floating-point ties](/proposals/p0866.md#alternatives-considered)
+-   [Use an ordinary integer or floating-point type for literals](/proposals/p000144-numeric-literal-semantics.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
+-   [Use same type for all literals](/proposals/p000144-numeric-literal-semantics.md#use-same-type-for-all-literals)
+-   [Allow leading `-` in literal tokens](/proposals/p000144-numeric-literal-semantics.md#allow-leading---in-literal-tokens)
+-   [Forbidding floating-point ties](/proposals/p000866-allow-ties-in-floating-literals.md#alternatives-considered)
 
 ## Numeric type literals
 
@@ -237,10 +239,10 @@ as a 32-bit two's complement signed integer. `Main` then returns the output of
 
 ### Alternatives considered
 
--   [C++ LP64 convention](/proposals/p2015.md#c-lp64-convention)
--   [Type name with length suffix](/proposals/p2015.md#type-name-with-length-suffix)
--   [Uppercase suffixes](/proposals/p2015.md#uppercase-suffixes)
--   [Additional bit sizes](/proposals/p2015.md#additional-bit-sizes)
+-   [C++ LP64 convention](/proposals/p002015-numeric-type-literal-syntax.md#c-lp64-convention)
+-   [Type name with length suffix](/proposals/p002015-numeric-type-literal-syntax.md#type-name-with-length-suffix)
+-   [Uppercase suffixes](/proposals/p002015-numeric-type-literal-syntax.md#uppercase-suffixes)
+-   [Additional bit sizes](/proposals/p002015-numeric-type-literal-syntax.md#additional-bit-sizes)
 
 ## String literals
 
@@ -248,6 +250,31 @@ String literal syntax is covered in the
 [string literal lexical conventions](../lexical_conventions/string_literals.md).
 
 No design for string types has been through the proposal process yet.
+
+## Character literals
+
+Character literals are defined in the
+[character literals lexical conventions](../lexical_conventions/character_literals.md).
+
+In Carbon, character literals have the type `Core.CharLiteral`, which represents
+a single Unicode code point. This type supports addition and subtraction, see
+[arithmetic](arithmetic.md#character-types). For example, `'a' + 1` results in a
+`Core.CharLiteral` with value `'b'`. Operations that result in invalid Unicode
+code points (such as `'a' + 0xFFFFFF`) are compile-time errors.
+
+A `Core.CharLiteral` will implicitly convert to `char` if its value is in the
+range `0x00`..`0x7F`, see
+[implicit conversions](implicit_conversions.md#character-types).
+
+## Character type literals
+
+Carbon defines `char` as a type literal, which is the same type as `Core.Char`,
+an adapter for `u8`.
+
+-   `char` notionally represents a single UTF-8 code unit.
+-   It can contain invalid UTF-8 code units, as long as it remains 8 bits. No
+    runtime validation is guaranteed.
+-   Carbon's string types use `char` for elements.
 
 ## References
 
@@ -260,6 +287,10 @@ No design for string types has been through the proposal process yet.
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 -   Proposal
+    [#1964: Character Literals](https://github.com/carbon-language/carbon-lang/pull/1964)
+-   Proposal
     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 -   Question-for-leads issue
     [#2113: Structure, scope, and naming of the prelude and syntax aliases](https://github.com/carbon-language/carbon-lang/issues/2113)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

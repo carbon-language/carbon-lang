@@ -179,7 +179,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %.loc7_26.1.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
@@ -198,7 +198,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 1, !dbg !20
+// CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 4, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_19.2.temp), !dbg !20
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple.(ptr %.loc11_19.2.temp), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
@@ -279,9 +279,9 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [8 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca [8 x i8], align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
-// CHECK:STDOUT:   call void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2603c91dd66a1dca"(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.1afc54683c199dfb"(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,7 +296,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.5648bcc2d6c775b7.Core:C.Cpp"(ptr sret([8 x i8]) %return) #2 !dbg !19 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.e22dc72f1b535a46.Core:C.Cpp"(ptr sret([8 x i8]) %return) #2 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
@@ -306,8 +306,8 @@ fn Four() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2603c91dd66a1dca"(ptr sret([8 x i8]) %return) #0 !dbg !25 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.5648bcc2d6c775b7.Core:C.Cpp"(ptr %return), !dbg !27
+// CHECK:STDOUT: define linkonce_odr void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.1afc54683c199dfb"(ptr sret([8 x i8]) %return) #0 !dbg !25 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.e22dc72f1b535a46.Core:C.Cpp"(ptr %return), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,13 +353,13 @@ fn Four() {
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTS1C", !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.5648bcc2d6c775b7.Core:C.Cpp", scope: null, file: !20, line: 4, type: !21, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.e22dc72f1b535a46.Core:C.Cpp", scope: null, file: !20, line: 4, type: !21, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !20 = !DIFile(filename: "./default.h", directory: "")
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !24 = !DILocation(line: 4, column: 3, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2603c91dd66a1dca", scope: null, file: !26, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.218d57fc466b073f:DefaultOrUnformed.Core.1afc54683c199dfb", scope: null, file: !26, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !27 = !DILocation(line: 9, column: 28, scope: !25)
 // CHECK:STDOUT: !28 = !DILocation(line: 9, column: 21, scope: !25)
@@ -381,18 +381,18 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_65.1.temp = alloca [4 x i8], align 1, !dbg !14
-// CHECK:STDOUT:   %_.var.loc9 = alloca [4 x i8], align 1, !dbg !15
-// CHECK:STDOUT:   %.loc12_65.1.temp = alloca [4 x i8], align 1, !dbg !16
-// CHECK:STDOUT:   %_.var.loc13 = alloca [4 x i8], align 1, !dbg !17
+// CHECK:STDOUT:   %.loc8_65.1.temp = alloca [4 x i8], align 4, !dbg !14
+// CHECK:STDOUT:   %_.var.loc9 = alloca [4 x i8], align 4, !dbg !15
+// CHECK:STDOUT:   %.loc12_65.1.temp = alloca [4 x i8], align 4, !dbg !16
+// CHECK:STDOUT:   %_.var.loc13 = alloca [4 x i8], align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_65.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %.loc8_65.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc9), !dbg !15
-// CHECK:STDOUT:   call void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2db09a503899761f"(ptr %_.var.loc9), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.774cef0582dbdb58"(ptr %_.var.loc9), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_65.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %.loc12_65.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc13), !dbg !17
-// CHECK:STDOUT:   call void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.0dfbcd9a7c1791ba"(ptr %_.var.loc13), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.6431fe01d50bd335"(ptr %_.var.loc13), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -407,7 +407,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.40902cf3dea87d9c.Core:ImplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !22 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.32bfc14b1bd3f644.Core:ImplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN26ImplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %return), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !27
@@ -424,7 +424,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.f7ced4a20f885cf5.Core:ExplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define void @"_COp:thunk:Default.3ee0b34aa3c731be.Core:ExplicitlyDefaultedDefault.Cpp"(ptr sret([4 x i8]) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN26ExplicitlyDefaultedDefaultC1Ev.carbon_thunk.(ptr %return), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !31
@@ -434,14 +434,14 @@ fn Four() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2db09a503899761f"(ptr sret([4 x i8]) %return) #0 !dbg !32 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.40902cf3dea87d9c.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !34
+// CHECK:STDOUT: define linkonce_odr void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.774cef0582dbdb58"(ptr sret([4 x i8]) %return) #0 !dbg !32 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.32bfc14b1bd3f644.Core:ImplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.0dfbcd9a7c1791ba"(ptr sret([4 x i8]) %return) #0 !dbg !36 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.f7ced4a20f885cf5.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !37
+// CHECK:STDOUT: define linkonce_odr void @"_COp.218d57fc466b073f:DefaultOrUnformed.Core.6431fe01d50bd335"(ptr sret([4 x i8]) %return) #0 !dbg !36 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.3ee0b34aa3c731be.Core:ExplicitlyDefaultedDefault.Cpp"(ptr %return), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -503,7 +503,7 @@ fn Four() {
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS26ImplicitlyDefaultedDefault", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.40902cf3dea87d9c.Core:ImplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 2, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.32bfc14b1bd3f644.Core:ImplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 2, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !23 = !DIFile(filename: "./defaulted_default.h", directory: "")
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{!26}
@@ -511,13 +511,13 @@ fn Four() {
 // CHECK:STDOUT: !27 = !DILocation(line: 2, column: 8, scope: !22)
 // CHECK:STDOUT: !28 = !{!29, !29, i64 0}
 // CHECK:STDOUT: !29 = !{!"p1 _ZTS26ExplicitlyDefaultedDefault", !21, i64 0}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.f7ced4a20f885cf5.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.3ee0b34aa3c731be.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !23, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !31 = !DILocation(line: 7, column: 3, scope: !30)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.2db09a503899761f", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.218d57fc466b073f:DefaultOrUnformed.Core.774cef0582dbdb58", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !33 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !34 = !DILocation(line: 9, column: 28, scope: !32)
 // CHECK:STDOUT: !35 = !DILocation(line: 9, column: 21, scope: !32)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbe5dd53b28eb3d1:DefaultOrUnformed.Core.0dfbcd9a7c1791ba", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.218d57fc466b073f:DefaultOrUnformed.Core.6431fe01d50bd335", scope: null, file: !33, line: 9, type: !24, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !37 = !DILocation(line: 9, column: 28, scope: !36)
 // CHECK:STDOUT: !38 = !DILocation(line: 9, column: 21, scope: !36)
 // CHECK:STDOUT: !39 = !{!40, !8, i64 0}
@@ -532,7 +532,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCopy.Main(ptr sret([4 x i8]) %return, ptr %c) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_10.1.temp = alloca [4 x i8], align 1, !dbg !17
+// CHECK:STDOUT:   %.loc7_10.1.temp = alloca [4 x i8], align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_10.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk._(ptr %c, ptr %return), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
@@ -552,7 +552,7 @@ fn Four() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.83073f2d17ed2f9e.Core:Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #2 !dbg !22 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.a9063bcbb8997555.Core:Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26
@@ -595,7 +595,7 @@ fn Four() {
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS4Copy", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.83073f2d17ed2f9e.Core:Copy.Cpp", scope: null, file: !23, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.a9063bcbb8997555.Core:Copy.Cpp", scope: null, file: !23, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
 // CHECK:STDOUT: !23 = !DIFile(filename: "./copy.h", directory: "")
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !22, type: !14)
@@ -631,7 +631,7 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_44.1.temp = alloca [8 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %.loc7_44.1.temp = alloca [8 x i8], align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_44.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_ZN7DerivedC1Ev.carbon_thunk.(ptr %.loc7_44.1.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15

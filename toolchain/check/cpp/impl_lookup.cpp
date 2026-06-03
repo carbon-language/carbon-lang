@@ -8,6 +8,8 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -19,6 +21,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -187,8 +190,8 @@ static auto BuildCppUnsafeDerefWitness(
 
   // TODO: Parameterize the interface by the form of the operand and compute the
   // appropriate passing mode here.
-  SemIR::ClangDeclSignatureId signature_id =
-      MakeSignature(context, {}, SemIR::ClangDeclSignature::PassingMode::ByRef);
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(
+      context, {}, SemIR::ClangDeclSignature::PassingMode::ByValue);
 
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};
@@ -197,17 +200,15 @@ static auto BuildCppUnsafeDerefWitness(
     return fn_id;
   }
 
-  auto result_type_id =
+  auto result_type_inst_id =
       context.functions()
           .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
           .return_type_inst_id;
-  if (result_type_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id,
-                            {result_type_id, fn_id});
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {context.types().GetTypeInstId(context.types().GetUnqualifiedType(
+           context.types().GetTypeIdForTypeInstId(result_type_inst_id))),
+       fn_id});
 }
 
 static auto BuildDefaultWitness(
@@ -245,11 +246,14 @@ static auto BuildDestroyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Destroy` for enums and other trivially
-  // destructible types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
     return SemIR::InstId::None;
+  }
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface_id);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 

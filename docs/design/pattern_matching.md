@@ -123,7 +123,7 @@ would, in the cases where they overlap.
 
 #### Alternatives considered
 
--   [Introducer syntax for expression patterns](/proposals/p2188.md#introducer-syntax-for-expression-patterns)
+-   [Introducer syntax for expression patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#introducer-syntax-for-expression-patterns)
 
 ### Binding patterns
 
@@ -225,8 +225,10 @@ fn F(n: i32) {
 }
 ```
 
-As specified in [#1084](/proposals/p1084.md), function redeclarations may
-replace binding names with `_`s but may not use different names.
+As specified in
+[#1084](/proposals/p001084-generics-details-9-forward-declarations.md), function
+redeclarations may replace binding names with `_`s but may not use different
+names.
 
 ```carbon
 fn G(n: i32);
@@ -241,11 +243,11 @@ fn H(m: i32) {}
 
 ##### Alternatives considered
 
--   [Commented names](/proposals/p2022.md#commented-names)
--   [Only short form support with `_`](/proposals/p2022.md#only-short-form-support-with-_)
--   [Named identifiers prefixed with `_`](/proposals/p2022.md#named-identifiers-prefixed-with-_)
--   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
--   [Attributes](/proposals/p2022.md#attributes)
+-   [Commented names](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#commented-names)
+-   [Only short form support with `_`](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#only-short-form-support-with-_)
+-   [Named identifiers prefixed with `_`](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#named-identifiers-prefixed-with-_)
+-   [Anonymous, named identifiers](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#anonymous-named-identifiers)
+-   [Attributes](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#attributes)
 
 #### `auto` and type deduction
 
@@ -290,7 +292,7 @@ specified.
 
 #### Alternatives considered
 
--   [Shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto)
+-   [Shorthand for `auto`](/proposals/p002188-pattern-matching-syntax-and-semantics.md#shorthand-for-auto)
 
 ### `var`
 
@@ -328,9 +330,9 @@ _pattern_ `=` _expression_ `;`.
 
 #### Alternatives considered
 
--   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
--   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
--   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
+-   [Treat all bindings under `var` as variable bindings](/proposals/p005164-updates-to-pattern-matching-for-objects.md#treat-all-bindings-under-var-as-variable-bindings)
+-   [Make `var` a binding pattern modifier](/proposals/p005164-updates-to-pattern-matching-for-objects.md#make-var-a-binding-pattern-modifier)
+-   [Initialize storage once pattern matching succeeds](/proposals/p005164-updates-to-pattern-matching-for-objects.md#initialize-storage-once-pattern-matching-succeeds)
 
 ### `unused`
 
@@ -350,10 +352,10 @@ bindings in a pattern. Nesting `unused` markers is an error. When an `unused`
 marker applies only to anonymous bindings `_` and is thus redundant, a warning
 is produced. `var` and `unused` may appear in any order in a pattern.
 
-As specified in [#3763](/proposals/p3763.md), `unused` markers may only appear
-on definitions, not on non-defining declarations. Function redeclarations that
-are also definitions may have difference due to `unused` markers, but they may
-not have different names.
+As specified in [#3763](/proposals/p003763-matching-redeclarations.md), `unused`
+markers may only appear on definitions, not on non-defining declarations.
+Function redeclarations that are also definitions may have difference due to
+`unused` markers, but they may not have different names.
 
 ```carbon
 fn J(n: i32);
@@ -444,7 +446,7 @@ This is valid even if all fields are actually named in the pattern.
 
 #### Alternatives considered
 
--   [Struct pattern syntax](/proposals/p2188.md#struct-pattern-syntax)
+-   [Struct pattern syntax](/proposals/p002188-pattern-matching-syntax-and-semantics.md#struct-pattern-syntax)
 
 ### Alternative patterns
 
@@ -677,8 +679,8 @@ We will diagnose the following situations:
 
 #### Alternatives considered
 
--   [Treat expression patterns as exhaustive if they cover all possible values](/proposals/p2188.md#treat-expression-patterns-as-exhaustive-if-they-cover-all-possible-values)
--   [Allow non-exhaustive `match` statements](/proposals/p2188.md#allow-non-exhaustive-match-statements)
+-   [Treat expression patterns as exhaustive if they cover all possible values](/proposals/p002188-pattern-matching-syntax-and-semantics.md#treat-expression-patterns-as-exhaustive-if-they-cover-all-possible-values)
+-   [Allow non-exhaustive `match` statements](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-non-exhaustive-match-statements)
 
 ## Pattern usage
 
@@ -768,7 +770,7 @@ fn F(x: X) {
 
 #### Alternatives considered
 
--   [Allow variable binding patterns to alias across `case`s](/proposals/p5164.md#allow-variable-binding-patterns-to-alias-across-cases)
+-   [Allow variable binding patterns to alias across `case`s](/proposals/p005164-updates-to-pattern-matching-for-objects.md#allow-variable-binding-patterns-to-alias-across-cases)
 
 #### Guards
 
@@ -928,8 +930,8 @@ evaluation order will be evaluated.
 
 ### Alternatives considered
 
--   [Breadth-first evaluation order](/proposals/p5545.md#breadth-first-evaluation-order)
--   [Depth-first evaluation with a different "horizontal" order](/proposals/p5545.md#depth-first-evaluation-with-a-different-horizontal-order)
+-   [Breadth-first evaluation order](/proposals/p005545-expression-form-basics.md#breadth-first-evaluation-order)
+-   [Depth-first evaluation with a different "horizontal" order](/proposals/p005545-expression-form-basics.md#depth-first-evaluation-with-a-different-horizontal-order)
 
 ## Open questions
 
@@ -945,8 +947,8 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
 
 ## Alternatives considered
 
--   [Type pattern matching](/proposals/p2188.md#type-pattern-matching)
--   [Allow guards on arbitrary patterns](/proposals/p2188.md#allow-guards-on-arbitrary-patterns)
+-   [Type pattern matching](/proposals/p002188-pattern-matching-syntax-and-semantics.md#type-pattern-matching)
+-   [Allow guards on arbitrary patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-guards-on-arbitrary-patterns)
 
 ## References
 

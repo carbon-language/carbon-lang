@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # ///
 
 """Updates files in preparation for a jekyll build.
@@ -12,8 +12,8 @@ structure prior to the jekyll build.
 
 import dataclasses
 import os
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Optional
 
 __copyright__ = """
@@ -127,7 +127,7 @@ def label_subdir(
 
         if subdir_str == "proposals":
             # Use proposal numbers as part of the title and ordering.
-            m = re.match(r"p(\d+).md", child.name)
+            m = re.match(r"p(\d+)(?:-.*)?\.md", child.name)
             # Skip files that aren't proposals.
             if not m:
                 continue

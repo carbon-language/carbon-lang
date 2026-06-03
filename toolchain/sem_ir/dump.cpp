@@ -274,6 +274,16 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, FieldId field_id) -> std::string {
+  RawStringOstream out;
+  out << field_id;
+  if (field_id.has_value()) {
+    const auto& field = file.fields().Get(field_id);
+    out << ": " << field;
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id)
     -> std::string {
   RawStringOstream out;

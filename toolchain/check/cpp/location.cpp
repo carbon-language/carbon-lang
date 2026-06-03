@@ -70,6 +70,13 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
         final_node.clang_source_loc_id());
   }
 
+  if (!final_node.node_id().has_value()) {
+    // A non-existent NodeID implies our C++ is compiler-synthesised. Synthetic
+    // code doesn't have a physical source location to retrieve, so the Clang
+    // mapping is empty.
+    return clang::SourceLocation();
+  }
+
   // This is a location in Carbon code; get or create a corresponding file in
   // Clang and build a corresponding location.
   auto [ir, start_loc] = GetFileInfo(context, final_node.check_ir_id());
