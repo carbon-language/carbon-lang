@@ -200,7 +200,7 @@ auto CompilationUnit::MakeTargetMachine(
   // Set the target on the module.
   // TODO: We should do this earlier. Lower should be passed the target triple
   // so it can create the module with this already set.
-  llvm::Triple target_triple(options_->codegen_options.target);
+  llvm::Triple target_triple(options_->codegen_options->target);
   module_->setTargetTriple(target_triple);
 
   // TODO: Provide flags to control these.

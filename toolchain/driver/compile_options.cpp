@@ -82,7 +82,7 @@ Selects the amount of optimization to perform.
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
   // below.
-  options->codegen_options.Build(b);
+  options->codegen_options->Build(b);
 
   b.AddFlag(
       {
@@ -440,7 +440,7 @@ auto CompileOptions::ValidateTarget(Diagnostics::NoLocEmitter& emitter)
     -> ErrorOr<const llvm::Target*> {
   std::string target_error;
   const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
-      llvm::Triple(codegen_options.target), target_error);
+      llvm::Triple(codegen_options->target), target_error);
   if (!target) {
     CARBON_DIAGNOSTIC(CompileTargetInvalid, Error, "invalid target: {0}",
                       std::string);
@@ -464,7 +464,7 @@ auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
   all_clang_args.append(clang_args);
   auto clang_invocation = Carbon::BuildClangInvocation(
       driver_env.consumer, driver_env.fs, *driver_env.installation,
-      codegen_options.target, all_clang_args);
+      codegen_options->target, all_clang_args);
   if (!clang_invocation) {
     return ErrorBuilder() << "Failed to build a valid clang invocation.";
   }

@@ -66,7 +66,8 @@ struct CompileOptions {
       -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>>;
 
   Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
-  CodegenOptions codegen_options;
+  std::shared_ptr<CodegenOptions> codegen_options =
+      std::make_shared<CodegenOptions>();
 
   llvm::SmallVector<llvm::StringRef> input_filenames;
   llvm::SmallVector<llvm::StringRef> clang_args;

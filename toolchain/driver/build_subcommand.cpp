@@ -150,7 +150,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Pass the target down to Clang to pick up the correct defaults.
   std::string target_arg =
       llvm::formatv("--target={0}",
-                    options_.compile_options.codegen_options.target)
+                    options_.compile_options.codegen_options->target)
           .str();
   clang_link_args.push_back(target_arg);
 
