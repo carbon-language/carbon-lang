@@ -201,12 +201,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields: type = class_type @AdaptWithBaseAndFields [concrete]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.00a: type = unbound_element_type %AdaptWithBaseAndFields, %Base [concrete]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.8fd: type = unbound_element_type %AdaptWithBaseAndFields, %Base [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.b83: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.3f0: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,8 +240,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.00a = base_decl %Base.ref, element<none> [concrete]
-// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.b83 = field_decl n, element<none> [concrete]
+// CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.8fd = base_decl %Base.ref, element<none> [concrete]
+// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.3f0 = field_decl n, element<none> [concrete]
 // CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]

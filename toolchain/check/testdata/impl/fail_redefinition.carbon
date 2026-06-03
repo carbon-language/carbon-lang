@@ -34,7 +34,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.eb29e8.1.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.6a2a49.1.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,11 +54,11 @@ impl i32 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl.eb29e8.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @i32.as.I.impl.6a2a49.1 [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl.eb29e8.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @i32.as.I.impl.6a2a49.2 [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -75,8 +75,8 @@ impl i32 as I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl.eb29e8.1: %i32 as %I.ref {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl.eb29e8.1 [concrete]
+// CHECK:STDOUT: impl @i32.as.I.impl.6a2a49.1: %i32 as %I.ref {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl.6a2a49.1 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -84,7 +84,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl.eb29e8.2: %i32 as %I.ref {
+// CHECK:STDOUT: impl @i32.as.I.impl.6a2a49.2: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = <error>

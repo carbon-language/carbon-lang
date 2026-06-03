@@ -396,7 +396,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !22
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !23
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !24
-// CHECK:STDOUT:   call void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %value.var), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %value.var), !dbg !15
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -439,7 +439,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: declare noundef i32 @_Z17SimpleReturnValueii(i32 noundef, i32 noundef) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
@@ -486,7 +486,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 3, scope: !11)
 // CHECK:STDOUT: !24 = !DILocation(line: 14, column: 10, scope: !11)
 // CHECK:STDOUT: !25 = !DILocation(line: 14, column: 3, scope: !11)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1fa36cd3e044ac37:core.Destroy.Core", scope: null, file: !6, line: 11, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !6, line: 11, type: !27, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{null, !14}
 // CHECK:STDOUT: !29 = !{!30}

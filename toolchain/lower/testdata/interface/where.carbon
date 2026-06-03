@@ -83,7 +83,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.C.Main:I.5d7343568c0b5715.Main.a557ebdd5991dda9"(ptr %a), !dbg !10
+// CHECK:STDOUT:   call void @"_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c"(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +94,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.5d7343568c0b5715.Main.a557ebdd5991dda9"(ptr %self) #0 !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c"(ptr %self) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
@@ -120,7 +120,7 @@ fn G() {
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.5d7343568c0b5715.Main.a557ebdd5991dda9", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !16, type: !7)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !16)

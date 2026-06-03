@@ -480,10 +480,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.bae36f.1: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.55fa57.1: %F.type.bae36f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.bae36f.2: type = fn_type @F.loc23 [concrete]
-// CHECK:STDOUT:   %F.55fa57.2: %F.type.bae36f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.1be9f8.1: %F.type.2a8c71.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc23 [concrete]
+// CHECK:STDOUT:   %F.1be9f8.2: %F.type.2a8c71.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,7 +492,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.F: %F.type.bae36f.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.55fa57.1]
+// CHECK:STDOUT:   %Other.F: %F.type.2a8c71.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.1be9f8.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -501,7 +501,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.bae36f.2 = fn_decl @F.loc23 [concrete = constants.%F.55fa57.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.2a8c71.2 = fn_decl @F.loc23 [concrete = constants.%F.1be9f8.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];

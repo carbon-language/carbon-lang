@@ -81,17 +81,17 @@ fn SubLiteral(a: Literal(), b: Literal()) -> Literal() = "float.sub";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.b55: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [concrete]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.b55, %b.param: %f64.b55) -> out %return.param: %f64.b55 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: %f64.dc1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
-// CHECK:STDOUT:   %a.ref: %f64.b55 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.b55 = name_ref b, %b
-// CHECK:STDOUT:   %Sub.call: init %f64.b55 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
+// CHECK:STDOUT:   %Sub.call: init %f64.dc1 = call %Sub.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Sub.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

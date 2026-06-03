@@ -40,29 +40,29 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @0 = private unnamed_addr constant [6 x i8] c"Hello\00", align 1
 // CHECK:STDOUT: @1 = private unnamed_addr constant [6 x i8] c"World\00", align 1
-// CHECK:STDOUT: @String.val.c68.String.val = internal constant { ptr, i64 } { ptr @0, i64 5 }
-// CHECK:STDOUT: @String.val.7d9.String.val = internal constant { ptr, i64 } { ptr @1, i64 5 }
+// CHECK:STDOUT: @String.val.75d.String.val = internal constant { ptr, i64 } { ptr @0, i64 5 }
+// CHECK:STDOUT: @String.val.2f1.String.val = internal constant { ptr, i64 } { ptr @1, i64 5 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.c68.String.val), !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.75d.String.val), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CH.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.c68.String.val), !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.75d.String.val), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CI.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.7d9.String.val), !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.2f1.String.val), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
