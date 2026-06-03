@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "gql==2.0.0",
+#   "requests",
+# ]
+# ///
+
 
 """Figure out comments on a GitHub PR."""
 
@@ -14,7 +23,7 @@ import hashlib
 import importlib.util
 import os
 import textwrap
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, override
 
 # Do some extra work to support direct runs.
 try:
@@ -178,6 +187,7 @@ class _PRComment(_Comment):
     def __lt__(self, other: "_PRComment") -> bool:
         return self.timestamp < other.timestamp
 
+    @override
     def format(self, long: bool) -> str:
         return "%s\n%s" % (self.url, super().format(long))
 

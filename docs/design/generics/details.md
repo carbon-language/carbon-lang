@@ -4585,26 +4585,115 @@ library depends on.
 #### Orphan rule
 
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
-given impl can only be defined in a library that must be imported for it to
-apply. Specifically, given a specific type and specific interface, `impl`
-declarations that can match can only be in libraries that must have been
-imported to name that type or interface. This is achieved with the _orphan
-rule_.
+given `impl` can only be defined where it is always visible when it could be
+used. Specifically, given a specific type and specific interface, `impl`
+declarations that can match must be imported along with some name in that type
+or interface.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
-be defined in the same library as the `impl`, that is some name must be _local_.
+be an _anchor name_, which is a name that names an entity whose first
+[owning declaration](/docs/design/declaring_entities.md) is in the same file as
+each owning declaration of the `impl`, and either:
+
+-   the scope of the owning declaration directly contains the `impl`
+    declaration, or
+-   the owning declaration is within the scope containing the `impl`
+    declaration, including nested scopes.
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
-defined in some library that must be imported in any code that looks up whether
-that interface is implemented for that type. This requires that `impl` is
-defined in the same library that defines the interface or one of the names
-needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
-`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
-this `impl` to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an `impl` with the definition. This accomplishes a
-few goals:
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl`'s first
+owning declaration must be in a file where one of the names `I`, `T`, `U`, `V`,
+`A`, `B`, `C`, `D`, or `E` is introduced by its first owning declaration. This
+ensures that if the name is imported, the `impl` will be imported along with it.
+We further require that the `impl` be anchored by a name in its type structure
+to its current scope in some way. This ensures that when declared within a
+generic context, the `impl` is only accessible through a specific of the
+enclosing generic.
+
+```carbon
+interface Z {}
+interface Y(T:! type) {}
+class A {}
+
+fn F(T:! type) {
+  class B { class C {} }
+
+  // Accepted; anchored by the name `B`.
+  impl B as Z {}
+
+  // Accepted; anchored by the name `C`.
+  impl B.C as Z {}
+
+  // Accepted; anchored by the name `B`.
+  impl A as Y(B) {}
+
+  // Accepted; anchored by the name `C`.
+  impl A as Y(B.C) {}
+
+  interface X {}
+
+  // Accepted; anchored by the name `X`.
+  impl A as X {}
+
+  class D {
+    // Accepted; anchored by the name `D`.
+    impl D as Z {}
+    // Accepted; anchored by implied `Self` which resolves to the name `D`.
+    impl as Z {}
+    // Accepted; anchored by `Self` which resolves to the name `D`.
+    impl Self as Z {}
+  }
+
+  class E {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {};
+
+    class G {
+      // ❌ Rejected, no anchor name. The `impl` is in the scope of `G`. But
+      // the scope of `G` is not the defining owning declaration of `E` nor
+      // does it contain the owning declaration of `E` .
+      impl E as Z {}
+    }
+  }
+
+  if (true) {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {}
+  }
+
+  fn H() {
+    // ❌ Rejected, no anchor name.
+    impl B as Z {}
+  }
+
+  // ❌ Rejected, no anchor name. Note that it has no way to specify a value
+  // for the `T` binding.
+  impl A as Z {}
+
+  // ❌ Rejected, no anchor name. A binding can not be an anchor name, only an
+  // entity declaration can.
+  impl A as Y(T) {}
+}
+```
+
+```carbon
+// api file.
+library "lib";
+
+class C;
+interface Z {}
+
+// impl file.
+impl library "lib";
+
+class C {}
+
+// ❌ Rejected, no anchor name. The names `C` and `Z` are introduced in the api
+// file.
+impl C as Z {}
+```
+
+This rule accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
     is actually used, avoiding
@@ -4622,19 +4711,26 @@ Note that [the rules for specialization](#lookup-resolution-and-specialization)
 do allow there to be more than one `impl` to be defined for a type, by
 unambiguously picking one as most specific.
 
-> **References:** Implementation coherence is
-> [defined in terminology](terminology.md#coherence), and is
-> [a goal for Carbon generics](goals.md#coherence). More detail can be found in
-> [this appendix with the rationale and alternatives considered](appendix-coherence.md).
-
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
 sufficient since it
 [need not be imported](/proposals/p000920-generic-blanket-impls-details-5.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
 Since Carbon in addition requires there be no cyclic library dependencies, we
-conclude that there is at most one library that can contain `impl` definitions
-with a particular type structure.
+conclude that there is at most one source file that can contain owning `impl`
+declarations with a particular type structure.
+
+> **References:** Implementation coherence is
+> [defined in terminology](terminology.md#coherence), and is
+> [a goal for Carbon generics](goals.md#coherence). More detail can be found in
+> [this appendix with the rationale and alternatives considered](appendix-coherence.md).
+
+> **Alternatives considered:** Alternative choices for the orphan rule were
+> considered:
+>
+> -   [A syntactic check, instead of applying the rule after evaluation](/proposals/p007140-orphan-rule-for-scopes.md#a-syntactic-check-instead-of-applying-the-rule-after-evaluation)
+> -   [Disallowing the anchor name to be in a nested scope](/proposals/p007140-orphan-rule-for-scopes.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
+> -   [Anchoring to a definition](/proposals/p007140-orphan-rule-for-scopes.md#anchoring-to-a-definition)
 
 #### Overlap rule
 

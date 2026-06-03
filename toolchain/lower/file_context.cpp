@@ -672,6 +672,21 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::Constant* {
+  // When a Carbon variable is exported and used from C++, code
+  // generation for the C++ code may have already created an
+  // llvm::GlobalVariable. If so, return that global rather than
+  // creating a new one.
+  auto clang_decl_id = sem_ir().clang_decls().Lookup(var_storage.pattern_id);
+  if (clang_decl_id.has_value()) {
+    auto* decl = sem_ir().clang_decls().Get(clang_decl_id).key.decl;
+    auto* constant = cpp_code_generator_->GetAddrOfGlobal(
+        CreateGlobalDecl(cast<clang::NamedDecl>(decl)),
+        /*isForDefinition=*/false);
+    if (constant) {
+      return constant;
+    }
+  }
+
   auto var_name_id =
       SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
   if (auto cpp_global_var_id =

@@ -20,7 +20,7 @@ contributions.
     -   [macOS](#macos)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
-        -   [Running pre-commit](#running-pre-commit)
+        -   [Running prek](#running-prek)
     -   [Optional tools](#optional-tools)
         -   [Jujutsu (`jj`)](#jujutsu-jj)
         -   [AI assistants](#ai-assistants)
@@ -58,17 +58,19 @@ sudo apt install \
   libc++-dev \
   libc++abi-dev \
   lld \
-  lldb \
-  pre-commit
+  lldb
 
 # Install `uv` for Python scripts.
 curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install `prek` for Git hooks.
+cargo install --locked prek
 
 # Set up git.
 # If you don't already have a fork:
 gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
-pre-commit install
+prek install
 
 # Run tests.
 ./scripts/run_bazelisk.py test //...:all
@@ -123,14 +125,14 @@ brew install \
   gh \
   llvm \
   uv \
-  pre-commit
+  prek
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
 
 # Set up git.
 gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
-pre-commit install
+prek install
 
 # Run tests. Note homebrew makes `bazel` an alias to `bazelisk`.
 bazel test //...:all
@@ -179,31 +181,36 @@ These tools are essential for work on Carbon.
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
-    -   [pre-commit](https://pre-commit.com): Validates and cleans up git
-        commits.
+    -   [prek](https://github.com/j178/prek): Validates and cleans up commits.
     -   `autoupdate_testdata.py`: Updates expected output for tests.
         -   Usage: `./toolchain/autoupdate_testdata.py [files...]`
         -   This is essential when changes affect compiler output (diagnostics,
             SemIR, etc.).
 
-#### Running pre-commit
+#### Running prek
 
-[pre-commit](https://pre-commit.com) is typically set up using
-`pre-commit install`. When set up in this mode, it will check for issues when
-`git commit` is run. A typical commit workflow looks like:
+[prek](https://github.com/j178/prek) runs linters and formatters. It's a drop-in
+replacement for [pre-commit](https://pre-commit.com/).
 
-1.  `git commit` to try committing files. This automatically executes
-    `pre-commit run`, which may fail and leave files modified for cleanup.
-2.  `git add .` to add the automatically modifications done by `pre-commit`.
-3.  `git commit` again.
+To use it:
 
-You can also use `pre-commit run` to check pending changes without `git commit`,
-or `pre-commit run -a` to run on all files in the repository.
+1. Install it by way of `cargo install --locked prek`.
+2. Run `prek install` to set up the git hooks.
 
-> NOTE: Some developers prefer to run `pre-commit` on `git push` instead of
+A typical commit workflow looks like:
+
+1. `git commit` to try committing files. This automatically executes `prek run`,
+   which may fail and leave files modified for cleanup.
+2. `git add .` to add the automatic modifications done by hooks.
+3. `git commit` again.
+
+You can also use `prek run` to check pending changes without `git commit`, or
+`prek run -a` to run on all files in the repository.
+
+> NOTE: Some developers prefer to run `prek` on `git push` instead of
 > `git commit` because they want to commit files as originally authored instead
-> of with pre-commit modifications. To switch, run
-> `pre-commit uninstall && pre-commit install -t pre-push`.
+> of with automatic modifications. To switch, run
+> `prek uninstall && prek install --hook-type pre-push`.
 
 ### Optional tools
 
@@ -215,7 +222,7 @@ considering if they fit your workflow.
 -   `rs-git-fsmonitor` and Watchman: Helps make `git` run faster on large
     repositories.
     -   **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
-        `pre-commit` deleting files. If you see files being deleted, disable
+        `prek` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
     for [Prettier](https://prettier.io/), which we use for formatting.
@@ -309,8 +316,7 @@ allowlisting) are:
 bazelisk build
 bazelisk test
 bazelisk run //toolchain/testing:file_test --
-clang-format
-pre-commit run
+prek run
 ./toolchain/autoupdate_testdata.py
 
 # Shell commands. Note that these allow reading arbitrary files on your local

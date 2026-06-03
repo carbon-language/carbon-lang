@@ -227,7 +227,7 @@ trying to write proposals, both types of contributor access will help.
 Please see our [contribution tool](/docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-[pre-commit](https://pre-commit.com) is used to simplify
+[prek](https://github.com/j178/prek) is used to simplify
 [code review](/docs/project/code_review.md).
 
 #### Using AI-based contribution tools
@@ -407,7 +407,7 @@ Changes to Carbon documentation follow the
 
 Markdown files should additionally use [Prettier](https://prettier.io) for
 formatting, which we automate with
-[pre-commit](/docs/project/contribution_tools.md#main-tools).
+[prek](/docs/project/contribution_tools.md#running-prek).
 
 Other style points to be aware of are:
 
