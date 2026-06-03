@@ -951,10 +951,14 @@ auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
         context.clang_decls().Get(clang_decl_id).key.decl);
   }
 
-  // Lookup the entity name.
+  // Look up the entity name and check the scope.
   auto entity_name_id = GetFirstBindingNameFromPatternId(
       context.sem_ir(), var_storage.pattern_id);
   const auto& entity_name = context.entity_names().Get(entity_name_id);
+  auto scope_inst = context.insts().Get(
+      context.name_scopes().Get(entity_name.parent_scope_id).inst_id());
+  CARBON_CHECK(scope_inst.Is<SemIR::Namespace>() ||
+               scope_inst.Is<SemIR::ClassDecl>());
 
   // Map the parent scope into the C++ AST.
   auto* decl_context =
@@ -981,8 +985,6 @@ auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
        .inst_id = var_storage.pattern_id});
 
-  auto scope_inst = context.insts().Get(
-      context.name_scopes().Get(entity_name.parent_scope_id).inst_id());
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     // TODO: Map Carbon access to C++ access.
     var_decl->setAccess(clang::AS_public);
