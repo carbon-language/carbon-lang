@@ -3713,7 +3713,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // A package from a different file becomes a child of the package here, as it
   // would be if it were imported.
   auto parent_scope_id =
-      inst.name_scope_id == SemIR::NameScopeId::Package
+      resolver.import_name_scopes().IsPackage(inst.name_scope_id)
           ? SemIR::NameScopeId::Package
           : GetLocalNameScopeId(resolver, name_scope.parent_scope_id());
 
