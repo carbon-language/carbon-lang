@@ -74,6 +74,10 @@ enum class ParamPatternKind {
   Var,
 };
 
+// Returns the `ParamPatternKind` of the parameter instruction `param_inst_id`.
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind;
+
 // Adds a parameter pattern with the specified name and type information. The
 // pattern emulates `x: T`, `ref x: T`, or `var x: T` depending on the value of
 // `kind`. This only sets up the parameter pattern, binding pattern and type;

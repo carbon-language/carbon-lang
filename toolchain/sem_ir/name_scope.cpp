@@ -7,8 +7,14 @@
 #include <optional>
 #include <utility>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
+#include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/interface.h"
+#include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -98,6 +104,92 @@ auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
     return {InstId::None, std::nullopt};
   }
   return {inst_id, file_->insts().Get(inst_id)};
+}
+
+auto NameScopeStore::IsPrivateWithinNamespace(NameId name_id,
+                                              NameScopeId parent_scope_id) const
+    -> bool {
+  if (!name_id.has_value() || !parent_scope_id.has_value()) {
+    return false;
+  }
+  const auto& scope = Get(parent_scope_id);
+  if (auto entry_id = scope.Lookup(name_id)) {
+    return scope.GetEntry(*entry_id).result.access_kind() ==
+               AccessKind::Private &&
+           InstIs<Namespace>(parent_scope_id);
+  }
+  return false;
+}
+
+auto NameScopeStore::GetScopeNameAndParent(NameScopeId scope_id) const
+    -> std::pair<NameId, NameScopeId> {
+  if (!scope_id.has_value()) {
+    return {NameId::None, NameScopeId::None};
+  }
+  const auto& scope = Get(scope_id);
+  if (scope.name_id().has_value()) {
+    return {scope.name_id(), scope.parent_scope_id()};
+  }
+
+  auto [inst_id, inst] = GetInstIfValid(scope_id);
+  if (inst) {
+    CARBON_KIND_SWITCH(*inst) {
+      case CARBON_KIND(SemIR::ClassDecl class_decl): {
+        const auto& class_info = file_->classes().Get(class_decl.class_id);
+        return {class_info.name_id, class_info.parent_scope_id};
+      }
+      case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+        const auto& interface_info =
+            file_->interfaces().Get(interface_decl.interface_id);
+        return {interface_info.name_id, interface_info.parent_scope_id};
+      }
+      case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface_with_self_decl): {
+        const auto& interface_info =
+            file_->interfaces().Get(interface_with_self_decl.interface_id);
+        return {interface_info.name_id, interface_info.parent_scope_id};
+      }
+      case CARBON_KIND(SemIR::NamedConstraintDecl named_constraint_decl): {
+        const auto& constraint_info = file_->named_constraints().Get(
+            named_constraint_decl.named_constraint_id);
+        return {constraint_info.name_id, constraint_info.parent_scope_id};
+      }
+      case CARBON_KIND(
+          SemIR::NamedConstraintWithSelfDecl named_constraint_with_self_decl): {
+        const auto& constraint_info = file_->named_constraints().Get(
+            named_constraint_with_self_decl.named_constraint_id);
+        return {constraint_info.name_id, constraint_info.parent_scope_id};
+      }
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        const auto& impl_info = file_->impls().Get(impl_decl.impl_id);
+        return {impl_info.name_id, impl_info.parent_scope_id};
+      }
+      default: {
+        CARBON_FATAL("Unexpected name scope inst {0}", *inst);
+      }
+    }
+  }
+  return {NameId::None, scope.parent_scope_id()};
+}
+
+auto NameScopeStore::IsPrivateToLibrary(NameId name_id,
+                                        NameScopeId parent_scope_id) const
+    -> bool {
+  if (!name_id.has_value() || !parent_scope_id.has_value()) {
+    return false;
+  }
+  if (IsPrivateWithinNamespace(name_id, parent_scope_id)) {
+    return true;
+  }
+  NameScopeId scope_id = parent_scope_id;
+  while (scope_id.has_value() && !IsPackage(scope_id)) {
+    auto [parent_name_id, parent_parent_scope_id] =
+        GetScopeNameAndParent(scope_id);
+    if (IsPrivateWithinNamespace(parent_name_id, parent_parent_scope_id)) {
+      return true;
+    }
+    scope_id = parent_parent_scope_id;
+  }
+  return false;
 }
 
 }  // namespace Carbon::SemIR

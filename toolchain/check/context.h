@@ -336,6 +336,7 @@ class Context {
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
+  auto fields() -> SemIR::FieldStore& { return sem_ir().fields(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
   auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
   auto named_constraints() -> SemIR::NamedConstraintStore& {
@@ -352,9 +353,6 @@ class Context {
   }
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
-  }
-  auto field_initializers() -> SemIR::File::FieldInitializerMap& {
-    return sem_ir().field_initializers();
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();

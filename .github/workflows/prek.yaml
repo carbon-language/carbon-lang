@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: pre-commit
+name: prek
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ permissions:
   contents: read # For actions/checkout.
 
 jobs:
-  pre-commit:
+  prek:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
@@ -57,22 +57,22 @@ jobs:
           matrix_runner: ubuntu-22.04
           remote_cache_upload: '--remote_upload_local_results=false'
 
-      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+      - uses: j178/prek-action@01345c78b7de7d79edf368729212760396ba9345 # v2
 
-      # We want to automatically create github suggestions for pre-commit file
+      # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
       # permissions to the repository, so we create the suggestions in a separate
-      # privileged `workflow_run` action in pre_commit_suggestions.yaml. Here,
+      # privileged `workflow_run` action in prek_suggestions.yaml. Here,
       # we upload the diffs and event configuration to an artifact for use by
       # that action.
-      - name: Collect pre-commit output
+      - name: Collect prek output
         if: failure()
         run: |
-          mkdir -p pre-commit-output
-          git diff > pre-commit-output/diff
-          cp $GITHUB_EVENT_PATH pre-commit-output/event
+          mkdir -p prek-output
+          git diff > prek-output/diff
+          cp $GITHUB_EVENT_PATH prek-output/event
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: failure()
         with:
-          name: pre-commit output
-          path: pre-commit-output/*
+          name: prek output
+          path: prek-output/*

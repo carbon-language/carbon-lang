@@ -95,10 +95,10 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.592: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.592) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b33: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.173: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b33, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.f49: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f49) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.cd0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.31b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.cd0, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -118,7 +118,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.173 = impl_witness_access constants.%Copy.impl_witness.592, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.31b = impl_witness_access constants.%Copy.impl_witness.f49, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
@@ -134,10 +134,10 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.592: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.592) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b33: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.173: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b33, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.f49: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f49) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.cd0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.31b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.cd0, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.173 = impl_witness_access constants.%Copy.impl_witness.592, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.31b = impl_witness_access constants.%Copy.impl_witness.f49, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
@@ -174,7 +174,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%B.a76) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %B.d97: type = class_type @B [concrete]
+// CHECK:STDOUT:   %B.c72: type = class_type @B [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
@@ -202,7 +202,7 @@ fn F() {
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B.d97
+// CHECK:STDOUT:   .Self = constants.%B.c72
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

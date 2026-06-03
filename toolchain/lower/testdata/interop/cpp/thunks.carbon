@@ -127,14 +127,14 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.4f2f8687b12a420f.Core:NeedThunk.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !23 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.701313661dc9b6bf.Core:NeedThunk.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.54656f03fa721bae.Core:NeedThunk.Cpp"(ptr %self) #2 !dbg !30 {
+// CHECK:STDOUT: define void @"_COp:thunk:Destroy.65bae3c5c999c45d.Core:NeedThunk.Cpp"(ptr %self) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -180,14 +180,14 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS9NeedThunk", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.4f2f8687b12a420f.Core:NeedThunk.Cpp", scope: null, file: !24, line: 4, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.701313661dc9b6bf.Core:NeedThunk.Cpp", scope: null, file: !24, line: 4, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
 // CHECK:STDOUT: !24 = !DIFile(filename: "./need_thunk.h", directory: "")
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{!14, !14}
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !23, type: !14)
 // CHECK:STDOUT: !29 = !DILocation(line: 4, column: 3, scope: !23)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.54656f03fa721bae.Core:NeedThunk.Cpp", scope: null, file: !24, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.65bae3c5c999c45d.Core:NeedThunk.Cpp", scope: null, file: !24, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !14)
 // CHECK:STDOUT: !33 = !DILocation(line: 5, column: 3, scope: !30)
@@ -228,7 +228,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.e1f26893fc85f4d1.Core:Box.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !26 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.b478b4410958a2a4.Core:Box.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN3BoxI1AEC1ERKS1_.carbon_thunk._(ptr %self, ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !32
@@ -248,7 +248,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.0fba185d40847304.Core:Box.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !35 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.accff7ae190285b7.Core:Box.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN3BoxI1BEC1ERKS1_.carbon_thunk._(ptr %self, ptr %return), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !38
@@ -307,7 +307,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !23 = !{!24, !24, i64 0}
 // CHECK:STDOUT: !24 = !{!"p1 _ZTS3BoxI1AE", !25, i64 0}
 // CHECK:STDOUT: !25 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.e1f26893fc85f4d1.Core:Box.Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.b478b4410958a2a4.Core:Box.Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
 // CHECK:STDOUT: !27 = !DIFile(filename: "./box.h", directory: "")
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{!14, !14}
@@ -316,7 +316,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !32 = !DILocation(line: 8, column: 3, scope: !26)
 // CHECK:STDOUT: !33 = !{!34, !34, i64 0}
 // CHECK:STDOUT: !34 = !{!"p1 _ZTS3BoxI1BE", !25, i64 0}
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.0fba185d40847304.Core:Box.Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.accff7ae190285b7.Core:Box.Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
 // CHECK:STDOUT: !38 = !DILocation(line: 8, column: 3, scope: !35)
@@ -361,7 +361,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.289c71441a159c5c.Core:Collide.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !26 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.e7718e93fc2b984e.Core:Collide.Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN7CollideC1ERKS_.carbon_thunk._(ptr %self, ptr %return), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !32
@@ -381,7 +381,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Copy.4bff6a47276e2ca8.Core:Collide..Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !35 {
+// CHECK:STDOUT: define void @"_COp:thunk:Copy.5ea391f5d7c54e11.Core:Collide..Cpp"(ptr sret([1 x i8]) %return, ptr %self) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN12_GLOBAL__N_17CollideC1ERKS0_.carbon_thunk._(ptr %self, ptr %return), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !38
@@ -469,7 +469,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !23 = !{!24, !24, i64 0}
 // CHECK:STDOUT: !24 = !{!"p1 _ZTS7Collide", !25, i64 0}
 // CHECK:STDOUT: !25 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.289c71441a159c5c.Core:Collide.Cpp", scope: null, file: !27, line: 17, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.e7718e93fc2b984e.Core:Collide.Cpp", scope: null, file: !27, line: 17, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
 // CHECK:STDOUT: !27 = !DIFile(filename: "./anonymous_namespace_collision.h", directory: "")
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{!14, !14}
@@ -478,7 +478,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !32 = !DILocation(line: 17, column: 3, scope: !26)
 // CHECK:STDOUT: !33 = !{!34, !34, i64 0}
 // CHECK:STDOUT: !34 = !{!"p1 _ZTSN12_GLOBAL__N_17CollideE", !25, i64 0}
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.4bff6a47276e2ca8.Core:Collide..Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Copy.5ea391f5d7c54e11.Core:Collide..Cpp", scope: null, file: !27, line: 8, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
 // CHECK:STDOUT: !38 = !DILocation(line: 8, column: 3, scope: !35)

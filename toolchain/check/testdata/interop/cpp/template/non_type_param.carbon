@@ -214,7 +214,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.c6b: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.104: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DependentNonType.c38: type = class_type @DependentNonType.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.b08: type = pattern_type %DependentNonType.c38 [concrete]
@@ -243,8 +243,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.c6b = ref_binding_pattern StaticInt [concrete]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.c6b = var_pattern %StaticInt.patt [concrete]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.104 = ref_binding_pattern StaticInt [concrete]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.104 = var_pattern %StaticInt.patt [concrete]
 // CHECK:STDOUT:   %StaticInt.var: ref %i32 = var %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

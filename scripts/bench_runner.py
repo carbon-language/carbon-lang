@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12"
 # dependencies = [
 #     "numpy",
 #     "rich",
@@ -73,7 +73,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, override
 
 import numpy as np  # type: ignore
 import scipy as sp  # type: ignore
@@ -288,6 +288,7 @@ class DeltaKind(Enum):
     REGRESSION = "[slower]👎[/slower]"
     NOISE = ""
 
+    @override
     def __str__(self) -> str:
         return self.value
 

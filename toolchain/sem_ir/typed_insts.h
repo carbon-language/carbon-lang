@@ -724,7 +724,7 @@ struct FieldDecl {
 
   TypeId type_id;
   NameId name_id;
-  ElementIndex index;
+  FieldId field_id;
 };
 
 // The float literal type.

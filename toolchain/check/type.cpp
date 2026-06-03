@@ -6,6 +6,7 @@
 
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
@@ -253,6 +254,15 @@ auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
+}
+
+auto GetArrayType(Context& context, SemIR::InstId bound_id,
+                  SemIR::TypeInstId element_type_inst_id) -> SemIR::TypeId {
+  SemIR::ArrayType inst = {.type_id = SemIR::TypeType::TypeId,
+                           .bound_id = bound_id,
+                           .element_type_inst_id = element_type_inst_id};
+  return context.types().GetTypeIdForTypeConstantId(
+      EvalOrAddInst(context, SemIR::LocIdAndInst::NoLoc(inst)));
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)

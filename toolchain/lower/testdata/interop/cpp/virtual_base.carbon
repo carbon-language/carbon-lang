@@ -111,7 +111,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16

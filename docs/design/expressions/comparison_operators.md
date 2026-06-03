@@ -112,7 +112,7 @@ if (m > 1 == n > 1) {
 
 ### Built-in comparisons and implicit conversions
 
-Built-in comparisons are permitted in three cases:
+Built-in comparisons are permitted in the following cases:
 
 1.  When both operands are of standard Carbon integer types (`Int(n)` or
     `Unsigned(n)`).
@@ -120,6 +120,7 @@ Built-in comparisons are permitted in three cases:
 3.  When one operand is of floating-point type and the other is of integer type,
     if all values of the integer type can be exactly represented in the
     floating-point type.
+4.  When both operands are of type `char` or `Core.CharLiteral`.
 
 In each case, the result is the mathematically-correct answer. This applies even
 when comparing `Int(n)` with `Unsigned(m)`.
@@ -225,7 +226,7 @@ We permit the following comparisons involving constants:
 -   Any two constants can be compared, even if there is no type that can
     represent both.
 
-As described in [implicit conversions](implicit_conversions.md#data-types),
+As described in [implicit conversions](implicit_conversions.md#numeric-types),
 integer constants can be implicitly converted to any integer or floating-point
 type that can represent their value, and floating-point constants can be
 implicitly converted to any floating-point type that can represent their value.
@@ -526,3 +527,5 @@ in general. That decision is left to a future proposal.
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
