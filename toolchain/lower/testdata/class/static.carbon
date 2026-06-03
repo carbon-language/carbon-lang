@@ -23,6 +23,24 @@ fn F() {
   C.static_field_with_init = 789;
 }
 
+// --- static_export.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  static var x: i32 = 123;
+}
+
+inline Cpp '''
+int F() {
+  return Carbon::C::x;
+}
+''';
+
+fn Run() -> i32 {
+  return Cpp.F();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'static.carbon'
 // CHECK:STDOUT: source_filename = "static.carbon"
 // CHECK:STDOUT:
