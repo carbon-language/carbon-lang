@@ -110,8 +110,8 @@ can contain:
     }
     ```
 
--   **Chained macros**: macros that expand to another macro which evaluates to a
-    constant.
+-   **Chained macros**: macros that expand to other macros which evaluate to
+    constants.
 
     For example:
 
@@ -150,7 +150,7 @@ can contain:
     let a: i32 = Cpp.VALUE;
     ```
 
-Macro are evaluated in the global namespace (for example `Cpp.VALUE`).
+Macros are evaluated in the global namespace (for example `Cpp.VALUE`).
 
 > **Future work**: Evaluating in a child namespace (`Cpp.SomeNamespace.VALUE`)
 > may also be possible.
