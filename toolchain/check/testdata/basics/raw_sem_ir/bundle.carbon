@@ -42,7 +42,6 @@ fn F(Form:! Core.Form()) ->? Form;
 // CHECK:STDOUT:     entity_name70000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function70000000: {name: name1, parent_scope: name_scope70000001, call_param_patterns_id: inst_block70000006, return_type_inst_id: inst7000001E, return_form_inst_id: inst7000001F, return_pattern_id: inst7000001C}
 // CHECK:STDOUT:     function70000001: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000008, call_params_id: inst_block70000009, return_type_inst_id: inst7000002E, return_form_inst_id: inst7000002B, return_pattern_id: inst70000035}

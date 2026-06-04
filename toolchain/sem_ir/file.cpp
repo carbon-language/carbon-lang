@@ -40,7 +40,6 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
-      cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
       thunks_(check_ir_id),
@@ -159,7 +158,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("entity_names", entity_names_.OutputYaml());
-          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("interfaces", interfaces_.OutputYaml());
@@ -195,8 +193,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
-                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);

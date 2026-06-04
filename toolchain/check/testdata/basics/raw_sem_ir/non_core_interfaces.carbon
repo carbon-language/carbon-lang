@@ -53,7 +53,6 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     name_scope60000002: {inst: inst60000015, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {name2: inst60000019, name3: inst6000001D}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name60000000: {name: name(SelfType), parent_scope: name_scope60000001, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:
@@ -233,7 +232,6 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     entity_name5000000A: {name: name5, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name5000000B: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
 // CHECK:STDOUT:     entity_name5000000C: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
-// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name4, parent_scope: name_scope0, call_param_patterns_id: inst_block50000018, call_params_id: inst_block50000019, body: [inst_block5000001F]}
 // CHECK:STDOUT:     function50000001: {name: name7, parent_scope: name_scope0, call_param_patterns_id: inst_block50000028, call_params_id: inst_block50000029, body: [inst_block5000002F]}
