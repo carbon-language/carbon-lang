@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Types, forms, and facets](#types-forms-and-facets)
+        -   [`extend`](#extend)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
@@ -237,6 +238,85 @@ implementation for `Avatar`, ignoring `Renderable.Draw`.
 
 Similarly, a form has members, specifically the members of the form's type
 component.
+
+#### `extend`
+
+An `extend` declaration declares that the enclosing scope extends the scope
+associated with any target entity named in the declaration. That is to say name
+lookups into the enclosing scope will also look into the scopes which are
+nominated by the `extend` declaration. The `extend` declaration requires that
+the target scopes named in an `extend` declaration are complete, or if the
+target is a generic parameter, requires the type of the parameter to be
+complete.
+
+To `extend` an entity `Y` with another `Z` means that name lookups into `Y` will
+also look into `Z`. Immediately after the `extend` operation, members of `Z`
+should also be found when doing name lookup into `Y`, both from outside and from
+inside the definition of `Y`. In order to be able to perform lookups into `Z`,
+we require that `extend` operations only target scopes that are complete.
+
+This requirement functions recursively. Given an interface `B` that extends
+another interface `A`: By naming `A` in an extend declaration, we require `A` is
+complete. This provides that its entire definition is known, and thus its
+`extend` relationship to `B`. The `extend` relationship there also provides that
+`B` is complete.
+
+If the target scope of an `extend` declaration is a generic parameter, its type
+must be complete where the `extend` declaration is written, as name lookups into
+the extended scope will look into the type of the generic parameter.
+
+```carbon
+interface I {
+  fn F();
+}
+
+class C(T:! I) {
+  extend base: T;
+  // `F` names `T.F` here, found in `I`.
+  fn G() { F(); }
+}
+```
+
+As any generic parameter in the enclosing scope is replaced by a more specific
+value, extended scopes that depend on a generic parameter must remain complete.
+This includes forming a specific for the extended scope involving the parameter
+in order to surface any monomorphization errors in the resulting specific.
+
+In the next example, the `extend` declaration in interface `A(N)` names a
+symbolic facet type which can produce monomorphization errors when a negative
+value is provided for `N`. When a more specific value for the target `B(N)` is
+provided, we require the specific value to be complete as well by forming the
+specific. A diagnostic error would be produced while checking `C(-1)` for
+completeness, as it requires `A(-1)` to be complete, which requires
+`B(array(i32, -1))` to be complete, and that contains an invalid type.
+
+```carbon
+interface B(T:! type) {}
+
+interface A(N:! i32) {
+  // Requires `B(N)` to be complete.
+  extend require impls B(array(i32, N)) {}
+}
+
+class C(N! i32) {
+  // Requires `A(N)` to be complete, which requires `B(N)` to be complete.
+  extend impl as A(N);
+}
+
+fn F() {
+  // Requires `C(-1)` to be complete, which requires `A(-1)` to be complete, which requires `B(array(i32, -1))` to be complete.
+  var c: C(-1);
+}
+```
+
+These rules prohibit an `extend` declaration from naming its enclosing scope,
+since by being part of the definition of that scope, it is implied that the
+enclosing scope is not complete. This seems reasonable as all names available
+inside the enclosing interface or named constraint are already available or
+would conflict with the ones that are.
+
+> **Alternative considered:** >
+> [Not requiring the target scope to be complete immediately](/proposals/p006395-type-completeness-in-extend.md#alternatives-considered).
 
 ### Tuple indexing
 
@@ -959,3 +1039,5 @@ var n: i32 = 1 + X.Y;
     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   Proposal
     [#2550: Simplified package declaration for the `Main` package](https://github.com/carbon-language/carbon-lang/pull/2550)
+-   Proposal
+    [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395)
