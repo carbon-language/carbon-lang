@@ -355,7 +355,7 @@ auto FileContext::GetOrCreateLLVMFunction(
         sem_ir().clang_decls().Lookup(function.first_decl_id());
     if (clang_decl_id.has_value()) {
       const auto& clang_decl = sem_ir().clang_decls().Get(clang_decl_id);
-      if (clang_decl.is_external) {
+      if (clang_decl.is_imported) {
         CARBON_CHECK(!specific_id.has_value(),
                      "Specific functions cannot have C++ definitions");
         return HandleReferencedCppFunction(

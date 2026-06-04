@@ -252,7 +252,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   const auto& decl_info = context.clang_decls().Get(clang_decl_id);
 
-  if (!decl_info.is_external) {
+  if (!decl_info.is_imported) {
     return false;
   }
 

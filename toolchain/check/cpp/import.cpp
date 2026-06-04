@@ -149,7 +149,8 @@ auto ImportCpp(Context& context,
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(
                  context.ast_context().getTranslationUnitDecl()),
-             .inst_id = name_scope.inst_id()}),
+             .inst_id = name_scope.inst_id(),
+             .is_imported = true}),
         /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
@@ -524,7 +525,8 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(
-          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}),
+          context.clang_decls().Add(
+              {.key = key, .inst_id = result.inst_id, .is_imported = true}),
           /*is_cpp_scope=*/true);
   return result.inst_id;
 }
@@ -587,8 +589,8 @@ static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
 
   // TODO: The caller does the same lookup. Avoid doing it twice.
   auto key = SemIR::ClangDeclKey(clang_decl);
-  auto clang_decl_id =
-      context.clang_decls().Add({.key = key, .inst_id = class_inst_id});
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = class_inst_id, .is_imported = true});
 
   // Name lookup into the Carbon class looks in the C++ class definition.
   auto& class_info = context.classes().Get(class_id);
@@ -814,7 +816,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // The imported SemIR::FieldDecl represents the original declaration `decl`,
     // which is either the field or the indirect field declaration.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-    context.clang_decls().Add({.key = key, .inst_id = field_decl_id});
+    context.clang_decls().Add(
+        {.key = key, .inst_id = field_decl_id, .is_imported = true});
 
     // Compute the offset to the field that appears directly in the class.
     uint64_t offset = clang_layout.getFieldOffset(
@@ -1063,13 +1066,15 @@ static auto ImportEnumConstantDecl(Context& context,
                    context.sem_ir(), import_ir_inst_id,
                    SemIR::IntValue{.type_id = type_id, .int_id = int_id}));
   context.imports().push_back(inst_id);
-  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  context.clang_decls().Add(
+      {.key = key, .inst_id = inst_id, .is_imported = true});
   return inst_id;
 }
 
 // Mark the given `key` as failed in `clang_decls`.
 static auto MarkFailedDecl(Context& context, SemIR::ClangDeclKey key) {
-  context.clang_decls().Add({.key = key, .inst_id = SemIR::ErrorInst::InstId});
+  context.clang_decls().Add(
+      {.key = key, .inst_id = SemIR::ErrorInst::InstId, .is_imported = true});
 }
 
 // Creates an integer type of the given size.
@@ -1215,7 +1220,8 @@ static auto MapTagType(Context& context, const clang::TagType& type)
     if (auto* record_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
       auto custom_type = LookupCustomRecordType(context, record_decl);
       if (custom_type.inst_id.has_value()) {
-        context.clang_decls().Add({.key = key, .inst_id = custom_type.inst_id});
+        context.clang_decls().Add(
+            {.key = key, .inst_id = custom_type.inst_id, .is_imported = true});
         return custom_type;
       }
     }
@@ -1891,7 +1897,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id),
        .inst_id = decl_id,
-       .is_external = true});
+       .is_imported = true});
 
   return function_id;
 }
@@ -2128,8 +2134,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
 
   // Register the variable so we don't create it again, and track the
   // corresponding declaration to use for mangling.
-  auto clang_decl_id = context.clang_decls().Add(
-      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
+  auto clang_decl_id =
+      context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
+                                 .inst_id = var_storage_inst_id,
+                                 .is_imported = true});
   context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
                                   .clang_decl_id = clang_decl_id});
 
@@ -2165,7 +2173,8 @@ static auto ImportTemplateDecl(Context& context,
   auto name_id = context.entity_names().Add(
       {.name_id = AddIdentifierName(context, template_decl->getName()),
        .parent_scope_id = GetParentNameScopeId(context, template_decl)});
-  auto decl_id = context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  auto decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = inst_id, .is_imported = true});
   value.type_id = GetCppTemplateNameType(context, name_id, decl_id);
 
   // Update the value with its type.
@@ -2196,7 +2205,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
                                  type.getAsString()));
       return SemIR::ErrorInst::InstId;
     }
-    context.clang_decls().Add({.key = key, .inst_id = type_inst_id});
+    context.clang_decls().Add(
+        {.key = key, .inst_id = type_inst_id, .is_imported = true});
     return type_inst_id;
   }
   if (isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {

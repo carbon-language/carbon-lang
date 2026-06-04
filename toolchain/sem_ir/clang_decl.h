@@ -182,7 +182,7 @@ struct ClangDecl : public Printable<ClangDecl> {
 
   // True if this declaration originated from C++. False if this declaration was
   // created by exporting some Carbon declaration to C++.
-  bool is_external = false;
+  bool is_imported = false;
 
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };

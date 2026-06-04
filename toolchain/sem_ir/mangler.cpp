@@ -196,7 +196,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     auto clang_decl_id =
         sem_ir().clang_decls().Lookup(function.first_decl_id());
     CARBON_CHECK(!clang_decl_id.has_value() ||
-                     !sem_ir().clang_decls().Get(clang_decl_id).is_external,
+                     !sem_ir().clang_decls().Get(clang_decl_id).is_imported,
                  "Shouldn't mangle C++ function");
   }
 

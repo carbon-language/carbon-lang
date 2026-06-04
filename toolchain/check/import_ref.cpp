@@ -3744,7 +3744,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
             resolver.local_context(), SemIR::LocId(inst_id),
             resolver.import_ir(), name_scope.clang_decl_context_id())) {
       auto clang_decl_id = resolver.local_context().clang_decls().Add(
-          {.key = *key, .inst_id = inst_id});
+          {.key = *key, .inst_id = inst_id, .is_imported = true});
       local_scope.set_clang_decl_context_id(clang_decl_id, true);
     }
   }

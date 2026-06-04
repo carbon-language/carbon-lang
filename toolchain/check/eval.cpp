@@ -3457,7 +3457,7 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   if (clang_decl_id.has_value() && outer_eval_context.sem_ir()
                                        .clang_decls()
                                        .Get(clang_decl_id)
-                                       .is_external) {
+                                       .is_imported) {
     return EvalCppCall(outer_eval_context.context(), loc_id, clang_decl_id,
                        args_id);
   } else if (function.body_block_ids.empty()) {
