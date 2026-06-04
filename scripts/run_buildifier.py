@@ -1,11 +1,11 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # ///
 
 
-"""Runs buildifier on passed-in BUILD files, mainly for pre-commit."""
+"""Runs buildifier on passed-in BUILD files, mainly for prek."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

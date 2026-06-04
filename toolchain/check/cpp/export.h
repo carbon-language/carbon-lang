@@ -64,6 +64,13 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl*;
 
+// Export a Carbon variable into C++.
+//
+// Returns nullptr if the variable could not be exported an an error was
+// diagnosed.
+auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
+                    SemIR::VarStorage var_storage) -> clang::VarDecl*;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_EXPORT_H_

@@ -2,11 +2,11 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Create PR suggestions based on problems found by pre-commit action.
-name: 'Add pre-commit suggestions'
+# Create PR suggestions based on problems found by prek action.
+name: 'Add prek suggestions'
 
-# This action is run whenever the `pre-commit` action finishes. Because the
-# `pre-commit` action is an unprivileged action running on (for example) the
+# This action is run whenever the `prek` action finishes. Because the
+# `prek` action is an unprivileged action running on (for example) the
 # `pull_request` event, it's run without write permissions to the repository, so
 # we use a separate privileged `workflow_run` action here to pick up its results
 # and convert them into suggestion comments.
@@ -15,7 +15,7 @@ name: 'Add pre-commit suggestions'
 # this file will not take effect until they are merged to trunk.
 on:
   workflow_run:
-    workflows: [pre-commit]
+    workflows: [prek]
     types:
       - completed
 
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   pull-request-suggestions:
-    # Only generate suggestions if pre-commit for a PR failed.
+    # Only generate suggestions if prek for a PR failed.
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.event == 'pull_request'
@@ -49,15 +49,15 @@ jobs:
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Download pre-commit output
+      - name: Download prek output
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          name: pre-commit output
+          name: prek output
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
       # Use https://github.com/reviewdog/reviewdog to create PR suggestions
-      # matching the diff that pre-commit created.
+      # matching the diff that prek created.
       - name: Create suggestions
         env:
           REVIEWDOG_GITHUB_API_TOKEN:

@@ -195,7 +195,8 @@ class A {
 // CHECK:STDOUT:   assign %return.param, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %return.param
-// CHECK:STDOUT:   return %b to %return.param
+// CHECK:STDOUT:   %.loc19_23: %B = acquire_value %b
+// CHECK:STDOUT:   return %.loc19_23 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.1(%self.param: ref %i32.builtin) = "no_op";

@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [TODO: Accessing global variables](#todo-accessing-global-variables)
 -   [Bi-directional type mapping: primitives and core types](#bi-directional-type-mapping-primitives-and-core-types)
     -   [TODO: Integers](#todo-integers)
+    -   [Literals](#literals)
     -   [Character types](#character-types)
         -   [References](#references)
 -   [TODO: Advanced type mapping: pointers, references, and `const`](#todo-advanced-type-mapping-pointers-references-and-const)
@@ -212,6 +213,16 @@ fn Run() {
 ## Bi-directional type mapping: primitives and core types
 
 ### TODO: Integers
+
+### Literals
+
+Carbon and C++ support bi-directional mapping for the types of integer and
+floating-point literals. Because Carbon literals do not have suffixes, they
+typically follow C++ rules for unsuffixed decimal literals, but can also be
+explicitly cast. C++ literals map to corresponding Carbon types based on their
+suffixes.
+
+For details, see [literals](literals.md).
 
 ### Character types
 

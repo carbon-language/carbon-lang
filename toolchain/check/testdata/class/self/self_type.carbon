@@ -186,6 +186,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.loc19_17.4: init %Class to %s.ref.loc19_5 = class_init (%.loc19_17.3)
 // CHECK:STDOUT:   %.loc19_7: init %Class = converted %.loc19_17.1, %.loc19_17.4
 // CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7
-// CHECK:STDOUT:   return %s to %return.param
+// CHECK:STDOUT:   %.loc18_19: %Class = acquire_value %s
+// CHECK:STDOUT:   return %.loc18_19 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

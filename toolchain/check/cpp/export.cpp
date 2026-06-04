@@ -17,6 +17,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 #include "toolchain/sem_ir/vtable.h"
 
@@ -935,6 +936,68 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   sema.ActOnFinishFunctionBody(cpp_destructor_decl, call.get());
 
   return cpp_destructor_decl;
+}
+
+auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
+                    SemIR::VarStorage var_storage) -> clang::VarDecl* {
+  // Check if the variable was already exported and return the existing
+  // `VarDecl` if so. Note that the `pattern_id` is used as the key
+  // rather than the `InstId` for the `VarStorage`. This just makes
+  // lookup more convenient in places where the `VarStorage` `InstId` is
+  // not readily accessible.
+  auto clang_decl_id = context.clang_decls().Lookup(var_storage.pattern_id);
+  if (clang_decl_id.has_value()) {
+    return cast<clang::VarDecl>(
+        context.clang_decls().Get(clang_decl_id).key.decl);
+  }
+
+  // Look up the entity name and check the scope.
+  auto entity_name_id = GetFirstBindingNameFromPatternId(
+      context.sem_ir(), var_storage.pattern_id);
+  const auto& entity_name = context.entity_names().Get(entity_name_id);
+  auto scope_inst = context.insts().Get(
+      context.name_scopes().Get(entity_name.parent_scope_id).inst_id());
+  CARBON_CHECK(scope_inst.Is<SemIR::Namespace>() ||
+               scope_inst.Is<SemIR::ClassDecl>());
+
+  // Map the parent scope into the C++ AST.
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, entity_name.parent_scope_id);
+  if (!decl_context) {
+    return nullptr;
+  }
+
+  // Map the type.
+  auto cpp_type = MapToCppType(context, var_storage.type_id);
+  if (cpp_type.isNull()) {
+    context.TODO(loc_id, "failed to map Carbon type to C++");
+    return nullptr;
+  }
+
+  // Create the `clang::VarDecl` and add it to `clang_decls()`.
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* identifier_info = GetClangIdentifierInfo(context, entity_name.name_id);
+  auto* var_decl = clang::VarDecl::Create(
+      context.ast_context(), decl_context,
+      /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
+      /*TInfo=*/nullptr, clang::SC_Extern);
+  context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
+       .inst_id = var_storage.pattern_id});
+
+  if (scope_inst.Is<SemIR::ClassDecl>()) {
+    // TODO: Map Carbon access to C++ access.
+    var_decl->setAccess(clang::AS_public);
+  }
+
+  // Set the Carbon mangled variable name.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  std::string mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  var_decl->addAttr(
+      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
+
+  return var_decl;
 }
 
 }  // namespace Carbon::Check

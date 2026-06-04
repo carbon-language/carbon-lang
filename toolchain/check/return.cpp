@@ -231,11 +231,10 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   }
 
   auto return_param_id = GetReturnedVarParam(context, function);
-  if (!return_param_id.has_value()) {
-    // If we don't have a return slot, we're returning by value. Convert to a
-    // value expression.
-    returned_var_id = ConvertToValueExpr(context, returned_var_id);
-  }
+
+  // Convert to a value expression in case the return logic needs a value, and
+  // to indicate that this was a `return var`, not a reference return.
+  returned_var_id = ConvertToValueExpr(context, returned_var_id);
 
   AddReturnCleanupBlockWithExpr(
       context, node_id,
