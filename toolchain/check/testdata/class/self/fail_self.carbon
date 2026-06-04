@@ -186,29 +186,17 @@ class Class {
 library "[[@TEST_NAME]]";
 
 class Class {
-  fn F(self);
-  fn G() -> Self;
+  fn F();
 }
 
-fn Class.F(unused self) {
-}
-
-fn Class.G() -> Self {
+fn Class.F() {
   // `var self` is only valid as the receiver of a method, not as a local
   // variable.
-  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in a parameter list [SelfOutsideParamList]
-  // CHECK:STDERR:   var self: Self;
-  // CHECK:STDERR:       ^~~~~~~~~~
+  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+4]]:14: error: `self` can only be declared in a parameter list [SelfOutsideParamList]
+  // CHECK:STDERR:   var unused self: Self;
+  // CHECK:STDERR:              ^~~~~~~~~~
   // CHECK:STDERR:
-  var self: Self;
-  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
-  // CHECK:STDERR:   return self;
-  // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_var_self.carbon:[[@LINE+4]]:10: note: type `Class` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return self;
-  // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR:
-  return self;
+  var unused self: Self;
 }
 
 // --- fail_self_wrong_type.carbon
