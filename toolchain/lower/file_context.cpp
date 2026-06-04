@@ -139,12 +139,45 @@ auto FileContext::LowerDefinitions() -> void {
   // variables.
   if (auto global_ctor_id = sem_ir().global_ctor_id();
       global_ctor_id.has_value()) {
-    auto llvm_function = BuildFunctionDecl(global_ctor_id);
-    functions_.Set(global_ctor_id, llvm_function);
+    // This is basically an inlined and specialized version of
+    // `BuildFunctionDecl` because global_ctor is a bit special (it has no
+    // declarations, for one thing).
+    // TODO: Consider making the global ctor not a function at all, but a
+    // special block.
+    auto function_type_info = BuildFunctionTypeInfo(
+        {{this, global_ctor_id, SemIR::SpecificId::None}});
+    std::string mangled_name = "_C__global_init.";
+    auto package_id = sem_ir().package_id();
+    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      mangled_name += sem_ir().identifiers().Get(ident_id);
+    } else {
+      mangled_name += package_id.AsSpecialName();
+    }
+
+    auto* llvm_function = llvm_module().getFunction(mangled_name);
+
+    if (!llvm_function) {
+      llvm_function = llvm::Function::Create(function_type_info.type,
+                                             llvm::Function::InternalLinkage,
+                                             mangled_name, llvm_module());
+      CARBON_CHECK(llvm_function->getName() == mangled_name,
+                   "Mangled name collision: {0}", mangled_name);
+    }
+    FunctionInfo function_info = {
+        .type = function_type_info.type,
+        .di_type = function_type_info.di_type,
+        .lowered_param_indices =
+            std::move(function_type_info.lowered_param_indices),
+        .unused_param_indices =
+            std::move(function_type_info.unused_param_indices),
+        .llvm_function = llvm_function,
+        .inexact = function_type_info.inexact};
+    functions_.Set(global_ctor_id, function_info);
+
     const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
     BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
                       *this, global_ctor);
-    llvm::appendToGlobalCtors(llvm_module(), llvm_function->llvm_function,
+    llvm::appendToGlobalCtors(llvm_module(), llvm_function,
                               /*Priority=*/0);
   }
 }
