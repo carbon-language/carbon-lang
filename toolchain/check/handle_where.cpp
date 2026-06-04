@@ -336,7 +336,6 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
     rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
-  // TODO: Require that at least one side uses a designator.
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
