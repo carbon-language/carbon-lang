@@ -27,6 +27,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   %.loc21_11.1.a = getelementptr inbounds nuw { { i32, i32, i32 } }, ptr %c, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc21_11.1.a, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc21_11.2 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
@@ -34,7 +35,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc21_11.3 = load i32, ptr %tuple.elem1.loc21_11.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc21_11.1.a, i32 0, i32 2, !dbg !11
 // CHECK:STDOUT:   %.loc21_11.4 = load i32, ptr %tuple.elem2.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple), !dbg !11
 // CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc21_11.2, ptr %tuple1, align 4, !dbg !11
 // CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !11
@@ -46,7 +47,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   ret i32 %tuple.elem1.loc21_13.tuple.elem.load, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

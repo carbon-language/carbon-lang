@@ -160,8 +160,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.a3c = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.aee = import_ref Main//a, loc5_10, unloaded
+// CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ad7 = import_ref Main//a, loc5_10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -176,8 +176,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a3c
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.aee
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.91a
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.ad7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
@@ -205,8 +205,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.5ee = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e0c = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e41 = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ab5 = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -234,8 +234,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8db
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5ee
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.e0c
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e41
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.ab5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- f.carbon
@@ -267,8 +267,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.a3c = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.4ea: %C.F.type = import_ref Main//a, loc5_10, loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.91a = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.d29: %C.F.type = import_ref Main//a, loc5_10, loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -293,8 +293,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a3c
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.4ea
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.91a
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.d29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F [from "a.carbon"];
@@ -302,7 +302,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.4ea [concrete = constants.%C.F]
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.d29 [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
@@ -324,8 +324,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.5ee = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.153: %C.F.type = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.e41 = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f46: %C.F.type = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -350,8 +350,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8db
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5ee
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.153
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e41
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.f46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F [from "a.carbon"];
@@ -359,7 +359,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.153 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.f46 [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
@@ -381,8 +381,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.5ee = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8a8: %C.F.type = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.e41 = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f46: %C.F.type = import_ref Main//c, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -407,8 +407,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8db
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5ee
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.8a8
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e41
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.f46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F [from "a.carbon"];
@@ -416,7 +416,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.8a8 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.f46 [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
@@ -439,11 +439,11 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//e, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.c3f = import_ref Main//e, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.214: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.c42 = import_ref Main//e, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.531: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.63e = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c16: %C.F.type = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.a5e = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e77: %C.F.type = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -468,16 +468,16 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c3f
-// CHECK:STDOUT:   .C = imports.%Main.import_ref.214
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c42
+// CHECK:STDOUT:   .C = imports.%Main.import_ref.531
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.63e
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.c16
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a5e
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.e77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F [from "a.carbon"];
@@ -485,8 +485,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.214 [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.c16 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.531 [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.e77 [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
@@ -509,11 +509,11 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//e, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.c3f = import_ref Main//e, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.214: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.c42 = import_ref Main//e, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.531: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.63e = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.23c: %C.F.type = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.a5e = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e77: %C.F.type = import_ref Main//e, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -538,16 +538,16 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c3f
-// CHECK:STDOUT:   .C = imports.%Main.import_ref.214
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c42
+// CHECK:STDOUT:   .C = imports.%Main.import_ref.531
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.63e
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.23c
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a5e
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.e77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F [from "a.carbon"];
@@ -555,8 +555,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.214 [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.23c [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.531 [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.e77 [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return

@@ -71,14 +71,14 @@ fn F() {
 // CHECK:STDOUT: declare void @_CA.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.Main.13ec69da6a0ff668() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CCall.Main.5bef28f1fba0ae94() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CA.Main(), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.C.Main.4854c3740e872e1f() #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CCall.C.Main.210474cb27d468f8() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CA.Main(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
@@ -93,12 +93,12 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "private_call_a.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.13ec69da6a0ff668", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.5bef28f1fba0ae94", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.4854c3740e872e1f", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.210474cb27d468f8", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
 // CHECK:STDOUT: ; ModuleID = 'private_call_b.carbon'
@@ -107,14 +107,14 @@ fn F() {
 // CHECK:STDOUT: declare void @_CB.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.Main.bb9a9a0bfd3df410() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CCall.Main.64199eeee1465ed1() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CB.Main(), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.C.Main.d31de1863abe6740() #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CCall.C.Main.210474cb27d468f8() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CB.Main(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
@@ -129,12 +129,12 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "private_call_b.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.bb9a9a0bfd3df410", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.64199eeee1465ed1", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.d31de1863abe6740", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.210474cb27d468f8", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
 // CHECK:STDOUT: ; ModuleID = 'use_a_and_b.carbon'
@@ -150,29 +150,30 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CCallInA.Main.6944efcfbb6a8360() #0 !dbg !10 {
-// CHECK:STDOUT:   call void @_CCall.Main.13ec69da6a0ff668(), !dbg !12
-// CHECK:STDOUT:   call void @_CCall.C.Main.4854c3740e872e1f(), !dbg !13
+// CHECK:STDOUT:   call void @_CCall.Main.5bef28f1fba0ae94(), !dbg !12
+// CHECK:STDOUT:   call void @_CCall.C.Main.210474cb27d468f8(), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CCallInB.Main.6944efcfbb6a8360() #0 !dbg !15 {
-// CHECK:STDOUT:   call void @_CCall.Main.bb9a9a0bfd3df410(), !dbg !17
-// CHECK:STDOUT:   call void @_CCall.C.Main.d31de1863abe6740(), !dbg !18
+// CHECK:STDOUT:   call void @_CCall.Main.64199eeee1465ed1(), !dbg !17
+// CHECK:STDOUT:   call void @_CCall.C.Main.210474cb27d468f8(), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CA.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CCall.Main.13ec69da6a0ff668()
+// CHECK:STDOUT: declare void @_CCall.Main.5bef28f1fba0ae94()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CCall.C.Main.4854c3740e872e1f()
+// CHECK:STDOUT: declare void @_CCall.C.Main.210474cb27d468f8()
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CB.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CCall.Main.bb9a9a0bfd3df410()
+// CHECK:STDOUT: declare void @_CCall.Main.64199eeee1465ed1()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CCall.C.Main.d31de1863abe6740()
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_CCall.C.Main.210474cb27d468f8, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:

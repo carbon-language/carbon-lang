@@ -1,4 +1,9 @@
-#! /usr/bin/env python
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# ///
+
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

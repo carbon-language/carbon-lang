@@ -32,7 +32,7 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "lib.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define weak_odr void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -46,7 +46,7 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "lib.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.94e3ca86614aba5d:core.Destroy.Core", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1fa36cd3e044ac37:core.Destroy.Core", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -59,20 +59,20 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.3e6c0554c3446d89(), !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main.c583422fbd7ef3aa(), !dbg !8
 // CHECK:STDOUT:   ret i32 0, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.3e6c0554c3446d89() #0 !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.c583422fbd7ef3aa() #0 !dbg !10 {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !14
-// CHECK:STDOUT:   call void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr %1), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr %1), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_COp.94e3ca86614aba5d:core.Destroy.Core"(ptr)
+// CHECK:STDOUT: declare void @"_COp.1fa36cd3e044ac37:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -93,7 +93,7 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.3e6c0554c3446d89", scope: null, file: !11, line: 4, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.c583422fbd7ef3aa", scope: null, file: !11, line: 4, type: !12, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DIFile(filename: "lib.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}

@@ -201,7 +201,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Final.Main"(ptr %self) #6 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.bbe15d81bea73f45:core.Destroy.Core"(ptr %self), !dbg !28
+// CHECK:STDOUT:   call void @"_COp.8fb57eaeb076daef:core.Destroy.Core"(ptr %self), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,7 +215,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.bbe15d81bea73f45:core.Destroy.Core"(ptr %self) #8 !dbg !33 {
+// CHECK:STDOUT: define weak_odr void @"_COp.8fb57eaeb076daef:core.Destroy.Core"(ptr %self) #8 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -232,12 +232,12 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Base.Main"(ptr %self) #6 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.890f67314d492134:core.Destroy.Core"(ptr %self), !dbg !44
+// CHECK:STDOUT:   call void @"_COp.8fd1c7aa0f654d74:core.Destroy.Core"(ptr %self), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.890f67314d492134:core.Destroy.Core"(ptr %self) #8 !dbg !45 {
+// CHECK:STDOUT: define weak_odr void @"_COp.8fd1c7aa0f654d74:core.Destroy.Core"(ptr %self) #8 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
@@ -384,7 +384,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !25)
 // CHECK:STDOUT: !32 = !DILocation(line: 12, column: 1, scope: !29)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.bbe15d81bea73f45:core.Destroy.Core", scope: null, file: !6, line: 12, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8fb57eaeb076daef:core.Destroy.Core", scope: null, file: !6, line: 12, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !34)
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !25)
 // CHECK:STDOUT: !36 = !DILocation(line: 12, column: 1, scope: !33)
@@ -396,7 +396,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !25)
 // CHECK:STDOUT: !44 = !DILocation(line: 17, column: 1, scope: !41)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.890f67314d492134:core.Destroy.Core", scope: null, file: !6, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8fd1c7aa0f654d74:core.Destroy.Core", scope: null, file: !6, line: 17, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
 // CHECK:STDOUT: !46 = !{!47}
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !25)
 // CHECK:STDOUT: !48 = !DILocation(line: 17, column: 1, scope: !45)

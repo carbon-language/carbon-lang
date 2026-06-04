@@ -57,19 +57,19 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main(ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.b4fc7929164fb220(ptr %a), !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main.a021841d47c697fb(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b4fc7929164fb220(ptr %x) #0 !dbg !12 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.d9476ddaeffa1656"(ptr %x), !dbg !16
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.a021841d47c697fb(ptr %x) #0 !dbg !12 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.a4f2cad14c3ff374"(ptr %x), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.d9476ddaeffa1656"(ptr %self) #0 !dbg !18 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.d9476ddaeffa1656"(ptr %self), !dbg !23
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.a4f2cad14c3ff374"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.a4f2cad14c3ff374"(ptr %self), !dbg !23
 // CHECK:STDOUT:   ret ptr %1, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,13 +90,13 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b4fc7929164fb220", scope: null, file: !13, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a021841d47c697fb", scope: null, file: !13, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !13 = !DIFile(filename: "library_with_period_self_in_impl.carbon", directory: "")
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 1, scope: !12)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.d9476ddaeffa1656", scope: null, file: !13, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.a4f2cad14c3ff374", scope: null, file: !13, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{!7, !7}
 // CHECK:STDOUT: !21 = !{!22}

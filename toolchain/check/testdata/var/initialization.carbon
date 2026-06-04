@@ -115,8 +115,8 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.805: %empty_tuple.type.as.DefaultOrUnformed.impl.Op.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%empty_tuple.type.as.DefaultOrUnformed.impl.Op]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.805), @empty_tuple.type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.f63: %empty_tuple.type.as.DefaultOrUnformed.impl.Op.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%empty_tuple.type.as.DefaultOrUnformed.impl.Op]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.f63), @empty_tuple.type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

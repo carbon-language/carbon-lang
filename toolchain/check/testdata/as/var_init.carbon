@@ -33,29 +33,29 @@ fn Convert(unused t: ()) {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.b17: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.f56: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @empty_tuple.type.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
-// CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.7b3: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.type: type = fn_type @empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert: %empty_tuple.type.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.b17 = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.84c: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.f56 = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.676: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %.ded: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.84c, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.d88: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.676, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.af7ec0.2: type = fn_type @Destroy.Op.loc12_3.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1dc86d.2: %Destroy.Op.type.af7ec0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.790b3b.2: type = fn_type @Destroy.Op.loc12_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.2dd605.2: %Destroy.Op.type.790b3b.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert(%t.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.e90 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.e90 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7b3 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.7b3 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
 // CHECK:STDOUT:   %.loc12_22.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.ded = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.d88 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_22.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc12_3.1: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -65,7 +65,7 @@ fn Convert(unused t: ()) {
 // CHECK:STDOUT:   assign %x.var, %.loc12_3.2
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1dc86d.2
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.2dd605.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

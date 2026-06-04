@@ -118,12 +118,12 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.4f97b17816379516:core.Destroy.Core"(ptr %self), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.4f97b17816379516:core.Destroy.Core"(ptr %self) #4 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self) #4 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
@@ -171,7 +171,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !17)
 // CHECK:STDOUT: !24 = !DILocation(line: 5, column: 1, scope: !21)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4f97b17816379516:core.Destroy.Core", scope: null, file: !6, line: 5, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ac7d25d81711af23:core.Destroy.Core", scope: null, file: !6, line: 5, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !17)
 // CHECK:STDOUT: !28 = !DILocation(line: 5, column: 1, scope: !25)
@@ -238,12 +238,12 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.70edc238a819ff9f:core.Destroy.Core"(ptr %self), !dbg !28
+// CHECK:STDOUT:   call void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70edc238a819ff9f:core.Destroy.Core"(ptr %self) #4 !dbg !29 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self) #4 !dbg !29 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
@@ -304,7 +304,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !23, type: !18)
 // CHECK:STDOUT: !28 = !DILocation(line: 5, column: 1, scope: !23)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70edc238a819ff9f:core.Destroy.Core", scope: null, file: !6, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ac7d25d81711af23:core.Destroy.Core", scope: null, file: !6, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !18)
 // CHECK:STDOUT: !32 = !DILocation(line: 5, column: 1, scope: !29)
@@ -349,12 +349,12 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #3 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.618b79babf1755d1:core.Destroy.Core"(ptr %self), !dbg !21
+// CHECK:STDOUT:   call void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.618b79babf1755d1:core.Destroy.Core"(ptr %self) #2 !dbg !22 {
+// CHECK:STDOUT: define weak_odr void @"_COp.ac7d25d81711af23:core.Destroy.Core"(ptr %self) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -404,7 +404,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 5, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.618b79babf1755d1:core.Destroy.Core", scope: null, file: !6, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ac7d25d81711af23:core.Destroy.Core", scope: null, file: !6, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !18)
 // CHECK:STDOUT: !25 = !DILocation(line: 5, column: 1, scope: !22)
