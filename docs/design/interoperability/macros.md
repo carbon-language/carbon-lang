@@ -18,10 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Supported constant expressions](#supported-constant-expressions)
     -   [Empty macros](#empty-macros)
     -   [Implementation](#implementation)
--   [Open questions](#open-questions)
-    -   [Object-like macros](#object-like-macros)
-    -   [Function-like macros](#function-like-macros)
-    -   [Predefined macros](#predefined-macros)
+-   [Future work](#future-work)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -72,9 +69,9 @@ replacement list as a C++ constant expression.
 The replacement list in the object-like macro expanding to a constant expression
 can contain:
 
--   **Operators**: arithmetic: `+, -, *, /`; bitwise: `|, &, ^, <<, >>` ;
-    logical: `||, &&`; comparison: `<, >, <=, >=, ==`; casts etc, with arbitrary
-    number of operands.
+-   **Operators**: arithmetic: `+`, `-`, `*`, `/`; bitwise: `|`, `&`, `^`, `<<`,
+    `>>` ; logical: `||`, `&&`; comparison: `<`, `>`, `<=`, `>=`, `==`; casts
+    etc, with arbitrary number of operands.
 
     For example:
 
@@ -180,53 +177,16 @@ a Carbon equivalent.
 
     This delegates parsing and type/value evaluation to Clang.
 
-## Open questions
+## Future work
 
-### Object-like macros
+Whether Carbon will support other macro forms is still to be determined:
 
-Support for the following cases remains to be clarified:
-
--   **Non-constant variable names**:
-    ```cpp
-    int x;
-    #define VAL x
-    ```
--   **Types**:
-    ```cpp
-    #define SHORT_TYPE short
-    ```
--   **Statements or keywords**:
-    ```cpp
-    #define RET return
-    #define FOREVER for(;;)
-    ```
--   **Child namespaces**: Expanding macros under child namespaces (for example,
-    `Cpp.SomeNamespace.MACRO`).
-
-### Function-like macros
-
-Support for function-like macros requires further design. One potential
-direction is to generate and import a function template whose body invokes the
-macro:
-
-**C++**:
-
-```cpp
-#define MY_MACRO(a, b) ((a) + (b))
-```
-
-**Generated C++ wrapper**:
-
-```cpp
-constexpr decltype(auto) __carbon_import_MY_MACRO(auto a, auto b) {
-  return (MY_MACRO(a, b));
-}
-```
-
-### Predefined macros
-
-The behavior and support of predefined C++ macros (such as `__FILE__`,
-`__LINE__`, `__cplusplus`) remains open.
+-   [Object-like macros](/proposals/p006676-carbon-c-interop-importing-c-c-object-like-macros.md#object-like-macros-1),
+    for example whose body names a variable or type
+-   [Function-like macros](/proposals/p006676-carbon-c-interop-importing-c-c-object-like-macros.md#function-like-macros-1)
+    that have parameters
+-   [Predefined macros](/proposals/p006676-carbon-c-interop-importing-c-c-object-like-macros.md#predefined-macros-1)
+    like `__FILE__` or `__LINE__`
 
 ## Alternatives considered
 
