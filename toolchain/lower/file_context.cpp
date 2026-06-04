@@ -714,10 +714,12 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::Constant* {
-  // When a Carbon variable is exported and used from C++, code
+  // Check if an llvm::GlobalVariable already exists and use it if so.
+  //
+  // This happens for C++ variables imported into Carbon. It also
+  // happens when a Carbon variable is exported and used from C++; code
   // generation for the C++ code may have already created an
-  // llvm::GlobalVariable. If so, return that global rather than
-  // creating a new one.
+  // llvm::GlobalVariable.
   auto clang_decl_id = sem_ir().clang_decls().Lookup(var_storage.pattern_id);
   if (clang_decl_id.has_value()) {
     auto* decl = sem_ir().clang_decls().Get(clang_decl_id).key.decl;
@@ -727,21 +729,6 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     if (constant) {
       return constant;
     }
-  }
-
-  auto var_name_id =
-      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
-  if (auto cpp_global_var_id =
-          sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
-      cpp_global_var_id.has_value()) {
-    SemIR::ClangDeclId clang_decl_id =
-        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
-    CARBON_CHECK(clang_decl_id.has_value(),
-                 "CppGlobalVar should have a clang_decl_id");
-    return cpp_code_generator_->GetAddrOfGlobal(
-        cast<clang::VarDecl>(
-            sem_ir().clang_decls().Get(clang_decl_id).key.decl),
-        /*isForDefinition=*/false);
   }
 
   return BuildNonCppGlobalVariableDecl(var_storage);
