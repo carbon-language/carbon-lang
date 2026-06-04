@@ -24,6 +24,11 @@ library "[[@TEST_NAME]]";
 
 import Core;
 
+fn CheckSameSize() {
+  Core.CheckFitsIn(1 as i32, 2 as i32);
+  Core.CheckFitsIn(1 as u32, 2 as u32);
+}
+
 fn CheckOk() {
   Core.CheckFitsIn(1 as i32, 2 as i64);
   Core.CheckFitsIn(1 as u32, 2 as u64);

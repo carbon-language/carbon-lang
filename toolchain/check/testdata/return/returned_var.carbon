@@ -167,7 +167,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   assign %return.param, %.loc21_12
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %result: ref %C = ref_binding result, %return.param
-// CHECK:STDOUT:   return %result to %return.param
+// CHECK:STDOUT:   %.loc21_22: %C = acquire_value %result
+// CHECK:STDOUT:   return %.loc21_22 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {

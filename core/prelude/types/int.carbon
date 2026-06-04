@@ -9,6 +9,7 @@ import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/int_literal";
+import library "prelude/types/float_literal";
 
 private fn MakeInt(size: IntLiteral()) -> type = "int.make_type_signed";
 
@@ -67,6 +68,12 @@ impl forall [To:! IntLiteral(), From:! AnyInt & IntFitsIn(Int(To))]
 
 final impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(Int(To)) {
   fn Convert[self: Self]() -> Int(To) = "int.convert";
+}
+
+// Explicit conversion from floating-point literals.
+impl forall [To:! IntLiteral()]
+    FloatLiteral() as UnsafeAs(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "float.convert_int";
 }
 
 // Comparisons.

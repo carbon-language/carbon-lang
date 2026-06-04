@@ -120,7 +120,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %T.61c: %ImplicitAs.type.08a = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.c1f: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%T.61c) [symbolic]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.2b4: %str.as.IndexWith.impl.At.type.c1f = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.fe0: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bc4, @Core.IntLiteral.as.ImplicitAs.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.fe0: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bc4, @Core.IntLiteral.as.ImplicitAs.impl.4e8(%int_64) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.08a = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.fe0) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness.f69: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.49d: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
@@ -141,7 +141,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %Core.import_ref.c67: @str.as.IndexWith.impl.%str.as.IndexWith.impl.At.type (%str.as.IndexWith.impl.At.type.c1f) = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, loaded [symbolic = @str.as.IndexWith.impl.%str.as.IndexWith.impl.At (constants.%str.as.IndexWith.impl.At.2b4)]
 // CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.1f3, %Core.import_ref.c67), @str.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.154 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bc4 = impl_witness_table (%Core.import_ref.154), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bc4 = impl_witness_table (%Core.import_ref.154), @Core.IntLiteral.as.ImplicitAs.impl.4e8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestStringIndexing() {
