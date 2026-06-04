@@ -938,13 +938,11 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   return cpp_destructor_decl;
 }
 
-auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
+auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
                     SemIR::VarStorage var_storage) -> clang::VarDecl* {
   // Check if the variable was already exported and return the existing
   // `VarDecl` if so. Note that the `pattern_id` is used as the key
-  // rather than the `InstId` for the `VarStorage`. This just makes
-  // lookup more convenient in places where the `VarStorage` `InstId` is
-  // not readily accessible.
+  // rather than the `InstId` for the `VarStorage`.
   auto clang_decl_id = context.clang_decls().Lookup(var_storage.pattern_id);
   if (clang_decl_id.has_value()) {
     return cast<clang::VarDecl>(
@@ -961,6 +959,7 @@ auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
                scope_inst.Is<SemIR::ClassDecl>());
 
   // Map the parent scope into the C++ AST.
+  SemIR::LocId loc_id(inst_id);
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, entity_name.parent_scope_id);
   if (!decl_context) {
@@ -981,9 +980,10 @@ auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
       context.ast_context(), decl_context,
       /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
-  context.clang_decls().Add(
+  context.clang_decls().AddVar(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = var_storage.pattern_id});
+       .inst_id = inst_id},
+      var_storage.pattern_id);
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     // TODO: Map Carbon access to C++ access.

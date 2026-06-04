@@ -436,8 +436,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);
     }
     case CARBON_KIND(SemIR::VarStorage var_storage): {
-      return ExportVarToCpp(*context_, SemIR::LocId(target_inst_id),
-                            var_storage);
+      return ExportVarToCpp(*context_, target_inst_id, var_storage);
     }
     default:
       return nullptr;

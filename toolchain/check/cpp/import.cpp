@@ -2132,12 +2132,12 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
                                           .pattern_id = pattern_id}});
   context.imports().push_back(var_storage_inst_id);
 
-  // Register the variable so we don't create it again, and track the
-  // corresponding declaration to use for mangling.
+  // Register the variable so we don't create it again.
   auto clang_decl_id =
-      context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
-                                 .inst_id = var_storage_inst_id,
-                                 .is_imported = true});
+      context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
+                                    .inst_id = var_storage_inst_id,
+                                    .is_imported = true},
+                                   pattern_id);
   context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
                                   .clang_decl_id = clang_decl_id});
 
