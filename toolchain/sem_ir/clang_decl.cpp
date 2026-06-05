@@ -81,14 +81,14 @@ auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {
 ClangDeclStore::ClangDeclStore(CheckIRId check_ir_id) : values_(check_ir_id) {}
 
 auto ClangDeclStore::Add(ClangDecl value) -> ClangDeclId {
-  CARBON_CHECK(!isa<clang::VarDecl>(value.key.decl));
+  CARBON_CHECK(!isa<clang::VarDecl>(value.decl()));
   auto id = values_.Add(value);
   inst_id_to_clang_decl_id_.Insert(value.inst_id, id);
   return id;
 }
 
 auto ClangDeclStore::AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId {
-  CARBON_CHECK(isa<clang::VarDecl>(value.key.decl));
+  CARBON_CHECK(isa<clang::VarDecl>(value.decl()));
   auto id = values_.Add(value);
   inst_id_to_clang_decl_id_.Insert(pattern_id, id);
   return id;

@@ -223,7 +223,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
     -> SemIR::ConstantId {
   const auto& args = context.inst_blocks().Get(args_id);
 
-  auto* function_decl = cast<clang::FunctionDecl>(clang_decl.key.decl);
+  auto* function_decl = cast<clang::FunctionDecl>(clang_decl.decl());
 
   // Create expr for the function declaration.
   auto* decl_ref_expr = clang::DeclRefExpr::Create(
@@ -304,7 +304,7 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
     function_decl = cast<clang::FunctionDecl>(
         context.clang_decls()
             .Lookup(thunk_callee_function.first_decl_id())
-            ->key.decl);
+            ->decl());
 
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
       return;

@@ -356,8 +356,7 @@ auto FileContext::GetOrCreateLLVMFunction(
       if (clang_decl->is_imported) {
         CARBON_CHECK(!specific_id.has_value(),
                      "Specific functions cannot have C++ definitions");
-        return HandleReferencedCppFunction(
-            clang_decl->key.decl->getAsFunction());
+        return HandleReferencedCppFunction(clang_decl->decl()->getAsFunction());
       }
     }
   }
@@ -721,7 +720,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   if (const auto* clang_decl =
           sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
     auto* constant = cpp_code_generator_->GetAddrOfGlobal(
-        CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->key.decl)),
+        CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
     if (constant) {
       return constant;

@@ -241,7 +241,7 @@ auto File::AppendCppMangledTypeName(ClassId class_id,
   }
   // A C++ class's scope always maps to a Clang tag declaration.
   auto* tag_decl =
-      clang::cast<clang::TagDecl>(clang_decls().Get(clang_decl_id).key.decl);
+      clang::cast<clang::TagDecl>(clang_decls().Get(clang_decl_id).decl());
   cpp_file_->mangle_context().mangleCanonicalTypeName(
       cpp_file_->ast_context().getCanonicalTagType(tag_decl), out);
   return true;

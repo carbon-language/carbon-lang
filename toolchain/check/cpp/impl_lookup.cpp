@@ -64,7 +64,7 @@ static auto TypeAsTagDecl(Context& context,
     return nullptr;
   }
 
-  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).key.decl);
+  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).decl());
 }
 
 // If the given type is a C++ class type, returns the corresponding class

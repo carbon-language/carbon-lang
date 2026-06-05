@@ -257,7 +257,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   const auto& signature =
       context.clang_decl_signatures().Get(clang_decl->key.signature_id);
-  auto* decl = cast<clang::FunctionDecl>(clang_decl->key.decl);
+  auto* decl = cast<clang::FunctionDecl>(clang_decl->decl());
   if (signature.kind != SemIR::ClangDeclSignature::Normal ||
       signature.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.

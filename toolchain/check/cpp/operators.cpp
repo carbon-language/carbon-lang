@@ -734,7 +734,7 @@ static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
   }
   const auto* clang_decl = context.clang_decls().Lookup(
       context.functions().Get(function_type->function_id).first_decl_id());
-  return clang_decl ? dyn_cast<clang::FunctionDecl>(clang_decl->key.decl)
+  return clang_decl ? dyn_cast<clang::FunctionDecl>(clang_decl->decl())
                     : nullptr;
 }
 

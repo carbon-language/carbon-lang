@@ -378,7 +378,7 @@ static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
   return dyn_cast<clang::DeclContext>(
-      context.clang_decls().Get(scope_clang_decl_context_id).key.decl);
+      context.clang_decls().Get(scope_clang_decl_context_id).decl());
 }
 
 // Returns true if the given Clang declaration is the implicit injected class
@@ -399,8 +399,7 @@ static auto IsDeclInjectedClassName(Context& context,
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
       context.name_scopes().Get(scope_id).clang_decl_context_id());
-  const auto* scope_record_decl =
-      cast<clang::CXXRecordDecl>(clang_decl.key.decl);
+  const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl());
 
   const clang::ASTContext& ast_context = context.ast_context();
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
@@ -2602,7 +2601,7 @@ auto ImportClassDefinitionForClangDecl(Context& context,
   CARBON_CHECK(cpp_file);
 
   auto* clang_decl =
-      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).key.decl);
+      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).decl());
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
 
@@ -2639,7 +2638,7 @@ auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
           context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
     if (const auto* clang_decl =
             context.clang_decls().Lookup(var_storage->pattern_id)) {
-      return cast<clang::VarDecl>(clang_decl->key.decl);
+      return cast<clang::VarDecl>(clang_decl->decl());
     }
   }
 

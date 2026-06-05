@@ -184,6 +184,9 @@ struct ClangDecl : public Printable<ClangDecl> {
   // created by exporting some Carbon declaration to C++.
   bool is_imported = false;
 
+  // Get the `clang::Decl` pointer.
+  auto decl() const -> clang::Decl* { return key.decl; }
+
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
