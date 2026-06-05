@@ -196,10 +196,11 @@ class ClangDeclStore {
   // Adds a `ClangDecl`, returning an ID to reference it.
   auto Add(ClangDecl value) -> ClangDeclId;
 
-  // Same as `Add`, but for `VarStorage` that maps to a
-  // `clang::VarDecl`. When looking up via `InstId`, the pattern's
-  // `InstId` must be used instead of the `InstId` `value.inst_id` corresponding to the
-  // `VarStorage`.
+  // Same as `Add`, but for `VarStorage` that maps to a `clang::VarDecl`.
+  //
+  // When looking up via `InstId`, the pattern's `InstId` must be used
+  // instead of the `InstId` corresponding to the `VarStorage`. Note however
+  // that the `value.inst_id` is still the `VarStorage` `InstId`.
   //
   // The pattern's `InstId` is used because it provides a more stable
   // lookup key than the `VarStorage` `InstId`. For example, a call to
